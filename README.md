@@ -38,7 +38,7 @@ Note: When extracting the timeseries, this package uses the Schaefer atlas. The 
 
 Main features for `TimeseriesExtractor` include:
 
-- Timeseries extraction for resting state or task data and creating a nested dictionary containing the subject ID, run number, and associated timeseries. This is used as input for the `get_caps()` method in the CAP class.
+- Timeseries extraction for resting state or task data and creating a nested dictionary containing the subject ID, run number, and associated timeseries. This is used as input for the `get_caps()` method in the `CAP` class.
 - Saving the nested dictionary containing timeseries as a pickle file.
 - Visualizing the timeseries of a Schaefer node or network subject's run. Also includes the ability to save plots.
 
