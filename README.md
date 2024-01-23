@@ -32,23 +32,23 @@ pip install -e .
 ```
 
 # Usage
- This package contains two main classes - TimeseriesExtractor, for extracting the timeseries, and CAP, for performing the cap analysis.
+ This package contains two main classes - `TimeseriesExtractor`, for extracting the timeseries, and `CAP`, for performing the cap analysis.
 
-Note: When extracting the timeseries, this package uses the Schaefer atlas. The number of ROIs for the Schaefer atlas can be modified when initializing the main TimeseriesExtractor class.
+Note: When extracting the timeseries, this package uses the Schaefer atlas. The number of ROIs for the Schaefer atlas can be modified when initializing the main `TimeseriesExtractor` class.
 
-Main features for TimeseriesExtractor include:
+Main features for `TimeseriesExtractor` include:
 
-- Timeseries extraction for resting state or task data and creating a nested dictionary containing the subject ID, run number, and associated timeseries. This is used as input for the get_caps() method in the CAP class.
+- Timeseries extraction for resting state or task data and creating a nested dictionary containing the subject ID, run number, and associated timeseries. This is used as input for the `get_caps()` method in the CAP class.
 - Saving the nested dictionary containing timeseries as a pickle file.
 - Visualizing the timeseries of a Schaefer node or network subject's run. Also includes the ability to save plots.
 
 Main features for CAP include:
 
 - Performing the silhouette or elbow method to identify the optimal cluster size. When the optimal cluster size is identified, the optimal model is saved as an attribute.
-- Visualizing the CAPs identified as an outer product or regular heatmap. For outer products, you also have the ability to use subplots to reduce the number of individual plots. You can also save the plots and use them. Please refer to the docstring for the visualize_caps() method in the CAP class to see the list of available kwargs arguments to modify plots.
+- Visualizing the CAPs identified as an outer product or regular heatmap. For outer products, you also have the ability to use subplots to reduce the number of individual plots. You can also save the plots and use them. Please refer to the docstring for the `visualize_caps()` method in the `CAP` class to see the list of available kwargs arguments to modify plots.
 - Grouping feature to perform CAPs independently on groups of subject IDs. When grouping is specified, k-means clustering, silhouette and elbow methods, as well as plotting, are done for each independent group.
 
-Please refer to [demo.ipynb](https://github.com/donishadsmith/caps/blob/main/demo.ipynb) to see multiple examples of how to use this package.
+Please refer to [demo.ipynb](https://github.com/donishadsmith/neurocaps/blob/main/demo.ipynb) to see multiple examples of how to use this package.
 
 Quick code example
 
