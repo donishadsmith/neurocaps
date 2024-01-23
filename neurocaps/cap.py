@@ -93,6 +93,7 @@ class CAP(_CAPGetter):
             Small number to add to the denominator when z-scoring for numerical stabilty.
         kwargs: dect
             Dictionary to adjust the sensitivity, `S` parameter, of the elbow method. The elbow method uses the KneeLocator function from the  kneed package. If no `S` is inputted, `S` will be KneeLocator default.
+            Larger values of `S` are more conservative and less sensitive to small fluctuations.
             
         Raises
         ------
