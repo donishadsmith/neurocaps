@@ -12,7 +12,7 @@ Clone repository
 
 ```bash
 
-git clone https://github.com/donishadsmith/caps
+git clone https://github.com/donishadsmith/neurocaps/
 
 ```
 
