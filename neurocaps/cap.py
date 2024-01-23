@@ -68,7 +68,7 @@ class CAP(_CAPGetter):
         # Get node networks
         self._node_networks = sorted(list(set([re.split("LH_|RH_", node)[-1].split("_")[0] for node in self._node_labels])))
 
-    def get_caps(self, input_path: str=None, subject_timeseries: dict[dict[np.ndarray]]=None, run: int=None, random_state: int=None, show_figs: bool=True, standardize: bool=True, epsilon: Union[int,float]=0) -> None:
+    def get_caps(self, input_path: str=None, subject_timeseries: dict[dict[np.ndarray]]=None, run: int=None, random_state: int=None, show_figs: bool=True, standardize: bool=True, epsilon: Union[int,float]=0, **kwargs) -> None:
         """"" Create CAPs
 
         The purpose of this function is to concatenate the timeseries of each subject and perform kmeans clustering on the concatenated data.
@@ -112,14 +112,14 @@ class CAP(_CAPGetter):
         if self._cluster_selection_method == "silhouette": 
             self._perform_silhouette_method(random_state=random_state)
         elif self._cluster_selection_method == "elbow":
-            self._perform_elbow_method(random_state=random_state, show_figs=show_figs)
+            self._perform_elbow_method(random_state=random_state, show_figs=show_figs, **kwargs)
 
 
         else:
             self._kmeans = {}
             for group in self._groups.keys():
                 self._kmeans[group] = {}
-                self._kmeans[group] = KMeans(n_clusters=self._n_clusters,random_state=random_state).fit(self._concatenated_timeseries[group]) if random_state else KMeans(n_clusters=self._n_clusters).fit(self._concatenated_timeseries[group])
+                self._kmeans[group] = KMeans(n_clusters=self._n_clusters,random_state=random_state).fit(self._concatenated_timeseries[group]) if random_state or random_state == 0 else KMeans(n_clusters=self._n_clusters).fit(self._concatenated_timeseries[group])
             
         # Create states dict
             
@@ -144,41 +144,52 @@ class CAP(_CAPGetter):
         for group in self._groups.keys():
             self._silhouette_scores[group] = {}
             for n_cluster in self._n_clusters:
-                self._kmeans[group] = KMeans(n_clusters=n_cluster,random_state=random_state).fit(self._concatenated_timeseries[group]) if random_state else KMeans(n_clusters=n_cluster).fit(self._concatenated_timeseries[group])
+                self._kmeans[group] = KMeans(n_clusters=n_cluster,random_state=random_state).fit(self._concatenated_timeseries[group]) if random_state or random_state == 0 else KMeans(n_clusters=n_cluster).fit(self._concatenated_timeseries[group])
                 cluster_labels = self._kmeans[group].fit_predict(self._concatenated_timeseries[group])
                 self._silhouette_scores[group].update({n_cluster: silhouette_score(self._concatenated_timeseries[group], cluster_labels)})
             self._optimal_n_clusters[group] = max(self._silhouette_scores[group], key=self._silhouette_scores[group].get)
             if self._optimal_n_clusters[group] != self._n_clusters[-1]:
-                self._kmeans[group] = KMeans(n_clusters=self._optimal_n_clusters[group],random_state=random_state).fit(self._concatenated_timeseries[group]) if random_state else KMeans(n_clusters=self._optimal_n_clusters[group]).fit(self._concatenated_timeseries[group])
+                self._kmeans[group] = KMeans(n_clusters=self._optimal_n_clusters[group],random_state=random_state).fit(self._concatenated_timeseries[group]) if random_state or random_state == 0 else KMeans(n_clusters=self._optimal_n_clusters[group]).fit(self._concatenated_timeseries[group])
             print(f"Optimal cluster size for {group} is {self._optimal_n_clusters[group]}.")
         
     
-    def _perform_elbow_method(self, random_state, show_figs):
+    def _perform_elbow_method(self, random_state, show_figs, **kwargs):
         # Initialize attribute
         self._inertia = {}
         self._optimal_n_clusters = {}
         self._kmeans = {}
 
+        if kwargs:
+            knee_dict = dict(S = kwargs["S"] if "S" in kwargs.keys() else None)
+
         for group in self._groups.keys():
             self._inertia[group] = {}
             for n_cluster in self._n_clusters:
-                self._kmeans[group] = KMeans(n_clusters=n_cluster,random_state=random_state).fit(self._concatenated_timeseries[group]) if random_state else KMeans(n_clusters=n_cluster).fit(self._concatenated_timeseries[group])
+                self._kmeans[group] = KMeans(n_clusters=n_cluster,random_state=random_state).fit(self._concatenated_timeseries[group]) if random_state or random_state == 0 else KMeans(n_clusters=n_cluster).fit(self._concatenated_timeseries[group])
                 self._inertia[group].update({n_cluster: self._kmeans[group].inertia_}) 
+            
             # Get optimal cluster size
-            kneedle = KneeLocator(x=list(self._inertia[group].keys()), 
-                                                          y=list(self._inertia[group].values()),
-                                                          curve='convex',
-                                                          direction='decreasing')
+            if kwargs and knee_dict["S"]:
+                kneedle = KneeLocator(x=list(self._inertia[group].keys()), 
+                                                            y=list(self._inertia[group].values()),
+                                                            curve='convex',
+                                                            direction='decreasing', S=knee_dict["S"])
+            else:
+                kneedle = KneeLocator(x=list(self._inertia[group].keys()), 
+                                                            y=list(self._inertia[group].values()),
+                                                            curve='convex',
+                                                            direction='decreasing')
             self._optimal_n_clusters[group] = kneedle.elbow
             if not self._optimal_n_clusters[group]:
                  warnings.warn("No elbow detected so optimal cluster size is None. Try expanding the list of clusters to test or set `cluster_selection_method` to 'sillhouette'.")
             else:
                 if self._optimal_n_clusters[group] != self._n_clusters[-1]:
-                    self._kmeans[group] = KMeans(n_clusters=self._optimal_n_clusters[group],random_state=random_state).fit(self._concatenated_timeseries[group]) if random_state else KMeans(n_clusters=self._optimal_n_clusters[group]).fit(self._concatenated_timeseries[group])
+                    self._kmeans[group] = KMeans(n_clusters=self._optimal_n_clusters[group],random_state=random_state).fit(self._concatenated_timeseries[group]) if random_state or random_state == 0 else KMeans(n_clusters=self._optimal_n_clusters[group]).fit(self._concatenated_timeseries[group])
                 print(f"Optimal cluster size for {group} is {self._optimal_n_clusters[group]}.\n")
 
                 if show_figs:
-                    kneedle.plot_knee()
+                    kneedle.plot_knee(title=group)
+
 
     def _create_caps_dict(self):
         # Initialize dictionary
