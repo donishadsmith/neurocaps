@@ -91,6 +91,8 @@ class CAP(_CAPGetter):
             To z-score the features of the concatonated timeseries array.
         epsilon: int or float, default=0
             Small number to add to the denominator when z-scoring for numerical stabilty.
+        kwargs: dect
+            Dictionary to adjust the sensitivity, `S` parameter, of the elbow method. The elbow method uses the KneeLocator function from the  kneed package. If no `S` is inputted, `S` will be KneeLocator default.
             
         Raises
         ------
