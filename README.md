@@ -20,7 +20,7 @@ Change directory
 
 ```bash
 
-cd caps
+cd neurocaps
 
 ```
 
