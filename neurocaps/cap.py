@@ -184,7 +184,7 @@ class CAP(_CAPGetter):
                                                             direction='decreasing')
             self._optimal_n_clusters[group] = kneedle.elbow
             if not self._optimal_n_clusters[group]:
-                 warnings.warn("No elbow detected so optimal cluster size is None. Try expanding the list of clusters to test or set `cluster_selection_method` to 'sillhouette'.")
+                 warnings.warn("No elbow detected so optimal cluster size is None. Try adjusting the sensitivity parameter, `S`, to increase or decrease sensitivity (higher values are less sensitive), expanding the list of clusters to test, or setting `cluster_selection_method` to 'sillhouette'.")
             else:
                 if self._optimal_n_clusters[group] != self._n_clusters[-1]:
                     self._kmeans[group] = KMeans(n_clusters=self._optimal_n_clusters[group],random_state=random_state).fit(self._concatenated_timeseries[group]) if random_state or random_state == 0 else KMeans(n_clusters=self._optimal_n_clusters[group]).fit(self._concatenated_timeseries[group])
