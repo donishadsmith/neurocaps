@@ -81,5 +81,6 @@ cap.visualize_caps(visual_scope="networks", plot_options="outer_product", task_t
 
 ```
 
-![image](https://github.com/donishadsmith/neurocaps/assets/112973674/36f2335c-20a2-4cb0-a339-33893f51047e)
+![image](https://github.com/donishadsmith/neurocaps/assets/112973674/4699bbd9-1f55-462b-9d9e-4ef17da79ad4)
+
 
