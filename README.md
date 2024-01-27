@@ -75,7 +75,7 @@ cap_analysis = CAP(node_labels=extractor.atlas_labels, n_clusters=6)
 
 cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries)
 
-cap.visualize_caps(visual_scope="networks", plot_options="outer_product", task_title="- Positive Valence", ncol=3, sharey=True, subplots=True)
+cap_analysis.visualize_caps(visual_scope="networks", plot_options="outer_product", task_title="- Positive Valence", ncol=3, sharey=True, subplots=True)
 
 
 ```
