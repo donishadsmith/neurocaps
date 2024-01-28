@@ -68,17 +68,16 @@ class CAP(_CAPGetter):
         # Get node networks
         self._node_networks = sorted(list(set([re.split("LH_|RH_", node)[-1].split("_")[0] for node in self._node_labels])))
 
-    def get_caps(self, input_path: str=None, subject_timeseries: dict[dict[np.ndarray]]=None, run: int=None, random_state: int=None, show_figs: bool=True, standardize: bool=True, epsilon: Union[int,float]=0, **kwargs) -> None:
+    def get_caps(self, subject_timeseries: Union[dict[dict[np.ndarray]], str]=None, run: int=None, random_state: int=None, show_figs: bool=True, standardize: bool=True, epsilon: Union[int,float]=0, **kwargs) -> None:
         """"" Create CAPs
 
         The purpose of this function is to concatenate the timeseries of each subject and perform kmeans clustering on the concatenated data.
         
         Parameters
         ----------
-        input_path: str, default=None
-            The absolute path of the pickle file containing the nested subject timeseries dictionary saved by the TimeSeriesExtractor class. 
         subject_timeseries: dict, default=None
-            The subject timeseries nested dictionary produced by the TimeseriesExtractor class. The first level of the nested dictionary must consist of the subject
+            The absolute path of the pickle file containing the nested subject timeseries dictionary saved by the TimeSeriesExtractor class or
+            the nested subject timeseries dictionary produced by the TimeseriesExtractor class. The first level of the nested dictionary must consist of the subject
             ID as a string, the second level must consist of the the run numbers in the form of 'run-#', where # is the corresponding number of the run, and the last level 
             must consist of the timeseries associated with that run.
         run: int, default=None
@@ -101,14 +100,12 @@ class CAP(_CAPGetter):
             If both input_path and subject_timeseries are None.
         """
         
-        if input_path == subject_timeseries == None:
-            raise ValueError("Both input_path and subject_timeseries cannot be None.")
 
         self._runs = run if run else "all"
         self._standardize = standardize
         self._epsilon = epsilon
 
-        if not subject_timeseries: subject_timeseries = self._convert_pickle_to_dict(input_path=input_path)
+        if isinstance(subject_timeseries, str) and "pkl" in subject_timeseries: subject_timeseries = self._convert_pickle_to_dict(pickle_file=subject_timeseries)
 
         self._concatenated_timeseries = self._get_concatenated_timeseries(subject_timeseries=subject_timeseries, run=run)
 
@@ -128,14 +125,14 @@ class CAP(_CAPGetter):
             
         self._create_caps_dict()
 
-    def _convert_pickle_to_dict(self, input_path):
+    def _convert_pickle_to_dict(self, pickle_file):
         import pickle
 
-        with open(input_path, "rb") as f:
+        with open(pickle_file, "rb") as f:
             subject_timeseries = pickle.load(f)
 
         return subject_timeseries
-
+    
     def _perform_silhouette_method(self, random_state):
         from sklearn.metrics import silhouette_score
 
