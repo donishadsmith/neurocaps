@@ -203,7 +203,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     onset_scan, duration_scan = int(condition_df.loc[i,"onset"]/tr), int((condition_df.loc[i,"onset"] + condition_df.loc[i,"duration"])/tr)
                     scan_list.extend(range(onset_scan, duration_scan + 1))
 
-                # Timeseries with the extracted scans corresponding to condition    
+                # Timeseries with the extracted scans corresponding to condition; set is used to remove overlapping TRs    
                 timeseries = timeseries[list(set(scan_list))]
     
 
