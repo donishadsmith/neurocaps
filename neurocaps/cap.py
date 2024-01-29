@@ -145,7 +145,7 @@ class CAP(_CAPGetter):
             self._silhouette_scores[group] = {}
             for n_cluster in self._n_clusters:
                 self._kmeans[group] = KMeans(n_clusters=n_cluster,random_state=random_state).fit(self._concatenated_timeseries[group]) if random_state or random_state == 0 else KMeans(n_clusters=n_cluster).fit(self._concatenated_timeseries[group])
-                cluster_labels = self._kmeans[group].fit_predict(self._concatenated_timeseries[group])
+                cluster_labels = self._kmeans[group].predict(self._concatenated_timeseries[group])
                 self._silhouette_scores[group].update({n_cluster: silhouette_score(self._concatenated_timeseries[group], cluster_labels)})
             self._optimal_n_clusters[group] = max(self._silhouette_scores[group], key=self._silhouette_scores[group].get)
             if self._optimal_n_clusters[group] != self._n_clusters[-1]:
