@@ -363,7 +363,7 @@ class CAP(_CAPGetter):
         # Iterate over CAPs
         for cap in cap_dict[group].keys():
             # Calculate outer product
-            self._outer_product[group].update({cap: np.multiply(cap_dict[group][cap][np.newaxis,:],cap_dict[group][cap][:, np.newaxis])})
+            self._outer_product[group].update({cap: np.outer(cap_dict[group][cap],cap_dict[group][cap])})
             if subplots: 
                 ax = axes[axes_y] if nrow == 1 else axes[axes_x,axes_y]
                 # Modify tick labels based on scope
