@@ -3,7 +3,7 @@ from typing import Union
 from .getters import _TimeseriesExtractorGetter
 
 class TimeseriesExtractor(_TimeseriesExtractorGetter):
-    def __init__(self, space: str="MNI152NLin2009cAsym", standardize: Union[bool,str]=False, n_rois: int=400, use_confounds: bool=True, confound_names: list[str]=None):
+    def __init__(self, space: str="MNI152NLin2009cAsym", standardize: Union[bool,str]=False, n_rois: int=400, n_networks: int=7, use_confounds: bool=True, confound_names: list[str]=None):
         """Timeseries Extractor Class
         
         Initializes a TimeseriesExtractor to prepare for Co-activation Patterns (CAPs) analysis.
@@ -26,6 +26,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         self._space = space
         self._standardize = standardize
         self._n_rois = n_rois
+        self._n_networks = n_networks
         self._use_confounds = use_confounds
 
         if self._use_confounds:
@@ -49,7 +50,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         # Get atlas
         from nilearn import datasets
-        self._atlas = datasets.fetch_atlas_schaefer_2018(n_rois=n_rois)
+        self._atlas = datasets.fetch_atlas_schaefer_2018(n_rois=self._n_rois, yeo_networks=self._n_networks)
         self._atlas_labels = [label.decode().split("7Networks_")[-1]  for label in self._atlas.labels]
 
         # Get node networks

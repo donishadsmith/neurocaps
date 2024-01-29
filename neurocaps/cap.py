@@ -204,7 +204,12 @@ class CAP(_CAPGetter):
 
         concatenated_timeseries = {group_name: {} for group_name in self._groups.keys()}
 
+        self._mean_vec = {}
+        self._stdev_vec = {}
+
         for group in self._groups.keys():
+            self._mean_vec[group] = {}
+            self._stdev_vec[group] = {}
             for subj_id in subject_timeseries:
                 subject_runs = [subject_run for subject_run in subject_timeseries[subj_id].keys() if subject_run == f"run-{run}"] if run else subject_timeseries[subj_id]
                 if len(subject_runs) == 0:
@@ -217,9 +222,10 @@ class CAP(_CAPGetter):
                         concatenated_timeseries[group] = np.vstack([concatenated_timeseries[group], subject_timeseries[subj_id][curr_run]]) if subj_id in list(set(self._groups[group])) else concatenated_timeseries[group]
         # Standardize
             if self._standardize:
-                mean_vec, stdev_vec = np.mean(concatenated_timeseries[group], axis=0), np.std(concatenated_timeseries[group], axis=0)
-                concatenated_timeseries[group] = (concatenated_timeseries[group] - mean_vec)/(stdev_vec + self._epsilon)
+                self._mean_vec[group], self._stdev_vec[group] = np.mean(concatenated_timeseries[group], axis=0), np.std(concatenated_timeseries[group], axis=0)
+                concatenated_timeseries[group] = (concatenated_timeseries[group] - self._mean_vec[group])/(self._stdev_vec[group] + self._epsilon)
 
+        
         return concatenated_timeseries
     
     def visualize_caps(self, output_dir: str=None, plot_options: Union[str, list[str]]="outer product", visual_scope: list[str]="networks", task_title: str=None, show_figs: bool=True, subplots: bool=False, **kwargs):
@@ -242,11 +248,11 @@ class CAP(_CAPGetter):
         subplots: bool, default=True
             Produce subplots for outer product plots.
         kwargs: dict
-            Keyword arguments used when saving figures. Valid keywords include "dpi", "format", "figsize", "fontsize", "hspace", "wspace", "xticklabels_size", "yticklabels_size", "shrink", "nrow", "ncol", "suptitle_fontsize", "tight_layout", "rect", "sharex", "sharey". If `output_dir` is not None and no inputs for dpi and format are given,
+            Keyword arguments used when saving figures. Valid keywords include "dpi", "format", "figsize", "fontsize", "hspace", "wspace", "xticklabels_size", "yticklabels_size", "shrink", "nrow", "ncol", "suptitle_fontsize", "tight_layout", "rect", "sharey", "xlabel_rotation", "ylabel_rotation". If `output_dir` is not None and no inputs for dpi and format are given,
             dpi defaults to 300 and format defaults to "png". If no keywords, "figsize" defaults to (8,6), "fontsize", which adjusts the title size of the individual plots or subplots, defaults to 14, "hspace", which adjusts spacing for subplots, defaults to 0.4, "wspace", which adjusts spacing between subplots,  
             defaults to 0.4, "xticklabels_size" defaults to 8, "yticklabels_size" defaults to 8, shrink, which adjusts the cbar size, defaults to 0.8, "nrow", which is the number of rows for subplot and varies, and "ncol", which is the number of columns for subplot, default varies but max is 5, "suptitle_fontsize", 
-            size of the main title when subplot is True, defaults to 0.7, "tight_layout", use tight layout for subplot, defaults to True, "rect", input for the `rect` parameter in tight layout when subplots is True to fix whitespace issues, default is [0, 0.03, 1, 0.95], sharex, which shares x axis labels for subplots, defaults to False,
-            and "sharey", which shares y axis labela for subplots, defaults tp True.
+            size of the main title when subplot is True, defaults to 0.7, "tight_layout", use tight layout for subplot, defaults to True, "rect", input for the `rect` parameter in tight layout when subplots is True to fix whitespace issues, default is [0, 0.03, 1, 0.95], 
+            "sharey", which shares y axis labela for subplots, defaults to True, "xlabel_rotation", which rotates the labels on the x-axis, defaults to 0, and "ylabel_rotation", which rotates the labels on the y-axis, defaults to 0.
     
         """
         import os
@@ -283,8 +289,10 @@ class CAP(_CAPGetter):
                         suptitle_fontsize = kwargs["suptitle_fontsize"] if kwargs and "suptitle_fontsize" in kwargs.keys() else 20,
                         tight_layout = kwargs["tight_layout"] if kwargs and "tight_layout" in kwargs.keys() else True,
                         rect = kwargs["rect"] if kwargs and "rect" in kwargs.keys() else [0, 0.03, 1, 0.95],
-                        sharex = kwargs["sharex"] if kwargs and "sharex" in kwargs.keys() else False,
-                        sharey = kwargs["sharey"] if kwargs and "sharey" in kwargs.keys() else True)
+                        sharey = kwargs["sharey"] if kwargs and "sharey" in kwargs.keys() else True,
+                        xlabel_rotation = kwargs["xlabel_rotation"] if kwargs and "xlabel_rotation" in kwargs.keys() else 0,
+                        ylabel_rotation = kwargs["ylabel_rotation"] if kwargs and "ylabel_rotation" in kwargs.keys() else 0,
+                        )
         
         if kwargs:
             invalid_kwargs = {key : value for key, value in kwargs.items() if key not in plot_dict.keys()}
@@ -343,7 +351,7 @@ class CAP(_CAPGetter):
 
             subplot_figsize = (8 * ncol, 6 * nrow) if plot_dict["figsize"] == (8,6) else plot_dict["figsize"] 
 
-            fig, axes = plt.subplots(nrow, ncol, sharex=plot_dict["sharex"], sharey=plot_dict["sharey"], figsize=subplot_figsize)
+            fig, axes = plt.subplots(nrow, ncol, sharex=False, sharey=plot_dict["sharey"], figsize=subplot_figsize)
             suptitle = f"{group} {task_title}" if task_title else f"{group}"
             fig.suptitle(suptitle, fontsize=plot_dict["suptitle_fontsize"])
             fig.subplots_adjust(hspace=plot_dict["hspace"], wspace=plot_dict["wspace"])  
@@ -363,8 +371,13 @@ class CAP(_CAPGetter):
                 else: display = heatmap(ax=ax, data=self._outer_product[group][cap], cmap="coolwarm", xticklabels=[], yticklabels=[], cbar_kws={"shrink": plot_dict["shrink"]})
                 
                 # Modify label sizes
-                display.set_xticklabels(display.get_xticklabels(), size = plot_dict["xticklabels_size"], rotation=0)
-                if axes_y == 0: display.set_yticklabels(display.get_yticklabels(), size = plot_dict["yticklabels_size"], rotation=0)
+                display.set_xticklabels(display.get_xticklabels(), size = plot_dict["xticklabels_size"], rotation=plot_dict["xlabel_rotation"])
+
+                if plot_dict["sharey"] == True:
+                    if axes_y == 0: display.set_yticklabels(display.get_yticklabels(), size = plot_dict["yticklabels_size"], rotation=plot_dict["ylabel_rotation"])
+                else:
+                    display.set_yticklabels(display.get_yticklabels(), size = plot_dict["yticklabels_size"], rotation=plot_dict["ylabel_rotation"])
+
                 
                 # Set title of subplot
                 ax.set_title(cap, fontsize=plot_dict["fontsize"])
@@ -388,8 +401,8 @@ class CAP(_CAPGetter):
                 display.set_title(plot_title, fontdict= {'fontsize': plot_dict["fontsize"]})
 
                 # Modify label sizes
-                display.set_xticklabels(display.get_xticklabels(), size = plot_dict["xticklabels_size"], rotation=0)
-                display.set_yticklabels(display.get_yticklabels(), size = plot_dict["yticklabels_size"])
+                display.set_xticklabels(display.get_xticklabels(), size = plot_dict["xticklabels_size"], rotation=plot_dict["xlabel_rotation"])
+                display.set_yticklabels(display.get_yticklabels(), size = plot_dict["yticklabels_size"], rotation=plot_dict["ylabel_rotation"])
 
                 # Save individual plots
                 if output_dir:
@@ -422,8 +435,8 @@ class CAP(_CAPGetter):
         else: display = heatmap(pd.DataFrame(cap_dict[group], columns=cap_dict[group].keys()), cmap='coolwarm', yticklabels=[], cbar_kws={'shrink': plot_dict["shrink"]})
 
         # Modify label sizes
-        display.set_xticklabels(display.get_xticklabels(), size = plot_dict["xticklabels_size"], rotation=0)
-        display.set_yticklabels(display.get_yticklabels(), size = plot_dict["yticklabels_size"])
+        display.set_xticklabels(display.get_xticklabels(), size = plot_dict["xticklabels_size"], rotation=plot_dict["xlabel_rotation"])
+        display.set_yticklabels(display.get_yticklabels(), size = plot_dict["yticklabels_size"], rotation=plot_dict["ylabel_rotation"])
 
         # Set plot name
         plot_title = f"{group} CAPS {task_title}" if task_title else f"{group} CAPS" 

@@ -17,6 +17,10 @@ class _TimeseriesExtractorGetter:
         return self._n_rois
     
     @property
+    def n_networks(self):
+        return self._n_networks
+    
+    @property
     def use_confounds(self):
         return self._use_confounds
     

@@ -75,6 +75,16 @@ class _CAPGetter:
         if hasattr(self, "_epsilon"): return self._epsilon
         else: return None
 
+    @property
+    def means(self):
+        if hasattr(self, "_mean_vec"): return self._mean_vec
+        else: return None
+
+    @property
+    def stdev(self):
+        if hasattr(self, "_stdev_vec"): return self._stdev_vec
+        else: return None
+
 
     
 
