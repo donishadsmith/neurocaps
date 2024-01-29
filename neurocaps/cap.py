@@ -68,7 +68,7 @@ class CAP(_CAPGetter):
         # Get node networks
         self._node_networks = sorted(list(set([re.split("LH_|RH_", node)[-1].split("_")[0] for node in self._node_labels])))
 
-    def get_caps(self, subject_timeseries: Union[dict[dict[np.ndarray]], str]=None, run: int=None, random_state: int=None, show_figs: bool=True, standardize: bool=True, epsilon: Union[int,float]=0, **kwargs) -> None:
+    def get_caps(self, subject_timeseries: Union[dict[dict[np.ndarray]], str], run: int=None, random_state: int=None, show_figs: bool=True, standardize: bool=True, epsilon: Union[int,float]=0, **kwargs) -> None:
         """"" Create CAPs
 
         The purpose of this function is to concatenate the timeseries of each subject and perform kmeans clustering on the concatenated data.
