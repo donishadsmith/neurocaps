@@ -33,7 +33,7 @@ pip install -e .
 # Usage
  This package contains two main classes - `TimeseriesExtractor`, for extracting the timeseries, and `CAP`, for performing the cap analysis.
 
-Note: When extracting the timeseries, this package uses the Schaefer atlas. The number of ROIs for the Schaefer atlas can be modified when initializing the main `TimeseriesExtractor` class.
+Note: When extracting the timeseries, this package uses the Schaefer atlas. The number of ROIs and networks for the Schaefer atlas can be modified with `n_rois`` and `n_networks` when initializing the main `TimeseriesExtractor` class.
 
 Main features for `TimeseriesExtractor` include:
 
