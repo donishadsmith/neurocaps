@@ -13,6 +13,18 @@ class _TimeseriesExtractorGetter:
         return self._standardize
     
     @property
+    def detrend(self):
+        return self._detrend
+    
+    @property
+    def low_pass(self):
+        return self._low_pass
+    
+    @property
+    def high_pass(self):
+        return self._high_pass
+    
+    @property
     def n_rois(self):
         return self._n_rois
     

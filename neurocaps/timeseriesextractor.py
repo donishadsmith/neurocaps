@@ -3,7 +3,7 @@ from typing import Union
 from .getters import _TimeseriesExtractorGetter
 
 class TimeseriesExtractor(_TimeseriesExtractorGetter):
-    def __init__(self, space: str="MNI152NLin2009cAsym", standardize: Union[bool,str]=False, n_rois: int=400, n_networks: int=7, use_confounds: bool=True, confound_names: list[str]=None):
+    def __init__(self, space: str="MNI152NLin2009cAsym", standardize: Union[bool,str]=False, detrend: bool=False , low_pass: float=None, high_pass: float=None, n_rois: int=400, n_networks: int=7, use_confounds: bool=True, confound_names: list[str]=None):
         """Timeseries Extractor Class
         
         Initializes a TimeseriesExtractor to prepare for Co-activation Patterns (CAPs) analysis.
@@ -13,9 +13,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         space : str, default="MNI152NLin2009cAsym"
             The brain template space data is in. 
         standardize : bool, default=False
-            Determines whether to standardize the timeseries. This is used as the input for the NiftiLabelsMasker standardize parameter. Standardizing will be done within each subject's run. 
-            It is not recommended to do this since this can obscure between-subject variability and affect how TRs are clustered in the CAPs analysis. Use the `standardize` parameter in the `get_caps()`
-            method of the CAP class to standardize the concatenate data.
+            Determines whether to standardize the timeseries. 
+        detrend : bool, default=True
+            Detrends timeseries during extraction.
+        low_pass : bool, default=None
+            Adds low pass filter.
+        high_pass : float, default=None
+            Adds high pass filter.
         n_rois : int, default=400
             The number of regions of interest (ROIs) to use for Schaefer parcellation.
         use_confounds : bool, default=True
@@ -28,6 +32,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         self._n_rois = n_rois
         self._n_networks = n_networks
         self._use_confounds = use_confounds
+        self._detrend = detrend
+        self._low_pass = low_pass
+        self._high_pass = high_pass
 
         if self._use_confounds:
             if confound_names == None:
@@ -54,7 +61,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         self._atlas_labels = [label.decode().split("7Networks_")[-1]  for label in self._atlas.labels]
 
         # Get node networks
-        self._atlas_networks = sorted(list(set([re.split("LH_|RH_", node)[-1].split("_")[0] for node in self._atlas_labels])))
+        self._atlas_networks = list(dict.fromkeys([re.split("LH_|RH_", node)[-1].split("_")[0] for node in self._atlas_labels]))
 
     def get_bold(self, bids_dir: str, session: int, runs: list[int]=None, task: str="rest", condition: str=None, tr: Union[int, float]=None, run_subjects: list[str]=None, pipeline_name: str=None) -> None: 
         """Get Bold Data
@@ -110,7 +117,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             nifti_files = sorted(layout.get(scope="derivatives", return_type="file",suffix="bold", task=task, space=self._space, session=session,extension = "nii.gz", subject=subj_id))
             json_files = sorted(layout.get(scope="derivatives", return_type="file",suffix="bold", task=task, space=self._space, session=session, extension = "json"))
-            event_files = None if task == "rest" else sorted([file for file in sorted(layout.get(return_type="filename",suffix="events", task=task, session=session,extension = "tsv", subject = subj_id))])
+            if task == "fci":
+                event_files = None if task == "rest" else sorted([file for file in sorted(layout.get(return_type="filename",suffix="events", task=task, session=session,extension = "tsv", subject = subj_id)) if "acq" in file])
+            else:
+                event_files = None if task == "rest" else sorted([file for file in sorted(layout.get(return_type="filename",suffix="events", task=task, session=session,extension = "tsv", subject = subj_id))])
             confound_files = sorted(layout.get(scope='derivatives', return_type='file', desc='confounds', task=task, session=session,extension = "tsv", subject=subj_id))
 
             # Generate a list of runs to iterate through based on runs in nifti_files
@@ -181,11 +191,16 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 confounds = confounds.fillna(0)
 
             # create the masker for extracting time series
+                
+            
             masker = NiftiLabelsMasker(
                 labels_img=self._atlas.maps, 
                 labels=self._atlas.labels, 
                 resampling_target='data',
                 standardize=self._standardize,
+                detrend=self._detrend,
+                low_pass=self._low_pass,
+                high_pass=self._high_pass,
                 t_r=tr
             )
 
