@@ -57,7 +57,7 @@ from neurocaps import TimeseriesExtractor, CAP
 
 # If use_confounds is True but no confound_names provided, there are hardcoded confound names that will extract the data from the confound files outputted by fMRIPrep
 
-extractor = TimeseriesExtractor(n_rois=100, standardize="zscore-sample", use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01)
+extractor = TimeseriesExtractor(n_rois=100, standardize="zscore_sample", use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01)
 
 bids_dir = "/path/to/bids/dir"
 
