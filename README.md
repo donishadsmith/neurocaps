@@ -57,7 +57,7 @@ from neurocaps import TimeseriesExtractor, CAP
 
 # If use_confounds is True but no confound_names provided, there are hardcoded confound names that will extract the data from the confound files outputted by fMRIPrep
 
-extractor = TimeseriesExtractor(n_rois=100, standardize=False, use_confounds=True)
+extractor = TimeseriesExtractor(n_rois=100, standardize="zscore-sample", use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01)
 
 bids_dir = "/path/to/bids/dir"
 
@@ -73,7 +73,7 @@ extractor.get_bold(bids_dir=bids_dir, task="emo", condition="positive", pipeline
 
 cap_analysis = CAP(node_labels=extractor.atlas_labels, n_clusters=6)
 
-cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries)
+cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, standardize = True)
 
 cap_analysis.visualize_caps(visual_scope="networks", plot_options="outer_product", task_title="- Positive Valence", ncol=3, sharey=True, subplots=True)
 

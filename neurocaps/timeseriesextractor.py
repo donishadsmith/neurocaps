@@ -17,9 +17,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         detrend : bool, default=True
             Detrends timeseries during extraction.
         low_pass : bool, default=None
-            Adds low pass filter.
+            Signals above cutoff frequency will be filtered out.
         high_pass : float, default=None
-            Adds high pass filter.
+            Signals below cutoff frequency will be filtered out
         n_rois : int, default=400
             The number of regions of interest (ROIs) to use for Schaefer parcellation.
         use_confounds : bool, default=True
