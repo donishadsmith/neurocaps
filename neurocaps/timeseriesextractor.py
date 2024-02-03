@@ -3,7 +3,7 @@ from typing import Union
 from .getters import _TimeseriesExtractorGetter
 
 class TimeseriesExtractor(_TimeseriesExtractorGetter):
-    def __init__(self, space: str="MNI152NLin2009cAsym", standardize: Union[bool,str]=False, detrend: bool=False , low_pass: float=None, high_pass: float=None, n_rois: int=400, n_networks: int=7, use_confounds: bool=True, confound_names: list[str]=None):
+    def __init__(self, space: str="MNI152NLin2009cAsym", standardize: Union[bool,str]=False, detrend: bool=False , low_pass: float=None, high_pass: float=None, n_rois: int=400, n_networks: int=7, use_confounds: bool=True, confound_names: list[str]=None, discard_volumes: int=None):
         """Timeseries Extractor Class
         
         Initializes a TimeseriesExtractor to prepare for Co-activation Patterns (CAPs) analysis.
@@ -19,7 +19,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         low_pass : bool, default=None
             Signals above cutoff frequency will be filtered out.
         high_pass : float, default=None
-            Signals below cutoff frequency will be filtered out
+            Signals below cutoff frequency will be filtered out.
+        discard_volumes : float, default=None
+            Remove the first `n` number of volumes before extracting timeseries.
         n_rois : int, default=400
             The number of regions of interest (ROIs) to use for Schaefer parcellation.
         use_confounds : bool, default=True
@@ -35,6 +37,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         self._detrend = detrend
         self._low_pass = low_pass
         self._high_pass = high_pass
+        self._discard_volumes = discard_volumes
 
         if self._use_confounds:
             if confound_names == None:
@@ -122,12 +125,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             else:
                 event_files = None if task == "rest" else sorted([file for file in sorted(layout.get(return_type="filename",suffix="events", task=task, session=session,extension = "tsv", subject = subj_id))])
             confound_files = sorted(layout.get(scope='derivatives', return_type='file', desc='confounds', task=task, session=session,extension = "tsv", subject=subj_id))
-
+            mask_files = sorted(layout.get(scope='derivatives', return_type='file', suffix='mask', task=task, space=self._space, session=session, extension = "nii.gz", subject=subj_id))
             # Generate a list of runs to iterate through based on runs in nifti_files
             run_list = [f"run-{run}" for run in runs] if runs else [re.search("run-(\d+)",x)[0] for x in nifti_files]
 
-            if len(nifti_files) == 0:
-                print(f"Skipping subject: {subj_id} due to missing nifti files.")
+            if len(nifti_files) == 0 or len(mask_files) == 0:
+                print(f"Skipping subject: {subj_id} due to missing nifti or mask files.")
                 continue
 
             if self._use_confounds:
@@ -145,13 +148,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             # Get repetition time for the subject
             tr = tr if tr else json.load(open(json_files[0]))["RepetitionTime"]
 
-            self._extract_timeseries(subj_id=subj_id, nifti_files=nifti_files, event_files=event_files, confound_files=confound_files,
-                                    run_list = run_list, condition=condition, tr=tr)
+            self._extract_timeseries(subj_id=subj_id, mask_files=mask_files, nifti_files=nifti_files, event_files=event_files, confound_files=confound_files,
+                                    run_list=run_list, condition=condition, tr=tr)
         
-    def _extract_timeseries(self, subj_id, nifti_files, event_files, confound_files, run_list, tr, condition=None):
+    def _extract_timeseries(self, subj_id, nifti_files, mask_files, event_files, confound_files, run_list, tr, condition=None):
 
         from nilearn.maskers import NiftiLabelsMasker
-        import pandas as pd, numpy as np, nibabel as nib
+        from nilearn.image import index_img, load_img
+        import pandas as pd 
 
         # Intitialize dictionary; Current subject will alway be the last subject in the subjects attribute
         subject_timeseries = {subj_id: {}}
@@ -160,12 +164,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             # Get files from specific run
             nifti_file = [nifti_file for nifti_file in nifti_files if run in nifti_file]
+            mask_file = [mask_file for mask_file in mask_files if run in mask_file]
             confound_file = [confound_file for confound_file in confound_files if run in confound_file] if self._use_confounds else None
 
             print(f"Running subject: {subj_id}; {run}; \n {nifti_file}")
 
-            if len(nifti_file) == 0:
-                print(f"Skipping subject: {subj_id}; {run} do to missing nifti file.")
+            if len(nifti_file) == 0 or len(mask_file) == 0:
+                print(f"Skipping subject: {subj_id}; {run} do to missing nifti or mask file.")
                 continue
             
             if self._use_confounds:
@@ -173,7 +178,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     print(f"Skipping subject: {subj_id}; {run} do to missing confound file.")
                     continue
 
-            nifti_file = nib.load(nifti_file[0])
             confound_df = pd.read_csv(confound_file[0], sep=None) if self._use_confounds else None
 
             event_file = None if event_files == None else [event_file for event_file in event_files if run in event_file]
@@ -189,11 +193,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             if self._use_confounds:
                 confounds = confound_df[[col for col in confound_df if col in self._confound_names]]
                 confounds = confounds.fillna(0)
-
-            # create the masker for extracting time series
-                
             
+            # Create the masker for extracting time series
             masker = NiftiLabelsMasker(
+                mask_img=mask_file[0],
                 labels_img=self._atlas.maps, 
                 labels=self._atlas.labels, 
                 resampling_target='data',
@@ -203,9 +206,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 high_pass=self._high_pass,
                 t_r=tr
             )
+            # Load and discard volumes if needed
+            nifti_img = load_img(nifti_file[0])
+            if self._discard_volumes: 
+                nifti_img = index_img(nifti_img, slice(self._discard_volumes, None))
+                confounds.drop(list(range(0,self._discard_volumes)),axis=0,inplace=True)
 
             # Extract timeseries
-            timeseries = masker.fit_transform(nifti_file, confounds=confounds) if self._use_confounds else masker.fit_transform(nifti_file)
+            timeseries = masker.fit_transform(nifti_img, confounds=confounds) if self._use_confounds else masker.fit_transform(nifti_img)
 
             if event_file:
                 # Get specific timing information for specific condition
@@ -224,6 +232,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     
 
             subject_timeseries[subj_id].update({run: timeseries})
+
 
         # Aggregate new timeseries
         self._subject_timeseries.update(subject_timeseries)

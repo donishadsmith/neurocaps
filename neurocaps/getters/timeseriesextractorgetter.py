@@ -25,6 +25,10 @@ class _TimeseriesExtractorGetter:
         return self._high_pass
     
     @property
+    def discard_volumes(self):
+        return self._discard_volumes
+    
+    @property
     def n_rois(self):
         return self._n_rois
     

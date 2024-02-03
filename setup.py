@@ -19,7 +19,7 @@ setup(
         packages=find_packages(),
         install_requires=[
             "pybids", "nilearn", "pandas", "numpy", 
-            "nibabel",  "matplotlib", "seaborn", "kneed"
+            "matplotlib", "seaborn", "kneed"
         ], 
         keywords=["python", "Co-Activation Patterns" "CAPs", "neuroimaging", "fmri"], 
         classifiers=[
