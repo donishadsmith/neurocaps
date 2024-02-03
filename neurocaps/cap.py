@@ -189,6 +189,7 @@ class CAP(_CAPGetter):
 
                 if show_figs:
                     kneedle.plot_knee(title=group)
+                    kneedle.plot_knee_normalized(title=group)
 
 
     def _create_caps_dict(self):
