@@ -120,10 +120,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             nifti_files = sorted(layout.get(scope="derivatives", return_type="file",suffix="bold", task=task, space=self._space, session=session,extension = "nii.gz", subject=subj_id))
             json_files = sorted(layout.get(scope="derivatives", return_type="file",suffix="bold", task=task, space=self._space, session=session, extension = "json"))
-            if task == "fci":
-                event_files = None if task == "rest" else sorted([file for file in sorted(layout.get(return_type="filename",suffix="events", task=task, session=session,extension = "tsv", subject = subj_id)) if "acq" in file])
-            else:
-                event_files = None if task == "rest" else sorted([file for file in sorted(layout.get(return_type="filename",suffix="events", task=task, session=session,extension = "tsv", subject = subj_id))])
+            event_files = None if task == "rest" else sorted([file for file in sorted(layout.get(return_type="filename",suffix="events", task=task, session=session,extension = "tsv", subject = subj_id))])
             confound_files = sorted(layout.get(scope='derivatives', return_type='file', desc='confounds', task=task, session=session,extension = "tsv", subject=subj_id))
             mask_files = sorted(layout.get(scope='derivatives', return_type='file', suffix='mask', task=task, space=self._space, session=session, extension = "nii.gz", subject=subj_id))
             # Generate a list of runs to iterate through based on runs in nifti_files
