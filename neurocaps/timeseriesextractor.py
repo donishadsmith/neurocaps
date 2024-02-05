@@ -66,7 +66,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             else:
                 self._confound_names = confound_names
         
-            print(f"List of confound regressors that will be used during timeseries extraction: {self._confound_names}")
+            print(f"List of confound regressors that will be used during timeseries extraction if available in confound dataframe: {self._confound_names}")
         
         
         assert type(self._confound_names) == list and len(self._confound_names) > 0 , "confound_names must be a non-empty list"
