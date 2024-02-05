@@ -43,13 +43,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             if confound_names == None:
                 # Hardcoded confound names
                 self._confound_names = [
-                    "cosine00", "cosine01", "cosine02",
                     "trans_x", "trans_x_derivative1", "trans_x_power2", "trans_x_derivative1_power2",
                     "trans_y", "trans_y_derivative1", "trans_y_derivative1_power2", "trans_y_power2",
                     "trans_z", "trans_z_derivative1", "trans_z_power2", "trans_z_derivative1_power2",
                     "rot_x", "rot_x_derivative1", "rot_x_power2", "rot_x_derivative1_power2",
                     "rot_y", "rot_y_derivative1", "rot_y_power2", "rot_y_derivative1_power2",
-                    "rot_z", "rot_z_derivative1", "rot_z_derivative1_power2", "rot_z_power2",
+                    "rot_z", "rot_z_derivative1", "rot_z_derivative1_power2", "rot_z_power2", 
                     "a_comp_cor_00", "a_comp_cor_01", "a_comp_cor_02", "a_comp_cor_03", "a_comp_cor_04", "a_comp_cor_05", "a_comp_cor_06"
                 ]
             else:
