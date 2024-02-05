@@ -43,6 +43,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             if confound_names == None:
                 # Hardcoded confound names
                 self._confound_names = [
+                    "cosine00", "cosine01", "cosine02",
                     "trans_x", "trans_x_derivative1", "trans_x_power2", "trans_x_derivative1_power2",
                     "trans_y", "trans_y_derivative1", "trans_y_derivative1_power2", "trans_y_power2",
                     "trans_z", "trans_z_derivative1", "trans_z_power2", "trans_z_derivative1_power2",
@@ -65,7 +66,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         # Get node networks
         self._atlas_networks = list(dict.fromkeys([re.split("LH_|RH_", node)[-1].split("_")[0] for node in self._atlas_labels]))
 
-    def get_bold(self, bids_dir: str, session: int, runs: list[int]=None, task: str="rest", condition: str=None, tr: Union[int, float]=None, run_subjects: list[str]=None, pipeline_name: str=None) -> None: 
+    def get_bold(self, bids_dir: str, session: int, runs: list[int]=None, task: str="rest", condition: str=None, tr: Union[int, float]=None, run_subjects: list[str]=None, exclude_subjects: list[str]= None, pipeline_name: str=None) -> None: 
         """Get Bold Data
 
         Collects files needed to extract timeseries data from NIfTI files for BIDS-compliant datasets.
@@ -85,7 +86,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         tr : int or float, default=None
             Repetition time.
         run_subjects : List[str], default=None
-            List of subject IDs to process. Processes all subjects if None. 
+            List of subject IDs to process. Processes all subjects if None.
+        exclude_subjects : List[str], default=None
+            List of subject IDs to exclude.  
         pipeline_name:str, default=None
             The name of the pipeline folder in the derivatives folder containing the preprocessed data. If None, BIDSLayout will use the name of dset_dir with derivatives=True. This parameter
             should be used if their are multiple pipelines in the derivatives folder.
@@ -112,6 +115,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         print(f"Bids layout collected.")
 
         subj_id_list = sorted(layout.get(return_type="id", target="subject", task=task, space=self._space, suffix="bold")) 
+
+        if exclude_subjects: subj_id_list = sorted([subj_id for subj_id in subj_id_list if subj_id not in exclude_subjects])
 
         if run_subjects: subj_id_list = sorted([subj_id for subj_id in subj_id_list if subj_id in run_subjects])
 
