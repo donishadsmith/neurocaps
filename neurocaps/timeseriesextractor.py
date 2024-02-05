@@ -41,19 +41,32 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         if self._use_confounds:
             if confound_names == None:
-                # Hardcoded confound names
-                self._confound_names = [
-                    "cosine00", "cosine01", "cosine02",
-                    "trans_x", "trans_x_derivative1", "trans_x_power2", "trans_x_derivative1_power2",
-                    "trans_y", "trans_y_derivative1", "trans_y_derivative1_power2", "trans_y_power2",
-                    "trans_z", "trans_z_derivative1", "trans_z_power2", "trans_z_derivative1_power2",
-                    "rot_x", "rot_x_derivative1", "rot_x_power2", "rot_x_derivative1_power2",
-                    "rot_y", "rot_y_derivative1", "rot_y_power2", "rot_y_derivative1_power2",
-                    "rot_z", "rot_z_derivative1", "rot_z_derivative1_power2", "rot_z_power2", 
-                    "a_comp_cor_00", "a_comp_cor_01", "a_comp_cor_02", "a_comp_cor_03", "a_comp_cor_04", "a_comp_cor_05", "a_comp_cor_06"
-                ]
+                if self._high_pass:
+                    # Do not use cosine or acompcor regressor if high pass filtering is not None. Acompcor regressors are estimated on high pass filtered version 
+                    # of data form fmriprep
+                    self._confound_names = [
+                        "trans_x", "trans_x_derivative1", "trans_x_power2", "trans_x_derivative1_power2",
+                        "trans_y", "trans_y_derivative1", "trans_y_derivative1_power2", "trans_y_power2",
+                        "trans_z", "trans_z_derivative1", "trans_z_power2", "trans_z_derivative1_power2",
+                        "rot_x", "rot_x_derivative1", "rot_x_power2", "rot_x_derivative1_power2",
+                        "rot_y", "rot_y_derivative1", "rot_y_power2", "rot_y_derivative1_power2",
+                        "rot_z", "rot_z_derivative1", "rot_z_derivative1_power2", "rot_z_power2"
+                    ]
+                else:
+                    self._confound_names = [
+                        "cosine_XX",
+                        "trans_x", "trans_x_derivative1", "trans_x_power2", "trans_x_derivative1_power2",
+                        "trans_y", "trans_y_derivative1", "trans_y_derivative1_power2", "trans_y_power2",
+                        "trans_z", "trans_z_derivative1", "trans_z_power2", "trans_z_derivative1_power2",
+                        "rot_x", "rot_x_derivative1", "rot_x_power2", "rot_x_derivative1_power2",
+                        "rot_y", "rot_y_derivative1", "rot_y_power2", "rot_y_derivative1_power2",
+                        "rot_z", "rot_z_derivative1", "rot_z_derivative1_power2", "rot_z_power2", 
+                        "a_comp_cor_00", "a_comp_cor_01", "a_comp_cor_02", "a_comp_cor_03", "a_comp_cor_04", "a_comp_cor_05", "a_comp_cor_06"
+                    ]
             else:
                 self._confound_names = confound_names
+        
+            print(f"List of confound regressors that will be used during timeseries extraction: {self._confound_names}")
         
         
         assert type(self._confound_names) == list and len(self._confound_names) > 0 , "confound_names must be a non-empty list"
@@ -192,7 +205,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             # Extract confound information of interest and nsure confound file does not contain NAs
             if self._use_confounds:
-                confounds = confound_df[[col for col in confound_df if col in self._confound_names]]
+                confounds = confound_df[[col for col in confound_df if col in self._confound_names or col.startswith("cosine") if "cosine_XX" in self._confound_names]]
                 confounds = confounds.fillna(0)
             
             # Create the masker for extracting time series
