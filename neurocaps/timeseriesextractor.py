@@ -137,7 +137,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             nifti_files = sorted(layout.get(scope="derivatives", return_type="file",suffix="bold", task=task, space=self._space, session=session,extension = "nii.gz", subject=subj_id))
             json_files = sorted(layout.get(scope="derivatives", return_type="file",suffix="bold", task=task, space=self._space, session=session, extension = "json"))
-            event_files = None if task == "rest" else sorted([file for file in sorted(layout.get(return_type="filename",suffix="events", task=task, session=session,extension = "tsv", subject = subj_id))])
+            event_files = sorted([file for file in sorted(layout.get(return_type="filename",suffix="events", task=task, session=session,extension = "tsv", subject = subj_id))])
             confound_files = sorted(layout.get(scope='derivatives', return_type='file', desc='confounds', task=task, session=session,extension = "tsv", subject=subj_id))
             mask_files = sorted(layout.get(scope='derivatives', return_type='file', suffix='mask', task=task, space=self._space, session=session, extension = "nii.gz", subject=subj_id))
             # Generate a list of runs to iterate through based on runs in nifti_files
@@ -196,13 +196,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             event_file = None if event_files == None else [event_file for event_file in event_files if run in event_file]
 
-            if event_file:
-                if len(event_file) == 0:
-                    print(f"Skipping subject: {subj_id}; {run} do to missing event file.")
-                    continue
-                else:
-                    event_df = pd.read_csv(event_file[0], sep=None)
-
             # Extract confound information of interest and nsure confound file does not contain NAs
             if self._use_confounds:
                 confounds = confound_df[[col for col in confound_df if col in self._confound_names or col.startswith("cosine") if "cosine_XX" in self._confound_names]]
@@ -230,6 +223,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             timeseries = masker.fit_transform(nifti_img, confounds=confounds) if self._use_confounds else masker.fit_transform(nifti_img)
 
             if event_file:
+                event_df = pd.read_csv(event_file[0], sep=None)
                 # Get specific timing information for specific condition
                 condition_df = event_df[event_df["trial_type"] == condition] if condition else event_df
 

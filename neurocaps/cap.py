@@ -369,8 +369,34 @@ class CAP(_CAPGetter):
             if subplots: 
                 ax = axes[axes_y] if nrow == 1 else axes[axes_x,axes_y]
                 # Modify tick labels based on scope
-                if scope == "networks": display = heatmap(ax=ax, data=self._outer_product[group][cap], cmap="coolwarm", xticklabels=columns, yticklabels=columns, cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"])
-                else: display = heatmap(ax=ax, data=self._outer_product[group][cap], cmap="coolwarm", xticklabels=[], yticklabels=[], cbar_kws={"shrink": plot_dict["shrink"]})
+                if scope == "networks":
+                    display = heatmap(ax=ax, data=self._outer_product[group][cap], cmap="coolwarm", xticklabels=columns, yticklabels=columns, cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"])
+                else:
+                    # Create Labels
+                    import collections
+                    frequency_dict = dict(collections.Counter([names[0] + " " + names[1] for names in [name.split("_")[0:2] for name in self._node_labels]]))
+                    names_list = list(frequency_dict.keys())
+                    labels = ["" for _ in range(0,len(self._node_labels) + 1)]
+
+                    shift = 0
+
+                    for num, name in enumerate(names_list):
+                        if num == 0:
+                            labels[0] = name
+                        else:
+                            shift += frequency_dict[names_list[num-1]] 
+                            indx = (frequency_dict[names_list[num]]) + shift - frequency_dict[names_list[num]]
+                            labels[indx] = name
+
+
+                    display = heatmap(ax=ax, data=self._outer_product[group][cap], cmap="coolwarm", cbar_kws={"shrink": plot_dict["shrink"]})
+
+                    ticks = [i for i, label in enumerate(labels) if label]  
+
+                    ax.set_xticks(ticks)  
+                    ax.set_xticklabels([label for label in labels if label]) 
+                    ax.set_yticks(ticks)  
+                    ax.set_yticklabels([label for label in labels if label]) 
                 
                 # Modify label sizes
                 display.set_xticklabels(display.get_xticklabels(), size = plot_dict["xticklabels_size"], rotation=plot_dict["xlabel_rotation"])
@@ -434,7 +460,29 @@ class CAP(_CAPGetter):
         plt.figure(figsize=plot_dict["figsize"])
 
         if scope == "networks": display = heatmap(pd.DataFrame(cap_dict[group], index=columns), cmap='coolwarm', cbar_kws={'shrink': plot_dict["shrink"]}) 
-        else: display = heatmap(pd.DataFrame(cap_dict[group], columns=cap_dict[group].keys()), cmap='coolwarm', yticklabels=[], cbar_kws={'shrink': plot_dict["shrink"]})
+        else: 
+            # Create Labels
+            import collections
+            
+            frequency_dict = dict(collections.Counter([names[0] + " " + names[1] for names in [name.split("_")[0:2] for name in self._node_labels]]))
+            names_list = list(frequency_dict.keys())
+            labels = ["" for _ in range(0,len(self._node_labels) + 1)]
+
+            shift = 0
+
+            for num, name in enumerate(names_list):
+                if num == 0:
+                    labels[0] = name
+                else:
+                    shift += frequency_dict[names_list[num-1]] 
+                    indx = (frequency_dict[names_list[num]]) + shift - frequency_dict[names_list[num]]
+                    labels[indx] = name
+
+
+            display = heatmap(pd.DataFrame(cap_dict[group], columns=cap_dict[group].keys()), cmap='coolwarm', cbar_kws={'shrink': plot_dict["shrink"]})
+
+
+            plt.yticks(ticks=[pos for pos, label in enumerate(labels) if label], labels=names_list)  
 
         # Modify label sizes
         display.set_xticklabels(display.get_xticklabels(), size = plot_dict["xticklabels_size"], rotation=plot_dict["xlabel_rotation"])
