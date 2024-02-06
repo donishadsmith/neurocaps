@@ -75,11 +75,14 @@ cap_analysis = CAP(node_labels=extractor.atlas_labels, n_clusters=6)
 
 cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, standardize = True)
 
-cap_analysis.visualize_caps(visual_scope="networks", plot_options="outer_product", task_title="- Positive Valence", ncol=3, sharey=True, subplots=True)
+cap_analysis.visualize_caps(visual_scope="networks", plot_options="outer product", task_title="- Positive Valence", ncol=3, sharey=True, subplots=True)
 
+cap_analysis.visualize_caps(visual_scope="nodes", plot_options="outer product", task_title="- Positive Valence", ncol=3, sharey=True, subplots=True, xlabel_rotation = 90, tight_layout=False, hspace = 0.4)
 
 ```
 
 ![image](https://github.com/donishadsmith/neurocaps/assets/112973674/4699bbd9-1f55-462b-9d9e-4ef17da79ad4)
+![image](https://github.com/donishadsmith/neurocaps/assets/112973674/506c5be5-540d-43a9-8a61-c02062f5c6f9)
+
 
 
