@@ -619,6 +619,9 @@ class CAP(_CAPGetter):
                                         uninterrupted_volumes.append(count)
                                     # Reset counter 
                                     count = 0
+                            # In the event, a participant only occupies one CAP and to ensure final counts are added
+                            if count > 0:
+                                uninterrupted_volumes.append(count)
                             # If uninterrupted_volumes not zero, multiply elements in the list by repetition time, sum and divide
                             if len(uninterrupted_volumes) > 0:
                                 if tr:
