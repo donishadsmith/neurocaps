@@ -79,9 +79,9 @@ cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, standardi
 
 cap_analysis.visualize_caps(visual_scope="networks", plot_options="outer product", task_title="- Positive Valence", ncol=3, sharey=True, subplots=True)
 
-cap_analysis.visualize_caps(visual_scope="nodes", plot_options="outer product", task_title="- Positive Valence", ncol=3, sharey=True, subplots=True, xlabel_rotation = 90, tight_layout=False, hspace = 0.4)
+cap_analysis.visualize_caps(visual_scope="nodes", plot_options="outer product", task_title="- Positive Valence", ncol=3, sharey=True, subplots=True, xlabel_rotation=90, tight_layout=False, hspace = 0.4)
 
-cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries,return_df=True, output_dir=output_dir, continuous_runs=True,file_name="All_Subjects_CAPs_metrics")
+cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, output_dir=output_dir, continuous_runs=True, file_name="All_Subjects_CAPs_metrics")
 
 ```
 
@@ -94,7 +94,7 @@ cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries,r
   <summary>DataFrame</summary>
 
     | Subject_ID | Group | Run | Metric | CAP-1 | CAP-2 | CAP-3 | CAP-4 | CAP-5 | CAP-6 |
-    | ---------- | ----- | --- | ------ | ----- | ----- | ----- | ----- | ----- | ----- |
+    | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
     | 1 | All Subjects | Continuous Runs | Fraction of Time | 0.16 | 0.14 | 0.18 | 0.19 | 0.16 | 0.17 |
     | 1 | All Subjects | Continuous Runs | Counts | 47.0 | 43.0 | 54.0 | 57.0 | 47.0 | 52.0 |
     | 1 | All Subjects | Continuous Runs | Persistence | 1.34 | 1.34 | 1.29 | 1.19 | 1.18 | 1.24 |
