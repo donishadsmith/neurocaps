@@ -81,7 +81,7 @@ cap_analysis.visualize_caps(visual_scope="networks", plot_options="outer product
 
 cap_analysis.visualize_caps(visual_scope="nodes", plot_options="outer product", task_title="- Positive Valence", ncol=3, sharey=True, subplots=True, xlabel_rotation=90, tight_layout=False, hspace = 0.4)
 
-cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, output_dir=output_dir, continuous_runs=True, file_name="All_Subjects_CAPs_metrics")
+cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, tr=2.0, return_df=True, output_dir=output_dir, continuous_runs=True, file_name="All_Subjects_CAPs_metrics")
 
 ```
 **Graph Outputs**
@@ -93,34 +93,34 @@ cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, 
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | All Subjects | Continuous Runs | Fraction of Time | 0.16 | 0.14 | 0.18 | 0.19 | 0.16 | 0.17 |
 | 1 | All Subjects | Continuous Runs | Counts | 47.0 | 43.0 | 54.0 | 57.0 | 47.0 | 52.0 |
-| 1 | All Subjects | Continuous Runs | Persistence | 1.34 | 1.34 | 1.29 | 1.19 | 1.18 | 1.24 |
+| 1 | All Subjects | Continuous Runs | Persistence | 2.69 | 2.69 | 2.57 | 2.38 | 2.35 | 2.49 |
 | 2 | All Subjects | Continuous Runs | Fraction of Time | 0.17 | 0.1 | 0.15 | 0.2 | 0.21 | 0.18 |
 | 2 | All Subjects | Continuous Runs | Counts | 50.0 | 29.0 | 45.0 | 61.0 | 62.0 | 53.0 |
-| 2 | All Subjects | Continuous Runs | Persistence | 1.19 | 1.32 | 1.12 | 1.24 | 1.33 | 1.2 |
+| 2 | All Subjects | Continuous Runs | Persistence | 2.38 | 2.64 | 2.25 | 2.49 | 2.65 | 2.41 |
 | 3 | All Subjects | Continuous Runs | Fraction of Time | 0.14 | 0.16 | 0.14 | 0.18 | 0.22 | 0.16 |
 | 3 | All Subjects | Continuous Runs | Counts | 42.0 | 49.0 | 41.0 | 53.0 | 66.0 | 49.0 |
-| 3 | All Subjects | Continuous Runs | Persistence | 1.14 | 1.11 | 1.17 | 1.33 | 1.14 | 1.14 |
+| 3 | All Subjects | Continuous Runs | Persistence | 2.27 | 2.23 | 2.34 | 2.67 | 2.28 | 2.28 |
 | 4 | All Subjects | Continuous Runs | Fraction of Time | 0.17 | 0.16 | 0.15 | 0.17 | 0.19 | 0.16 |
 | 4 | All Subjects | Continuous Runs | Counts | 50.0 | 47.0 | 44.0 | 52.0 | 58.0 | 49.0 |
-| 4 | All Subjects | Continuous Runs | Persistence | 1.19 | 1.09 | 1.16 | 1.3 | 1.32 | 1.17 |
+| 4 | All Subjects | Continuous Runs | Persistence | 2.38 | 2.19 | 2.32 | 2.6 | 2.64 | 2.34 |
 | 5 | All Subjects | Continuous Runs | Fraction of Time | 0.18 | 0.2 | 0.19 | 0.15 | 0.14 | 0.15 |
 | 5 | All Subjects | Continuous Runs | Counts | 53.0 | 60.0 | 57.0 | 45.0 | 41.0 | 44.0 |
-| 5 | All Subjects | Continuous Runs | Persistence | 1.27 | 1.2 | 1.3 | 1.25 | 1.32 | 1.19 |
+| 5 | All Subjects | Continuous Runs | Persistence | 2.54 | 2.4 | 2.59 | 2.5 | 2.65 | 2.38 |
 | 6 | All Subjects | Continuous Runs | Fraction of Time | 0.15 | 0.16 | 0.18 | 0.17 | 0.16 | 0.18 |
 | 6 | All Subjects | Continuous Runs | Counts | 45.0 | 49.0 | 53.0 | 52.0 | 47.0 | 54.0 |
-| 6 | All Subjects | Continuous Runs | Persistence | 1.1 | 1.17 | 1.26 | 1.21 | 1.15 | 1.29 |
+| 6 | All Subjects | Continuous Runs | Persistence | 2.2 | 2.33 | 2.52 | 2.43 | 2.29 | 2.57 |
 | 7 | All Subjects | Continuous Runs | Fraction of Time | 0.21 | 0.14 | 0.17 | 0.18 | 0.15 | 0.15 |
 | 7 | All Subjects | Continuous Runs | Counts | 62.0 | 43.0 | 51.0 | 53.0 | 45.0 | 46.0 |
-| 7 | All Subjects | Continuous Runs | Persistence | 1.22 | 1.19 | 1.24 | 1.23 | 1.13 | 1.18 |
+| 7 | All Subjects | Continuous Runs | Persistence | 2.43 | 2.39 | 2.49 | 2.47 | 2.26 | 2.36 |
 | 8 | All Subjects | Continuous Runs | Fraction of Time | 0.18 | 0.18 | 0.13 | 0.18 | 0.16 | 0.17 |
 | 8 | All Subjects | Continuous Runs | Counts | 54.0 | 53.0 | 39.0 | 55.0 | 49.0 | 50.0 |
-| 8 | All Subjects | Continuous Runs | Persistence | 1.19 | 1.15 | 1.15 | 1.25 | 1.26 | 1.14 |
+| 8 | All Subjects | Continuous Runs | Persistence | 2.37 | 2.3 | 2.29 | 2.5 | 2.51 | 2.27 |
 | 9 | All Subjects | Continuous Runs | Fraction of Time | 0.14 | 0.17 | 0.17 | 0.22 | 0.18 | 0.13 |
 | 9 | All Subjects | Continuous Runs | Counts | 41.0 | 51.0 | 51.0 | 65.0 | 53.0 | 39.0 |
-| 9 | All Subjects | Continuous Runs | Persistence | 1.14 | 1.09 | 1.13 | 1.36 | 1.23 | 1.18 |
+| 9 | All Subjects | Continuous Runs | Persistence | 2.28 | 2.17 | 2.27 | 2.72 | 2.47 | 2.36 |
 | 10 | All Subjects | Continuous Runs | Fraction of Time | 0.13 | 0.2 | 0.16 | 0.18 | 0.15 | 0.18 |
 | 10 | All Subjects | Continuous Runs | Counts | 39.0 | 60.0 | 47.0 | 54.0 | 45.0 | 55.0 |
-| 10 | All Subjects | Continuous Runs | Persistence | 1.03 | 1.2 | 1.12 | 1.32 | 1.15 | 1.25 |
+| 10 | All Subjects | Continuous Runs | Persistence | 2.05 | 2.4 | 2.24 | 2.63 | 2.31 | 2.5 |
 
 # References
 
