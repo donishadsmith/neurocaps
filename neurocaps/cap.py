@@ -1,7 +1,7 @@
 from typing import Union
 from sklearn.cluster import KMeans
 from .getters import _CAPGetter
-import numpy as np, re, warnings
+import numpy as np, pandas as pd, re, warnings
 from kneed import KneeLocator
 
 class CAP(_CAPGetter):
@@ -212,7 +212,7 @@ class CAP(_CAPGetter):
             self._mean_vec[group] = {}
             self._stdev_vec[group] = {}
             for subj_id in subject_timeseries:
-                subject_runs = [subject_run for subject_run in subject_timeseries[subj_id].keys() if subject_run == f"run-{run}"] if run else subject_timeseries[subj_id]
+                subject_runs = [subject_run for subject_run in subject_timeseries[subj_id].keys() if subject_run == f"run-{run}"] if run else subject_timeseries[subj_id].keys()
                 if len(subject_runs) == 0:
                     print(f"Skipping subject {subj_id} since they do not have the requested run number {run}")
                     continue
@@ -376,7 +376,7 @@ class CAP(_CAPGetter):
                     import collections
                     frequency_dict = dict(collections.Counter([names[0] + " " + names[1] for names in [name.split("_")[0:2] for name in self._node_labels]]))
                     names_list = list(frequency_dict.keys())
-                    labels = ["" for _ in range(0,len(self._node_labels) + 1)]
+                    labels = ["" for _ in range(0,len(self._node_labels))]
 
                     shift = 0
 
@@ -397,7 +397,7 @@ class CAP(_CAPGetter):
                     ax.set_xticklabels([label for label in labels if label]) 
                     ax.set_yticks(ticks)  
                     ax.set_yticklabels([label for label in labels if label]) 
-                
+
                 # Modify label sizes
                 display.set_xticklabels(display.get_xticklabels(), size = plot_dict["xticklabels_size"], rotation=plot_dict["xlabel_rotation"])
 
@@ -454,7 +454,7 @@ class CAP(_CAPGetter):
 
     def _generate_heatmap_plots(self, group, plot_dict, cap_dict, columns, output_dir, task_title, show_figs, scope):
         from seaborn import heatmap
-        import matplotlib.pyplot as plt, os, pandas as pd
+        import matplotlib.pyplot as plt, os
         
         # Initialize new grid
         plt.figure(figsize=plot_dict["figsize"])
@@ -466,7 +466,7 @@ class CAP(_CAPGetter):
             
             frequency_dict = dict(collections.Counter([names[0] + " " + names[1] for names in [name.split("_")[0:2] for name in self._node_labels]]))
             names_list = list(frequency_dict.keys())
-            labels = ["" for _ in range(0,len(self._node_labels) + 1)]
+            labels = ["" for _ in range(0,len(self._node_labels))]
 
             shift = 0
 
@@ -501,3 +501,157 @@ class CAP(_CAPGetter):
         # Display figures
         if show_figs == False:
                 plt.close()
+
+    def calculate_metrics(self, subject_timeseries: Union[dict[dict[np.ndarray]], str], tr: float=None, run: int=None, continuous_runs: bool=False, metrics: Union[str, list[str]]=["fraction of time", "persistence", "counts"], return_df: bool=True, output_dir: str=None, file_name: str=None, **kwargs) -> pd.core.frame.DataFrame:
+        """Get CAP metrics
+
+        Creates a single pandas Dataframe containing all participants containing CAP metrics as described in Yang et al., 2021 where `fraction of time` is the proportion of total volumes spent in a single CAP over all volumes in a run,
+        `persistence` is the average time spent in a single CAP before transitioning to another CAP (average consecutive/uninterrupted time), and `counts` is the frequency of each CAP observed in a run.
+
+        Parameters
+        ----------
+        subject_timeseries: dict, default=None
+            The absolute path of the pickle file containing the nested subject timeseries dictionary saved by the TimeSeriesExtractor class or
+            the nested subject timeseries dictionary produced by the TimeseriesExtractor class. The first level of the nested dictionary must consist of the subject
+            ID as a string, the second level must consist of the the run numbers in the form of 'run-#', where # is the corresponding number of the run, and the last level 
+            must consist of the timeseries associated with that run. This should be the same dictionary used for `get_caps()`.
+        tr: float, default=None
+            The repetition time. If given, persistence will be calculate as the average uninterrupted time spent in each CAP. If not give, persistence will be calculate
+            as the average uninterrupted volumes (TRs) spent in each state.
+        run: int, default=None
+            The run number to calculate cap metrics for. If None, cap metrics will be calculated for each run.
+        continuous_runs: bool, default=False
+            If True, all runs will be treated as a single, uninterrupted run.
+        metrics : str or list[str], default=["fraction of time", "persistence", "counts"]
+            The metrics to calculate. Available options include `fraction of time`, `persistence`, `counts`.
+        return_df: str, default=True
+            If True, dataframe will be returned.
+        output_dir: str, default=None
+            Directory to save dataframe in. If None, dataframe will not be saved.
+        file_name: str, default=None
+            Name to save dataframe as if output_dir is not None.
+        kwargs: dict
+            Keyword arguments for saving dataframe. Valid keywords includes `sep`, the deliminater to use, and `index`, boolean to determine if dataframe is saved with rownames.
+            The defaults are "," for sep, meaning file will be saves as a csv, and False for index.
+
+        Returns
+        -------
+        pd.core.frame.DataFrame
+
+        Notes
+        -----
+        Yang, H., Zhang, H., Di, X., Wang, S., Meng, C., Tian, L., & Biswal, B. (2021). Reproducible coactivation patterns of functional brain networks reveal the aberrant dynamic state transition in schizophrenia. 
+        NeuroImage, 237, 118193. https://doi.org/10.1016/j.neuroimage.2021.118193
+
+        """
+        import collections, os
+
+        metrics = [metrics] if isinstance(metrics, str) else metrics
+
+
+        if continuous_runs == True and run != None:
+            warnings.warn("`run` is will be ignored since `continuous_runs` is True.")
+        
+        if isinstance(subject_timeseries, str) and "pkl" in subject_timeseries: subject_timeseries = self._convert_pickle_to_dict(pickle_file=subject_timeseries)
+
+        group_cap_dict = {}
+        # Get group with most CAPs
+        for group in self._groups.keys():
+            group_cap_dict.update({group: len(self._caps[group])})
+        
+        cap_names =  self._caps[max(group_cap_dict, key=group_cap_dict.get)].keys()
+        cap_numbers = [int(name.split("-")[-1]) for name in cap_names]
+
+        # Assign each subject TRs to CAP
+        predicted_subject_timeseries = {}
+
+        for group in self._groups.keys():
+            for subj_id in self._groups[group]:
+                predicted_subject_timeseries[subj_id] = {}
+                if not continuous_runs:
+                    subject_runs = [subject_run for subject_run in subject_timeseries[subj_id].keys() if subject_run == f"run-{run}"] if run else subject_timeseries[subj_id].keys()
+                    if len(subject_runs) == 0:
+                        print(f"Skipping subject {subj_id} since they do not have the requested run number {run}")
+                        continue
+                    for curr_run in subject_runs:
+                        timeseries = (subject_timeseries[subj_id][curr_run] - self._mean_vec[group])/(self._stdev_vec[group] + self._epsilon) if self._standardize else subject_timeseries[subj_id][curr_run] 
+                        predicted_subject_timeseries[subj_id].update({curr_run: self._kmeans[group].predict(timeseries) + 1})
+                else:
+                    subject_runs = "Continuous Runs"
+                    timeseries = {subject_runs: {}}
+                    for curr_run in subject_timeseries[subj_id].keys():
+                        timeseries[subject_runs] = np.vstack([timeseries[subject_runs], subject_timeseries[subj_id][curr_run]]) if len(timeseries[subject_runs]) != 0 else subject_timeseries[subj_id][curr_run]
+                    timeseries = (timeseries[subject_runs] - self._mean_vec[group])/(self._stdev_vec[group] + self._epsilon) if self._standardize else timeseries[subject_runs]
+                    predicted_subject_timeseries[subj_id].update({subject_runs: self._kmeans[group].predict(timeseries) + 1})
+
+
+        # Create pd.dataframe
+
+        df = pd.DataFrame(columns=["Subject_ID", "Group","Run","Metric"] + list(cap_names))
+
+        for group in self._groups.keys():
+            for subj_id in self._groups[group]:
+                for curr_run in predicted_subject_timeseries[subj_id].keys():
+                    if "fraction of time" in metrics or "counts" in metrics:
+                        frequency_dict = dict(collections.Counter(predicted_subject_timeseries[subj_id][curr_run]))
+                        sorted_frequency_dict = {key: frequency_dict[key] for key in sorted(list(frequency_dict.keys()))}
+                        if len(sorted_frequency_dict) != len(cap_numbers):
+                            sorted_frequency_dict = {cap_number: sorted_frequency_dict[cap_number] if cap_number in sorted_frequency_dict.keys() else float("nan") for cap_number in cap_numbers}
+                        if "fraction of time" in metrics: 
+                            proportion_dict = {key: item/(len(predicted_subject_timeseries[subj_id][curr_run])) for key, item in sorted_frequency_dict.items()}
+                            # Populate Dataframe
+                            df.loc[len(df)] = [subj_id, group, curr_run, "Fraction of Time"] + [items for _ , items in proportion_dict.items()]
+                        if "counts" in metrics:
+                            # Populate Dataframe
+                            df.loc[len(df)] = [subj_id, group, curr_run, "Counts"] + [items for _ , items in sorted_frequency_dict.items()]
+                    if "persistence" in metrics:
+                        # Initialize variable
+                        persistence_dict = {}
+                        uninterrupted_volumes = []
+                        count = 0
+
+                        # Iterate through caps
+                        for target in cap_numbers:
+                            # Iterate through each element and count uniterrupted volumes that equal target
+                            for index in range(0,len(predicted_subject_timeseries[subj_id][curr_run])):
+                                if predicted_subject_timeseries[subj_id][curr_run][index] == target:
+                                    count +=1
+                                # Store count in list if interuptted and not zero an
+                                else:
+                                    if count != 0:
+                                        uninterrupted_volumes.append(count)
+                                    # Reset counter 
+                                    count = 0
+                            # If uninterrupted_volumes not zero, multiply elements in the list by repetition time, sum and divide
+                            if len(uninterrupted_volumes) > 0:
+                                if tr:
+                                    persistence_dict.update({target: np.sum(np.array(uninterrupted_volumes)*tr)/(len(uninterrupted_volumes))})
+                                else:
+                                    persistence_dict.update({target: np.sum(np.array(uninterrupted_volumes))/(len(uninterrupted_volumes))})
+                            else:
+                                persistence_dict.update({target: float("nan")})
+                            # Reset variables
+                            count = 0
+                            uninterrupted_volumes = []
+                        # Populate Dataframe
+                        df.loc[len(df)] = [subj_id, group, curr_run, "Persistence"] + [items for _ , items in persistence_dict.items()]
+
+        if output_dir:
+            file_name = file_name if file_name else "CAP_metrics"
+            file_dict = dict(sep = kwargs["sep"] if kwargs and "sep" in kwargs.keys() else ",",
+                             index = kwargs["index"] if kwargs and "index" in kwargs.keys() else False,
+            )
+            df.to_csv(path_or_buf=os.path.join(output_dir,file_name), sep=file_dict["sep"], index=file_dict["index"])
+
+
+        if return_df:
+            return df
+
+
+
+
+                    
+
+
+
+

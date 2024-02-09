@@ -3,7 +3,7 @@ from typing import Union
 from .getters import _TimeseriesExtractorGetter
 
 class TimeseriesExtractor(_TimeseriesExtractorGetter):
-    def __init__(self, space: str="MNI152NLin2009cAsym", standardize: Union[bool,str]=False, detrend: bool=False , low_pass: float=None, high_pass: float=None, n_rois: int=400, n_networks: int=7, use_confounds: bool=True, confound_names: list[str]=None, discard_volumes: int=None):
+    def __init__(self, space: str="MNI152NLin2009cAsym", standardize: Union[bool,str]=True, detrend: bool=False , low_pass: float=None, high_pass: float=None, n_rois: int=400, n_networks: int=7, use_confounds: bool=True, confound_names: list[str]=None, discard_volumes: int=None):
         """Timeseries Extractor Class
         
         Initializes a TimeseriesExtractor to prepare for Co-activation Patterns (CAPs) analysis.
@@ -12,7 +12,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         ----------
         space : str, default="MNI152NLin2009cAsym"
             The brain template space data is in. 
-        standardize : bool, default=False
+        standardize : bool, default=True
             Determines whether to standardize the timeseries. 
         detrend : bool, default=True
             Detrends timeseries during extraction.

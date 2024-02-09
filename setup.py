@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 #Package Metadata
 NAME="neurocaps"
-VERSION = "0.1.0" 
+VERSION = "0.5.0" 
 DESCRIPTION = "Co-activation patterns Python package"
 LONG_DESCRIPTION = "This package intends to provide a simple pipeline to perform a Co-activation patterns (CAPs) analysis on resting-state or task fmri data."
 REQUIRES_PYTHON = '>=3.7.0'
