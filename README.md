@@ -84,51 +84,11 @@ cap_analysis.visualize_caps(visual_scope="nodes", plot_options="outer product", 
 cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, output_dir=output_dir, continuous_runs=True, file_name="All_Subjects_CAPs_metrics")
 
 ```
-
+**Graph Outputs**
 ![image](https://github.com/donishadsmith/neurocaps/assets/112973674/4699bbd9-1f55-462b-9d9e-4ef17da79ad4)
 ![image](https://github.com/donishadsmith/neurocaps/assets/112973674/506c5be5-540d-43a9-8a61-c02062f5c6f9)
 
-
-<details>
-  
-  <summary>DataFrame</summary>
-
-    | Subject_ID | Group | Run | Metric | CAP-1 | CAP-2 | CAP-3 | CAP-4 | CAP-5 | CAP-6 |
-    | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-    | 1 | All Subjects | Continuous Runs | Fraction of Time | 0.16 | 0.14 | 0.18 | 0.19 | 0.16 | 0.17 |
-    | 1 | All Subjects | Continuous Runs | Counts | 47.0 | 43.0 | 54.0 | 57.0 | 47.0 | 52.0 |
-    | 1 | All Subjects | Continuous Runs | Persistence | 1.34 | 1.34 | 1.29 | 1.19 | 1.18 | 1.24 |
-    | 2 | All Subjects | Continuous Runs | Fraction of Time | 0.17 | 0.1 | 0.15 | 0.2 | 0.21 | 0.18 |
-    | 2 | All Subjects | Continuous Runs | Counts | 50.0 | 29.0 | 45.0 | 61.0 | 62.0 | 53.0 |
-    | 2 | All Subjects | Continuous Runs | Persistence | 1.19 | 1.32 | 1.12 | 1.24 | 1.33 | 1.2 |
-    | 3 | All Subjects | Continuous Runs | Fraction of Time | 0.14 | 0.16 | 0.14 | 0.18 | 0.22 | 0.16 |
-    | 3 | All Subjects | Continuous Runs | Counts | 42.0 | 49.0 | 41.0 | 53.0 | 66.0 | 49.0 |
-    | 3 | All Subjects | Continuous Runs | Persistence | 1.14 | 1.11 | 1.17 | 1.33 | 1.14 | 1.14 |
-    | 4 | All Subjects | Continuous Runs | Fraction of Time | 0.17 | 0.16 | 0.15 | 0.17 | 0.19 | 0.16 |
-    | 4 | All Subjects | Continuous Runs | Counts | 50.0 | 47.0 | 44.0 | 52.0 | 58.0 | 49.0 |
-    | 4 | All Subjects | Continuous Runs | Persistence | 1.19 | 1.09 | 1.16 | 1.3 | 1.32 | 1.17 |
-    | 5 | All Subjects | Continuous Runs | Fraction of Time | 0.18 | 0.2 | 0.19 | 0.15 | 0.14 | 0.15 |
-    | 5 | All Subjects | Continuous Runs | Counts | 53.0 | 60.0 | 57.0 | 45.0 | 41.0 | 44.0 |
-    | 5 | All Subjects | Continuous Runs | Persistence | 1.27 | 1.2 | 1.3 | 1.25 | 1.32 | 1.19 |
-    | 6 | All Subjects | Continuous Runs | Fraction of Time | 0.15 | 0.16 | 0.18 | 0.17 | 0.16 | 0.18 |
-    | 6 | All Subjects | Continuous Runs | Counts | 45.0 | 49.0 | 53.0 | 52.0 | 47.0 | 54.0 |
-    | 6 | All Subjects | Continuous Runs | Persistence | 1.1 | 1.17 | 1.26 | 1.21 | 1.15 | 1.29 |
-    | 7 | All Subjects | Continuous Runs | Fraction of Time | 0.21 | 0.14 | 0.17 | 0.18 | 0.15 | 0.15 |
-    | 7 | All Subjects | Continuous Runs | Counts | 62.0 | 43.0 | 51.0 | 53.0 | 45.0 | 46.0 |
-    | 7 | All Subjects | Continuous Runs | Persistence | 1.22 | 1.19 | 1.24 | 1.23 | 1.13 | 1.18 |
-    | 8 | All Subjects | Continuous Runs | Fraction of Time | 0.18 | 0.18 | 0.13 | 0.18 | 0.16 | 0.17 |
-    | 8 | All Subjects | Continuous Runs | Counts | 54.0 | 53.0 | 39.0 | 55.0 | 49.0 | 50.0 |
-    | 8 | All Subjects | Continuous Runs | Persistence | 1.19 | 1.15 | 1.15 | 1.25 | 1.26 | 1.14 |
-    | 9 | All Subjects | Continuous Runs | Fraction of Time | 0.14 | 0.17 | 0.17 | 0.22 | 0.18 | 0.13 |
-    | 9 | All Subjects | Continuous Runs | Counts | 41.0 | 51.0 | 51.0 | 65.0 | 53.0 | 39.0 |
-    | 9 | All Subjects | Continuous Runs | Persistence | 1.14 | 1.09 | 1.13 | 1.36 | 1.23 | 1.18 |
-    | 10 | All Subjects | Continuous Runs | Fraction of Time | 0.13 | 0.2 | 0.16 | 0.18 | 0.15 | 0.18 |
-    | 10 | All Subjects | Continuous Runs | Counts | 39.0 | 60.0 | 47.0 | 54.0 | 45.0 | 55.0 |
-    | 10 | All Subjects | Continuous Runs | Persistence | 1.03 | 1.2 | 1.12 | 1.32 | 1.15 | 1.25 |
-
-    
-</details>
-
+**DataFrame output**
 | Subject_ID | Group | Run | Metric | CAP-1 | CAP-2 | CAP-3 | CAP-4 | CAP-5 | CAP-6 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | All Subjects | Continuous Runs | Fraction of Time | 0.16 | 0.14 | 0.18 | 0.19 | 0.16 | 0.17 |
