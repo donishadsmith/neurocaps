@@ -502,7 +502,7 @@ class CAP(_CAPGetter):
         if show_figs == False:
                 plt.close()
 
-    def calculate_metrics(self, subject_timeseries: Union[dict[dict[np.ndarray]], str], tr: float=None, run: int=None, continuous_runs: bool=False, metrics: Union[str, list[str]]=["fraction of time", "persistence", "counts"], return_df: bool=True, output_dir: str=None, file_name: str=None, **kwargs) -> pd.core.frame.DataFrame:
+    def calculate_metrics(self, subject_timeseries: Union[dict[dict[np.ndarray]], str], tr: float=None, run: int=None, continuous_runs: bool=False, metrics: Union[str, list[str]]=["fraction of time", "persistence", "counts"], return_df: bool=True, output_dir: str=None, file_name: str=None) -> pd.core.frame.DataFrame:
         """Get CAP metrics
 
         Creates a single pandas Dataframe containing all participants containing CAP metrics as described in Yang et al., 2021 where `fraction of time` is the proportion of total volumes spent in a single CAP over all volumes in a run,
@@ -530,9 +530,6 @@ class CAP(_CAPGetter):
             Directory to save dataframe in. If None, dataframe will not be saved.
         file_name: str, default=None
             Name to save dataframe as if output_dir is not None.
-        kwargs: dict
-            Keyword arguments for saving dataframe. Valid keywords includes `sep`, the deliminater to use, and `index`, boolean to determine if dataframe is saved with rownames.
-            The defaults are "," for sep, meaning file will be saves as a csv, and False for index.
 
         Returns
         -------
@@ -638,10 +635,7 @@ class CAP(_CAPGetter):
 
         if output_dir:
             file_name = file_name if file_name else "CAP_metrics"
-            file_dict = dict(sep = kwargs["sep"] if kwargs and "sep" in kwargs.keys() else ",",
-                             index = kwargs["index"] if kwargs and "index" in kwargs.keys() else False,
-            )
-            df.to_csv(path_or_buf=os.path.join(output_dir,file_name), sep=file_dict["sep"], index=file_dict["index"])
+            df.to_csv(path_or_buf=os.path.join(output_dir,file_name + ".csv"), sep=",", index=False)
 
 
         if return_df:
