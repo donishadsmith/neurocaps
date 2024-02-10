@@ -91,8 +91,8 @@ print(outputs["temporal fraction"])
 ![image](https://github.com/donishadsmith/neurocaps/assets/112973674/506c5be5-540d-43a9-8a61-c02062f5c6f9)
 
 **DataFrame output**
-| Subject_ID | Group | Run | Metric | CAP-1 | CAP-2 | CAP-3 | CAP-4 | CAP-5 | CAP-6 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Subject_ID | Group | Run | CAP-1 | CAP-2 | CAP-3 | CAP-4 | CAP-5 | CAP-6 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | All Subjects | Continuous Runs | 0.14 | 0.17 | 0.14 | 0.2 | 0.15 | 0.19 |
 | 2 | All Subjects | Continuous Runs | 0.17 | 0.17 | 0.16 | 0.16 | 0.15 | 0.19 |
 | 3 | All Subjects | Continuous Runs | 0.15 | 0.2 | 0.14 | 0.18 | 0.17 | 0.17 |
