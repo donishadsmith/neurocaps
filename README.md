@@ -46,7 +46,7 @@ Main features for `CAP` include:
 - Performing the silhouette or elbow method to identify the optimal cluster size. When the optimal cluster size is identified, the optimal model is saved as an attribute.
 - Visualizing the CAPs identified as an outer product or regular heatmap. For outer products, you also have the ability to use subplots to reduce the number of individual plots. You can also save the plots and use them. Please refer to the docstring for the `visualize_caps()` method in the `CAP` class to see the list of available kwargs arguments to modify plots.
 - Grouping feature to perform CAPs independently on groups of subject IDs. When grouping is specified, k-means clustering, silhouette and elbow methods, as well as plotting, are done for each independent group.
-- Calculating CCAP metrics as described in [Liu et al., 2018](https://doi.org/10.1016/j.neuroimage.2018.01.041) [Yang et al., 2021](https://doi.org/10.1016/j.neuroimage.2021.118193) where `fraction of time` is the proportion of total volumes spent in a single CAP over all volumes in a run,
+- Calculating CCAP metrics as described in [Liu et al., 2018](https://doi.org/10.1016/j.neuroimage.2018.01.041) and [Yang et al., 2021](https://doi.org/10.1016/j.neuroimage.2021.118193) where `fraction of time` is the proportion of total volumes spent in a single CAP over all volumes in a run,
 `persistence` is the average time spent in a single CAP before transitioning to another CAP (average consecutive/uninterrupted time), and `counts` is the frequency of each CAP observed in a run.
 
 Please refer to [demo.ipynb](https://github.com/donishadsmith/neurocaps/blob/main/demo.ipynb) to see multiple examples of how to use this package.
