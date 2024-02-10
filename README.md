@@ -46,7 +46,7 @@ Main features for `CAP` include:
 - Performing the silhouette or elbow method to identify the optimal cluster size. When the optimal cluster size is identified, the optimal model is saved as an attribute.
 - Visualizing the CAPs identified as an outer product or regular heatmap. For outer products, you also have the ability to use subplots to reduce the number of individual plots. You can also save the plots and use them. Please refer to the docstring for the `visualize_caps()` method in the `CAP` class to see the list of available kwargs arguments to modify plots.
 - Grouping feature to perform CAPs independently on groups of subject IDs. When grouping is specified, k-means clustering, silhouette and elbow methods, as well as plotting, are done for each independent group.
-- Calculating CCAP metrics as described in [Yang et al., 2021](https://doi.org/10.1016/j.neuroimage.2021.118193) where `fraction of time` is the proportion of total volumes spent in a single CAP over all volumes in a run,
+- Calculating CCAP metrics as described in [Liu et al., 2018](https://doi.org/10.1016/j.neuroimage.2018.01.041) [Yang et al., 2021](https://doi.org/10.1016/j.neuroimage.2021.118193) where `fraction of time` is the proportion of total volumes spent in a single CAP over all volumes in a run,
 `persistence` is the average time spent in a single CAP before transitioning to another CAP (average consecutive/uninterrupted time), and `counts` is the frequency of each CAP observed in a run.
 
 Please refer to [demo.ipynb](https://github.com/donishadsmith/neurocaps/blob/main/demo.ipynb) to see multiple examples of how to use this package.
@@ -81,7 +81,9 @@ cap_analysis.visualize_caps(visual_scope="networks", plot_options="outer product
 
 cap_analysis.visualize_caps(visual_scope="nodes", plot_options="outer product", task_title="- Positive Valence", ncol=3, sharey=True, subplots=True, xlabel_rotation=90, tight_layout=False, hspace = 0.4)
 
-cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, tr=2.0, return_df=True, output_dir=output_dir, continuous_runs=True, file_name="All_Subjects_CAPs_metrics")
+outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, tr=2.0, return_df=True, output_dir=output_dir, metrics=["temporal fraction", "persistence"],continuous_runs=True, file_name="All_Subjects_CAPs_metrics")
+
+print(outputs["temporal fraction"])
 
 ```
 **Graph Outputs**
@@ -91,37 +93,18 @@ cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, 
 **DataFrame output**
 | Subject_ID | Group | Run | Metric | CAP-1 | CAP-2 | CAP-3 | CAP-4 | CAP-5 | CAP-6 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | All Subjects | Continuous Runs | Fraction of Time | 0.16 | 0.14 | 0.18 | 0.19 | 0.16 | 0.17 |
-| 1 | All Subjects | Continuous Runs | Counts | 47.0 | 43.0 | 54.0 | 57.0 | 47.0 | 52.0 |
-| 1 | All Subjects | Continuous Runs | Persistence | 2.69 | 2.69 | 2.57 | 2.38 | 2.35 | 2.49 |
-| 2 | All Subjects | Continuous Runs | Fraction of Time | 0.17 | 0.1 | 0.15 | 0.2 | 0.21 | 0.18 |
-| 2 | All Subjects | Continuous Runs | Counts | 50.0 | 29.0 | 45.0 | 61.0 | 62.0 | 53.0 |
-| 2 | All Subjects | Continuous Runs | Persistence | 2.38 | 2.64 | 2.25 | 2.49 | 2.65 | 2.41 |
-| 3 | All Subjects | Continuous Runs | Fraction of Time | 0.14 | 0.16 | 0.14 | 0.18 | 0.22 | 0.16 |
-| 3 | All Subjects | Continuous Runs | Counts | 42.0 | 49.0 | 41.0 | 53.0 | 66.0 | 49.0 |
-| 3 | All Subjects | Continuous Runs | Persistence | 2.27 | 2.23 | 2.34 | 2.67 | 2.28 | 2.28 |
-| 4 | All Subjects | Continuous Runs | Fraction of Time | 0.17 | 0.16 | 0.15 | 0.17 | 0.19 | 0.16 |
-| 4 | All Subjects | Continuous Runs | Counts | 50.0 | 47.0 | 44.0 | 52.0 | 58.0 | 49.0 |
-| 4 | All Subjects | Continuous Runs | Persistence | 2.38 | 2.19 | 2.32 | 2.6 | 2.64 | 2.34 |
-| 5 | All Subjects | Continuous Runs | Fraction of Time | 0.18 | 0.2 | 0.19 | 0.15 | 0.14 | 0.15 |
-| 5 | All Subjects | Continuous Runs | Counts | 53.0 | 60.0 | 57.0 | 45.0 | 41.0 | 44.0 |
-| 5 | All Subjects | Continuous Runs | Persistence | 2.54 | 2.4 | 2.59 | 2.5 | 2.65 | 2.38 |
-| 6 | All Subjects | Continuous Runs | Fraction of Time | 0.15 | 0.16 | 0.18 | 0.17 | 0.16 | 0.18 |
-| 6 | All Subjects | Continuous Runs | Counts | 45.0 | 49.0 | 53.0 | 52.0 | 47.0 | 54.0 |
-| 6 | All Subjects | Continuous Runs | Persistence | 2.2 | 2.33 | 2.52 | 2.43 | 2.29 | 2.57 |
-| 7 | All Subjects | Continuous Runs | Fraction of Time | 0.21 | 0.14 | 0.17 | 0.18 | 0.15 | 0.15 |
-| 7 | All Subjects | Continuous Runs | Counts | 62.0 | 43.0 | 51.0 | 53.0 | 45.0 | 46.0 |
-| 7 | All Subjects | Continuous Runs | Persistence | 2.43 | 2.39 | 2.49 | 2.47 | 2.26 | 2.36 |
-| 8 | All Subjects | Continuous Runs | Fraction of Time | 0.18 | 0.18 | 0.13 | 0.18 | 0.16 | 0.17 |
-| 8 | All Subjects | Continuous Runs | Counts | 54.0 | 53.0 | 39.0 | 55.0 | 49.0 | 50.0 |
-| 8 | All Subjects | Continuous Runs | Persistence | 2.37 | 2.3 | 2.29 | 2.5 | 2.51 | 2.27 |
-| 9 | All Subjects | Continuous Runs | Fraction of Time | 0.14 | 0.17 | 0.17 | 0.22 | 0.18 | 0.13 |
-| 9 | All Subjects | Continuous Runs | Counts | 41.0 | 51.0 | 51.0 | 65.0 | 53.0 | 39.0 |
-| 9 | All Subjects | Continuous Runs | Persistence | 2.28 | 2.17 | 2.27 | 2.72 | 2.47 | 2.36 |
-| 10 | All Subjects | Continuous Runs | Fraction of Time | 0.13 | 0.2 | 0.16 | 0.18 | 0.15 | 0.18 |
-| 10 | All Subjects | Continuous Runs | Counts | 39.0 | 60.0 | 47.0 | 54.0 | 45.0 | 55.0 |
-| 10 | All Subjects | Continuous Runs | Persistence | 2.05 | 2.4 | 2.24 | 2.63 | 2.31 | 2.5 |
+| 1 | All Subjects | Continuous Runs | 0.14 | 0.17 | 0.14 | 0.2 | 0.15 | 0.19 |
+| 2 | All Subjects | Continuous Runs | 0.17 | 0.17 | 0.16 | 0.16 | 0.15 | 0.19 |
+| 3 | All Subjects | Continuous Runs | 0.15 | 0.2 | 0.14 | 0.18 | 0.17 | 0.17 |
+| 4 | All Subjects | Continuous Runs | 0.17 | 0.21 | 0.18 | 0.17 | 0.1 | 0.16 |
+| 5 | All Subjects | Continuous Runs | 0.14 | 0.19 | 0.14 | 0.16 | 0.2 | 0.18 |
+| 6 | All Subjects | Continuous Runs | 0.16 | 0.21 | 0.16 | 0.18 | 0.16 | 0.13 |
+| 7 | All Subjects | Continuous Runs | 0.16 | 0.16 | 0.17 | 0.15 | 0.19 | 0.17 |
+| 8 | All Subjects | Continuous Runs | 0.17 | 0.21 | 0.13 | 0.14 | 0.17 | 0.18 |
+| 9 | All Subjects | Continuous Runs | 0.18 | 0.1 | 0.17 | 0.18 | 0.16 | 0.2 |
+| 10 | All Subjects | Continuous Runs | 0.14 | 0.19 | 0.14 | 0.17 | 0.19 | 0.16 |
 
 # References
+Liu, X., Zhang, N., Chang, C., & Duyn, J. H. (2018). Co-activation patterns in resting-state fMRI signals. NeuroImage, 180, 485–494. https://doi.org/10.1016/j.neuroimage.2018.01.041
 
 Yang, H., Zhang, H., Di, X., Wang, S., Meng, C., Tian, L., & Biswal, B. (2021). Reproducible coactivation patterns of functional brain networks reveal the aberrant dynamic state transition in schizophrenia. NeuroImage, 237, 118193. https://doi.org/10.1016/j.neuroimage.2021.118193

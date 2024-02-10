@@ -1,7 +1,7 @@
 from typing import Union
 from sklearn.cluster import KMeans
 from .getters import _CAPGetter
-import numpy as np, pandas as pd, re, warnings
+import numpy as np, re, warnings
 from kneed import KneeLocator
 
 class CAP(_CAPGetter):
@@ -454,7 +454,7 @@ class CAP(_CAPGetter):
 
     def _generate_heatmap_plots(self, group, plot_dict, cap_dict, columns, output_dir, task_title, show_figs, scope):
         from seaborn import heatmap
-        import matplotlib.pyplot as plt, os
+        import matplotlib.pyplot as plt, pandas as pd, os
         
         # Initialize new grid
         plt.figure(figsize=plot_dict["figsize"])
@@ -502,11 +502,12 @@ class CAP(_CAPGetter):
         if show_figs == False:
                 plt.close()
 
-    def calculate_metrics(self, subject_timeseries: Union[dict[dict[np.ndarray]], str], tr: float=None, run: int=None, continuous_runs: bool=False, metrics: Union[str, list[str]]=["fraction of time", "persistence", "counts"], return_df: bool=True, output_dir: str=None, file_name: str=None) -> pd.core.frame.DataFrame:
+    def calculate_metrics(self, subject_timeseries: Union[dict[dict[np.ndarray]], str], tr: float=None, run: int=None, continuous_runs: bool=False, metrics: Union[str, list[str]]=["temporal fraction", "persistence", "counts", "transition frequency"], return_df: bool=True, output_dir: str=None, file_name: str=None) -> dict:
         """Get CAP metrics
 
-        Creates a single pandas Dataframe containing all participants containing CAP metrics as described in Yang et al., 2021 where `fraction of time` is the proportion of total volumes spent in a single CAP over all volumes in a run,
-        `persistence` is the average time spent in a single CAP before transitioning to another CAP (average consecutive/uninterrupted time), and `counts` is the frequency of each CAP observed in a run.
+        Creates a single pandas Dataframe containing all participants containing CAP metrics as described in Liu et al., 2018 and Yang et al., 2021, where `temporal fraction` is the proportion of total volumes spent in a single CAP over all volumes in a run,
+        `persistence` is the average time spent in a single CAP before transitioning to another CAP (average consecutive/uninterrupted time), and `counts` is the frequency of each CAP observed in a run, and `transition frequncy` is the number of switches between
+        different CAPs across the entire run.
 
         Parameters
         ----------
@@ -522,8 +523,8 @@ class CAP(_CAPGetter):
             The run number to calculate cap metrics for. If None, cap metrics will be calculated for each run.
         continuous_runs: bool, default=False
             If True, all runs will be treated as a single, uninterrupted run.
-        metrics : str or list[str], default=["fraction of time", "persistence", "counts"]
-            The metrics to calculate. Available options include `fraction of time`, `persistence`, `counts`.
+        metrics : str or list[str], default=["temporal fraction", "persistence", "counts", "transition frequency"]
+            The metrics to calculate. Available options include `temporal fraction`, `persistence`, `counts`, and `transition frequency`.
         return_df: str, default=True
             If True, dataframe will be returned.
         output_dir: str, default=None
@@ -533,18 +534,35 @@ class CAP(_CAPGetter):
 
         Returns
         -------
-        pd.core.frame.DataFrame
+        dictionary containing pandas dataframes - one for each metric requested.
+
+        Raises
+        ------
+        ValueError
+            No valid metrics are detected in `metrics` parameter.
 
         Notes
         -----
+        Liu, X., Zhang, N., Chang, C., & Duyn, J. H. (2018). Co-activation patterns in resting-state fMRI signals. NeuroImage, 180, 485–494. https://doi.org/10.1016/j.neuroimage.2018.01.041
+
         Yang, H., Zhang, H., Di, X., Wang, S., Meng, C., Tian, L., & Biswal, B. (2021). Reproducible coactivation patterns of functional brain networks reveal the aberrant dynamic state transition in schizophrenia. 
         NeuroImage, 237, 118193. https://doi.org/10.1016/j.neuroimage.2021.118193
 
         """
-        import collections, os
+        import collections, pandas as pd, os
 
         metrics = [metrics] if isinstance(metrics, str) else metrics
 
+        valid_metrics = ["temporal fraction", "persistence", "counts", "transition frequency"]
+
+        boolean_list = [element in valid_metrics for element in metrics]
+
+        if any(boolean_list):
+            invalid_metrics = [metrics[indx] for indx,boolean in enumerate(boolean_list) if boolean == False]
+            if len(invalid_metrics) > 0:
+                warnings.warn(f"invalid metrics will be ignored: {' '.join(invalid_metrics)}")
+        else:
+            raise ValueError(f"No valid metrics in `metrics` list. Valid metrics are {', '.join(valid_metrics)}")
 
         if continuous_runs == True and run != None:
             warnings.warn("`run` is will be ignored since `continuous_runs` is True.")
@@ -583,24 +601,31 @@ class CAP(_CAPGetter):
 
 
         # Create pd.dataframe
+        df_dict = {}
 
-        df = pd.DataFrame(columns=["Subject_ID", "Group","Run","Metric"] + list(cap_names))
+        for metric in metrics: 
+            if metric in valid_metrics:
+                if metric != "transition frequency":
+                    df_dict.update({metric: pd.DataFrame(columns=["Subject_ID", "Group","Run"] + list(cap_names))})
+                else:
+                    df_dict.update({metric: pd.DataFrame(columns=["Subject_ID", "Group","Run","Transition_Frequency"])})
+
 
         for group in self._groups.keys():
             for subj_id in self._groups[group]:
                 for curr_run in predicted_subject_timeseries[subj_id].keys():
-                    if "fraction of time" in metrics or "counts" in metrics:
+                    if "temporal fraction" in metrics or "counts" in metrics:
                         frequency_dict = dict(collections.Counter(predicted_subject_timeseries[subj_id][curr_run]))
                         sorted_frequency_dict = {key: frequency_dict[key] for key in sorted(list(frequency_dict.keys()))}
                         if len(sorted_frequency_dict) != len(cap_numbers):
                             sorted_frequency_dict = {cap_number: sorted_frequency_dict[cap_number] if cap_number in sorted_frequency_dict.keys() else float("nan") for cap_number in cap_numbers}
-                        if "fraction of time" in metrics: 
+                        if "temporal fraction" in metrics: 
                             proportion_dict = {key: item/(len(predicted_subject_timeseries[subj_id][curr_run])) for key, item in sorted_frequency_dict.items()}
                             # Populate Dataframe
-                            df.loc[len(df)] = [subj_id, group, curr_run, "Fraction of Time"] + [items for _ , items in proportion_dict.items()]
+                            df_dict["temporal fraction"].loc[len(df_dict["temporal fraction"])] = [subj_id, group, curr_run] + [items for _ , items in proportion_dict.items()]
                         if "counts" in metrics:
                             # Populate Dataframe
-                            df.loc[len(df)] = [subj_id, group, curr_run, "Counts"] + [items for _ , items in sorted_frequency_dict.items()]
+                            df_dict["counts"].loc[len(df_dict["counts"])] = [subj_id, group, curr_run] + [items for _ , items in sorted_frequency_dict.items()]
                     if "persistence" in metrics:
                         # Initialize variable
                         persistence_dict = {}
@@ -634,15 +659,27 @@ class CAP(_CAPGetter):
                             count = 0
                             uninterrupted_volumes = []
                         # Populate Dataframe
-                        df.loc[len(df)] = [subj_id, group, curr_run, "Persistence"] + [items for _ , items in persistence_dict.items()]
+                        df_dict["persistence"].loc[len(df_dict["persistence"])] = [subj_id, group, curr_run] + [items for _ , items in persistence_dict.items()]
+                    if "transition frequency" in metrics:
+                        count = 0
+                        # Iterate through predicted values 
+                        for index in range(0,len(predicted_subject_timeseries[subj_id][curr_run])):
+                            if index != 0:
+                                # If the subsequent element does not equal the previous element, this is considered a transition
+                                if predicted_subject_timeseries[subj_id][curr_run][index-1] != predicted_subject_timeseries[subj_id][curr_run][index]:
+                                    count +=1
+                        df_dict["transition frequency"].loc[len(df_dict["transition frequency"])] = [subj_id, group, curr_run, count]
+
 
         if output_dir:
-            file_name = file_name if file_name else "CAP_metrics"
-            df.to_csv(path_or_buf=os.path.join(output_dir,file_name + ".csv"), sep=",", index=False)
+            for metric in df_dict.keys():
+                filename = file_name + f"-{metric.replace(' ','_')}" if file_name else f"{metric.replace(' ','_')}"
+                df_dict[f"{metric}"].to_csv(path_or_buf=os.path.join(output_dir,filename + ".csv"), sep=",", index=False)
+
 
 
         if return_df:
-            return df
+            return df_dict
 
 
 
