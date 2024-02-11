@@ -51,7 +51,7 @@ different CAPs across the entire run.
 
 Please refer to [demo.ipynb](https://github.com/donishadsmith/neurocaps/blob/main/demo.ipynb) to see multiple examples of how to use this package.
 
-Quick code example
+Quick code example:
 
 ```python
 
