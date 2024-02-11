@@ -35,18 +35,18 @@ pip install -e .
 
 Note: When extracting the timeseries, this package uses the Schaefer atlas. The number of ROIs and networks for the Schaefer atlas can be modified with `n_rois` and `n_networks` when initializing the main `TimeseriesExtractor` class.
 
-Main features for `TimeseriesExtractor` include:
+Main features for `TimeseriesExtractor` includes:
 
 - Timeseries extraction for resting state or task data and creating a nested dictionary containing the subject ID, run number, and associated timeseries. This is used as input for the `get_caps()` method in the `CAP` class.
 - Saving the nested dictionary containing timeseries as a pickle file.
 - Visualizing the timeseries of a Schaefer node or network subject's run. Also includes the ability to save plots.
 
-Main features for `CAP` include:
+Main features for `CAP` includes:
 
 - Performing the silhouette or elbow method to identify the optimal cluster size. When the optimal cluster size is identified, the optimal model is saved as an attribute.
 - Visualizing the CAPs identified as an outer product or regular heatmap. For outer products, you also have the ability to use subplots to reduce the number of individual plots. You can also save the plots and use them. Please refer to the docstring for the `visualize_caps()` method in the `CAP` class to see the list of available kwargs arguments to modify plots.
 - Grouping feature to perform CAPs independently on groups of subject IDs. When grouping is specified, k-means clustering, silhouette and elbow methods, as well as plotting, are done for each independent group.
-- Calculating CCAP metrics as described in [Liu et al., 2018](https://doi.org/10.1016/j.neuroimage.2018.01.041) and [Yang et al., 2021](https://doi.org/10.1016/j.neuroimage.2021.118193), where `temporal fraction` is the proportion of total volumes spent in a single CAP over all volumes in a run, `persistence` is the average time spent in a single CAP before transitioning to another CAP (average consecutive/uninterrupted time), and `counts` is the frequency of each CAP observed in a run, and `transition frequncy` is the number of switches between
+- Calculating CAP metrics as described in [Liu et al., 2018](https://doi.org/10.1016/j.neuroimage.2018.01.041) and [Yang et al., 2021](https://doi.org/10.1016/j.neuroimage.2021.118193), where `temporal fraction` is the proportion of total volumes spent in a single CAP over all volumes in a run, `persistence` is the average time spent in a single CAP before transitioning to another CAP (average consecutive/uninterrupted time), and `counts` is the frequency of each CAP observed in a run, and `transition frequency` is the number of switches between
 different CAPs across the entire run.
 
 Please refer to [demo.ipynb](https://github.com/donishadsmith/neurocaps/blob/main/demo.ipynb) to see multiple examples of how to use this package.
