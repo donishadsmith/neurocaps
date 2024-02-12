@@ -79,8 +79,8 @@ class _TimeseriesExtractorGetter:
         else: return None
     
     @property
-    def run(self):
-        if hasattr(self, "_run"): return self._run
+    def runs(self):
+        if hasattr(self, "_runs"): return self._runs
         else: return None
     
     @property
