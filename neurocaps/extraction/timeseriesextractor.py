@@ -219,7 +219,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             nifti_img = load_img(nifti_file[0])
             if self._discard_volumes: 
                 nifti_img = index_img(nifti_img, slice(self._discard_volumes, None))
-                confounds.drop(list(range(0,self._discard_volumes)),axis=0,inplace=True)
+                if self._use_confounds: confounds.drop(list(range(0,self._discard_volumes)),axis=0,inplace=True)
 
             # Extract timeseries
             timeseries = masker.fit_transform(nifti_img, confounds=confounds) if self._use_confounds else masker.fit_transform(nifti_img)
