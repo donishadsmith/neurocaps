@@ -55,7 +55,8 @@ Quick code example:
 
 ```python
 
-from neurocaps import TimeseriesExtractor, CAP
+from neurocaps.extraction import TimeseriesExtractor
+from neurocaps.analysis import CAP
 
 # If use_confounds is True but no confound_names provided, there are hardcoded confound names that will extract the data from the confound files outputted by fMRIPrep
 
