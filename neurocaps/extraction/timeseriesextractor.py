@@ -1,6 +1,6 @@
 from typing import Union
 from .._utils import _TimeseriesExtractorGetter
-import re, os, warnings
+import re, os, warnings, math 
 
 class TimeseriesExtractor(_TimeseriesExtractorGetter):
     def __init__(self, space: str="MNI152NLin2009cAsym", standardize: Union[bool,str]="zscore_sample", detrend: bool=False , low_pass: float=None, high_pass: float=None, n_rois: int=400, n_networks: int=7, use_confounds: bool=True, confound_names: list[str]=None, discard_volumes: int=None):
@@ -232,9 +232,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 # Empty list for scans
                 scan_list = []
 
-                # Convert times into scan numbers to obtain the scans taken when the participant was exposed to the condition of interest; round to nearest whole number
+                # Convert times into scan numbers to obtain the scans taken when the participant was exposed to the condition of interest; include partial scans
                 for i in condition_df.index:
-                    onset_scan, duration_scan = int(condition_df.loc[i,"onset"]/tr), int((condition_df.loc[i,"onset"] + condition_df.loc[i,"duration"])/tr)
+                    onset_scan, duration_scan = int(condition_df.loc[i,"onset"]/tr), math.ceil((condition_df.loc[i,"onset"] + condition_df.loc[i,"duration"])/tr)
                     scan_list.extend(range(onset_scan, duration_scan + 1))
 
                 # Timeseries with the extracted scans corresponding to condition; set is used to remove overlapping TRs    
