@@ -238,7 +238,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     scan_list.extend(range(onset_scan, duration_scan + 1))
 
                 # Timeseries with the extracted scans corresponding to condition; set is used to remove overlapping TRs    
-                timeseries = timeseries[sorted(list(set(scan_list)))]
+                timeseries = timeseries[sorted(list(set(scan_list))),:]
     
 
             subject_timeseries[subj_id].update({run: timeseries})
