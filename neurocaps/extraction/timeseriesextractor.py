@@ -234,7 +234,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
                 # Convert times into scan numbers to obtain the scans taken when the participant was exposed to the condition of interest; round to nearest whole number
                 for i in condition_df.index:
-                    onset_scan, duration_scan = int(condition_df.loc[i,"onset"]/tr) - 1, int((condition_df.loc[i,"onset"] + condition_df.loc[i,"duration"])/tr) - 1
+                    onset_scan, duration_scan = int(condition_df.loc[i,"onset"]/tr), int((condition_df.loc[i,"onset"] + condition_df.loc[i,"duration"])/tr)
                     scan_list.extend(range(onset_scan, duration_scan + 1))
 
                 # Timeseries with the extracted scans corresponding to condition; set is used to remove overlapping TRs    
