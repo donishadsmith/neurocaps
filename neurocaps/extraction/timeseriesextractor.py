@@ -288,7 +288,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         with open(os.path.join(output_dir,file_name + ".pkl"), "wb") as f:
             pickle.dump(self._subject_timeseries,f)
 
-    def visualize_bold(self, subj_id: str, run: int, roi_indx: Union[int, list[int]]=None, network: str=None, show_figs: bool=True, output_dir: str=None, file_name: str=None, **kwargs):
+    def visualize_bold(self, subj_id: Union[int,str], run: int, roi_indx: Union[int, list[int]]=None, network: str=None, show_figs: bool=True, output_dir: str=None, file_name: str=None, **kwargs):
         """Plot Bold Data
 
         Collects files needed to extract timeseries data from NIfTI files for BIDS-compliant datasets.
@@ -322,6 +322,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         """
     
         import matplotlib.pyplot as plt, numpy as np
+
+        if isinstance(subj_id,int): subj_id = str(subj_id)
 
         if roi_indx !=None and network != None:
             raise ValueError("`roi_indx` and network can not be used simultaneously.")

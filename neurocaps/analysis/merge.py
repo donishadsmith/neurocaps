@@ -6,7 +6,8 @@ def merge_dicts(subject_timeseries_list: Union[list[dict], list[str]], return_di
     """Merge subject timeseries
 
     Merge subject timeseries dictionaries or pickle files to the first dictionary or pickle file in the list.
-    Repetition times from the same subject and run are merged together.
+    Repetition times from the same subject and run are merged together. The combined dicitonary will only include subjects
+    that are present in all dictionaries.
 
     Parameters
     ----------
@@ -37,18 +38,33 @@ def merge_dicts(subject_timeseries_list: Union[list[dict], list[str]], return_di
 
     if isinstance(subject_timeseries_list[0],dict): subject_timeseries_combined = subject_timeseries_list[0] 
     else: subject_timeseries_combined = _convert_pickle_to_dict(pickle_file=subject_timeseries_list[0])
-    
-    for curr_dict in subject_timeseries_list[1:]:
+
+    # Get common subject ids
+    subject_set = {}
+
+    for curr_dict in  subject_timeseries_list:      
         if "pkl" in curr_dict: curr_dict = _convert_pickle_to_dict(pickle_file=curr_dict)
-        for subj_id in subject_timeseries_combined.keys():
+        if len(subject_set) == 0: subject_set = set(curr_dict.keys())    
+        intersect_subjects = subject_set.intersection(list(curr_dict.keys()))
+
+    # Order subjects
+    intersect_subjects = sorted(list(intersect_subjects))
+
+    subject_timeseries_combined = {}
+
+    for curr_dict in subject_timeseries_list:
+        if "pkl" in curr_dict: curr_dict = _convert_pickle_to_dict(pickle_file=curr_dict)
+        for subj_id in intersect_subjects:
+            if subj_id not in subject_timeseries_combined.keys(): subject_timeseries_combined.update({subj_id: {}})
+            # Get run names in the current iteration
             subject_runs = curr_dict[subj_id].keys()
-            if subj_id in curr_dict.keys():
-                for curr_run in subject_runs:
-                    if curr_run in subject_timeseries_combined[subj_id].keys():
-                        subject_timeseries_combined[subj_id][curr_run] = np.vstack([subject_timeseries_combined[subj_id][curr_run], curr_dict[subj_id][curr_run]])
-                    else:
-                        subject_timeseries_combined[subj_id].update({curr_run: curr_dict[subj_id][curr_run]})
-    
+            for curr_run in subject_runs:
+                # If run is in combined dict, stack. If not, add
+                if curr_run in subject_timeseries_combined[subj_id].keys():
+                    subject_timeseries_combined[subj_id][curr_run] = np.vstack([subject_timeseries_combined[subj_id][curr_run], curr_dict[subj_id][curr_run]])
+                else:
+                    subject_timeseries_combined[subj_id].update({curr_run: curr_dict[subj_id][curr_run]})
+                
     
 
     if output_dir:
