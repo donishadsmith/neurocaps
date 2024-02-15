@@ -3,7 +3,7 @@ from .._utils import _TimeseriesExtractorGetter
 import re, os, warnings, math 
 
 class TimeseriesExtractor(_TimeseriesExtractorGetter):
-    def __init__(self, space: str="MNI152NLin2009cAsym", standardize: Union[bool,str]="zscore_sample", detrend: bool=False , low_pass: float=None, high_pass: float=None, n_rois: int=400, n_networks: int=7, use_confounds: bool=True, confound_names: list[str]=None, discard_volumes: int=None):
+    def __init__(self, space: str="MNI152NLin2009cAsym", standardize: Union[bool,str]="zscore_sample", detrend: bool=False , low_pass: float=None, high_pass: float=None, n_rois: int=400, n_networks: int=7, use_confounds: bool=True, confound_names: list[str]=None, dummy_scans: int=None):
         """Timeseries Extractor Class
         
         Initializes a TimeseriesExtractor to prepare for Co-activation Patterns (CAPs) analysis.
@@ -20,7 +20,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Signals above cutoff frequency will be filtered out.
         high_pass : float, default=None
             Signals below cutoff frequency will be filtered out.
-        discard_volumes : float, default=None
+        dummy_scans : float, default=None
             Remove the first `n` number of volumes before extracting timeseries.
         n_rois : int, default=400
             The number of regions of interest (ROIs) to use for Schaefer parcellation.
@@ -28,6 +28,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             To use confounds when extracting timeseries.
         confound_names : List[str], default=None
             Names of confounds to use in confound files. If None, default confounds are used.
+
+        Notes
+        -----
+        For the `confound_names` parameter, an asterisk ("*") can be used to find the name of confounds that starts with the term preceding the asterisk.
+        For instance, "cosine*" will find all confound names in the confound files starting with "cosine".
         """
         self._space = space
         self._standardize = standardize
@@ -37,7 +42,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         self._detrend = detrend
         self._low_pass = low_pass
         self._high_pass = high_pass
-        self._discard_volumes = discard_volumes
+        self._dummy_scans = dummy_scans
 
         if self._use_confounds:
             if confound_names == None:
@@ -54,7 +59,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     ]
                 else:
                     self._confound_names = [
-                        "cosine_XX",
+                        "cosine*",
                         "trans_x", "trans_x_derivative1", "trans_x_power2", "trans_x_derivative1_power2",
                         "trans_y", "trans_y_derivative1", "trans_y_derivative1_power2", "trans_y_power2",
                         "trans_z", "trans_z_derivative1", "trans_z_power2", "trans_z_derivative1_power2",
@@ -198,9 +203,23 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             event_file = None if event_files == None else [event_file for event_file in event_files if run in event_file]
 
-            # Extract confound information of interest and nsure confound file does not contain NAs
+            # Extract confound information of interest and ensure confound file does not contain NAs
             if self._use_confounds:
-                confounds = confound_df[[col for col in confound_df if col in self._confound_names or col.startswith("cosine") if "cosine_XX" in self._confound_names]]
+                valid_confounds = []
+                invalid_confounds = []
+                for confound_name in self._confound_names:
+                    if "*" in confound_name:
+                        prefix = confound_name.split("*")[0]
+                        confounds_list = [col for col in confound_df.columns if col.startswith(prefix)]
+                    else:
+                        confounds_list = [col for col in confound_df.columns if col == confound_name] 
+                
+                    if len(confounds_list) > 0: valid_confounds.extend(confounds_list)
+                    else: invalid_confounds.extend([confound_name])
+
+                if len(invalid_confounds) > 0: print(f"Subject {subj_id} did not have the following confounds: {invalid_confounds}")
+
+                confounds = confound_df[valid_confounds]
                 confounds = confounds.fillna(0)
             
             # Create the masker for extracting time series
@@ -217,9 +236,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             )
             # Load and discard volumes if needed
             nifti_img = load_img(nifti_file[0])
-            if self._discard_volumes: 
-                nifti_img = index_img(nifti_img, slice(self._discard_volumes, None))
-                if self._use_confounds: confounds.drop(list(range(0,self._discard_volumes)),axis=0,inplace=True)
+            if self._dummy_scans: 
+                nifti_img = index_img(nifti_img, slice(self._dummy_scans, None))
+                if self._use_confounds: confounds.drop(list(range(0,self._dummy_scans)),axis=0,inplace=True)
 
             # Extract timeseries
             timeseries = masker.fit_transform(nifti_img, confounds=confounds) if self._use_confounds else masker.fit_transform(nifti_img)
@@ -313,12 +332,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 os.makedirs(output_dir)
             assert "." in file_name, "`file_name` must be specified if `output_dir` is specified and it must contain an extension to signify the file type."
 
-        if kwargs:
-                dpi = kwargs["dpi"] if "dpi" in kwargs.keys() else 300
-                figsize= kwargs["figsize"] if "figsize" in kwargs.keys else (15, 5)
-        else:
-            dpi = 300
-            figsize = (15, 5)
+        plot_dict = dict(dpi = kwargs["dpi"] if kwargs and "dpi" in kwargs.keys() else 300,
+                         figsize= kwargs["figsize"] if kwargs and "figsize" in kwargs.keys else (15, 5))
 
         # Obtain the column indices associated with the rois; add logic for roi_indx == 0 since it would be recognized as False
         if roi_indx or roi_indx == 0:
@@ -338,7 +353,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             plot_indxs = np.array([index for index, node in enumerate(self._atlas_labels) if network in node])
         
 
-        plt.figure(figsize=figsize)
+        plt.figure(figsize=plot_dict["figsize"])
 
         if roi_indx or roi_indx == 0: 
             plt.plot(range(1, self._subject_timeseries[subj_id][f"run-{run}"].shape[0] + 1), self._subject_timeseries[subj_id][f"run-{run}"][:,plot_indxs])
@@ -348,7 +363,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         plt.xlabel("TR")
 
         if output_dir:
-            plt.savefig(os.path.join(output_dir,file_name), dpi=dpi)
+            plt.savefig(os.path.join(output_dir,file_name), dpi=plot_dict["dpi"])
 
         if show_figs == False:
             plt.close()
