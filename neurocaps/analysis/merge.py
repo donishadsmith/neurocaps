@@ -42,13 +42,13 @@ def merge_dicts(subject_timeseries_list: Union[list[dict], list[str]], return_di
     # Get common subject ids
     subject_set = {}
 
-    for curr_dict in  subject_timeseries_list:      
+    for curr_dict in subject_timeseries_list:      
         if "pkl" in curr_dict: curr_dict = _convert_pickle_to_dict(pickle_file=curr_dict)
         if len(subject_set) == 0: subject_set = set(curr_dict.keys())    
-        intersect_subjects = subject_set.intersection(list(curr_dict.keys()))
+        subject_set = subject_set.intersection(list(curr_dict.keys()))
 
     # Order subjects
-    intersect_subjects = sorted(list(intersect_subjects))
+    intersect_subjects = sorted(list(subject_set))
 
     subject_timeseries_combined = {}
 
