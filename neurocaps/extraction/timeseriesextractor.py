@@ -155,7 +155,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 continue
 
             if self._use_confounds:
-                if  len(confound_files) == 0:
+                if len(confound_files) == 0:
                     warnings.warn(f"Skipping subject: {subj_id} due to missing confound files.")
                     continue
             
