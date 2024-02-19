@@ -119,8 +119,6 @@ class CAP(_CAPGetter):
             self._perform_silhouette_method(random_state=random_state)
         elif self._cluster_selection_method == "elbow":
             self._perform_elbow_method(random_state=random_state, show_figs=show_figs, **kwargs)
-
-
         else:
             self._kmeans = {}
             for group in self._groups.keys():
@@ -157,8 +155,7 @@ class CAP(_CAPGetter):
         self._optimal_n_clusters = {}
         self._kmeans = {}
 
-        if kwargs:
-            knee_dict = dict(S = kwargs["S"] if "S" in kwargs.keys() else None)
+        knee_dict = dict(S = kwargs["S"] if "S" in kwargs.keys() else 1)
 
         for group in self._groups.keys():
             self._inertia[group] = {}
@@ -167,16 +164,11 @@ class CAP(_CAPGetter):
                 self._inertia[group].update({n_cluster: self._kmeans[group].inertia_}) 
             
             # Get optimal cluster size
-            if kwargs and knee_dict["S"]:
-                kneedle = KneeLocator(x=list(self._inertia[group].keys()), 
-                                                            y=list(self._inertia[group].values()),
-                                                            curve='convex',
-                                                            direction='decreasing', S=knee_dict["S"])
-            else:
-                kneedle = KneeLocator(x=list(self._inertia[group].keys()), 
-                                                            y=list(self._inertia[group].values()),
-                                                            curve='convex',
-                                                            direction='decreasing')
+            kneedle = KneeLocator(x=list(self._inertia[group].keys()), 
+                                                        y=list(self._inertia[group].values()),
+                                                        curve='convex',
+                                                        direction='decreasing', S=knee_dict["S"])
+                
             self._optimal_n_clusters[group] = kneedle.elbow
             if not self._optimal_n_clusters[group]:
                  warnings.warn("No elbow detected so optimal cluster size is None. Try adjusting the sensitivity parameter, `S`, to increase or decrease sensitivity (higher values are less sensitive), expanding the list of clusters to test, or setting `cluster_selection_method` to 'sillhouette'.")
@@ -189,7 +181,6 @@ class CAP(_CAPGetter):
                     kneedle.plot_knee(title=group)
                     kneedle.plot_knee_normalized(title=group)
 
-
     def _create_caps_dict(self):
         # Initialize dictionary
         self._caps = {}
@@ -201,33 +192,41 @@ class CAP(_CAPGetter):
         # Create dictionary for "All Subjects" if no groups are specified to reuse the same loop instead of having to create logic for grouped and non-grouped version of the same code
         if not self._groups: self._groups = {"All Subjects": [subject for subject in subject_timeseries.keys()]}
 
-        concatenated_timeseries = {group_name: {} for group_name in self._groups.keys()}
+        concatenated_timeseries = {group: {} for group in self._groups.keys()}
 
-        self._mean_vec = {}
-        self._stdev_vec = {}
+        self._generate_lookup_table()
 
-        for group in self._groups.keys():
-            self._mean_vec[group] = {}
-            self._stdev_vec[group] = {}
-            for subj_id in subject_timeseries:
-                requested_runs = [f"run-{run}" for run in runs] if runs else subject_timeseries[subj_id].keys()
-                subject_runs = [subject_run for subject_run in subject_timeseries[subj_id].keys() if subject_run in requested_runs] 
-                if len(subject_runs) == 0:
-                    warnings.warn(f"Skipping subject {subj_id} since they do not have the requested run numbers {','.join(requested_runs)}")
-                    continue
-                for curr_run in subject_runs:
-                    if len(concatenated_timeseries[group]) == 0:
-                        concatenated_timeseries[group] = subject_timeseries[subj_id][curr_run] if subj_id in list(set(self._groups[group])) else concatenated_timeseries[group]
-                    else:
-                        concatenated_timeseries[group] = np.vstack([concatenated_timeseries[group], subject_timeseries[subj_id][curr_run]]) if subj_id in list(set(self._groups[group])) else concatenated_timeseries[group]
+        self._mean_vec = {group: {} for group in self._groups.keys()}
+        self._stdev_vec = {group: {} for group in self._groups.keys()}
+
+        for subj_id, group in self._subject_table.items():
+            requested_runs = [f"run-{run}" for run in runs] if runs else subject_timeseries[subj_id].keys()
+            subject_runs = [subject_run for subject_run in subject_timeseries[subj_id].keys() if subject_run in requested_runs] 
+            if len(subject_runs) == 0:
+                warnings.warn(f"Skipping subject {subj_id} since they do not have the requested run numbers {','.join(requested_runs)}")
+                continue
+            for curr_run in subject_runs:
+                if len(concatenated_timeseries[group]) == 0:
+                    concatenated_timeseries[group] = subject_timeseries[subj_id][curr_run] if subj_id in list(set(self._groups[group])) else concatenated_timeseries[group]
+                else:
+                    concatenated_timeseries[group] = np.vstack([concatenated_timeseries[group], subject_timeseries[subj_id][curr_run]]) if subj_id in list(set(self._groups[group])) else concatenated_timeseries[group]
         # Standardize
-            if self._standardize:
+        if self._standardize:
+            for group in self._groups.keys():
                 self._mean_vec[group], self._stdev_vec[group] = np.mean(concatenated_timeseries[group], axis=0), np.std(concatenated_timeseries[group], ddof=1, axis=0)
                 concatenated_timeseries[group] = (concatenated_timeseries[group] - self._mean_vec[group])/(self._stdev_vec[group] + self._epsilon)
 
-        
         return concatenated_timeseries
     
+    def _generate_lookup_table(self):
+        self._subject_table = {}
+        for group in self._groups:
+            for subj_id in self._groups[group]:
+                if subj_id in self._subject_table.keys():
+                    warnings.warn(f"Subject: {subj_id} appears more than once, only including the first instance of this subject in the analysis.") 
+                else:
+                    self._subject_table.update({subj_id : group})
+
     def visualize_caps(self, output_dir: str=None, plot_options: Union[str, list[str]]="outer product", visual_scope: list[str]="networks", task_title: str=None, show_figs: bool=True, subplots: bool=False, **kwargs):
         """ Plotting CAPs
 
@@ -255,7 +254,7 @@ class CAP(_CAPGetter):
             "xlabel_rotation", which rotates the labels on the x-axis, defaults to 0, "ylabel_rotation", which rotates the labels on the y-axis, defaults to 0, "annot", which adds values to cells on the outer product heatmap at the network level only, defaults to False .
     
         """
-        import os
+        import os, itertools
 
         if output_dir:
             if not os.path.exists(output_dir):
@@ -303,27 +302,25 @@ class CAP(_CAPGetter):
         # Ensure plot_options and visual_scope are lists
         plot_options = plot_options if type(plot_options) == list else list(plot_options)
         visual_scope = visual_scope if type(visual_scope) == list else list(visual_scope)
+        # Initialize outer product attribute
+        if "outer product" in plot_options: self._outer_product = {}
 
-        for plot_option in plot_options:
-            for scope in visual_scope:
+        distributed_list = list(itertools.product(plot_options,visual_scope,self._groups.keys()))
+
+        for plot_option, scope, group in distributed_list:
                 # Get correct labels depending on scope
                 if scope == "networks": cap_dict, columns = self._network_caps, self._node_networks
                 elif scope == "nodes": cap_dict, columns = self._caps, self._node_labels
 
-                # Initialize outer product attribute
-                if plot_option == "outer product": self._outer_product = {}
-
                 #  Generate plot for each group
-                for group in self._groups.keys():
-                    if plot_option == "outer product": self._generate_outer_product_plots(group=group, plot_dict=plot_dict, cap_dict=cap_dict, columns=columns, subplots=subplots,
-                                                                                        output_dir=output_dir, task_title=task_title, show_figs=show_figs, scope=scope)
-                    elif plot_option == "heatmap": self._generate_heatmap_plots(group=group, plot_dict=plot_dict, cap_dict=cap_dict, columns=columns,
-                                                                                output_dir=output_dir, task_title=task_title, show_figs=show_figs, scope=scope)
+                if plot_option == "outer product": self._generate_outer_product_plots(group=group, plot_dict=plot_dict, cap_dict=cap_dict, columns=columns, subplots=subplots,
+                                                                                    output_dir=output_dir, task_title=task_title, show_figs=show_figs, scope=scope)
+                elif plot_option == "heatmap": self._generate_heatmap_plots(group=group, plot_dict=plot_dict, cap_dict=cap_dict, columns=columns,
+                                                                            output_dir=output_dir, task_title=task_title, show_figs=show_figs, scope=scope)
             
     def _create_networks(self):
-        self._network_caps = {}
+        self._network_caps = {group: {} for group in self._groups.keys()}
         for group in self._groups.keys():
-            self._network_caps[group] = {}
             for cap in self._caps[group].keys():
                 network_caps = {}
                 for network in self._node_networks:
@@ -387,7 +384,6 @@ class CAP(_CAPGetter):
                             indx = (frequency_dict[names_list[num]]) + shift - frequency_dict[names_list[num]]
                             labels[indx] = name
 
-
                     display = heatmap(ax=ax, data=self._outer_product[group][cap], cmap="coolwarm", cbar_kws={"shrink": plot_dict["shrink"]})
 
                     ticks = [i for i, label in enumerate(labels) if label]  
@@ -405,7 +401,6 @@ class CAP(_CAPGetter):
                 else:
                     display.set_yticklabels(display.get_yticklabels(), size = plot_dict["yticklabels_size"], rotation=plot_dict["ylabel_rotation"])
 
-                
                 # Set title of subplot
                 ax.set_title(cap, fontsize=plot_dict["fontsize"])
 
@@ -438,8 +433,7 @@ class CAP(_CAPGetter):
                     display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"], bbox_inches='tight')
         
         # Remove subplots with no data
-        if subplots:
-            [fig.delaxes(ax) for ax in axes.flatten() if not ax.has_data()]
+        if subplots: [fig.delaxes(ax) for ax in axes.flatten() if not ax.has_data()]
 
         # Save subplot
         if subplots and output_dir: 
@@ -448,8 +442,7 @@ class CAP(_CAPGetter):
             display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"], bbox_inches='tight')    
         
         # Display figures
-        if show_figs == False:
-                plt.close()
+        if not show_figs: plt.close()
 
     def _generate_heatmap_plots(self, group, plot_dict, cap_dict, columns, output_dir, task_title, show_figs, scope):
         from seaborn import heatmap
@@ -477,9 +470,7 @@ class CAP(_CAPGetter):
                     indx = (frequency_dict[names_list[num]]) + shift - frequency_dict[names_list[num]]
                     labels[indx] = name
 
-
             display = heatmap(pd.DataFrame(cap_dict[group], columns=cap_dict[group].keys()), cmap='coolwarm', cbar_kws={'shrink': plot_dict["shrink"]})
-
 
             plt.yticks(ticks=[pos for pos, label in enumerate(labels) if label], labels=names_list)  
 
@@ -498,8 +489,7 @@ class CAP(_CAPGetter):
             display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"], bbox_inches='tight')    
    
         # Display figures
-        if show_figs == False:
-                plt.close()
+        if not show_figs: plt.close()
 
     def calculate_metrics(self, subject_timeseries: Union[dict[dict[np.ndarray]], str], tr: float=None, runs: Union[int]=None, continuous_runs: bool=False, metrics: Union[str, list[str]]=["temporal fraction", "persistence", "counts", "transition frequency"], return_df: bool=True, output_dir: str=None, file_name: str=None) -> dict:
         """Get CAP metrics
@@ -542,6 +532,11 @@ class CAP(_CAPGetter):
 
         Notes
         -----
+        The presence of NaN values for specific CAPs in the "temporal fraction", "persistence", or "counts" dataframes, indicates that the participant had zero instances of 
+        a specific CAP.
+
+        References
+        -----
         Liu, X., Zhang, N., Chang, C., & Duyn, J. H. (2018). Co-activation patterns in resting-state fMRI signals. NeuroImage, 180, 485–494. https://doi.org/10.1016/j.neuroimage.2018.01.041
 
         Yang, H., Zhang, H., Di, X., Wang, S., Meng, C., Tian, L., & Biswal, B. (2021). Reproducible coactivation patterns of functional brain networks reveal the aberrant dynamic state transition in schizophrenia. 
@@ -576,26 +571,24 @@ class CAP(_CAPGetter):
         # Assign each subject TRs to CAP
         predicted_subject_timeseries = {}
 
-        for group in self._groups.keys():
-            for subj_id in self._groups[group]:
-                predicted_subject_timeseries[subj_id] = {}
-                requested_runs = [f"run-{run}" for run in runs] if runs else subject_timeseries[subj_id].keys()
-                subject_runs = [subject_run for subject_run in subject_timeseries[subj_id].keys() if subject_run in requested_runs] 
-                if len(subject_runs) == 0:
-                    warnings.warn(f"Skipping subject {subj_id} since they do not have the requested run numbers {','.join(requested_runs)}")
-                    continue
+        for subj_id, group in self._subject_table.items():
+            predicted_subject_timeseries[subj_id] = {}
+            requested_runs = [f"run-{run}" for run in runs] if runs else subject_timeseries[subj_id].keys()
+            subject_runs = [subject_run for subject_run in subject_timeseries[subj_id].keys() if subject_run in requested_runs] 
+            if len(subject_runs) == 0:
+                warnings.warn(f"Skipping subject {subj_id} since they do not have the requested run numbers {','.join(requested_runs)}")
+                continue
+            if not continuous_runs or len(requested_runs) == 1:
                 for curr_run in subject_runs:
-                    if not continuous_runs or len(requested_runs) == 1:
                         timeseries = (subject_timeseries[subj_id][curr_run] - self._mean_vec[group])/(self._stdev_vec[group] + self._epsilon) if self._standardize else subject_timeseries[subj_id][curr_run] 
                         predicted_subject_timeseries[subj_id].update({curr_run: self._kmeans[group].predict(timeseries) + 1})
-                    else:
-                        subject_runs = "Continuous Runs"
-                        timeseries = {subject_runs: {}}
-                        for curr_run in subject_timeseries[subj_id].keys():
-                            timeseries[subject_runs] = np.vstack([timeseries[subject_runs], subject_timeseries[subj_id][curr_run]]) if len(timeseries[subject_runs]) != 0 else subject_timeseries[subj_id][curr_run]
-                        timeseries = (timeseries[subject_runs] - self._mean_vec[group])/(self._stdev_vec[group] + self._epsilon) if self._standardize else timeseries[subject_runs]
-                        predicted_subject_timeseries[subj_id].update({subject_runs: self._kmeans[group].predict(timeseries) + 1})
-
+            else:
+                subject_runs = "Continuous Runs"
+                timeseries = {subject_runs: {}}
+                for curr_run in subject_timeseries[subj_id].keys():
+                    timeseries[subject_runs] = np.vstack([timeseries[subject_runs], subject_timeseries[subj_id][curr_run]]) if len(timeseries[subject_runs]) != 0 else subject_timeseries[subj_id][curr_run]
+                timeseries = (timeseries[subject_runs] - self._mean_vec[group])/(self._stdev_vec[group] + self._epsilon) if self._standardize else timeseries[subject_runs]
+                predicted_subject_timeseries[subj_id].update({subject_runs: self._kmeans[group].predict(timeseries) + 1})
 
         # Create pd.dataframe
         df_dict = {}
@@ -607,73 +600,72 @@ class CAP(_CAPGetter):
                 else:
                     df_dict.update({metric: pd.DataFrame(columns=["Subject_ID", "Group","Run","Transition_Frequency"])})
 
+        distributed_list = []
+        for subj_id, group in self._subject_table.items():
+            for curr_run in predicted_subject_timeseries[subj_id].keys():
+                distributed_list.append([subj_id,group,curr_run])
 
-        for group in self._groups.keys():
-            for subj_id in self._groups[group]:
-                for curr_run in predicted_subject_timeseries[subj_id].keys():
-                    if "temporal fraction" in metrics or "counts" in metrics:
-                        frequency_dict = dict(collections.Counter(predicted_subject_timeseries[subj_id][curr_run]))
-                        sorted_frequency_dict = {key: frequency_dict[key] for key in sorted(list(frequency_dict.keys()))}
-                        if len(sorted_frequency_dict) != len(cap_numbers):
-                            sorted_frequency_dict = {cap_number: sorted_frequency_dict[cap_number] if cap_number in sorted_frequency_dict.keys() else float("nan") for cap_number in cap_numbers}
-                        if "temporal fraction" in metrics: 
-                            proportion_dict = {key: item/(len(predicted_subject_timeseries[subj_id][curr_run])) for key, item in sorted_frequency_dict.items()}
-                            # Populate Dataframe
-                            df_dict["temporal fraction"].loc[len(df_dict["temporal fraction"])] = [subj_id, group, curr_run] + [items for _ , items in proportion_dict.items()]
-                        if "counts" in metrics:
-                            # Populate Dataframe
-                            df_dict["counts"].loc[len(df_dict["counts"])] = [subj_id, group, curr_run] + [items for _ , items in sorted_frequency_dict.items()]
-                    if "persistence" in metrics:
-                        # Initialize variable
-                        persistence_dict = {}
-                        uninterrupted_volumes = []
-                        count = 0
+        for subj_id, group, curr_run in distributed_list:
+            if "temporal fraction" in metrics or "counts" in metrics:
+                frequency_dict = dict(collections.Counter(predicted_subject_timeseries[subj_id][curr_run]))
+                sorted_frequency_dict = {key: frequency_dict[key] for key in sorted(list(frequency_dict.keys()))}
+                if len(sorted_frequency_dict) != len(cap_numbers):
+                    sorted_frequency_dict = {cap_number: sorted_frequency_dict[cap_number] if cap_number in sorted_frequency_dict.keys() else float("nan") for cap_number in cap_numbers}
+                if "temporal fraction" in metrics: 
+                    proportion_dict = {key: item/(len(predicted_subject_timeseries[subj_id][curr_run])) for key, item in sorted_frequency_dict.items()}
+                    # Populate Dataframe
+                    df_dict["temporal fraction"].loc[len(df_dict["temporal fraction"])] = [subj_id, group, curr_run] + [items for _ , items in proportion_dict.items()]
+                if "counts" in metrics:
+                    # Populate Dataframe
+                    df_dict["counts"].loc[len(df_dict["counts"])] = [subj_id, group, curr_run] + [items for _ , items in sorted_frequency_dict.items()]
+            if "persistence" in metrics:
+                # Initialize variable
+                persistence_dict = {}
+                uninterrupted_volumes = []
+                count = 0
 
-                        # Iterate through caps
-                        for target in cap_numbers:
-                            # Iterate through each element and count uniterrupted volumes that equal target
-                            for index in range(0,len(predicted_subject_timeseries[subj_id][curr_run])):
-                                if predicted_subject_timeseries[subj_id][curr_run][index] == target:
-                                    count +=1
-                                # Store count in list if interuptted and not zero an
-                                else:
-                                    if count != 0:
-                                        uninterrupted_volumes.append(count)
-                                    # Reset counter 
-                                    count = 0
-                            # In the event, a participant only occupies one CAP and to ensure final counts are added
-                            if count > 0:
+                # Iterate through caps
+                for target in cap_numbers:
+                    # Iterate through each element and count uniterrupted volumes that equal target
+                    for index in range(0,len(predicted_subject_timeseries[subj_id][curr_run])):
+                        if predicted_subject_timeseries[subj_id][curr_run][index] == target:
+                            count +=1
+                        # Store count in list if interuptted and not zero an
+                        else:
+                            if count != 0:
                                 uninterrupted_volumes.append(count)
-                            # If uninterrupted_volumes not zero, multiply elements in the list by repetition time, sum and divide
-                            if len(uninterrupted_volumes) > 0:
-                                if tr:
-                                    persistence_dict.update({target: np.sum(np.array(uninterrupted_volumes)*tr)/(len(uninterrupted_volumes))})
-                                else:
-                                    persistence_dict.update({target: np.sum(np.array(uninterrupted_volumes))/(len(uninterrupted_volumes))})
-                            else:
-                                persistence_dict.update({target: float("nan")})
-                            # Reset variables
+                            # Reset counter 
                             count = 0
-                            uninterrupted_volumes = []
-                        # Populate Dataframe
-                        df_dict["persistence"].loc[len(df_dict["persistence"])] = [subj_id, group, curr_run] + [items for _ , items in persistence_dict.items()]
-                    if "transition frequency" in metrics:
-                        count = 0
-                        # Iterate through predicted values 
-                        for index in range(0,len(predicted_subject_timeseries[subj_id][curr_run])):
-                            if index != 0:
-                                # If the subsequent element does not equal the previous element, this is considered a transition
-                                if predicted_subject_timeseries[subj_id][curr_run][index-1] != predicted_subject_timeseries[subj_id][curr_run][index]:
-                                    count +=1
-                        df_dict["transition frequency"].loc[len(df_dict["transition frequency"])] = [subj_id, group, curr_run, count]
-
+                    # In the event, a participant only occupies one CAP and to ensure final counts are added
+                    if count > 0:
+                        uninterrupted_volumes.append(count)
+                    # If uninterrupted_volumes not zero, multiply elements in the list by repetition time, sum and divide
+                    if len(uninterrupted_volumes) > 0:
+                        if tr:
+                            persistence_dict.update({target: np.sum(np.array(uninterrupted_volumes)*tr)/(len(uninterrupted_volumes))})
+                        else:
+                            persistence_dict.update({target: np.sum(np.array(uninterrupted_volumes))/(len(uninterrupted_volumes))})
+                    else:
+                        persistence_dict.update({target: float("nan")})
+                    # Reset variables
+                    count = 0
+                    uninterrupted_volumes = []
+                # Populate Dataframe
+                df_dict["persistence"].loc[len(df_dict["persistence"])] = [subj_id, group, curr_run] + [items for _ , items in persistence_dict.items()]
+            if "transition frequency" in metrics:
+                count = 0
+                # Iterate through predicted values 
+                for index in range(0,len(predicted_subject_timeseries[subj_id][curr_run])):
+                    if index != 0:
+                        # If the subsequent element does not equal the previous element, this is considered a transition
+                        if predicted_subject_timeseries[subj_id][curr_run][index-1] != predicted_subject_timeseries[subj_id][curr_run][index]:
+                            count +=1
+                df_dict["transition frequency"].loc[len(df_dict["transition frequency"])] = [subj_id, group, curr_run, count]
 
         if output_dir:
             for metric in df_dict.keys():
                 filename = file_name + f"-{metric.replace(' ','_')}" if file_name else f"{metric.replace(' ','_')}"
                 df_dict[f"{metric}"].to_csv(path_or_buf=os.path.join(output_dir,filename + ".csv"), sep=",", index=False)
-
-
 
         if return_df:
             return df_dict
