@@ -3,7 +3,8 @@ from .._utils import _TimeseriesExtractorGetter
 import re, os, warnings, math 
 
 class TimeseriesExtractor(_TimeseriesExtractorGetter):
-    def __init__(self, space: str="MNI152NLin2009cAsym", standardize: Union[bool,str]="zscore_sample", detrend: bool=False , low_pass: float=None, high_pass: float=None, n_rois: int=400, n_networks: int=7, use_confounds: bool=True, confound_names: list[str]=None, dummy_scans: int=None):
+    def __init__(self, space: str="MNI152NLin2009cAsym", standardize: Union[bool,str]="zscore_sample", detrend: bool=False , low_pass: float=None, high_pass: float=None, n_rois: int=400, 
+                 n_networks: int=7, use_confounds: bool=True, confound_names: list[str]=None, n_acompcor_separate: int=None, dummy_scans: int=None):
         """Timeseries Extractor Class
         
         Initializes a TimeseriesExtractor to prepare for Co-activation Patterns (CAPs) analysis.
@@ -20,14 +21,23 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Signals above cutoff frequency will be filtered out.
         high_pass : float, default=None
             Signals below cutoff frequency will be filtered out.
-        dummy_scans : float, default=None
-            Remove the first `n` number of volumes before extracting timeseries.
         n_rois : int, default=400
-            The number of regions of interest (ROIs) to use for Schaefer parcellation.
+            The number of regions of interest (ROIs) to use for Schaefer parcellation. Options are 100, 200, 300, 400, 500, 600, 700, 800, 900, and 1000.
+        n_networks : int, default=7
+            The number of networks to use for Schaefer parcellation. Options are 7 and 17.
         use_confounds : bool, default=True
             To use confounds when extracting timeseries.
         confound_names : List[str], default=None
             Names of confounds to use in confound files. If None, default confounds are used.
+        n_acompcor_separate : int, default = None
+            The number of seperate acompcor components derived from the white-matter (WM) and cerebrospinal (CSF) masks to use. For instance if '5' is assigned to this parameter
+            then the first five components derived from the WM mask and the first five components derived from the CSF mask will be used, resulting in ten acompcor components being
+            used. If this parameter is not none any acompcor components listed in the confound names will be disregarded in order to locate the first 'n' components derived from the 
+            masks. To use the acompcor components derived from the combined masks (WM & CSF) leave this parameter as 'None' and list the specific acompcors of interest in the 
+            `confound_names` parameter.
+        dummy_scans : float, default=None
+            Remove the first `n` number of volumes before extracting timeseries.
+        
 
         Notes
         -----
@@ -43,6 +53,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         self._low_pass = low_pass
         self._high_pass = high_pass
         self._dummy_scans = dummy_scans
+        self._n_acompcor_separate = n_acompcor_separate 
 
         if self._use_confounds:
             if confound_names == None:
@@ -71,7 +82,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             else:
                 self._confound_names = confound_names
                 assert type(self._confound_names) == list and len(self._confound_names) > 0 , "confound_names must be a non-empty list"
-        
+
+            if self._n_acompcor_separate:
+                check_confounds = [confound for confound in self._confound_names if "a_comp_cor" not in confound]
+                if len(self._confound_names) > len(check_confounds):
+                    removed_confounds = [element for element in self._confound_names if element not in check_confounds]
+                    warnings.warn(f"Since `n_acompcor_separate` has been specified, specified acompcor components in `confound_names` will be disregarded and replaced with the first {self._n_acompcor_separate} components of the white matter and cerebrospinal fluid masks for each participant. The following components will not be used {removed_confounds}")
+                    self._confound_names = check_confounds 
+
             print(f"List of confound regressors that will be used during timeseries extraction if available in confound dataframe: {self._confound_names}")
 
         # Get atlas
@@ -146,6 +164,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             json_files = sorted(layout.get(scope="derivatives", return_type="file",suffix="bold", task=task, space=self._space, session=session, extension = "json"))
             event_files = sorted([file for file in sorted(layout.get(return_type="filename",suffix="events", task=task, session=session,extension = "tsv", subject = subj_id))])
             confound_files = sorted(layout.get(scope='derivatives', return_type='file', desc='confounds', task=task, session=session,extension = "tsv", subject=subj_id))
+            confound_metadata_files = sorted(layout.get(scope='derivatives', return_type='file', desc='confounds', task=task, session=session,extension = "json", subject=subj_id))
             mask_files = sorted(layout.get(scope='derivatives', return_type='file', suffix='mask', task=task, space=self._space, session=session, extension = "nii.gz", subject=subj_id))
             # Generate a list of runs to iterate through based on runs in nifti_files
             run_list = [f"run-{run}" for run in runs] if runs else [re.search("run-(\d+)",x)[0] for x in nifti_files]
@@ -157,6 +176,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             if self._use_confounds:
                 if len(confound_files) == 0:
                     warnings.warn(f"Skipping subject: {subj_id} due to missing confound files.")
+                    continue
+                if len(confound_metadata_files) == 0 and self._n_acompcor_separate:
+                    warnings.warn(f"Skipping subject: {subj_id} due to missing confound metadata to locate the first six components of the white-matter and cerobrospinal fluid masks seperately.")
                     continue
             
             if task != "rest" and len(event_files) == 0:
@@ -170,13 +192,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             tr = tr if tr else json.load(open(json_files[0]))["RepetitionTime"]
 
             self._extract_timeseries(subj_id=subj_id, mask_files=mask_files, nifti_files=nifti_files, event_files=event_files, confound_files=confound_files,
-                                    run_list=run_list, condition=condition, tr=tr)
+                                    confound_metadata_files=confound_metadata_files, run_list=run_list, condition=condition, tr=tr)
         
-    def _extract_timeseries(self, subj_id, nifti_files, mask_files, event_files, confound_files, run_list, tr, condition=None):
+    def _extract_timeseries(self, subj_id, nifti_files, mask_files, event_files, confound_files, confound_metadata_files, run_list, tr, condition=None):
 
         from nilearn.maskers import NiftiLabelsMasker
         from nilearn.image import index_img, load_img
-        import pandas as pd 
+        import pandas as pd, copy, json
 
         # Intitialize dictionary; Current subject will alway be the last subject in the subjects attribute
         subject_timeseries = {subj_id: {}}
@@ -187,6 +209,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             nifti_file = [nifti_file for nifti_file in nifti_files if run in nifti_file]
             mask_file = [mask_file for mask_file in mask_files if run in mask_file]
             confound_file = [confound_file for confound_file in confound_files if run in confound_file] if self._use_confounds else None
+            confound_metadata_file = [confound_metadata_file for confound_metadata_file in confound_metadata_files if run in confound_metadata_file] if self._use_confounds and self._n_acompcor_separate else None
 
             print(f"Running subject: {subj_id}; {run}; \n {nifti_file}")
 
@@ -198,6 +221,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 if len(confound_file) == 0:
                     warnings.warn(f"Skipping subject: {subj_id}; {run} do to missing confound file.")
                     continue
+                if len(confound_metadata_file) == 0 and self._n_acompcor_separate:
+                    warnings.warn(f"Skipping subject: {subj_id}; {run} do to missing confound metadata files to locate the first six components of the white-matter and cerobrospinal fluid masks seperately.")
+                    continue
 
             confound_df = pd.read_csv(confound_file[0], sep=None) if self._use_confounds else None
 
@@ -205,9 +231,20 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             # Extract confound information of interest and ensure confound file does not contain NAs
             if self._use_confounds:
+                subject_confounds = copy.deepcopy(self._confound_names)
+                # Extract first "n" numbers of specified WM and CSF components
+                if confound_metadata_file:
+                    with open(confound_metadata_file[0]) as foo:
+                        confound_metadata = json.load(foo)
+
+                    acompcors_CSF = sorted([acompcor_CSF for acompcor_CSF in confound_metadata.keys() if "Mask" in confound_metadata[acompcor_CSF].keys() and confound_metadata[acompcor_CSF]["Mask"] == "CSF"])[0:self._n_acompcor_separate]
+                    acompcor_WM = sorted([acompcor_WM for acompcor_WM in confound_metadata.keys() if "Mask" in confound_metadata[acompcor_WM].keys() if confound_metadata[acompcor_WM]["Mask"] == "WM"])[0:self._n_acompcor_separate]
+                    
+                    subject_confounds.extend(acompcors_CSF + acompcor_WM)
+
                 valid_confounds = []
                 invalid_confounds = []
-                for confound_name in self._confound_names:
+                for confound_name in subject_confounds:
                     if "*" in confound_name:
                         prefix = confound_name.split("*")[0]
                         confounds_list = [col for col in confound_df.columns if col.startswith(prefix)]

@@ -60,6 +60,10 @@ class _TimeseriesExtractorGetter:
     def atlas_networks(self):
         return self._atlas_networks
     
+    @property
+    def n_acompcor_separate(self):
+        return self._n_acompcor_separate
+    
     ### Does not exists upon initialization of Timeseries Extractor
 
     # Exist when TimeSeriesExtractor.get_bold() used
