@@ -58,9 +58,16 @@ Quick code example:
 from neurocaps.extraction import TimeseriesExtractor
 from neurocaps.analysis import CAP
 
-# If use_confounds is True but no confound_names provided, there are hardcoded confound names that will extract the data from the confound files outputted by fMRIPrep
+# If an asterisk '*' is after a name, all cofounds starting with the term preceding the paramter will be used. in this case, all parameters starting with 
+# cosine will be used.
+confounds = ["cosine*", "trans_x", "trans_x_derivative1", "trans_y", "trans_y_derivative1", "trans_z",
+            "trans_z_derivative1", "rot_x", "rot_x_derivative1", "rot_y", "rot_y_derivative1", "rot_z",
+            "rot_z_derivative1"]
 
-extractor = TimeseriesExtractor(n_rois=100, standardize="zscore_sample", use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01)
+# If use_confounds is True but no confound_names provided, there are hardcoded confound names that will extract the data from the confound files outputted by fMRIPrep
+# `n_acompcor_separate` will use the first 'n' components derived from the separate white-matter (WM) and cerebrospinalfluid (CSF). To use the acompcor components from the 
+# combined mask, list them in the `confound_names` parameter
+extractor = TimeseriesExtractor(n_rois=100, standardize="zscore_sample", use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01, confound_names=confounds, n_acompcor_separate=6)
 
 bids_dir = "/path/to/bids/dir"
 
