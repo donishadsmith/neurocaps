@@ -69,7 +69,7 @@ confounds = ["cosine*", "trans_x", "trans_x_derivative1", "trans_y", "trans_y_de
 # combined mask, list them in the `confound_names` parameter
 parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
 
-extractor = TimeseriesExtractor(n_rois=100, standardize="zscore_sample", use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01, confound_names=confounds, n_acompcor_separate=6)
+extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample", use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01, confound_names=confounds, n_acompcor_separate=6)
 
 bids_dir = "/path/to/bids/dir"
 
