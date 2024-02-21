@@ -33,7 +33,7 @@ pip install -e .
 # Usage
  This package contains two main classes - `TimeseriesExtractor`, for extracting the timeseries, and `CAP`, for performing the cap analysis.
 
-Note: When extracting the timeseries, this package uses the Schaefer atlas. The number of ROIs and networks for the Schaefer atlas can be modified with `n_rois` and `n_networks` when initializing the main `TimeseriesExtractor` class.
+Note: When extracting the timeseries, this package uses the Schaefer atlas. The number of ROIs and networks for the Schaefer atlas can be modified with the `parcel_approach` parameter when initializing the main `TimeseriesExtractor` class. To modify it, you must use a nested dictionary, where the primary key is "Schaefer" and the sub-keys are "n_rois" and "yeo_networks". Example: `parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}`.
 
 Main features for `TimeseriesExtractor` includes:
 
@@ -67,6 +67,8 @@ confounds = ["cosine*", "trans_x", "trans_x_derivative1", "trans_y", "trans_y_de
 # If use_confounds is True but no confound_names provided, there are hardcoded confound names that will extract the data from the confound files outputted by fMRIPrep
 # `n_acompcor_separate` will use the first 'n' components derived from the separate white-matter (WM) and cerebrospinalfluid (CSF). To use the acompcor components from the 
 # combined mask, list them in the `confound_names` parameter
+parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
+
 extractor = TimeseriesExtractor(n_rois=100, standardize="zscore_sample", use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01, confound_names=confounds, n_acompcor_separate=6)
 
 bids_dir = "/path/to/bids/dir"
@@ -81,7 +83,7 @@ pipeline_name = "fmriprep-1.4.0"
 # Task
 extractor.get_bold(bids_dir=bids_dir, task="emo", condition="positive", pipeline_name=pipeline_name)
 
-cap_analysis = CAP(node_labels=extractor.atlas_labels, n_clusters=6)
+cap_analysis = CAP(node_labels=extractor.parcel_approach["Schaefer"]["labels"], n_clusters=6)
 
 cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, standardize = True)
 

@@ -29,12 +29,8 @@ class _TimeseriesExtractorGetter:
         return self._dummy_scans
     
     @property
-    def n_rois(self):
-        return self._n_rois
-    
-    @property
-    def n_networks(self):
-        return self._n_networks
+    def parcel_approach(self):
+        return self._parcel_approach
     
     @property
     def use_confounds(self):
@@ -43,22 +39,6 @@ class _TimeseriesExtractorGetter:
     @property
     def confound_names(self):
         return self._confound_names
-    
-    @property
-    def atlas(self):
-        return self._atlas
-
-    @property
-    def atlas_labels(self):
-        return self._atlas_labels
-    
-    @property
-    def atlas_indices(self):
-        return enumerate(self._atlas_labels)
-    
-    @property
-    def atlas_networks(self):
-        return self._atlas_networks
     
     @property
     def n_acompcor_separate(self):

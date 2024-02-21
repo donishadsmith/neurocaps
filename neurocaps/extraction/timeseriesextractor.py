@@ -1,10 +1,10 @@
 from typing import Union
-from .._utils import _TimeseriesExtractorGetter
+from .._utils import _TimeseriesExtractorGetter, _check_parcel_approach
 import re, os, warnings, math 
 
 class TimeseriesExtractor(_TimeseriesExtractorGetter):
-    def __init__(self, space: str="MNI152NLin2009cAsym", standardize: Union[bool,str]="zscore_sample", detrend: bool=False , low_pass: float=None, high_pass: float=None, n_rois: int=400, 
-                 n_networks: int=7, use_confounds: bool=True, confound_names: list[str]=None, n_acompcor_separate: int=None, dummy_scans: int=None):
+    def __init__(self, space: str="MNI152NLin2009cAsym", standardize: Union[bool,str]="zscore_sample", detrend: bool=False , low_pass: float=None, high_pass: float=None, 
+                 parcel_approach : dict={"Schaefer": {"n_rois": 400, "yeo_networks": 7}}, use_confounds: bool=True, confound_names: list[str]=None, n_acompcor_separate: int=None, dummy_scans: int=None):
         """Timeseries Extractor Class
         
         Initializes a TimeseriesExtractor to prepare for Co-activation Patterns (CAPs) analysis.
@@ -21,10 +21,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Signals above cutoff frequency will be filtered out.
         high_pass : float, default=None
             Signals below cutoff frequency will be filtered out.
-        n_rois : int, default=400
-            The number of regions of interest (ROIs) to use for Schaefer parcellation. Options are 100, 200, 300, 400, 500, 600, 700, 800, 900, and 1000.
-        n_networks : int, default=7
-            The number of networks to use for Schaefer parcellation. Options are 7 and 17.
+        parcel_approach : dict, default={"Schaefer": {"n_rois": 400, "yeo_networks": 7}}
+            Approach to use to parcellate bold images. Should be in the form of a nested dictionary where the first key is the atlas.
+            Currently only "Schaefer" is important. For the sub-dcitionary, for "Schaefer", available options includes "n_rois" and "yeo_networks".
+            Please refer to the documentation for Nilearn's `datasets.fetch_atlas_schaefer_2018` for valid inputs.
         use_confounds : bool, default=True
             To use confounds when extracting timeseries.
         confound_names : List[str], default=None
@@ -46,14 +46,16 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         """
         self._space = space
         self._standardize = standardize
-        self._n_rois = n_rois
-        self._n_networks = n_networks
         self._use_confounds = use_confounds
         self._detrend = detrend
         self._low_pass = low_pass
         self._high_pass = high_pass
         self._dummy_scans = dummy_scans
         self._n_acompcor_separate = n_acompcor_separate 
+
+        # Check parcel_apprach
+        
+        self._parcel_approach = _check_parcel_approach(parcel_approach=parcel_approach)
 
         if self._use_confounds:
             if confound_names == None:
@@ -92,13 +94,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             print(f"List of confound regressors that will be used during timeseries extraction if available in confound dataframe: {self._confound_names}")
 
-        # Get atlas
-        from nilearn import datasets
-        self._atlas = datasets.fetch_atlas_schaefer_2018(n_rois=self._n_rois, yeo_networks=self._n_networks)
-        self._atlas_labels = [label.decode().split("7Networks_")[-1]  for label in self._atlas.labels]
-
-        # Get node networks
-        self._atlas_networks = list(dict.fromkeys([re.split("LH_|RH_", node)[-1].split("_")[0] for node in self._atlas_labels]))
 
     def get_bold(self, bids_dir: str, session: int, runs: list[int]=None, task: str="rest", condition: str=None, tr: Union[int, float]=None, run_subjects: list[str]=None, exclude_subjects: list[str]= None, pipeline_name: str=None) -> None: 
         """Get Bold Data
@@ -258,12 +253,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
                 confounds = confound_df[valid_confounds]
                 confounds = confounds.fillna(0)
-            
+
             # Create the masker for extracting time series
             masker = NiftiLabelsMasker(
                 mask_img=mask_file[0],
-                labels_img=self._atlas.maps, 
-                labels=self._atlas.labels, 
+                labels_img=self._parcel_approach[list(self._parcel_approach.keys())[0]]["maps"], 
+                labels=self._parcel_approach[list(self._parcel_approach.keys())[0]]["labels"], 
                 resampling_target='data',
                 standardize=self._standardize,
                 detrend=self._detrend,
@@ -380,16 +375,16 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 plot_indxs = roi_indx
             
             elif type(roi_indx) == str:
-                plot_indxs = self._atlas_labels.index(roi_indx)
+                plot_indxs = self._parcel_approach[self._parcel_approach.keys[0]]["labels"].index(roi_indx)
             
             elif type(roi_indx) == list:
                 if type(roi_indx[0]) == int:
                     plot_indxs = np.array(roi_indx)
                 elif type(roi_indx[0]) == str:
-                    plot_indxs = np.array([self._atlas_labels.index(index) for index in roi_indx])
+                    plot_indxs = np.array([self._parcel_approach[self._parcel_approach.keys[0]]["labels"].index(index) for index in roi_indx])
         
         elif network:
-            plot_indxs = np.array([index for index, node in enumerate(self._atlas_labels) if network in node])
+            plot_indxs = np.array([index for index, label in enumerate(self._parcel_approach[list(self._parcel_approach.keys())[0]]["labels"]) if network in label])
         
 
         plt.figure(figsize=plot_dict["figsize"])
