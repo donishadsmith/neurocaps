@@ -59,8 +59,8 @@ Quick code example:
 from neurocaps.extraction import TimeseriesExtractor
 from neurocaps.analysis import CAP
 
-"""If an asterisk '*' is after a name, all cofounds starting with the 
-term preceding the paramter will be used. in this case, all parameters 
+"""If an asterisk '*' is after a name, all confounds starting with the 
+term preceding the parameter will be used. in this case, all parameters 
 starting with cosine will be used."""
 confounds = ["cosine*", "trans_x", "trans_x_derivative1", "trans_y", 
              "trans_y_derivative1", "trans_z","trans_z_derivative1", 
@@ -70,7 +70,7 @@ confounds = ["cosine*", "trans_x", "trans_x_derivative1", "trans_y",
 """If use_confounds is True but no confound_names provided, there are hardcoded 
 confound names that will extract the data from the confound files outputted by fMRIPrep
 `n_acompcor_separate` will use the first 'n' components derived from the separate 
-white-matter (WM) and cerebrospinalfluid (CSF). To use the acompcor components from the 
+white-matter (WM) and cerebrospinal fluid (CSF). To use the acompcor components from the 
 combined mask, list them in the `confound_names` parameter"""
 parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
 
