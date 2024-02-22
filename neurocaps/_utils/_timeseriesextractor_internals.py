@@ -2,7 +2,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
 
     from nilearn.maskers import NiftiLabelsMasker
     from nilearn.image import index_img, load_img
-    import pandas as pd, warnings, json, math
+    import pandas as pd, warnings, json, math, copy
 
     # Intitialize dictionary; Current subject will alway be the last subject in the subjects attribute
     subject_timeseries = {subj_id: {}}
@@ -36,6 +36,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
         # Extract confound information of interest and ensure confound file does not contain NAs
         if signal_clean_info["use_confounds"]:
             # Extract first "n" numbers of specified WM and CSF components
+            confound_names = copy.deepcopy(signal_clean_info["confound_names"])
             if confound_metadata_file:
                 with open(confound_metadata_file[0]) as foo:
                     confound_metadata = json.load(foo)
@@ -45,11 +46,11 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
                 acompcors_CSF = [acompcor_CSF for acompcor_CSF in acompcors if confound_metadata[acompcor_CSF]["Mask"] == "CSF"][0:signal_clean_info["n_acompcor_separate"]]
                 acompcor_WM = [acompcor_WM for acompcor_WM in acompcors if confound_metadata[acompcor_WM]["Mask"] == "WM"][0:signal_clean_info["n_acompcor_separate"]]
                 
-                signal_clean_info["confound_names"].extend(acompcors_CSF + acompcor_WM)
+                confound_names.extend(acompcors_CSF + acompcor_WM)
 
             valid_confounds = []
             invalid_confounds = []
-            for confound_name in signal_clean_info["confound_names"]:
+            for confound_name in confound_names:
                 if "*" in confound_name:
                     prefix = confound_name.split("*")[0]
                     confounds_list = [col for col in confound_df.columns if col.startswith(prefix)]
