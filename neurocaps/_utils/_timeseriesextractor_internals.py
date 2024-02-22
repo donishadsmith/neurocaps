@@ -16,6 +16,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
         confound_metadata_file = [confound_metadata_file for confound_metadata_file in confound_metadata_files if run in confound_metadata_file] if signal_clean_info["use_confounds"] and signal_clean_info["n_acompcor_separate"] else None
 
         print(f"Running subject: {subj_id}; {run}; \n {nifti_file}")
+
         if len(nifti_file) == 0 or len(mask_file) == 0:
             warnings.warn(f"Skipping subject: {subj_id}; {run} do to missing nifti or mask file.")
             continue
@@ -31,7 +32,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
         confound_df = pd.read_csv(confound_file[0], sep=None) if signal_clean_info["use_confounds"] else None
 
         event_file = None if len(event_files) == 0 else [event_file for event_file in event_files if run in event_file]
-        print(f"Running subject: {subj_id}; {run}; \n {nifti_file} \n{mask_file} \n{mask_file} \n{confound_file} \n{event_file} \n{confound_metadata_file}")
+
         # Extract confound information of interest and ensure confound file does not contain NAs
         if signal_clean_info["use_confounds"]:
             # Extract first "n" numbers of specified WM and CSF components
@@ -45,7 +46,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
                 acompcor_WM = [acompcor_WM for acompcor_WM in acompcors if confound_metadata[acompcor_WM]["Mask"] == "WM"][0:signal_clean_info["n_acompcor_separate"]]
                 
                 signal_clean_info["confound_names"].extend(acompcors_CSF + acompcor_WM)
-            print(f"Subject{subj_id} signal_clean {signal_clean_info['confound_names']}")
+
             valid_confounds = []
             invalid_confounds = []
             for confound_name in signal_clean_info["confound_names"]:
@@ -62,7 +63,6 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
 
             confounds = confound_df[valid_confounds]
             confounds = confounds.fillna(0)
-            print(f"Subject {subj_id} confounds: {confounds.columns}")
 
         # Create the masker for extracting time series
         masker = NiftiLabelsMasker(
