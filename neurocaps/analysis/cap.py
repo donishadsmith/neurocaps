@@ -37,7 +37,6 @@ class CAP(_CAPGetter):
         The initialization ensures unique values if `n_clusters` is a list and checks for 
         valid input types and values.
         """
-        
         # Ensure all unique values if n_clusters is a list
         self._n_clusters = n_clusters if type(n_clusters) == int else sorted(list(set(n_clusters)))
         self._cluster_selection_method = cluster_selection_method 
@@ -125,8 +124,7 @@ class CAP(_CAPGetter):
                 self._kmeans[group] = {}
                 self._kmeans[group] = KMeans(n_clusters=self._n_clusters,random_state=random_state).fit(self._concatenated_timeseries[group]) if random_state or random_state == 0 else KMeans(n_clusters=self._n_clusters).fit(self._concatenated_timeseries[group])
             
-        # Create states dict
-            
+        # Create states dict   
         self._create_caps_dict()
     
     def _perform_silhouette_method(self, random_state):

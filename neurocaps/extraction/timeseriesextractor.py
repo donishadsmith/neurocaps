@@ -44,13 +44,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         For the `confound_names` parameter, an asterisk ("*") can be used to find the name of confounds that starts with the term preceding the asterisk.
         For instance, "cosine*" will find all confound names in the confound files starting with "cosine".
         """
-
         self._space = space
         self._signal_clean_info = {"standardize": standardize, "use_confounds": use_confounds, "detrend": detrend, 
                                    "low_pass": low_pass, "high_pass": high_pass, "dummy_scans": dummy_scans,"n_acompcor_separate": n_acompcor_separate}   
 
         # Check parcel_apprach
-        
         self._parcel_approach = _check_parcel_approach(parcel_approach=parcel_approach)
 
         if self._signal_clean_info["use_confounds"]:
@@ -304,7 +302,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         if roi_indx !=None and network != None:
             raise ValueError("`roi_indx` and network can not be used simultaneously.")
         
-
         if output_dir:
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
@@ -330,7 +327,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         elif network:
             plot_indxs = np.array([index for index, label in enumerate(self._parcel_approach[list(self._parcel_approach.keys())[0]]["labels"]) if network in label])
         
-
         plt.figure(figsize=plot_dict["figsize"])
 
         if roi_indx or roi_indx == 0: 

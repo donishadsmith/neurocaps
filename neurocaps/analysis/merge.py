@@ -65,8 +65,6 @@ def merge_dicts(subject_timeseries_list: Union[list[dict], list[str]], return_di
                 else:
                     subject_timeseries_combined[subj_id].update({curr_run: curr_dict[subj_id][curr_run]})
                 
-    
-
     if output_dir:
         import pickle, os
         if not os.path.exists(output_dir):
