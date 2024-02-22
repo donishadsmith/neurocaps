@@ -1,7 +1,7 @@
 # neurocaps
 This is a beta Python package to perform Co-activation Patterns (CAPs) analyses, which involves using kmeans clustering to group timepoints (TR's) into brain states, on both resting-state or task data. It is compatible with data preprocessed with fMRIPrep and assumes your directory is BIDS-compliant and contains a derivatives folder with a pipeline folder, such as fMRIPrep, containing preprocessed BOLD data.
 
-**This package is still in development but is functional**
+**This package is still in development but is functional.**
 
 # Installation
 
