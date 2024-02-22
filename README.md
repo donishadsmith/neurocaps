@@ -59,19 +59,24 @@ Quick code example:
 from neurocaps.extraction import TimeseriesExtractor
 from neurocaps.analysis import CAP
 
-# If an asterisk '*' is after a name, all cofounds starting with the term preceding the paramter will be used. in this case, all parameters starting with 
-# cosine will be used.
-confounds = ["cosine*", "trans_x", "trans_x_derivative1", "trans_y", "trans_y_derivative1", "trans_z",
-            "trans_z_derivative1", "rot_x", "rot_x_derivative1", "rot_y", "rot_y_derivative1", "rot_z",
-            "rot_z_derivative1"]
+"""If an asterisk '*' is after a name, all cofounds starting with the 
+term preceding the paramter will be used. in this case, all parameters 
+starting with cosine will be used."""
+confounds = ["cosine*", "trans_x", "trans_x_derivative1", "trans_y", 
+             "trans_y_derivative1", "trans_z","trans_z_derivative1", 
+             "rot_x", "rot_x_derivative1", "rot_y", "rot_y_derivative1", 
+             "rot_z","rot_z_derivative1"]
 
-# If use_confounds is True but no confound_names provided, there are hardcoded confound names that will extract the data from the confound files outputted by fMRIPrep
-# `n_acompcor_separate` will use the first 'n' components derived from the separate white-matter (WM) and cerebrospinalfluid (CSF). To use the acompcor components from the 
-# combined mask, list them in the `confound_names` parameter
+"""If use_confounds is True but no confound_names provided, there are hardcoded 
+confound names that will extract the data from the confound files outputted by fMRIPrep
+`n_acompcor_separate` will use the first 'n' components derived from the separate 
+white-matter (WM) and cerebrospinalfluid (CSF). To use the acompcor components from the 
+combined mask, list them in the `confound_names` parameter"""
 parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
 
-extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample", use_confounds=True, 
-                                detrend=True, low_pass=0.15, high_pass=0.01, confound_names=confounds, n_acompcor_separate=6)
+extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
+                                 use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01, 
+                                 confound_names=confounds, n_acompcor_separate=6)
 
 bids_dir = "/path/to/bids/dir"
 
@@ -82,20 +87,28 @@ pipeline_name = "fmriprep-1.4.0"
 # extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
 
 # Task; use parallel processing with `n_cores`
-extractor.get_bold(bids_dir=bids_dir, task="emo", condition="positive", pipeline_name=pipeline_name, n_cores=10)
+extractor.get_bold(bids_dir=bids_dir, task="emo", condition="positive", 
+                   pipeline_name=pipeline_name, n_cores=10)
 
-cap_analysis = CAP(node_labels=extractor.parcel_approach["Schaefer"]["labels"], n_clusters=6)
+cap_analysis = CAP(node_labels=extractor.parcel_approach["Schaefer"]["labels"],
+                    n_clusters=6)
 
-cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, standardize = True)
+cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, 
+                      standardize = True)
 
 cap_analysis.visualize_caps(visual_scope="networks", plot_options="outer product", 
-                            task_title="- Positive Valence", ncol=3, sharey=True, subplots=True)
+                            task_title="- Positive Valence", ncol=3, sharey=True, 
+                            subplots=True)
 
-cap_analysis.visualize_caps(visual_scope="nodes", plot_options="outer product", task_title="- Positive Valence", ncol=3,
-                            sharey=True, subplots=True, xlabel_rotation=90, tight_layout=False, hspace = 0.4)
+cap_analysis.visualize_caps(visual_scope="nodes", plot_options="outer product", 
+                            task_title="- Positive Valence", ncol=3,sharey=True, 
+                            subplots=True, xlabel_rotation=90, tight_layout=False, 
+                            hspace = 0.4)
 
-outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, tr=2.0, return_df=True, output_dir=output_dir, 
-                                         metrics=["temporal fraction", "persistence"],continuous_runs=True, file_name="All_Subjects_CAPs_metrics")
+outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, tr=2.0, 
+                                         return_df=True, output_dir=output_dir,
+                                         metrics=["temporal fraction", "persistence"],
+                                         continuous_runs=True, file_name="All_Subjects_CAPs_metrics")
 
 print(outputs["temporal fraction"])
 
