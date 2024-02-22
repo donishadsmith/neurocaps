@@ -96,6 +96,7 @@ cap_analysis = CAP(node_labels=extractor.parcel_approach["Schaefer"]["labels"],
 cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, 
                       standardize = True)
 
+# Visualize CAPs
 cap_analysis.visualize_caps(visual_scope="networks", plot_options="outer product", 
                             task_title="- Positive Valence", ncol=3, sharey=True, 
                             subplots=True)
@@ -105,6 +106,7 @@ cap_analysis.visualize_caps(visual_scope="nodes", plot_options="outer product",
                             subplots=True, xlabel_rotation=90, tight_layout=False, 
                             hspace = 0.4)
 
+# Get CAP metrics
 outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, tr=2.0, 
                                          return_df=True, output_dir=output_dir,
                                          metrics=["temporal fraction", "persistence"],
