@@ -9,67 +9,19 @@ class _TimeseriesExtractorGetter:
         return self._space
     
     @property
-    def standardize(self):
-        return self._standardize
-    
-    @property
-    def detrend(self):
-        return self._detrend
-    
-    @property
-    def low_pass(self):
-        return self._low_pass
-    
-    @property
-    def high_pass(self):
-        return self._high_pass
-    
-    @property
-    def dummy_scans(self):
-        return self._dummy_scans
+    def signal_clean_info(self):
+        return self._signal_clean_info
     
     @property
     def parcel_approach(self):
         return self._parcel_approach
     
-    @property
-    def use_confounds(self):
-        return self._use_confounds
-    
-    @property
-    def confound_names(self):
-        return self._confound_names
-    
-    @property
-    def n_acompcor_separate(self):
-        return self._n_acompcor_separate
-    
     ### Does not exists upon initialization of Timeseries Extractor
 
     # Exist when TimeSeriesExtractor.get_bold() used
     @property
-    def task(self):
-        if hasattr(self, "_task"): return self._task
-        else: return None
-            
-    @property
-    def condition(self):
-        if hasattr(self, "_condition"): return self._condition
-        else: return None
-    
-    @property
-    def session(self):
-        if hasattr(self, "_session"): return self._session
-        else: return None
-    
-    @property
-    def runs(self):
-        if hasattr(self, "_runs"): return self._runs
-        else: return None
-    
-    @property
-    def tr(self):
-        if hasattr(self, "_tr"): return self._tr
+    def task_info(self):
+        if hasattr(self, "_task_info"): return self._task_info
         else: return None
     
     # Gets initialized and populated in TimeSeriesExtractor.get_bold(), 
@@ -78,6 +30,11 @@ class _TimeseriesExtractorGetter:
         if hasattr(self, "_subject_ids"): return self._subject_ids
         else: return None
     
+    @property
+    def n_cores(self):
+        if hasattr(self, "_n_cores"): return self._n_cores
+        else: return None
+
     # Gets initialized in TimeSeriesExtractor.get_bold(), gets populated when TimeseriesExtractor._timeseries_aggregator
     # gets called in TimeseriesExtractor._extract_timeseries
     @property

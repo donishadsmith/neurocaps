@@ -40,6 +40,7 @@ Main features for `TimeseriesExtractor` includes:
 - Timeseries extraction for resting state or task data and creating a nested dictionary containing the subject ID, run number, and associated timeseries. This is used as input for the `get_caps()` method in the `CAP` class.
 - Saving the nested dictionary containing timeseries as a pickle file.
 - Visualizing the timeseries of a Schaefer node or network subject's run. Also includes the ability to save plots.
+- Ability to use parallel processing by specifiying the number of CPU cores to use in the `n_cores` parameter in the `get_bold()` method
 
 Main features for `CAP` includes:
 
@@ -69,29 +70,32 @@ confounds = ["cosine*", "trans_x", "trans_x_derivative1", "trans_y", "trans_y_de
 # combined mask, list them in the `confound_names` parameter
 parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
 
-extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample", use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01, confound_names=confounds, n_acompcor_separate=6)
+extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample", use_confounds=True, 
+                                detrend=True, low_pass=0.15, high_pass=0.01, confound_names=confounds, n_acompcor_separate=6)
 
 bids_dir = "/path/to/bids/dir"
 
-# If there are multiple pipelines in the derivatives folder
-
+# If there are multiple pipelines in the derivatives folder, you can specify a specific pipeline
 pipeline_name = "fmriprep-1.4.0"
 
 # Resting State
 # extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
 
-# Task
-extractor.get_bold(bids_dir=bids_dir, task="emo", condition="positive", pipeline_name=pipeline_name)
+# Task; use parallel processing with `n_cores`
+extractor.get_bold(bids_dir=bids_dir, task="emo", condition="positive", pipeline_name=pipeline_name, n_cores=10)
 
 cap_analysis = CAP(node_labels=extractor.parcel_approach["Schaefer"]["labels"], n_clusters=6)
 
 cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, standardize = True)
 
-cap_analysis.visualize_caps(visual_scope="networks", plot_options="outer product", task_title="- Positive Valence", ncol=3, sharey=True, subplots=True)
+cap_analysis.visualize_caps(visual_scope="networks", plot_options="outer product", 
+                            task_title="- Positive Valence", ncol=3, sharey=True, subplots=True)
 
-cap_analysis.visualize_caps(visual_scope="nodes", plot_options="outer product", task_title="- Positive Valence", ncol=3, sharey=True, subplots=True, xlabel_rotation=90, tight_layout=False, hspace = 0.4)
+cap_analysis.visualize_caps(visual_scope="nodes", plot_options="outer product", task_title="- Positive Valence", ncol=3,
+                            sharey=True, subplots=True, xlabel_rotation=90, tight_layout=False, hspace = 0.4)
 
-outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, tr=2.0, return_df=True, output_dir=output_dir, metrics=["temporal fraction", "persistence"],continuous_runs=True, file_name="All_Subjects_CAPs_metrics")
+outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, tr=2.0, return_df=True, output_dir=output_dir, 
+                                         metrics=["temporal fraction", "persistence"],continuous_runs=True, file_name="All_Subjects_CAPs_metrics")
 
 print(outputs["temporal fraction"])
 

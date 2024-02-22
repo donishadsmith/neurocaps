@@ -2,4 +2,5 @@ from ._timeseriesextractorgetter import _TimeseriesExtractorGetter
 from ._capgetter import _CAPGetter
 from ._pickle_to_dict import _convert_pickle_to_dict
 from ._check_parcel_approach import _check_parcel_approach
+from ._timeseriesextractor_internals import _extract_timeseries
 
