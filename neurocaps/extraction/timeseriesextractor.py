@@ -112,9 +112,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             List of subject IDs to process. Processes all subjects if None.
         exclude_subjects : List[str], default=None
             List of subject IDs to exclude.  
-        pipeline_name:str, default=None
+        pipeline_name: str, default=None
             The name of the pipeline folder in the derivatives folder containing the preprocessed data. If None, BIDSLayout will use the name of dset_dir with derivatives=True. This parameter
             should be used if their are multiple pipelines in the derivatives folder.
+        n_cores: bool or int, default=None
+            The number of CPU cores to use for multiprocessing. If true, all available cores will be used.
         """
         import bids, multiprocessing
 
@@ -161,12 +163,16 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                           self._subject_info[subj_id]["tr"], condition, self._parcel_approach, self._signal_clean_info
                           ) for subj_id in self._subject_ids]
 
+            print(args_list[0:9])
             with multiprocessing.Pool(processes=self._n_cores) as pool:
                 outputs = pool.starmap(_extract_timeseries, args_list)
             
             for output in outputs:
                 if isinstance(output, dict):
                     self._subject_timeseries.update(output)
+
+            # Ensure subjects are sorted
+            self._subject_timeseries = dict(sorted(self._subject_timeseries.items()))
 
             # Ensure processes close
             pool.close()
@@ -180,6 +186,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             
                 # Aggregate new timeseries
                 self._subject_timeseries.update(subject_timeseries)
+        
     
     # Get valid subjects to iterate through
     def _setup_extraction(self, layout, subj_id_list):
@@ -187,7 +194,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             
             nifti_files = sorted(layout.get(scope="derivatives", return_type="file",suffix="bold", task=self._task_info["task"], space=self._space, session=self._task_info["session"],extension = "nii.gz", subject=subj_id))
             bold_metadata_files = sorted(layout.get(scope="derivatives", return_type="file",suffix="bold", task=self._task_info["task"], space=self._space, session=self._task_info["session"], extension = "json", subject=subj_id))
-            event_files = sorted([file for file in sorted(layout.get(return_type="filename",suffix="events", task=self._task_info["task"], session=self._task_info["session"],extension = "tsv", subject = subj_id))])
+            if self._task_info["task"] == "fci":
+                event_files = sorted([file for file in sorted(layout.get(return_type="filename",suffix="events", task=self._task_info["task"], session=self._task_info["session"],extension = "tsv", subject = subj_id)) if "acq" in file])
+            else:
+                event_files = sorted([file for file in sorted(layout.get(return_type="filename",suffix="events", task=self._task_info["task"], session=self._task_info["session"],extension = "tsv", subject = subj_id))])
             confound_files = sorted(layout.get(scope='derivatives', return_type='file', desc='confounds', task=self._task_info["task"], session=self._task_info["session"],extension = "tsv", subject=subj_id))
             confound_metadata_files = sorted(layout.get(scope='derivatives', return_type='file', desc='confounds', task=self._task_info["task"], session=self._task_info["session"],extension = "json", subject=subj_id))
             mask_files = sorted(layout.get(scope='derivatives', return_type='file', suffix='mask', task=self._task_info["task"], space=self._space, session=self._task_info["session"], extension = "nii.gz", subject=subj_id))
