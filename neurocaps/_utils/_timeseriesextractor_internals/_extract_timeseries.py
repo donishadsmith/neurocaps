@@ -15,7 +15,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
         confound_file = [confound_file for confound_file in confound_files if run in confound_file] if signal_clean_info["use_confounds"] else None
         confound_metadata_file = [confound_metadata_file for confound_metadata_file in confound_metadata_files if run in confound_metadata_file] if signal_clean_info["use_confounds"] and signal_clean_info["n_acompcor_separate"] else None
 
-        #print(f"Running subject: {subj_id}; {run}; \n {nifti_file}")
+        print(f"Running subject: {subj_id}; {run}; \n {nifti_file}")
 
         if len(nifti_file) == 0 or len(mask_file) == 0:
             warnings.warn(f"Skipping subject: {subj_id}; {run} do to missing nifti or mask file.")
@@ -32,7 +32,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
         confound_df = pd.read_csv(confound_file[0], sep=None) if signal_clean_info["use_confounds"] else None
 
         event_file = None if len(event_files) == 0 else [event_file for event_file in event_files if run in event_file]
-        print(f"Running subject: {subj_id}; {run}; \n {nifti_file} \n{mask_file}\n{confound_file} \n{event_file} \n{confound_metadata_file}")
+
         # Extract confound information of interest and ensure confound file does not contain NAs
         if signal_clean_info["use_confounds"]:
             # Extract first "n" numbers of specified WM and CSF components
@@ -64,7 +64,6 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
 
             confounds = confound_df[valid_confounds]
             confounds = confounds.fillna(0)
-            print(f"Subject {subj_id} ; {run} confounds: {confounds.columns}")
 
         # Create the masker for extracting time series
         masker = NiftiLabelsMasker(
@@ -102,7 +101,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
 
             # Timeseries with the extracted scans corresponding to condition; set is used to remove overlapping TRs    
             timeseries = timeseries[sorted(list(set(scan_list))),:]
-        print(f"Subject {subj_id} ; {run} shape: {nifti_img.shape}")
+
         subject_timeseries[subj_id].update({run: timeseries})
 
     return subject_timeseries
