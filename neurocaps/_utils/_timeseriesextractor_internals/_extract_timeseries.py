@@ -2,7 +2,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
 
     from nilearn.maskers import NiftiLabelsMasker
     from nilearn.image import index_img, load_img
-    import pandas as pd, json, math, copy
+    import pandas as pd, json, math, copy, warnings
 
     # Intitialize subject dictionary
     subject_timeseries = {subj_id: {}}
@@ -70,6 +70,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
         if signal_clean_info["dummy_scans"]: 
             nifti_img = index_img(nifti_img, slice(signal_clean_info["dummy_scans"], None))
             if signal_clean_info["use_confounds"]: confounds.drop(list(range(0,signal_clean_info["dummy_scans"])),axis=0,inplace=True)
+            offset = signal_clean_info["dummy_scans"] 
 
         # Extract timeseries
         timeseries = masker.fit_transform(nifti_img, confounds=confounds) if signal_clean_info["use_confounds"] else masker.fit_transform(nifti_img)
@@ -85,11 +86,17 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
             # Convert times into scan numbers to obtain the scans taken when the participant was exposed to the condition of interest; include partial scans
             for i in condition_df.index:
                 onset_scan, duration_scan = int(condition_df.loc[i,"onset"]/tr), math.ceil((condition_df.loc[i,"onset"] + condition_df.loc[i,"duration"])/tr)
-                scan_list.extend(range(onset_scan, duration_scan + 1))
+                if signal_clean_info["dummy_scans"]:
+                    scan_list.extend([scan - offset for scan in range(onset_scan, duration_scan + 1) if scan not in range(0, signal_clean_info["dummy_scans"])])
+                else:
+                    scan_list.extend(range(onset_scan, duration_scan + 1))
 
             # Timeseries with the extracted scans corresponding to condition; set is used to remove overlapping TRs    
             timeseries = timeseries[sorted(list(set(scan_list))),:]
 
-        subject_timeseries[subj_id].update({run: timeseries})
+        if timeseries.shape[0] == 0:
+            warnings.warn(f"Subject {subj_id} timeseries is empty for {run}. Most likely due to condition not existing or TRs correspoonding to the condition being removed by `dummy_scans`.")
+        else:
+            subject_timeseries[subj_id].update({run: timeseries})
 
     return subject_timeseries
