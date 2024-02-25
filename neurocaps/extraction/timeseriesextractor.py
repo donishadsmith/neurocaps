@@ -1,5 +1,5 @@
 from typing import Union
-from .._utils import _TimeseriesExtractorGetter, _check_parcel_approach, _extract_timeseries
+from .._utils import _TimeseriesExtractorGetter, _check_confound_names, _check_parcel_approach, _extract_timeseries
 import re, os, warnings, json
 
 class TimeseriesExtractor(_TimeseriesExtractorGetter):
@@ -23,7 +23,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Signals below cutoff frequency will be filtered out.
         parcel_approach : dict, default={"Schaefer": {"n_rois": 400, "yeo_networks": 7}}
             Approach to use to parcellate bold images. Should be in the form of a nested dictionary where the first key is the atlas.
-            Currently only "Schaefer" is important. For the sub-dcitionary, for "Schaefer", available options includes "n_rois" and "yeo_networks".
+            Currently only "Schaefer" is supported. For the sub-dictionary for "Schaefer", available options includes "n_rois" and "yeo_networks".
             Please refer to the documentation for Nilearn's `datasets.fetch_atlas_schaefer_2018` for valid inputs.
         use_confounds : bool, default=True
             To use confounds when extracting timeseries.
@@ -45,49 +45,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         For instance, "cosine*" will find all confound names in the confound files starting with "cosine".
         """
         self._space = space
-        self._signal_clean_info = {"standardize": standardize, "use_confounds": use_confounds, "detrend": detrend, 
-                                   "low_pass": low_pass, "high_pass": high_pass, "dummy_scans": dummy_scans,"n_acompcor_separate": n_acompcor_separate}   
+        self._signal_clean_info = {"standardize": standardize, "detrend": detrend, "low_pass": low_pass, "high_pass": high_pass, 
+                                   "dummy_scans": dummy_scans, "use_confounds": use_confounds,  "n_acompcor_separate": n_acompcor_separate}   
 
         # Check parcel_apprach
         self._parcel_approach = _check_parcel_approach(parcel_approach=parcel_approach)
 
         if self._signal_clean_info["use_confounds"]:
-            if confound_names == None:
-                if self._signal_clean_info["high_pass"]:
-                    # Do not use cosine or acompcor regressor if high pass filtering is not None. Acompcor regressors are estimated on high pass filtered version 
-                    # of data form fmriprep
-                    self._signal_clean_info["confound_names"] = [
-                        "trans_x", "trans_x_derivative1", "trans_x_power2", "trans_x_derivative1_power2",
-                        "trans_y", "trans_y_derivative1", "trans_y_derivative1_power2", "trans_y_power2",
-                        "trans_z", "trans_z_derivative1", "trans_z_power2", "trans_z_derivative1_power2",
-                        "rot_x", "rot_x_derivative1", "rot_x_power2", "rot_x_derivative1_power2",
-                        "rot_y", "rot_y_derivative1", "rot_y_power2", "rot_y_derivative1_power2",
-                        "rot_z", "rot_z_derivative1", "rot_z_derivative1_power2", "rot_z_power2"
-                    ]
-                else:
-                    self._signal_clean_info["confound_names"] = [
-                        "cosine*",
-                        "trans_x", "trans_x_derivative1", "trans_x_power2", "trans_x_derivative1_power2",
-                        "trans_y", "trans_y_derivative1", "trans_y_derivative1_power2", "trans_y_power2",
-                        "trans_z", "trans_z_derivative1", "trans_z_power2", "trans_z_derivative1_power2",
-                        "rot_x", "rot_x_derivative1", "rot_x_power2", "rot_x_derivative1_power2",
-                        "rot_y", "rot_y_derivative1", "rot_y_power2", "rot_y_derivative1_power2",
-                        "rot_z", "rot_z_derivative1", "rot_z_derivative1_power2", "rot_z_power2", 
-                        "a_comp_cor_00", "a_comp_cor_01", "a_comp_cor_02", "a_comp_cor_03", "a_comp_cor_04", "a_comp_cor_05", "a_comp_cor_06"
-                    ]
-            else:
-                self._signal_clean_info["confound_names"] = confound_names
-                assert type(self._signal_clean_info["confound_names"]) == list and len(self._signal_clean_info["confound_names"]) > 0 , "confound_names must be a non-empty list"
-
-            if self._signal_clean_info["n_acompcor_separate"]:
-                check_confounds = [confound for confound in self._signal_clean_info["confound_names"] if "a_comp_cor" not in confound]
-                if len(self._signal_clean_info["confound_names"]) > len(check_confounds):
-                    removed_confounds = [element for element in self._signal_clean_info["confound_names"] if element not in check_confounds]
-                    warnings.warn(f"Since `n_acompcor_separate` has been specified, specified acompcor components in `confound_names` will be disregarded and replaced with the first {self._signal_clean_info['n_acompcor_separate']} components of the white matter and cerebrospinal fluid masks for each participant. The following components will not be used {removed_confounds}")
-                    self._signal_clean_info["confound_names"] = check_confounds 
-
-            print(f"List of confound regressors that will be used during timeseries extraction if available in confound dataframe: {self._signal_clean_info['confound_names']}")
-
+            self._signal_clean_info["confound_names"] = _check_confound_names(high_pass=high_pass, specified_confound_names=confound_names, n_acompcor_separate=n_acompcor_separate)
             
     def get_bold(self, bids_dir: str, session: int, runs: list[int]=None, task: str="rest", condition: str=None, tr: Union[int, float]=None, run_subjects: list[str]=None, exclude_subjects: list[str]= None, pipeline_name: str=None, n_cores: Union[bool, int]=None) -> None: 
         """Get Bold Data
@@ -99,13 +64,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         bids_dir : str
             Path to a BIDS compliant directory. 
         session : int
-            Session number.
-        run : list[int]
+            Session to extract timeseries from. Only a single session can be extracted at a time. 
+        runs : list[int]
             Run number to extract timeseries data from. Extracts all runs if unspecified.
         task : str, default="rest"
             Task name.
         condition : str, default=None
-            Specific condition in the task to extract from
+            Specific condition in the task to extract from. Only a single condition can be extracted at a time.
         tr : int or float, default=None
             Repetition time.
         run_subjects : List[str], default=None
@@ -186,11 +151,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 # Aggregate new timeseries
                 self._subject_timeseries.update(subject_timeseries)
         
-    
     # Get valid subjects to iterate through
     def _setup_extraction(self, layout, subj_id_list):
        for subj_id in subj_id_list:
-            
             nifti_files = sorted(layout.get(scope="derivatives", return_type="file",suffix="bold", task=self._task_info["task"], space=self._space, session=self._task_info["session"],extension = "nii.gz", subject=subj_id))
             bold_metadata_files = sorted(layout.get(scope="derivatives", return_type="file",suffix="bold", task=self._task_info["task"], space=self._space, session=self._task_info["session"], extension = "json", subject=subj_id))
             event_files = sorted([file for file in sorted(layout.get(return_type="filename",suffix="events", task=self._task_info["task"], session=self._task_info["session"],extension = "tsv", subject = subj_id))])
@@ -198,7 +161,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             confound_metadata_files = sorted(layout.get(scope='derivatives', return_type='file', desc='confounds', task=self._task_info["task"], session=self._task_info["session"],extension = "json", subject=subj_id))
             mask_files = sorted(layout.get(scope='derivatives', return_type='file', suffix='mask', task=self._task_info["task"], space=self._space, session=self._task_info["session"], extension = "nii.gz", subject=subj_id))
             # Generate a list of runs to iterate through based on runs in nifti_files
-            run_list = [f"run-{run}" for run in self._task_info["runs"]] if self._task_info["runs"] else [re.search("run-(\d+)",x)[0] for x in nifti_files]
+            check_runs = [f"run-{run}" for run in self._task_info["runs"]] if self._task_info["runs"] else [re.search("run-(\d+)",x)[0] for x in nifti_files]
 
             if len(nifti_files) == 0 or len(mask_files) == 0:
                 warnings.warn(f"Skipping subject: {subj_id} due to missing nifti or mask files.")
@@ -215,27 +178,29 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             if self._task_info["task"] != "rest" and len(event_files) == 0:
                 warnings.warn(f"Skipping subject: {subj_id} due to having no event files.")
                 continue
-            
-            bool_list = []
 
+            run_list = []
             # Check if at least one run has all files present
-            for run in run_list:
+            for run in check_runs:
                 curr_list = []
                 # Assess is any of these returns True
+                curr_list.append(any([run in file for file in nifti_files]))
                 if self._task_info["task"] != "rest": curr_list.append(any([run in file for file in event_files]))
                 if self._signal_clean_info["use_confounds"]:
                     curr_list.append(any([run in file for file in confound_files]))
                     if self._signal_clean_info["n_acompcor_separate"]: curr_list.append(any([run in file for file in confound_metadata_files]))
                 curr_list.append(any([run in file for file in mask_files]))
-                # Assess if all returns True for a specific run number
-                bool_list.append(all(curr_list))
+                # Append runs that contain all needed files
+                if all(curr_list): run_list.append(run)
             
             # Skip subject if no run has all needed files present
-            if True not in bool_list:
-                if self._task_info["task"] != "rest": warnings.warn(f"Skipping subject: {subj_id} due to no nifti file, mask file, confound tsv file, confound json file being from the same run.")
-                else: warnings.warn(f"Skipping subject: {subj_id} due to no nifti file, mask file, event file, confound tsv file, confound json file being from the same run.")
-                continue
-            
+            if len(run_list) != len(check_runs):
+                if len(run_list) == 0:
+                    if self._task_info["task"] != "rest": warnings.warn(f"Skipping subject: {subj_id} due to no nifti file, mask file, confound tsv file, confound json file being from the same run.")
+                    else: warnings.warn(f"Skipping subject: {subj_id} due to no nifti file, mask file, event file, confound tsv file, confound json file being from the same run.")
+                    continue
+                else: warnings.warn(f"Subject: {subj_id} only has the following runs available: {', '.join(run_list)}")
+
             # Add subject list to subject attribute. These are subjects that will be ran
             self._subject_ids.append(subj_id)
 

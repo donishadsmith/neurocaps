@@ -2,9 +2,9 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
 
     from nilearn.maskers import NiftiLabelsMasker
     from nilearn.image import index_img, load_img
-    import pandas as pd, warnings, json, math, copy
+    import pandas as pd, json, math, copy
 
-    # Intitialize dictionary; Current subject will alway be the last subject in the subjects attribute
+    # Intitialize subject dictionary
     subject_timeseries = {subj_id: {}}
     
     for run in run_list:
@@ -16,18 +16,6 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
         confound_metadata_file = [confound_metadata_file for confound_metadata_file in confound_metadata_files if run in confound_metadata_file] if signal_clean_info["use_confounds"] and signal_clean_info["n_acompcor_separate"] else None
 
         print(f"Running subject: {subj_id}; {run}; \n {nifti_file}")
-
-        if len(nifti_file) == 0 or len(mask_file) == 0:
-            warnings.warn(f"Skipping subject: {subj_id}; {run} do to missing nifti or mask file.")
-            continue
-        
-        if signal_clean_info["use_confounds"]:
-            if len(confound_file) == 0:
-                warnings.warn(f"Skipping subject: {subj_id}; {run} do to missing confound file.")
-                continue
-            if len(confound_metadata_file) == 0 and signal_clean_info["n_acompcor_separate"]:
-                warnings.warn(f"Skipping subject: {subj_id}; {run} do to missing confound metadata files to locate the first six components of the white-matter and cerobrospinal fluid masks seperately.")
-                continue
 
         confound_df = pd.read_csv(confound_file[0], sep=None) if signal_clean_info["use_confounds"] else None
 

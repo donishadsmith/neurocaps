@@ -3,5 +3,6 @@ from ._timeseriesextractor_internals import _extract_timeseries
 from ._timeseriesextractor_internals import _TimeseriesExtractorGetter
 from ._cap_internals import _CAPGetter
 from ._cap_internals import _convert_pickle_to_dict
+from ._check_confound_names import _check_confound_names
 
 
