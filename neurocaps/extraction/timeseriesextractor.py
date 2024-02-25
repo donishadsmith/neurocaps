@@ -149,7 +149,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                                                        tr=self._subject_info[subj_id]["tr"], condition=condition, parcel_approach=self._parcel_approach, signal_clean_info=self._signal_clean_info)
             
                 # Aggregate new timeseries
-                self._subject_timeseries.update(subject_timeseries)
+                if isinstance(subject_timeseries, dict): self._subject_timeseries.update(subject_timeseries)
         
     # Get valid subjects to iterate through
     def _setup_extraction(self, layout, subj_id_list):

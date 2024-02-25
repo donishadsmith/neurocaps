@@ -17,7 +17,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
 
         print(f"Running subject: {subj_id}; {run}; \n {nifti_file}")
 
-        confound_df = pd.read_csv(confound_file[0], sep=None) if signal_clean_info["use_confounds"] else None
+        confound_df = pd.read_csv(confound_file[0], sep="\t") if signal_clean_info["use_confounds"] else None
 
         event_file = None if len(event_files) == 0 else [event_file for event_file in event_files if run in event_file]
 
@@ -98,5 +98,8 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
             warnings.warn(f"Subject {subj_id} timeseries is empty for {run}. Most likely due to condition not existing or TRs correspoonding to the condition being removed by `dummy_scans`.")
         else:
             subject_timeseries[subj_id].update({run: timeseries})
+    
+    if len(subject_timeseries[subj_id].keys()) == 0:
+        subject_timeseries = None
 
     return subject_timeseries
