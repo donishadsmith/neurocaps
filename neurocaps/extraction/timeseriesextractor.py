@@ -194,7 +194,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 if all(curr_list): run_list.append(run)
             
             # Skip subject if no run has all needed files present
-            if len(run_list) != len(check_runs):
+            if len(run_list) != len(check_runs) or len(run_list) == 0:
                 if len(run_list) == 0:
                     if self._task_info["task"] != "rest": warnings.warn(f"Skipping subject: {subj_id} due to no nifti file, mask file, confound tsv file, confound json file being from the same run.")
                     else: warnings.warn(f"Skipping subject: {subj_id} due to no nifti file, mask file, event file, confound tsv file, confound json file being from the same run.")
