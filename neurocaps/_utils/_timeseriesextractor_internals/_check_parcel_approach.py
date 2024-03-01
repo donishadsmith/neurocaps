@@ -22,6 +22,5 @@ def _check_parcel_approach(parcel_approach):
         parcel_approach["Schaefer"].update({"labels": [label.decode().split("7Networks_")[-1]  for label in fetched_schaefer.labels]})
         # Get node networks
         parcel_approach["Schaefer"].update({"networks": list(dict.fromkeys([re.split("LH_|RH_", node)[-1].split("_")[0] for node in parcel_approach["Schaefer"]["labels"]]))})
-
     
     return parcel_approach
