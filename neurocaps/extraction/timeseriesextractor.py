@@ -156,7 +156,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
        for subj_id in subj_id_list:
             nifti_files = sorted(layout.get(scope="derivatives", return_type="file",suffix="bold", task=self._task_info["task"], space=self._space, session=self._task_info["session"],extension = "nii.gz", subject=subj_id))
             bold_metadata_files = sorted(layout.get(scope="derivatives", return_type="file",suffix="bold", task=self._task_info["task"], space=self._space, session=self._task_info["session"], extension = "json", subject=subj_id))
-            event_files = sorted([file for file in sorted(layout.get(return_type="filename",suffix="events", task=self._task_info["task"], session=self._task_info["session"],extension = "tsv", subject = subj_id))])
+            event_files = sorted([file for file in sorted(layout.get(return_type="filename",suffix="events", task=self._task_info["task"], session=self._task_info["session"],extension = "tsv", subject = subj_id))]) if self._task_info["condition"] else []
             confound_files = sorted(layout.get(scope='derivatives', return_type='file', desc='confounds', task=self._task_info["task"], session=self._task_info["session"],extension = "tsv", subject=subj_id))
             confound_metadata_files = sorted(layout.get(scope='derivatives', return_type='file', desc='confounds', task=self._task_info["task"], session=self._task_info["session"],extension = "json", subject=subj_id))
             mask_files = sorted(layout.get(scope='derivatives', return_type='file', suffix='mask', task=self._task_info["task"], space=self._space, session=self._task_info["session"], extension = "nii.gz", subject=subj_id))
@@ -175,7 +175,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     warnings.warn(f"Skipping subject: {subj_id} due to missing confound metadata to locate the first six components of the white-matter and cerobrospinal fluid masks seperately.")
                     continue
             
-            if self._task_info["task"] != "rest" and len(event_files) == 0:
+            if self._task_info["condition"] and len(event_files) == 0:
                 warnings.warn(f"Skipping subject: {subj_id} due to having no event files.")
                 continue
 
@@ -185,7 +185,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 curr_list = []
                 # Assess is any of these returns True
                 curr_list.append(any([run in file for file in nifti_files]))
-                if self._task_info["task"] != "rest": curr_list.append(any([run in file for file in event_files]))
+                if self._task_info["condition"]: curr_list.append(any([run in file for file in event_files]))
                 if self._signal_clean_info["use_confounds"]:
                     curr_list.append(any([run in file for file in confound_files]))
                     if self._signal_clean_info["n_acompcor_separate"]: curr_list.append(any([run in file for file in confound_metadata_files]))
@@ -196,7 +196,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             # Skip subject if no run has all needed files present
             if len(run_list) != len(check_runs) or len(run_list) == 0:
                 if len(run_list) == 0:
-                    if self._task_info["task"] != "rest": warnings.warn(f"Skipping subject: {subj_id} due to no nifti file, mask file, confound tsv file, confound json file being from the same run.")
+                    if self._task_info["condition"]: warnings.warn(f"Skipping subject: {subj_id} due to no nifti file, mask file, confound tsv file, confound json file being from the same run.")
                     else: warnings.warn(f"Skipping subject: {subj_id} due to no nifti file, mask file, event file, confound tsv file, confound json file being from the same run.")
                     continue
                 else: warnings.warn(f"Subject: {subj_id} only has the following runs available: {', '.join(run_list)}")
