@@ -33,13 +33,13 @@ pip install -e .
 # Usage
  This package contains two main classes - `TimeseriesExtractor`, for extracting the timeseries, and `CAP`, for performing the cap analysis.
 
-Note: When extracting the timeseries, this package uses the Schaefer atlas or the Automated Anatomical Labeling (AAL) atlas. The number of ROIs and networks for the Schaefer atlas can be modified with the `parcel_approach` parameter when initializing the main `TimeseriesExtractor` class. To modify it, you must use a nested dictionary, where the primary key is "Schaefer" and the sub-keys are "n_rois" and "yeo_networks". Example: `parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}`. Similary the version of the AAL atlas can be modified using `parcel_approach = {"AAL": {"version": "SPM12"}}`.
+**Note**: When extracting the timeseries, **this package uses the Schaefer atlas or the Automated Anatomical Labeling (AAL) atlas**. The number of ROIs and networks for the Schaefer atlas can be modified with the `parcel_approach` parameter when initializing the main `TimeseriesExtractor` class. To modify it, you must use a nested dictionary, where the primary key is "Schaefer" and the sub-keys are "n_rois" and "yeo_networks". Example: `parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}`. Similary the version of the AAL atlas can be modified using `parcel_approach = {"AAL": {"version": "SPM12"}}`.
 
 Main features for `TimeseriesExtractor` includes:
 
 - Timeseries extraction for resting state or task data and creating a nested dictionary containing the subject ID, run number, and associated timeseries. This is used as input for the `get_caps()` method in the `CAP` class.
 - Saving the nested dictionary containing timeseries as a pickle file.
-- Visualizing the timeseries of a Schaefer node or network subject's run. Also includes the ability to save plots.
+- Visualizing the timeseries of a Schaefer or AAL node or network subject's run. Also includes the ability to save plots.
 - Ability to use parallel processing by specifiying the number of CPU cores to use in the `n_cores` parameter in the `get_bold()` method. Testing on an HPC using a loop with `TimeseriesExtractor.get_bold()` to extract the session 1 and 2 bold timeries from 105 subjects from resting-state data (single-run containing 360 volumes) and two task datasets (three-runs containing 200 volumes each and two-runs containing 200 volumes) reduced processing time from 5 hrs 48 mins to 1 hr 26 mins (using 10 cores).
 
 Main features for `CAP` includes:
