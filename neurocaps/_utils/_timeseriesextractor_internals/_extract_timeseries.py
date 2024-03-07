@@ -78,7 +78,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
         if event_file:
             event_df = pd.read_csv(event_file[0], sep=None)
             # Get specific timing information for specific condition
-            condition_df = event_df[event_df["trial_type"] == condition] if condition else event_df
+            condition_df = event_df[event_df["trial_type"] == condition] 
 
             # Empty list for scans
             scan_list = []
