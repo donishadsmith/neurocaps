@@ -33,7 +33,7 @@ pip install -e .
 # Usage
  This package contains two main classes - `TimeseriesExtractor`, for extracting the timeseries, and `CAP`, for performing the cap analysis.
 
-Note: When extracting the timeseries, this package uses the Schaefer atlas or the Automated Anatomical Labeling (AAL) atlas. The number of ROIs and networks for the Schaefer atlas can be modified with the `parcel_approach` parameter when initializing the main `TimeseriesExtractor` class. To modify it, you must use a nested dictionary, where the primary key is "Schaefer" and the sub-keys are "n_rois" and "yeo_networks". Example: `parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}`. Similary the version of the AAL atlas can be modified using `parcel_approach = {"AAL": {"version": "SPM12"}}`.
+**Note**: When extracting the timeseries, **this package uses the Schaefer atlas or the Automated Anatomical Labeling (AAL) atlas**. The number of ROIs and networks for the Schaefer atlas can be modified with the `parcel_approach` parameter when initializing the main `TimeseriesExtractor` class. To modify it, you must use a nested dictionary, where the primary key is "Schaefer" and the sub-keys are "n_rois" and "yeo_networks". Example: `parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}`. Similary the version of the AAL atlas can be modified using `parcel_approach = {"AAL": {"version": "SPM12"}}`.
 
 Main features for `TimeseriesExtractor` includes:
 
