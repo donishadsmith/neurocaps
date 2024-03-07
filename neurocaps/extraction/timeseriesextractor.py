@@ -23,8 +23,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Signals below cutoff frequency will be filtered out.
         parcel_approach : dict, default={"Schaefer": {"n_rois": 400, "yeo_networks": 7}}
             Approach to use to parcellate bold images. Should be in the form of a nested dictionary where the first key is the atlas.
-            Currently only "Schaefer" is supported. For the sub-dictionary for "Schaefer", available options includes "n_rois" and "yeo_networks".
-            Please refer to the documentation for Nilearn's `datasets.fetch_atlas_schaefer_2018` for valid inputs.
+            Currently only "Schaefer" and "AAL" is supported. For the sub-dictionary for "Schaefer", available options includes "n_rois" and "yeo_networks".
+            Please refer to the documentation for Nilearn's `datasets.fetch_atlas_schaefer_2018` for valid inputs. For the subdictionary for "AAL" only "version"
+            is an option. Please refer to the documentation for Nilearn's `datasets.fetch_atlas_aal` for valid inputs.
         use_confounds : bool, default=True
             To use confounds when extracting timeseries.
         confound_names : List[str], default=None

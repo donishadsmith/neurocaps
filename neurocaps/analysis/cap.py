@@ -5,7 +5,7 @@ from .._utils import _CAPGetter, _convert_pickle_to_dict
 import numpy as np, re, warnings
 
 class CAP(_CAPGetter):
-    def __init__(self, node_labels: list[str], n_clusters: Union[int, list[int]]=5, cluster_selection_method: str=None, groups: dict=None):
+    def __init__(self, parcel_approach: dict[dict], n_clusters: Union[int, list[int]]=5, cluster_selection_method: str=None, groups: dict=None):
         """
         Initialize the CAP (Co-activation Patterns) analysis class.
 
@@ -64,12 +64,13 @@ class CAP(_CAPGetter):
             for group in self._groups.keys():
                 self._groups[group] = [str(subj_id) if not isinstance(subj_id,str) else subj_id for subj_id in self._groups[group]]
         
-        if hasattr(node_labels[0],"decode"):
-            self._node_labels = [node_label.decode() for node_label in node_labels]
-        else:
-             self._node_labels = node_labels
-        # Get node networks
-        self._node_networks = list(dict.fromkeys([re.split("LH_|RH_", node)[-1].split("_")[0] for node in self._node_labels]))
+        valid_parcel_dict = {"Schaefer": {"n_rois" : 400, "yeo_networks": 7},
+                         "AAL": {"version": "SPM12"}}
+
+        if len(parcel_approach.keys()) > 1:
+            raise ValueError(f"Only one parcellation approach can be selected from the following valid options: {valid_parcel_dict.keys()}.\n Example format of `parcel_approach`: {valid_parcel_dict}")
+        
+        self._parcel_approach = parcel_approach 
 
     def get_caps(self, subject_timeseries: Union[dict[dict[np.ndarray]], str], runs: Union[int, list[int]]=None, random_state: int=None, show_figs: bool=True, standardize: bool=True, epsilon: Union[int,float]=0, **kwargs) -> None:
         """"" Create CAPs
@@ -307,8 +308,8 @@ class CAP(_CAPGetter):
 
         for plot_option, scope, group in distributed_list:
                 # Get correct labels depending on scope
-                if scope == "networks": cap_dict, columns = self._network_caps, self._node_networks
-                elif scope == "nodes": cap_dict, columns = self._caps, self._node_labels
+                if scope == "networks": cap_dict, columns = self._network_caps, self._parcel_approach[list(self._parcel_approach.keys())[0]]["networks"]
+                elif scope == "nodes": cap_dict, columns = self._caps, self._parcel_approach[list(self._parcel_approach.keys())[0]]["labels"]
 
                 #  Generate plot for each group
                 if plot_option == "outer product": self._generate_outer_product_plots(group=group, plot_dict=plot_dict, cap_dict=cap_dict, columns=columns, subplots=subplots,
@@ -321,11 +322,11 @@ class CAP(_CAPGetter):
         for group in self._groups.keys():
             for cap in self._caps[group].keys():
                 network_caps = {}
-                for network in self._node_networks:
+                for network in self._parcel_approach[list(self._parcel_approach.keys())[0]]["networks"]:
                     if len(network_caps) == 0:
-                        network_caps = np.array([np.average(self._caps[group][cap][np.array([index for index, node in enumerate(self._node_labels) if network in node])])])
+                        network_caps = np.array([np.average(self._caps[group][cap][np.array([index for index, node in enumerate(self._parcel_approach[list(self._parcel_approach.keys())[0]]["labels"]) if network in node])])])
                     else:
-                        network_caps = np.hstack([network_caps, np.average(self._caps[group][cap][np.array([index for index, node in enumerate(self._node_labels) if network in node])])])
+                        network_caps = np.hstack([network_caps, np.average(self._caps[group][cap][np.array([index for index, node in enumerate(self._parcel_approach[list(self._parcel_approach.keys())[0]]["labels"]) if network in node])])])
             
                 self._network_caps[group].update({cap: network_caps})
     
@@ -368,9 +369,12 @@ class CAP(_CAPGetter):
                 else:
                     # Create Labels
                     import collections
-                    frequency_dict = dict(collections.Counter([names[0] + " " + names[1] for names in [name.split("_")[0:2] for name in self._node_labels]]))
+                    if list(self._parcel_approach.keys())[0] == "Schaefer":
+                        frequency_dict = dict(collections.Counter([names[0] + " " + names[1] for names in [name.split("_")[0:2] for name in self._parcel_approach[list(self._parcel_approach.keys())[0]]["labels"]]]))
+                    elif list(self._parcel_approach.keys())[0] == "AAL":
+                        frequency_dict = collections.Counter([name.split("_")[0] for name in self._parcel_approach[list(self._parcel_approach.keys())[0]]["labels"]])
                     names_list = list(frequency_dict.keys())
-                    labels = ["" for _ in range(0,len(self._node_labels))]
+                    labels = ["" for _ in range(0,len(self._parcel_approach[list(self._parcel_approach.keys())[0]]["labels"]))]
 
                     shift = 0
 
@@ -453,10 +457,12 @@ class CAP(_CAPGetter):
         else: 
             # Create Labels
             import collections
-            
-            frequency_dict = dict(collections.Counter([names[0] + " " + names[1] for names in [name.split("_")[0:2] for name in self._node_labels]]))
+            if list(self._parcel_approach.keys())[0] == "Schaefer":
+                frequency_dict = dict(collections.Counter([names[0] + " " + names[1] for names in [name.split("_")[0:2] for name in self._parcel_approach[list(self._parcel_approach.keys())[0]]["labels"]]]))
+            elif list(self._parcel_approach.keys())[0] == "AAL":
+                frequency_dict = collections.Counter([name.split("_")[0] for name in self._parcel_approach[list(self._parcel_approach.keys())[0]]["labels"]])
             names_list = list(frequency_dict.keys())
-            labels = ["" for _ in range(0,len(self._node_labels))]
+            labels = ["" for _ in range(0,len(self._parcel_approach[list(self._parcel_approach.keys())[0]]["labels"]))]
 
             shift = 0
 

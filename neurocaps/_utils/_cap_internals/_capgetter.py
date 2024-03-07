@@ -17,12 +17,8 @@ class _CAPGetter:
         return self._groups
     
     @property
-    def node_labels(self):
-        return self._node_labels
-    
-    @property
-    def node_networks(self):
-        return self._node_networks
+    def parcel_approach(self):
+        return self._parcel_approach
     
     ### Attributes exist when CAP.get_caps() used
     @property
