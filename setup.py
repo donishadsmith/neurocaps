@@ -5,7 +5,7 @@ NAME = "neurocaps"
 VERSION = "0.8.5" 
 DESCRIPTION = "Co-activation patterns Python package"
 LONG_DESCRIPTION = "This package intends to provide a simple pipeline to perform a Co-activation patterns (CAPs) analysis on resting-state or task fmri data."
-REQUIRES_PYTHON = '>=3.7.0'
+REQUIRES_PYTHON = '>=3.9.0'
 
 setup(
         name=NAME, 
