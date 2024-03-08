@@ -21,7 +21,7 @@ def _check_confound_names(high_pass, specified_confound_names, n_acompcor_separa
                 "rot_x", "rot_x_derivative1", "rot_x_power2", "rot_x_derivative1_power2",
                 "rot_y", "rot_y_derivative1", "rot_y_power2", "rot_y_derivative1_power2",
                 "rot_z", "rot_z_derivative1", "rot_z_derivative1_power2", "rot_z_power2", 
-                "a_comp_cor_00", "a_comp_cor_01", "a_comp_cor_02", "a_comp_cor_03", "a_comp_cor_04", "a_comp_cor_05", "a_comp_cor_06"
+                "a_comp_cor_00", "a_comp_cor_01", "a_comp_cor_02", "a_comp_cor_03", "a_comp_cor_04", "a_comp_cor_05"
             ]
     else:
         assert type(specified_confound_names) == list and len(specified_confound_names) > 0 , "confound_names must be a non-empty list."
