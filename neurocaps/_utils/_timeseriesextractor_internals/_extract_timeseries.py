@@ -52,6 +52,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
 
             confounds = confound_df[valid_confounds]
             confounds = confounds.fillna(0)
+            print(f"Confounds used for subject: {subj_id}; {run} - {confounds.columns}")
 
         # Create the masker for extracting time series
         masker = NiftiLabelsMasker(
