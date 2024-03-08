@@ -19,20 +19,7 @@ From source:
 ```bash
 
 git clone https://github.com/donishadsmith/neurocaps/
-
-```
-
-Change directory
-
-```bash
-
 cd neurocaps
-
-```
-
-Install 
-
-```bash
 pip install -e .
 
 ```
