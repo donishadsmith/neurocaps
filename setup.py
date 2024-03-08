@@ -20,8 +20,8 @@ setup(
             "pybids", "nilearn", "pandas", "numpy", 
             "matplotlib", "seaborn", "kneed"
         ], 
-        keywords=["python", "Co-Activation Patterns" "CAPs", "neuroimaging", "fmri", 
-                  "dfc", "dynamic functional connectivity"], 
+        keywords=["python", "Co-Activation Patterns", "CAPs", "neuroimaging", "fmri", 
+                  "dfc", "dynamic functional connectivity", "fMRIPrep"], 
         classifiers=[
             "Intended Audience :: Education",
             "Programming Language :: Python :: 3",
