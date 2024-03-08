@@ -6,6 +6,15 @@ This is a Python package to perform Co-activation Patterns (CAPs) analyses, whic
 This package uses pybids, which is only functional on POSIX operating system and Mac OS. To install, using your preferred terminal:
 
 Clone repository
+Installation with pip:
+
+```bash
+
+pip install neurocaps
+
+```
+
+From source:
 
 ```bash
 
