@@ -15,7 +15,13 @@ pip install neurocaps
 
 ```
 
-From source:
+From source (Development version):
+
+```bash
+pip install git+https://github.com/donishadsmith/neurocaps.git
+```
+
+or
 
 ```bash
 
