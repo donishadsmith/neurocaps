@@ -1,7 +1,7 @@
 import os, numpy as np, sys, pytest, warnings
-dirname = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+#dirname = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
-sys.path.append(dirname)
+#sys.path.append(dirname)
 
 from neurocaps.extraction import TimeseriesExtractor
 from neurocaps.analysis import CAP
