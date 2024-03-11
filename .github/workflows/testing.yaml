@@ -1,0 +1,31 @@
+name: testing
+
+on:
+  push:
+    branches: [main, master]
+
+jobs:
+  test-build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ['ubuntu-latest', 'macos-latest']
+        python-ver: ['3.9', '3.10', '3.11', '3.12']
+    name: Python ${{ matrix.python-ver }} check on ${{ matrix.os }} 
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-ver }}
+      - name: Install package
+        run: pip install -e .
+        shell: bash
+      - name: Run tests
+        run: |
+          pip install pytest
+          pytest test_CAP.py
+          pytest test_merge_dicts.py
+        shell: bash
+        working-directory: neurocaps/tests
+     
+
