@@ -17,10 +17,11 @@ def merge_dicts(subject_timeseries_list: Union[list[dict], list[str]], return_co
         the nested subject timeseries dictionary produced by the TimeseriesExtractor class. The first level of the nested dictionary must consist of the subject
         ID as a string, the second level must consist of the the run numbers in the form of 'run-#', where # is the corresponding number of the run, and the last level 
         must consist of the timeseries associated with that run.
-    return_dict: bool, default=True,
+    return_combined_dict: bool, default=True,
         Returns the merged dictionaries if True
-    reduced_dict: bool, default=False
-        Returns the list of dictionaries provided with only the subjects present in the combined dictionary.
+    return_reduced_dicts: bool, default=False
+        Returns the list of dictionaries provided with only the subjects present in the combined dictionary. Returns dictionaries in the same order
+        they are listed in the `subject_timeseries_list` parameter.
     output_dir: str, default=None
         Directory to save the merged dictionary to. Will be saved as a pickle file.
     file_name: str, default=None
