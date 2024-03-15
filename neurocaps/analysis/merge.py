@@ -2,7 +2,7 @@ import numpy as np
 from typing import Union
 from .._utils import _convert_pickle_to_dict
 
-def merge_dicts(subject_timeseries_list: Union[list[dict], list[str]], return_dict: bool=True, output_dir: str=None, file_name: str=None) -> dict:
+def merge_dicts(subject_timeseries_list: Union[list[dict], list[str]], return_combined_dict: bool=True, return_reduced_dicts: bool=False, output_dir: str=None, file_name: str=None) -> dict:
     """Merge subject timeseries
 
     Merge subject timeseries dictionaries or pickle files to the first dictionary or pickle file in the list.
@@ -19,6 +19,8 @@ def merge_dicts(subject_timeseries_list: Union[list[dict], list[str]], return_di
         must consist of the timeseries associated with that run.
     return_dict: bool, default=True,
         Returns the merged dictionaries if True
+    reduced_dict: bool, default=False
+        Returns the list of dictionaries provided with only the subjects present in the combined dictionary.
     output_dir: str, default=None
         Directory to save the merged dictionary to. Will be saved as a pickle file.
     file_name: str, default=None
@@ -72,6 +74,22 @@ def merge_dicts(subject_timeseries_list: Union[list[dict], list[str]], return_di
     
         with open(os.path.join(output_dir,file_name + ".pkl"), "wb") as f:
             pickle.dump(subject_timeseries_combined,f)
-        
-    if return_dict:
-        return subject_timeseries_combined
+    
+    if return_reduced_dicts:
+        all_dicts = {}
+        count = 1
+        for curr_dict in subject_timeseries_list:
+            if "pkl" in curr_dict: curr_dict = _convert_pickle_to_dict(pickle_file=curr_dict)
+            if any([elem in subject_timeseries_combined.keys() for elem in curr_dict.keys()]):
+                all_dicts[f"dict_{count}"] = {}
+                for subj_id in subject_timeseries_combined.keys():
+                    if subj_id in curr_dict.keys():
+                        all_dicts[f"dict_{count}"].update({subj_id : curr_dict[subj_id]})
+                count += 1
+        if not return_combined_dict: return all_dicts
+            
+    if return_combined_dict:
+        if not return_reduced_dicts: return subject_timeseries_combined
+        else: 
+            all_dicts["combined"] = subject_timeseries_combined
+            return all_dicts
