@@ -255,6 +255,12 @@ class CAP(_CAPGetter):
         """
         import os, itertools
 
+        # Check labels
+        check_caps = self._caps[list(self._caps.keys())[0]]
+        check_caps = check_caps[list(check_caps.keys())[0]]
+        if check_caps.shape[0] != len(self._parcel_approach[list(self._parcel_approach.keys())[0]]["labels"]): 
+                raise ValueError("Number of rois/labels used for CAPs does not equal the number of rois/labels specified in `parcel_approach`.")
+
         if output_dir:
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
@@ -298,12 +304,6 @@ class CAP(_CAPGetter):
             if len(invalid_kwargs.keys()) > 0:
                 print(f"Invalid kwargs arguments used and will be ignored {invalid_kwargs}.")
 
-        # Check labels
-        check_caps = self._caps[list(self._caps.keys())[0]]
-        check_caps = check_caps[list(check_caps.keys())[0]]
-        if check_caps.shape[0] != len(self._parcel_approach[list(self._parcel_approach.keys())[0]]["labels"]): 
-                raise ValueError("Number of rois/labels used for CAPs does not equal the number of rois/labels specified in `parcel_approach`.")
-                
         # Ensure plot_options and visual_scope are lists
         plot_options = plot_options if type(plot_options) == list else list(plot_options)
         visual_scope = visual_scope if type(visual_scope) == list else list(visual_scope)
