@@ -1,6 +1,6 @@
 from typing import Union
 from .._utils import _TimeseriesExtractorGetter, _check_confound_names, _check_parcel_approach, _extract_timeseries
-import re, os, warnings, json
+import re, os, warnings, json, sys
 
 class TimeseriesExtractor(_TimeseriesExtractorGetter):
     def __init__(self, space: str="MNI152NLin2009cAsym", standardize: Union[bool,str]="zscore_sample", detrend: bool=False , low_pass: float=None, high_pass: float=None, 
@@ -86,6 +86,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         """
         import bids, multiprocessing
 
+        if sys.platform == "win32":
+            raise SystemError("Cannot use this method on Windows devices since it relies on the `pybids` module which is only compatable with POSIX systems.")
+
         # Update attributes
         self._task_info = {"task": task, "condition": condition, "session": session, "runs": runs, "tr": tr}
 
@@ -162,7 +165,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             confound_metadata_files = sorted(layout.get(scope='derivatives', return_type='file', desc='confounds', task=self._task_info["task"], session=self._task_info["session"],extension = "json", subject=subj_id))
             mask_files = sorted(layout.get(scope='derivatives', return_type='file', suffix='mask', task=self._task_info["task"], space=self._space, session=self._task_info["session"], extension = "nii.gz", subject=subj_id))
             # Generate a list of runs to iterate through based on runs in nifti_files
-            check_runs = [f"run-{run}" for run in self._task_info["runs"]] if self._task_info["runs"] else [re.search("run-(\d+)",x)[0] for x in nifti_files]
+            check_runs = [f"run-{run}" for run in self._task_info["runs"]] if self._task_info["runs"] else [re.search("run-(\\d+)",x)[0] for x in nifti_files]
 
             if len(nifti_files) == 0 or len(mask_files) == 0:
                 warnings.warn(f"Skipping subject: {subj_id} due to missing nifti or mask files.")
