@@ -1,8 +1,4 @@
-import os, numpy as np, pandas as pd, sys, pytest
-
-#dirname = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-
-#sys.path.append(dirname)
+import numpy as np, pandas as pytest
 
 from neurocaps.analysis import merge_dicts
 

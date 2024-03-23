@@ -1,6 +1,6 @@
 from typing import Union
 from .._utils import _TimeseriesExtractorGetter, _check_confound_names, _check_parcel_approach, _extract_timeseries
-import re, os, warnings, json
+import re, os, warnings, json, sys
 
 class TimeseriesExtractor(_TimeseriesExtractorGetter):
     def __init__(self, space: str="MNI152NLin2009cAsym", standardize: Union[bool,str]="zscore_sample", detrend: bool=False , low_pass: float=None, high_pass: float=None, 
@@ -85,6 +85,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             The number of CPU cores to use for multiprocessing. If true, all available cores will be used.
         """
         import bids, multiprocessing
+
+        if sys.platform == "win32":
+            raise SystemError("Cannot use this method on Windows devices since it relies on the `pybids` module which is only compatable with POSIX systems.")
 
         # Update attributes
         self._task_info = {"task": task, "condition": condition, "session": session, "runs": runs, "tr": tr}
