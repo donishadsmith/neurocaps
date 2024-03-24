@@ -53,7 +53,7 @@ different CAPs across the entire run.
 
 **Additionally, the `neurocaps.analysis` submodule contains the `merge_dicts` function, which allows you to merge the subject_timeseries dictionaries (merged dictionary will be returned and can be saved as a pickle file) for overlapping subjects across tasks in order to identify similar CAPs across different tasks[^3].**
 
-Please refer to [demo.ipynb](https://github.com/donishadsmith/neurocaps/blob/main/demos/demo.ipynb) to see a more extensive demonstration of the features included in this package. 
+Please refer to [demo.ipynb](https://github.com/donishadsmith/neurocaps/blob/main/demo.ipynb) to see a more extensive demonstration of the features included in this package. 
 
 Quick code example:
 
