@@ -26,6 +26,6 @@ jobs:
           pytest test_CAP.py
           pytest test_merge_dicts.py
         shell: bash
-        working-directory: /tests
+        working-directory: tests
      
 
