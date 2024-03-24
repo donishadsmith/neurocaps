@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neurocaps"
+description = "Co-activation patterns Python package"
+authors = [{ name = "Donisha Smith", email = "donishasmith@outlook.com"}]
+license = { file = "LICENSE" }
+readme = "README.md"
+requires-python = ">=3.9"
+keywords = ["python", "Co-Activation Patterns", "CAPs", "neuroimaging", "fmri", "dfc", "dynamic functional connectivity", "fMRIPrep"]
+classifiers = [
+    "Intended Audience :: Education",
+    "Programming Language :: Python :: 3",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: POSIX :: Linux",
+    "Development Status :: 4 - Beta"
+]
+
+[project.dependencies]
+numpy = "*"
+pandas = "*"
+matplotlib = "*"
+seaborn = "*"
+kneed = "*"
+nilearn = "*"
+
+# Conditional dependency using an environment marker
+pybids = {version = "*", markers = "sys_platform != 'win32'"}

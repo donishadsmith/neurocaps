@@ -2,7 +2,7 @@ name: testing
 
 on:
   push:
-    branches: [main, experimental, test]
+    branches: [main, test]
 
 jobs:
   test-build:
