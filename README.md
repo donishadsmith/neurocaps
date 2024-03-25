@@ -5,7 +5,9 @@ This is a Python package to perform Co-activation Patterns (CAPs) analyses, whic
 
 # Installation
 
-This package uses pybids, which is only functional on POSIX operating system and Mac OS. To install, using your preferred terminal:
+**Note**: The `.get_bold()` method in the `TimeseriesExtractor` class in this package uses pybids, which is only functional on POSIX operating system and Mac OS. Assuming you have a pickled timeseries dictionary in the proper nested form, this package can be used on windows to visualize the bold timeseries, use the `CAP` class, and the `merge_dicts()` fuction. 
+
+To install, using your preferred terminal:
 
 **Installation with pip:**
 
