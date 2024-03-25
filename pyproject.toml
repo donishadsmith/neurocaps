@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neurocaps"
-version = "0.8.8post2"
+version = "0.8.8post3"
 authors = [{name = "Donisha Smith", email = "donishasmith@outlook.com"}]
 description = "Co-activation patterns Python package"
 readme = "README.md"
@@ -26,7 +26,7 @@ dependencies = ["numpy",
                 "matplotlib",
                 "seaborn",
                 "kneed",
-                "nilearn",
+                "nilearn == 0.10.2",
                 "pybids; platform_system != 'Windows'"
                 ]
 
