@@ -20,12 +20,20 @@ jobs:
       - name: Install package
         run: pip install -e .
         shell: bash
-      - name: Run tests
+      - name: Run CAP tests
         run: |
           pip install pytest
           pytest test_CAP.py
           pytest test_merge_dicts.py
         shell: bash
         working-directory: tests
+      - name: Run TimeseriesExtractor tests
+        if: ${{ matrix.os  == 'ubuntu-latest' || matrix.os == 'macos-latest' }}
+        run: |
+          pip install pytest
+          pytest test_TimeseriesExtractor.py
+        shell: bash
+        working-directory: tests
+     
      
 

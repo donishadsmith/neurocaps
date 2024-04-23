@@ -1,4 +1,4 @@
-def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_files, confound_metadata_files, run_list, tr, condition, parcel_approach, signal_clean_info):
+def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_files, confound_metadata_files, run_list, tr, condition, parcel_approach, signal_clean_info, verbose, flush_print):
 
     from nilearn.maskers import NiftiLabelsMasker
     from nilearn.image import index_img, load_img
@@ -15,7 +15,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
         confound_file = [confound_file for confound_file in confound_files if run in confound_file] if signal_clean_info["use_confounds"] else None
         confound_metadata_file = [confound_metadata_file for confound_metadata_file in confound_metadata_files if run in confound_metadata_file] if signal_clean_info["use_confounds"] and signal_clean_info["n_acompcor_separate"] else None
 
-        print(f"Running subject: {subj_id}; {run}; \n {nifti_file}")
+        if verbose: print(f"Running subject: {subj_id}; {run}; \n {nifti_file}", flush=flush_print)
 
         confound_df = pd.read_csv(confound_file[0], sep="\t") if signal_clean_info["use_confounds"] else None
 
@@ -48,11 +48,12 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
                 if len(confounds_list) > 0: valid_confounds.extend(confounds_list)
                 else: invalid_confounds.extend([confound_name])
 
-            if len(invalid_confounds) > 0: print(f"Subject {subj_id} did not have the following confounds: {invalid_confounds}")
+            if len(invalid_confounds) > 0: 
+                if verbose: print(f"Subject {subj_id} did not have the following confounds: {invalid_confounds}", flush=flush_print)
 
             confounds = confound_df[valid_confounds]
             confounds = confounds.fillna(0)
-            print(f"Confounds used for subject: {subj_id}; {run} - {confounds.columns}")
+            if verbose: print(f"Confounds used for subject: {subj_id}; {run} - {confounds.columns}", flush=flush_print)
 
         # Create the masker for extracting time series
         masker = NiftiLabelsMasker(

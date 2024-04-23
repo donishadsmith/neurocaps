@@ -1,0 +1,15 @@
+{
+    "Name": "MyConnectome",
+    "License": "PDDL", 
+    "Authors": ["Poldrack RA", "Laumann TO", "Koyejo O", "Gregory B", "Hover A", "Chen MY", "Luci J", "Joo SJ", "Handwerker D", "Liang J", "Boyd R", "Hunicke-Smith S", "Simpson ZB", "Caven T", "Sochat V", "Shine JM", "Gordon E", "Snyder AZ", "Adeyemo B", "Petersen SE", "Glahn D", "McKay DR", "Curran JE", "Goring HHH", "Carless MA", "Blangero J", "Frick L", "Marcotte E", "Mumford JA"],
+    "Acknowledgments":"Jacy Anthis, Ashley Armenita, Adiel Carlo, Andrew Coulter, Jave Del Rosario, Dustin Fry, Kristie Garza, Kelly Jameson, Seorin Kim, Christina Leuker, Lakshya Nagar, Jacob Perez, Grace Shearrer, and Sheila Zare for assistance with MRI scanning",
+    "HowToAcknowledge":"Data for the MyConnectome project were obtained from the OpenfMRI database (http://openfmri.org/dataset/ds000031); also cite: Poldrack et al., (2015). Long-term neural and physiological phenotyping of a single human. Nature Communications.",
+    "ReferencesAndLinks": ["http://www.myconnectome.org","http://dx.doi.org/10.1016/j.neuron.2015.06.037"],
+    "Description":"Extensive longitudinal acquisition on a single individual",
+    "DatasetDOI": "doi:10.18112/P2159B",
+    "Funding": "Texas Emerging Technology Fund", 
+    "OpenFMRIAccessionNumber": "ds031", 
+    "ContactEmail": "poldrack@stanford.edu" ,
+    "BIDSVersion":"1.0.4",
+    "VersionReleaseDate":"09/22/2017"
+}

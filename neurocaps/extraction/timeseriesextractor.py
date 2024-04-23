@@ -55,7 +55,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         if self._signal_clean_info["use_confounds"]:
             self._signal_clean_info["confound_names"] = _check_confound_names(high_pass=high_pass, specified_confound_names=confound_names, n_acompcor_separate=n_acompcor_separate)
             
-    def get_bold(self, bids_dir: str, session: int, runs: list[int]=None, task: str="rest", condition: str=None, tr: Union[int, float]=None, run_subjects: list[str]=None, exclude_subjects: list[str]= None, pipeline_name: str=None, n_cores: Union[bool, int]=None) -> None: 
+    def get_bold(self, bids_dir: str, session: int=None, runs: list[int]=None, task: str="rest", condition: str=None, tr: Union[int, float]=None, 
+                 run_subjects: list[str]=None, exclude_subjects: list[str]= None, pipeline_name: str=None, n_cores: Union[bool, int]=None, verbose: bool=True, flush_print: bool=False) -> None: 
         """Get Bold Data
 
         Collects files needed to extract timeseries data from NIfTI files for BIDS-compliant datasets.
@@ -64,9 +65,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         ----------
         bids_dir : str
             Path to a BIDS compliant directory. 
-        session : int
+        session : int, default=None
             Session to extract timeseries from. Only a single session can be extracted at a time. 
-        runs : list[int]
+        runs : list[int], default=None
             Run number to extract timeseries data from. Extracts all runs if unspecified.
         task : str, default="rest"
             Task name.
@@ -83,6 +84,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             should be used if their are multiple pipelines in the derivatives folder.
         n_cores: bool or int, default=None
             The number of CPU cores to use for multiprocessing. If true, all available cores will be used.
+        verbose: bool, default=True
+            Print subject specific information such as confounds being extracted and id and run of subject being processed during timeseries extraction.
+        flush_print: bool, default=False
+            Flush the printed subject specific infomation produced during the timeseries extraction process.
         """
         import bids, multiprocessing
 
@@ -102,8 +107,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         else:
             layout = bids.BIDSLayout(bids_dir, derivatives=True)
 
-        print(f"Bids layout collected.")
-
+        print(f"Bids layout collected.", flush=True)
+        print(layout, flush=True)
         subj_id_list = sorted(layout.get(return_type="id", target="subject", task=task, space=self._space, suffix="bold")) 
 
         if exclude_subjects: 
@@ -129,7 +134,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             # Generate list of tuples for each subject
             args_list = [(subj_id, self._subject_info[subj_id]["nifti_files"],self._subject_info[subj_id]["mask_files"],self._subject_info[subj_id]["event_files"],
                           self._subject_info[subj_id]["confound_files"], self._subject_info[subj_id]["confound_metadata_files"], self._subject_info[subj_id]["run_list"],
-                          self._subject_info[subj_id]["tr"], condition, self._parcel_approach, self._signal_clean_info
+                          self._subject_info[subj_id]["tr"], condition, self._parcel_approach, self._signal_clean_info, verbose, flush_print
                           ) for subj_id in self._subject_ids]
 
             with multiprocessing.Pool(processes=self._n_cores) as pool:
@@ -150,7 +155,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 subject_timeseries=_extract_timeseries(subj_id=subj_id, nifti_files=self._subject_info[subj_id]["nifti_files"], mask_files=self._subject_info[subj_id]["mask_files"], 
                                                        event_files=self._subject_info[subj_id]["event_files"], confound_files=self._subject_info[subj_id]["confound_files"],
                                                        confound_metadata_files=self._subject_info[subj_id]["confound_metadata_files"], run_list=self._subject_info[subj_id]["run_list"], 
-                                                       tr=self._subject_info[subj_id]["tr"], condition=condition, parcel_approach=self._parcel_approach, signal_clean_info=self._signal_clean_info)
+                                                       tr=self._subject_info[subj_id]["tr"], condition=condition, parcel_approach=self._parcel_approach, signal_clean_info=self._signal_clean_info,
+                                                       verbose=verbose, flush_print=flush_print)
             
                 # Aggregate new timeseries
                 if isinstance(subject_timeseries, dict): self._subject_timeseries.update(subject_timeseries)
@@ -209,7 +215,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             self._subject_ids.append(subj_id)
 
             # Get repetition time for the subject
-            tr = tr if self._task_info["tr"] else json.load(open(bold_metadata_files[0]))["RepetitionTime"]
+            tr = self._task_info["tr"] if self._task_info["tr"] else json.load(open(bold_metadata_files[0]))["RepetitionTime"]
 
             # Store subject specific information
             self._subject_info[subj_id] = {"nifti_files": nifti_files, "event_files": event_files, "confound_files": confound_files, "confound_metadata_files": confound_metadata_files, "mask_files": mask_files,
