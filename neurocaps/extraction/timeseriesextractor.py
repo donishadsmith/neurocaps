@@ -55,7 +55,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         if self._signal_clean_info["use_confounds"]:
             self._signal_clean_info["confound_names"] = _check_confound_names(high_pass=high_pass, specified_confound_names=confound_names, n_acompcor_separate=n_acompcor_separate)
             
-    def get_bold(self, bids_dir: str, session: int=None, runs: list[int]=None, task: str="rest", condition: str=None, tr: Union[int, float]=None, 
+    def get_bold(self, bids_dir: str, session: Union[int,str]=None, runs: list[int]=None, task: str="rest", condition: str=None, tr: Union[int, float]=None, 
                  run_subjects: list[str]=None, exclude_subjects: list[str]= None, pipeline_name: str=None, n_cores: Union[bool, int]=None, verbose: bool=True, flush_print: bool=False) -> None: 
         """Get Bold Data
 
