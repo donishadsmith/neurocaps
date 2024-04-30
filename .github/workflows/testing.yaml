@@ -30,8 +30,21 @@ jobs:
       - name: Run TimeseriesExtractor tests
         if: ${{ matrix.os  == 'ubuntu-latest' || matrix.os == 'macos-latest' }}
         run: |
-          pip install pytest
           pytest test_TimeseriesExtractor.py
+        shell: bash
+        working-directory: tests
+      - name: Change file names for additional TimeseriesExtractor tests
+        if: ${{ matrix.os  == 'ubuntu-latest' || matrix.os == 'macos-latest' }}
+        run: |
+          mv sub-01_ses-002_task-rest_run-001_desc-confounds_timeseries.tsv sub-01_task-rest_desc-confounds_timeseries.tsv
+          mv sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz sub-01_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz
+          mv sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz sub-01_task-rest_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz
+        shell: bash
+        working-directory: tests/ds000031_R1.0.4_ses001-022/ds000031_R1.0.4/derivatives/fmriprep_1.0.0/fmriprep/sub-01/ses-002/func
+      - name: Perform additional TimeseriesExtractor test
+        if: ${{ matrix.os  == 'ubuntu-latest' || matrix.os == 'macos-latest' }}
+        run: |
+          pytest test_TimeseriesExtractor_additional.py
         shell: bash
         working-directory: tests
      

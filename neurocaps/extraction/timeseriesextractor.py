@@ -164,14 +164,38 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     # Get valid subjects to iterate through
     def _setup_extraction(self, layout, subj_id_list):
        for subj_id in subj_id_list:
-            nifti_files = sorted(layout.get(scope="derivatives", return_type="file",suffix="bold", task=self._task_info["task"], space=self._space, session=self._task_info["session"],extension = "nii.gz", subject=subj_id))
-            bold_metadata_files = sorted(layout.get(scope="derivatives", return_type="file",suffix="bold", task=self._task_info["task"], space=self._space, session=self._task_info["session"], extension = "json", subject=subj_id))
-            event_files = sorted([file for file in sorted(layout.get(return_type="filename",suffix="events", task=self._task_info["task"], session=self._task_info["session"],extension = "tsv", subject = subj_id))]) if self._task_info["condition"] else []
-            confound_files = sorted(layout.get(scope='derivatives', return_type='file', desc='confounds', task=self._task_info["task"], session=self._task_info["session"],extension = "tsv", subject=subj_id))
-            confound_metadata_files = sorted(layout.get(scope='derivatives', return_type='file', desc='confounds', task=self._task_info["task"], session=self._task_info["session"],extension = "json", subject=subj_id))
-            mask_files = sorted(layout.get(scope='derivatives', return_type='file', suffix='mask', task=self._task_info["task"], space=self._space, session=self._task_info["session"], extension = "nii.gz", subject=subj_id))
+            if self._task_info["session"]:
+                nifti_files = sorted(layout.get(scope="derivatives", return_type="file",suffix="bold", task=self._task_info["task"], space=self._space, session=self._task_info["session"],extension = "nii.gz", subject=subj_id))
+                bold_metadata_files = sorted(layout.get(scope="derivatives", return_type="file",suffix="bold", task=self._task_info["task"], space=self._space, session=self._task_info["session"], extension = "json", subject=subj_id))
+                event_files = sorted([file for file in sorted(layout.get(return_type="filename",suffix="events", task=self._task_info["task"], session=self._task_info["session"],extension = "tsv", subject = subj_id))]) if self._task_info["condition"] else []
+                confound_files = sorted(layout.get(scope='derivatives', return_type='file', desc='confounds', task=self._task_info["task"], session=self._task_info["session"],extension = "tsv", subject=subj_id))
+                confound_metadata_files = sorted(layout.get(scope='derivatives', return_type='file', desc='confounds', task=self._task_info["task"], session=self._task_info["session"],extension = "json", subject=subj_id))
+                mask_files = sorted(layout.get(scope='derivatives', return_type='file', suffix='mask', task=self._task_info["task"], space=self._space, session=self._task_info["session"], extension = "nii.gz", subject=subj_id))
+            else:
+                nifti_files = sorted(layout.get(scope="derivatives", return_type="file",suffix="bold", task=self._task_info["task"], space=self._space, extension = "nii.gz", subject=subj_id))
+                bold_metadata_files = sorted(layout.get(scope="derivatives", return_type="file",suffix="bold", task=self._task_info["task"], space=self._space, extension = "json", subject=subj_id))
+                event_files = sorted([file for file in sorted(layout.get(return_type="filename",suffix="events", task=self._task_info["task"], extension = "tsv", subject = subj_id))]) if self._task_info["condition"] else []
+                confound_files = sorted(layout.get(scope='derivatives', return_type='file', desc='confounds', task=self._task_info["task"], extension = "tsv", subject=subj_id))
+                confound_metadata_files = sorted(layout.get(scope='derivatives', return_type='file', desc='confounds', task=self._task_info["task"], extension = "json", subject=subj_id))
+                mask_files = sorted(layout.get(scope='derivatives', return_type='file', suffix='mask', task=self._task_info["task"], space=self._space, extension = "nii.gz", subject=subj_id))
+
             # Generate a list of runs to iterate through based on runs in nifti_files
-            check_runs = [f"run-{run}" for run in self._task_info["runs"]] if self._task_info["runs"] else [re.search("run-(\\d+)",x)[0] for x in nifti_files]
+            if self._task_info["runs"]:
+                check_runs = [f"run-{run}" for run in self._task_info["runs"]] 
+            elif len(nifti_files) != 0:
+                if "run-" in nifti_files[0].split("/")[-1]:
+                    check_runs = [re.search("run-(\\S+?)[-_]",x.split("/")[-1])[0][:-1] for x in nifti_files]
+                else:
+                   check_runs = [] 
+            else:
+                check_runs = []
+
+            # Generate a list of runs to iterate through based on runs in nifti_files
+            if not self._task_info["session"] and len(nifti_files) != 0:
+                if "ses-" in nifti_files[0].split("/")[-1]:
+                    check_sessions = [re.search("ses-(\\S+?)[-_]",x.split("/")[-1])[0][:-1] for x in nifti_files]
+                    if len(list(set(check_sessions))) > 1:
+                        raise ValueError(f"`session` not specified but subject {subj_id} has more than one session : {sorted(list(set(check_sessions)))}. In order to continue timeseries extraction, the specific session to extract must be specified")
 
             if len(nifti_files) == 0 or len(mask_files) == 0:
                 warnings.warn(f"Skipping subject: {subj_id} due to missing nifti or mask files.")
@@ -188,29 +212,31 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             if self._task_info["condition"] and len(event_files) == 0:
                 warnings.warn(f"Skipping subject: {subj_id} due to having no event files.")
                 continue
-
-            run_list = []
-            # Check if at least one run has all files present
-            for run in check_runs:
-                curr_list = []
-                # Assess is any of these returns True
-                curr_list.append(any([run in file for file in nifti_files]))
-                if self._task_info["condition"]: curr_list.append(any([run in file for file in event_files]))
-                if self._signal_clean_info["use_confounds"]:
-                    curr_list.append(any([run in file for file in confound_files]))
-                    if self._signal_clean_info["n_acompcor_separate"]: curr_list.append(any([run in file for file in confound_metadata_files]))
-                curr_list.append(any([run in file for file in mask_files]))
-                # Append runs that contain all needed files
-                if all(curr_list): run_list.append(run)
-            
-            # Skip subject if no run has all needed files present
-            if len(run_list) != len(check_runs) or len(run_list) == 0:
-                if len(run_list) == 0:
-                    if self._task_info["condition"]: warnings.warn(f"Skipping subject: {subj_id} due to no nifti file, mask file, confound tsv file, confound json file being from the same run.")
-                    else: warnings.warn(f"Skipping subject: {subj_id} due to no nifti file, mask file, event file, confound tsv file, confound json file being from the same run.")
-                    continue
-                else: warnings.warn(f"Subject: {subj_id} only has the following runs available: {', '.join(run_list)}")
-
+                
+            if len(check_runs) != 0:
+                run_list = []
+                # Check if at least one run has all files present
+                for run in check_runs:
+                    curr_list = []
+                    # Assess is any of these returns True
+                    curr_list.append(any([run in file for file in nifti_files]))
+                    if self._task_info["condition"]: curr_list.append(any([run in file for file in event_files]))
+                    if self._signal_clean_info["use_confounds"]:
+                        curr_list.append(any([run in file for file in confound_files]))
+                        if self._signal_clean_info["n_acompcor_separate"]: curr_list.append(any([run in file for file in confound_metadata_files]))
+                    curr_list.append(any([run in file for file in mask_files]))
+                    # Append runs that contain all needed files
+                    if all(curr_list): run_list.append(run)
+                
+                # Skip subject if no run has all needed files present
+                if len(run_list) != len(check_runs) or len(run_list) == 0:
+                    if len(run_list) == 0:
+                        if self._task_info["condition"]: warnings.warn(f"Skipping subject: {subj_id} due to no nifti file, mask file, confound tsv file, confound json file being from the same run.")
+                        else: warnings.warn(f"Skipping subject: {subj_id} due to no nifti file, mask file, event file, confound tsv file, confound json file being from the same run.")
+                        continue
+                    else: warnings.warn(f"Subject: {subj_id} only has the following runs available: {', '.join(run_list)}")
+            else:
+                run_list = [None]
             # Add subject list to subject attribute. These are subjects that will be ran
             self._subject_ids.append(subj_id)
 

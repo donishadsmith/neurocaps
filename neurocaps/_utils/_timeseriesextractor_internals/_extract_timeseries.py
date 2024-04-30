@@ -2,24 +2,27 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
 
     from nilearn.maskers import NiftiLabelsMasker
     from nilearn.image import index_img, load_img
-    import pandas as pd, json, math, copy, warnings
+    import pandas as pd, json, math, numpy as np, copy, warnings
 
     # Intitialize subject dictionary
     subject_timeseries = {subj_id: {}}
     
     for run in run_list:
 
-        # Get files from specific run
-        nifti_file = [nifti_file for nifti_file in nifti_files if run in nifti_file]
-        mask_file = [mask_file for mask_file in mask_files if run in mask_file]
-        confound_file = [confound_file for confound_file in confound_files if run in confound_file] if signal_clean_info["use_confounds"] else None
-        confound_metadata_file = [confound_metadata_file for confound_metadata_file in confound_metadata_files if run in confound_metadata_file] if signal_clean_info["use_confounds"] and signal_clean_info["n_acompcor_separate"] else None
+        run_id = "run-1" if run == None else run
+        run = run if run != None else ""
 
-        if verbose: print(f"Running subject: {subj_id}; {run}; \n {nifti_file}", flush=flush_print)
+        # Get files from specific run
+        nifti_file = [nifti_file for nifti_file in nifti_files if run in nifti_file.split("/")[-1]]
+        mask_file = [mask_file for mask_file in mask_files if run in mask_file.split("/")[-1]]
+        confound_file = [confound_file for confound_file in confound_files if run in confound_file.split("/")[-1]] if signal_clean_info["use_confounds"] else None
+        confound_metadata_file = [confound_metadata_file for confound_metadata_file in confound_metadata_files if run in confound_metadata_file.split("/")[-1]] if signal_clean_info["use_confounds"] and signal_clean_info["n_acompcor_separate"] else None
+
+        if verbose: print(f"Running subject: {subj_id}; run: {run_id}; \n {nifti_file}", flush=flush_print)
 
         confound_df = pd.read_csv(confound_file[0], sep="\t") if signal_clean_info["use_confounds"] else None
 
-        event_file = None if len(event_files) == 0 else [event_file for event_file in event_files if run in event_file]
+        event_file = None if len(event_files) == 0 else [event_file for event_file in event_files if run in event_file.split("/")[-1]]
 
         # Extract confound information of interest and ensure confound file does not contain NAs
         if signal_clean_info["use_confounds"]:
@@ -53,7 +56,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
 
             confounds = confound_df[valid_confounds]
             confounds = confounds.fillna(0)
-            if verbose: print(f"Confounds used for subject: {subj_id}; {run} - {confounds.columns}", flush=flush_print)
+            if verbose: print(f"Confounds used for subject: {subj_id}; run: {run_id} - {confounds.columns}", flush=flush_print)
 
         # Create the masker for extracting time series
         masker = NiftiLabelsMasker(
@@ -99,7 +102,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
         if timeseries.shape[0] == 0:
             warnings.warn(f"Subject {subj_id} timeseries is empty for {run}. Most likely due to condition not existing or TRs correspoonding to the condition being removed by `dummy_scans`.")
         else:
-            subject_timeseries[subj_id].update({run: timeseries})
+            subject_timeseries[subj_id].update({run_id: timeseries})
     
     if len(subject_timeseries[subj_id].keys()) == 0:
         subject_timeseries = None
