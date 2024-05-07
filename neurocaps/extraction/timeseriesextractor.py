@@ -4,7 +4,8 @@ import re, os, warnings, json, sys
 
 class TimeseriesExtractor(_TimeseriesExtractorGetter):
     def __init__(self, space: str="MNI152NLin2009cAsym", standardize: Union[bool,str]="zscore_sample", detrend: bool=False , low_pass: float=None, high_pass: float=None, 
-                 parcel_approach : dict={"Schaefer": {"n_rois": 400, "yeo_networks": 7}}, use_confounds: bool=True, confound_names: list[str]=None, n_acompcor_separate: int=None, dummy_scans: int=None):
+                 parcel_approach : dict={"Schaefer": {"n_rois": 400, "yeo_networks": 7}}, use_confounds: bool=True, confound_names: list[str]=None, fd_threshold: float=None,
+                 n_acompcor_separate: int=None, dummy_scans: int=None):
         """Timeseries Extractor Class
         
         Initializes a TimeseriesExtractor to prepare for Co-activation Patterns (CAPs) analysis.
@@ -25,11 +26,16 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Approach to use to parcellate bold images. Should be in the form of a nested dictionary where the first key is the atlas.
             Currently only "Schaefer" and "AAL" is supported. For the sub-dictionary for "Schaefer", available options includes "n_rois" and "yeo_networks".
             Please refer to the documentation for Nilearn's `datasets.fetch_atlas_schaefer_2018` for valid inputs. For the subdictionary for "AAL" only "version"
-            is an option. Please refer to the documentation for Nilearn's `datasets.fetch_atlas_aal` for valid inputs.
+            is an option. Please refer to the documentation for Nilearn's `datasets.fetch_atlas_aal` for valid inputs. As of version 0.8.9, you can replace "Schaefer"
+            and "AAL" with "Custom". At minimum, if "Custom" is specified, a subkey, called "maps" specifying the directory location of the parcellation as a Nifti (e.g .nii or .nii.gz)
+            - {"Custom": {"maps": "/location/to/parcellation.nii.gz"}}.
         use_confounds : bool, default=True
             To use confounds when extracting timeseries.
         confound_names : List[str], default=None
             Names of confounds to use in confound files. If None, default confounds are used.
+        fd_threshold : float, default=None
+            Threshold criteria to remove volume after nuisance regression and timeseries extraction. For this to work, a column named "framewise_displacement" must be
+            in the confounds dataframe and `use_confounds` must be true. Additionally, 'framewise_displacemnt' does not need to be specified in the `confound_names` for this to work.
         n_acompcor_separate : int, default = None
             The number of seperate acompcor components derived from the white-matter (WM) and cerebrospinal (CSF) masks to use. For instance if '5' is assigned to this parameter
             then the first five components derived from the WM mask and the first five components derived from the CSF mask will be used, resulting in ten acompcor components being
@@ -37,26 +43,50 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             masks. To use the acompcor components derived from the combined masks (WM & CSF) leave this parameter as 'None' and list the specific acompcors of interest in the 
             `confound_names` parameter.
         dummy_scans : float, default=None
-            Remove the first `n` number of volumes before extracting timeseries.
+            Removes the first `n` number of volumes before extracting timeseries.
         
-
-        Notes
-        -----
+        Notes for `confounds_names`
+        --------------------------
         For the `confound_names` parameter, an asterisk ("*") can be used to find the name of confounds that starts with the term preceding the asterisk.
         For instance, "cosine*" will find all confound names in the confound files starting with "cosine".
+
+        Notes for `parcel_approach`
+        ---------------------------
+        If using a "Custom" parcellation approach, ensure each node in your dataset includes both left (lh) and right (rh) hemisphere versions. 
+
+        Custom Key Structure:
+        - maps: Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g., .nii for NIfTI files). For plotting purposes, this key is not required.
+        - nodes:  list of all node labels used in your study, arranged in the exact order they correspond to indices in your parcellation files. 
+          Each label should match the parcellation index it represents. For example, if the parcellation label "0" corresponds to the left hemisphere 
+          visual cortex area 1, then "LH_Vis1" should occupy the 0th index in this list. This ensures that data extraction and analysis accurately reflect the anatomical regions intended.
+          For timeseries extraction, this key is not required.
+        - regions: Dictionary defining major brain regions. Each region should list node indices under "lh" and "rh" to specify left and right hemisphere nodes. For timeseries extraction, this key is not required.
+        
+        Example 
+        The provided example demonstrates setting up a custom parcellation containing nodes for the visual network (Vis) and hippocampus regions:
+
+        parcel_approach = {"Custom": {"maps": "/location/to/parcellation.nii.gz",
+                             "nodes": ["LH_Vis1", "LH_Vis2", "LH_Hippocampus", "RH_Vis1", "RH_Vis2", "RH_Hippocampus"],
+                             "regions": {"Vis" : {"lh": [0,1],
+                                                  "rh": [3,4]},
+                                         "Hippocampus": {"lh": [2],
+                                                         "rh": [5]}}}}
         """
         self._space = space
         self._signal_clean_info = {"standardize": standardize, "detrend": detrend, "low_pass": low_pass, "high_pass": high_pass, 
-                                   "dummy_scans": dummy_scans, "use_confounds": use_confounds,  "n_acompcor_separate": n_acompcor_separate}   
+                                   "dummy_scans": dummy_scans, "use_confounds": use_confounds,  "n_acompcor_separate": n_acompcor_separate,
+                                   "fd_threshold": None}   
 
         # Check parcel_apprach
         self._parcel_approach = _check_parcel_approach(parcel_approach=parcel_approach)
 
         if self._signal_clean_info["use_confounds"]:
             self._signal_clean_info["confound_names"] = _check_confound_names(high_pass=high_pass, specified_confound_names=confound_names, n_acompcor_separate=n_acompcor_separate)
-            
-    def get_bold(self, bids_dir: str, session: Union[int,str]=None, runs: list[int]=None, task: str="rest", condition: str=None, tr: Union[int, float]=None, 
-                 run_subjects: list[str]=None, exclude_subjects: list[str]= None, pipeline_name: str=None, n_cores: Union[bool, int]=None, verbose: bool=True, flush_print: bool=False) -> None: 
+            self._signal_clean_info["fd_threshold"] = fd_threshold
+
+    def get_bold(self, bids_dir: str, task: str, session: Union[int,str]=None, runs: list[int]=None, condition: str=None, tr: Union[int, float]=None, 
+                 run_subjects: list[str]=None, exclude_subjects: list[str]= None, pipeline_name: str=None, n_cores: Union[bool, int]=None, verbose: bool=True, flush_print: bool=False,
+                 exclude_niftis: list[str]=None) -> None: 
         """Get Bold Data
 
         Collects files needed to extract timeseries data from NIfTI files for BIDS-compliant datasets.
@@ -65,19 +95,19 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         ----------
         bids_dir : str
             Path to a BIDS compliant directory. 
+        task : str, default="rest"
+            Task name.
         session : int, default=None
             Session to extract timeseries from. Only a single session can be extracted at a time. 
         runs : list[int], default=None
             Run number to extract timeseries data from. Extracts all runs if unspecified.
-        task : str, default="rest"
-            Task name.
         condition : str, default=None
             Specific condition in the task to extract from. Only a single condition can be extracted at a time.
         tr : int or float, default=None
             Repetition time.
-        run_subjects : List[str], default=None
+        run_subjects : list[str], default=None
             List of subject IDs to process. Processes all subjects if None.
-        exclude_subjects : List[str], default=None
+        exclude_subjects : list[str], default=None
             List of subject IDs to exclude.  
         pipeline_name: str, default=None
             The name of the pipeline folder in the derivatives folder containing the preprocessed data. If None, BIDSLayout will use the name of dset_dir with derivatives=True. This parameter
@@ -88,6 +118,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Print subject specific information such as confounds being extracted and id and run of subject being processed during timeseries extraction.
         flush_print: bool, default=False
             Flush the printed subject specific infomation produced during the timeseries extraction process.
+        exclude_niftis: list[str], default=None
+            Exclude certain preprocessed nifti files to prevent the timeseries of that file from being extracted. Used if there are specific runs across differnt participants that need to be
+            excluded.
         """
         import bids, multiprocessing
 
@@ -120,14 +153,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             subj_id_list = sorted([subj_id for subj_id in subj_id_list if subj_id in run_subjects])
 
         # Setup extraction
-        self._setup_extraction(layout=layout, subj_id_list=subj_id_list)
+        self._setup_extraction(layout=layout, subj_id_list=subj_id_list, exclude_niftis=exclude_niftis)
 
         if n_cores:
             if n_cores == True:
                 self._n_cores = multiprocessing.cpu_count()
             else:
                 if n_cores > multiprocessing.cpu_count():
-                    raise ValueError(f"More cores specified than available - Number of cores specified: {n_cores}; Max cores available: {multiprocessing.cpu_count()}")
+                    raise ValueError(f"More cores specified than available - Number of cores specified: {n_cores}; Max cores available: {multiprocessing.cpu_count()}.")
                 else:
                     self._n_cores = n_cores
             
@@ -162,7 +195,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 if isinstance(subject_timeseries, dict): self._subject_timeseries.update(subject_timeseries)
         
     # Get valid subjects to iterate through
-    def _setup_extraction(self, layout, subj_id_list):
+    def _setup_extraction(self, layout, subj_id_list, exclude_niftis):
        for subj_id in subj_id_list:
             if self._task_info["session"]:
                 nifti_files = sorted(layout.get(scope="derivatives", return_type="file",suffix="bold", task=self._task_info["task"], space=self._space, session=self._task_info["session"],extension = "nii.gz", subject=subj_id))
@@ -178,13 +211,17 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 confound_files = sorted(layout.get(scope='derivatives', return_type='file', desc='confounds', task=self._task_info["task"], extension = "tsv", subject=subj_id))
                 confound_metadata_files = sorted(layout.get(scope='derivatives', return_type='file', desc='confounds', task=self._task_info["task"], extension = "json", subject=subj_id))
                 mask_files = sorted(layout.get(scope='derivatives', return_type='file', suffix='mask', task=self._task_info["task"], space=self._space, extension = "nii.gz", subject=subj_id))
+            
+            # Remove excluded file from the nifti_files list, which will prevent it from being processed
+            if exclude_niftis and len(nifti_files) != 0:
+                nifti_files = [nifti_file for nifti_file in nifti_files if os.path.basename(nifti_file) not in exclude_niftis]
 
             # Generate a list of runs to iterate through based on runs in nifti_files
             if self._task_info["runs"]:
                 check_runs = [f"run-{run}" for run in self._task_info["runs"]] 
             elif len(nifti_files) != 0:
-                if "run-" in nifti_files[0].split("/")[-1]:
-                    check_runs = [re.search("run-(\\S+?)[-_]",x.split("/")[-1])[0][:-1] for x in nifti_files]
+                if "run-" in os.path.basename(nifti_files[0]):
+                    check_runs = [re.search("run-(\\S+?)[-_]",os.path.basename(x))[0][:-1] for x in nifti_files]
                 else:
                    check_runs = [] 
             else:
@@ -192,15 +229,18 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             # Generate a list of runs to iterate through based on runs in nifti_files
             if not self._task_info["session"] and len(nifti_files) != 0:
-                if "ses-" in nifti_files[0].split("/")[-1]:
-                    check_sessions = [re.search("ses-(\\S+?)[-_]",x.split("/")[-1])[0][:-1] for x in nifti_files]
+                if "ses-" in os.path.basename(nifti_files[0]):
+                    check_sessions = [re.search("ses-(\\S+?)[-_]",os.path.basename(x))[0][:-1] for x in nifti_files]
                     if len(list(set(check_sessions))) > 1:
-                        raise ValueError(f"`session` not specified but subject {subj_id} has more than one session : {sorted(list(set(check_sessions)))}. In order to continue timeseries extraction, the specific session to extract must be specified")
+                        raise ValueError(f"`session` not specified but subject {subj_id} has more than one session : {sorted(list(set(check_sessions)))}. In order to continue timeseries extraction, the specific session to extract must be specified.")
 
-            if len(nifti_files) == 0 or len(mask_files) == 0:
-                warnings.warn(f"Skipping subject: {subj_id} due to missing nifti or mask files.")
+            if len(nifti_files) == 0:
+                warnings.warn(f"Skipping subject: {subj_id} due to missing nifti files.")
                 continue
-
+            
+            if len(mask_files) == 0:
+                warnings.warn(f"Subject: {subj_id} is missing mask file but timeseries extraction will continue.")
+                
             if self._signal_clean_info["use_confounds"]:
                 if len(confound_files) == 0:
                     warnings.warn(f"Skipping subject: {subj_id} due to missing confound files.")
@@ -224,7 +264,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     if self._signal_clean_info["use_confounds"]:
                         curr_list.append(any([run in file for file in confound_files]))
                         if self._signal_clean_info["n_acompcor_separate"]: curr_list.append(any([run in file for file in confound_metadata_files]))
-                    curr_list.append(any([run in file for file in mask_files]))
+                    if len(mask_files) != 0: curr_list.append(any([run in file for file in mask_files]))
                     # Append runs that contain all needed files
                     if all(curr_list): run_list.append(run)
                 
@@ -234,7 +274,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                         if self._task_info["condition"]: warnings.warn(f"Skipping subject: {subj_id} due to no nifti file, mask file, confound tsv file, confound json file being from the same run.")
                         else: warnings.warn(f"Skipping subject: {subj_id} due to no nifti file, mask file, event file, confound tsv file, confound json file being from the same run.")
                         continue
-                    else: warnings.warn(f"Subject: {subj_id} only has the following runs available: {', '.join(run_list)}")
+                    else: warnings.warn(f"Subject: {subj_id} only has the following runs available: {', '.join(run_list)}.")
             else:
                 run_list = [None]
             # Add subject list to subject attribute. These are subjects that will be ran
@@ -269,7 +309,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         with open(os.path.join(output_dir,file_name + ".pkl"), "wb") as f:
             pickle.dump(self._subject_timeseries,f)
 
-    def visualize_bold(self, subj_id: Union[int,str], run: int, roi_indx: Union[int, list[int]]=None, network: str=None, show_figs: bool=True, output_dir: str=None, file_name: str=None, **kwargs):
+    def visualize_bold(self, subj_id: Union[int,str], run: int, roi_indx: Union[int, list[int]]=None, region: str=None, show_figs: bool=True, output_dir: str=None, file_name: str=None, **kwargs):
         """Plot Bold Data
 
         Collects files needed to extract timeseries data from NIfTI files for BIDS-compliant datasets.
@@ -282,8 +322,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             The run to plot.
         roi_indx: int or list[int], default=None
             The indices of the Schaefer nodes to plot. See self.node_indices for valid node names and indices.
-        network: str, default=None
-            The Schaefer network to plot. If not None, all nodes in the specified Schaefer network will be averaged then plotted. See self.atlas_networks for valid network names.
+        region: str, default=None
+            The region of the parcellation to plot. If not None, all nodes in the specified region will be averaged then plotted. See `regions` in self.parcel_approach 
+            for valid regions names.
         show_figs: bool, defaults=True
             Whether to show figires or not to show figures
         output_dir : str
@@ -297,17 +338,38 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         Raises
         ------
         ValueError
-            If both `roi_indx` and `network` are specified.
+            If both `roi_indx` and `region` are specified.
         AssertionError
             If `file_name` does not contain an extension to signify the file type.
+
+        Notes
+        -----
+        If using a "Custom" parcellation approach, ensure each node in your dataset includes both left (lh) and right (rh) hemisphere versions. 
+
+        Custom Key Structure:
+        - maps: Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g., .nii for NIfTI files). For plotting purposes, this label is not required.
+        - nodes: A list of all node labels used in your study, arranged in the exact order they correspond to indices in your parcellation files. 
+          Each label should match the parcellation index it represents. For example, if the parcellation label "0" corresponds to the left hemisphere 
+          visual cortex area 1, then "LH_Vis1" should occupy the 0th index in this list. This ensures that data extraction and analysis accurately reflect the anatomical regions intended.
+        - regions: Dictionary defining major brain regions. Each region should list node indices under "lh" and "rh" to specify left and right hemisphere nodes.
+        
+        Example 
+        The provided example demonstrates setting up a custom parcellation containing nodes for the visual network (Vis) and hippocampus regions:
+
+        parcel_approach = {"Custom": {"maps": "/location/to/parcellation.nii.gz",
+                             "nodes": ["LH_Vis1", "LH_Vis2", "LH_Hippocampus", "RH_Vis1", "RH_Vis2", "RH_Hippocampus"],
+                             "regions": {"Vis" : {"lh": [0,1],
+                                                  "rh": [3,4]},
+                                         "Hippocampus": {"lh": [2],
+                                                         "rh": [5]}}}}
         """
     
         import matplotlib.pyplot as plt, numpy as np
 
         if isinstance(subj_id,int): subj_id = str(subj_id)
 
-        if roi_indx !=None and network != None:
-            raise ValueError("`roi_indx` and network can not be used simultaneously.")
+        if roi_indx !=None and region != None:
+            raise ValueError("`roi_indx` and `region` can not be used simultaneously.")
         
         if output_dir:
             if not os.path.exists(output_dir):
@@ -315,7 +377,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             assert "." in file_name, "`file_name` must be specified if `output_dir` is specified and it must contain an extension to signify the file type."
 
         plot_dict = dict(dpi = kwargs["dpi"] if kwargs and "dpi" in kwargs.keys() else 300,
-                         figsize= kwargs["figsize"] if kwargs and "figsize" in kwargs.keys else (15, 5))
+                         figsize= kwargs["figsize"] if kwargs and "figsize" in kwargs.keys() else (15, 5))
+        
+        if kwargs:
+            invalid_kwargs = {key : value for key, value in kwargs.items() if key not in plot_dict.keys()}
+            if len(invalid_kwargs.keys()) > 0:
+                print(f"Invalid kwargs arguments used and will be ignored {invalid_kwargs}.")
 
         # Obtain the column indices associated with the rois; add logic for roi_indx == 0 since it would be recognized as False
         if roi_indx or roi_indx == 0:
@@ -323,24 +390,38 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 plot_indxs = roi_indx
             
             elif type(roi_indx) == str:
-                plot_indxs = self._parcel_approach[self._parcel_approach.keys[0]]["labels"].index(roi_indx)
+                # Check if parcellation_approach is custom
+                if "Custom" in self.parcel_approach.keys() and "nodes" not in self.parcel_approach["Custom"].keys():
+                    _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_bold")
+                plot_indxs = self._parcel_approach[self._parcel_approach.keys[0]]["nodes"].index(roi_indx)
             
             elif type(roi_indx) == list:
-                if type(roi_indx[0]) == int:
+                if all([isinstance(indx,int) for indx in roi_indx]):
                     plot_indxs = np.array(roi_indx)
-                elif type(roi_indx[0]) == str:
-                    plot_indxs = np.array([self._parcel_approach[self._parcel_approach.keys[0]]["labels"].index(index) for index in roi_indx])
-        
-        elif network:
-            plot_indxs = np.array([index for index, label in enumerate(self._parcel_approach[list(self._parcel_approach.keys())[0]]["labels"]) if network in label])
+                elif all([isinstance(indx,str) for indx in roi_indx]):
+                    # Check if parcellation_approach is custom
+                    if "Custom" in self.parcel_approach.keys() and "nodes" not in self.parcel_approach["Custom"].keys():
+                        _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_bold")
+                    plot_indxs = np.array([self._parcel_approach[self._parcel_approach.keys[0]]["nodes"].index(index) for index in roi_indx])
+                else:
+                    raise ValueError("All elements in `roi_indx` need to be all strings or all integers.")
+                
+        elif region:
+            if "Custom" in self.parcel_approach.keys():
+                if "regions" not in self.parcel_approach["Custom"].keys():
+                    _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_bold")
+                else:
+                    plot_indxs =  np.array(self.parcel_approach["Custom"]["regions"][region]["lh"] + self.parcel_approach["Custom"]["regions"][region]["rh"])
+            else:
+                plot_indxs = np.array([index for index, label in enumerate(self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"]) if region in label])
         
         plt.figure(figsize=plot_dict["figsize"])
 
         if roi_indx or roi_indx == 0: 
             plt.plot(range(1, self._subject_timeseries[subj_id][f"run-{run}"].shape[0] + 1), self._subject_timeseries[subj_id][f"run-{run}"][:,plot_indxs])
-        elif network:  
+        elif region:  
             plt.plot(range(1, self._subject_timeseries[subj_id][f"run-{run}"].shape[0] + 1), np.mean(self._subject_timeseries[subj_id][f"run-{run}"][:,plot_indxs], axis=1))
-            plt.title(network)
+            plt.title(region)
         plt.xlabel("TR")
 
         if output_dir:

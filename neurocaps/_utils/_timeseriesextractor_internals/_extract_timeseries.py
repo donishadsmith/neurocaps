@@ -14,7 +14,10 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
 
         # Get files from specific run
         nifti_file = [nifti_file for nifti_file in nifti_files if run in nifti_file.split("/")[-1]]
-        mask_file = [mask_file for mask_file in mask_files if run in mask_file.split("/")[-1]]
+        if len(mask_files) != 0:
+            mask_file = [mask_file for mask_file in mask_files if run in mask_file.split("/")[-1]]
+        else:
+            mask_file = []
         confound_file = [confound_file for confound_file in confound_files if run in confound_file.split("/")[-1]] if signal_clean_info["use_confounds"] else None
         confound_metadata_file = [confound_metadata_file for confound_metadata_file in confound_metadata_files if run in confound_metadata_file.split("/")[-1]] if signal_clean_info["use_confounds"] and signal_clean_info["n_acompcor_separate"] else None
 
@@ -56,29 +59,57 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
 
             confounds = confound_df[valid_confounds]
             confounds = confounds.fillna(0)
+
+            if signal_clean_info["fd_threshold"]: 
+                censor = True
+                if "framewise_displacement" in confound_df.columns:
+                    fd_array = confound_df["framewise_displacement"].fillna(0).values
+                else:
+                    censor = False
+                    warnings.warn(f"For subject {subj_id}, `fd_threshold` specified but 'framewise_displacement' is not a column in the confound dataframe so removal of volumes after nuisance regression will not be done.")
+            else:
+                censor = False
+
             if verbose: print(f"Confounds used for subject: {subj_id}; run: {run_id} - {confounds.columns}", flush=flush_print)
 
         # Create the masker for extracting time series
-        masker = NiftiLabelsMasker(
-            mask_img=mask_file[0],
-            labels_img=parcel_approach[list(parcel_approach.keys())[0]]["maps"], 
-            labels=parcel_approach[list(parcel_approach.keys())[0]]["labels"], 
-            resampling_target='data',
-            standardize=signal_clean_info["standardize"],
-            detrend=signal_clean_info["detrend"],
-            low_pass=signal_clean_info["low_pass"],
-            high_pass=signal_clean_info["high_pass"],
-            t_r=tr
-        )
+        if len(mask_file) !=0:
+            masker = NiftiLabelsMasker(
+                mask_img=mask_file[0],
+                labels_img=parcel_approach[list(parcel_approach.keys())[0]]["maps"], 
+                resampling_target='data',
+                standardize=signal_clean_info["standardize"],
+                detrend=signal_clean_info["detrend"],
+                low_pass=signal_clean_info["low_pass"],
+                high_pass=signal_clean_info["high_pass"],
+                t_r=tr
+            )
+        else:
+            masker = NiftiLabelsMasker(
+                labels_img=parcel_approach[list(parcel_approach.keys())[0]]["maps"], 
+                resampling_target='data',
+                standardize=signal_clean_info["standardize"],
+                detrend=signal_clean_info["detrend"],
+                low_pass=signal_clean_info["low_pass"],
+                high_pass=signal_clean_info["high_pass"],
+                t_r=tr
+            )
         # Load and discard volumes if needed
         nifti_img = load_img(nifti_file[0])
         if signal_clean_info["dummy_scans"]: 
             nifti_img = index_img(nifti_img, slice(signal_clean_info["dummy_scans"], None))
-            if signal_clean_info["use_confounds"]: confounds.drop(list(range(0,signal_clean_info["dummy_scans"])),axis=0,inplace=True)
+            if signal_clean_info["use_confounds"]: 
+                confounds.drop(list(range(0,signal_clean_info["dummy_scans"])),axis=0,inplace=True)
+                # Truncate the fd_array also
+                if censor:
+                    fd_array = fd_array[signal_clean_info["dummy_scans"]:]
             offset = signal_clean_info["dummy_scans"] 
 
         # Extract timeseries
         timeseries = masker.fit_transform(nifti_img, confounds=confounds) if signal_clean_info["use_confounds"] else masker.fit_transform(nifti_img)
+
+        if censor:
+            censor_volumes = list(np.where(fd_array > signal_clean_info["fd_threshold"])[0])
 
         if event_file:
             event_df = pd.read_csv(event_file[0], sep=None)
@@ -94,10 +125,15 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
                 if signal_clean_info["dummy_scans"]:
                     scan_list.extend([scan - offset for scan in range(onset_scan, duration_scan + 1) if scan not in range(0, signal_clean_info["dummy_scans"])])
                 else:
-                    scan_list.extend(range(onset_scan, duration_scan + 1))
+                    scan_list.extend(list(range(onset_scan, duration_scan + 1)))
+                if censor:
+                    scan_list = [volume for volume in scan_list if volume not in censor_volumes]
 
             # Timeseries with the extracted scans corresponding to condition; set is used to remove overlapping TRs    
             timeseries = timeseries[sorted(list(set(scan_list))),:]
+        else:
+            if censor:
+                timeseries = np.delete(timeseries, censor_volumes, axis=0)
 
         if timeseries.shape[0] == 0:
             warnings.warn(f"Subject {subj_id} timeseries is empty for {run}. Most likely due to condition not existing or TRs correspoonding to the condition being removed by `dummy_scans`.")

@@ -1,3 +1,5 @@
+from .._timeseriesextractor_internals._check_parcel_approach import _check_parcel_approach
+
 # A class which is responsible for accessing all CAPMetadata and to keep track of all attributes in CAP
 class _CAPGetter:
     def __init__(self):
@@ -19,6 +21,10 @@ class _CAPGetter:
     @property
     def parcel_approach(self):
         return self._parcel_approach
+    
+    @parcel_approach.setter
+    def parcel_approach(self, parcel_dict):
+        self._parcel_approach = _check_parcel_approach(parcel_approach=parcel_dict, call="setter")
     
     ### Attributes exist when CAP.get_caps() used
     @property
@@ -52,8 +58,8 @@ class _CAPGetter:
         else: return None
     
     @property
-    def network_caps(self):
-        if hasattr(self, "_network_caps"): return self._network_caps
+    def region_caps(self):
+        if hasattr(self, "_region_caps"): return self._region_caps
         else: return None
 
     @property

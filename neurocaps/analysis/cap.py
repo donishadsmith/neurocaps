@@ -1,7 +1,7 @@
 from typing import Union
 from sklearn.cluster import KMeans
 from kneed import KneeLocator
-from .._utils import _CAPGetter, _convert_pickle_to_dict
+from .._utils import _CAPGetter, _convert_pickle_to_dict, _check_parcel_approach
 import numpy as np, re, warnings
 
 class CAP(_CAPGetter):
@@ -64,8 +64,7 @@ class CAP(_CAPGetter):
             for group in self._groups.keys():
                 self._groups[group] = [str(subj_id) if not isinstance(subj_id,str) else subj_id for subj_id in self._groups[group]]
         
-        valid_parcel_dict = {"Schaefer": {"n_rois" : 400, "yeo_networks": 7},
-                         "AAL": {"version": "SPM12"}}
+        valid_parcel_dict = {"Schaefer", "AAL", "Custom"}
 
         if len(parcel_approach.keys()) > 1:
             raise ValueError(f"Only one parcellation approach can be selected from the following valid options: {valid_parcel_dict.keys()}.\n Example format of `parcel_approach`: {valid_parcel_dict}")
@@ -226,7 +225,7 @@ class CAP(_CAPGetter):
                 else:
                     self._subject_table.update({subj_id : group})
 
-    def visualize_caps(self, output_dir: str=None, plot_options: Union[str, list[str]]="outer product", visual_scope: list[str]="networks", task_title: str=None, show_figs: bool=True, subplots: bool=False, **kwargs):
+    def visualize_caps(self, output_dir: str=None, plot_options: Union[str, list[str]]="outer product", visual_scope: list[str]="regions", task_title: str=None, show_figs: bool=True, subplots: bool=False, **kwargs):
         """ Plotting CAPs
 
         This function produces seaborn heatmaps for each CAP. If groups were given when the CAP class was initialized, plotting will be done for all CAPs for all groups.
@@ -237,8 +236,10 @@ class CAP(_CAPGetter):
             Directory to save plots in. If None, plots will not be saved.
         plot_options: str or list[str], default="outer product"
             Type of plots to create. Options are "outer product" or "heatmap".
-        visual_scope: str or list[str], default="networks
-            Determines whether plotting is done at the network level or node level. For network level, the value of each nodes in the same networks are averaged together them plotted.
+        visual_scope: str or list[str], default="regions"
+            Determines whether plotting is done at the region level or node level. 
+            For region level, the value of each nodes in the same regions are averaged together them plotted.
+            Options are "regions" or "nodes".
         task_title: str, default=None
             Serves as the title of each plot as well as the name of the saved file if output_dir is given.
         show_figs: bool, default=True
@@ -250,16 +251,43 @@ class CAP(_CAPGetter):
             If `output_dir` is not None and no inputs for dpi and format are given, dpi defaults to 300 and format defaults to "png". If no keywords, "figsize" defaults to (8,6), "fontsize", which adjusts the title size of the individual plots or subplots, defaults to 14, "hspace", which adjusts spacing for subplots, defaults to 0.4, 
             "wspace", which adjusts spacing between subplots, defaults to 0.4, "xticklabels_size" defaults to 8, "yticklabels_size" defaults to 8, shrink, which adjusts the cbar size, defaults to 0.8, "nrow", which is the number of rows for subplot and varies, and "ncol", which is the number of columns for subplot, default varies but max is 5, "suptitle_fontsize", 
             size of the main title when subplot is True, defaults to 0.7, "tight_layout", use tight layout for subplot, defaults to True, "rect", input for the `rect` parameter in tight layout when subplots is True to fix whitespace issues, default is [0, 0.03, 1, 0.95], "sharey", which shares y axis labela for subplots, defaults to True, 
-            "xlabel_rotation", which rotates the labels on the x-axis, defaults to 0, "ylabel_rotation", which rotates the labels on the y-axis, defaults to 0, "annot", which adds values to cells on the outer product heatmap at the network level only, defaults to False .
+            "xlabel_rotation", which rotates the labels on the x-axis, defaults to 0, "ylabel_rotation", which rotates the labels on the y-axis, defaults to 0, "annot", which adds values to cells on the outer product heatmap at the region level only, defaults to False, "linewidths", which specifies the padding between each cell, defaults to 0,
+            and "cmap", which specifies the color pattern of the cells in the plot, defaults to "coolwarm".
     
+         Notes
+        -----
+        If using a "Custom" parcellation approach, ensure each node in your dataset includes both left (lh) and right (rh) hemisphere versions. 
+
+        Custom Key Structure:
+        - maps: Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g., .nii for NIfTI files). For plotting purposes, this label is not required.
+        - nodes: A list of all node labels used in your study, arranged in the exact order they correspond to indices in your parcellation files. 
+          Each label should match the parcellation index it represents. For example, if the parcellation label "0" corresponds to the left hemisphere 
+          visual cortex area 1, then "LH_Vis1" should occupy the 0th index in this list. This ensures that data extraction and analysis accurately reflect the anatomical regions intended.
+        - regions: Dictionary defining major brain regions. Each region should list node indices under "lh" and "rh" to specify left and right hemisphere nodes.
+        
+        Example 
+        The provided example demonstrates setting up a custom parcellation containing nodes for the visual network (Vis) and hippocampus regions:
+
+        parcel_approach = {"Custom": {"maps": "/location/to/parcellation.nii.gz",
+                             "nodes": ["LH_Vis1", "LH_Vis2", "LH_Hippocampus", "RH_Vis1", "RH_Vis2", "RH_Hippocampus"],
+                             "regions": {"Vis" : {"lh": [0,1],
+                                                  "rh": [3,4]},
+                                         "Hippocampus": {"lh": [2],
+                                                         "rh": [5]}}}}
         """
         import os, itertools
+
+        # Check parcel approach
+
+        # Check if parcellation_approach is custom
+        if "Custom" in self.parcel_approach.keys() and ("nodes" not in self.parcel_approach["Custom"].keys() or "regions" not in self.parcel_approach["Custom"].keys()):
+            _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_caps")
 
         # Check labels
         check_caps = self._caps[list(self._caps.keys())[0]]
         check_caps = check_caps[list(check_caps.keys())[0]]
-        if check_caps.shape[0] != len(self._parcel_approach[list(self._parcel_approach.keys())[0]]["labels"]): 
-                raise ValueError("Number of rois/labels used for CAPs does not equal the number of rois/labels specified in `parcel_approach`.")
+        if check_caps.shape[0] != len(self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"]): 
+                raise ValueError("Number of rois/nodes used for CAPs does not equal the number of rois/nodes specified in `parcel_approach`.")
 
         if output_dir:
             if not os.path.exists(output_dir):
@@ -273,10 +301,10 @@ class CAP(_CAPGetter):
         if not any(["heatmap" in plot_options, "outer product" in plot_options]):
             raise ValueError("Valid inputs for `plot_options` are 'heatmap' and 'outer product'.")
         
-        if not any(["networks" in visual_scope, "nodes" in visual_scope]):
-            raise ValueError("Valid inputs for `visual_scope` are 'networks' and 'nodes'.")
+        if not any(["regions" in visual_scope, "nodes" in visual_scope]):
+            raise ValueError("Valid inputs for `visual_scope` are 'regions' and 'nodes'.")
 
-        if "networks" in visual_scope: self._create_networks()
+        if "regions" in visual_scope: self._create_regions()
 
         # Create plot dictionary
         plot_dict = dict(dpi = kwargs["dpi"] if kwargs and "dpi" in kwargs.keys() else 300,
@@ -297,6 +325,8 @@ class CAP(_CAPGetter):
                         xlabel_rotation = kwargs["xlabel_rotation"] if kwargs and "xlabel_rotation" in kwargs.keys() else 0,
                         ylabel_rotation = kwargs["ylabel_rotation"] if kwargs and "ylabel_rotation" in kwargs.keys() else 0,
                         annot = kwargs["annot"] if kwargs and "annot" in kwargs.keys() else False,
+                        linewidths = kwargs["linewidths"] if kwargs and "linewidths" in kwargs.keys() else 0,
+                        cmap = kwargs["cmap"] if kwargs and "cmap" in kwargs.keys() else "coolwarm"
                         )
         
         if kwargs:
@@ -314,8 +344,16 @@ class CAP(_CAPGetter):
 
         for plot_option, scope, group in distributed_list:
                 # Get correct labels depending on scope
-                if scope == "networks": cap_dict, columns = self._network_caps, self._parcel_approach[list(self._parcel_approach.keys())[0]]["networks"]
-                elif scope == "nodes": cap_dict, columns = self._caps, self._parcel_approach[list(self._parcel_approach.keys())[0]]["labels"]
+                if scope == "regions": 
+                    if list(self._parcel_approach.keys())[0] in ["Schaefer", "AAL"]:
+                        cap_dict, columns = self._region_caps, self._parcel_approach[list(self._parcel_approach.keys())[0]]["regions"]
+                    elif list(self._parcel_approach.keys())[0] == "Custom":
+                        cap_dict, columns = self._region_caps, list(self._parcel_approach["Custom"]["regions"].keys())
+                elif scope == "nodes": 
+                    if list(self._parcel_approach.keys())[0] in ["Schaefer", "AAL"]:
+                        cap_dict, columns = self._caps, self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"]
+                    elif list(self._parcel_approach.keys())[0] == "Custom":
+                        cap_dict, columns = self._caps , [x[0] + " " + x[1] for x in list(itertools.product(["LH", "RH"],self._parcel_approach["Custom"]["regions"].keys()))]
 
                 #  Generate plot for each group
                 if plot_option == "outer product": self._generate_outer_product_plots(group=group, plot_dict=plot_dict, cap_dict=cap_dict, columns=columns, subplots=subplots,
@@ -323,18 +361,29 @@ class CAP(_CAPGetter):
                 elif plot_option == "heatmap": self._generate_heatmap_plots(group=group, plot_dict=plot_dict, cap_dict=cap_dict, columns=columns,
                                                                             output_dir=output_dir, task_title=task_title, show_figs=show_figs, scope=scope)
             
-    def _create_networks(self):
-        self._network_caps = {group: {} for group in self._groups.keys()}
+    def _create_regions(self):
+        self._region_caps = {group: {} for group in self._groups.keys()}
         for group in self._groups.keys():
             for cap in self._caps[group].keys():
-                network_caps = {}
-                for network in self._parcel_approach[list(self._parcel_approach.keys())[0]]["networks"]:
-                    if len(network_caps) == 0:
-                        network_caps = np.array([np.average(self._caps[group][cap][np.array([index for index, node in enumerate(self._parcel_approach[list(self._parcel_approach.keys())[0]]["labels"]) if network in node])])])
-                    else:
-                        network_caps = np.hstack([network_caps, np.average(self._caps[group][cap][np.array([index for index, node in enumerate(self._parcel_approach[list(self._parcel_approach.keys())[0]]["labels"]) if network in node])])])
-            
-                self._network_caps[group].update({cap: network_caps})
+                region_caps = {}
+                if list(self._parcel_approach.keys())[0] != "Custom":
+                    for region in self._parcel_approach[list(self._parcel_approach.keys())[0]]["regions"]:
+                        if len(region_caps) == 0:
+                            region_caps = np.array([np.average(self._caps[group][cap][np.array([index for index, node in enumerate(self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"]) if region in node])])])
+                        else:
+                            region_caps = np.hstack([region_caps, np.average(self._caps[group][cap][np.array([index for index, node in enumerate(self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"]) if region in node])])])
+                else:
+                    region_dict = self._parcel_approach["Custom"]["regions"]
+                    region_keys = region_dict.keys()
+                    for region in region_keys:
+                        roi_indxs = np.array(region_dict[region]["lh"] + region_dict[region]["rh"])
+
+                        if len(region_caps) == 0:
+                            region_caps= np.array([np.average(self._caps[group][cap][roi_indxs])])
+                        else:
+                            region_caps= np.hstack([region_caps, np.average(self._caps[group][cap][roi_indxs])])
+
+                self._region_caps[group].update({cap: region_caps})
     
     def _generate_outer_product_plots(self, group, plot_dict, cap_dict, columns, subplots, output_dir, task_title, show_figs, scope):
         from seaborn import heatmap
@@ -367,33 +416,44 @@ class CAP(_CAPGetter):
         for cap in cap_dict[group].keys():
             # Calculate outer product
             self._outer_product[group].update({cap: np.outer(cap_dict[group][cap],cap_dict[group][cap])})
+            # Create labels if nodes requested for scope
+            if scope == "nodes":
+                import collections
+                
+                # Get frequency of each major hemisphere and region in Schaefer, AAL, or Custom atlas
+                if list(self._parcel_approach.keys())[0] == "Schaefer":
+                    frequency_dict = dict(collections.Counter([names[0] + " " + names[1] for names in [name.split("_")[0:2] for name in self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"]]]))
+                elif list(self._parcel_approach.keys())[0] == "AAL":
+                    frequency_dict = collections.Counter([name.split("_")[0] for name in self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"]])
+                elif list(self._parcel_approach.keys())[0] == "Custom":
+                    frequency_dict = {}
+                    for id in columns:
+                        hemisphere_id = "LH" if id.startswith("LH ") else "RH"
+                        region_id = re.split("LH |RH ", id)[-1]
+                        frequency_dict.update({id: len(self._parcel_approach["Custom"]["regions"][region_id][hemisphere_id.lower()])})
+                # Get the names, which indicate the hemisphere and region
+                names_list = list(frequency_dict.keys())
+                # Create label list the same length as the labels dictionary and substitute each element with an empty string
+                labels = ["" for _ in range(0,len(self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"]))]
+
+                starting_value = 0
+
+                # Iterate through names_list and assign the starting indices corresponding to unique region and hemisphere key
+                for num, name in enumerate(names_list): 
+                    if num == 0:
+                        labels[0] = name
+                    else:
+                        # Shifting to previous frequency of the preceding netwerk to obtain the new starting value of the subsequent region and hemosphere pair
+                        starting_value += frequency_dict[names_list[num-1]] 
+                        labels[starting_value] = name
+
             if subplots: 
                 ax = axes[axes_y] if nrow == 1 else axes[axes_x,axes_y]
                 # Modify tick labels based on scope
-                if scope == "networks":
-                    display = heatmap(ax=ax, data=self._outer_product[group][cap], cmap="coolwarm", xticklabels=columns, yticklabels=columns, cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"])
+                if scope == "regions":
+                    display = heatmap(ax=ax, data=self._outer_product[group][cap], cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], xticklabels=columns, yticklabels=columns, cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"])
                 else:
-                    # Create Labels
-                    import collections
-                    
-                    if list(self._parcel_approach.keys())[0] == "Schaefer":
-                        frequency_dict = dict(collections.Counter([names[0] + " " + names[1] for names in [name.split("_")[0:2] for name in self._parcel_approach[list(self._parcel_approach.keys())[0]]["labels"]]]))
-                    elif list(self._parcel_approach.keys())[0] == "AAL":
-                        frequency_dict = collections.Counter([name.split("_")[0] for name in self._parcel_approach[list(self._parcel_approach.keys())[0]]["labels"]])
-                    names_list = list(frequency_dict.keys())
-                    labels = ["" for _ in range(0,len(self._parcel_approach[list(self._parcel_approach.keys())[0]]["labels"]))]
-
-                    shift = 0
-
-                    for num, name in enumerate(names_list):
-                        if num == 0:
-                            labels[0] = name
-                        else:
-                            shift += frequency_dict[names_list[num-1]] 
-                            indx = (frequency_dict[names_list[num]]) + shift - frequency_dict[names_list[num]]
-                            labels[indx] = name
-
-                    display = heatmap(ax=ax, data=self._outer_product[group][cap], cmap="coolwarm", cbar_kws={"shrink": plot_dict["shrink"]})
+                    display = heatmap(ax=ax, data=self._outer_product[group][cap], cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], cbar_kws={"shrink": plot_dict["shrink"]})
 
                     ticks = [i for i, label in enumerate(labels) if label]  
 
@@ -425,8 +485,15 @@ class CAP(_CAPGetter):
                 plt.figure(figsize=plot_dict["figsize"])
 
                 plot_title = f"{group} {cap} {task_title}" if task_title else f"{group} {cap}"
-                if scope == "networks": display = heatmap(self._outer_product[group][cap], cmap="coolwarm", xticklabels=columns, yticklabels=columns, cbar_kws={'shrink': plot_dict["shrink"]})
-                else: display = heatmap(self._outer_product[group][cap], cmap="coolwarm", xticklabels=[], yticklabels=[], cbar_kws={'shrink': plot_dict["shrink"]})
+                if scope == "regions": display = heatmap(self._outer_product[group][cap], cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], xticklabels=columns, yticklabels=columns, cbar_kws={'shrink': plot_dict["shrink"]})
+                else: 
+                    display = heatmap(self._outer_product[group][cap], cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], xticklabels=[], yticklabels=[], cbar_kws={'shrink': plot_dict["shrink"]})
+                    ticks = [i for i, label in enumerate(labels) if label]  
+
+                    display.set_xticks(ticks)  
+                    display.set_xticklabels([label for label in labels if label]) 
+                    display.set_yticks(ticks)  
+                    display.set_yticklabels([label for label in labels if label]) 
                 
                 # Set title
                 display.set_title(plot_title, fontdict= {'fontsize': plot_dict["fontsize"]})
@@ -438,7 +505,7 @@ class CAP(_CAPGetter):
                 # Save individual plots
                 if output_dir:
                     partial_filename = f"{group}_{cap}_{task_title}" if task_title else f"{group}_{cap}"
-                    full_filename = f"{partial_filename}_outer_product_heatmap-networks.{plot_dict['format']}" if scope == "networks" else f"{partial_filename}_outer_product_heatmap-nodes.{plot_dict['format']}"
+                    full_filename = f"{partial_filename}_outer_product_heatmap-regions.{plot_dict['format']}" if scope == "regions" else f"{partial_filename}_outer_product_heatmap-nodes.{plot_dict['format']}"
                     display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"], bbox_inches='tight')
         
         # Remove subplots with no data
@@ -447,7 +514,7 @@ class CAP(_CAPGetter):
         # Save subplot
         if subplots and output_dir: 
             partial_filename = f"{group}_CAPS_{task_title}" if task_title else f"{group}_CAPS"
-            full_filename = f"{partial_filename}_outer_product_heatmap-networks.{plot_dict['format']}" if scope == "networks" else f"{partial_filename}_outer_product_heatmap-nodes.{plot_dict['format']}"
+            full_filename = f"{partial_filename}_outer_product_heatmap-regions.{plot_dict['format']}" if scope == "regions" else f"{partial_filename}_outer_product_heatmap-nodes.{plot_dict['format']}"
             display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"], bbox_inches='tight')    
         
         # Display figures
@@ -460,28 +527,36 @@ class CAP(_CAPGetter):
         # Initialize new grid
         plt.figure(figsize=plot_dict["figsize"])
 
-        if scope == "networks": display = heatmap(pd.DataFrame(cap_dict[group], index=columns), cmap='coolwarm', cbar_kws={'shrink': plot_dict["shrink"]}) 
+        if scope == "regions": 
+            display = heatmap(pd.DataFrame(cap_dict[group], index=columns), xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], cbar_kws={'shrink': plot_dict["shrink"]}) 
         else: 
             # Create Labels
             import collections
             if list(self._parcel_approach.keys())[0] == "Schaefer":
-                frequency_dict = dict(collections.Counter([names[0] + " " + names[1] for names in [name.split("_")[0:2] for name in self._parcel_approach[list(self._parcel_approach.keys())[0]]["labels"]]]))
+                frequency_dict = dict(collections.Counter([names[0] + " " + names[1] for names in [name.split("_")[0:2] for name in self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"]]]))
             elif list(self._parcel_approach.keys())[0] == "AAL":
-                frequency_dict = collections.Counter([name.split("_")[0] for name in self._parcel_approach[list(self._parcel_approach.keys())[0]]["labels"]])
+                frequency_dict = collections.Counter([name.split("_")[0] for name in self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"]])
+            elif list(self._parcel_approach.keys())[0] == "Custom":
+                    frequency_dict = {}
+                    for id in columns:
+                        hemisphere_id = "LH" if id.startswith("LH ") else "RH"
+                        region_id = re.split("LH |RH ", id)[-1]
+                        frequency_dict.update({id: len(self._parcel_approach["Custom"]["regions"][region_id][hemisphere_id.lower()])})
             names_list = list(frequency_dict.keys())
-            labels = ["" for _ in range(0,len(self._parcel_approach[list(self._parcel_approach.keys())[0]]["labels"]))]
+            labels = ["" for _ in range(0,len(self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"]))]
 
-            shift = 0
+            starting_value = 0
 
-            for num, name in enumerate(names_list):
+            # Iterate through names_list and assign the starting indices corresponding to unique region and hemisphere key
+            for num, name in enumerate(names_list): 
                 if num == 0:
                     labels[0] = name
                 else:
-                    shift += frequency_dict[names_list[num-1]] 
-                    indx = (frequency_dict[names_list[num]]) + shift - frequency_dict[names_list[num]]
-                    labels[indx] = name
+                    # Shifting to previous frequency of the preceding netwerk to obtain the new starting value of the subsequent region and hemosphere pair
+                    starting_value += frequency_dict[names_list[num-1]] 
+                    labels[starting_value] = name
 
-            display = heatmap(pd.DataFrame(cap_dict[group], columns=cap_dict[group].keys()), cmap='coolwarm', cbar_kws={'shrink': plot_dict["shrink"]})
+            display = heatmap(pd.DataFrame(cap_dict[group], columns=cap_dict[group].keys()), xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], cbar_kws={'shrink': plot_dict["shrink"]})
 
             plt.yticks(ticks=[pos for pos, label in enumerate(labels) if label], labels=names_list)  
 
@@ -496,7 +571,7 @@ class CAP(_CAPGetter):
         # Save plots
         if output_dir:
             partial_filename = f"{group}_CAPS_{task_title}" if task_title else f"{group}_CAPS"
-            full_filename = f"{partial_filename}_heatmap-networks.{plot_dict['format']}" if scope == "networks" else f"{partial_filename}_heatmap-nodes.{plot_dict['format']}"
+            full_filename = f"{partial_filename}_heatmap-regions.{plot_dict['format']}" if scope == "regions" else f"{partial_filename}_heatmap-nodes.{plot_dict['format']}"
             display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"], bbox_inches='tight')    
    
         # Display figures

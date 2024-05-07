@@ -1,4 +1,5 @@
 import numpy as np
+from ._check_parcel_approach import _check_parcel_approach
 # A class which is responsible for acessing all TimeseriesExtractorGetter and to keep track of all attributes in TimeSeriesExtractor
 class _TimeseriesExtractorGetter:
     def __init__(self):
@@ -17,6 +18,10 @@ class _TimeseriesExtractorGetter:
     def parcel_approach(self):
         return self._parcel_approach
     
+    @parcel_approach.setter
+    def parcel_approach(self, parcel_dict):
+        self._parcel_approach = _check_parcel_approach(parcel_approach=parcel_dict, call="setter")
+
     ### Does not exists upon initialization of Timeseries Extractor
 
     # Exist when TimeSeriesExtractor.get_bold() used
@@ -45,7 +50,7 @@ class _TimeseriesExtractorGetter:
     
     @subject_timeseries.setter
     def subject_timeseries(self, subject_dict):
-        error_message = "Must be a nested dictionary where the first level is the subject id, second level is the run number in the form of 'run-#', and the final level is the timeseris as a numpy array"
+        error_message = "Must be a nested dictionary where the first level is the subject id, second level is the run number in the form of 'run-#', and the final level is the timeseris as a numpy array."
         if isinstance(subject_dict, dict): 
             first_level_indx = list(subject_dict.keys())[0]
             if isinstance(subject_dict[first_level_indx], dict) and len(subject_dict[first_level_indx].keys()) != 0 and "run" in list(subject_dict[first_level_indx].keys())[0]: 
