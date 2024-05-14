@@ -1,8 +1,9 @@
-from typing import Union
-from sklearn.cluster import KMeans
-from kneed import KneeLocator
-from .._utils import _CAPGetter, _convert_pickle_to_dict, _check_parcel_approach
 import numpy as np, re, warnings
+from kneed import KneeLocator
+from sklearn.cluster import KMeans
+from typing import Union
+from .._utils import _CAPGetter, _convert_pickle_to_dict, _check_parcel_approach
+
 
 class CAP(_CAPGetter):
     def __init__(self, parcel_approach: dict[dict], n_clusters: Union[int, list[int]]=5, cluster_selection_method: str=None, groups: dict=None):
@@ -275,7 +276,7 @@ class CAP(_CAPGetter):
                                          "Hippocampus": {"lh": [2],
                                                          "rh": [5]}}}}
         """
-        import os, itertools
+        import itertools, os
 
         # Check parcel approach
 
@@ -347,12 +348,12 @@ class CAP(_CAPGetter):
                 if scope == "regions": 
                     if list(self._parcel_approach.keys())[0] in ["Schaefer", "AAL"]:
                         cap_dict, columns = self._region_caps, self._parcel_approach[list(self._parcel_approach.keys())[0]]["regions"]
-                    elif list(self._parcel_approach.keys())[0] == "Custom":
+                    else:
                         cap_dict, columns = self._region_caps, list(self._parcel_approach["Custom"]["regions"].keys())
                 elif scope == "nodes": 
                     if list(self._parcel_approach.keys())[0] in ["Schaefer", "AAL"]:
                         cap_dict, columns = self._caps, self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"]
-                    elif list(self._parcel_approach.keys())[0] == "Custom":
+                    else:
                         cap_dict, columns = self._caps , [x[0] + " " + x[1] for x in list(itertools.product(["LH", "RH"],self._parcel_approach["Custom"]["regions"].keys()))]
 
                 #  Generate plot for each group
@@ -386,8 +387,8 @@ class CAP(_CAPGetter):
                 self._region_caps[group].update({cap: region_caps})
     
     def _generate_outer_product_plots(self, group, plot_dict, cap_dict, columns, subplots, output_dir, task_title, show_figs, scope):
-        from seaborn import heatmap
         import matplotlib.pyplot as plt, os
+        from seaborn import heatmap
 
         # Nested dictionary for group
         self._outer_product[group] = {}
@@ -425,7 +426,7 @@ class CAP(_CAPGetter):
                     frequency_dict = dict(collections.Counter([names[0] + " " + names[1] for names in [name.split("_")[0:2] for name in self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"]]]))
                 elif list(self._parcel_approach.keys())[0] == "AAL":
                     frequency_dict = collections.Counter([name.split("_")[0] for name in self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"]])
-                elif list(self._parcel_approach.keys())[0] == "Custom":
+                else:
                     frequency_dict = {}
                     for id in columns:
                         hemisphere_id = "LH" if id.startswith("LH ") else "RH"
@@ -521,8 +522,8 @@ class CAP(_CAPGetter):
         if not show_figs: plt.close()
 
     def _generate_heatmap_plots(self, group, plot_dict, cap_dict, columns, output_dir, task_title, show_figs, scope):
+        import matplotlib.pyplot as plt, os, pandas as pd
         from seaborn import heatmap
-        import matplotlib.pyplot as plt, pandas as pd, os
         
         # Initialize new grid
         plt.figure(figsize=plot_dict["figsize"])
@@ -536,7 +537,7 @@ class CAP(_CAPGetter):
                 frequency_dict = dict(collections.Counter([names[0] + " " + names[1] for names in [name.split("_")[0:2] for name in self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"]]]))
             elif list(self._parcel_approach.keys())[0] == "AAL":
                 frequency_dict = collections.Counter([name.split("_")[0] for name in self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"]])
-            elif list(self._parcel_approach.keys())[0] == "Custom":
+            else:
                     frequency_dict = {}
                     for id in columns:
                         hemisphere_id = "LH" if id.startswith("LH ") else "RH"
@@ -629,7 +630,7 @@ class CAP(_CAPGetter):
         NeuroImage, 237, 118193. https://doi.org/10.1016/j.neuroimage.2021.118193
 
         """
-        import collections, pandas as pd, os
+        import collections, os, pandas as pd
 
         metrics = [metrics] if isinstance(metrics, str) else metrics
 
@@ -755,7 +756,108 @@ class CAP(_CAPGetter):
 
         if return_df:
             return df_dict
+        
+    def caps2surf(self, output_dir: str=None, show_figs: bool = True, 
+                      fwhm: float=None, return_stat_map: bool = False, **kwargs):
+        """Project CAPs back onto atlas used for spatial dimensionality reduction for visualization
+        
+        Converts atlas into a stat map by replacing labels with the corresponding from the cluster centroids then plots on a surface plot.
 
+        Parameters
+        ----------
+        output_dir: str, default=None
+            Directory to save plots in. If None, plots will not be saved.
+        show_figs: bool, default=True
+            Display figures or not to display figures.
+        fwhm: float, defualt=None
+            Strength of spatial smoothing to apply in millimeters.
+        return_stat_map: bool, default=FAlse
+            Returns the atlas as a stat map.
+        **kwargs: dict
+            Additional parameters to pass to modify certain plot parameters. Options include "dpi", defaults to 300, "title_pad", defaults to -3,
+            "cmap", defaults to "cold_hot", "cbar_location", defaults to "bottom", "cbar_draw_border", defaults to False, "cbar_aspect", defaults to 10, "cbar_shrink", defaults 
+            to 0.2, "cbar_decimals", defaults to 0, and "cbar_pad", defaults to 0.
+            
+        Returns
+        -------
+        Nifti Stat map
+
+        Notes
+        -----
+        Assumes that atlas background label is zero.
+
+        """
+
+        import nibabel as nib, numpy as np, os
+        from nilearn import image
+        from nilearn.plotting.cm import _cmap_d 
+        from neuromaps.transforms import mni152_to_fslr
+        from neuromaps.datasets import fetch_fslr
+        from surfplot import Plot
+
+        plot_dict = dict(dpi = kwargs["dpi"] if kwargs and "dpi" in kwargs.keys() else 300,
+                         title_pad = kwargs["title_pad"] if kwargs and "title_pad" in kwargs.keys() else -3,
+                         cmap = kwargs["cmap"] if kwargs and "cmap" in kwargs.keys() else "cold_hot",
+                         cbar_location = kwargs["cbar_location"] if kwargs and "cbar_location" in kwargs.keys() else "bottom",
+                         cbar_draw_border = kwargs["cbar_draw_border"] if kwargs and "cbar_draw_border" in kwargs.keys() else False,
+                         cbar_aspect = kwargs["cbar_aspect"] if kwargs and "cbar_aspect" in kwargs.keys() else 10,
+                         cbar_shrink = kwargs["cbar_shrink"] if kwargs and "cbar_shrink" in kwargs.keys() else 0.2,
+                         cbar_decimals = kwargs["cbar_decimals"] if kwargs and "cbar_decimals" in kwargs.keys() else 0,
+                         cbar_pad = kwargs["cbar_pad"] if kwargs and "cbar_pad" in kwargs.keys() else 0)
+        
+        if kwargs:
+            invalid_kwargs = {key : value for key, value in kwargs.items() if key not in plot_dict.keys()}
+            if len(invalid_kwargs.keys()) > 0:
+                print(f"Invalid kwargs arguments used and will be ignored {invalid_kwargs}.")
+
+        for group in self._caps.keys():
+            for cap in self._caps[group].keys():
+                atlas = nib.load(self._parcel_approach[list(self._parcel_approach.keys())[0]]["maps"])
+                atlas_fdata = atlas.get_fdata()
+                for indx, value in enumerate(self._caps[group][cap]):
+                    actual_indx = indx + 1
+                    atlas_fdata[np.where(atlas_fdata == actual_indx)] = value
+                stat_map = nib.Nifti1Image(atlas_fdata, atlas.affine, atlas.header)
+                if fwhm != None:
+                    stat_map = image.smooth_img(stat_map, fwhm=fwhm)
+
+                # Code slightly adapted from surfplot example 2
+                gii_lh, gii_rh = mni152_to_fslr(stat_map, method="linear")
+                surfaces = fetch_fslr()
+                lh, rh = surfaces['inflated']
+                lh = str(lh) if not isinstance(lh, str) else lh
+                rh = str(rh) if not isinstance(rh, str) else rh
+                sulc_lh, sulc_rh = surfaces['sulc']
+                sulc_lh = str(sulc_lh) if not isinstance(sulc_lh, str) else sulc_lh
+                sulc_rh = str(sulc_rh) if not isinstance(sulc_rh, str) else sulc_rh
+                p = Plot(lh, rh)
+
+                # Add base layer
+                p.add_layer({"left": sulc_lh, "right": sulc_rh}, cmap="binary_r", cbar=False)
+
+                plot_min = -1 if round(atlas_fdata.min()) == 0 else round(atlas_fdata.min())
+                plot_max = 1 if round(atlas_fdata.max()) == 0 else round(atlas_fdata.max())
+
+                # Add stat map layer
+                p.add_layer({"left": gii_lh, "right": gii_rh}, cmap=_cmap_d[plot_dict["cmap"]], 
+                            color_range=(plot_min,plot_max))
+
+                # Color bar
+                kws = dict(location=plot_dict["cbar_location"], draw_border=plot_dict["cbar_draw_border"], aspect=plot_dict["cbar_aspect"], shrink=plot_dict["cbar_shrink"],
+                        decimals=plot_dict["cbar_decimals"], pad=plot_dict["cbar_pad"])
+                fig = p.build(cbar_kws=kws)
+                fig_name = f"{group} - {cap}"
+                fig.axes[0].set_title(fig_name, pad=plot_dict["title_pad"])      
+                
+                if show_figs:
+                    fig.show()
+                
+                if output_dir:
+                    save_name = f"{group.replace(' ', '_')}_{cap.replace('-', '_')}"
+                    fig.savefig(os.path.join(output_dir, save_name), dpi=plot_dict["dpi"])
+
+        if return_stat_map:
+            return stat_map
 
 
 

@@ -55,7 +55,7 @@ def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
         if not all(check_subkeys):
             missing_subkeys = [["nodes", "regions"][x] for x,y in enumerate(check_subkeys) if y == False]
             error_message = f"The following subkeys haven't been detected {missing_subkeys}."
-            if call == "TimeseriesExtractor":warnings.warn(error_message + " These labels are not needed for timeseries extraction but are needed for future timeseries or CAPs plotting.")
+            if call == "TimeseriesExtractor": warnings.warn(error_message + " These labels are not needed for timeseries extraction but are needed for future timeseries or CAPs plotting.")
             else: 
                 custom_example = {"Custom": {"nodes": ["LH_Vis1", "LH_Vis2", "LH_Hippocampus", "RH_Vis1", "RH_Vis2", "RH_Hippocampus"],
                                              "regions": {"Vis" : {"lh": [0,1],

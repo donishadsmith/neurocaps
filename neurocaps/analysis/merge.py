@@ -12,7 +12,7 @@ def merge_dicts(subject_timeseries_list: Union[list[dict], list[str]], return_co
     Parameters
     ----------
 
-    subject_timeseries_list: dict
+    subject_timeseries_list: list[dict] or list[str]
         The list of pickle files containing the nested subject timeseries dictionary saved by the TimeSeriesExtractor class or a liist of the
         the nested subject timeseries dictionary produced by the TimeseriesExtractor class. The first level of the nested dictionary must consist of the subject
         ID as a string, the second level must consist of the the run numbers in the form of 'run-#', where # is the corresponding number of the run, and the last level 
