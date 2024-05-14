@@ -1,6 +1,6 @@
+import json, os, re, sys, warnings
 from typing import Union
 from .._utils import _TimeseriesExtractorGetter, _check_confound_names, _check_parcel_approach, _extract_timeseries
-import re, os, warnings, json, sys
 
 class TimeseriesExtractor(_TimeseriesExtractorGetter):
     def __init__(self, space: str="MNI152NLin2009cAsym", standardize: Union[bool,str]="zscore_sample", detrend: bool=False , low_pass: float=None, high_pass: float=None, 
@@ -299,7 +299,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         file_name : str
             Name of the file without the "pkl" extension.
         """
-
         import pickle
 
         if output_dir:
@@ -333,7 +332,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Name of the file with the extension to signify the file type.
         kwargs: dict
             Keyword arguments used when saving figures. Valid keywords include "dpi" and "figsize". If output_dir is not None and no inputs for dpi and format are given,
-            dpi defaults to 300. If "figsize" has no input, figure sizes defaults to (8,6).
+            dpi defaults to 300. If "figsize" has no input, figure sizes defaults to (11,5).
 
         Raises
         ------
@@ -377,7 +376,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             assert "." in file_name, "`file_name` must be specified if `output_dir` is specified and it must contain an extension to signify the file type."
 
         plot_dict = dict(dpi = kwargs["dpi"] if kwargs and "dpi" in kwargs.keys() else 300,
-                         figsize= kwargs["figsize"] if kwargs and "figsize" in kwargs.keys() else (15, 5))
+                         figsize = kwargs["figsize"] if kwargs and "figsize" in kwargs.keys() else (11, 5))
         
         if kwargs:
             invalid_kwargs = {key : value for key, value in kwargs.items() if key not in plot_dict.keys()}

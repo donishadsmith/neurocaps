@@ -2,7 +2,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
 
     from nilearn.maskers import NiftiLabelsMasker
     from nilearn.image import index_img, load_img
-    import pandas as pd, json, math, numpy as np, copy, warnings
+    import copy, json, math, numpy as np, pandas as pd, warnings
 
     # Intitialize subject dictionary
     subject_timeseries = {subj_id: {}}

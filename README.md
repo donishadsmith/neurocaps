@@ -81,6 +81,7 @@ Please refer to [demo.ipynb](https://github.com/donishadsmith/neurocaps/blob/mai
 Quick code example:
 
 ```python
+# Examples use randomized data
 
 from neurocaps.extraction import TimeseriesExtractor
 from neurocaps.analysis import CAP
@@ -132,6 +133,13 @@ cap_analysis.visualize_caps(visual_scope="nodes", plot_options="outer product",
                             subplots=True, xlabel_rotation=90, tight_layout=False, 
                             hspace = 0.4)
 
+```
+**Graph Outputs:**
+![image](https://github.com/donishadsmith/neurocaps/assets/112973674/4699bbd9-1f55-462b-9d9e-4ef17da79ad4)
+![image](https://github.com/donishadsmith/neurocaps/assets/112973674/506c5be5-540d-43a9-8a61-c02062f5c6f9)
+
+```python
+
 # Get CAP metrics
 outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, tr=2.0, 
                                          return_df=True, output_dir=output_dir,
@@ -139,12 +147,7 @@ outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_ti
                                          continuous_runs=True, file_name="All_Subjects_CAPs_metrics")
 
 print(outputs["temporal fraction"])
-
 ```
-**Graph Outputs:**
-![image](https://github.com/donishadsmith/neurocaps/assets/112973674/4699bbd9-1f55-462b-9d9e-4ef17da79ad4)
-![image](https://github.com/donishadsmith/neurocaps/assets/112973674/506c5be5-540d-43a9-8a61-c02062f5c6f9)
-
 **DataFrame Output:**
 | Subject_ID | Group | Run | CAP-1 | CAP-2 | CAP-3 | CAP-4 | CAP-5 | CAP-6 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -159,6 +162,10 @@ print(outputs["temporal fraction"])
 | 9 | All Subjects | Continuous Runs | 0.18 | 0.1 | 0.17 | 0.18 | 0.16 | 0.2 |
 | 10 | All Subjects | Continuous Runs | 0.14 | 0.19 | 0.14 | 0.17 | 0.19 | 0.16 |
 
+```python
+cap_analysis.caps2surf(fwhm=1)
+```
+![image](https://github.com/donishadsmith/neurocaps/assets/112973674/6241b4b7-f5ae-4bfa-99b2-9e801d5b9422)
 # Testing 
 This package was tested using a closed dataset as well as a modified version of a single subject open dataset to test the TimeseriesExtractor function on Github Actions. Furthermore, the open dataset provided by [Laumann & Poldrack](https://openfmri.org/dataset/ds000031/) and used in [Laumann et al., 2015](https://doi.org/10.1016/j.neuron.2015.06.037)[^4]. Additionally, this data was obtained from the OpenfMRI database. Its accession number is ds000031. Modifications to the data consist of truncating the preprocessed bold data and confounds form 448 timepoints to 34 timepoints, only including session 002 data, adding a dataset_description.json file to the fmriprep folder, excluding the nii.gz file in the root bids folder, only retaining the mask, truncated preprocessed bold file, and truncated confounds file in the fmriprep folder, and slighly changing the naming style of the mask, preprocessed bold file, and confounds file in the fmriprep folder to conform with the naming conventions of modern fmriprep outputs.
 
