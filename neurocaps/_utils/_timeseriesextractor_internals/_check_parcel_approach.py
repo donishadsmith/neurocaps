@@ -2,7 +2,7 @@ from nilearn import datasets
 import warnings, re, os
 
 def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
-    valid_parcel_dict = {"Schaefer": {"n_rois" : 400, "yeo_networks": 7},
+    valid_parcel_dict = {"Schaefer": {"n_rois" : 400, "yeo_networks": 7, "resolution_mm": 1},
                          "AAL": {"version": "SPM12"},
                          "Custom": {"maps": "/location/to/parcellation.nii.gz",
                                     "nodes": ["LH_Vis1", "LH_Vis2", "LH_Hippocampus", "RH_Vis1", "RH_Vis2", "RH_Hippocampus"],
@@ -15,7 +15,7 @@ def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
         raise ValueError(f"Please include a valid `parcel_approach` in one of the following dictionary formats for 'Schaefer' or 'AAL' {valid_parcel_dict}")
     
     if len(parcel_approach.keys()) > 1:
-        raise ValueError(f"Only one parcellation approach can be selected from the following valid options: {valid_parcel_dict.keys()}.\n Example format of `parcel_approach`: {valid_parcel_dict}")
+        raise ValueError(f"Only one parcellation approach can be selected from the following valid options: {valid_parcel_dict.keys()}.\nExample format of `parcel_approach`: {valid_parcel_dict}")
     
     if "Schaefer" not in parcel_approach.keys() and "AAL" not in parcel_approach.keys() and "Custom" not in parcel_approach.keys():
         raise ValueError(f"Please include a valid `parcel_approach` in one of the following formats for 'Schaefer', 'AAL', or 'Custom': {valid_parcel_dict}")
@@ -28,9 +28,15 @@ def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
         if "yeo_networks" not in parcel_approach["Schaefer"].keys():
             warnings.warn("'yeo_networks' not specified in `parcel_approach`. Defaulting to 7 networks.")
             parcel_approach["Schaefer"].update({"yeo_networks": 7})
+        
+        if "resolution_mm" not in parcel_approach["Schaefer"].keys():
+            warnings.warn("'resolution_mm' not specified in `parcel_approach`. Defaulting to 1mm.")
+            parcel_approach["Schaefer"].update({"resolution_mm": 1})
 
         # Get atlas
-        fetched_schaefer = datasets.fetch_atlas_schaefer_2018(n_rois=parcel_approach["Schaefer"]["n_rois"], yeo_networks=parcel_approach["Schaefer"]["yeo_networks"])
+        fetched_schaefer = datasets.fetch_atlas_schaefer_2018(n_rois=parcel_approach["Schaefer"]["n_rois"], 
+                                                              yeo_networks=parcel_approach["Schaefer"]["yeo_networks"], 
+                                                              resolution_mm=parcel_approach["Schaefer"]["resolution_mm"])
         parcel_approach["Schaefer"].update({"maps": fetched_schaefer.maps})
         parcel_approach["Schaefer"].update({"nodes": [label.decode().split("7Networks_")[-1]  for label in fetched_schaefer.labels]})
         # Get node networks
@@ -50,7 +56,7 @@ def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
     
     if "Custom" in parcel_approach.keys():
         if call  == "TimeseriesExtractor" and "maps" not in parcel_approach["Custom"].keys():
-            raise ValueError(f"For `Custom` parcel_approach, a nested key-value pair containing the key 'maps' with the value being a string specifying the location of the parcellation is needed. Example: {{'Custom' : valid_parcel_dict['Custom']}}")
+            raise ValueError(f"For `Custom` parcel_approach, a nested key-value pair containing the key 'maps' with the value being a string specifying the location of the parcellation is needed.\nExample: {{'Custom' : valid_parcel_dict['Custom']}}")
         check_subkeys = ["nodes" in parcel_approach["Custom"].keys(), "regions" in parcel_approach["Custom"].keys()]
         if not all(check_subkeys):
             missing_subkeys = [["nodes", "regions"][x] for x,y in enumerate(check_subkeys) if y == False]

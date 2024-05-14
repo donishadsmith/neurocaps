@@ -1,7 +1,7 @@
 import numpy as np, re, warnings
 from kneed import KneeLocator
 from sklearn.cluster import KMeans
-from typing import Union
+from typing import Union, Literal
 from .._utils import _CAPGetter, _convert_pickle_to_dict, _check_parcel_approach
 
 
@@ -68,11 +68,14 @@ class CAP(_CAPGetter):
         valid_parcel_dict = {"Schaefer", "AAL", "Custom"}
 
         if len(parcel_approach.keys()) > 1:
-            raise ValueError(f"Only one parcellation approach can be selected from the following valid options: {valid_parcel_dict.keys()}.\n Example format of `parcel_approach`: {valid_parcel_dict}")
+            raise ValueError(f"Only one parcellation approach can be selected from the following valid options: {valid_parcel_dict.keys()}.\nExample format of `parcel_approach`: {valid_parcel_dict}")
         
         self._parcel_approach = parcel_approach 
 
-    def get_caps(self, subject_timeseries: Union[dict[dict[np.ndarray]], str], runs: Union[int, list[int]]=None, random_state: int=None, show_figs: bool=True, standardize: bool=True, epsilon: Union[int,float]=0, **kwargs) -> None:
+    def get_caps(self, subject_timeseries: Union[dict[dict[np.ndarray]], str], runs: Union[int, list[int]]=None, random_state: int=None, 
+                 init: Union[np.array, Literal["k-means++", "random"]]="k-means++", n_init: Union[Literal["auto"],int]='auto', 
+                 max_iter: int=300, tol: float=0.0001, algorithm: Literal["lloyd", "elkan"]="lloyd", show_figs: bool=False, 
+                 output_dir: str=None, standardize: bool=True, epsilon: Union[int,float]=0, **kwargs) -> None:
         """"" Create CAPs
 
         The purpose of this function is to concatenate the timeseries of each subject and perform kmeans clustering on the concatenated data.
@@ -87,21 +90,31 @@ class CAP(_CAPGetter):
         runs: int or list[int], default=None
             The run numbers to perform the CAPs analysis with. If None, all runs in the subject timeseries will be concatenated into a single dataframe.
         random_state: int, default=None
-            The random state to use for scikits KMeans function.
-        show_figs: bool, default=True
+            The random state to use for scikit's KMeans function.
+        init: "k-means++", "random", or array, default="k-means++"
+            Method for choosing initial cluster centroid. Please refer to scikit's KMeans documentation for more information.
+        n_init: "auto" or int, default="auto"
+            Number of times KMeans is ran with different intial clusters. Model with lowest inertia out of the runs will be selected.
+            Please refer to scikit's KMeans documentation for more information.
+        max_iter: int, default=300
+            Maximum number of iterations for a single run of KMeans.
+        tol: float, default=1e-4,
+            Stopping criteria if the change of inertia is below value assuming `max_iter` has not been reached.
+        algorithm: "lloyd or "elkan", default="lloyd"
+            The type of algorithm to use. Please refer to scikit's KMeans documentation for more information.
+        show_figs: bool, default=False
             Display the plots of inertia scores for all groups if `cluster_selection_method`="elbow".
+        output_dir: str, default=None
+            Directory to save plot in if `cluster_selection_method`="elbow".
         standardize: bool, default=True
             To z-score the features of the concatonated timeseries array.
         epsilon: int or float, default=0
             Small number to add to the denominator when z-scoring for numerical stabilty.
-        kwargs: dect
-            Dictionary to adjust the sensitivity, `S` parameter, of the elbow method. The elbow method uses the KneeLocator function from the  kneed package. If no `S` is inputted, `S` will be KneeLocator default.
-            Larger values of `S` are more conservative and less sensitive to small fluctuations.
+        kwargs: dict
+            Dictionary to adjust certain parameters related to `cluster_selection_method`="elbow". Additional parameters includes "S", which adjust the sensitivity of finding the elbow 
+            (Larger values of `S` are more conservative and less sensitive to small fluctuations; this package uses KneeLocator from the kneed package to identify the elbow), defaults to 1, 
+            "dpi", to adjust the dpi of the elbow plot, defaults to 300, and "figsize", which adjust the size of the elbow plots.
             
-        Raises
-        ------
-        ValueError
-            If both input_path and subject_timeseries are None.
         """
         
         if runs:
@@ -116,19 +129,20 @@ class CAP(_CAPGetter):
         self._concatenated_timeseries = self._get_concatenated_timeseries(subject_timeseries=subject_timeseries, runs=runs)
 
         if self._cluster_selection_method == "silhouette": 
-            self._perform_silhouette_method(random_state=random_state)
+            self._perform_silhouette_method(random_state=random_state, init=init, n_init=n_init, max_iter=max_iter, tol=tol, algorithm=algorithm)
         elif self._cluster_selection_method == "elbow":
-            self._perform_elbow_method(random_state=random_state, show_figs=show_figs, **kwargs)
+            self._perform_elbow_method(random_state=random_state, show_figs=show_figs, output_dir=output_dir, init=init, n_init=n_init, 
+                                       max_iter=max_iter, tol=tol, algorithm=algorithm, **kwargs)
         else:
             self._kmeans = {}
             for group in self._groups.keys():
                 self._kmeans[group] = {}
-                self._kmeans[group] = KMeans(n_clusters=self._n_clusters,random_state=random_state).fit(self._concatenated_timeseries[group]) if random_state or random_state == 0 else KMeans(n_clusters=self._n_clusters).fit(self._concatenated_timeseries[group])
+                self._kmeans[group] = KMeans(n_clusters=self._n_clusters, random_state=random_state, init=init, n_init=n_init, max_iter=max_iter, tol=tol, algorithm=algorithm).fit(self._concatenated_timeseries[group]) 
             
         # Create states dict   
         self._create_caps_dict()
     
-    def _perform_silhouette_method(self, random_state):
+    def _perform_silhouette_method(self, random_state, init, n_init, max_iter, tol, algorithm):
         from sklearn.metrics import silhouette_score
 
         # Initialize attribute
@@ -139,16 +153,16 @@ class CAP(_CAPGetter):
         for group in self._groups.keys():
             self._silhouette_scores[group] = {}
             for n_cluster in self._n_clusters:
-                self._kmeans[group] = KMeans(n_clusters=n_cluster,random_state=random_state).fit(self._concatenated_timeseries[group]) if random_state or random_state == 0 else KMeans(n_clusters=n_cluster).fit(self._concatenated_timeseries[group])
+                self._kmeans[group] = KMeans(n_clusters=n_cluster, random_state=random_state, init=init, n_init=n_init, max_iter=max_iter, tol=tol, algorithm=algorithm).fit(self._concatenated_timeseries[group])
                 cluster_labels = self._kmeans[group].predict(self._concatenated_timeseries[group])
                 self._silhouette_scores[group].update({n_cluster: silhouette_score(self._concatenated_timeseries[group], cluster_labels)})
             self._optimal_n_clusters[group] = max(self._silhouette_scores[group], key=self._silhouette_scores[group].get)
             if self._optimal_n_clusters[group] != self._n_clusters[-1]:
-                self._kmeans[group] = KMeans(n_clusters=self._optimal_n_clusters[group],random_state=random_state).fit(self._concatenated_timeseries[group]) if random_state or random_state == 0 else KMeans(n_clusters=self._optimal_n_clusters[group]).fit(self._concatenated_timeseries[group])
+                self._kmeans[group] = KMeans(n_clusters=self._optimal_n_clusters[group], random_state=random_state, init=init, n_init=n_init, max_iter=max_iter, tol=tol, algorithm=algorithm).fit(self._concatenated_timeseries[group]) 
             print(f"Optimal cluster size for {group} is {self._optimal_n_clusters[group]}.")
         
     
-    def _perform_elbow_method(self, random_state, show_figs, **kwargs):
+    def _perform_elbow_method(self, random_state, show_figs, output_dir, init, n_init, max_iter, tol, algorithm, **kwargs):
         # Initialize attribute
         self._inertia = {}
         self._optimal_n_clusters = {}
@@ -159,7 +173,7 @@ class CAP(_CAPGetter):
         for group in self._groups.keys():
             self._inertia[group] = {}
             for n_cluster in self._n_clusters:
-                self._kmeans[group] = KMeans(n_clusters=n_cluster,random_state=random_state).fit(self._concatenated_timeseries[group]) if random_state or random_state == 0 else KMeans(n_clusters=n_cluster).fit(self._concatenated_timeseries[group])
+                self._kmeans[group] = KMeans(n_clusters=n_cluster, random_state=random_state, init=init, n_init=n_init, max_iter=max_iter, tol=tol, algorithm=algorithm).fit(self._concatenated_timeseries[group])
                 self._inertia[group].update({n_cluster: self._kmeans[group].inertia_}) 
             
             # Get optimal cluster size
@@ -173,12 +187,32 @@ class CAP(_CAPGetter):
                  warnings.warn("No elbow detected so optimal cluster size is None. Try adjusting the sensitivity parameter, `S`, to increase or decrease sensitivity (higher values are less sensitive), expanding the list of clusters to test, or setting `cluster_selection_method` to 'sillhouette'.")
             else:
                 if self._optimal_n_clusters[group] != self._n_clusters[-1]:
-                    self._kmeans[group] = KMeans(n_clusters=self._optimal_n_clusters[group],random_state=random_state).fit(self._concatenated_timeseries[group]) if random_state or random_state == 0 else KMeans(n_clusters=self._optimal_n_clusters[group]).fit(self._concatenated_timeseries[group])
+                    self._kmeans[group] = KMeans(n_clusters=self._optimal_n_clusters[group], random_state=random_state, init=init, n_init=n_init, max_iter=max_iter, tol=tol, algorithm=algorithm).fit(self._concatenated_timeseries[group])
                 print(f"Optimal cluster size for {group} is {self._optimal_n_clusters[group]}.\n")
 
-                if show_figs:
-                    kneedle.plot_knee(title=group)
-                    kneedle.plot_knee_normalized(title=group)
+                if show_figs or output_dir != None:
+                    import matplotlib.pyplot as plt, os
+
+                    plot_dict = dict(dpi = kwargs["dpi"] if kwargs and "dpi" in kwargs.keys() else 300,
+                                     figsize = kwargs["figsize"] if kwargs and "figsize" in kwargs.keys() else (8,6))
+                    
+                    plt.figure(figsize=plot_dict["figsize"])
+                    inertia_values = [y for x,y in self._inertia[group].items()]
+                    plt.plot(self._n_clusters, inertia_values)
+                    plt.vlines(self._optimal_n_clusters[group], plt.ylim()[0], plt.ylim()[1], 
+                               linestyles="--", label="elbow")
+                    plt.legend(loc="best")
+                    plt.xlabel("K")
+                    plt.ylabel("Inertia")
+                    plt.title(group)
+
+                    if output_dir:
+                        plt.savefig(os.path.join(output_dir,f"{group.replace(' ','_')}_elbow.png"), dpi=plot_dict["dpi"])
+                    
+                    if show_figs == False:
+                        plt.close()
+                    else:
+                        plt.show()
 
     def _create_caps_dict(self):
         # Initialize dictionary
@@ -226,7 +260,8 @@ class CAP(_CAPGetter):
                 else:
                     self._subject_table.update({subj_id : group})
 
-    def visualize_caps(self, output_dir: str=None, plot_options: Union[str, list[str]]="outer product", visual_scope: list[str]="regions", task_title: str=None, show_figs: bool=True, subplots: bool=False, **kwargs):
+    def visualize_caps(self, output_dir: str=None, plot_options: Union[str, list[str]]="outer product", visual_scope: list[str]="regions", 
+                       task_title: str=None, show_figs: bool=True, subplots: bool=False, **kwargs):
         """ Plotting CAPs
 
         This function produces seaborn heatmaps for each CAP. If groups were given when the CAP class was initialized, plotting will be done for all CAPs for all groups.
@@ -257,12 +292,13 @@ class CAP(_CAPGetter):
     
          Notes
         -----
-        If using a "Custom" parcellation approach, ensure each node in your dataset includes both left (lh) and right (rh) hemisphere versions. 
+        If using a "Custom" parcellation approach, ensure each node in your dataset includes both left (lh) and right (rh) hemisphere versions. Also, this function assumes that the background label is "zero". Do not add a a background label, in the "nodes" or "networks" key,
+        the zero index should correspond the first id that is not zero.
 
         Custom Key Structure:
         - maps: Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g., .nii for NIfTI files). For plotting purposes, this label is not required.
         - nodes: A list of all node labels used in your study, arranged in the exact order they correspond to indices in your parcellation files. 
-          Each label should match the parcellation index it represents. For example, if the parcellation label "0" corresponds to the left hemisphere 
+          Each label should match the parcellation index it represents. For example, if the parcellation label "1" corresponds to the left hemisphere 
           visual cortex area 1, then "LH_Vis1" should occupy the 0th index in this list. This ensures that data extraction and analysis accurately reflect the anatomical regions intended.
         - regions: Dictionary defining major brain regions. Each region should list node indices under "lh" and "rh" to specify left and right hemisphere nodes.
         
@@ -610,7 +646,7 @@ class CAP(_CAPGetter):
 
         Returns
         -------
-        dictionary containing pandas dataframes - one for each metric requested.
+        Dictionary containing pandas dataframes - one for each metric requested.
 
         Raises
         ------
@@ -619,7 +655,7 @@ class CAP(_CAPGetter):
 
         Notes
         -----
-        The presence of NaN values for specific CAPs in the "temporal fraction", "persistence", or "counts" dataframes, indicates that the participant had zero instances of 
+        The presence of 0 for specific CAPs in the "temporal fraction", "persistence", or "counts" dataframes, indicates that the participant had zero instances of 
         a specific CAP.
 
         References
@@ -697,7 +733,7 @@ class CAP(_CAPGetter):
                 frequency_dict = dict(collections.Counter(predicted_subject_timeseries[subj_id][curr_run]))
                 sorted_frequency_dict = {key: frequency_dict[key] for key in sorted(list(frequency_dict.keys()))}
                 if len(sorted_frequency_dict) != len(cap_numbers):
-                    sorted_frequency_dict = {cap_number: sorted_frequency_dict[cap_number] if cap_number in sorted_frequency_dict.keys() else float("nan") for cap_number in cap_numbers}
+                    sorted_frequency_dict = {cap_number: sorted_frequency_dict[cap_number] if cap_number in sorted_frequency_dict.keys() else 0 for cap_number in cap_numbers}
                 if "temporal fraction" in metrics: 
                     proportion_dict = {key: item/(len(predicted_subject_timeseries[subj_id][curr_run])) for key, item in sorted_frequency_dict.items()}
                     # Populate Dataframe
@@ -733,7 +769,7 @@ class CAP(_CAPGetter):
                         else:
                             persistence_dict.update({target: np.sum(np.array(uninterrupted_volumes))/(len(uninterrupted_volumes))})
                     else:
-                        persistence_dict.update({target: float("nan")})
+                        persistence_dict.update({target: 0})
                     # Reset variables
                     count = 0
                     uninterrupted_volumes = []
@@ -757,11 +793,12 @@ class CAP(_CAPGetter):
         if return_df:
             return df_dict
         
-    def caps2surf(self, output_dir: str=None, show_figs: bool = True, 
-                      fwhm: float=None, return_stat_map: bool = False, **kwargs):
+    def caps2surf(self, output_dir: str=None, show_figs: bool = True, fwhm: float=None, 
+                  fslr_density: str="32k", method: str="linear", return_stat_map: bool = False, **kwargs):
         """Project CAPs back onto atlas used for spatial dimensionality reduction for visualization
         
         Converts atlas into a stat map by replacing labels with the corresponding from the cluster centroids then plots on a surface plot.
+        This function uses surfplot for surface plotting.
 
         Parameters
         ----------
@@ -771,6 +808,12 @@ class CAP(_CAPGetter):
             Display figures or not to display figures.
         fwhm: float, defualt=None
             Strength of spatial smoothing to apply in millimeters.
+        fslr_density: str, default="32k"
+            Density of the fslr surface when converting from mni 152 space to fslr surface. Options are 
+            "32k" or "164k".
+        method: str, default="linear"
+            Interpolation method to use when converting from mni152 space to fslr surface. Options are "linear"
+            or "nearest".
         return_stat_map: bool, default=FAlse
             Returns the atlas as a stat map.
         **kwargs: dict
@@ -784,7 +827,11 @@ class CAP(_CAPGetter):
 
         Notes
         -----
-        Assumes that atlas background label is zero.
+        Assumes that atlas background label is zero and atlas is in MNI space. Also assumes that the indices from the cluster centroids are related
+        to the atlas by an offset of one. For instance, index 0 of the cluster centroid vector is the first nonzero label, which is assumed to be at the 
+        first index of the array in sorted(np.unique(atlas_fdata)).
+
+        Using fwhm to adjust smooting may help coverage issues.
 
         """
 
@@ -814,15 +861,18 @@ class CAP(_CAPGetter):
             for cap in self._caps[group].keys():
                 atlas = nib.load(self._parcel_approach[list(self._parcel_approach.keys())[0]]["maps"])
                 atlas_fdata = atlas.get_fdata()
+                # Get array containing all labels in atlas to avoid issue if atlas labels dont start at 1, like Nilearn's AAL map
+                target_array = sorted(np.unique(atlas_fdata))
                 for indx, value in enumerate(self._caps[group][cap]):
                     actual_indx = indx + 1
-                    atlas_fdata[np.where(atlas_fdata == actual_indx)] = value
+                    atlas_fdata[np.where(atlas_fdata == target_array[actual_indx])] = value
                 stat_map = nib.Nifti1Image(atlas_fdata, atlas.affine, atlas.header)
+                # Add smoothing to stat map to help mitigate potential coverage issues 
                 if fwhm != None:
                     stat_map = image.smooth_img(stat_map, fwhm=fwhm)
 
                 # Code slightly adapted from surfplot example 2
-                gii_lh, gii_rh = mni152_to_fslr(stat_map, method="linear")
+                gii_lh, gii_rh = mni152_to_fslr(stat_map, method=method, fslr_density=fslr_density)
                 surfaces = fetch_fslr()
                 lh, rh = surfaces['inflated']
                 lh = str(lh) if not isinstance(lh, str) else lh
@@ -858,11 +908,3 @@ class CAP(_CAPGetter):
 
         if return_stat_map:
             return stat_map
-
-
-
-                    
-
-
-
-

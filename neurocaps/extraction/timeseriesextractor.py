@@ -4,8 +4,8 @@ from .._utils import _TimeseriesExtractorGetter, _check_confound_names, _check_p
 
 class TimeseriesExtractor(_TimeseriesExtractorGetter):
     def __init__(self, space: str="MNI152NLin2009cAsym", standardize: Union[bool,str]="zscore_sample", detrend: bool=False , low_pass: float=None, high_pass: float=None, 
-                 parcel_approach : dict={"Schaefer": {"n_rois": 400, "yeo_networks": 7}}, use_confounds: bool=True, confound_names: list[str]=None, fd_threshold: float=None,
-                 n_acompcor_separate: int=None, dummy_scans: int=None):
+                 parcel_approach : dict={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}, use_confounds: bool=True, confound_names: list[str]=None, 
+                 fwhm: float=None, fd_threshold: float=None, n_acompcor_separate: int=None, dummy_scans: int=None):
         """Timeseries Extractor Class
         
         Initializes a TimeseriesExtractor to prepare for Co-activation Patterns (CAPs) analysis.
@@ -22,9 +22,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Signals above cutoff frequency will be filtered out.
         high_pass : float, default=None
             Signals below cutoff frequency will be filtered out.
-        parcel_approach : dict, default={"Schaefer": {"n_rois": 400, "yeo_networks": 7}}
+        parcel_approach : dict, default={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
             Approach to use to parcellate bold images. Should be in the form of a nested dictionary where the first key is the atlas.
-            Currently only "Schaefer" and "AAL" is supported. For the sub-dictionary for "Schaefer", available options includes "n_rois" and "yeo_networks".
+            Currently only "Schaefer", "AAL", and "Custom" is supported. For the sub-dictionary for "Schaefer", available options includes "n_rois", "yeo_networks", and "resolution_mm".
             Please refer to the documentation for Nilearn's `datasets.fetch_atlas_schaefer_2018` for valid inputs. For the subdictionary for "AAL" only "version"
             is an option. Please refer to the documentation for Nilearn's `datasets.fetch_atlas_aal` for valid inputs. As of version 0.8.9, you can replace "Schaefer"
             and "AAL" with "Custom". At minimum, if "Custom" is specified, a subkey, called "maps" specifying the directory location of the parcellation as a Nifti (e.g .nii or .nii.gz)
@@ -33,6 +33,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             To use confounds when extracting timeseries.
         confound_names : List[str], default=None
             Names of confounds to use in confound files. If None, default confounds are used.
+        fwhm : float, default=None
+            Parameter for spatial smoothing.
         fd_threshold : float, default=None
             Threshold criteria to remove volume after nuisance regression and timeseries extraction. For this to work, a column named "framewise_displacement" must be
             in the confounds dataframe and `use_confounds` must be true. Additionally, 'framewise_displacemnt' does not need to be specified in the `confound_names` for this to work.
@@ -52,12 +54,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         Notes for `parcel_approach`
         ---------------------------
-        If using a "Custom" parcellation approach, ensure each node in your dataset includes both left (lh) and right (rh) hemisphere versions. 
+        If using a "Custom" parcellation approach, ensure each node in your dataset includes both left (lh) and right (rh) hemisphere versions. Also, this function assumes that the background label is "zero". Do not add a a background label, in the "nodes" or "networks" key,
+        the zero index should correspond the first id that is not zero.
 
         Custom Key Structure:
         - maps: Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g., .nii for NIfTI files). For plotting purposes, this key is not required.
         - nodes:  list of all node labels used in your study, arranged in the exact order they correspond to indices in your parcellation files. 
-          Each label should match the parcellation index it represents. For example, if the parcellation label "0" corresponds to the left hemisphere 
+          Each label should match the parcellation index it represents. For example, if the parcellation label "1" corresponds to the left hemisphere 
           visual cortex area 1, then "LH_Vis1" should occupy the 0th index in this list. This ensures that data extraction and analysis accurately reflect the anatomical regions intended.
           For timeseries extraction, this key is not required.
         - regions: Dictionary defining major brain regions. Each region should list node indices under "lh" and "rh" to specify left and right hemisphere nodes. For timeseries extraction, this key is not required.
@@ -73,7 +76,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                                                          "rh": [5]}}}}
         """
         self._space = space
-        self._signal_clean_info = {"standardize": standardize, "detrend": detrend, "low_pass": low_pass, "high_pass": high_pass, 
+        self._signal_clean_info = {"standardize": standardize, "detrend": detrend, "low_pass": low_pass, "high_pass": high_pass, "fwhm": fwhm, 
                                    "dummy_scans": dummy_scans, "use_confounds": use_confounds,  "n_acompcor_separate": n_acompcor_separate,
                                    "fd_threshold": None}   
 
@@ -343,12 +346,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         Notes
         -----
-        If using a "Custom" parcellation approach, ensure each node in your dataset includes both left (lh) and right (rh) hemisphere versions. 
+        If using a "Custom" parcellation approach, ensure each node in your dataset includes both left (lh) and right (rh) hemisphere versions. Also, this function assumes that the background label is "zero". Do not add a a background label, in the "nodes" or "networks" key,
+        the zero index should correspond the first id that is not zero.
 
         Custom Key Structure:
         - maps: Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g., .nii for NIfTI files). For plotting purposes, this label is not required.
         - nodes: A list of all node labels used in your study, arranged in the exact order they correspond to indices in your parcellation files. 
-          Each label should match the parcellation index it represents. For example, if the parcellation label "0" corresponds to the left hemisphere 
+          Each label should match the parcellation index it represents. For example, if the parcellation label "1" corresponds to the left hemisphere 
           visual cortex area 1, then "LH_Vis1" should occupy the 0th index in this list. This ensures that data extraction and analysis accurately reflect the anatomical regions intended.
         - regions: Dictionary defining major brain regions. Each region should list node indices under "lh" and "rh" to specify left and right hemisphere nodes.
         
@@ -428,6 +432,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         if show_figs == False:
             plt.close()
+        else:
+            plt.show()
 
 
 

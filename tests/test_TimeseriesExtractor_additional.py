@@ -12,7 +12,7 @@ def test_TimeseriesExtractor_no_parallel_additional():
 
     extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
                                     use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01,
-                                    confound_names=confounds)
+                                    confound_names=confounds, fwhm=2)
 
     bids_dir = os.path.join(dir, "ds000031_R1.0.4_ses001-022/ds000031_R1.0.4")
 

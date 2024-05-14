@@ -82,7 +82,8 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
                 detrend=signal_clean_info["detrend"],
                 low_pass=signal_clean_info["low_pass"],
                 high_pass=signal_clean_info["high_pass"],
-                t_r=tr
+                t_r=tr,
+                smoothing_fwhm=signal_clean_info["fwhm"]
             )
         else:
             masker = NiftiLabelsMasker(
@@ -92,7 +93,8 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
                 detrend=signal_clean_info["detrend"],
                 low_pass=signal_clean_info["low_pass"],
                 high_pass=signal_clean_info["high_pass"],
-                t_r=tr
+                t_r=tr,
+                smoothing_fwhm=signal_clean_info["fwhm"]
             )
         # Load and discard volumes if needed
         nifti_img = load_img(nifti_file[0])
