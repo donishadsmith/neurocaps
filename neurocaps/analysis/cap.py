@@ -282,13 +282,47 @@ class CAP(_CAPGetter):
             Display figures or not to display figures.
         subplots: bool, default=True
             Produce subplots for outer product plots.
-        kwargs: dict
-            Keyword arguments used when saving figures. Valid keywords include "dpi", "format", "figsize", "fontsize", "hspace", "wspace", "xticklabels_size", "yticklabels_size", "shrink", "nrow", "ncol", "suptitle_fontsize", "tight_layout", "rect", "sharey", "xlabel_rotation", "ylabel_rotation", "annot". 
-            If `output_dir` is not None and no inputs for dpi and format are given, dpi defaults to 300 and format defaults to "png". If no keywords, "figsize" defaults to (8,6), "fontsize", which adjusts the title size of the individual plots or subplots, defaults to 14, "hspace", which adjusts spacing for subplots, defaults to 0.4, 
-            "wspace", which adjusts spacing between subplots, defaults to 0.4, "xticklabels_size" defaults to 8, "yticklabels_size" defaults to 8, shrink, which adjusts the cbar size, defaults to 0.8, "nrow", which is the number of rows for subplot and varies, and "ncol", which is the number of columns for subplot, default varies but max is 5, "suptitle_fontsize", 
-            size of the main title when subplot is True, defaults to 0.7, "tight_layout", use tight layout for subplot, defaults to True, "rect", input for the `rect` parameter in tight layout when subplots is True to fix whitespace issues, default is [0, 0.03, 1, 0.95], "sharey", which shares y axis labela for subplots, defaults to True, 
-            "xlabel_rotation", which rotates the labels on the x-axis, defaults to 0, "ylabel_rotation", which rotates the labels on the y-axis, defaults to 0, "annot", which adds values to cells on the outer product heatmap at the region level only, defaults to False, "linewidths", which specifies the padding between each cell, defaults to 0,
-            and "cmap", which specifies the color pattern of the cells in the plot, defaults to "coolwarm".
+        **kwargs: dict
+            Keyword arguments used when saving figures. Valid keywords include:
+
+            - "dpi": int, default=300
+                Dots per inch for the figure. Default is 300 if `output_dir` is provided and `dpi` is not specified.
+            - "figsize": tuple, default=(8, 6)
+                Size of the figure in inches.
+            - "fontsize": int, default=14
+                Font size for the title of individual plots or subplots.
+            - "hspace": float, default=0.4
+                Height space between subplots.
+            - "wspace": float, default=0.4
+                Width space between subplots.
+            - "xticklabels_size": int, default=8
+                Font size for x-axis tick labels.
+            - "yticklabels_size": int, default=8
+                Font size for y-axis tick labels.
+            - "shrink": float, default=0.8
+                Fraction by which to shrink the colorbar.
+            - "nrow": int, varies;
+                Number of rows for subplots. Default varies.
+            - "ncol": int, default varies (max 5)
+                Number of columns for subplots. Default varies but the maximum is 5.
+            - "suptitle_fontsize": float, default=0.7
+                Font size for the main title when subplot is True.
+            - "tight_layout": bool, default=True
+                Use tight layout for subplots.
+            - "rect": list, default=[0, 0.03, 1, 0.95]
+                Rectangle parameter for tight layout when subplots are True to fix whitespace issues.
+            - "sharey": bool, default=True
+                Share y-axis labels for subplots.
+            - "xlabel_rotation": int, default=0
+                Rotation angle for x-axis labels.
+            - "ylabel_rotation": int, default=0
+                Rotation angle for y-axis labels.
+            - "annot": bool, default=False
+                Add values to cells on the outer product heatmap at the region level only.
+            - "linewidths": float, default=0
+                Padding between each cell in the plot.
+            - "cmap": str, default="coolwarm"
+                Color map for the cells in the plot.
     
          Notes
         -----
@@ -345,7 +379,6 @@ class CAP(_CAPGetter):
 
         # Create plot dictionary
         plot_dict = dict(dpi = kwargs["dpi"] if kwargs and "dpi" in kwargs.keys() else 300,
-                        format = kwargs["format"] if kwargs and "format" in kwargs.keys() else "png",
                         figsize = kwargs["figsize"] if kwargs and "figsize" in kwargs.keys() else (8,6),
                         fontsize = kwargs["fontsize"] if kwargs and "fontsize" in kwargs.keys() else 14,
                         hspace = kwargs["hspace"] if kwargs and "hspace" in kwargs.keys() else 0.2,
@@ -542,7 +575,7 @@ class CAP(_CAPGetter):
                 # Save individual plots
                 if output_dir:
                     partial_filename = f"{group}_{cap}_{task_title}" if task_title else f"{group}_{cap}"
-                    full_filename = f"{partial_filename}_outer_product_heatmap-regions.{plot_dict['format']}" if scope == "regions" else f"{partial_filename}_outer_product_heatmap-nodes.{plot_dict['format']}"
+                    full_filename = f"{partial_filename}_outer_product_heatmap-regions.png" if scope == "regions" else f"{partial_filename}_outer_product_heatmap-nodes.png"
                     display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"], bbox_inches='tight')
         
         # Remove subplots with no data
@@ -551,7 +584,7 @@ class CAP(_CAPGetter):
         # Save subplot
         if subplots and output_dir: 
             partial_filename = f"{group}_CAPS_{task_title}" if task_title else f"{group}_CAPS"
-            full_filename = f"{partial_filename}_outer_product_heatmap-regions.{plot_dict['format']}" if scope == "regions" else f"{partial_filename}_outer_product_heatmap-nodes.{plot_dict['format']}"
+            full_filename = f"{partial_filename}_outer_product_heatmap-regions.png" if scope == "regions" else f"{partial_filename}_outer_product_heatmap-nodes.png"
             display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"], bbox_inches='tight')    
         
         # Display figures
@@ -608,7 +641,7 @@ class CAP(_CAPGetter):
         # Save plots
         if output_dir:
             partial_filename = f"{group}_CAPS_{task_title}" if task_title else f"{group}_CAPS"
-            full_filename = f"{partial_filename}_heatmap-regions.{plot_dict['format']}" if scope == "regions" else f"{partial_filename}_heatmap-nodes.{plot_dict['format']}"
+            full_filename = f"{partial_filename}_heatmap-regions.png" if scope == "regions" else f"{partial_filename}_heatmap-nodes.png"
             display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"], bbox_inches='tight')    
    
         # Display figures
@@ -816,11 +849,53 @@ class CAP(_CAPGetter):
             or "nearest".
         return_stat_map: bool, default=FAlse
             Returns the atlas as a stat map.
-        **kwargs: dict
-            Additional parameters to pass to modify certain plot parameters. Options include "dpi", defaults to 300, "title_pad", defaults to -3,
-            "cmap", defaults to "cold_hot", "cbar_location", defaults to "bottom", "cbar_draw_border", defaults to False, "cbar_aspect", defaults to 10, "cbar_shrink", defaults 
-            to 0.2, "cbar_decimals", defaults to 0, and "cbar_pad", defaults to 0.
-            
+        **kwargs : dict
+            Additional parameters to pass to modify certain plot parameters. Options include:
+
+            - "dpi": int, default=300
+                Dots per inch for the plot.
+            - "title_pad": int, default=-3
+                Padding for the plot title.
+            - "cmap": str, default="cold_hot"
+                Colormap to be used for the plot.
+            - "cbar_location": str, default="bottom"
+                Location of the colorbar.
+            - "cbar_draw_border": bool, default=False
+                Whether to draw a border around the colorbar.
+            - "cbar_aspect": int, default=20
+                Aspect ratio of the colorbar.
+            - "cbar_shrink": float, default=0.2
+                Fraction by which to shrink the colorbar.
+            - "cbar_decimals": int, default=2
+                Number of decimals for colorbar values.
+            - "cbar_pad": float, default=0
+                Padding between the colorbars.
+            - "cbar_fraction": float, default=0.05
+                Fraction of the original axes to use for the colorbar.
+            - "cbar_n_ticks": int, default=3
+                Number of ticks on the colorbar.
+            - "cbar_fontsize": int, default=10
+                Font size for the colorbar labels.
+            - "cbar_alpha": float, default=1
+                Transparency level of the colorbar.
+            - "size": tuple, default=(500, 400)
+                Size of the plot in pixels.
+            - "layout": str, default="grid";
+                Layout of the plot.
+            - "zoom": float, default=1.5
+                Zoom level for the plot.
+            - "views": list of str, default=["lateral", "medial"]
+                Views to be displayed in the plot.
+            - "brightness": float, default=0.5
+                Brightness level of the plot.
+            - "figsize": tuple or None, default=None
+                Size of the figure.
+            - "scale": tuple, default=(2, 2)
+                Scale factors for the plot.
+
+            Please refer to surfplot's documentation for specifics: 
+            https://surfplot.readthedocs.io/en/latest/generated/surfplot.plotting.Plot.html#surfplot.plotting.Plot.
+
         Returns
         -------
         Nifti Stat map
@@ -847,10 +922,22 @@ class CAP(_CAPGetter):
                          cmap = kwargs["cmap"] if kwargs and "cmap" in kwargs.keys() else "cold_hot",
                          cbar_location = kwargs["cbar_location"] if kwargs and "cbar_location" in kwargs.keys() else "bottom",
                          cbar_draw_border = kwargs["cbar_draw_border"] if kwargs and "cbar_draw_border" in kwargs.keys() else False,
-                         cbar_aspect = kwargs["cbar_aspect"] if kwargs and "cbar_aspect" in kwargs.keys() else 10,
+                         cbar_aspect = kwargs["cbar_aspect"] if kwargs and "cbar_aspect" in kwargs.keys() else 20,
                          cbar_shrink = kwargs["cbar_shrink"] if kwargs and "cbar_shrink" in kwargs.keys() else 0.2,
-                         cbar_decimals = kwargs["cbar_decimals"] if kwargs and "cbar_decimals" in kwargs.keys() else 0,
-                         cbar_pad = kwargs["cbar_pad"] if kwargs and "cbar_pad" in kwargs.keys() else 0)
+                         cbar_decimals = kwargs["cbar_decimals"] if kwargs and "cbar_decimals" in kwargs.keys() else 2,
+                         cbar_pad = kwargs["cbar_pad"] if kwargs and "cbar_pad" in kwargs.keys() else 0,
+                         cbar_fraction = kwargs["cbar_fraction"] if kwargs and "cbar_fraction" in kwargs.keys() else 0.05,
+                         cbar_n_ticks = kwargs["cbar_n_ticks"] if kwargs and "cbar_n_ticks" in kwargs.keys() else 3,
+                         cbar_fontsize = kwargs["cbar_fontsize"] if kwargs and "cbar_fontsize" in kwargs.keys() else 10,
+                         cbar_alpha = kwargs["cbar_alpha"] if kwargs and "cbar_alpha" in kwargs.keys() else 1,
+                         size = kwargs["size"] if kwargs and "size" in kwargs.keys() else (500,400),
+                         layout = kwargs["layout"] if kwargs and "layout" in kwargs.keys() else "grid",
+                         zoom = kwargs["zoom"] if kwargs and "zoom" in kwargs.keys() else 1.5,
+                         views = kwargs["views"] if kwargs and "views" in kwargs.keys() else ["lateral", "medial"],
+                         brightness = kwargs["brightness"] if kwargs and "brightness" in kwargs.keys() else 0.5,
+                         figsize = kwargs["figsize"] if kwargs and "figsize" in kwargs.keys() else None,
+                         scale = kwargs["scale"] if kwargs and "scale" in kwargs.keys() else (2,2),
+                         )
         
         if kwargs:
             invalid_kwargs = {key : value for key, value in kwargs.items() if key not in plot_dict.keys()}
@@ -880,7 +967,8 @@ class CAP(_CAPGetter):
                 sulc_lh, sulc_rh = surfaces['sulc']
                 sulc_lh = str(sulc_lh) if not isinstance(sulc_lh, str) else sulc_lh
                 sulc_rh = str(sulc_rh) if not isinstance(sulc_rh, str) else sulc_rh
-                p = Plot(lh, rh)
+                p = Plot(lh, rh, size=plot_dict["size"], layout=plot_dict["layout"], zoom=plot_dict["zoom"],
+                         views=plot_dict["views"], brightness=plot_dict["brightness"])
 
                 # Add base layer
                 p.add_layer({"left": sulc_lh, "right": sulc_rh}, cmap="binary_r", cbar=False)
@@ -890,12 +978,13 @@ class CAP(_CAPGetter):
 
                 # Add stat map layer
                 p.add_layer({"left": gii_lh, "right": gii_rh}, cmap=_cmap_d[plot_dict["cmap"]], 
-                            color_range=(plot_min,plot_max))
+                            alpha=plot_dict["cbar_alpha"], color_range=(plot_min,plot_max))
 
                 # Color bar
                 kws = dict(location=plot_dict["cbar_location"], draw_border=plot_dict["cbar_draw_border"], aspect=plot_dict["cbar_aspect"], shrink=plot_dict["cbar_shrink"],
-                        decimals=plot_dict["cbar_decimals"], pad=plot_dict["cbar_pad"])
-                fig = p.build(cbar_kws=kws)
+                        decimals=plot_dict["cbar_decimals"], pad=plot_dict["cbar_pad"], fraction=plot_dict["cbar_fraction"], n_ticks=plot_dict["cbar_n_ticks"], 
+                        fontsize=plot_dict["cbar_fontsize"])
+                fig = p.build(cbar_kws=kws, figsize=plot_dict["figsize"], scale=plot_dict["scale"])
                 fig_name = f"{group} - {cap}"
                 fig.axes[0].set_title(fig_name, pad=plot_dict["title_pad"])      
                 
@@ -903,7 +992,7 @@ class CAP(_CAPGetter):
                     fig.show()
                 
                 if output_dir:
-                    save_name = f"{group.replace(' ', '_')}_{cap.replace('-', '_')}"
+                    save_name = f"{group.replace(' ', '_')}_{cap.replace('-', '_')}.png"
                     fig.savefig(os.path.join(output_dir, save_name), dpi=plot_dict["dpi"])
 
         if return_stat_map:

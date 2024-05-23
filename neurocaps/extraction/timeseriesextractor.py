@@ -333,9 +333,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Directory to save the file to.
         file_name : str
             Name of the file with the extension to signify the file type.
-        kwargs: dict
-            Keyword arguments used when saving figures. Valid keywords include "dpi" and "figsize". If output_dir is not None and no inputs for dpi and format are given,
-            dpi defaults to 300. If "figsize" has no input, figure sizes defaults to (11,5).
+        **kwargs: dict
+            Keyword arguments used when saving figures. Valid keywords include:
+        
+            - "dpi": int, default=300
+                Dots per inch for the figure. Default is 300 if `output_dir` is provided and `dpi` is not specified.
+            - "figsize": tuple, default=(11, 5)
+                Size of the figure in inches. Default is (11, 5) if "figsize" is not specified.
+
 
         Raises
         ------
