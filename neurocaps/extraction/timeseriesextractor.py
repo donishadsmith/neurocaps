@@ -36,7 +36,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         fwhm : float, default=None
             Parameter for spatial smoothing.
         fd_threshold : float, default=None
-            Threshold criteria to remove volume after nuisance regression and timeseries extraction. For this to work, a column named "framewise_displacement" must be
+            Threshold criteria to remove frames after nuisance regression and timeseries extraction. For this to work, a column named "framewise_displacement" must be
             in the confounds dataframe and `use_confounds` must be true. Additionally, 'framewise_displacemnt' does not need to be specified in the `confound_names` for this to work.
         n_acompcor_separate : int, default = None
             The number of seperate acompcor components derived from the white-matter (WM) and cerebrospinal (CSF) masks to use. For instance if '5' is assigned to this parameter

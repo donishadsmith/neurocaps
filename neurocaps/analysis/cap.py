@@ -154,7 +154,7 @@ class CAP(_CAPGetter):
             self._silhouette_scores[group] = {}
             for n_cluster in self._n_clusters:
                 self._kmeans[group] = KMeans(n_clusters=n_cluster, random_state=random_state, init=init, n_init=n_init, max_iter=max_iter, tol=tol, algorithm=algorithm).fit(self._concatenated_timeseries[group])
-                cluster_labels = self._kmeans[group].predict(self._concatenated_timeseries[group])
+                cluster_labels = self._kmeans[group].labels_
                 self._silhouette_scores[group].update({n_cluster: silhouette_score(self._concatenated_timeseries[group], cluster_labels)})
             self._optimal_n_clusters[group] = max(self._silhouette_scores[group], key=self._silhouette_scores[group].get)
             if self._optimal_n_clusters[group] != self._n_clusters[-1]:
@@ -825,7 +825,89 @@ class CAP(_CAPGetter):
 
         if return_df:
             return df_dict
+
+    def caps2corr(self, output_dir: str=None, show_figs: bool=True, **kwargs):
+        """ Generate Correlation Matrix
+
+        This function produces the correlation matrix of all CAPs. If groups were given when the CAP class was initialized, a correlation matrix will be generated for each group. 
+
+        Parameters
+        ----------
+        output_dir: str, default=None
+            Directory to save plots in. If None, plots will not be saved.
+        show_figs: bool, default=True
+            Display figures or not to display figures.
+        **kwargs: dict
+            Keyword arguments used when saving figures. Valid keywords include:
+
+            - "dpi": int, default=300
+                Dots per inch for the figure. Default is 300 if `output_dir` is provided and `dpi` is not specified.
+            - "figsize": tuple, default=(8, 6)
+                Size of the figure in inches.
+            - "fontsize": int, default=14
+                Font size for the title of individual plots or subplots.
+            - "xticklabels_size": int, default=8
+                Font size for x-axis tick labels.
+            - "yticklabels_size": int, default=8
+                Font size for y-axis tick labels.
+            - "shrink": float, default=0.8
+                Fraction by which to shrink the colorbar.
+            - "xlabel_rotation": int, default=0
+                Rotation angle for x-axis labels.
+            - "ylabel_rotation": int, default=0
+                Rotation angle for y-axis labels.
+            - "annot": bool, default=False
+                Add values to each cell.
+            - "linewidths": float, default=0
+                Padding between each cell in the plot.
+            - "cmap": str, default="coolwarm"
+                Color map for the cells in the plot.
+        """
+        import matplotlib.pyplot as plt, os, pandas as pd
+        from seaborn import heatmap
         
+        # Initialize new grid
+        
+        # Create plot dictionary
+        plot_dict = dict(dpi = kwargs["dpi"] if kwargs and "dpi" in kwargs.keys() else 300,
+                        figsize = kwargs["figsize"] if kwargs and "figsize" in kwargs.keys() else (8,6),
+                        fontsize = kwargs["fontsize"] if kwargs and "fontsize" in kwargs.keys() else 14,
+                        xticklabels_size = kwargs["xticklabels_size"] if kwargs and "xticklabels_size" in kwargs.keys() else 8,
+                        yticklabels_size = kwargs["yticklabels_size"] if kwargs and "yticklabels_size" in kwargs.keys() else 8,
+                        shrink = kwargs["shrink"] if kwargs and "shrink" in kwargs.keys() else 0.8,
+                        xlabel_rotation = kwargs["xlabel_rotation"] if kwargs and "xlabel_rotation" in kwargs.keys() else 0,
+                        ylabel_rotation = kwargs["ylabel_rotation"] if kwargs and "ylabel_rotation" in kwargs.keys() else 0,
+                        annot = kwargs["annot"] if kwargs and "annot" in kwargs.keys() else False,
+                        linewidths = kwargs["linewidths"] if kwargs and "linewidths" in kwargs.keys() else 0,
+                        cmap = kwargs["cmap"] if kwargs and "cmap" in kwargs.keys() else "coolwarm"
+                        )
+        
+        if kwargs:
+            invalid_kwargs = {key : value for key, value in kwargs.items() if key not in plot_dict.keys()}
+            if len(invalid_kwargs.keys()) > 0:
+                print(f"Invalid kwargs arguments used and will be ignored {invalid_kwargs}.")
+
+        for group in self.caps.keys():
+            # Refresh grid for each iteration
+            plt.figure(figsize=plot_dict["figsize"])
+
+            df = pd.DataFrame(self.caps[group])
+            display = heatmap(df.corr(), xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], 
+                              cbar_kws={'shrink': plot_dict["shrink"]}, annot=plot_dict["annot"]) 
+            # Modify label sizes
+            display.set_xticklabels(display.get_xticklabels(), size = plot_dict["xticklabels_size"], rotation=plot_dict["xlabel_rotation"])
+            display.set_yticklabels(display.get_yticklabels(), size = plot_dict["yticklabels_size"], rotation=plot_dict["ylabel_rotation"])
+            # Set plot name
+            plot_title = f"{group} - CAPS Correlation Matrix" 
+            display.set_title(plot_title, fontdict= {'fontsize': plot_dict["fontsize"]})
+
+            # Display figures
+            if not show_figs: plt.close()
+            # Save figure
+            if output_dir:
+                full_filename = f"{group.replace(' ', '_')}_correlation_matrix.png"
+                display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"], bbox_inches='tight')
+
     def caps2surf(self, output_dir: str=None, show_figs: bool = True, fwhm: float=None, 
                   fslr_density: str="32k", method: str="linear", return_stat_map: bool = False, **kwargs):
         """Project CAPs back onto atlas used for spatial dimensionality reduction for visualization
