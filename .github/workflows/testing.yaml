@@ -18,7 +18,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-ver }}
       - name: Install package
-        run: pip install -e .
+        run: |
+          pip install -e .
         shell: bash
       - name: Run CAP tests
         run: |
