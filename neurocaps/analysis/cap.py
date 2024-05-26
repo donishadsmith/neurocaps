@@ -7,31 +7,21 @@ from .._utils import _CAPGetter, _convert_pickle_to_dict, _check_parcel_approach
 
 class CAP(_CAPGetter):
     def __init__(self, parcel_approach: dict[dict], n_clusters: Union[int, list[int]]=5, cluster_selection_method: str=None, groups: dict=None):
-        """
-        Initialize the CAP (Co-activation Patterns) analysis class.
+        """CAP class
+
+        Initializes the CAPs (Co-activation Patterns) class.
 
         Parameters
         ----------
-        node_labels : list[str]
+        node_labels: list[str]
             Decoded or non-decoded Schaefer Atlas labels for the nodes.
-        n_clusters : int or list[int], default=5
+        n_clusters: int or list[int], default=5
             The number of clusters to use. Can be a single integer or a list of integers.
         cluster_selection_method: str, default=None
             Method to find the optimal number of clusters. Options are "silhouette" or "elbow".
-        groups : dict, default=None
+        groups: dict, default=None
             A mapping of group names to subject IDs. Each group contains subject IDs for
             separate CAP analysis. If None, CAPs are not separated by group.
-
-        Raises
-        ------
-        ValueError
-            If `cluster_selection_method` is none when `n_clusters` is a list.
-        ValueError
-            If `cluster_selection_method` is used when `n_clusters` is a single integer.
-        TypeError
-            If `groups` is provided but is not a dictionary.
-        AssertionError
-            If any group in `groups` has zero subject IDs.
 
         Notes
         -----
@@ -76,7 +66,7 @@ class CAP(_CAPGetter):
                  init: Union[np.array, Literal["k-means++", "random"]]="k-means++", n_init: Union[Literal["auto"],int]='auto', 
                  max_iter: int=300, tol: float=0.0001, algorithm: Literal["lloyd", "elkan"]="lloyd", show_figs: bool=False, 
                  output_dir: str=None, standardize: bool=True, epsilon: Union[int,float]=0, **kwargs) -> None:
-        """"" Create CAPs
+        """""Generate CAPs
 
         The purpose of this function is to concatenate the timeseries of each subject and perform kmeans clustering on the concatenated data.
         
@@ -105,7 +95,7 @@ class CAP(_CAPGetter):
         show_figs: bool, default=False
             Display the plots of inertia scores for all groups if `cluster_selection_method`="elbow".
         output_dir: str, default=None
-            Directory to save plot in if `cluster_selection_method`="elbow".
+            Directory to save plot in if `cluster_selection_method`="elbow". Will create the directory if it does not exist.
         standardize: bool, default=True
             To z-score the features of the concatonated timeseries array.
         epsilon: int or float, default=0
@@ -114,7 +104,6 @@ class CAP(_CAPGetter):
             Dictionary to adjust certain parameters related to `cluster_selection_method`="elbow". Additional parameters includes "S", which adjust the sensitivity of finding the elbow 
             (Larger values of `S` are more conservative and less sensitive to small fluctuations; this package uses KneeLocator from the kneed package to identify the elbow), defaults to 1, 
             "dpi", to adjust the dpi of the elbow plot, defaults to 300, and "figsize", which adjust the size of the elbow plots.
-            
         """
         
         if runs:
@@ -161,7 +150,6 @@ class CAP(_CAPGetter):
                 self._kmeans[group] = KMeans(n_clusters=self._optimal_n_clusters[group], random_state=random_state, init=init, n_init=n_init, max_iter=max_iter, tol=tol, algorithm=algorithm).fit(self._concatenated_timeseries[group]) 
             print(f"Optimal cluster size for {group} is {self._optimal_n_clusters[group]}.")
         
-    
     def _perform_elbow_method(self, random_state, show_figs, output_dir, init, n_init, max_iter, tol, algorithm, **kwargs):
         # Initialize attribute
         self._inertia = {}
@@ -207,6 +195,7 @@ class CAP(_CAPGetter):
                     plt.title(group)
 
                     if output_dir:
+                        if not os.path.exists(output_dir): os.makedirs(output_dir)
                         plt.savefig(os.path.join(output_dir,f"{group.replace(' ','_')}_elbow.png"), dpi=plot_dict["dpi"])
                     
                     if show_figs == False:
@@ -260,16 +249,16 @@ class CAP(_CAPGetter):
                 else:
                     self._subject_table.update({subj_id : group})
 
-    def visualize_caps(self, output_dir: str=None, plot_options: Union[str, list[str]]="outer product", visual_scope: list[str]="regions", 
+    def caps2plot(self, output_dir: str=None, plot_options: Union[str, list[str]]="outer product", visual_scope: list[str]="regions", 
                        task_title: str=None, show_figs: bool=True, subplots: bool=False, **kwargs):
-        """ Plotting CAPs
+        """Generate heatmaps and outer product plots of CAPs
 
         This function produces seaborn heatmaps for each CAP. If groups were given when the CAP class was initialized, plotting will be done for all CAPs for all groups.
 
         Parameters
         ----------
         output_dir: str, default=None
-            Directory to save plots in. If None, plots will not be saved.
+            Directory to save plots in. Will create the directory if it does not exist. If None, plots will not be saved.
         plot_options: str or list[str], default="outer product"
             Type of plots to create. Options are "outer product" or "heatmap".
         visual_scope: str or list[str], default="regions"
@@ -348,11 +337,12 @@ class CAP(_CAPGetter):
         """
         import itertools, os
 
-        # Check parcel approach
-
+        if not hasattr(self,"_caps"):
+            raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` first.")
+        
         # Check if parcellation_approach is custom
         if "Custom" in self.parcel_approach.keys() and ("nodes" not in self.parcel_approach["Custom"].keys() or "regions" not in self.parcel_approach["Custom"].keys()):
-            _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_caps")
+            _check_parcel_approach(parcel_approach=self._parcel_approach, call="caps2plot")
 
         # Check labels
         check_caps = self._caps[list(self._caps.keys())[0]]
@@ -361,8 +351,7 @@ class CAP(_CAPGetter):
                 raise ValueError("Number of rois/nodes used for CAPs does not equal the number of rois/nodes specified in `parcel_approach`.")
 
         if output_dir:
-            if not os.path.exists(output_dir):
-                os.makedirs(output_dir)
+            if not os.path.exists(output_dir): os.makedirs(output_dir)
 
         # Convert to list
         if type(plot_options) == str: plot_options = [plot_options]
@@ -432,6 +421,7 @@ class CAP(_CAPGetter):
                                                                             output_dir=output_dir, task_title=task_title, show_figs=show_figs, scope=scope)
             
     def _create_regions(self):
+        # Internal function to create an attribute called `region_caps`. Purpose is to average the vales of all nodes in a corresponding region to create region heatmaps or outer product plots
         self._region_caps = {group: {} for group in self._groups.keys()}
         for group in self._groups.keys():
             for cap in self._caps[group].keys():
@@ -565,17 +555,15 @@ class CAP(_CAPGetter):
                     display.set_yticks(ticks)  
                     display.set_yticklabels([label for label in labels if label]) 
                 
-                # Set title
                 display.set_title(plot_title, fontdict= {'fontsize': plot_dict["fontsize"]})
 
-                # Modify label sizes
                 display.set_xticklabels(display.get_xticklabels(), size = plot_dict["xticklabels_size"], rotation=plot_dict["xlabel_rotation"])
                 display.set_yticklabels(display.get_yticklabels(), size = plot_dict["yticklabels_size"], rotation=plot_dict["ylabel_rotation"])
 
                 # Save individual plots
                 if output_dir:
                     partial_filename = f"{group}_{cap}_{task_title}" if task_title else f"{group}_{cap}"
-                    full_filename = f"{partial_filename}_outer_product_heatmap-regions.png" if scope == "regions" else f"{partial_filename}_outer_product_heatmap-nodes.png"
+                    full_filename = f"{partial_filename.replace(' ','_')}_outer_product_heatmap-regions.png" if scope == "regions" else f"{partial_filename.replace(' ','_')}_outer_product_heatmap-nodes.png"
                     display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"], bbox_inches='tight')
         
         # Remove subplots with no data
@@ -583,8 +571,8 @@ class CAP(_CAPGetter):
 
         # Save subplot
         if subplots and output_dir: 
-            partial_filename = f"{group}_CAPS_{task_title}" if task_title else f"{group}_CAPS"
-            full_filename = f"{partial_filename}_outer_product_heatmap-regions.png" if scope == "regions" else f"{partial_filename}_outer_product_heatmap-nodes.png"
+            partial_filename = f"{group}_CAPs_{task_title}" if task_title else f"{group}_CAPs"
+            full_filename = f"{partial_filename.replace(' ','_')}_outer_product_heatmap-regions.png" if scope == "regions" else f"{partial_filename.replace(' ','_')}_outer_product_heatmap-nodes.png"
             display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"], bbox_inches='tight')    
         
         # Display figures
@@ -630,29 +618,30 @@ class CAP(_CAPGetter):
 
             plt.yticks(ticks=[pos for pos, label in enumerate(labels) if label], labels=names_list)  
 
-        # Modify label sizes
         display.set_xticklabels(display.get_xticklabels(), size = plot_dict["xticklabels_size"], rotation=plot_dict["xlabel_rotation"])
         display.set_yticklabels(display.get_yticklabels(), size = plot_dict["yticklabels_size"], rotation=plot_dict["ylabel_rotation"])
 
-        # Set plot name
-        plot_title = f"{group} CAPS {task_title}" if task_title else f"{group} CAPS" 
+        plot_title = f"{group} CAPs {task_title}" if task_title else f"{group} CAPs" 
         display.set_title(plot_title, fontdict= {'fontsize': plot_dict["fontsize"]})
 
         # Save plots
         if output_dir:
-            partial_filename = f"{group}_CAPS_{task_title}" if task_title else f"{group}_CAPS"
-            full_filename = f"{partial_filename}_heatmap-regions.png" if scope == "regions" else f"{partial_filename}_heatmap-nodes.png"
+            partial_filename = f"{group}_CAPs_{task_title}" if task_title else f"{group}_CAPs"
+            full_filename = f"{partial_filename.replace(' ','_')}_heatmap-regions.png" if scope == "regions" else f"{partial_filename.replace(' ','_')}_heatmap-nodes.png"
             display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"], bbox_inches='tight')    
    
         # Display figures
         if not show_figs: plt.close()
 
-    def calculate_metrics(self, subject_timeseries: Union[dict[dict[np.ndarray]], str], tr: float=None, runs: Union[int]=None, continuous_runs: bool=False, metrics: Union[str, list[str]]=["temporal fraction", "persistence", "counts", "transition frequency"], return_df: bool=True, output_dir: str=None, file_name: str=None) -> dict:
-        """Get CAP metrics
+    def calculate_metrics(self, subject_timeseries: Union[dict[dict[np.ndarray]], str], tr: float=None, runs: Union[int]=None, continuous_runs: bool=False, 
+                          metrics: Union[str, list[str]]=["temporal fraction", "persistence", "counts", "transition frequency"], return_df: bool=True, 
+                          output_dir: str=None, file_name: str=None) -> dict:
+        """Get CAPs metrics
 
-        Creates a single pandas Dataframe containing all participants containing CAP metrics as described in Liu et al., 2018 and Yang et al., 2021, where `temporal fraction` is the proportion of total volumes spent in a single CAP over all volumes in a run,
-        `persistence` is the average time spent in a single CAP before transitioning to another CAP (average consecutive/uninterrupted time), and `counts` is the frequency of each CAP observed in a run, and `transition frequency` is the number of switches between
-        different CAPs across the entire run.
+        Creates a single pandas Dataframe containing all participants containing CAP metrics as described in Liu et al., 2018 and Yang et al., 2021, 
+        where `temporal fraction` is the proportion of total volumes spent in a single CAP over all volumes in a run, `persistence` is the average 
+        time spent in a single CAP before transitioning to another CAP (average consecutive/uninterrupted time), and `counts` is the frequency 
+        of each CAP observed in a run, and `transition frequency` is the number of switches between different CAPs across the entire run.
 
         Parameters
         ----------
@@ -668,23 +657,18 @@ class CAP(_CAPGetter):
             The run numbers to calculate cap metrics for. If None, cap metrics will be calculated for each run.
         continuous_runs: bool, default=False
             If True, all runs will be treated as a single, uninterrupted run.
-        metrics : str or list[str], default=["temporal fraction", "persistence", "counts", "transition frequency"]
+        metrics: str or list[str], default=["temporal fraction", "persistence", "counts", "transition frequency"]
             The metrics to calculate. Available options include `temporal fraction`, `persistence`, `counts`, and `transition frequency`.
         return_df: str, default=True
             If True, dataframe will be returned.
         output_dir: str, default=None
-            Directory to save dataframe in. If None, dataframe will not be saved.
+            Directory to save dataframe in. Will create the directory if it does not exist. If None, dataframe will not be saved.
         file_name: str, default=None
             Name to save dataframe as if output_dir is not None.
 
         Returns
         -------
         Dictionary containing pandas dataframes - one for each metric requested.
-
-        Raises
-        ------
-        ValueError
-            No valid metrics are detected in `metrics` parameter.
 
         Notes
         -----
@@ -700,6 +684,11 @@ class CAP(_CAPGetter):
 
         """
         import collections, os, pandas as pd
+
+        if not hasattr(self,"_kmeans"):
+            raise AttributeError("Cannot calculate metrics since `self._kmeans` attribute does not exist. Run `self.get_caps()` first.")
+        
+        if file_name != None and output_dir == None: warnings.warn("`file_name` supplied but no `output_dir` specified. Files will not be saved.")
 
         metrics = [metrics] if isinstance(metrics, str) else metrics
 
@@ -746,7 +735,6 @@ class CAP(_CAPGetter):
                 timeseries = (timeseries[subject_runs] - self._mean_vec[group])/(self._stdev_vec[group] + self._epsilon) if self._standardize else timeseries[subject_runs]
                 predicted_subject_timeseries[subj_id].update({subject_runs: self._kmeans[group].predict(timeseries) + 1})
 
-        # Create pd.dataframe
         df_dict = {}
 
         for metric in metrics: 
@@ -819,22 +807,23 @@ class CAP(_CAPGetter):
                 df_dict["transition frequency"].loc[len(df_dict["transition frequency"])] = [subj_id, group, curr_run, count]
 
         if output_dir:
+            if not os.path.exists(output_dir): os.makedirs(output_dir)
             for metric in df_dict.keys():
-                filename = file_name + f"-{metric.replace(' ','_')}" if file_name else f"{metric.replace(' ','_')}"
+                filename = os.path.splitext(file_name.rstrip())[0].rstrip() + f"-{metric.replace(' ','_')}" if file_name else f"{metric.replace(' ','_')}"
                 df_dict[f"{metric}"].to_csv(path_or_buf=os.path.join(output_dir,filename + ".csv"), sep=",", index=False)
 
         if return_df:
             return df_dict
 
     def caps2corr(self, output_dir: str=None, show_figs: bool=True, **kwargs):
-        """ Generate Correlation Matrix
+        """Generate Correlation Matrix
 
         This function produces the correlation matrix of all CAPs. If groups were given when the CAP class was initialized, a correlation matrix will be generated for each group. 
 
         Parameters
         ----------
         output_dir: str, default=None
-            Directory to save plots in. If None, plots will not be saved.
+            Directory to save plots in. Will create the directory if it does not exist. If None, plots will not be saved.
         show_figs: bool, default=True
             Display figures or not to display figures.
         **kwargs: dict
@@ -865,8 +854,9 @@ class CAP(_CAPGetter):
         """
         import matplotlib.pyplot as plt, os, pandas as pd
         from seaborn import heatmap
-        
-        # Initialize new grid
+
+        if not hasattr(self,"_caps"):
+            raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` first.")
         
         # Create plot dictionary
         plot_dict = dict(dpi = kwargs["dpi"] if kwargs and "dpi" in kwargs.keys() else 300,
@@ -898,19 +888,20 @@ class CAP(_CAPGetter):
             display.set_xticklabels(display.get_xticklabels(), size = plot_dict["xticklabels_size"], rotation=plot_dict["xlabel_rotation"])
             display.set_yticklabels(display.get_yticklabels(), size = plot_dict["yticklabels_size"], rotation=plot_dict["ylabel_rotation"])
             # Set plot name
-            plot_title = f"{group} - CAPS Correlation Matrix" 
+            plot_title = f"{group} - CAPs Correlation Matrix" 
             display.set_title(plot_title, fontdict= {'fontsize': plot_dict["fontsize"]})
 
             # Display figures
             if not show_figs: plt.close()
             # Save figure
             if output_dir:
+                if not os.path.exists(output_dir): os.makedirs(output_dir)
                 full_filename = f"{group.replace(' ', '_')}_correlation_matrix.png"
                 display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"], bbox_inches='tight')
 
     def caps2surf(self, output_dir: str=None, show_figs: bool = True, fwhm: float=None, 
-                  fslr_density: str="32k", method: str="linear", return_stat_map: bool = False, **kwargs):
-        """Project CAPs back onto atlas used for spatial dimensionality reduction for visualization
+                  fslr_density: str="32k", save_stat_map: bool=False, method: str="linear",  **kwargs):
+        """Project CAPs onto 
         
         Converts atlas into a stat map by replacing labels with the corresponding from the cluster centroids then plots on a surface plot.
         This function uses surfplot for surface plotting.
@@ -918,7 +909,7 @@ class CAP(_CAPGetter):
         Parameters
         ----------
         output_dir: str, default=None
-            Directory to save plots in. If None, plots will not be saved.
+            Directory to save plots in. Will create the directory if it does not exist. If None, plots will not be saved. 
         show_figs: bool, default=True
             Display figures or not to display figures.
         fwhm: float, defualt=None
@@ -929,8 +920,6 @@ class CAP(_CAPGetter):
         method: str, default="linear"
             Interpolation method to use when converting from mni152 space to fslr surface. Options are "linear"
             or "nearest".
-        return_stat_map: bool, default=FAlse
-            Returns the atlas as a stat map.
         **kwargs : dict
             Additional parameters to pass to modify certain plot parameters. Options include:
 
@@ -962,7 +951,7 @@ class CAP(_CAPGetter):
                 Transparency level of the colorbar.
             - "size": tuple, default=(500, 400)
                 Size of the plot in pixels.
-            - "layout": str, default="grid";
+            - "layout": str, default="grid"
                 Layout of the plot.
             - "zoom": float, default=1.5
                 Zoom level for the plot.
@@ -988,7 +977,7 @@ class CAP(_CAPGetter):
         to the atlas by an offset of one. For instance, index 0 of the cluster centroid vector is the first nonzero label, which is assumed to be at the 
         first index of the array in sorted(np.unique(atlas_fdata)).
 
-        Using fwhm to adjust smooting may help coverage issues.
+        Using fwhm to adjust smoothing may help coverage issues.
 
         """
 
@@ -998,6 +987,12 @@ class CAP(_CAPGetter):
         from neuromaps.transforms import mni152_to_fslr
         from neuromaps.datasets import fetch_fslr
         from surfplot import Plot
+
+        if not hasattr(self,"_caps"):
+            raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` first.")
+
+        if output_dir:
+            if not os.path.exists(output_dir): os.makedirs(output_dir)
 
         plot_dict = dict(dpi = kwargs["dpi"] if kwargs and "dpi" in kwargs.keys() else 300,
                          title_pad = kwargs["title_pad"] if kwargs and "title_pad" in kwargs.keys() else -3,
@@ -1076,6 +1071,7 @@ class CAP(_CAPGetter):
                 if output_dir:
                     save_name = f"{group.replace(' ', '_')}_{cap.replace('-', '_')}.png"
                     fig.savefig(os.path.join(output_dir, save_name), dpi=plot_dict["dpi"])
-
-        if return_stat_map:
-            return stat_map
+                    # Save stat map
+                    if save_stat_map: 
+                        stat_map_name = save_name.replace(".png", ".nii.gz")
+                        nib.save(stat_map, stat_map_name)

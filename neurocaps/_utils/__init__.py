@@ -1,8 +1,6 @@
+from ._cap_internals import _convert_pickle_to_dict
+from ._cap_internals import _CAPGetter
 from ._timeseriesextractor_internals import _check_confound_names
 from ._timeseriesextractor_internals import _check_parcel_approach
 from ._timeseriesextractor_internals import _extract_timeseries
 from ._timeseriesextractor_internals import _TimeseriesExtractorGetter
-from ._cap_internals import _CAPGetter
-from ._cap_internals import _convert_pickle_to_dict
-
-

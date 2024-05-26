@@ -11,7 +11,6 @@ def merge_dicts(subject_timeseries_list: Union[list[dict], list[str]], return_co
 
     Parameters
     ----------
-
     subject_timeseries_list: list[dict] or list[str]
         The list of pickle files containing the nested subject timeseries dictionary saved by the TimeSeriesExtractor class or a liist of the
         the nested subject timeseries dictionary produced by the TimeseriesExtractor class. The first level of the nested dictionary must consist of the subject
@@ -35,7 +34,6 @@ def merge_dicts(subject_timeseries_list: Union[list[dict], list[str]], return_co
     Returns
     -------
     dict
-    
     """
     assert len(subject_timeseries_list) > 1, "Merging cannot be done with less than two dictionaries or files."
 

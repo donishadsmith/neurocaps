@@ -1,6 +1,6 @@
 from .._timeseriesextractor_internals._check_parcel_approach import _check_parcel_approach
 
-# A class which is responsible for accessing all CAPMetadata and to keep track of all attributes in CAP
+# A class which is responsible for accessing all CAP metadata and to keep track of all attributes in CAP
 class _CAPGetter:
     def __init__(self):
         pass
@@ -86,14 +86,3 @@ class _CAPGetter:
     def stdev(self):
         if hasattr(self, "_stdev_vec"): return self._stdev_vec
         else: return None
-
-
-    
-
-
-    
-     
-     
-     
-     
-         

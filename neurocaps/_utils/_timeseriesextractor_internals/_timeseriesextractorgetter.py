@@ -1,6 +1,6 @@
 import numpy as np
 from ._check_parcel_approach import _check_parcel_approach
-# A class which is responsible for acessing all TimeseriesExtractorGetter and to keep track of all attributes in TimeSeriesExtractor
+# A class which is responsible for accessing all TimeseriesExtractorGetter and to keep track of all attributes in TimeSeriesExtractor
 class _TimeseriesExtractorGetter:
     def __init__(self):
         pass
@@ -60,6 +60,3 @@ class _TimeseriesExtractorGetter:
                 else: raise TypeError(error_message) 
             else: raise TypeError(error_message) 
         else: raise TypeError(error_message)
-    
-    
-        

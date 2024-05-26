@@ -8,44 +8,44 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                  fwhm: float=None, fd_threshold: float=None, n_acompcor_separate: int=None, dummy_scans: int=None):
         """Timeseries Extractor Class
         
-        Initializes a TimeseriesExtractor to prepare for Co-activation Patterns (CAPs) analysis.
+        Initializes the TimeseriesExtractor class to prepare for Co-activation Patterns (CAPs) analysis.
 
         Parameters
         ----------
-        space : str, default="MNI152NLin2009cAsym"
+        space: str, default="MNI152NLin2009cAsym"
             The brain template space data is in. 
-        standardize : bool, default=True
+        standardize: bool, default=True
             Determines whether to standardize the timeseries. Refer to Nilearn's NiftiLabelsMasker for available options. 
-        detrend : bool, default=True
+        detrend: bool, default=True
             Detrends timeseries during extraction.
-        low_pass : bool, default=None
+        low_pass: bool, default=None
             Signals above cutoff frequency will be filtered out.
-        high_pass : float, default=None
+        high_pass: float, default=None
             Signals below cutoff frequency will be filtered out.
-        parcel_approach : dict, default={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
+        parcel_approach: dict, default={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
             Approach to use to parcellate bold images. Should be in the form of a nested dictionary where the first key is the atlas.
             Currently only "Schaefer", "AAL", and "Custom" is supported. For the sub-dictionary for "Schaefer", available options includes "n_rois", "yeo_networks", and "resolution_mm".
             Please refer to the documentation for Nilearn's `datasets.fetch_atlas_schaefer_2018` for valid inputs. For the subdictionary for "AAL" only "version"
             is an option. Please refer to the documentation for Nilearn's `datasets.fetch_atlas_aal` for valid inputs. As of version 0.8.9, you can replace "Schaefer"
             and "AAL" with "Custom". At minimum, if "Custom" is specified, a subkey, called "maps" specifying the directory location of the parcellation as a Nifti (e.g .nii or .nii.gz)
             - {"Custom": {"maps": "/location/to/parcellation.nii.gz"}}.
-        use_confounds : bool, default=True
+        use_confounds: bool, default=True
             To use confounds when extracting timeseries.
-        confound_names : List[str], default=None
+        confound_names: List[str], default=None
             Names of confounds to use in confound files. If None, default confounds are used.
-        fwhm : float, default=None
+        fwhm: float, default=None
             Parameter for spatial smoothing.
-        fd_threshold : float, default=None
+        fd_threshold: float, default=None
             Threshold criteria to remove frames after nuisance regression and timeseries extraction. For this to work, a column named "framewise_displacement" must be
             in the confounds dataframe and `use_confounds` must be true. Additionally, 'framewise_displacemnt' does not need to be specified in the `confound_names` for this to work.
-        n_acompcor_separate : int, default = None
-            The number of seperate acompcor components derived from the white-matter (WM) and cerebrospinal (CSF) masks to use. For instance if '5' is assigned to this parameter
+        n_acompcor_separate: int, default = None
+            The number of separate acompcor components derived from the white-matter (WM) and cerebrospinal (CSF) masks to use. For instance if '5' is assigned to this parameter
             then the first five components derived from the WM mask and the first five components derived from the CSF mask will be used, resulting in ten acompcor components being
             used. If this parameter is not none any acompcor components listed in the confound names will be disregarded in order to locate the first 'n' components derived from the 
             masks. To use the acompcor components derived from the combined masks (WM & CSF) leave this parameter as 'None' and list the specific acompcors of interest in the 
             `confound_names` parameter.
-        dummy_scans : float, default=None
-            Removes the first `n` number of volumes before extracting timeseries.
+        dummy_scans: float, default=None
+            Removes the first `n` number of volumes before extracting the timeseries.
         
         Notes for `confounds_names`
         --------------------------
@@ -96,21 +96,21 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         Parameters
         ----------
-        bids_dir : str
+        bids_dir: str
             Path to a BIDS compliant directory. 
-        task : str, default="rest"
-            Task name.
-        session : int, default=None
+        task: str
+            Name of task to process.
+        session: int, default=None
             Session to extract timeseries from. Only a single session can be extracted at a time. 
-        runs : list[int], default=None
+        runs: list[int], default=None
             Run number to extract timeseries data from. Extracts all runs if unspecified.
-        condition : str, default=None
+        condition: str, default=None
             Specific condition in the task to extract from. Only a single condition can be extracted at a time.
-        tr : int or float, default=None
-            Repetition time.
-        run_subjects : list[str], default=None
+        tr: int or float, default=None
+            Repetition time for task.
+        run_subjects: list[str], default=None
             List of subject IDs to process. Processes all subjects if None.
-        exclude_subjects : list[str], default=None
+        exclude_subjects: list[str], default=None
             List of subject IDs to exclude.  
         pipeline_name: str, default=None
             The name of the pipeline folder in the derivatives folder containing the preprocessed data. If None, BIDSLayout will use the name of dset_dir with derivatives=True. This parameter
@@ -249,7 +249,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     warnings.warn(f"Skipping subject: {subj_id} due to missing confound files.")
                     continue
                 if len(confound_metadata_files) == 0 and self._signal_clean_info["n_acompcor_separate"]:
-                    warnings.warn(f"Skipping subject: {subj_id} due to missing confound metadata to locate the first six components of the white-matter and cerobrospinal fluid masks seperately.")
+                    warnings.warn(f"Skipping subject: {subj_id} due to missing confound metadata to locate the first six components of the white-matter and cerobrospinal fluid masks separately.")
                     continue
             
             if self._task_info["condition"] and len(event_files) == 0:
@@ -290,25 +290,30 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             self._subject_info[subj_id] = {"nifti_files": nifti_files, "event_files": event_files, "confound_files": confound_files, "confound_metadata_files": confound_metadata_files, "mask_files": mask_files,
                                            "tr": tr, "run_list": run_list}
 
-    def timeseries_to_pickle(self, output_dir: str, file_name: str):
+    def timeseries_to_pickle(self, output_dir: str, file_name: str=None):
         """Save Bold Data
 
-        Saves the timeseries dictionary as a pickle file where columns are the subject ID and indices are the runs. Each cell contains the timeseries array.
+        Saves the timeseries dictionary obtained from running `get_bold()` as a pickle file.
 
         Parameters
         ----------
-        output_dir : str
-            Directory to save the file to.
-        file_name : str
-            Name of the file without the "pkl" extension.
+        output_dir: str
+            Directory to save the file to. Will create the directory if it does not exist.
+        file_name: str, default=None
+            Name of the file without or without the "pkl" extension.
         """
         import pickle
 
+        if not hasattr(self, "_subject_timeseries"):
+            raise AttributeError("Cannot save pickle file since `self._subject_timeseries` does not exist, either run `self.get_bold()` or assign a valid timeseries dictionary to `self.subject_timeseries`.")
+
         if output_dir:
-            if not os.path.exists(output_dir):
-                os.makedirs(output_dir)
+            if not os.path.exists(output_dir): os.makedirs(output_dir)
         
-        with open(os.path.join(output_dir,file_name + ".pkl"), "wb") as f:
+        if file_name == None: save_file_name = "subject_timeseries.pkl"
+        else: save_file_name = f"{os.path.splitext(file_name.rstrip())[0].rstrip()}.pkl" 
+
+        with open(os.path.join(output_dir,save_file_name), "wb") as f:
             pickle.dump(self._subject_timeseries,f)
 
     def visualize_bold(self, subj_id: Union[int,str], run: int, roi_indx: Union[int, list[int]]=None, region: str=None, show_figs: bool=True, output_dir: str=None, file_name: str=None, **kwargs):
@@ -327,12 +332,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         region: str, default=None
             The region of the parcellation to plot. If not None, all nodes in the specified region will be averaged then plotted. See `regions` in self.parcel_approach 
             for valid regions names.
-        show_figs: bool, defaults=True
+        show_figs: bool, default=True
             Whether to show figires or not to show figures
-        output_dir : str
-            Directory to save the file to.
-        file_name : str
-            Name of the file with the extension to signify the file type.
+        output_dir: str, default=None
+            Directory to save the file to. Will create the directory if it does not exist.
+        file_name: str, default=None
+            Name of the file without the extension.
         **kwargs: dict
             Keyword arguments used when saving figures. Valid keywords include:
         
@@ -340,14 +345,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 Dots per inch for the figure. Default is 300 if `output_dir` is provided and `dpi` is not specified.
             - "figsize": tuple, default=(11, 5)
                 Size of the figure in inches. Default is (11, 5) if "figsize" is not specified.
-
-
-        Raises
-        ------
-        ValueError
-            If both `roi_indx` and `region` are specified.
-        AssertionError
-            If `file_name` does not contain an extension to signify the file type.
 
         Notes
         -----
@@ -374,15 +371,19 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     
         import matplotlib.pyplot as plt, numpy as np
 
+        if not hasattr(self, "_subject_timeseries"):
+            raise AttributeError("Cannot plot bold data since `self._subject_timeseries` does not exist, either run `self.get_bold()` or assign a valid timeseries structure to self.subject_timeseries.")
+
         if isinstance(subj_id,int): subj_id = str(subj_id)
 
         if roi_indx !=None and region != None:
             raise ValueError("`roi_indx` and `region` can not be used simultaneously.")
         
+        if file_name != None and output_dir == None: warnings.warn("`file_name` supplied but no `output_dir` specified. Files will not be saved.")
+        
         if output_dir:
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
-            assert "." in file_name, "`file_name` must be specified if `output_dir` is specified and it must contain an extension to signify the file type."
 
         plot_dict = dict(dpi = kwargs["dpi"] if kwargs and "dpi" in kwargs.keys() else 300,
                          figsize = kwargs["figsize"] if kwargs and "figsize" in kwargs.keys() else (11, 5))
@@ -419,7 +420,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 if "regions" not in self.parcel_approach["Custom"].keys():
                     _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_bold")
                 else:
-                    plot_indxs =  np.array(self.parcel_approach["Custom"]["regions"][region]["lh"] + self.parcel_approach["Custom"]["regions"][region]["rh"])
+                    plot_indxs =  np.array(self._parcel_approach["Custom"]["regions"][region]["lh"] + self._parcel_approach["Custom"]["regions"][region]["rh"])
             else:
                 plot_indxs = np.array([index for index, label in enumerate(self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"]) if region in label])
         
@@ -433,15 +434,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         plt.xlabel("TR")
 
         if output_dir:
+            if not os.path.exists(output_dir): os.makedirs(output_dir)
+            file_name = f"{os.path.splitext(file_name.rstrip())[0].rstrip()}.png" if file_name else f'subject-{subj_id}_run-{run}_timeseries.png'
             plt.savefig(os.path.join(output_dir,file_name), dpi=plot_dict["dpi"])
 
         if show_figs == False:
             plt.close()
         else:
             plt.show()
-
-
-
-        
-        
-        

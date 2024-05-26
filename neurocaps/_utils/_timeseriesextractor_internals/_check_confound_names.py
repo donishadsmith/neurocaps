@@ -2,8 +2,7 @@ import warnings
 def _check_confound_names(high_pass, specified_confound_names, n_acompcor_separate):
     if specified_confound_names == None:
         if high_pass:
-            # Do not use cosine or acompcor regressor if high pass filtering is not None. Acompcor regressors are estimated on high pass filtered version 
-            # of data form fmriprep
+            # Do not use cosine or acompcor regressor if high pass filtering is not None. Acompcor regressors are estimated on high pass filtered version of data form fmriprep
             confound_names = [
                 "trans_x", "trans_x_derivative1", "trans_x_power2", "trans_x_derivative1_power2",
                 "trans_y", "trans_y_derivative1", "trans_y_derivative1_power2", "trans_y_power2",

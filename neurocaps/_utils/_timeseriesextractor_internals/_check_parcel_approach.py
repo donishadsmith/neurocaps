@@ -60,14 +60,14 @@ def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
         check_subkeys = ["nodes" in parcel_approach["Custom"].keys(), "regions" in parcel_approach["Custom"].keys()]
         if not all(check_subkeys):
             missing_subkeys = [["nodes", "regions"][x] for x,y in enumerate(check_subkeys) if y == False]
-            error_message = f"The following subkeys haven't been detected {missing_subkeys}."
-            if call == "TimeseriesExtractor": warnings.warn(error_message + " These labels are not needed for timeseries extraction but are needed for future timeseries or CAPs plotting.")
+            error_message = f"The following subkeys haven't been detected {missing_subkeys}"
+            if call == "TimeseriesExtractor": warnings.warn(f"{error_message}. These labels are not needed for timeseries extraction but are needed for future timeseries or CAPs plotting.")
             else: 
                 custom_example = {"Custom": {"nodes": ["LH_Vis1", "LH_Vis2", "LH_Hippocampus", "RH_Vis1", "RH_Vis2", "RH_Hippocampus"],
                                              "regions": {"Vis" : {"lh": [0,1],
                                                                    "rh": [3,4]}},
                                                                    "Hippocampus": {"lh": [2],"rh": [5]}}}
-                raise ValueError(error_message + f" These subkeys are needed for plotting. Please reassign `parcel_approach` using `self.parcel_approach` amd refer to the example structure: {custom_example}")
+                raise ValueError(f"{error_message}. These subkeys are needed for plotting. Please reassign `parcel_approach` using `self.parcel_approach` amd refer to the example structure: {custom_example}")
         if call  == "TimeseriesExtractor" and not os.path.isfile(parcel_approach["Custom"]["maps"]):
             raise ValueError("Please specify the location to the custom parcellation to be used.")
 
