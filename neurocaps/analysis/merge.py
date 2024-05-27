@@ -5,31 +5,26 @@ from .._utils import _convert_pickle_to_dict
 def merge_dicts(subject_timeseries_list: Union[list[dict], list[str]], return_combined_dict: bool=True, return_reduced_dicts: bool=False, output_dir: str=None, file_name: str=None) -> dict:
     """Merge subject timeseries
 
-    Merge subject timeseries dictionaries or pickle files to the first dictionary or pickle file in the list.
-    Repetition times from the same subject and run are merged together. The combined dicitonary will only include subjects
+    Merge subject timeseries dictionaries or pickle files into the first dictionary or pickle file in the list.
+    Repetition times from the same subject and run are merged together. The combined dictionary will only include subjects
     that are present in all dictionaries.
 
     Parameters
     ----------
-    subject_timeseries_list: list[dict] or list[str]
-        The list of pickle files containing the nested subject timeseries dictionary saved by the TimeSeriesExtractor class or a liist of the
-        the nested subject timeseries dictionary produced by the TimeseriesExtractor class. The first level of the nested dictionary must consist of the subject
-        ID as a string, the second level must consist of the the run numbers in the form of 'run-#', where # is the corresponding number of the run, and the last level 
-        must consist of the timeseries associated with that run.
+    subject_timeseries_list: list[dict[dict[np.ndarray]]] or list[str]
+        A list of pickle files containing the nested subject timeseries dictionary saved by the `TimeSeriesExtractor` class or a list of nested subject 
+        timeseries dictionaries produced by the `TimeSeriesExtractor` class. The first level of the nested dictionary must consist of the subject ID as a string, 
+        the second level must consist of the run numbers in the form of 'run-#' (where # is the corresponding number of the run), and the last level must consist of the timeseries 
+        (as a numpy array) associated with that run.
     return_combined_dict: bool, default=True,
-        Returns the merged dictionaries if True
+        If True, returns the merged dictionaries.
     return_reduced_dicts: bool, default=False
-        Returns the list of dictionaries provided with only the subjects present in the combined dictionary. Returns dictionaries in the same order
-        they are listed in the `subject_timeseries_list` parameter.
+        If True, returns the list of dictionaries provided with only the subjects present in the combined dictionary. The dictionaries are returned in the same order as listed in 
+        the `subject_timeseries_list` parameter.
     output_dir: str, default=None
-        Directory to save the merged dictionary to. Will be saved as a pickle file.
+        Directory to save the merged dictionary to. Will be saved as a pickle file. The directory will be created if it does not exist.
     file_name: str, default=None
-        Name to save merged dictionary as.
-
-    Raises
-    ------
-    AssertionError
-        If the length of `subject_timeseries_list` is less than two.
+        Name to save the merged dictionary as.
 
     Returns
     -------

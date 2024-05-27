@@ -21,5 +21,5 @@ def test_TimeseriesExtractor_no_parallel_additional():
     
     print(extractor.subject_timeseries, flush=True)
 
-    assert extractor.subject_timeseries["01"]["run-1"].shape[-1] == 100
-    assert extractor.subject_timeseries["01"]["run-1"].shape[0] == 40
+    assert extractor.subject_timeseries["01"]["run-0"].shape[-1] == 100
+    assert extractor.subject_timeseries["01"]["run-0"].shape[0] == 40

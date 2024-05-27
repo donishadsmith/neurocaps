@@ -8,11 +8,11 @@ def standardize(subject_timeseries: Union[dict,str]) -> dict:
 
     Parameters
     ----------
-    subject_timeseries_list: dict or str
-        The list of pickle files containing the nested subject timeseries dictionary saved by the TimeSeriesExtractor class or a liist of the
-        the nested subject timeseries dictionary produced by the TimeseriesExtractor class. The first level of the nested dictionary must consist of the subject
-        ID as a string, the second level must consist of the the run numbers in the form of 'run-#', where # is the corresponding number of the run, and the last level 
-        must consist of the timeseries associated with that run.
+    subject_timeseries_list: dict[dict[np.ndarray]] or str
+        A list of pickle files containing the nested subject timeseries dictionary saved by the `TimeSeriesExtractor` class or a list of nested subject 
+        timeseries dictionaries produced by the `TimeSeriesExtractor` class. The first level of the nested dictionary must consist of the subject ID as a string, 
+        the second level must consist of the run numbers in the form of 'run-#' (where # is the corresponding number of the run), and the last level must consist of the timeseries 
+        (as a numpy array) associated with that run.
 
     Returns
     -------

@@ -13,20 +13,44 @@ class CAP(_CAPGetter):
 
         Parameters
         ----------
-        node_labels: list[str]
-            Decoded or non-decoded Schaefer Atlas labels for the nodes.
+        parcel_approach: dict[dict]
+           The approach used to parcellate BOLD images. This should be a nested dictionary with the first key being the atlas name. The subkeys should include:
+            - "nodes": A list of node names in the order of the label IDs in the parcellation.
+            - "regions": The regions or networks in the parcellation.
+            - "maps": Directory path to the location of the parcellation file.
+
+          If the "Schaefer" or "AAL" option was used in the `TimeSeriesExtractor` class, you can initialize the `TimeSeriesExtractor` class with the `parcel_approach` 
+          that was initially used, then set this parameter to `TimeSeriesExtractor.parcel_approach`. For this parameter, only "Schaefer", "AAL", and "Custom" are supported.
         n_clusters: int or list[int], default=5
             The number of clusters to use. Can be a single integer or a list of integers.
         cluster_selection_method: str, default=None
             Method to find the optimal number of clusters. Options are "silhouette" or "elbow".
         groups: dict, default=None
-            A mapping of group names to subject IDs. Each group contains subject IDs for
-            separate CAP analysis. If None, CAPs are not separated by group.
+            A mapping of group names to subject IDs. Each group contains subject IDs for separate CAP analysis. If None, CAPs are not separated by group.
 
-        Notes
-        -----
-        The initialization ensures unique values if `n_clusters` is a list and checks for 
-        valid input types and values.
+        Notes for `parcel_approach`
+        ---------------------------
+        If using a "Custom" parcellation approach, ensure each node in your dataset includes both left (lh) and right (rh) hemisphere versions. This function assumes that the background label is "zero". 
+        Do not add a background label in the "nodes" or "networks" key; the zero index should correspond to the first ID that is not zero.
+
+        Custom Key Structure:
+        - 'maps': Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g., .nii for NIfTI files). For plotting purposes, this key is not required.
+        - 'nodes':  list of all node labels used in your study, arranged in the exact order they correspond to indices in your parcellation files. 
+          Each label should match the parcellation index it represents. For example, if the parcellation label "1" corresponds to the left hemisphere 
+          visual cortex area 1, then "LH_Vis1" should occupy the 0th index in this list. This ensures that data extraction and analysis accurately reflect the anatomical regions intended.
+          For timeseries extraction, this key is not required.
+        - 'regions': Dictionary defining major brain regions. Each region should list node indices under "lh" and "rh" to specify left and right hemisphere nodes. For timeseries extraction, this key is not required.
+        
+        Example 
+        The provided example demonstrates setting up a custom parcellation containing nodes for the visual network (Vis) and hippocampus regions:
+
+        parcel_approach = {"Custom": {"maps": "/location/to/parcellation.nii.gz",
+                             "nodes": ["LH_Vis1", "LH_Vis2", "LH_Hippocampus", "RH_Vis1", "RH_Vis2", "RH_Hippocampus"],
+                             "regions": {"Vis" : {"lh": [0,1],
+                                                  "rh": [3,4]},
+                                         "Hippocampus": {"lh": [2],
+                                                         "rh": [5]}}}}
+        
         """
         # Ensure all unique values if n_clusters is a list
         self._n_clusters = n_clusters if type(n_clusters) == int else sorted(list(set(n_clusters)))
@@ -68,42 +92,43 @@ class CAP(_CAPGetter):
                  output_dir: str=None, standardize: bool=True, epsilon: Union[int,float]=0, **kwargs) -> None:
         """""Generate CAPs
 
-        The purpose of this function is to concatenate the timeseries of each subject and perform kmeans clustering on the concatenated data.
+        Concatenates the timeseries of each subject and performs k-means clustering on the concatenated data.
         
         Parameters
         ----------
-        subject_timeseries: dict or str
-            A pickle file containing the nested subject timeseries dictionary saved by the TimeSeriesExtractor class or
-            the nested subject timeseries dictionary produced by the TimeseriesExtractor class. The first level of the nested dictionary must consist of the subject
-            ID as a string, the second level must consist of the the run numbers in the form of 'run-#', where # is the corresponding number of the run, and the last level 
-            must consist of the timeseries associated with that run.
+        subject_timeseries: dict[dict[np.ndarray]] or str
+            Path of the pickle file containing the nested subject timeseries dictionary saved by the TimeSeriesExtractor class or
+            the nested subject timeseries dictionary produced by the TimeseriesExtractor class. The first level of the nested dictionary must consist of the subject ID as a string, 
+            the second level must consist of the run numbers in the form of 'run-#' (where # is the corresponding number of the run), and the last level must consist of the timeseries 
+            (as a numpy array) associated with that run.
         runs: int or list[int], default=None
-            The run numbers to perform the CAPs analysis with. If None, all runs in the subject timeseries will be concatenated into a single dataframe.
+            The run numbers to perform the CAPs analysis with. If None, all runs in the subject timeseries will be concatenated into a single dataframe and subjected to k-means clustering.
         random_state: int, default=None
             The random state to use for scikit's KMeans function.
         init: "k-means++", "random", or array, default="k-means++"
-            Method for choosing initial cluster centroid. Please refer to scikit's KMeans documentation for more information.
+            Method for choosing initial cluster centroid. Refer to scikit's KMeans documentation for more information.
         n_init: "auto" or int, default="auto"
-            Number of times KMeans is ran with different intial clusters. Model with lowest inertia out of the runs will be selected.
-            Please refer to scikit's KMeans documentation for more information.
+            Number of times KMeans is ran with different initial clusters. The model with lowest inertia from these runs will be selected.
+            Refer to scikit's KMeans documentation for more information.
         max_iter: int, default=300
             Maximum number of iterations for a single run of KMeans.
         tol: float, default=1e-4,
-            Stopping criteria if the change of inertia is below value assuming `max_iter` has not been reached.
+            Stopping criterion if the change in inertia is below this value, assuming `max_iter` has not been reached.
         algorithm: "lloyd or "elkan", default="lloyd"
-            The type of algorithm to use. Please refer to scikit's KMeans documentation for more information.
+            The type of algorithm to use. Refer to scikit's KMeans documentation for more information.
         show_figs: bool, default=False
-            Display the plots of inertia scores for all groups if `cluster_selection_method`="elbow".
+            Display the plots of inertia scores for all groups if `cluster_selection_method` is set to "elbow".
         output_dir: str, default=None
-            Directory to save plot in if `cluster_selection_method`="elbow". Will create the directory if it does not exist.
+            Directory to save plot to if `cluster_selection_method` is set to "elbow". The directory will be created if it does not exist.
         standardize: bool, default=True
-            To z-score the features of the concatonated timeseries array.
+            Whether to z-score the features of the concatenated timeseries data.
         epsilon: int or float, default=0
-            Small number to add to the denominator when z-scoring for numerical stabilty.
+            A small number to add to the denominator when z-scoring for numerical stability.
         kwargs: dict
-            Dictionary to adjust certain parameters related to `cluster_selection_method`="elbow". Additional parameters includes "S", which adjust the sensitivity of finding the elbow 
-            (Larger values of `S` are more conservative and less sensitive to small fluctuations; this package uses KneeLocator from the kneed package to identify the elbow), defaults to 1, 
-            "dpi", to adjust the dpi of the elbow plot, defaults to 300, and "figsize", which adjust the size of the elbow plots.
+            Dictionary to adjust certain parameters related to `cluster_selection_method` when set to "elbow". Additional parameters include:
+             - "S": Adjusts the sensitivity of finding the elbow. Larger values are more conservative and less sensitive to small fluctuations. This package uses KneeLocator from the kneed package to identify the elbow. Default is 1.
+             - "dpi": Adjusts the dpi of the elbow plot. Default is 300.
+             - "figsize": Adjusts the size of the elbow plots.
         """
         
         if runs:
@@ -258,22 +283,21 @@ class CAP(_CAPGetter):
         Parameters
         ----------
         output_dir: str, default=None
-            Directory to save plots in. Will create the directory if it does not exist. If None, plots will not be saved.
+            Directory to save plots to. The directory will be created if it does not exist. If None, plots will not be saved.
         plot_options: str or list[str], default="outer product"
             Type of plots to create. Options are "outer product" or "heatmap".
         visual_scope: str or list[str], default="regions"
             Determines whether plotting is done at the region level or node level. 
-            For region level, the value of each nodes in the same regions are averaged together them plotted.
+            For region level, the value of each nodes in the same regions are averaged together then plotted.
             Options are "regions" or "nodes".
         task_title: str, default=None
-            Serves as the title of each plot as well as the name of the saved file if output_dir is given.
+            Serves as the title of each plot as well as the name of the saved file if `output_dir` is provided.
         show_figs: bool, default=True
-            Display figures or not to display figures.
+            Whether to display figures.
         subplots: bool, default=True
-            Produce subplots for outer product plots.
+            Whether to produce subplots for outer product plots.
         **kwargs: dict
             Keyword arguments used when saving figures. Valid keywords include:
-
             - "dpi": int, default=300
                 Dots per inch for the figure. Default is 300 if `output_dir` is provided and `dpi` is not specified.
             - "figsize": tuple, default=(8, 6)
@@ -319,11 +343,12 @@ class CAP(_CAPGetter):
         the zero index should correspond the first id that is not zero.
 
         Custom Key Structure:
-        - maps: Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g., .nii for NIfTI files). For plotting purposes, this label is not required.
-        - nodes: A list of all node labels used in your study, arranged in the exact order they correspond to indices in your parcellation files. 
+        - 'maps': Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g., .nii for NIfTI files). For plotting purposes, this key is not required.
+        - 'nodes':  list of all node labels used in your study, arranged in the exact order they correspond to indices in your parcellation files. 
           Each label should match the parcellation index it represents. For example, if the parcellation label "1" corresponds to the left hemisphere 
           visual cortex area 1, then "LH_Vis1" should occupy the 0th index in this list. This ensures that data extraction and analysis accurately reflect the anatomical regions intended.
-        - regions: Dictionary defining major brain regions. Each region should list node indices under "lh" and "rh" to specify left and right hemisphere nodes.
+          For timeseries extraction, this key is not required.
+        - 'regions': Dictionary defining major brain regions. Each region should list node indices under "lh" and "rh" to specify left and right hemisphere nodes. For timeseries extraction, this key is not required.
         
         Example 
         The provided example demonstrates setting up a custom parcellation containing nodes for the visual network (Vis) and hippocampus regions:
@@ -638,45 +663,49 @@ class CAP(_CAPGetter):
                           output_dir: str=None, file_name: str=None) -> dict:
         """Get CAPs metrics
 
-        Creates a single pandas Dataframe containing all participants containing CAP metrics as described in Liu et al., 2018 and Yang et al., 2021, 
-        where `temporal fraction` is the proportion of total volumes spent in a single CAP over all volumes in a run, `persistence` is the average 
-        time spent in a single CAP before transitioning to another CAP (average consecutive/uninterrupted time), and `counts` is the frequency 
-        of each CAP observed in a run, and `transition frequency` is the number of switches between different CAPs across the entire run.
+        Creates a single pandas DataFrame containing CAP metrics for all participants, as described in Liu et al., 2018 and Yang et al., 2021. 
+        The metrics include:
+
+        - 'temporal fraction': The proportion of total volumes spent in a single CAP over all volumes in a run.
+        - 'persistence;: The average time spent in a single CAP before transitioning to another CAP (average consecutive/uninterrupted time).
+        - 'counts': The frequency of each CAP observed in a run.
+        - 'transition frequency': The number of switches between different CAPs across the entire run.
+
 
         Parameters
         ----------
-        subject_timeseries: dict or str
-            The absolute path of the pickle file containing the nested subject timeseries dictionary saved by the TimeSeriesExtractor class or
-            the nested subject timeseries dictionary produced by the TimeseriesExtractor class. The first level of the nested dictionary must consist of the subject
-            ID as a string, the second level must consist of the the run numbers in the form of 'run-#', where # is the corresponding number of the run, and the last level 
-            must consist of the timeseries associated with that run. This should be the same dictionary used for `get_caps()`.
+        subject_timeseries: dict[dict[np.ndarray]] or str
+            Path of the pickle file containing the nested subject timeseries dictionary saved by the TimeSeriesExtractor class or
+            the nested subject timeseries dictionary produced by the TimeseriesExtractor class. The first level of the nested dictionary must consist of the subject ID as a string, 
+            the second level must consist of the run numbers in the form of 'run-#' (where # is the corresponding number of the run), and the last level must consist of the timeseries 
+            (as a numpy array) associated with that run.
         tr: float, default=None
-            The repetition time. If given, persistence will be calculate as the average uninterrupted time spent in each CAP. If not give, persistence will be calculate
-            as the average uninterrupted volumes (TRs) spent in each state.
+            The repetition time (TR). If provided, persistence will be calculated as the average uninterrupted time spent in each CAP. 
+            If not provided, persistence will be calculated as the average uninterrupted volumes (TRs) spent in each state.
         runs: int or list[int], default=None
-            The run numbers to calculate cap metrics for. If None, cap metrics will be calculated for each run.
+            The run numbers to calculate CAP metrics for. If None, CAP metrics will be calculated for each run.
         continuous_runs: bool, default=False
             If True, all runs will be treated as a single, uninterrupted run.
         metrics: str or list[str], default=["temporal fraction", "persistence", "counts", "transition frequency"]
             The metrics to calculate. Available options include `temporal fraction`, `persistence`, `counts`, and `transition frequency`.
         return_df: str, default=True
-            If True, dataframe will be returned.
+            If True, returns the dataframe
         output_dir: str, default=None
-            Directory to save dataframe in. Will create the directory if it does not exist. If None, dataframe will not be saved.
+            Directory to save dataframe to. The directory will be created if it does not exist. If None, dataframe will not be saved.
         file_name: str, default=None
-            Name to save dataframe as if output_dir is not None.
+            Will serve as a prefix to append to the saved file names for the dataframes, if `output_dir` is provided.
 
         Returns
         -------
-        Dictionary containing pandas dataframes - one for each metric requested.
+        dict
+            Dictionary containing pandas DataFrames - one for each requested metric.
 
-        Notes
-        -----
-        The presence of 0 for specific CAPs in the "temporal fraction", "persistence", or "counts" dataframes, indicates that the participant had zero instances of 
-        a specific CAP.
+        Note
+        ----
+        The presence of 0 for specific CAPs in the "temporal fraction", "persistence", or "counts" dataframes indicates that the participant had zero instances of a specific CAP.
 
         References
-        -----
+        ----------
         Liu, X., Zhang, N., Chang, C., & Duyn, J. H. (2018). Co-activation patterns in resting-state fMRI signals. NeuroImage, 180, 485–494. https://doi.org/10.1016/j.neuroimage.2018.01.041
 
         Yang, H., Zhang, H., Di, X., Wang, S., Meng, C., Tian, L., & Biswal, B. (2021). Reproducible coactivation patterns of functional brain networks reveal the aberrant dynamic state transition in schizophrenia. 
@@ -818,17 +847,16 @@ class CAP(_CAPGetter):
     def caps2corr(self, output_dir: str=None, show_figs: bool=True, **kwargs):
         """Generate Correlation Matrix
 
-        This function produces the correlation matrix of all CAPs. If groups were given when the CAP class was initialized, a correlation matrix will be generated for each group. 
+        Produces the correlation matrix of all CAPs. If groups were given when the CAP class was initialized, a correlation matrix will be generated for each group. 
 
         Parameters
         ----------
         output_dir: str, default=None
-            Directory to save plots in. Will create the directory if it does not exist. If None, plots will not be saved.
+            Directory to save plots to. The directory will be created if it does not exist. If None, plots will not be saved.
         show_figs: bool, default=True
-            Display figures or not to display figures.
+            Whether to display figures.
         **kwargs: dict
             Keyword arguments used when saving figures. Valid keywords include:
-
             - "dpi": int, default=300
                 Dots per inch for the figure. Default is 300 if `output_dir` is provided and `dpi` is not specified.
             - "figsize": tuple, default=(8, 6)
@@ -899,9 +927,9 @@ class CAP(_CAPGetter):
                 full_filename = f"{group.replace(' ', '_')}_correlation_matrix.png"
                 display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"], bbox_inches='tight')
 
-    def caps2surf(self, output_dir: str=None, show_figs: bool = True, fwhm: float=None, 
-                  fslr_density: str="32k", save_stat_map: bool=False, method: str="linear",  **kwargs):
-        """Project CAPs onto 
+    def caps2surf(self, output_dir: str=None, show_figs: bool=True, fwhm: float=None, 
+                  fslr_density: str="32k", method: str="linear", save_stat_map: bool=False, **kwargs):
+        """Project CAPs onto surface plots
         
         Converts atlas into a stat map by replacing labels with the corresponding from the cluster centroids then plots on a surface plot.
         This function uses surfplot for surface plotting.
@@ -909,20 +937,20 @@ class CAP(_CAPGetter):
         Parameters
         ----------
         output_dir: str, default=None
-            Directory to save plots in. Will create the directory if it does not exist. If None, plots will not be saved. 
+            Directory to save plots to. The directory will be created if it does not exist. If None, plots will not be saved. 
         show_figs: bool, default=True
-            Display figures or not to display figures.
+            Whether to display figures.
         fwhm: float, defualt=None
-            Strength of spatial smoothing to apply in millimeters.
+            Strength of spatial smoothing to apply (in millimeters) to the statistical map prior to interpolating from MNI152 space to fslr surface space. 
+            Note, this can assist with coverage issues in the plot.
         fslr_density: str, default="32k"
-            Density of the fslr surface when converting from mni 152 space to fslr surface. Options are 
-            "32k" or "164k".
+            Density of the fslr surface when converting from MNI152 space to fslr surface. Options are "32k" or "164k".
         method: str, default="linear"
-            Interpolation method to use when converting from mni152 space to fslr surface. Options are "linear"
-            or "nearest".
+            Interpolation method to use when converting from MNI152 space to fslr surface. Options are "linear" or "nearest".
+        save_stat_map: bool, default=False
+            If True, saves the statistical map for each CAP for all groups as a Nifti1Image if `output_dir` is provided.
         **kwargs : dict
             Additional parameters to pass to modify certain plot parameters. Options include:
-
             - "dpi": int, default=300
                 Dots per inch for the plot.
             - "title_pad": int, default=-3
@@ -969,16 +997,14 @@ class CAP(_CAPGetter):
 
         Returns
         -------
-        Nifti Stat map
+        Nifti1Image
+            Nifti statistical map.
 
-        Notes
+        Note
         -----
         Assumes that atlas background label is zero and atlas is in MNI space. Also assumes that the indices from the cluster centroids are related
         to the atlas by an offset of one. For instance, index 0 of the cluster centroid vector is the first nonzero label, which is assumed to be at the 
         first index of the array in sorted(np.unique(atlas_fdata)).
-
-        Using fwhm to adjust smoothing may help coverage issues.
-
         """
 
         import nibabel as nib, numpy as np, os

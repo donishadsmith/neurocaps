@@ -2,25 +2,17 @@ import warnings
 def _check_confound_names(high_pass, specified_confound_names, n_acompcor_separate):
     if specified_confound_names == None:
         if high_pass:
-            # Do not use cosine or acompcor regressor if high pass filtering is not None. Acompcor regressors are estimated on high pass filtered version of data form fmriprep
-            confound_names = [
-                "trans_x", "trans_x_derivative1", "trans_x_power2", "trans_x_derivative1_power2",
-                "trans_y", "trans_y_derivative1", "trans_y_derivative1_power2", "trans_y_power2",
-                "trans_z", "trans_z_derivative1", "trans_z_power2", "trans_z_derivative1_power2",
-                "rot_x", "rot_x_derivative1", "rot_x_power2", "rot_x_derivative1_power2",
-                "rot_y", "rot_y_derivative1", "rot_y_power2", "rot_y_derivative1_power2",
-                "rot_z", "rot_z_derivative1", "rot_z_derivative1_power2", "rot_z_power2"
+            # Do not use cosine or acompcor regressor if high-pass filtering is not None. Acompcor regressors are estimated on high pass filtered version of data form fmriprep
+            confound_names = ["trans_x", "trans_x_derivative1","trans_y", "trans_y_derivative1", 
+                              "trans_z", "trans_z_derivative1",  "rot_x", "rot_x_derivative1",
+                              "rot_y", "rot_y_derivative1", "rot_z", "rot_z_derivative1"
             ]
         else:
             confound_names = [
-                "cosine*",
-                "trans_x", "trans_x_derivative1", "trans_x_power2", "trans_x_derivative1_power2",
-                "trans_y", "trans_y_derivative1", "trans_y_derivative1_power2", "trans_y_power2",
-                "trans_z", "trans_z_derivative1", "trans_z_power2", "trans_z_derivative1_power2",
-                "rot_x", "rot_x_derivative1", "rot_x_power2", "rot_x_derivative1_power2",
-                "rot_y", "rot_y_derivative1", "rot_y_power2", "rot_y_derivative1_power2",
-                "rot_z", "rot_z_derivative1", "rot_z_derivative1_power2", "rot_z_power2", 
-                "a_comp_cor_00", "a_comp_cor_01", "a_comp_cor_02", "a_comp_cor_03", "a_comp_cor_04", "a_comp_cor_05"
+                "cosine*","trans_x", "trans_x_derivative1","trans_y", "trans_y_derivative1", 
+                "trans_z", "trans_z_derivative1",  "rot_x", "rot_x_derivative1",
+                "rot_y", "rot_y_derivative1", "rot_z", "rot_z_derivative1", "a_comp_cor_00", 
+                "a_comp_cor_01", "a_comp_cor_02", "a_comp_cor_03", "a_comp_cor_04", "a_comp_cor_05"
             ]
     else:
         assert type(specified_confound_names) == list and len(specified_confound_names) > 0 , "confound_names must be a non-empty list."

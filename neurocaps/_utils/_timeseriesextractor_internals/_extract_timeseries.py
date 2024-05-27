@@ -9,7 +9,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
     
     for run in run_list:
 
-        run_id = "run-1" if run == None else run
+        run_id = "run-0" if run == None else run
         run = run if run != None else ""
 
         # Get files from specific run
