@@ -799,11 +799,11 @@ class CAP(_CAPGetter):
 
                 # Iterate through caps
                 for target in cap_numbers:
-                    # Iterate through each element and count uniterrupted volumes that equal target
+                    # Iterate through each element and count uninterrupted volumes that equal target
                     for index in range(0,len(predicted_subject_timeseries[subj_id][curr_run])):
                         if predicted_subject_timeseries[subj_id][curr_run][index] == target:
                             count +=1
-                        # Store count in list if interuptted and not zero an
+                        # Store count in list if interrupted and not zero 
                         else:
                             if count != 0:
                                 uninterrupted_volumes.append(count)

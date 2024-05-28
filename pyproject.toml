@@ -4,8 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neurocaps"
-version = "0.9.3.post1"
-authors = [{name = "Donisha Smith", email = "donishasmith@outlook.com"}]
+version = "0.9.4"
+license = {text = "MIT License"}
+authors = [{name = "Donisha Smith", email = "dsmit216@fiu.edu"}]
 description = "Co-activation Patterns (CAPs) Python package"
 readme = "README.md"
 requires-python = ">=3.9.0"
@@ -31,6 +32,7 @@ dependencies = ["numpy",
                 "kneed",
                 "nibabel",
                 "nilearn>=0.10.1, !=0.10.3",
+                "scikit-learn>=1.4.0",
                 "surfplot",
                 "neuromaps",
                 "pybids; platform_system != 'Windows'"
