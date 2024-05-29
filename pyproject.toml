@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neurocaps"
-version = "0.9.4"
+version = "0.9.4.post1"
 license = {text = "MIT License"}
-authors = [{name = "Donisha Smith", email = "dsmit216@fiu.edu"}]
+authors = [{name = "Donisha Smith", email = "donishasmith@outlook.com"}]
 description = "Co-activation Patterns (CAPs) Python package"
 readme = "README.md"
 requires-python = ">=3.9.0"
@@ -40,6 +40,8 @@ dependencies = ["numpy",
 
 [project.urls]
 Homepage = "https://github.com/donishadsmith/neurocaps"  
+Issues = "https://github.com/donishadsmith/neurocaps/issues"  
+Changelog = "https://github.com/donishadsmith/neurocaps/blob/main/CHANGELOG.md"
 
 [tool.distutils.bdist_wheel]
 universal = true
