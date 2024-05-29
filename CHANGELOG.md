@@ -40,18 +40,19 @@ else:
 - Supports nilearns versions 0.10.1, 0.10.2, 0.10.4, and above (does not include 0.10.3).
 
 ### ♻ Changed
-- Renamed `CAP.visualize_caps` tp `CAP.caps2plot` for naming consistency with other methods for visualization in the `CAP` class.
+- Renamed `CAP.visualize_caps()` to `CAP.caps2plot()` for naming consistency with other methods for visualization in the `CAP` class.
 
 ## [0.9.2] - 2024-05-24
 
 ### 🚀 New/Added
-- Added ability to create correlation matrices of CAPs with `CAP.caps2corr`.
-- Added more **kwargs to `CAP.caps2surf`. Refer to the docstring to see optional **kwargs.
+- Added ability to create correlation matrices of CAPs with `CAP.caps2corr()`.
+- Added more **kwargs to `CAP.caps2surf()`. Refer to the docstring to see optional **kwargs.
 
 ### 🐛 Fixes
-- Use the .labels_ attribute for scikit's KMeans instead of using the .predict() on the same dataframe used to generate the model. It is unecessary since .predict() will produce the same labels already stored in .labels_. These labels are used for silhouette method.
+- Use the `KMeans.labels_` attribute for scikit's KMeans instead of using the `KMeans.predict()` on the same dataframe used to generate the model. It is unecessary since `KMeans.predict()` will produce the same labels already stored in `KMeans.labels_`. These labels are used for silhouette method.
 
-- Minor aesthetic changes to some plots in the `CAP` class such as changing "CAPS" in the title of `CAP.caps2corr` to "CAPs"
+### ♻ Changed
+- Minor aesthetic changes to some plots in the `CAP` class such as changing "CAPS" in the title of `CAP.caps2corr()` to "CAPs".
 
 ## [0.9.1] - 2024-05-22
 
@@ -59,50 +60,51 @@ else:
 - Ability to specify resolution for Schaefer parcellation.
 - Ability to use spatial smoothing during timeseries extraction.
 - Ability to save elbow plots.
-- Add additional parameters - "fslr_density" and "method" for surface plotting to modify interpolation methods from mni152 to surface space.
-- Increased number of parameters for KMeans in `CAP.get_caps`
+- Add additional parameters - `fslr_density` and `method` to the `CAP.caps2surf()` method to modify interpolation methods from MNI152 to surface space.
+- Increased number of parameters to use with scikit's `KMeans`, which is used in `CAP.get_caps()`.
 
 ### ♻ Changed
-- In, `CAP.calculate_metrics` nans where used to signify the abscense of a CAP, this has been replaced with 0. Now for persistence, counts, and temporal fraction, 0 signifies the absence of a CAP. For transition frequency, 0 means no transition between CAPs.
+- In, `CAP.calculate_metrics()` nans where used to signify the abscense of a CAP, this has been replaced with 0. Now for persistence, counts, and temporal fraction, 0 signifies the absence of a CAP. For transition frequency, 0 means no transition between CAPs.
 
 ### 🐛 Fixes
-- Fix for AAL surface plotting for `CAP.caps2surf`. Changed how CAPs are projected onto surface plotting by extracting the actual sorted labels from the atlas instead of assuming the parcellation labels goes from 1 to n. The function still assumes that 0 is the background label; however, this fixes the issue for parcellations that don't go from 0 to 1 and go from 0 with the first parcellation label after zero starting at 2000 for instance.
+- Fix for AAL surface plotting for `CAP.caps2surf()`. Changed how CAPs are projected onto surface plotting by extracting the actual sorted labels from the atlas instead of assuming the parcellation labels goes from 1 to n. The function still assumes that 0 is the background label; however, this fixes the issue for parcellations that don't go from 0 to 1 and go from 0 with the first parcellation label after zero starting at 2000 for instance.
 
 ## [0.9.0] - 2024-05-13 
 
 ### 🚀 New/Added
-- Ability to project CAPs onto surface plots
+- Ability to project CAPs onto surface plots.
 
 ## [0.8.9] - 2024-05-09
 
 ### 🚀 New/Added
-- Added "Custom" as a valid keyword for parcel_approach to support custom parcellation. Timeseries extraction, caps extraction, bold visualization, and cap visualization available for custom plotting.
+- Added "Custom" as a valid keyword for `parcel_approach` in the `TimeseriesExtractor` and `CAP` classes to support custom parcellation with bilateral nodes (nodes that have a left and right hemisphere version). Timeseries extraction, CAPs extraction, and all visualization methods are available for custom parcellations.
 - Added `exclude_niftis` parameter to `TimeseriesExtractor.get_bold()` to skip over specific files during timeseries extraction.
-- Added `fd_threshold` parameter to `TimeseriesExtractor()` to scrub frames that exceed a specific threshold after nuisance regression is done.
-- Add options to flush print statements during timeseries extraction.
+- Added `fd_threshold` parameter to `TimeseriesExtractor` to scrub frames that exceed a specific threshold after nuisance regression is done.
+- Added options to flush print statements during timeseries extraction.
+- Added additional **kwargs for `CAP.visualize_caps()`.
 
 ### ♻ Changed
-- Changed network parameter in `TimeseriesExtractor.visualize_bold()` to region.
+- Changed `network` parameter in `TimeseriesExtractor.visualize_bold()` to `region`.
 - Changed "networks" option in `visual_scope` parameter in `CAP.visualize_caps()` to "regions".
-- Can specify "linespace" and "cmap" as kwargs for CAP.visualize_caps().
 
 ### 🐛 Fixes
-- Fix reference before assignment when specifying tr to not only rely on tr extraction from the metadata files.
-- Allow bids datasets that do not specify run id or session id in their file names to be ran instead of producing an error.
+- Fixed reference before assignment when specifying the repition time (TR) when using the `tr`  parameter in `TimeseriesExtractor.get_bold`. Prior only extracting the TR from the metadata files, which is done if the `tr` parameter was not specified worked.
+- Allow bids datasets that do not specify run id or session id in their file names to be ran instead of producing an error. Prior, only bids datasets that included "ses-#" and "run-#" in the file names worked. Files that do not have "run-#" in it's name will include a default run-id in their subkey to maintain the structure of the `TimeseriesExtractor.subject_timeseries` dictionary". This default id is "run-1".
+- Fixed error in `CAP.visualize_caps()` when plotting "outer products" plot without subplots.
 
 ## [0.8.8] - 2024-03-23
 
 ### 🚀 New/Added
-- Support Windows by only allowing install of pybids if system is not Windows. On Windows machines `TimeseriesExtractor` cannot be used but `CAP` and all other functions can be used.
+- Support Windows by only allowing install of pybids if system is not Windows. On Windows machines `TimeseriesExtractor()` cannot be used but `CAP()` and all other functions can be used.
 
 ## [0.8.7] - 2024-03-15
 
 ### 🚀 New/Added
-- Added `merge_dicts` to be able to combine different subject_timeseries and only return shared subjects.
-- Prints names of confounds used for each subject and run when extracting timeseries for transparency.
-- Ability to extract timeseries using AAL or Schaefer atlas.
+- Added `merge_dicts()` to be able to combine different subject_timeseries and only return shared subjects.
+- Print names of confounds used for each subject and run when extracting timeseries for transparency.
+- Ability to extract timeseries using the AAL or Schaefer parcellation.
 - Ability to use multiprocessing to speed up timeseries extraction.
-- Can be used to extract task (entire task timeseries or a single specific condition) or resting state data.
+- Can be used to extract task (entire task timeseries or a single specific condition) or resting-state data.
 - Ability to denoise data during extraction using band pass filtering, confounds, detrending, and removing dummy scans.
 - Can visualize the extracted timeseries at the node or network level.
 - Ability to perform Co-activation Patterns (CAPs) analysis on separate groups or all subjects.
