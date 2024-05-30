@@ -334,6 +334,8 @@ class CAP(_CAPGetter):
                 Add values to cells on the outer product heatmap at the region level only.
             - "linewidths": float, default=0
                 Padding between each cell in the plot.
+            - "linecolor": str, default="black"
+                Color of the line that seperates each cell.
             - "cmap": str, Class, or function, default="coolwarm"
                 Color map for the cells in the plot. For this parameter, you can use premade color palettes or create custom ones.
                 Below is a list of valid options:
@@ -415,6 +417,7 @@ class CAP(_CAPGetter):
                         ylabel_rotation = kwargs["ylabel_rotation"] if kwargs and "ylabel_rotation" in kwargs.keys() else 0,
                         annot = kwargs["annot"] if kwargs and "annot" in kwargs.keys() else False,
                         linewidths = kwargs["linewidths"] if kwargs and "linewidths" in kwargs.keys() else 0,
+                        linecolor = kwargs["linecolor"] if kwargs and "linecolor" in kwargs.keys() else "black",
                         cmap = kwargs["cmap"] if kwargs and "cmap" in kwargs.keys() else "coolwarm"
                         )
         
@@ -541,9 +544,9 @@ class CAP(_CAPGetter):
                 ax = axes[axes_y] if nrow == 1 else axes[axes_x,axes_y]
                 # Modify tick labels based on scope
                 if scope == "regions":
-                    display = heatmap(ax=ax, data=self._outer_product[group][cap], cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], xticklabels=columns, yticklabels=columns, cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"])
+                    display = heatmap(ax=ax, data=self._outer_product[group][cap], cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"], xticklabels=columns, yticklabels=columns, cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"])
                 else:
-                    display = heatmap(ax=ax, data=self._outer_product[group][cap], cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], cbar_kws={"shrink": plot_dict["shrink"]})
+                    display = heatmap(ax=ax, data=self._outer_product[group][cap], cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"], cbar_kws={"shrink": plot_dict["shrink"]})
 
                     ticks = [i for i, label in enumerate(labels) if label]  
 
@@ -575,9 +578,9 @@ class CAP(_CAPGetter):
                 plt.figure(figsize=plot_dict["figsize"])
 
                 plot_title = f"{group} {cap} {task_title}" if task_title else f"{group} {cap}"
-                if scope == "regions": display = heatmap(self._outer_product[group][cap], cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], xticklabels=columns, yticklabels=columns, cbar_kws={'shrink': plot_dict["shrink"]})
+                if scope == "regions": display = heatmap(self._outer_product[group][cap], cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"], xticklabels=columns, yticklabels=columns, cbar_kws={'shrink': plot_dict["shrink"]})
                 else: 
-                    display = heatmap(self._outer_product[group][cap], cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], xticklabels=[], yticklabels=[], cbar_kws={'shrink': plot_dict["shrink"]})
+                    display = heatmap(self._outer_product[group][cap], cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"], xticklabels=[], yticklabels=[], cbar_kws={'shrink': plot_dict["shrink"]})
                     ticks = [i for i, label in enumerate(labels) if label]  
 
                     display.set_xticks(ticks)  
@@ -616,7 +619,7 @@ class CAP(_CAPGetter):
         plt.figure(figsize=plot_dict["figsize"])
 
         if scope == "regions": 
-            display = heatmap(pd.DataFrame(cap_dict[group], index=columns), xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], cbar_kws={'shrink': plot_dict["shrink"]}) 
+            display = heatmap(pd.DataFrame(cap_dict[group], index=columns), xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"], cbar_kws={'shrink': plot_dict["shrink"]}) 
         else: 
             # Create Labels
             import collections
@@ -644,7 +647,7 @@ class CAP(_CAPGetter):
                     starting_value += frequency_dict[names_list[num-1]] 
                     labels[starting_value] = name
 
-            display = heatmap(pd.DataFrame(cap_dict[group], columns=cap_dict[group].keys()), xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], cbar_kws={'shrink': plot_dict["shrink"]})
+            display = heatmap(pd.DataFrame(cap_dict[group], columns=cap_dict[group].keys()), xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"], cbar_kws={'shrink': plot_dict["shrink"]})
 
             plt.yticks(ticks=[pos for pos, label in enumerate(labels) if label], labels=names_list)  
 
@@ -882,6 +885,8 @@ class CAP(_CAPGetter):
                 Add values to each cell.
             - "linewidths": float, default=0
                 Padding between each cell in the plot.
+            - "linecolor": str, default="black"
+                Color of the line that seperates each cell.
             - "cmap": str, Class, or function, default="coolwarm"
                 Color map for the cells in the plot. For this parameter, you can use premade color palettes or create custom ones.
                 Below is a list of valid options:
@@ -907,6 +912,7 @@ class CAP(_CAPGetter):
                         ylabel_rotation = kwargs["ylabel_rotation"] if kwargs and "ylabel_rotation" in kwargs.keys() else 0,
                         annot = kwargs["annot"] if kwargs and "annot" in kwargs.keys() else False,
                         linewidths = kwargs["linewidths"] if kwargs and "linewidths" in kwargs.keys() else 0,
+                        linecolor = kwargs["linecolor"] if kwargs and "linecolor" in kwargs.keys() else "black",
                         cmap = kwargs["cmap"] if kwargs and "cmap" in kwargs.keys() else "coolwarm"
                         )
         
@@ -920,7 +926,7 @@ class CAP(_CAPGetter):
             plt.figure(figsize=plot_dict["figsize"])
 
             df = pd.DataFrame(self.caps[group])
-            display = heatmap(df.corr(), xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], 
+            display = heatmap(df.corr(), xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"],
                               cbar_kws={'shrink': plot_dict["shrink"]}, annot=plot_dict["annot"]) 
             # Modify label sizes
             display.set_xticklabels(display.get_xticklabels(), size = plot_dict["xticklabels_size"], rotation=plot_dict["xlabel_rotation"])
