@@ -82,9 +82,9 @@ parcel_approach= {"Custom": {"maps": "/location/to/parcellation.nii.gz",
 **Main features for `CAP` includes:**
 - **Optimal Cluster Size Identification:** Perform the silhouette or elbow method to identify the optimal cluster size, saving the optimal model as an attribute.
 - **Grouping:** Perform CAPs analysis independently on groups of subject IDs. K-means clustering, silhouette and elbow methods, and plotting are done for each group when specified.
-- **CAP Visualization:** Visualize the CAPs as outer products or heatmaps, with options to use subplots to reduce the number of individual plots. You can save and use the plots. Refer to the docstring for the `caps2plot()` method in the `CAP` class for available **kwargs arguments and parameters to modify plots.
-- **Surface Plot Visualization:** Convert the atlas used for parcellation to a stat map projected onto a surface plot. Refer to the docstring for the `caps2surf()` method in the `CAP` class for available **kwargs arguments and parameters to modify plots.
-- **Correlation Matrix Creation:** Create a correlation matrix from CAPs. Refer to the docstring for the `caps2corr()` method in the `CAP` class for available **kwargs arguments and parameters to modify plots.
+- **CAP Visualization:** Visualize the CAPs as outer products or heatmaps, with options to use subplots to reduce the number of individual plots, as well as save. Refer to the docstring for the `caps2plot()` method in the `CAP` class for available **kwargs arguments and parameters to modify plots.
+- **Surface Plot Visualization:** Convert the atlas used for parcellation to a stat map projected onto a surface plot with options to customize and save plots. Refer to the docstring for the `caps2surf()` method in the `CAP` class for available **kwargs arguments and parameters to modify plots.
+- **Correlation Matrix Creation:** Create a correlation matrix from CAPs with options to customize and save plots. Refer to the docstring for the `caps2corr()` method in the `CAP` class for available **kwargs arguments and parameters to modify plots.
 - **CAP Metrics Calculation:** Calculate CAP metrics as described in  [Liu et al., 2018](https://doi.org/10.1016/j.neuroimage.2018.01.041)[^1] and [Yang et al., 2021](https://doi.org/10.1016/j.neuroimage.2021.118193)[^2]:
     - *Temporal Fraction:* The proportion of total volumes spent in a single CAP over all volumes in a run.
     - *Persistence:* The average time spent in a single CAP before transitioning to another CAP (average consecutive/uninterrupted time).
@@ -144,19 +144,26 @@ cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
                       standardize = True)
 
 # Visualize CAPs
+# You can use seaborn's premade palettes as strings or generate your own custom palettes
+# Using seaborn's diverging_palette function, matplotlib's LinearSegmentedColormap, 
+# or other Classes or functions compatable with seaborn
+
 cap_analysis.caps2plot(visual_scope="regions", plot_options="outer product", 
                             task_title="- Positive Valence", ncol=3, sharey=True, 
-                            subplots=True)
+                            subplots=True, cmap="coolwarm")
+# Create the colormap
+import seaborn as sns
+palette = sns.diverging_palette(260, 10, s=80, l=55, n=256, as_cmap=True)
 
 cap_analysis.caps2plot(visual_scope="nodes", plot_options="outer product", 
                             task_title="- Positive Valence", ncol=3,sharey=True, 
                             subplots=True, xlabel_rotation=90, tight_layout=False, 
-                            hspace = 0.4)
+                            hspace = 0.4, cmap=palette)
 
 ```
 **Plot Outputs:**
-![image](https://github.com/donishadsmith/neurocaps/assets/112973674/4699bbd9-1f55-462b-9d9e-4ef17da79ad4)
-![image](https://github.com/donishadsmith/neurocaps/assets/112973674/506c5be5-540d-43a9-8a61-c02062f5c6f9)
+![image](https://github.com/donishadsmith/neurocaps/assets/112973674/e1ab0f55-0c4c-4701-8f3a-838c2470d44d)
+![image](https://github.com/donishadsmith/neurocaps/assets/112973674/43e46a0a-8721-4df9-88fa-04758a34142e)
 
 ```python
 
@@ -185,17 +192,38 @@ print(outputs["temporal fraction"])
 ```python
 # Create surface plots of CAPs; there will be as many plots as CAPs
 # If you experience coverage issues, usually smoothing helps to mitigate these issues
-cap_analysis.caps2surf(fwhm=2)
+cap_analysis.caps2surf(fwhm=2, cmap="cold_hot", layout="row",  size=(500, 100), zoom=1, cbar_location="bottom")
+
+#You can also generate your own colormaps using matplotlib's LinearSegmentedColormap
+
+# Create the colormap
+from matplotlib.colors import LinearSegmentedColormap
+colors = ["#1bfffe", "#00ccff", "#0099ff", "#0066ff", "#0033ff", "#c4c4c4",
+          "#ff6666", "#ff3333", "#FF0000","#ffcc00","#FFFF00"]
+custom_cmap = LinearSegmentedColormap.from_list("custom_cold_hot", colors, N=256)
+cap_analysis.caps2surf(fwhm=2, cmap=custom_cmap, size=(500, 100), layout="row")
 ```
-**Plot Output:**
-![image](https://github.com/donishadsmith/neurocaps/assets/112973674/46ea5174-0ded-4640-a1f9-c21e798e0459)
+**Partial Plot Outputs:** (*Note*: one image will be generated per CAP)
+![image](https://github.com/donishadsmith/neurocaps/assets/112973674/fadc946a-214b-4fbf-8316-2f32ab0b026e)
+![image](https://github.com/donishadsmith/neurocaps/assets/112973674/8207914a-6bf0-47a9-8be8-3504d0a56516)
+
 
 ```python
 # Create correlation matrix
-cap_analysis.caps2corr(annot=True)
+cap_analysis.caps2corr(annot=True ,figsize=(6,4),cmap="coolwarm")
+
+# You can use seaborn's premade palettes as strings or generate your own custom palettes
+# Using seaborn's diverging_palette function, matplotlib's LinearSegmentedColormap, 
+# or other Classes or functions compatable with seaborn
+
+# Create the colormap
+import seaborn as sns
+palette = sns.diverging_palette(260, 10, s=80, l=55, n=256, as_cmap=True)
+cap_analysis.caps2corr(annot=True, ,figsize=(6,4), cmap=palette)
 ```
 **Plot Output:**
-![image](https://github.com/donishadsmith/neurocaps/assets/112973674/81620b36-55b0-4c83-be51-95d3f5280fa9)
+![image](https://github.com/donishadsmith/neurocaps/assets/112973674/57a2ce81-13d3-40d0-93e7-0ca910f7b0be)
+![image](https://github.com/donishadsmith/neurocaps/assets/112973674/9a8329df-65c7-4ad0-8b81-edc73f2d960d)
 
 # Testing 
 This package was tested using a closed dataset as well as a modified version of a single-subject open dataset to test the `TimeseriesExtractor` function on GitHub Actions. The open dataset provided by [Laumann & Poldrack](https://openfmri.org/dataset/ds000031/) and used in [Laumann et al., 2015](https://doi.org/10.1016/j.neuron.2015.06.037)[^4]. was also utilized. This data was obtained from the OpenfMRI database, accession number ds000031. 

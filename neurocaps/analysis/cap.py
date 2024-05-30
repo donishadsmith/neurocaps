@@ -334,8 +334,13 @@ class CAP(_CAPGetter):
                 Add values to cells on the outer product heatmap at the region level only.
             - "linewidths": float, default=0
                 Padding between each cell in the plot.
-            - "cmap": str, default="coolwarm"
-                Color map for the cells in the plot.
+            - "cmap": str, Class, or function, default="coolwarm"
+                Color map for the cells in the plot. For this parameter, you can use premade color palettes or create custom ones.
+                Below is a list of valid options:
+                - Strings to call seaborn's premade palettes. Refer to seaborn's documentation for valid options.
+                - Seaborn's diverging_palette function to generate custom palettes.
+                - Matplotlib's LinearSegmentedColormap to generate custom palettes.
+                - Other classes or functions compatible with seaborn.
     
          Notes
         -----
@@ -877,8 +882,13 @@ class CAP(_CAPGetter):
                 Add values to each cell.
             - "linewidths": float, default=0
                 Padding between each cell in the plot.
-            - "cmap": str, default="coolwarm"
-                Color map for the cells in the plot.
+            - "cmap": str, Class, or function, default="coolwarm"
+                Color map for the cells in the plot. For this parameter, you can use premade color palettes or create custom ones.
+                Below is a list of valid options:
+                - Strings to call seaborn's premade palettes. Refer to seaborn's documentation for valid options.
+                - Seaborn's diverging_palette function to generate custom palettes.
+                - Matplotlib's LinearSegmentedColormap to generate custom palettes.
+                - Other classes or functions compatible with seaborn.
         """
         import matplotlib.pyplot as plt, os, pandas as pd
         from seaborn import heatmap
@@ -955,8 +965,11 @@ class CAP(_CAPGetter):
                 Dots per inch for the plot.
             - "title_pad": int, default=-3
                 Padding for the plot title.
-            - "cmap": str, default="cold_hot"
-                Colormap to be used for the plot.
+            - "cmap": str or Class, default="cold_hot"
+                Colormap to be used for the plot. For this parameter, you can use premade color palettes or create custom ones.
+                Below is a list of valid options:
+                - Strings to call nilearn's _cmap_d fuction. Refer to documention for nilearn's _cmap_d for valid palettes.
+                - Matplotlib's LinearSegmentedColormap to generate custom colormaps.
             - "cbar_location": str, default="bottom"
                 Location of the colorbar.
             - "cbar_draw_border": bool, default=False
@@ -991,6 +1004,8 @@ class CAP(_CAPGetter):
                 Size of the figure.
             - "scale": tuple, default=(2, 2)
                 Scale factors for the plot.
+            - "surface": str, default="inflated"
+                The surface atlas that is used for plotting. Options are "inflated" or "veryinflated"
 
             Please refer to surfplot's documentation for specifics: 
             https://surfplot.readthedocs.io/en/latest/generated/surfplot.plotting.Plot.html#surfplot.plotting.Plot.
@@ -1040,6 +1055,7 @@ class CAP(_CAPGetter):
                          brightness = kwargs["brightness"] if kwargs and "brightness" in kwargs.keys() else 0.5,
                          figsize = kwargs["figsize"] if kwargs and "figsize" in kwargs.keys() else None,
                          scale = kwargs["scale"] if kwargs and "scale" in kwargs.keys() else (2,2),
+                         surface = kwargs["surface"] if kwargs and "surface" in kwargs.keys() else "inflated"
                          )
         
         if kwargs:
@@ -1064,7 +1080,10 @@ class CAP(_CAPGetter):
                 # Code slightly adapted from surfplot example 2
                 gii_lh, gii_rh = mni152_to_fslr(stat_map, method=method, fslr_density=fslr_density)
                 surfaces = fetch_fslr()
-                lh, rh = surfaces['inflated']
+                if plot_dict["surface"] not in ["inflated", "veryinflated"]:
+                    warnings.warn(f"{plot_dict['surface']} is an invalid option for `surface`. Available options include 'inflated' or 'verinflated'. Defaulting to 'inflated'")
+                    plot_dict["surface"] = "inflated"
+                lh, rh = surfaces[plot_dict["surface"]]
                 lh = str(lh) if not isinstance(lh, str) else lh
                 rh = str(rh) if not isinstance(rh, str) else rh
                 sulc_lh, sulc_rh = surfaces['sulc']
@@ -1078,9 +1097,11 @@ class CAP(_CAPGetter):
 
                 plot_min = -1 if round(atlas_fdata.min()) == 0 else round(atlas_fdata.min())
                 plot_max = 1 if round(atlas_fdata.max()) == 0 else round(atlas_fdata.max())
-
+                
+                # Check cmap
+                cmap = _cmap_d[plot_dict["cmap"]] if isinstance(plot_dict["cmap"],str) else plot_dict["cmap"]
                 # Add stat map layer
-                p.add_layer({"left": gii_lh, "right": gii_rh}, cmap=_cmap_d[plot_dict["cmap"]], 
+                p.add_layer({"left": gii_lh, "right": gii_rh}, cmap=cmap, 
                             alpha=plot_dict["cbar_alpha"], color_range=(plot_min,plot_max))
 
                 # Color bar

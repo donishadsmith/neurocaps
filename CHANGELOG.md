@@ -3,6 +3,12 @@
 All notable future changes to neurocaps will be documented in this file.
 
 *Note*: All versions in this file are deployed on pypi. 
+## [0.9.5] - 2024-05-30
+
+### 🚀 New/Added
+- Added ability to create custom colormaps with `CAP.caps2surf()` by simply using the cmap parameter with matplotlibs LinearSegmentedColormap with the `cmap` kwarg.
+An example of its use can be seen in demo.ipynb and the in the README.
+- Added `surface` **kwarg to `CAP.caps2surf()` to use "inflated" or "veryinflated" for the surface plots.
 
 ## [0.9.4.post1] - 2024-05-28
 

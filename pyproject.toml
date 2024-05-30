@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neurocaps"
-version = "0.9.4.post1"
+version = "0.9.5"
 license = {text = "MIT License"}
 authors = [{name = "Donisha Smith", email = "donishasmith@outlook.com"}]
 description = "Co-activation Patterns (CAPs) Python package"
