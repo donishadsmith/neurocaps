@@ -3,6 +3,10 @@
 All notable future changes to neurocaps will be documented in this file.
 
 *Note*: All versions in this file are deployed on pypi. 
+## [0.9.5.post1] - 2024-05-30
+🚀 New/Added
+- Added the `linecolor` **kwarg for `CAP.caps2corr()` and `CAP.caps2plot()` that should have been deployed in 0.9.5.
+
 ## [0.9.5] - 2024-05-30
 
 ### 🚀 New/Added
