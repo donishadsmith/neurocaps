@@ -3,6 +3,15 @@
 All notable future changes to neurocaps will be documented in this file.
 
 *Note*: All versions in this file are deployed on pypi. 
+
+## [0.9.6] - 2024-05-31
+🚀 New/Added
+- Added `n_cores` parameter to `CAP.get_caps()` for multiprocessing when using the silhouette or elbow method.
+- More restrictions to the minimum versions allowed for dependencies.
+
+### ♻ Changed
+- Use joblib for pickling (replaces pickle) and multiprocessing (replace multiprocessing).
+
 ## [0.9.5.post1] - 2024-05-30
 🚀 New/Added
 - Added the `linecolor` **kwargs for `CAP.caps2corr()` and `CAP.caps2plot()` that should have been deployed in 0.9.5.

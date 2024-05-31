@@ -105,7 +105,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             self._signal_clean_info["fd_threshold"] = fd_threshold
 
     def get_bold(self, bids_dir: str, task: str, session: Union[int,str]=None, runs: list[int]=None, condition: str=None, tr: Union[int, float]=None, 
-                 run_subjects: list[str]=None, exclude_subjects: list[str]= None, pipeline_name: str=None, n_cores: Union[bool, int]=None, verbose: bool=True, flush_print: bool=False,
+                 run_subjects: list[str]=None, exclude_subjects: list[str]= None, pipeline_name: str=None, n_cores: int=None, verbose: bool=True, flush_print: bool=False,
                  exclude_niftis: list[str]=None) -> None: 
         """Get Bold Data
 
@@ -134,8 +134,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         pipeline_name: str, default=None
             The name of the pipeline folder in the derivatives folder containing the preprocessed data. If None, BIDSLayout will use the name of dset_dir with derivatives=True. This parameter
             should be used if there are multiple pipelines in the derivatives folder.
-        n_cores: bool or int, default=None
-            The number of CPU cores to use for multiprocessing. If true, all available cores will be used.
+        n_cores: int, default=None
+            The number of CPU cores to use for multiprocessing with joblib.
         verbose: bool, default=True
             Print subject-specific information such as confounds being extracted, and id and run of subject being processed during timeseries extraction.
         flush_print: bool, default=False
@@ -152,7 +152,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         Additionally, if your files do not specify a run number due to your subjects only having a single run, the run id key for the second level of the nested dictionary defaults to "run-0".
         """
-        import bids, multiprocessing
+        import bids
+        from joblib import cpu_count, delayed, Parallel
 
         if sys.platform == "win32":
             raise SystemError("Cannot use this method on Windows devices since it relies on the `pybids` module which is only compatable with POSIX systems.")
@@ -185,33 +186,24 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         # Setup extraction
         self._setup_extraction(layout=layout, subj_id_list=subj_id_list, exclude_niftis=exclude_niftis)
 
-        if n_cores:
-            if n_cores == True:
-                self._n_cores = multiprocessing.cpu_count()
-            else:
-                if n_cores > multiprocessing.cpu_count():
-                    raise ValueError(f"More cores specified than available - Number of cores specified: {n_cores}; Max cores available: {multiprocessing.cpu_count()}.")
-                else:
-                    self._n_cores = n_cores
+        if n_cores: 
+            if n_cores > cpu_count(): raise ValueError(f"More cores specified than available - Number of cores specified: {n_cores}; Max cores available: {cpu_count()}.")
+            if isinstance(n_cores, int): self._n_cores = n_cores
+            else: raise ValueError("`n_cores` must be an integer.")
             
             # Generate list of tuples for each subject
             args_list = [(subj_id, self._subject_info[subj_id]["nifti_files"],self._subject_info[subj_id]["mask_files"],self._subject_info[subj_id]["event_files"],
                           self._subject_info[subj_id]["confound_files"], self._subject_info[subj_id]["confound_metadata_files"], self._subject_info[subj_id]["run_list"],
                           self._subject_info[subj_id]["tr"], condition, self._parcel_approach, self._signal_clean_info, verbose, flush_print
                           ) for subj_id in self._subject_ids]
-
-            with multiprocessing.Pool(processes=self._n_cores) as pool:
-                outputs = pool.starmap(_extract_timeseries, args_list)
+            
+            with Parallel(n_jobs=self._n_cores) as parallel:
+                outputs = parallel(delayed(_extract_timeseries)(*args) for args in args_list)
             
             for output in outputs:
                 if isinstance(output, dict):
                     self._subject_timeseries.update(output)
 
-            # Ensure subjects are sorted
-            self._subject_timeseries = dict(sorted(self._subject_timeseries.items()))
-
-            # Ensure processes close
-            pool.close()
         else:
             for subj_id in self._subject_ids:
 
@@ -329,7 +321,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         file_name: str, default=None
             Name of the file with or without the "pkl" extension.
         """
-        import pickle
+        import joblib
 
         if not hasattr(self, "_subject_timeseries"):
             raise AttributeError("Cannot save pickle file since `self._subject_timeseries` does not exist, either run `self.get_bold()` or assign a valid timeseries dictionary to `self.subject_timeseries`.")
@@ -341,7 +333,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         else: save_file_name = f"{os.path.splitext(file_name.rstrip())[0].rstrip()}.pkl" 
 
         with open(os.path.join(output_dir,save_file_name), "wb") as f:
-            pickle.dump(self._subject_timeseries,f)
+            joblib.dump(self._subject_timeseries,f)
 
     def visualize_bold(self, subj_id: Union[int,str], run: int, roi_indx: Union[int, list[int]]=None, region: str=None, show_figs: bool=True, output_dir: str=None, file_name: str=None, **kwargs):
         """Plot Bold Data
