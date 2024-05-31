@@ -28,6 +28,11 @@ class _CAPGetter:
     
     ### Attributes exist when CAP.get_caps() used
     @property
+    def n_cores(self):
+        if hasattr(self, "_n_cores"): return self._n_cores
+        else: return None
+        
+    @property
     def runs(self):
         if hasattr(self, "_runs"): return self._runs
         else: return None

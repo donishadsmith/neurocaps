@@ -1,8 +1,9 @@
 import numpy as np, re, warnings
 from kneed import KneeLocator
+from joblib import cpu_count, delayed, Parallel
 from sklearn.cluster import KMeans
 from typing import Union, Literal
-from .._utils import _CAPGetter, _convert_pickle_to_dict, _check_parcel_approach
+from .._utils import _CAPGetter, _convert_pickle_to_dict, _check_parcel_approach, _run_kmeans
 
 
 class CAP(_CAPGetter):
@@ -89,7 +90,7 @@ class CAP(_CAPGetter):
     def get_caps(self, subject_timeseries: Union[dict[dict[np.ndarray]], str], runs: Union[int, list[int]]=None, random_state: int=None, 
                  init: Union[np.array, Literal["k-means++", "random"]]="k-means++", n_init: Union[Literal["auto"],int]='auto', 
                  max_iter: int=300, tol: float=0.0001, algorithm: Literal["lloyd", "elkan"]="lloyd", show_figs: bool=False, 
-                 output_dir: str=None, standardize: bool=True, epsilon: Union[int,float]=0, **kwargs) -> None:
+                 output_dir: str=None, standardize: bool=True, epsilon: Union[int,float]=0, n_cores: int=None, **kwargs) -> None:
         """""Generate CAPs
 
         Concatenates the timeseries of each subject and performs k-means clustering on the concatenated data.
@@ -124,13 +125,22 @@ class CAP(_CAPGetter):
             Whether to z-score the features of the concatenated timeseries data.
         epsilon: int or float, default=0
             A small number to add to the denominator when z-scoring for numerical stability.
+        n_cores: int, default=None
+            The number of CPU cores to use for multiprocessing, with joblib, to run multiple kmeans models if `cluster_selection_method` is not None. 
         kwargs: dict
             Dictionary to adjust certain parameters related to `cluster_selection_method` when set to "elbow". Additional parameters include:
              - "S": Adjusts the sensitivity of finding the elbow. Larger values are more conservative and less sensitive to small fluctuations. This package uses KneeLocator from the kneed package to identify the elbow. Default is 1.
              - "dpi": Adjusts the dpi of the elbow plot. Default is 300.
              - "figsize": Adjusts the size of the elbow plots.
         """
-        
+        if n_cores and self.cluster_selection_method is not None:
+            if n_cores > cpu_count(): raise ValueError(f"More cores specified than available - Number of cores specified: {n_cores}; Max cores available: {cpu_count()}.")
+            if isinstance(n_cores, int): self._n_cores = n_cores
+            else: raise ValueError("`n_cores` must be an integer.")
+        else:
+            if n_cores and self.cluster_selection_method == None: warnings.warn("Multiprocessing will not run since `cluster_selection_method` is None.")
+            self._n_cores = None
+
         if runs:
             if isinstance(runs,int): runs = list(runs)
     
@@ -157,8 +167,6 @@ class CAP(_CAPGetter):
         self._create_caps_dict()
     
     def _perform_silhouette_method(self, random_state, init, n_init, max_iter, tol, algorithm):
-        from sklearn.metrics import silhouette_score
-
         # Initialize attribute
         self._silhouette_scores = {}
         self._optimal_n_clusters = {}
@@ -166,13 +174,21 @@ class CAP(_CAPGetter):
 
         for group in self._groups.keys():
             self._silhouette_scores[group] = {}
-            for n_cluster in self._n_clusters:
-                self._kmeans[group] = KMeans(n_clusters=n_cluster, random_state=random_state, init=init, n_init=n_init, max_iter=max_iter, tol=tol, algorithm=algorithm).fit(self._concatenated_timeseries[group])
-                cluster_labels = self._kmeans[group].labels_
-                self._silhouette_scores[group].update({n_cluster: silhouette_score(self._concatenated_timeseries[group], cluster_labels)})
+            if self._n_cores is None:
+                for n_cluster in self._n_clusters:
+                    silhouette_dict = _run_kmeans(n_cluster=n_cluster, random_state=random_state, init=init, n_init=n_init, max_iter=max_iter, 
+                                               tol=tol, algorithm=algorithm, concatenated_timeseries=self._concatenated_timeseries[group], method="elbow")
+                    self._silhouette_scores[group].update(silhouette_dict) 
+            else:
+                with Parallel(n_jobs=self._n_cores) as parallel:             
+                    outputs = parallel(delayed(_run_kmeans)(n_cluster, random_state, init, n_init, max_iter, tol, algorithm, 
+                                                                                self._concatenated_timeseries[group], "silhouette") for n_cluster in self._n_clusters)
+                for output in outputs:
+                    self._silhouette_scores[group].update(output)
+
+            # Get max score  
             self._optimal_n_clusters[group] = max(self._silhouette_scores[group], key=self._silhouette_scores[group].get)
-            if self._optimal_n_clusters[group] != self._n_clusters[-1]:
-                self._kmeans[group] = KMeans(n_clusters=self._optimal_n_clusters[group], random_state=random_state, init=init, n_init=n_init, max_iter=max_iter, tol=tol, algorithm=algorithm).fit(self._concatenated_timeseries[group]) 
+            self._kmeans[group] = KMeans(n_clusters=self._optimal_n_clusters[group], random_state=random_state, init=init, n_init=n_init, max_iter=max_iter, tol=tol, algorithm=algorithm).fit(self._concatenated_timeseries[group]) 
             print(f"Optimal cluster size for {group} is {self._optimal_n_clusters[group]}.")
         
     def _perform_elbow_method(self, random_state, show_figs, output_dir, init, n_init, max_iter, tol, algorithm, **kwargs):
@@ -185,9 +201,17 @@ class CAP(_CAPGetter):
 
         for group in self._groups.keys():
             self._inertia[group] = {}
-            for n_cluster in self._n_clusters:
-                self._kmeans[group] = KMeans(n_clusters=n_cluster, random_state=random_state, init=init, n_init=n_init, max_iter=max_iter, tol=tol, algorithm=algorithm).fit(self._concatenated_timeseries[group])
-                self._inertia[group].update({n_cluster: self._kmeans[group].inertia_}) 
+            if self._n_cores is None:
+                for n_cluster in self._n_clusters:
+                    inertia_dict = _run_kmeans(n_cluster=n_cluster, random_state=random_state, init=init, n_init=n_init, max_iter=max_iter, 
+                                               tol=tol, algorithm=algorithm, concatenated_timeseries=self._concatenated_timeseries[group], method="elbow")
+                    self._inertia[group].update(inertia_dict) 
+            else:
+                with Parallel(n_jobs=self._n_cores) as parallel:
+                    outputs = parallel(delayed(_run_kmeans)(n_cluster, random_state, init, n_init, max_iter, 
+                                                                                tol, algorithm, self._concatenated_timeseries[group], "elbow") for n_cluster in self._n_clusters)
+                for output in outputs:
+                    self._inertia[group].update(output)
             
             # Get optimal cluster size
             kneedle = KneeLocator(x=list(self._inertia[group].keys()), 
@@ -199,8 +223,7 @@ class CAP(_CAPGetter):
             if not self._optimal_n_clusters[group]:
                  warnings.warn("No elbow detected so optimal cluster size is None. Try adjusting the sensitivity parameter, `S`, to increase or decrease sensitivity (higher values are less sensitive), expanding the list of clusters to test, or setting `cluster_selection_method` to 'sillhouette'.")
             else:
-                if self._optimal_n_clusters[group] != self._n_clusters[-1]:
-                    self._kmeans[group] = KMeans(n_clusters=self._optimal_n_clusters[group], random_state=random_state, init=init, n_init=n_init, max_iter=max_iter, tol=tol, algorithm=algorithm).fit(self._concatenated_timeseries[group])
+                self._kmeans[group] = KMeans(n_clusters=self._optimal_n_clusters[group], random_state=random_state, init=init, n_init=n_init, max_iter=max_iter, tol=tol, algorithm=algorithm).fit(self._concatenated_timeseries[group])
                 print(f"Optimal cluster size for {group} is {self._optimal_n_clusters[group]}.\n")
 
                 if show_figs or output_dir != None:
