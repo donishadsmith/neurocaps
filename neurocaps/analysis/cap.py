@@ -40,7 +40,7 @@ class CAP(_CAPGetter):
           Each label should match the parcellation index it represents. For example, if the parcellation label "1" corresponds to the left hemisphere 
           visual cortex area 1, then "LH_Vis1" should occupy the 0th index in this list. This ensures that data extraction and analysis accurately reflect the anatomical regions intended.
           For timeseries extraction, this key is not required.
-        - 'regions': Dictionary defining major brain regions. Each region should list node indices under "lh" and "rh" to specify left and right hemisphere nodes. For timeseries extraction, this key is not required.
+        - 'regions': Dictionary defining major brain regions. Each region should list node indices under "lh" and "rh" to specify left and right hemisphere nodes. 
         
         Example 
         The provided example demonstrates setting up a custom parcellation containing nodes for the visual network (Vis) and hippocampus regions:
@@ -133,12 +133,12 @@ class CAP(_CAPGetter):
              - "dpi": Adjusts the dpi of the elbow plot. Default is 300.
              - "figsize": Adjusts the size of the elbow plots.
         """
-        if n_cores and self.cluster_selection_method is not None:
+        if n_cores and self._cluster_selection_method is not None:
             if n_cores > cpu_count(): raise ValueError(f"More cores specified than available - Number of cores specified: {n_cores}; Max cores available: {cpu_count()}.")
             if isinstance(n_cores, int): self._n_cores = n_cores
             else: raise ValueError("`n_cores` must be an integer.")
         else:
-            if n_cores and self.cluster_selection_method == None: warnings.warn("Multiprocessing will not run since `cluster_selection_method` is None.")
+            if n_cores and self._cluster_selection_method == None: warnings.warn("Multiprocessing will not run since `cluster_selection_method` is None.")
             self._n_cores = None
 
         if runs:
@@ -298,7 +298,7 @@ class CAP(_CAPGetter):
                     self._subject_table.update({subj_id : group})
 
     def caps2plot(self, output_dir: str=None, plot_options: Union[str, list[str]]="outer product", visual_scope: list[str]="regions", 
-                       task_title: str=None, show_figs: bool=True, subplots: bool=False, **kwargs):
+                       suffix_title: str=None, show_figs: bool=True, subplots: bool=False, **kwargs):
         """Generate heatmaps and outer product plots of CAPs
 
         This function produces seaborn heatmaps for each CAP. If groups were given when the CAP class was initialized, plotting will be done for all CAPs for all groups.
@@ -313,8 +313,8 @@ class CAP(_CAPGetter):
             Determines whether plotting is done at the region level or node level. 
             For region level, the value of each nodes in the same regions are averaged together then plotted.
             Options are "regions" or "nodes".
-        task_title: str, default=None
-            Serves as the title of each plot as well as the name of the saved file if `output_dir` is provided.
+        suffix_title: str, default=None
+            Appended to the title of each plot as well as the name of the saved file if `output_dir` is provided.
         show_figs: bool, default=True
             Whether to display figures.
         subplots: bool, default=True
@@ -354,11 +354,26 @@ class CAP(_CAPGetter):
             - "ylabel_rotation": int, default=0
                 Rotation angle for y-axis labels.
             - "annot": bool, default=False
-                Add values to cells on the outer product heatmap at the region level only.
+                Add values to cells.
+            - "fmt": str, default=".2g"
+                Modify how the annotated vales are presented.
             - "linewidths": float, default=0
                 Padding between each cell in the plot.
+            - "borderwidths": float, default=0
+                Width of the border around the plot.
             - "linecolor": str, default="black"
                 Color of the line that seperates each cell.
+            - "edgecolors": str, default=None
+                Color of the edges.
+            - "alpha": float, default=None
+                Controls transparancy and ranges from 0 (transparant) to 1 (opaque).
+            - "hemisphere_labels": bool, default=False
+                This option is only available when visual_scope="nodes". Instead of listing all individual labels, this parameter 
+                simplifies the labels to indicate only the left and right hemispheres, with a division line separating the cells 
+                belonging to each hemisphere. If set to True, "edgecolors" will not be used, and both "linewidths" and "linecolor" 
+                will be applied only to the division line. This option is available exclusively for "Custom" and "Schaefer" parcellations. 
+                WARNING, for the "Custom" option, the parcellation should be organized such that the first half of the labels/nodes belong to the left 
+                hemisphere and the latter half to the right hemisphere.
             - "cmap": str, Class, or function, default="coolwarm"
                 Color map for the cells in the plot. For this parameter, you can use premade color palettes or create custom ones.
                 Below is a list of valid options:
@@ -367,8 +382,11 @@ class CAP(_CAPGetter):
                 - Matplotlib's LinearSegmentedColormap to generate custom palettes.
                 - Other classes or functions compatible with seaborn.
     
-         Notes
+        Notes
         -----
+        This function assumes that each node has a left and right counterpart (bilateral nodes). It also assumes that all the nodes belonging to the left hemisphere are listed first in the 'nodes' key.
+        For instance ["LH_Vis1", "LH_Vis2", "LH_Hippocampus", "RH_Vis1", "RH_Vis2", "RH_Hippocampus"].
+
         If using a "Custom" parcellation approach, ensure each node in your dataset includes both left (lh) and right (rh) hemisphere versions. Also, this function assumes that the background label is "zero". Do not add a a background label, in the "nodes" or "networks" key,
         the zero index should correspond the first id that is not zero.
 
@@ -378,7 +396,7 @@ class CAP(_CAPGetter):
           Each label should match the parcellation index it represents. For example, if the parcellation label "1" corresponds to the left hemisphere 
           visual cortex area 1, then "LH_Vis1" should occupy the 0th index in this list. This ensures that data extraction and analysis accurately reflect the anatomical regions intended.
           For timeseries extraction, this key is not required.
-        - 'regions': Dictionary defining major brain regions. Each region should list node indices under "lh" and "rh" to specify left and right hemisphere nodes. For timeseries extraction, this key is not required.
+        - 'regions': Dictionary defining major brain regions. Each region should list node indices under "lh" and "rh" to specify left and right hemisphere nodes. 
         
         Example 
         The provided example demonstrates setting up a custom parcellation containing nodes for the visual network (Vis) and hippocampus regions:
@@ -396,7 +414,7 @@ class CAP(_CAPGetter):
             raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` first.")
         
         # Check if parcellation_approach is custom
-        if "Custom" in self.parcel_approach.keys() and ("nodes" not in self.parcel_approach["Custom"].keys() or "regions" not in self.parcel_approach["Custom"].keys()):
+        if "Custom" in self._parcel_approach.keys() and ("nodes" not in self._parcel_approach["Custom"].keys() or "regions" not in self._parcel_approach["Custom"].keys()):
             _check_parcel_approach(parcel_approach=self._parcel_approach, call="caps2plot")
 
         # Check labels
@@ -439,9 +457,14 @@ class CAP(_CAPGetter):
                         xlabel_rotation = kwargs["xlabel_rotation"] if kwargs and "xlabel_rotation" in kwargs.keys() else 0,
                         ylabel_rotation = kwargs["ylabel_rotation"] if kwargs and "ylabel_rotation" in kwargs.keys() else 0,
                         annot = kwargs["annot"] if kwargs and "annot" in kwargs.keys() else False,
+                        fmt = kwargs["fmt"] if kwargs and "fmt" in kwargs.keys() else ".2g",
                         linewidths = kwargs["linewidths"] if kwargs and "linewidths" in kwargs.keys() else 0,
                         linecolor = kwargs["linecolor"] if kwargs and "linecolor" in kwargs.keys() else "black",
-                        cmap = kwargs["cmap"] if kwargs and "cmap" in kwargs.keys() else "coolwarm"
+                        cmap = kwargs["cmap"] if kwargs and "cmap" in kwargs.keys() else "coolwarm",
+                        edgecolors = kwargs["edgecolors"] if kwargs and "edgecolors" in kwargs.keys() else None,
+                        alpha = kwargs["alpha"] if kwargs and "alpha" in kwargs.keys() else None,
+                        hemisphere_labels = kwargs["hemisphere_labels"] if kwargs and "hemisphere_labels" in kwargs.keys() else False,
+                        borderwidths = kwargs["borderwidths"] if kwargs and "borderwidths" in kwargs.keys() else 0,
                         )
         
         if kwargs:
@@ -449,6 +472,12 @@ class CAP(_CAPGetter):
             if len(invalid_kwargs.keys()) > 0:
                 print(f"Invalid kwargs arguments used and will be ignored {invalid_kwargs}.")
 
+        if plot_dict["hemisphere_labels"] == True:
+            if "nodes" not in visual_scope:
+                raise ValueError("`hemisphere_labels` is only available when `visual_scope == 'nodes'`.")
+            if "AAL" in self._parcel_approach.keys():
+                raise ValueError("`hemisphere_labels` is only available for 'Custom' and 'Schaefer'.")
+        
         # Ensure plot_options and visual_scope are lists
         plot_options = plot_options if type(plot_options) == list else list(plot_options)
         visual_scope = visual_scope if type(visual_scope) == list else list(visual_scope)
@@ -472,12 +501,12 @@ class CAP(_CAPGetter):
 
                 #  Generate plot for each group
                 if plot_option == "outer product": self._generate_outer_product_plots(group=group, plot_dict=plot_dict, cap_dict=cap_dict, columns=columns, subplots=subplots,
-                                                                                    output_dir=output_dir, task_title=task_title, show_figs=show_figs, scope=scope)
+                                                                                    output_dir=output_dir, suffix_title=suffix_title, show_figs=show_figs, scope=scope)
                 elif plot_option == "heatmap": self._generate_heatmap_plots(group=group, plot_dict=plot_dict, cap_dict=cap_dict, columns=columns,
-                                                                            output_dir=output_dir, task_title=task_title, show_figs=show_figs, scope=scope)
+                                                                            output_dir=output_dir, suffix_title=suffix_title, show_figs=show_figs, scope=scope)
             
     def _create_regions(self):
-        # Internal function to create an attribute called `region_caps`. Purpose is to average the vales of all nodes in a corresponding region to create region heatmaps or outer product plots
+        # Internal function to create an attribute called `region_caps`. Purpose is to average the values of all nodes in a corresponding region to create region heatmaps or outer product plots
         self._region_caps = {group: {} for group in self._groups.keys()}
         for group in self._groups.keys():
             for cap in self._caps[group].keys():
@@ -493,7 +522,6 @@ class CAP(_CAPGetter):
                     region_keys = region_dict.keys()
                     for region in region_keys:
                         roi_indxs = np.array(region_dict[region]["lh"] + region_dict[region]["rh"])
-
                         if len(region_caps) == 0:
                             region_caps= np.array([np.average(self._caps[group][cap][roi_indxs])])
                         else:
@@ -501,7 +529,7 @@ class CAP(_CAPGetter):
 
                 self._region_caps[group].update({cap: region_caps})
     
-    def _generate_outer_product_plots(self, group, plot_dict, cap_dict, columns, subplots, output_dir, task_title, show_figs, scope):
+    def _generate_outer_product_plots(self, group, plot_dict, cap_dict, columns, subplots, output_dir, suffix_title, show_figs, scope):
         import matplotlib.pyplot as plt, os
         from seaborn import heatmap
 
@@ -513,14 +541,15 @@ class CAP(_CAPGetter):
             # Max five subplots per row for default
             default_col = len(cap_dict[group].keys()) if len(cap_dict[group].keys()) <= 5 else 5
             ncol = plot_dict["ncol"] if plot_dict["ncol"] != None else default_col
+            if ncol > len(cap_dict[group].keys()): ncol = len(cap_dict[group].keys())
             # Pad nrow, since int will round down, padding is needed for cases where len(cap_dict[group].keys())/ncol is a float. This will add the extra row needed
             x_pad = 0 if len(cap_dict[group].keys())/ncol <= 1 else 1
             nrow = plot_dict["nrow"] if plot_dict["nrow"] != None else x_pad + int(len(cap_dict[group].keys())/ncol)
-
+            
             subplot_figsize = (8 * ncol, 6 * nrow) if plot_dict["figsize"] == (8,6) else plot_dict["figsize"] 
 
             fig, axes = plt.subplots(nrow, ncol, sharex=False, sharey=plot_dict["sharey"], figsize=subplot_figsize)
-            suptitle = f"{group} {task_title}" if task_title else f"{group}"
+            suptitle = f"{group} {suffix_title}" if suffix_title else f"{group}"
             fig.suptitle(suptitle, fontsize=plot_dict["suptitle_fontsize"])
             fig.subplots_adjust(hspace=plot_dict["hspace"], wspace=plot_dict["wspace"])  
             if plot_dict["tight_layout"]: fig.tight_layout(rect=plot_dict["rect"])  
@@ -533,7 +562,7 @@ class CAP(_CAPGetter):
             # Calculate outer product
             self._outer_product[group].update({cap: np.outer(cap_dict[group][cap],cap_dict[group][cap])})
             # Create labels if nodes requested for scope
-            if scope == "nodes":
+            if scope == "nodes" and plot_dict["hemisphere_labels"] == False:
                 import collections
                 
                 # Get frequency of each major hemisphere and region in Schaefer, AAL, or Custom atlas
@@ -567,16 +596,49 @@ class CAP(_CAPGetter):
                 ax = axes[axes_y] if nrow == 1 else axes[axes_x,axes_y]
                 # Modify tick labels based on scope
                 if scope == "regions":
-                    display = heatmap(ax=ax, data=self._outer_product[group][cap], cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"], xticklabels=columns, yticklabels=columns, cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"])
+                    display = heatmap(ax=ax, data=self._outer_product[group][cap], cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"], 
+                                      xticklabels=columns, yticklabels=columns, cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"], fmt=plot_dict["fmt"],
+                                      edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"])
                 else:
-                    display = heatmap(ax=ax, data=self._outer_product[group][cap], cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"], cbar_kws={"shrink": plot_dict["shrink"]})
+                    if plot_dict["hemisphere_labels"] == False:
+                        display = heatmap(ax=ax, data=self._outer_product[group][cap], cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], 
+                                        linecolor=plot_dict["linecolor"], cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"], fmt=plot_dict["fmt"],
+                                        edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"])
+                    else:
+                        display = heatmap(ax=ax, data=self._outer_product[group][cap], cmap=plot_dict["cmap"], cbar_kws={"shrink": plot_dict["shrink"]}, 
+                                          annot=plot_dict["annot"], fmt=plot_dict["fmt"], alpha=plot_dict["alpha"])
+                        
+                    if plot_dict["hemisphere_labels"] == False:
+                        ticks = [i for i, label in enumerate(labels) if label]  
 
-                    ticks = [i for i, label in enumerate(labels) if label]  
+                        ax.set_xticks(ticks)  
+                        ax.set_xticklabels([label for label in labels if label]) 
+                        ax.set_yticks(ticks)  
+                        ax.set_yticklabels([label for label in labels if label]) 
+                    else:
+                        n_labels = len(self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"])
+                        division_line = n_labels//2
+                        left_hemisphere_tick = (0 + division_line)//2
+                        right_hemisphere_tick = (division_line + n_labels)//2
 
-                    ax.set_xticks(ticks)  
-                    ax.set_xticklabels([label for label in labels if label]) 
-                    ax.set_yticks(ticks)  
-                    ax.set_yticklabels([label for label in labels if label]) 
+                        ax.set_xticks([left_hemisphere_tick,right_hemisphere_tick])
+                        ax.set_xticklabels(["LH", "RH"])
+                        ax.set_yticks([left_hemisphere_tick,right_hemisphere_tick])
+                        ax.set_yticklabels(["LH", "RH"])
+                        
+                        plot_dict["linewidths"] = plot_dict["linewidths"] if plot_dict["linewidths"] != 0 else 1
+
+                        ax.axhline(division_line, color=plot_dict["linecolor"], linewidth=plot_dict["linewidths"])
+                        ax.axvline(division_line, color=plot_dict["linecolor"], linewidth=plot_dict["linewidths"])
+                
+                # Add border 
+                if plot_dict['borderwidths'] != 0:
+                    border_length = self._outer_product[group][cap].shape[0] if scope == "regions" else self._outer_product[group][cap].shape[0]
+
+                    display.axhline(y=0, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
+                    display.axhline(y=border_length, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
+                    display.axvline(x=0, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
+                    display.axvline(x=border_length, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
 
                 # Modify label sizes
                 display.set_xticklabels(display.get_xticklabels(), size = plot_dict["xticklabels_size"], rotation=plot_dict["xlabel_rotation"])
@@ -600,17 +662,52 @@ class CAP(_CAPGetter):
                 # Create new plot for each iteration when not subplot
                 plt.figure(figsize=plot_dict["figsize"])
 
-                plot_title = f"{group} {cap} {task_title}" if task_title else f"{group} {cap}"
-                if scope == "regions": display = heatmap(self._outer_product[group][cap], cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"], xticklabels=columns, yticklabels=columns, cbar_kws={'shrink': plot_dict["shrink"]})
+                plot_title = f"{group} {cap} {suffix_title}" if suffix_title else f"{group} {cap}"
+                if scope == "regions": display = heatmap(self._outer_product[group][cap], cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"], 
+                                                         xticklabels=columns, yticklabels=columns, cbar_kws={'shrink': plot_dict["shrink"]}, annot=plot_dict["annot"], fmt=plot_dict["fmt"],
+                                                         edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"])
                 else: 
-                    display = heatmap(self._outer_product[group][cap], cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"], xticklabels=[], yticklabels=[], cbar_kws={'shrink': plot_dict["shrink"]})
-                    ticks = [i for i, label in enumerate(labels) if label]  
+                    if plot_dict["hemisphere_labels"] == False:
+                        display = heatmap(self._outer_product[group][cap], cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"], 
+                                        xticklabels=[], yticklabels=[], cbar_kws={'shrink': plot_dict["shrink"]}, annot=plot_dict["annot"], fmt=plot_dict["fmt"],
+                                        edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"])
+                    else:
+                        display = heatmap(self._outer_product[group][cap], cmap=plot_dict["cmap"], xticklabels=[], yticklabels=[], cbar_kws={'shrink': plot_dict["shrink"]}, 
+                                          annot=plot_dict["annot"], fmt=plot_dict["fmt"], alpha=plot_dict["alpha"])
+                    
+                    if plot_dict["hemisphere_labels"] == False:
+                        ticks = [i for i, label in enumerate(labels) if label]  
 
-                    display.set_xticks(ticks)  
-                    display.set_xticklabels([label for label in labels if label]) 
-                    display.set_yticks(ticks)  
-                    display.set_yticklabels([label for label in labels if label]) 
+                        display.set_xticks(ticks)  
+                        display.set_xticklabels([label for label in labels if label]) 
+                        display.set_yticks(ticks)  
+                        display.set_yticklabels([label for label in labels if label]) 
+
+                    else:
+                        n_labels = len(self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"])
+                        division_line = n_labels//2
+                        left_hemisphere_tick = (0 + division_line)//2
+                        right_hemisphere_tick = (division_line + n_labels)//2
+
+                        display.set_xticks([left_hemisphere_tick,right_hemisphere_tick])
+                        display.set_xticklabels(["LH", "RH"])
+                        display.set_yticks([left_hemisphere_tick,right_hemisphere_tick])
+                        display.set_yticklabels(["LH", "RH"])
+                        
+                        plot_dict["linewidths"] = plot_dict["linewidths"] if plot_dict["linewidths"] != 0 else 1
+
+                        plt.axhline(division_line, color=plot_dict["linecolor"], linewidth=plot_dict["linewidths"])
+                        plt.axvline(division_line, color=plot_dict["linecolor"], linewidth=plot_dict["linewidths"])
                 
+                # Add border
+                if plot_dict['borderwidths'] != 0:
+                    border_length = self._outer_product[group][cap].shape[0] if scope == "regions" else self._outer_product[group][cap].shape[0]
+
+                    display.axhline(y=0, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
+                    display.axhline(y=border_length, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
+                    display.axvline(x=0, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
+                    display.axvline(x=border_length, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
+
                 display.set_title(plot_title, fontdict= {'fontsize': plot_dict["fontsize"]})
 
                 display.set_xticklabels(display.get_xticklabels(), size = plot_dict["xticklabels_size"], rotation=plot_dict["xlabel_rotation"])
@@ -618,7 +715,7 @@ class CAP(_CAPGetter):
 
                 # Save individual plots
                 if output_dir:
-                    partial_filename = f"{group}_{cap}_{task_title}" if task_title else f"{group}_{cap}"
+                    partial_filename = f"{group}_{cap}_{suffix_title}" if suffix_title else f"{group}_{cap}"
                     full_filename = f"{partial_filename.replace(' ','_')}_outer_product_heatmap-regions.png" if scope == "regions" else f"{partial_filename.replace(' ','_')}_outer_product_heatmap-nodes.png"
                     display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"], bbox_inches='tight')
         
@@ -627,14 +724,14 @@ class CAP(_CAPGetter):
 
         # Save subplot
         if subplots and output_dir: 
-            partial_filename = f"{group}_CAPs_{task_title}" if task_title else f"{group}_CAPs"
+            partial_filename = f"{group}_CAPs_{suffix_title}" if suffix_title else f"{group}_CAPs"
             full_filename = f"{partial_filename.replace(' ','_')}_outer_product_heatmap-regions.png" if scope == "regions" else f"{partial_filename.replace(' ','_')}_outer_product_heatmap-nodes.png"
             display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"], bbox_inches='tight')    
         
         # Display figures
         if not show_figs: plt.close()
 
-    def _generate_heatmap_plots(self, group, plot_dict, cap_dict, columns, output_dir, task_title, show_figs, scope):
+    def _generate_heatmap_plots(self, group, plot_dict, cap_dict, columns, output_dir, suffix_title, show_figs, scope):
         import matplotlib.pyplot as plt, os, pandas as pd
         from seaborn import heatmap
         
@@ -642,47 +739,76 @@ class CAP(_CAPGetter):
         plt.figure(figsize=plot_dict["figsize"])
 
         if scope == "regions": 
-            display = heatmap(pd.DataFrame(cap_dict[group], index=columns), xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"], cbar_kws={'shrink': plot_dict["shrink"]}) 
+            display = heatmap(pd.DataFrame(cap_dict[group], index=columns), xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"],
+                               linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"], cbar_kws={'shrink': plot_dict["shrink"]}, fmt=plot_dict["fmt"],
+                               edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"], ) 
         else: 
             # Create Labels
-            import collections
-            if list(self._parcel_approach.keys())[0] == "Schaefer":
-                frequency_dict = dict(collections.Counter([names[0] + " " + names[1] for names in [name.split("_")[0:2] for name in self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"]]]))
-            elif list(self._parcel_approach.keys())[0] == "AAL":
-                frequency_dict = collections.Counter([name.split("_")[0] for name in self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"]])
-            else:
-                    frequency_dict = {}
-                    for id in columns:
-                        hemisphere_id = "LH" if id.startswith("LH ") else "RH"
-                        region_id = re.split("LH |RH ", id)[-1]
-                        frequency_dict.update({id: len(self._parcel_approach["Custom"]["regions"][region_id][hemisphere_id.lower()])})
-            names_list = list(frequency_dict.keys())
-            labels = ["" for _ in range(0,len(self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"]))]
-
-            starting_value = 0
-
-            # Iterate through names_list and assign the starting indices corresponding to unique region and hemisphere key
-            for num, name in enumerate(names_list): 
-                if num == 0:
-                    labels[0] = name
+            if plot_dict["hemisphere_labels"] == False:
+                import collections
+                if list(self._parcel_approach.keys())[0] == "Schaefer":
+                    frequency_dict = dict(collections.Counter([names[0] + " " + names[1] for names in [name.split("_")[0:2] for name in self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"]]]))
+                elif list(self._parcel_approach.keys())[0] == "AAL":
+                    frequency_dict = collections.Counter([name.split("_")[0] for name in self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"]])
                 else:
-                    # Shifting to previous frequency of the preceding netwerk to obtain the new starting value of the subsequent region and hemosphere pair
-                    starting_value += frequency_dict[names_list[num-1]] 
-                    labels[starting_value] = name
+                        frequency_dict = {}
+                        for id in columns:
+                            hemisphere_id = "LH" if id.startswith("LH ") else "RH"
+                            region_id = re.split("LH |RH ", id)[-1]
+                            frequency_dict.update({id: len(self._parcel_approach["Custom"]["regions"][region_id][hemisphere_id.lower()])})
+                names_list = list(frequency_dict.keys())
+                labels = ["" for _ in range(0,len(self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"]))]
 
-            display = heatmap(pd.DataFrame(cap_dict[group], columns=cap_dict[group].keys()), xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"], cbar_kws={'shrink': plot_dict["shrink"]})
+                starting_value = 0
 
-            plt.yticks(ticks=[pos for pos, label in enumerate(labels) if label], labels=names_list)  
+                # Iterate through names_list and assign the starting indices corresponding to unique region and hemisphere key
+                for num, name in enumerate(names_list): 
+                    if num == 0:
+                        labels[0] = name
+                    else:
+                        # Shifting to previous frequency of the preceding netwerk to obtain the new starting value of the subsequent region and hemosphere pair
+                        starting_value += frequency_dict[names_list[num-1]] 
+                        labels[starting_value] = name
 
+                display = heatmap(pd.DataFrame(cap_dict[group], columns=cap_dict[group].keys()), xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"], 
+                                linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"], cbar_kws={'shrink': plot_dict["shrink"]}, annot=plot_dict["annot"], fmt=plot_dict["fmt"],
+                                edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"])
+
+                plt.yticks(ticks=[pos for pos, label in enumerate(labels) if label], labels=names_list) 
+
+            else:
+                display = heatmap(pd.DataFrame(cap_dict[group], columns=cap_dict[group].keys()), xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"], 
+                                  cbar_kws={'shrink': plot_dict["shrink"]}, annot=plot_dict["annot"], fmt=plot_dict["fmt"], alpha=plot_dict["alpha"])
+                
+                n_labels = len(self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"])
+                division_line = n_labels//2
+                left_hemisphere_tick = (0 + division_line)//2
+                right_hemisphere_tick = (division_line + n_labels)//2
+
+                display.set_yticks([left_hemisphere_tick,right_hemisphere_tick])
+                display.set_yticklabels(["LH", "RH"])
+                
+                plot_dict["linewidths"] = plot_dict["linewidths"] if plot_dict["linewidths"] != 0 else 1
+
+                plt.axhline(division_line, color=plot_dict["linecolor"], linewidth=plot_dict["linewidths"])
+
+        if plot_dict['borderwidths'] != 0:
+                y_length = len(cap_dict[group][list(cap_dict[group].keys())[0]])
+
+                display.axhline(y=0, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
+                display.axhline(y=y_length, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
+                display.axvline(x=0, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
+                display.axvline(x=len(self._caps[group]), color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
+                
         display.set_xticklabels(display.get_xticklabels(), size = plot_dict["xticklabels_size"], rotation=plot_dict["xlabel_rotation"])
         display.set_yticklabels(display.get_yticklabels(), size = plot_dict["yticklabels_size"], rotation=plot_dict["ylabel_rotation"])
 
-        plot_title = f"{group} CAPs {task_title}" if task_title else f"{group} CAPs" 
+        plot_title = f"{group} CAPs {suffix_title}" if suffix_title else f"{group} CAPs" 
         display.set_title(plot_title, fontdict= {'fontsize': plot_dict["fontsize"]})
 
         # Save plots
         if output_dir:
-            partial_filename = f"{group}_CAPs_{task_title}" if task_title else f"{group}_CAPs"
+            partial_filename = f"{group}_CAPs_{suffix_title}" if suffix_title else f"{group}_CAPs"
             full_filename = f"{partial_filename.replace(' ','_')}_heatmap-regions.png" if scope == "regions" else f"{partial_filename.replace(' ','_')}_heatmap-nodes.png"
             display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"], bbox_inches='tight')    
    
@@ -701,7 +827,6 @@ class CAP(_CAPGetter):
         - 'persistence;: The average time spent in a single CAP before transitioning to another CAP (average consecutive/uninterrupted time).
         - 'counts': The frequency of each CAP observed in a run.
         - 'transition frequency': The number of switches between different CAPs across the entire run.
-
 
         Parameters
         ----------
@@ -875,7 +1000,7 @@ class CAP(_CAPGetter):
         if return_df:
             return df_dict
 
-    def caps2corr(self, output_dir: str=None, show_figs: bool=True, **kwargs):
+    def caps2corr(self, output_dir: str=None, suffix_title: str=None, show_figs: bool=True, **kwargs):
         """Generate Correlation Matrix
 
         Produces the correlation matrix of all CAPs. If groups were given when the CAP class was initialized, a correlation matrix will be generated for each group. 
@@ -884,6 +1009,8 @@ class CAP(_CAPGetter):
         ----------
         output_dir: str, default=None
             Directory to save plots to. The directory will be created if it does not exist. If None, plots will not be saved.
+        suffix_title: str, default=None
+            Appended to the title of each plot as well as the name of the saved file if `output_dir` is provided.
         show_figs: bool, default=True
             Whether to display figures.
         **kwargs: dict
@@ -906,10 +1033,18 @@ class CAP(_CAPGetter):
                 Rotation angle for y-axis labels.
             - "annot": bool, default=False
                 Add values to each cell.
+            - "fmt": str, default=".2g",
+                Modify how the annotated vales are presented.
             - "linewidths": float, default=0
                 Padding between each cell in the plot.
+            - "borderwidths": float, default=0
+                Width of the border around the plot.
             - "linecolor": str, default="black"
                 Color of the line that seperates each cell.
+            - "edgecolors": str, default=None
+                Color of the edges.
+            - "alpha": float, default=None
+                Controls transparancy and ranges from 0 (transparant) to 1 (opaque).
             - "cmap": str, Class, or function, default="coolwarm"
                 Color map for the cells in the plot. For this parameter, you can use premade color palettes or create custom ones.
                 Below is a list of valid options:
@@ -936,7 +1071,11 @@ class CAP(_CAPGetter):
                         annot = kwargs["annot"] if kwargs and "annot" in kwargs.keys() else False,
                         linewidths = kwargs["linewidths"] if kwargs and "linewidths" in kwargs.keys() else 0,
                         linecolor = kwargs["linecolor"] if kwargs and "linecolor" in kwargs.keys() else "black",
-                        cmap = kwargs["cmap"] if kwargs and "cmap" in kwargs.keys() else "coolwarm"
+                        cmap = kwargs["cmap"] if kwargs and "cmap" in kwargs.keys() else "coolwarm",
+                        fmt = kwargs["fmt"] if kwargs and "fmt" in kwargs.keys() else ".2g",
+                        borderwidths = kwargs["borderwidths"] if kwargs and "borderwidths" in kwargs.keys() else 0,
+                        edgecolors = kwargs["edgecolors"] if kwargs and "edgecolors" in kwargs.keys() else None,
+                        alpha = kwargs["alpha"] if kwargs and "alpha" in kwargs.keys() else None
                         )
         
         if kwargs:
@@ -944,18 +1083,25 @@ class CAP(_CAPGetter):
             if len(invalid_kwargs.keys()) > 0:
                 print(f"Invalid kwargs arguments used and will be ignored {invalid_kwargs}.")
 
-        for group in self.caps.keys():
+        for group in self._caps.keys():
             # Refresh grid for each iteration
             plt.figure(figsize=plot_dict["figsize"])
 
-            df = pd.DataFrame(self.caps[group])
+            df = pd.DataFrame(self._caps[group])
             display = heatmap(df.corr(), xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"],
-                              cbar_kws={'shrink': plot_dict["shrink"]}, annot=plot_dict["annot"]) 
+                              cbar_kws={'shrink': plot_dict["shrink"]}, annot=plot_dict["annot"], fmt=plot_dict["fmt"], edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"]) 
+            # Add Border
+            if plot_dict["borderwidths"] != 0:
+                display.axhline(y=0, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
+                display.axhline(y=df.corr().shape[1], color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
+                display.axvline(x=0, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
+                display.axvline(x=df.corr().shape[0], color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
+            
             # Modify label sizes
             display.set_xticklabels(display.get_xticklabels(), size = plot_dict["xticklabels_size"], rotation=plot_dict["xlabel_rotation"])
             display.set_yticklabels(display.get_yticklabels(), size = plot_dict["yticklabels_size"], rotation=plot_dict["ylabel_rotation"])
             # Set plot name
-            plot_title = f"{group} - CAPs Correlation Matrix" 
+            plot_title = f"{group} CAPs Correlation Matrix {suffix_title}" if suffix_title else f"{group} CAPs Correlation Matrix" 
             display.set_title(plot_title, fontdict= {'fontsize': plot_dict["fontsize"]})
 
             # Display figures
@@ -963,10 +1109,10 @@ class CAP(_CAPGetter):
             # Save figure
             if output_dir:
                 if not os.path.exists(output_dir): os.makedirs(output_dir)
-                full_filename = f"{group.replace(' ', '_')}_correlation_matrix.png"
+                full_filename = f"{group.replace(' ', '_')}_correlation_matrix_{suffix_title}.png" if suffix_title else f"{group.replace(' ', '_')}_correlation_matrix.png"
                 display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"], bbox_inches='tight')
 
-    def caps2surf(self, output_dir: str=None, show_figs: bool=True, fwhm: float=None, 
+    def caps2surf(self, output_dir: str=None, suffix_title: str=None, show_figs: bool=True, fwhm: float=None, 
                   fslr_density: str="32k", method: str="linear", save_stat_map: bool=False, **kwargs):
         """Project CAPs onto surface plots
         
@@ -977,6 +1123,8 @@ class CAP(_CAPGetter):
         ----------
         output_dir: str, default=None
             Directory to save plots to. The directory will be created if it does not exist. If None, plots will not be saved. 
+        suffix_title: str, default=None
+            Appended to the title of each plot as well as the name of the saved file if `output_dir` is provided.
         show_figs: bool, default=True
             Whether to display figures.
         fwhm: float, defualt=None
@@ -1138,14 +1286,14 @@ class CAP(_CAPGetter):
                         decimals=plot_dict["cbar_decimals"], pad=plot_dict["cbar_pad"], fraction=plot_dict["cbar_fraction"], n_ticks=plot_dict["cbar_n_ticks"], 
                         fontsize=plot_dict["cbar_fontsize"])
                 fig = p.build(cbar_kws=kws, figsize=plot_dict["figsize"], scale=plot_dict["scale"])
-                fig_name = f"{group} - {cap}"
+                fig_name = f"{group} {cap} {suffix_title}" if suffix_title else f"{group} {cap}"
                 fig.axes[0].set_title(fig_name, pad=plot_dict["title_pad"])      
                 
                 if show_figs:
                     fig.show()
                 
                 if output_dir:
-                    save_name = f"{group.replace(' ', '_')}_{cap.replace('-', '_')}.png"
+                    save_name = f"{group.replace(' ', '_')}_{cap.replace('-', '_')}_{suffix_title}.png" if suffix_title else f"{group.replace(' ', '_')}_{cap.replace('-', '_')}.png" 
                     fig.savefig(os.path.join(output_dir, save_name), dpi=plot_dict["dpi"])
                     # Save stat map
                     if save_stat_map: 

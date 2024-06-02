@@ -419,7 +419,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             
             elif type(roi_indx) == str:
                 # Check if parcellation_approach is custom
-                if "Custom" in self.parcel_approach.keys() and "nodes" not in self.parcel_approach["Custom"].keys():
+                if "Custom" in self._parcel_approach.keys() and "nodes" not in self._parcel_approach["Custom"].keys():
                     _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_bold")
                 plot_indxs = self._parcel_approach[self._parcel_approach.keys[0]]["nodes"].index(roi_indx)
             
@@ -428,15 +428,15 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     plot_indxs = np.array(roi_indx)
                 elif all([isinstance(indx,str) for indx in roi_indx]):
                     # Check if parcellation_approach is custom
-                    if "Custom" in self.parcel_approach.keys() and "nodes" not in self.parcel_approach["Custom"].keys():
+                    if "Custom" in self._parcel_approach.keys() and "nodes" not in self._parcel_approach["Custom"].keys():
                         _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_bold")
                     plot_indxs = np.array([self._parcel_approach[self._parcel_approach.keys[0]]["nodes"].index(index) for index in roi_indx])
                 else:
                     raise ValueError("All elements in `roi_indx` need to be all strings or all integers.")
                 
         elif region:
-            if "Custom" in self.parcel_approach.keys():
-                if "regions" not in self.parcel_approach["Custom"].keys():
+            if "Custom" in self._parcel_approach.keys():
+                if "regions" not in self._parcel_approach["Custom"].keys():
                     _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_bold")
                 else:
                     plot_indxs =  np.array(self._parcel_approach["Custom"]["regions"][region]["lh"] + self._parcel_approach["Custom"]["regions"][region]["rh"])

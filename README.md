@@ -150,14 +150,14 @@ cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
 # or other Classes or functions compatable with seaborn
 
 cap_analysis.caps2plot(visual_scope="regions", plot_options="outer product", 
-                            task_title="- Positive Valence", ncol=3, sharey=True, 
+                            suffix_title="- Positive Valence", ncol=3, sharey=True, 
                             subplots=True, cmap="coolwarm")
 # Create the colormap
 import seaborn as sns
 palette = sns.diverging_palette(260, 10, s=80, l=55, n=256, as_cmap=True)
 
 cap_analysis.caps2plot(visual_scope="nodes", plot_options="outer product", 
-                            task_title="- Positive Valence", ncol=3,sharey=True, 
+                            suffix_title="- Positive Valence", ncol=3,sharey=True, 
                             subplots=True, xlabel_rotation=90, tight_layout=False, 
                             hspace = 0.4, cmap=palette)
 

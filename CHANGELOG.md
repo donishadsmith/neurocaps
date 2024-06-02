@@ -4,6 +4,14 @@ All notable future changes to neurocaps will be documented in this file.
 
 *Note*: All versions in this file are deployed on pypi. 
 
+## [0.9.7] - 2024-06-02
+🚀 New/Added
+- More plotting kwargs and ability to just show the left and right hemisphere when plotting nodes with `CAP.caps2plot` for "Schaefer" and "Custom" parcellations.
+- Added `suffix_title` parameter to `CAP.caps2corr` and `CAP.caps2surf`.
+
+### ♻ Changed
+- Changed `task_title` parameter in `CAP.caps2plot` to `suffix_title`.
+
 ## [0.9.6] - 2024-05-31
 Recommend this version if intending to use parallel processing since it uses joblib, which seems to be more memory efficient than multiprocessing.
 
