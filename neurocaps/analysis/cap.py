@@ -381,6 +381,10 @@ class CAP(_CAPGetter):
                 - Seaborn's diverging_palette function to generate custom palettes.
                 - Matplotlib's LinearSegmentedColormap to generate custom palettes.
                 - Other classes or functions compatible with seaborn.
+            - "vmin": float, default=None
+                The minimum value to display in plots. 
+            - "vmax": float, default=None
+                The maximum value to display in plots. 
     
         Notes
         -----
@@ -465,6 +469,8 @@ class CAP(_CAPGetter):
                         alpha = kwargs["alpha"] if kwargs and "alpha" in kwargs.keys() else None,
                         hemisphere_labels = kwargs["hemisphere_labels"] if kwargs and "hemisphere_labels" in kwargs.keys() else False,
                         borderwidths = kwargs["borderwidths"] if kwargs and "borderwidths" in kwargs.keys() else 0,
+                        vmin = kwargs["vmin"] if kwargs and "vmin" in kwargs.keys() else None,
+                        vmax = kwargs["vmax"] if kwargs and "vmax" in kwargs.keys() else None
                         )
         
         if kwargs:
@@ -598,15 +604,15 @@ class CAP(_CAPGetter):
                 if scope == "regions":
                     display = heatmap(ax=ax, data=self._outer_product[group][cap], cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"], 
                                       xticklabels=columns, yticklabels=columns, cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"], fmt=plot_dict["fmt"],
-                                      edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"])
+                                      edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"], vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
                 else:
                     if plot_dict["hemisphere_labels"] == False:
                         display = heatmap(ax=ax, data=self._outer_product[group][cap], cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], 
                                         linecolor=plot_dict["linecolor"], cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"], fmt=plot_dict["fmt"],
-                                        edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"])
+                                        edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"], vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
                     else:
                         display = heatmap(ax=ax, data=self._outer_product[group][cap], cmap=plot_dict["cmap"], cbar_kws={"shrink": plot_dict["shrink"]}, 
-                                          annot=plot_dict["annot"], fmt=plot_dict["fmt"], alpha=plot_dict["alpha"])
+                                          annot=plot_dict["annot"], fmt=plot_dict["fmt"], alpha=plot_dict["alpha"], vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
                         
                     if plot_dict["hemisphere_labels"] == False:
                         ticks = [i for i, label in enumerate(labels) if label]  
@@ -665,15 +671,15 @@ class CAP(_CAPGetter):
                 plot_title = f"{group} {cap} {suffix_title}" if suffix_title else f"{group} {cap}"
                 if scope == "regions": display = heatmap(self._outer_product[group][cap], cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"], 
                                                          xticklabels=columns, yticklabels=columns, cbar_kws={'shrink': plot_dict["shrink"]}, annot=plot_dict["annot"], fmt=plot_dict["fmt"],
-                                                         edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"])
+                                                         edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"], vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
                 else: 
                     if plot_dict["hemisphere_labels"] == False:
                         display = heatmap(self._outer_product[group][cap], cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"], 
                                         xticklabels=[], yticklabels=[], cbar_kws={'shrink': plot_dict["shrink"]}, annot=plot_dict["annot"], fmt=plot_dict["fmt"],
-                                        edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"])
+                                        edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"], vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
                     else:
                         display = heatmap(self._outer_product[group][cap], cmap=plot_dict["cmap"], xticklabels=[], yticklabels=[], cbar_kws={'shrink': plot_dict["shrink"]}, 
-                                          annot=plot_dict["annot"], fmt=plot_dict["fmt"], alpha=plot_dict["alpha"])
+                                          annot=plot_dict["annot"], fmt=plot_dict["fmt"], alpha=plot_dict["alpha"], vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
                     
                     if plot_dict["hemisphere_labels"] == False:
                         ticks = [i for i, label in enumerate(labels) if label]  
@@ -741,7 +747,7 @@ class CAP(_CAPGetter):
         if scope == "regions": 
             display = heatmap(pd.DataFrame(cap_dict[group], index=columns), xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"],
                                linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"], cbar_kws={'shrink': plot_dict["shrink"]}, fmt=plot_dict["fmt"],
-                               edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"], ) 
+                               edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"], vmin=plot_dict["vmin"], vmax=plot_dict["vmax"]) 
         else: 
             # Create Labels
             if plot_dict["hemisphere_labels"] == False:
@@ -772,13 +778,14 @@ class CAP(_CAPGetter):
 
                 display = heatmap(pd.DataFrame(cap_dict[group], columns=cap_dict[group].keys()), xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"], 
                                 linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"], cbar_kws={'shrink': plot_dict["shrink"]}, annot=plot_dict["annot"], fmt=plot_dict["fmt"],
-                                edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"])
+                                edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"], vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
 
                 plt.yticks(ticks=[pos for pos, label in enumerate(labels) if label], labels=names_list) 
 
             else:
                 display = heatmap(pd.DataFrame(cap_dict[group], columns=cap_dict[group].keys()), xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"], 
-                                  cbar_kws={'shrink': plot_dict["shrink"]}, annot=plot_dict["annot"], fmt=plot_dict["fmt"], alpha=plot_dict["alpha"])
+                                  cbar_kws={'shrink': plot_dict["shrink"]}, annot=plot_dict["annot"], fmt=plot_dict["fmt"], alpha=plot_dict["alpha"], 
+                                  vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
                 
                 n_labels = len(self._parcel_approach[list(self._parcel_approach.keys())[0]]["nodes"])
                 division_line = n_labels//2
@@ -1183,9 +1190,17 @@ class CAP(_CAPGetter):
                 Scale factors for the plot.
             - "surface": str, default="inflated"
                 The surface atlas that is used for plotting. Options are "inflated" or "veryinflated"
-
+            - "vmin": float, default=None
+                The minimum value to display in plots. If None, the minimum value will be 
+                extracted from the statistical image and the lowest will be restricted to -1
+                if the minimum value in the statistical image higher than -1.
+            - "vmax": float, default=None
+                The maximum value to display in plots. If None, the maximum value will be 
+                extracted from the statistical image and the maximum will be restricted to 1
+                if the maximum value in the statistical image is less than 1.
+            
             Please refer to surfplot's documentation for specifics: 
-            https://surfplot.readthedocs.io/en/latest/generated/surfplot.plotting.Plot.html#surfplot.plotting.Plot.
+            https://surfplot.readthedocs.io/en/latest/generated/surfplot.plotting.Plot.html#surfplot.plotting.Plot
 
         Returns
         -------
@@ -1232,7 +1247,9 @@ class CAP(_CAPGetter):
                          brightness = kwargs["brightness"] if kwargs and "brightness" in kwargs.keys() else 0.5,
                          figsize = kwargs["figsize"] if kwargs and "figsize" in kwargs.keys() else None,
                          scale = kwargs["scale"] if kwargs and "scale" in kwargs.keys() else (2,2),
-                         surface = kwargs["surface"] if kwargs and "surface" in kwargs.keys() else "inflated"
+                         surface = kwargs["surface"] if kwargs and "surface" in kwargs.keys() else "inflated",
+                         vmin = kwargs["vmin"] if kwargs and "vmin" in kwargs.keys() else None,
+                         vmax = kwargs["vmax"] if kwargs and "vmax" in kwargs.keys() else None
                          )
         
         if kwargs:
@@ -1272,8 +1289,11 @@ class CAP(_CAPGetter):
                 # Add base layer
                 p.add_layer({"left": sulc_lh, "right": sulc_rh}, cmap="binary_r", cbar=False)
 
-                plot_min = -1 if round(atlas_fdata.min()) == 0 else round(atlas_fdata.min())
-                plot_max = 1 if round(atlas_fdata.max()) == 0 else round(atlas_fdata.max())
+                if plot_dict["vmin"]: plot_min = plot_dict["vmin"]
+                else: plot_min = -1 if round(atlas_fdata.min()) == 0 else round(atlas_fdata.min())
+
+                if plot_dict["vmax"]: plot_max= plot_dict["vmax"]
+                else: plot_max = 1 if round(atlas_fdata.max()) == 0 else round(atlas_fdata.max())
                 
                 # Check cmap
                 cmap = _cmap_d[plot_dict["cmap"]] if isinstance(plot_dict["cmap"],str) else plot_dict["cmap"]

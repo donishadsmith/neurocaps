@@ -3,6 +3,9 @@
 All notable future changes to neurocaps will be documented in this file.
 
 *Note*: All versions in this file are deployed on pypi. 
+## [0.9.7] - 2024-06-03
+### 🐛 Fixes
+- Allows user to change the maximum and minimum value displayed for `CAP.caps2plot()` and `CAP.caps2surf()`
 
 ## [0.9.7] - 2024-06-02
 🚀 New/Added
