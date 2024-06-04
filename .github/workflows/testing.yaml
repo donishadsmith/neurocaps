@@ -48,6 +48,18 @@ jobs:
           pytest test_TimeseriesExtractor_additional.py
         shell: bash
         working-directory: tests
+      - name: Remove mask file
+        if: ${{ matrix.os  == 'ubuntu-latest' || matrix.os == 'macos-latest' }}
+        run: |
+          rm sub-01_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz
+        shell: bash
+        working-directory: tests/ds000031_R1.0.4_ses001-022/ds000031_R1.0.4/derivatives/fmriprep_1.0.0/fmriprep/sub-01/ses-002/func
+      - name: Perform additional TimeseriesExtractor test
+        if: ${{ matrix.os  == 'ubuntu-latest' || matrix.os == 'macos-latest' }}
+        run: |
+          pytest test_TimeseriesExtractor_additional.py
+        shell: bash
+        working-directory: tests
      
      
 
