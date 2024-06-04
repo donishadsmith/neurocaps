@@ -3,7 +3,13 @@
 All notable future changes to neurocaps will be documented in this file.
 
 *Note*: All versions in this file are deployed on pypi. 
-## [0.9.7] - 2024-06-03
+## [0.9.7.post2] - 2024-06-03
+### ♻ Changed
+- Minor change in merge_dicts() to make it explicitly clear that the dictionaries are returned in the order they are provided in the list.
+Originally, the dictionaries were returned as a nested dictionary with subkeys starting at "dict_1" to represent the first dictionary given in the list.
+They now start at "dict_0" to represent the first dictionary in the list. This doesn't affect the underlying functionality of the code; the subkeys are simply numbered to represent their original index in the provided list.
+
+## [0.9.7.post1] - 2024-06-03
 ### 🐛 Fixes
 - Allows user to change the maximum and minimum value displayed for `CAP.caps2plot()` and `CAP.caps2surf()`
 

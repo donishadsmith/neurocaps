@@ -6,7 +6,7 @@ def merge_dicts(subject_timeseries_list: Union[list[dict], list[str]], return_co
     """Merge subject timeseries
 
     Merge subject timeseries dictionaries or pickle files into the first dictionary or pickle file in the list.
-    Repetition times from the same subject and run are merged together. The combined dictionary will only include subjects
+    Repetition times/frames from the same subject and run are merged together. The combined dictionary will only include subjects
     that are present in all dictionaries.
 
     Parameters
@@ -17,10 +17,10 @@ def merge_dicts(subject_timeseries_list: Union[list[dict], list[str]], return_co
         the second level must consist of the run numbers in the form of 'run-#' (where # is the corresponding number of the run), and the last level must consist of the timeseries 
         (as a numpy array) associated with that run.
     return_combined_dict: bool, default=True,
-        If True, returns the merged dictionaries.
+        If True, returns the merged dictionary.
     return_reduced_dicts: bool, default=False
         If True, returns the list of dictionaries provided with only the subjects present in the combined dictionary. The dictionaries are returned in the same order as listed in 
-        the `subject_timeseries_list` parameter.
+        the `subject_timeseries_list` parameter. The keys will be names "dict_#", with "#" indicating the index of the dictionary or pickle file in the `subject_timeseries_list` parameter.
     output_dir: str, default=None
         Directory to save the merged dictionary to. Will be saved as a pickle file. The directory will be created if it does not exist.
     file_name: str, default=None
@@ -71,15 +71,13 @@ def merge_dicts(subject_timeseries_list: Union[list[dict], list[str]], return_co
     
     if return_reduced_dicts:
         all_dicts = {}
-        count = 1
-        for curr_dict in subject_timeseries_list:
+        for indx, curr_dict in enumerate(subject_timeseries_list):
             if "pkl" in curr_dict: curr_dict = _convert_pickle_to_dict(pickle_file=curr_dict)
             if any([elem in subject_timeseries_combined.keys() for elem in curr_dict.keys()]):
-                all_dicts[f"dict_{count}"] = {}
+                all_dicts[f"dict_{indx}"] = {}
                 for subj_id in subject_timeseries_combined.keys():
                     if subj_id in curr_dict.keys():
-                        all_dicts[f"dict_{count}"].update({subj_id : curr_dict[subj_id]})
-                count += 1
+                        all_dicts[f"dict_{indx}"].update({subj_id : curr_dict[subj_id]})
         if not return_combined_dict: return all_dicts
             
     if return_combined_dict:
