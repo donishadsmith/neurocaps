@@ -444,34 +444,38 @@ class CAP(_CAPGetter):
         if "regions" in visual_scope: self._create_regions()
 
         # Create plot dictionary
-        plot_dict = dict(dpi = kwargs["dpi"] if kwargs and "dpi" in kwargs.keys() else 300,
-                        figsize = kwargs["figsize"] if kwargs and "figsize" in kwargs.keys() else (8,6),
-                        fontsize = kwargs["fontsize"] if kwargs and "fontsize" in kwargs.keys() else 14,
-                        hspace = kwargs["hspace"] if kwargs and "hspace" in kwargs.keys() else 0.2,
-                        wspace = kwargs["wspace"] if kwargs and "wspace" in kwargs.keys() else 0.2,
-                        xticklabels_size = kwargs["xticklabels_size"] if kwargs and "xticklabels_size" in kwargs.keys() else 8,
-                        yticklabels_size = kwargs["yticklabels_size"] if kwargs and "yticklabels_size" in kwargs.keys() else 8,
-                        shrink = kwargs["shrink"] if kwargs and "shrink" in kwargs.keys() else 0.8,
-                        nrow = kwargs["nrow"] if kwargs and "nrow" in kwargs.keys() else None,
-                        ncol = kwargs["ncol"] if kwargs and "ncol" in kwargs.keys() else None,
-                        suptitle_fontsize = kwargs["suptitle_fontsize"] if kwargs and "suptitle_fontsize" in kwargs.keys() else 20,
-                        tight_layout = kwargs["tight_layout"] if kwargs and "tight_layout" in kwargs.keys() else True,
-                        rect = kwargs["rect"] if kwargs and "rect" in kwargs.keys() else [0, 0.03, 1, 0.95],
-                        sharey = kwargs["sharey"] if kwargs and "sharey" in kwargs.keys() else True,
-                        xlabel_rotation = kwargs["xlabel_rotation"] if kwargs and "xlabel_rotation" in kwargs.keys() else 0,
-                        ylabel_rotation = kwargs["ylabel_rotation"] if kwargs and "ylabel_rotation" in kwargs.keys() else 0,
-                        annot = kwargs["annot"] if kwargs and "annot" in kwargs.keys() else False,
-                        fmt = kwargs["fmt"] if kwargs and "fmt" in kwargs.keys() else ".2g",
-                        linewidths = kwargs["linewidths"] if kwargs and "linewidths" in kwargs.keys() else 0,
-                        linecolor = kwargs["linecolor"] if kwargs and "linecolor" in kwargs.keys() else "black",
-                        cmap = kwargs["cmap"] if kwargs and "cmap" in kwargs.keys() else "coolwarm",
-                        edgecolors = kwargs["edgecolors"] if kwargs and "edgecolors" in kwargs.keys() else None,
-                        alpha = kwargs["alpha"] if kwargs and "alpha" in kwargs.keys() else None,
-                        hemisphere_labels = kwargs["hemisphere_labels"] if kwargs and "hemisphere_labels" in kwargs.keys() else False,
-                        borderwidths = kwargs["borderwidths"] if kwargs and "borderwidths" in kwargs.keys() else 0,
-                        vmin = kwargs["vmin"] if kwargs and "vmin" in kwargs.keys() else None,
-                        vmax = kwargs["vmax"] if kwargs and "vmax" in kwargs.keys() else None
-                        )
+        defaults= {
+            "dpi": 300,
+            "figsize": (8, 6),
+            "fontsize": 14,
+            "hspace": 0.2,
+            "wspace": 0.2,
+            "xticklabels_size": 8,
+            "yticklabels_size": 8,
+            "shrink": 0.8,
+            "nrow": None,
+            "ncol": None,
+            "suptitle_fontsize": 20,
+            "tight_layout": True,
+            "rect": [0, 0.03, 1, 0.95],
+            "sharey": True,
+            "xlabel_rotation": 0,
+            "ylabel_rotation": 0,
+            "annot": False,
+            "fmt": ".2g",
+            "linewidths": 0,
+            "linecolor": "black",
+            "cmap": "coolwarm",
+            "edgecolors": None,
+            "alpha": None,
+            "hemisphere_labels": False,
+            "borderwidths": 0,
+            "vmin": None,
+            "vmax": None
+        }
+
+        plot_dict = defaults.copy()
+        plot_dict.update({k: v for k, v in kwargs.items() if k in plot_dict.keys()})
         
         if kwargs:
             invalid_kwargs = {key : value for key, value in kwargs.items() if key not in plot_dict.keys()}
@@ -1067,24 +1071,28 @@ class CAP(_CAPGetter):
             raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` first.")
         
         # Create plot dictionary
-        plot_dict = dict(dpi = kwargs["dpi"] if kwargs and "dpi" in kwargs.keys() else 300,
-                        figsize = kwargs["figsize"] if kwargs and "figsize" in kwargs.keys() else (8,6),
-                        fontsize = kwargs["fontsize"] if kwargs and "fontsize" in kwargs.keys() else 14,
-                        xticklabels_size = kwargs["xticklabels_size"] if kwargs and "xticklabels_size" in kwargs.keys() else 8,
-                        yticklabels_size = kwargs["yticklabels_size"] if kwargs and "yticklabels_size" in kwargs.keys() else 8,
-                        shrink = kwargs["shrink"] if kwargs and "shrink" in kwargs.keys() else 0.8,
-                        xlabel_rotation = kwargs["xlabel_rotation"] if kwargs and "xlabel_rotation" in kwargs.keys() else 0,
-                        ylabel_rotation = kwargs["ylabel_rotation"] if kwargs and "ylabel_rotation" in kwargs.keys() else 0,
-                        annot = kwargs["annot"] if kwargs and "annot" in kwargs.keys() else False,
-                        linewidths = kwargs["linewidths"] if kwargs and "linewidths" in kwargs.keys() else 0,
-                        linecolor = kwargs["linecolor"] if kwargs and "linecolor" in kwargs.keys() else "black",
-                        cmap = kwargs["cmap"] if kwargs and "cmap" in kwargs.keys() else "coolwarm",
-                        fmt = kwargs["fmt"] if kwargs and "fmt" in kwargs.keys() else ".2g",
-                        borderwidths = kwargs["borderwidths"] if kwargs and "borderwidths" in kwargs.keys() else 0,
-                        edgecolors = kwargs["edgecolors"] if kwargs and "edgecolors" in kwargs.keys() else None,
-                        alpha = kwargs["alpha"] if kwargs and "alpha" in kwargs.keys() else None
-                        )
-        
+        defaults = {
+            "dpi": 300,
+            "figsize": (8, 6),
+            "fontsize": 14,
+            "xticklabels_size": 8,
+            "yticklabels_size": 8,
+            "shrink": 0.8,
+            "xlabel_rotation": 0,
+            "ylabel_rotation": 0,
+            "annot": False,
+            "linewidths": 0,
+            "linecolor": "black",
+            "cmap": "coolwarm",
+            "fmt": ".2g",
+            "borderwidths": 0,
+            "edgecolors": None,
+            "alpha": None
+        }
+
+        plot_dict = defaults.copy()
+        plot_dict.update({k: v for k, v in kwargs.items() if k in plot_dict.keys()})
+
         if kwargs:
             invalid_kwargs = {key : value for key, value in kwargs.items() if key not in plot_dict.keys()}
             if len(invalid_kwargs.keys()) > 0:
@@ -1227,33 +1235,38 @@ class CAP(_CAPGetter):
         if output_dir:
             if not os.path.exists(output_dir): os.makedirs(output_dir)
 
-        plot_dict = dict(dpi = kwargs["dpi"] if kwargs and "dpi" in kwargs.keys() else 300,
-                         title_pad = kwargs["title_pad"] if kwargs and "title_pad" in kwargs.keys() else -3,
-                         cmap = kwargs["cmap"] if kwargs and "cmap" in kwargs.keys() else "cold_hot",
-                         cbar_location = kwargs["cbar_location"] if kwargs and "cbar_location" in kwargs.keys() else "bottom",
-                         cbar_draw_border = kwargs["cbar_draw_border"] if kwargs and "cbar_draw_border" in kwargs.keys() else False,
-                         cbar_aspect = kwargs["cbar_aspect"] if kwargs and "cbar_aspect" in kwargs.keys() else 20,
-                         cbar_shrink = kwargs["cbar_shrink"] if kwargs and "cbar_shrink" in kwargs.keys() else 0.2,
-                         cbar_decimals = kwargs["cbar_decimals"] if kwargs and "cbar_decimals" in kwargs.keys() else 2,
-                         cbar_pad = kwargs["cbar_pad"] if kwargs and "cbar_pad" in kwargs.keys() else 0,
-                         cbar_fraction = kwargs["cbar_fraction"] if kwargs and "cbar_fraction" in kwargs.keys() else 0.05,
-                         cbar_n_ticks = kwargs["cbar_n_ticks"] if kwargs and "cbar_n_ticks" in kwargs.keys() else 3,
-                         cbar_fontsize = kwargs["cbar_fontsize"] if kwargs and "cbar_fontsize" in kwargs.keys() else 10,
-                         cbar_alpha = kwargs["cbar_alpha"] if kwargs and "cbar_alpha" in kwargs.keys() else 1,
-                         size = kwargs["size"] if kwargs and "size" in kwargs.keys() else (500,400),
-                         layout = kwargs["layout"] if kwargs and "layout" in kwargs.keys() else "grid",
-                         zoom = kwargs["zoom"] if kwargs and "zoom" in kwargs.keys() else 1.5,
-                         views = kwargs["views"] if kwargs and "views" in kwargs.keys() else ["lateral", "medial"],
-                         brightness = kwargs["brightness"] if kwargs and "brightness" in kwargs.keys() else 0.5,
-                         figsize = kwargs["figsize"] if kwargs and "figsize" in kwargs.keys() else None,
-                         scale = kwargs["scale"] if kwargs and "scale" in kwargs.keys() else (2,2),
-                         surface = kwargs["surface"] if kwargs and "surface" in kwargs.keys() else "inflated",
-                         vmin = kwargs["vmin"] if kwargs and "vmin" in kwargs.keys() else None,
-                         vmax = kwargs["vmax"] if kwargs and "vmax" in kwargs.keys() else None
-                         )
+        # Create plot dictionary
+        defaults = {
+            "dpi": 300,
+            "title_pad": -3,
+            "cmap": "cold_hot",
+            "cbar_location": "bottom",
+            "cbar_draw_border": False,
+            "cbar_aspect": 20,
+            "cbar_shrink": 0.2,
+            "cbar_decimals": 2,
+            "cbar_pad": 0,
+            "cbar_fraction": 0.05,
+            "cbar_n_ticks": 3,
+            "cbar_fontsize": 10,
+            "cbar_alpha": 1,
+            "size": (500, 400),
+            "layout": "grid",
+            "zoom": 1.5,
+            "views": ["lateral", "medial"],
+            "brightness": 0.5,
+            "figsize": None,
+            "scale": (2, 2),
+            "surface": "inflated",
+            "vmin": None,
+            "vmax": None
+        }
+
+        plot_dict = defaults.copy()
+        plot_dict.update({k: v for k, v in kwargs.items() if k in plot_dict.keys()})
         
         if kwargs:
-            invalid_kwargs = {key : value for key, value in kwargs.items() if key not in plot_dict.keys()}
+            invalid_kwargs = {key: value for key, value in kwargs.items() if key not in plot_dict.keys()}
             if len(invalid_kwargs.keys()) > 0:
                 print(f"Invalid kwargs arguments used and will be ignored {invalid_kwargs}.")
 
@@ -1309,8 +1322,7 @@ class CAP(_CAPGetter):
                 fig_name = f"{group} {cap} {suffix_title}" if suffix_title else f"{group} {cap}"
                 fig.axes[0].set_title(fig_name, pad=plot_dict["title_pad"])      
                 
-                if show_figs:
-                    fig.show()
+                if show_figs: fig.show()
                 
                 if output_dir:
                     save_name = f"{group.replace(' ', '_')}_{cap.replace('-', '_')}_{suffix_title}.png" if suffix_title else f"{group.replace(' ', '_')}_{cap.replace('-', '_')}.png" 
