@@ -1,3 +1,4 @@
+from ._check_kwargs import _check_kwargs
 from ._cap_internals import _convert_pickle_to_dict
 from ._cap_internals import _CAPGetter
 from ._cap_internals import _run_kmeans

@@ -2,7 +2,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
 
     from nilearn.maskers import NiftiLabelsMasker
     from nilearn.image import index_img, load_img
-    import copy, json, math, numpy as np, pandas as pd, warnings
+    import copy, json, math, numpy as np, os, pandas as pd, warnings
 
     # Intitialize subject dictionary
     subject_timeseries = {subj_id: {}}
@@ -13,19 +13,19 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
         run = run if run != None else ""
 
         # Get files from specific run
-        nifti_file = [nifti_file for nifti_file in nifti_files if run in nifti_file.split("/")[-1]]
+        nifti_file = [nifti_file for nifti_file in nifti_files if run in os.path.basename(nifti_file)]
         if len(mask_files) != 0:
-            mask_file = [mask_file for mask_file in mask_files if run in mask_file.split("/")[-1]]
+            mask_file = [mask_file for mask_file in mask_files if run in os.path.basename(mask_file)]
         else:
             mask_file = []
-        confound_file = [confound_file for confound_file in confound_files if run in confound_file.split("/")[-1]] if signal_clean_info["use_confounds"] else None
-        confound_metadata_file = [confound_metadata_file for confound_metadata_file in confound_metadata_files if run in confound_metadata_file.split("/")[-1]] if signal_clean_info["use_confounds"] and signal_clean_info["n_acompcor_separate"] else None
+        confound_file = [confound_file for confound_file in confound_files if run in os.path.basename(confound_file)] if signal_clean_info["use_confounds"] else None
+        confound_metadata_file = [confound_metadata_file for confound_metadata_file in confound_metadata_files if run in os.path.basename(confound_metadata_file)] if signal_clean_info["use_confounds"] and signal_clean_info["n_acompcor_separate"] else None
 
         if verbose: print(f"Running subject: {subj_id}; run: {run_id}; \n {nifti_file}", flush=flush_print)
 
         confound_df = pd.read_csv(confound_file[0], sep="\t") if signal_clean_info["use_confounds"] else None
 
-        event_file = None if len(event_files) == 0 else [event_file for event_file in event_files if run in event_file.split("/")[-1]]
+        event_file = None if len(event_files) == 0 else [event_file for event_file in event_files if run in os.path.basename(event_file)]
 
         # Extract confound information of interest and ensure confound file does not contain NAs
         if signal_clean_info["use_confounds"]:

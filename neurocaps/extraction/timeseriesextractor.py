@@ -1,6 +1,6 @@
 import json, os, re, sys, warnings
 from typing import Union
-from .._utils import _TimeseriesExtractorGetter, _check_confound_names, _check_parcel_approach, _extract_timeseries
+from .._utils import _TimeseriesExtractorGetter, _check_kwargs, _check_confound_names, _check_parcel_approach, _extract_timeseries
 
 class TimeseriesExtractor(_TimeseriesExtractorGetter):
     def __init__(self, space: str="MNI152NLin2009cAsym", standardize: Union[bool,str]="zscore_sample", detrend: bool=True , low_pass: float=None, high_pass: float=None, 
@@ -404,13 +404,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
 
-        plot_dict = dict(dpi = kwargs["dpi"] if kwargs and "dpi" in kwargs.keys() else 300,
-                         figsize = kwargs["figsize"] if kwargs and "figsize" in kwargs.keys() else (11, 5))
-        
-        if kwargs:
-            invalid_kwargs = {key : value for key, value in kwargs.items() if key not in plot_dict.keys()}
-            if len(invalid_kwargs.keys()) > 0:
-                print(f"Invalid kwargs arguments used and will be ignored {invalid_kwargs}.")
+        # Defaults
+        defaults = {"dpi": 300,"figsize": (11,5)}
+
+        plot_dict = _check_kwargs(defaults, **kwargs)
 
         # Obtain the column indices associated with the rois; add logic for roi_indx == 0 since it would be recognized as False
         if roi_indx or roi_indx == 0:

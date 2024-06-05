@@ -3,7 +3,7 @@ from kneed import KneeLocator
 from joblib import cpu_count, delayed, Parallel
 from sklearn.cluster import KMeans
 from typing import Union, Literal
-from .._utils import _CAPGetter, _convert_pickle_to_dict, _check_parcel_approach, _run_kmeans
+from .._utils import _CAPGetter, _check_kwargs, _convert_pickle_to_dict, _check_parcel_approach, _run_kmeans
 
 
 class CAP(_CAPGetter):
@@ -229,8 +229,10 @@ class CAP(_CAPGetter):
                 if show_figs or output_dir != None:
                     import matplotlib.pyplot as plt, os
 
-                    plot_dict = dict(dpi = kwargs["dpi"] if kwargs and "dpi" in kwargs.keys() else 300,
-                                     figsize = kwargs["figsize"] if kwargs and "figsize" in kwargs.keys() else (8,6))
+                    # Defaults
+                    defaults = {"dpi": 300,"figsize": (8,6)}
+
+                    plot_dict = _check_kwargs(defaults, **kwargs)
                     
                     plt.figure(figsize=plot_dict["figsize"])
                     inertia_values = [y for x,y in self._inertia[group].items()]
@@ -246,10 +248,8 @@ class CAP(_CAPGetter):
                         if not os.path.exists(output_dir): os.makedirs(output_dir)
                         plt.savefig(os.path.join(output_dir,f"{group.replace(' ','_')}_elbow.png"), dpi=plot_dict["dpi"])
                     
-                    if show_figs == False:
-                        plt.close()
-                    else:
-                        plt.show()
+                    if show_figs == False: plt.close()
+                    else: plt.show()
 
     def _create_caps_dict(self):
         # Initialize dictionary
@@ -444,43 +444,14 @@ class CAP(_CAPGetter):
         if "regions" in visual_scope: self._create_regions()
 
         # Create plot dictionary
-        defaults= {
-            "dpi": 300,
-            "figsize": (8, 6),
-            "fontsize": 14,
-            "hspace": 0.2,
-            "wspace": 0.2,
-            "xticklabels_size": 8,
-            "yticklabels_size": 8,
-            "shrink": 0.8,
-            "nrow": None,
-            "ncol": None,
-            "suptitle_fontsize": 20,
-            "tight_layout": True,
-            "rect": [0, 0.03, 1, 0.95],
-            "sharey": True,
-            "xlabel_rotation": 0,
-            "ylabel_rotation": 0,
-            "annot": False,
-            "fmt": ".2g",
-            "linewidths": 0,
-            "linecolor": "black",
-            "cmap": "coolwarm",
-            "edgecolors": None,
-            "alpha": None,
-            "hemisphere_labels": False,
-            "borderwidths": 0,
-            "vmin": None,
-            "vmax": None
-        }
-
-        plot_dict = defaults.copy()
-        plot_dict.update({k: v for k, v in kwargs.items() if k in plot_dict.keys()})
+        defaults= {"dpi": 300, "figsize": (8, 6), "fontsize": 14, "hspace": 0.2, "wspace": 0.2, "xticklabels_size": 8,
+                    "yticklabels_size": 8, "shrink": 0.8, "nrow": None, "ncol": None, "suptitle_fontsize": 20,
+                    "tight_layout": True, "rect": [0, 0.03, 1, 0.95], "sharey": True, "xlabel_rotation": 0,
+                    "ylabel_rotation": 0, "annot": False, "fmt": ".2g", "linewidths": 0, "linecolor": "black",
+                    "cmap": "coolwarm", "edgecolors": None, "alpha": None, "hemisphere_labels": False, "borderwidths": 0,
+                    "vmin": None, "vmax": None}
         
-        if kwargs:
-            invalid_kwargs = {key : value for key, value in kwargs.items() if key not in plot_dict.keys()}
-            if len(invalid_kwargs.keys()) > 0:
-                print(f"Invalid kwargs arguments used and will be ignored {invalid_kwargs}.")
+        plot_dict = _check_kwargs(defaults, **kwargs)
 
         if plot_dict["hemisphere_labels"] == True:
             if "nodes" not in visual_scope:
@@ -1067,36 +1038,15 @@ class CAP(_CAPGetter):
         import matplotlib.pyplot as plt, os, pandas as pd
         from seaborn import heatmap
 
-        if not hasattr(self,"_caps"):
-            raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` first.")
+        if not hasattr(self,"_caps"): raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` first.")
         
         # Create plot dictionary
-        defaults = {
-            "dpi": 300,
-            "figsize": (8, 6),
-            "fontsize": 14,
-            "xticklabels_size": 8,
-            "yticklabels_size": 8,
-            "shrink": 0.8,
-            "xlabel_rotation": 0,
-            "ylabel_rotation": 0,
-            "annot": False,
-            "linewidths": 0,
-            "linecolor": "black",
-            "cmap": "coolwarm",
-            "fmt": ".2g",
-            "borderwidths": 0,
-            "edgecolors": None,
-            "alpha": None
-        }
-
-        plot_dict = defaults.copy()
-        plot_dict.update({k: v for k, v in kwargs.items() if k in plot_dict.keys()})
-
-        if kwargs:
-            invalid_kwargs = {key : value for key, value in kwargs.items() if key not in plot_dict.keys()}
-            if len(invalid_kwargs.keys()) > 0:
-                print(f"Invalid kwargs arguments used and will be ignored {invalid_kwargs}.")
+        defaults = {"dpi": 300, "figsize": (8, 6), "fontsize": 14, "xticklabels_size": 8, "yticklabels_size": 8,
+                    "shrink": 0.8, "xlabel_rotation": 0, "ylabel_rotation": 0, "annot": False, "linewidths": 0, 
+                    "linecolor": "black", "cmap": "coolwarm", "fmt": ".2g", "borderwidths": 0, "edgecolors": None, 
+                    "alpha": None}
+        
+        plot_dict = _check_kwargs(defaults, **kwargs)
 
         for group in self._caps.keys():
             # Refresh grid for each iteration
@@ -1229,46 +1179,17 @@ class CAP(_CAPGetter):
         from neuromaps.datasets import fetch_fslr
         from surfplot import Plot
 
-        if not hasattr(self,"_caps"):
-            raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` first.")
+        if not hasattr(self,"_caps"):  raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` first.")
 
-        if output_dir:
-            if not os.path.exists(output_dir): os.makedirs(output_dir)
+        if output_dir and not os.path.exists(output_dir): os.makedirs(output_dir)
 
         # Create plot dictionary
-        defaults = {
-            "dpi": 300,
-            "title_pad": -3,
-            "cmap": "cold_hot",
-            "cbar_location": "bottom",
-            "cbar_draw_border": False,
-            "cbar_aspect": 20,
-            "cbar_shrink": 0.2,
-            "cbar_decimals": 2,
-            "cbar_pad": 0,
-            "cbar_fraction": 0.05,
-            "cbar_n_ticks": 3,
-            "cbar_fontsize": 10,
-            "cbar_alpha": 1,
-            "size": (500, 400),
-            "layout": "grid",
-            "zoom": 1.5,
-            "views": ["lateral", "medial"],
-            "brightness": 0.5,
-            "figsize": None,
-            "scale": (2, 2),
-            "surface": "inflated",
-            "vmin": None,
-            "vmax": None
-        }
+        defaults = {"dpi": 300, "title_pad": -3, "cmap": "cold_hot", "cbar_location": "bottom", "cbar_draw_border": False,
+                    "cbar_aspect": 20, "cbar_shrink": 0.2, "cbar_decimals": 2, "cbar_pad": 0, "cbar_fraction": 0.05, "cbar_n_ticks": 3,
+                    "cbar_fontsize": 10, "cbar_alpha": 1, "size": (500, 400), "layout": "grid", "zoom": 1.5, "views": ["lateral", "medial"],
+                    "brightness": 0.5, "figsize": None, "scale": (2, 2), "surface": "inflated", "vmin": None, "vmax": None}
 
-        plot_dict = defaults.copy()
-        plot_dict.update({k: v for k, v in kwargs.items() if k in plot_dict.keys()})
-        
-        if kwargs:
-            invalid_kwargs = {key: value for key, value in kwargs.items() if key not in plot_dict.keys()}
-            if len(invalid_kwargs.keys()) > 0:
-                print(f"Invalid kwargs arguments used and will be ignored {invalid_kwargs}.")
+        plot_dict = _check_kwargs(defaults, **kwargs)
 
         for group in self._caps.keys():
             for cap in self._caps[group].keys():
@@ -1331,3 +1252,93 @@ class CAP(_CAPGetter):
                     if save_stat_map: 
                         stat_map_name = save_name.replace(".png", ".nii.gz")
                         nib.save(stat_map, stat_map_name)
+
+    def caps2radar(self, output_dir: str=None, suffix_name: str=None, show_figs: bool=True,  **kwargs):
+        """Generate Radar Plots
+        
+        """
+        import numpy as np, os, pandas as pd, plotly.express as px
+
+        defaults = {"dpi": 300, "height": 800, "width": 1200, "line_close": True,"tickvals": None, "ticks": "outside","bgcolor": "white", 
+                    "radialaxis_showline": True, "radialaxis_linewidth": 2,  "radialaxis_linecolor": "rgba(0, 0, 0, 0.25)", "radialaxis_gridcolor": "rgba(0, 0, 0, 0.25)",
+                    "radialaxis_tickfont": {"size": 14, "color": "black"}, "angularaxis_linewidth": 2, "angularaxis_linecolor": "rgba(0, 0, 0, 0.25)",
+                    "angularaxis_gridcolor": "rgba(0, 0, 0, 0.25)", "angularaxis_tickfont": {"size": 16, "color": "black"},
+                    "angularaxis_showline": True, "color_discrete_map": {"High Amplitude": "red", "Low Amplitude": "blue"},
+                    "title_font": {"family": "Times New Roman", "size": 30, "color": "black"}, "title_x": 0.5}              
+
+        plot_dict = _check_kwargs(defaults, **kwargs)
+
+        parcellation_name = list(self.parcel_approach.keys())[0]
+
+        # Create radar dict
+        for group in self._caps.keys():
+            if parcellation_name == "Custom": radar_dict = {"regions": self.parcel_approach[parcellation_name]["regions"].keys()}
+            else: radar_dict = {"regions": self.parcel_approach[parcellation_name]["regions"]}
+            for cap in self._caps[group].keys():
+                cap_vector = self._caps[group][cap]
+                radar_dict[cap] = []
+                for region in radar_dict["regions"]:
+                    if parcellation_name == "Custom": 
+                        indxs = indxs = self._parcel_approach[parcellation_name]["regions"][region]["lh"] + self._parcel_approach[parcellation_name]["regions"][region]["rh"]
+                    else:
+                        indxs = np.array([value for value, node in enumerate(self._parcel_approach[parcellation_name]["nodes"]) if region in node])
+                    
+                    # Create mask to set ROIs not in regions to zero and ROIs in regions as 1
+                    binary_vector = np.zeros_like(cap_vector)
+                    binary_vector[indxs] = 1
+
+                    #Calculate cosine similarity
+                    cosine_similarity = (np.dot(cap_vector, binary_vector))/(np.linalg.norm(cap_vector) * np.linalg.norm(binary_vector))
+
+                    # Store value in dict
+                    radar_dict[cap].append(cosine_similarity)
+
+            # Create dataframe
+            df = pd.DataFrame(radar_dict)
+
+            for cap in df.columns[df.columns != "regions"]:
+
+                groups = df[cap].apply(lambda x: 'High Amplitude' if x >= 0 else 'Low Amplitude')
+                df[cap] = df[cap].abs()
+                df[cap] = df[cap].round(decimals=1)
+                fig = px.line_polar(df, r=cap, theta="regions", line_close=plot_dict["line_close"], color=groups, 
+                                    width=plot_dict["width"], height=plot_dict["height"],
+                                    category_orders={"regions": df["regions"]}, 
+                                    color_discrete_map = plot_dict["color_discrete_map"])
+
+                # Set max value
+                if plot_dict["tickvals"] is None:
+                    max_value = df[cap].max()
+                    plot_dict["tickvals"] = [max_value/4, max_value/2, 3*max_value/4, max_value]
+
+                # Customize
+                fig.update_layout(
+                    title=dict(text=f"{group} {cap}", font=plot_dict["title_font"]), 
+                    title_x=plot_dict["title_x"],
+                    polar=dict(
+                        bgcolor=plot_dict["bgcolor"],
+                        radialaxis=dict(
+                            showline=plot_dict["radialaxis_showline"],
+                            linewidth=plot_dict["radialaxis_linewidth"],
+                            linecolor=plot_dict["radialaxis_linecolor"],
+                            gridcolor=plot_dict["radialaxis_gridcolor"],
+                            tickvals=plot_dict["tickvals"],
+                            ticks=plot_dict["ticks"],
+                            tickfont = plot_dict["radialaxis_tickfont"]
+                        ),
+                        angularaxis=dict(
+                            showline=plot_dict["angularaxis_showline"],
+                            linewidth=plot_dict["angularaxis_linewidth"],
+                            linecolor=plot_dict["angularaxis_linecolor"],
+                            gridcolor=plot_dict["angularaxis_gridcolor"],
+                            tickfont=plot_dict["angularaxis_tickfont"]
+                        )
+                    )
+                )
+
+                if show_figs: fig.show()
+
+                if output_dir:
+                    if not os.path.exists(output_dir): os.makedirs(output_dir)
+                    file_name = f"{group}_{cap}_radar_{suffix_name}.png" if suffix_name else f"{group}_{cap}_radar.png"
+                    fig.savefig(os.path.join(output_dir,file_name), dpi=plot_dict["dpi"])

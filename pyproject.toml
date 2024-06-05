@@ -36,7 +36,8 @@ dependencies = ["numpy>=1.22.0",
                 "scikit-learn>=1.4.0",
                 "surfplot",
                 "neuromaps",
-                "pybids>=0.16.2; platform_system != 'Windows'"
+                "pybids>=0.16.2; platform_system != 'Windows'",
+                "plotly"
                 ]
 
 [project.urls]
