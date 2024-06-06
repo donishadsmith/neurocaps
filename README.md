@@ -84,13 +84,15 @@ parcel_approach= {"Custom": {"maps": "/location/to/parcellation.nii.gz",
 - **Parallel Processing:** Use parallel processing, when using the silhouette or elbow method, by specifying the number of CPU cores in the `n_cores` parameter in the `get_caps()` method. *Note:* If you are using an HPC, remember to allocate the appropriate amount of CPU cores with your workload manager. For instance in slurm use `#SBATCH --cpus-per-task=10` if you intend to use 10 cores.
 - **Grouping:** Perform CAPs analysis for entire sample or groups of subject IDs (using the `groups` parameter when intitializing the `CAP` class). K-means clustering, silhouette and elbow methods, and plotting are done for each group when specified.
 - **CAP Visualization:** Visualize the CAPs as outer products or heatmaps, with options to use subplots to reduce the number of individual plots, as well as save. Refer to the docstring for the `caps2plot()` method in the `CAP` class for available **kwargs arguments and parameters to modify plots.
-- **Surface Plot Visualization:** Convert the atlas used for parcellation to a stat map projected onto a surface plot with options to customize and save plots. Refer to the docstring for the `caps2surf()` method in the `CAP` class for available **kwargs arguments and parameters to modify plots.
+- **Save CAPs as Niftis:** Convert the atlas used for parcellation to a stat map and saves them.
+- **Surface Plot Visualization:** Convert the atlas used for parcellation to a stat map projected onto a surface plot with options to customize and save plots. Refer to the docstring for the `caps2surf()` method in the `CAP` class for available **kwargs arguments and parameters to modify plots. Also includes the option to save the Niftis
 - **Correlation Matrix Creation:** Create a correlation matrix from CAPs with options to customize and save plots. Refer to the docstring for the `caps2corr()` method in the `CAP` class for available **kwargs arguments and parameters to modify plots.
-- **CAP Metrics Calculation:** Calculate CAP metrics as described in  [Liu et al., 2018](https://doi.org/10.1016/j.neuroimage.2018.01.041)[^1] and [Yang et al., 2021](https://doi.org/10.1016/j.neuroimage.2021.118193)[^2]:
+- **CAP Metrics Calculation:** Calculate CAP metrics (`calculate_metrics()`) as described in [Liu et al., 2018](https://doi.org/10.1016/j.neuroimage.2018.01.041)[^1] and [Yang et al., 2021](https://doi.org/10.1016/j.neuroimage.2021.118193)[^2]:
     - *Temporal Fraction:* The proportion of total volumes spent in a single CAP over all volumes in a run.
     - *Persistence:* The average time spent in a single CAP before transitioning to another CAP (average consecutive/uninterrupted time).
     - *Counts:* The frequency of each CAP observed in a run.
     - *Transition Frequency:* The number of switches between different CAPs across the entire run.
+- **Cosine Similarity Radar Plots:** Create radar plots showing the cosine similarity between CAPs and networks/regions. Especially useful as a quantitative method to categorize CAPs by determining the regions/networks containing the most nodes demonstrating increased co-activation or decreased co-deactivation. Refer to the docstring in `caps2radar` in the `CAP` class for a more detailed explanation as well as available **kwargs arguments and parameters to modify plots.
 
 **Additionally, the `neurocaps.analysis` submodule contains two additional functions:**
 
@@ -225,6 +227,15 @@ cap_analysis.caps2corr(annot=True, ,figsize=(6,4), cmap=palette)
 **Plot Output:**
 ![image](https://github.com/donishadsmith/neurocaps/assets/112973674/57a2ce81-13d3-40d0-93e7-0ca910f7b0be)
 ![image](https://github.com/donishadsmith/neurocaps/assets/112973674/9a8329df-65c7-4ad0-8b81-edc73f2d960d)
+
+```python
+# Create radar plots showing cosine similarity between region/networks and caps
+radialaxis={"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "ticks": "outside" , "tickfont": {"size": 14, "color": "black"},
+"range": [0,0.3], "tickvals": [0.1,0.2,0.3]}
+cap_analysis.caps2radar(radialaxis=radialaxis, fill="toself", scattersize=10)
+```
+**Partial Plot Outputs:** (*Note*: one image will be generated per CAP)
+![image](https://github.com/donishadsmith/neurocaps/assets/112973674/755afcc2-14d7-4613-9247-91634e0b7e34)
 
 # Testing 
 This package was tested using a closed dataset as well as a modified version of a single-subject open dataset to test the `TimeseriesExtractor` function on GitHub Actions. The open dataset provided by [Laumann & Poldrack](https://openfmri.org/dataset/ds000031/) and used in [Laumann et al., 2015](https://doi.org/10.1016/j.neuron.2015.06.037)[^4]. was also utilized. This data was obtained from the OpenfMRI database, accession number ds000031. 

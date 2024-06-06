@@ -5,7 +5,7 @@ from .._utils import _TimeseriesExtractorGetter, _check_kwargs, _check_confound_
 class TimeseriesExtractor(_TimeseriesExtractorGetter):
     def __init__(self, space: str="MNI152NLin2009cAsym", standardize: Union[bool,str]="zscore_sample", detrend: bool=True , low_pass: float=None, high_pass: float=None, 
                  parcel_approach : dict[dict]={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}, use_confounds: bool=True, confound_names: list[str]=None, 
-                 fwhm: float=None, fd_threshold: float=None, n_acompcor_separate: int=None, dummy_scans: int=None):
+                 fwhm: float=None, fd_threshold: float=None, n_acompcor_separate: int=None, dummy_scans: int=None) -> None:
         """Timeseries Extractor Class
         
         Initializes the TimeseriesExtractor class.
@@ -309,7 +309,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             self._subject_info[subj_id] = {"nifti_files": nifti_files, "event_files": event_files, "confound_files": confound_files, "confound_metadata_files": confound_metadata_files, "mask_files": mask_files,
                                            "tr": tr, "run_list": run_list}
 
-    def timeseries_to_pickle(self, output_dir: str, file_name: str=None):
+    def timeseries_to_pickle(self, output_dir: str, file_name: str=None) -> None:
         """Save Bold Data
 
         Saves the timeseries dictionary obtained from running `get_bold()` as a pickle file.
@@ -335,7 +335,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         with open(os.path.join(output_dir,save_file_name), "wb") as f:
             joblib.dump(self._subject_timeseries,f)
 
-    def visualize_bold(self, subj_id: Union[int,str], run: int, roi_indx: Union[int, list[int]]=None, region: str=None, show_figs: bool=True, output_dir: str=None, file_name: str=None, **kwargs):
+    def visualize_bold(self, subj_id: Union[int,str], run: int, roi_indx: Union[int, list[int]]=None, region: str=None, 
+                       show_figs: bool=True, output_dir: str=None, file_name: str=None, **kwargs) -> None:
         """Plot Bold Data
 
         Collects files needed to extract timeseries data from NIfTI files for BIDS-compliant datasets.
@@ -363,6 +364,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 Dots per inch for the figure. Default is 300 if `output_dir` is provided and `dpi` is not specified.
             - "figsize": tuple, default=(11, 5)
                 Size of the figure in inches. Default is (11, 5) if "figsize" is not specified.
+
+        Returns
+        -------
+        matplotlib.Figure
+            An instance of a matplotlib figure.
 
         Notes
         -----

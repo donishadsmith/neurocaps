@@ -7,7 +7,7 @@ from .._utils import _CAPGetter, _cap2statmap, _check_kwargs, _convert_pickle_to
 
 
 class CAP(_CAPGetter):
-    def __init__(self, parcel_approach: dict[dict], n_clusters: Union[int, list[int]]=5, cluster_selection_method: str=None, groups: dict=None):
+    def __init__(self, parcel_approach: dict[dict], n_clusters: Union[int, list[int]]=5, cluster_selection_method: str=None, groups: dict=None) -> None:
         """CAP class
 
         Initializes the CAPs (Co-activation Patterns) class.
@@ -132,6 +132,11 @@ class CAP(_CAPGetter):
              - "S": Adjusts the sensitivity of finding the elbow. Larger values are more conservative and less sensitive to small fluctuations. This package uses KneeLocator from the kneed package to identify the elbow. Default is 1.
              - "dpi": Adjusts the dpi of the elbow plot. Default is 300.
              - "figsize": Adjusts the size of the elbow plots.
+
+        Returns
+        -------
+        matplotlib.Figure
+            An instance of a matplotlib figure.
         """
         if n_cores and self._cluster_selection_method is not None:
             if n_cores > cpu_count(): raise ValueError(f"More cores specified than available - Number of cores specified: {n_cores}; Max cores available: {cpu_count()}.")
@@ -166,7 +171,7 @@ class CAP(_CAPGetter):
         # Create states dict   
         self._create_caps_dict()
     
-    def _perform_silhouette_method(self, random_state, init, n_init, max_iter, tol, algorithm):
+    def _perform_silhouette_method(self, random_state, init, n_init, max_iter, tol, algorithm) -> None:
         # Initialize attribute
         self._silhouette_scores = {}
         self._optimal_n_clusters = {}
@@ -191,7 +196,7 @@ class CAP(_CAPGetter):
             self._kmeans[group] = KMeans(n_clusters=self._optimal_n_clusters[group], random_state=random_state, init=init, n_init=n_init, max_iter=max_iter, tol=tol, algorithm=algorithm).fit(self._concatenated_timeseries[group]) 
             print(f"Optimal cluster size for {group} is {self._optimal_n_clusters[group]}.")
         
-    def _perform_elbow_method(self, random_state, show_figs, output_dir, init, n_init, max_iter, tol, algorithm, **kwargs):
+    def _perform_elbow_method(self, random_state, show_figs, output_dir, init, n_init, max_iter, tol, algorithm, **kwargs) -> None:
         # Initialize attribute
         self._inertia = {}
         self._optimal_n_clusters = {}
@@ -251,14 +256,14 @@ class CAP(_CAPGetter):
                     if show_figs == False: plt.close()
                     else: plt.show()
 
-    def _create_caps_dict(self):
+    def _create_caps_dict(self) -> None:
         # Initialize dictionary
         self._caps = {}
         for group in self._groups.keys():
                 self._caps[group] = {}
                 self._caps[group].update({f"CAP-{state_number}": state_vector for state_number, state_vector in zip([num for num in range(1,len(self._kmeans[group].cluster_centers_)+1)],self._kmeans[group].cluster_centers_)})
     
-    def _get_concatenated_timeseries(self, subject_timeseries, runs):
+    def _get_concatenated_timeseries(self, subject_timeseries, runs) -> None:
         # Create dictionary for "All Subjects" if no groups are specified to reuse the same loop instead of having to create logic for grouped and non-grouped version of the same code
         if not self._groups: self._groups = {"All Subjects": [subject for subject in subject_timeseries.keys()]}
 
@@ -288,7 +293,7 @@ class CAP(_CAPGetter):
 
         return concatenated_timeseries
     
-    def _generate_lookup_table(self):
+    def _generate_lookup_table(self) -> None:
         self._subject_table = {}
         for group in self._groups:
             for subj_id in self._groups[group]:
@@ -298,7 +303,7 @@ class CAP(_CAPGetter):
                     self._subject_table.update({subj_id : group})
 
     def caps2plot(self, output_dir: str=None, plot_options: Union[str, list[str]]="outer product", visual_scope: list[str]="regions", 
-                       suffix_title: str=None, show_figs: bool=True, subplots: bool=False, **kwargs):
+                       suffix_title: str=None, show_figs: bool=True, subplots: bool=False, **kwargs) -> None:
         """Generate heatmaps and outer product plots of CAPs
 
         This function produces seaborn heatmaps for each CAP. If groups were given when the CAP class was initialized, plotting will be done for all CAPs for all groups.
@@ -385,6 +390,11 @@ class CAP(_CAPGetter):
                 The minimum value to display in plots. 
             - "vmax": float, default=None
                 The maximum value to display in plots. 
+        
+        Returns
+        -------
+        seaborn.heatmap
+            An instance of a seaborn heatmap.
     
         Notes
         -----
@@ -510,7 +520,7 @@ class CAP(_CAPGetter):
 
                 self._region_caps[group].update({cap: region_caps})
     
-    def _generate_outer_product_plots(self, group, plot_dict, cap_dict, columns, subplots, output_dir, suffix_title, show_figs, scope):
+    def _generate_outer_product_plots(self, group, plot_dict, cap_dict, columns, subplots, output_dir, suffix_title, show_figs, scope) -> None:
         import matplotlib.pyplot as plt, os
         from seaborn import heatmap
 
@@ -712,7 +722,7 @@ class CAP(_CAPGetter):
         # Display figures
         if not show_figs: plt.close()
 
-    def _generate_heatmap_plots(self, group, plot_dict, cap_dict, columns, output_dir, suffix_title, show_figs, scope):
+    def _generate_heatmap_plots(self, group, plot_dict, cap_dict, columns, output_dir, suffix_title, show_figs, scope) -> None:
         import matplotlib.pyplot as plt, os, pandas as pd
         from seaborn import heatmap
         
@@ -982,7 +992,7 @@ class CAP(_CAPGetter):
         if return_df:
             return df_dict
 
-    def caps2corr(self, output_dir: str=None, suffix_title: str=None, show_figs: bool=True, **kwargs):
+    def caps2corr(self, output_dir: str=None, suffix_title: str=None, show_figs: bool=True, **kwargs) -> None:
         """Generate Correlation Matrix
 
         Produces the correlation matrix of all CAPs. If groups were given when the CAP class was initialized, a correlation matrix will be generated for each group. 
@@ -1077,9 +1087,25 @@ class CAP(_CAPGetter):
                 full_filename = f"{group.replace(' ', '_')}_correlation_matrix_{suffix_title}.png" if suffix_title else f"{group.replace(' ', '_')}_correlation_matrix.png"
                 display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"], bbox_inches='tight')
 
-    def caps2statmaps(self, output_dir: str, suffix_file_name: str=None, fwhm: float=None):
+    def caps2statmaps(self, output_dir: str, suffix_file_name: str=None, fwhm: float=None) -> None:
         """Standalone method to convert caps to statistical maps
+
+        Converts atlas into a stat map by replacing labels with the corresponding from the cluster centroids then saves them as compressed nii files.
+
+        Parameters
+        ----------
+        output_dir: str, default=None
+            Directory to save plots to. The directory will be created if it does not exist.
+        suffix_title: str, default=None
+            Appended to the name of the saved file.
+        fwhm: float, defualt=None
+            Strength of spatial smoothing to apply (in millimeters) to the statistical map prior to interpolating from MNI152 space to fslr surface space. 
+            Note, this can assist with coverage issues in the plot.
         
+        Returns
+        -------
+        Nifti1Image
+            Nifti statistical map.
         """
 
         import os, nibabel as nib
@@ -1097,7 +1123,7 @@ class CAP(_CAPGetter):
                 nib.save(stat_map, os.path.join(output_dir,save_name))
 
     def caps2surf(self, output_dir: str=None, suffix_title: str=None, show_figs: bool=True, fwhm: float=None, 
-                  fslr_density: str="32k", method: str="linear", save_stat_map: bool=False, **kwargs):
+                  fslr_density: str="32k", method: str="linear", save_stat_map: bool=False, **kwargs) -> None:
         """Project CAPs onto surface plots
         
         Converts atlas into a stat map by replacing labels with the corresponding from the cluster centroids then plots on a surface plot.
@@ -1183,6 +1209,8 @@ class CAP(_CAPGetter):
         -------
         Nifti1Image
             Nifti statistical map.
+        surfplot.Plot
+            An instance of a surfplot plot.
 
         Note
         -----
@@ -1261,18 +1289,127 @@ class CAP(_CAPGetter):
                         stat_map_name = save_name.replace(".png", ".nii.gz")
                         nib.save(stat_map, stat_map_name)
 
-    def caps2radar(self, output_dir: str=None, suffix_name: str=None, show_figs: bool=True,  **kwargs):
+    def caps2radar(self, output_dir: str=None, suffix_title: str=None, show_figs: bool=True, use_scatterpolar: bool=True, **kwargs) -> None:
         """Generate Radar Plots
-        
-        """
-        import numpy as np, os, pandas as pd, plotly.express as px
 
-        defaults = {"dpi": 300, "height": 800, "width": 1200, "line_close": True,"tickvals": None, "ticks": "outside","bgcolor": "white", 
-                    "radialaxis_showline": True, "radialaxis_linewidth": 2,  "radialaxis_linecolor": "rgba(0, 0, 0, 0.25)", "radialaxis_gridcolor": "rgba(0, 0, 0, 0.25)",
-                    "radialaxis_tickfont": {"size": 14, "color": "black"}, "angularaxis_linewidth": 2, "angularaxis_linecolor": "rgba(0, 0, 0, 0.25)",
-                    "angularaxis_gridcolor": "rgba(0, 0, 0, 0.25)", "angularaxis_tickfont": {"size": 16, "color": "black"},
-                    "angularaxis_showline": True, "color_discrete_map": {"High Amplitude": "red", "Low Amplitude": "blue"},
-                    "title_font": {"family": "Times New Roman", "size": 30, "color": "black"}, "title_x": 0.5}              
+        This method identifies networks/regions (across both hemispheres) in each CAP that show high amplitude (high activation relative to the mean zero if z-scored) and low amplitude (high deactivation relative 
+        to the mean zero if z-scored) by using cosine similarity. This is accomplished by extracting the cluster centroids (CAPs), a 1 x ROI vector, and generating a binary vector 
+        (a vector 1 x ROI vector consisting of 0's and 1's) where 1's indicate the indices/ROIs (Regions of Interest) in a specific region. For instance, if elements at indices 0, 
+        5, and 10 in the cluster centroid are nodes in the Visual Network, then a binary vector is generated where those indices are 1, and all others are 0. This binary vector 
+        essentially operates like a 1-dimensional binary mask to capture relevant ROIs in a given region/network.
+
+        Once, the dot product of the cluster centroid and binary vector is then calculated it is normalized by the product of the norms of the cluster centroid and the binary 
+        vector to restrict the range to -1 and 1, hence cosine similarity. For example, with the Schaefer 7-network parcellation, if your analysis has five CAPs, then each cluster 
+        centroid (CAP) will be multiplied by seven different binary vectors (where the 1's represent the nodes in that network).
+
+        Cosine similarities notably above zero suggest that many nodes in that network/region are highly activating together, cosine similarities around zero suggest that nodes in that 
+        network/region are co-activating and deactivating together, and cosine similarities notably below zero suggest that many nodes in that network/region are deactivating together.
+
+        This method is a useful quantitative method to characterize CAPs based on nodes in region/networks that display high co-activation or high co-deactivation. For instance, if 
+        the dorsal attention network (DAN) has the highest cosine similarity and the ventral attention network (VAN) has a lowest cosine similarity, then that cap can be described as 
+        (DAN +/VAN -).
+
+        Note, the radar plots only display positive values. The "Low Amplitude" group are cosine similarity values that are less than zero; however, the absolute value was taken to 
+        make them positive for aesthetic reasons. 
+
+        Parameters
+        ----------
+        output_dir: str, default=None
+            Directory to save plots to. The directory will be created if it does not exist. 
+        suffix_title: str, default=None
+            Appended to the title of each plot as well as the name of the saved file if `output_dir` is provided.
+        show_figs: bool, default=True
+            Whether to display figures.
+        use_scatterpolar: bool=True
+            Uses plotly's Scatterpolar instead of plotly's line_polar. The difference is that Scatterpolar shows the scatter
+            dots.
+        **kwargs : dict
+            Additional parameters to pass to modify certain plot parameters. Options include:
+            - "scale": int, default=2
+                Controls resolution of image when saving.
+            - "savefig_options": dict, default={"width": 3, "height": 3, "scale": 1}
+                If `output_dir` provided, controls the width (in inches), height (in inches), and scale of the plot.
+                The height and width are multiplied by the dpi.
+            - "height": int, default=800
+                Height of the plot. Value is multiplied by the dpi when saving.
+            - "width": int, defualt=1200
+                Width of the plot. Value is multiplied by the dpi when saving.
+            - "line_close": int, default=True
+                Whether to close the lines
+            - "bgcolor": str, default="white"
+                Color of the background
+            - "scattersize": int, default=5
+                If `use_scatterpolar=True`, controls the size of the dots.
+            - "connectgaps": bool, default=True
+                If `use_scatterpolar=True`, controls if missing values are connected.
+            - "opacity": float, default=0.5,
+                If `use_scatterpolar=True`, sets the opacity of the trace.
+            - "fill": str, default="none".
+                If "toself" the are of the dots and within the boundaries of the line will be filled.
+            - "radialaxis": dict, default={"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "ticks": "outside","tickfont": {"size": 14, "color": "black"}}
+                Customizes the radial axis. Refer to https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.radialaxis.html or
+                https://plotly.com/python/reference/layout/polar/ for valid kwargs. Note if there is no "tickvals" key, the plot will only display 
+                four ticks - [max_value/4, max_value/2, 3*max_value/4, max_value].
+            - "angularaxis": dict, default= {"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "tickfont": {"size": 16, "color": "black"}}
+                Customizes the angular axis. Refer to https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.angularaxis.html
+                or https://plotly.com/python/reference/layout/polar/ for valid kwargs.
+            - "color_discrete_map": dict, default={"High Amplitude": "red", "Low Amplitude": "blue"},
+                Change color of the "High Amplitude" and "Low Amplitude" groups. Must use the keys 
+                "High Amplitude" and "Low Amplitude" to work.
+            - title_font: dict, default={"family": "Times New Roman", "size": 30, "color": "black"}
+                Modifies the font of the title. Refer to https://plotly.com/python/reference/layout/ for valid kwargs.
+            - title_x: float, default=0.5
+                Modifies x position of title.
+            - title_y: float, default=None
+                Modifies y position of title.
+            - legend: dict, default={"yanchor": "top", "xanchor": "left", "y": 0.99, "x": 0.01, "title_font_family": "Times New Roman", "font": {"size": 12, "color": "black"}} 
+                Customized legend. Refer to https://plotly.com/python/reference/layout/ for valid kwargs.
+            
+
+        Returns
+        -------
+        plotly.express.line_polar
+            An instance of a plotly radar plot.
+            
+        Notes
+        -----
+        **To save, the kaleido package is needed, which is a dependency in this package. The kaleido package on Windows seems to only work with plotly if it is a specific version, such as version 0.1.0post1***
+
+        This function assumes that each node has a left and right counterpart (bilateral nodes). It also assumes that all the nodes belonging to the left hemisphere are listed first in the 'nodes' key.
+        For instance ["LH_Vis1", "LH_Vis2", "LH_Hippocampus", "RH_Vis1", "RH_Vis2", "RH_Hippocampus"].
+
+        If using a "Custom" parcellation approach, ensure each node in your dataset includes both left (lh) and right (rh) hemisphere versions. Also, this function assumes that the background label is "zero". Do not add a a background label, in the "nodes" or "networks" key,
+        the zero index should correspond the first id that is not zero.
+
+        Custom Key Structure:
+        - 'maps': Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g., .nii for NIfTI files). For plotting purposes, this key is not required.
+        - 'nodes':  list of all node labels used in your study, arranged in the exact order they correspond to indices in your parcellation files. 
+          Each label should match the parcellation index it represents. For example, if the parcellation label "1" corresponds to the left hemisphere 
+          visual cortex area 1, then "LH_Vis1" should occupy the 0th index in this list. This ensures that data extraction and analysis accurately reflect the anatomical regions intended.
+          For timeseries extraction, this key is not required.
+        - 'regions': Dictionary defining major brain regions. Each region should list node indices under "lh" and "rh" to specify left and right hemisphere nodes. 
+        
+        Example 
+        The provided example demonstrates setting up a custom parcellation containing nodes for the visual network (Vis) and hippocampus regions:
+
+        parcel_approach = {"Custom": {"maps": "/location/to/parcellation.nii.gz",
+                             "nodes": ["LH_Vis1", "LH_Vis2", "LH_Hippocampus", "RH_Vis1", "RH_Vis2", "RH_Hippocampus"],
+                             "regions": {"Vis" : {"lh": [0,1],
+                                                  "rh": [3,4]},
+                                         "Hippocampus": {"lh": [2],
+                                                         "rh": [5]}}}}
+        References
+        ----------
+        Zhang, R., Yan, W., Manza, P., Shokri-Kojori, E., Demiral, S. B., Schwandt, M., Vines, L., Sotelo, D., Tomasi, D., Giddens, N. T., Wang, G., Diazgranados, N., Momenan, R., & Volkow, N. D. (2023). 
+        Disrupted brain state dynamics in opioid and alcohol use disorder: attenuation by nicotine use. Neuropsychopharmacology, 49(5), 876–884. https://doi.org/10.1038/s41386-023-01750-w      
+        """
+        import numpy as np, os, pandas as pd, plotly.express as px, plotly.graph_objects as go
+
+        defaults = {"scale": 2, "height": 800, "width": 1200, "line_close": True, "bgcolor": "white", "fill": "none", "scattersize": 5, "connectgaps": True, "opacity": 0.5,
+                    "radialaxis": {"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "ticks": "outside", "tickfont": {"size": 14, "color": "black"}},
+                    "angularaxis": {"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "tickfont": {"size": 16, "color": "black"}},
+                    "color_discrete_map": {"High Amplitude": "rgba(255, 0, 0, 1)", "Low Amplitude": "rgba(0, 0, 255, 1)"}, "title_font": {"family": "Times New Roman", "size": 30, "color": "black"}, "title_x": 0.5, "title_y":None,
+                    "legend": {"yanchor": "top", "xanchor": "left", "y": 0.99, "x": 0.01, "title_font_family": "Times New Roman", "font": {"size": 12, "color": "black"}}}              
 
         plot_dict = _check_kwargs(defaults, **kwargs)
 
@@ -1306,41 +1443,61 @@ class CAP(_CAPGetter):
 
             for cap in df.columns[df.columns != "regions"]:
 
-                groups = df[cap].apply(lambda x: 'High Amplitude' if x >= 0 else 'Low Amplitude')
+                groups = df[cap].apply(lambda x: 'High Amplitude' if x > 0 else ('Low Amplitude' if x < 0 else np.nan))
                 df[cap] = df[cap].abs()
-                df[cap] = df[cap].round(decimals=1)
-                fig = px.line_polar(df, r=cap, theta="regions", line_close=plot_dict["line_close"], color=groups, 
-                                    width=plot_dict["width"], height=plot_dict["height"],
-                                    category_orders={"regions": df["regions"]}, 
-                                    color_discrete_map = plot_dict["color_discrete_map"])
 
+                if use_scatterpolar:
+                    # Get high amplitude and low amplitude data
+                    regions = df["regions"].values
+                    # Set non high amplitude values as nan and low amplitude values as nan
+                    high_amplitude_values, low_amplitude_values = np.array([np.nan]*len(regions)), np.array([np.nan]*len(regions))
+                    high_amplitude_values[np.where(groups.values == "High Amplitude")] = df[cap].values[np.where(groups.values == "High Amplitude")]
+                    low_amplitude_values[np.where(groups.values == "Low Amplitude")] = df[cap].values[np.where(groups.values == "Low Amplitude")]
+
+                    # Add high amplitude and low amplitude data as traces
+                    fig = go.Figure(layout=go.Layout(width=plot_dict["width"], height=plot_dict["height"]))
+                    fig.add_trace(go.Scatterpolar(
+                    r=list(high_amplitude_values),
+                    theta=regions,
+                    connectgaps=plot_dict["connectgaps"],
+                    name="High Amplitude",
+                    opacity=plot_dict["opacity"],
+                    marker=dict(color=plot_dict["color_discrete_map"]["High Amplitude"], size=plot_dict["scattersize"])))
+                    
+                    fig.add_trace(go.Scatterpolar(
+                    r=list(low_amplitude_values),
+                    theta=regions,
+                    name="Low Amplitude",
+                    connectgaps=plot_dict["connectgaps"],
+                    opacity=plot_dict["opacity"],
+                    marker=dict(color=plot_dict["color_discrete_map"]["Low Amplitude"], size=plot_dict["scattersize"])))
+
+                else:
+                    fig = px.line_polar(df, r=cap, theta="regions", line_close=plot_dict["line_close"], color=groups, 
+                                        width=plot_dict["width"], height=plot_dict["height"],
+                                        category_orders={"regions": df["regions"]}, 
+                                        color_discrete_map = plot_dict["color_discrete_map"])
+                
+                fig.update_traces(fill=plot_dict["fill"])
+                
                 # Set max value
-                if plot_dict["tickvals"] is None:
+                if "tickvals" not in plot_dict["radialaxis"].keys() and "range" not in plot_dict["radialaxis"].keys():
                     max_value = df[cap].max()
-                    plot_dict["tickvals"] = [max_value/4, max_value/2, 3*max_value/4, max_value]
+                    plot_dict["radialaxis"]["tickvals"] = [max_value/4, max_value/2, 3*max_value/4, max_value]
+
+                title_text = f"{group} {cap} {suffix_title}" if suffix_title else f"{group} {cap}"
 
                 # Customize
                 fig.update_layout(
-                    title=dict(text=f"{group} {cap}", font=plot_dict["title_font"]), 
+                    title=dict(text=title_text, font=plot_dict["title_font"]), 
                     title_x=plot_dict["title_x"],
+                    title_y=plot_dict["title_y"],
+                    legend=plot_dict["legend"],
+                    legend_title_text="Cosine Similarity",
                     polar=dict(
                         bgcolor=plot_dict["bgcolor"],
-                        radialaxis=dict(
-                            showline=plot_dict["radialaxis_showline"],
-                            linewidth=plot_dict["radialaxis_linewidth"],
-                            linecolor=plot_dict["radialaxis_linecolor"],
-                            gridcolor=plot_dict["radialaxis_gridcolor"],
-                            tickvals=plot_dict["tickvals"],
-                            ticks=plot_dict["ticks"],
-                            tickfont = plot_dict["radialaxis_tickfont"]
-                        ),
-                        angularaxis=dict(
-                            showline=plot_dict["angularaxis_showline"],
-                            linewidth=plot_dict["angularaxis_linewidth"],
-                            linecolor=plot_dict["angularaxis_linecolor"],
-                            gridcolor=plot_dict["angularaxis_gridcolor"],
-                            tickfont=plot_dict["angularaxis_tickfont"]
-                        )
+                        radialaxis=plot_dict["radialaxis"],
+                        angularaxis=plot_dict["angularaxis"]
                     )
                 )
 
@@ -1348,5 +1505,5 @@ class CAP(_CAPGetter):
 
                 if output_dir:
                     if not os.path.exists(output_dir): os.makedirs(output_dir)
-                    file_name = f"{group}_{cap}_radar_{suffix_name}.png" if suffix_name else f"{group}_{cap}_radar.png"
-                    fig.savefig(os.path.join(output_dir,file_name), dpi=plot_dict["dpi"])
+                    file_name = f"{group}_{cap}_radar_{suffix_title}.png" if suffix_title else f"{group}_{cap}_radar.png"
+                    fig.write_image(os.path.join(output_dir,file_name), scale=plot_dict["scale"], engine='kaleido')

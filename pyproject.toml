@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neurocaps"
-version = "0.9.8.rc1"
+version = "0.9.8b1"
 license = {text = "MIT License"}
 authors = [{name = "Donisha Smith", email = "donishasmith@outlook.com"}]
 description = "Co-activation Patterns (CAPs) Python package"
@@ -37,7 +37,9 @@ dependencies = ["numpy>=1.22.0",
                 "surfplot",
                 "neuromaps",
                 "pybids>=0.16.2; platform_system != 'Windows'",
-                "plotly"
+                "plotly",
+                "kaleido==0.1.0post1; platform_system == 'Windows'", # Plotly saving seems to work best with this version for Windows
+                "kaleido; platform_system != 'Windows'"
                 ]
 
 [project.urls]
