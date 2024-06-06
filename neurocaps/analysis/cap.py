@@ -3,7 +3,7 @@ from kneed import KneeLocator
 from joblib import cpu_count, delayed, Parallel
 from sklearn.cluster import KMeans
 from typing import Union, Literal
-from .._utils import _CAPGetter, _check_kwargs, _convert_pickle_to_dict, _check_parcel_approach, _run_kmeans
+from .._utils import _CAPGetter, _cap2statmap, _check_kwargs, _convert_pickle_to_dict, _check_parcel_approach, _run_kmeans
 
 
 class CAP(_CAPGetter):
@@ -1077,6 +1077,25 @@ class CAP(_CAPGetter):
                 full_filename = f"{group.replace(' ', '_')}_correlation_matrix_{suffix_title}.png" if suffix_title else f"{group.replace(' ', '_')}_correlation_matrix.png"
                 display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"], bbox_inches='tight')
 
+    def caps2statmaps(self, output_dir: str, suffix_file_name: str=None, fwhm: float=None):
+        """Standalone method to convert caps to statistical maps
+        
+        """
+
+        import os, nibabel as nib
+
+        if not hasattr(self,"_caps"):  raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` first.")
+
+        if not os.path.exists(output_dir): os.makedirs(output_dir)
+
+        for group in self._caps.keys():
+            for cap in self._caps[group].keys():
+                stat_map = _cap2statmap(atlas_file=self._parcel_approach[list(self._parcel_approach.keys())[0]]["maps"],
+                                        cap_vector=self._caps[group][cap], fwhm=fwhm, return_fdata=False)
+
+                save_name = f"{group.replace(' ', '_')}_{cap.replace('-', '_')}_{suffix_file_name}.nii.gz" if suffix_file_name else f"{group.replace(' ', '_')}_{cap.replace('-', '_')}.nii.gz" 
+                nib.save(stat_map, os.path.join(output_dir,save_name))
+
     def caps2surf(self, output_dir: str=None, suffix_title: str=None, show_figs: bool=True, fwhm: float=None, 
                   fslr_density: str="32k", method: str="linear", save_stat_map: bool=False, **kwargs):
         """Project CAPs onto surface plots
@@ -1171,9 +1190,7 @@ class CAP(_CAPGetter):
         to the atlas by an offset of one. For instance, index 0 of the cluster centroid vector is the first nonzero label, which is assumed to be at the 
         first index of the array in sorted(np.unique(atlas_fdata)).
         """
-
-        import nibabel as nib, numpy as np, os
-        from nilearn import image
+        import nibabel as nib, os
         from nilearn.plotting.cm import _cmap_d 
         from neuromaps.transforms import mni152_to_fslr
         from neuromaps.datasets import fetch_fslr
@@ -1193,17 +1210,8 @@ class CAP(_CAPGetter):
 
         for group in self._caps.keys():
             for cap in self._caps[group].keys():
-                atlas = nib.load(self._parcel_approach[list(self._parcel_approach.keys())[0]]["maps"])
-                atlas_fdata = atlas.get_fdata()
-                # Get array containing all labels in atlas to avoid issue if atlas labels dont start at 1, like Nilearn's AAL map
-                target_array = sorted(np.unique(atlas_fdata))
-                for indx, value in enumerate(self._caps[group][cap]):
-                    actual_indx = indx + 1
-                    atlas_fdata[np.where(atlas_fdata == target_array[actual_indx])] = value
-                stat_map = nib.Nifti1Image(atlas_fdata, atlas.affine, atlas.header)
-                # Add smoothing to stat map to help mitigate potential coverage issues 
-                if fwhm != None:
-                    stat_map = image.smooth_img(stat_map, fwhm=fwhm)
+                stat_map, atlas_fdata = _cap2statmap(atlas_file=self._parcel_approach[list(self._parcel_approach.keys())[0]]["maps"],
+                                        cap_vector=self._caps[group][cap], fwhm=fwhm, return_fdata=True)
 
                 # Code slightly adapted from surfplot example 2
                 gii_lh, gii_rh = mni152_to_fslr(stat_map, method=method, fslr_density=fslr_density)
