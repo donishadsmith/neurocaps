@@ -3,6 +3,12 @@
 All notable future changes to neurocaps will be documented in this file.
 
 *Note*: All versions in this file are deployed on pypi.
+## [0.9.8] - 2024-06-07
+### ♻ Changed
+- Changed `vmax` and `vmin` kwargs in `CAP.caps2surf()` to `color_range`
+- In `CAP.caps2surf()` the function no longer rounds max and min values and restricts range to -1 and 1 if the rounded value is 0.
+It just uses the max and min values from the data.
+
 ## [0.9.8.rc1] - 2024-06-07
 🚀 New/Added
 - New method in `CAP` class to plot radar plot of cosine similarity (`CAP.caps2radar()`).
