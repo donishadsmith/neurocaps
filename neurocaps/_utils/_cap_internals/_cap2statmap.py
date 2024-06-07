@@ -14,5 +14,4 @@ def _cap2statmap(atlas_file,cap_vector,fwhm,return_fdata=False):
     if fwhm != None:
         stat_map = image.smooth_img(stat_map, fwhm=fwhm)
     
-    if return_fdata: return stat_map, atlas_fdata
-    else: return stat_map
+    return stat_map

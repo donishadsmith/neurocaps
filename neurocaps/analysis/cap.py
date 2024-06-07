@@ -1087,7 +1087,7 @@ class CAP(_CAPGetter):
                 full_filename = f"{group.replace(' ', '_')}_correlation_matrix_{suffix_title}.png" if suffix_title else f"{group.replace(' ', '_')}_correlation_matrix.png"
                 display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"], bbox_inches='tight')
 
-    def caps2statmaps(self, output_dir: str, suffix_file_name: str=None, fwhm: float=None) -> None:
+    def caps2niftis(self, output_dir: str, suffix_file_name: str=None, fwhm: float=None) -> None:
         """Standalone method to convert caps to statistical maps
 
         Converts atlas into a stat map by replacing labels with the corresponding from the cluster centroids then saves them as compressed nii files.
@@ -1117,13 +1117,13 @@ class CAP(_CAPGetter):
         for group in self._caps.keys():
             for cap in self._caps[group].keys():
                 stat_map = _cap2statmap(atlas_file=self._parcel_approach[list(self._parcel_approach.keys())[0]]["maps"],
-                                        cap_vector=self._caps[group][cap], fwhm=fwhm, return_fdata=False)
+                                        cap_vector=self._caps[group][cap], fwhm=fwhm)
 
                 save_name = f"{group.replace(' ', '_')}_{cap.replace('-', '_')}_{suffix_file_name}.nii.gz" if suffix_file_name else f"{group.replace(' ', '_')}_{cap.replace('-', '_')}.nii.gz" 
                 nib.save(stat_map, os.path.join(output_dir,save_name))
 
     def caps2surf(self, output_dir: str=None, suffix_title: str=None, show_figs: bool=True, fwhm: float=None, 
-                  fslr_density: str="32k", method: str="linear", save_stat_map: bool=False, **kwargs) -> None:
+                  fslr_density: str="32k", method: str="linear", save_stat_map: bool=False, fslr_giftis_dict: dict=None, **kwargs) -> None:
         """Project CAPs onto surface plots
         
         Converts atlas into a stat map by replacing labels with the corresponding from the cluster centroids then plots on a surface plot.
@@ -1142,10 +1142,24 @@ class CAP(_CAPGetter):
             Note, this can assist with coverage issues in the plot.
         fslr_density: str, default="32k"
             Density of the fslr surface when converting from MNI152 space to fslr surface. Options are "32k" or "164k".
+            If using `fslr_giftis_dict` options are "4k", "8k", "32k", and "164k".
         method: str, default="linear"
             Interpolation method to use when converting from MNI152 space to fslr surface. Options are "linear" or "nearest".
         save_stat_map: bool, default=False
             If True, saves the statistical map for each CAP for all groups as a Nifti1Image if `output_dir` is provided.
+        fslr_giftis_dict: dict, default=None
+            Dictionary specifying precomputed gifti files in fslr space for plotting stat maps. This parameter should be used if the statistical CAP NIfTI files (can be obtained using `caps2niftis`) 
+            were converted to GIfTI files using a tool such as Connectome Workbench.The dictionary structure is:
+            {
+                "GroupName": {
+                    "CAP-Name": {
+                        "lh": "path/to/left_hemisphere_gifti",
+                        "rh": "path/to/right_hemisphere_gifti"
+                    }
+                }
+            }
+            GroupName can be "All Subjects" or any specific group name. CAP-Name is the name of the CAP.
+            This parameter allows plotting without re-running the analysis. Initialize the CAP class and use this method if using this parameter.
         **kwargs : dict
             Additional parameters to pass to modify certain plot parameters. Options include:
             - "dpi": int, default=300
@@ -1157,26 +1171,15 @@ class CAP(_CAPGetter):
                 Below is a list of valid options:
                 - Strings to call nilearn's _cmap_d fuction. Refer to documention for nilearn's _cmap_d for valid palettes.
                 - Matplotlib's LinearSegmentedColormap to generate custom colormaps.
-            - "cbar_location": str, default="bottom"
-                Location of the colorbar.
-            - "cbar_draw_border": bool, default=False
-                Whether to draw a border around the colorbar.
-            - "cbar_aspect": int, default=20
-                Aspect ratio of the colorbar.
-            - "cbar_shrink": float, default=0.2
-                Fraction by which to shrink the colorbar.
-            - "cbar_decimals": int, default=2
-                Number of decimals for colorbar values.
-            - "cbar_pad": float, default=0
-                Padding between the colorbars.
-            - "cbar_fraction": float, default=0.05
-                Fraction of the original axes to use for the colorbar.
-            - "cbar_n_ticks": int, default=3
-                Number of ticks on the colorbar.
-            - "cbar_fontsize": int, default=10
-                Font size for the colorbar labels.
-            - "cbar_alpha": float, default=1
+            - cbar_kws: dict, default={"location": "bottom", "n_ticks": 3}
+                Customize colorbar. Refer to `_add_colorbars` at https://surfplot.readthedocs.io/en/latest/generated/surfplot.plotting.Plot.html#surfplot.plotting.Plot
+                for valid **kwargs. 
+            - "alpha": float, default=1
                 Transparency level of the colorbar.
+            - "zero_transparent", default=True
+                Turns vertices with a value of 0 transparent.
+            - "as_outline", default=False
+                Plots only an outline of contiguous vertices with the same value.
             - "size": tuple, default=(500, 400)
                 Size of the plot in pixels.
             - "layout": str, default="grid"
@@ -1220,29 +1223,32 @@ class CAP(_CAPGetter):
         """
         import nibabel as nib, os
         from nilearn.plotting.cm import _cmap_d 
-        from neuromaps.transforms import mni152_to_fslr
+        from neuromaps.transforms import mni152_to_fslr, fslr_to_fslr
         from neuromaps.datasets import fetch_fslr
         from surfplot import Plot
 
-        if not hasattr(self,"_caps"):  raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` first.")
+        if not hasattr(self,"_caps") and fslr_giftis_dict == None:  raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` first.")
 
         if output_dir and not os.path.exists(output_dir): os.makedirs(output_dir)
 
         # Create plot dictionary
-        defaults = {"dpi": 300, "title_pad": -3, "cmap": "cold_hot", "cbar_location": "bottom", "cbar_draw_border": False,
-                    "cbar_aspect": 20, "cbar_shrink": 0.2, "cbar_decimals": 2, "cbar_pad": 0, "cbar_fraction": 0.05, "cbar_n_ticks": 3,
-                    "cbar_fontsize": 10, "cbar_alpha": 1, "size": (500, 400), "layout": "grid", "zoom": 1.5, "views": ["lateral", "medial"],
-                    "brightness": 0.5, "figsize": None, "scale": (2, 2), "surface": "inflated", "vmin": None, "vmax": None}
+        defaults = {"dpi": 300, "title_pad": -3, "cmap": "cold_hot", "cbar_kws":  {"location": "bottom", "n_ticks": 3}, "size": (500, 400), "layout": "grid", "zoom": 1.5, "views": ["lateral", "medial"],
+                    "alpha": 1, "zero_transparent": True, "as_outline": False,"brightness": 0.5, "figsize": None, "scale": (2, 2), "surface": "inflated", "vmin": None, "vmax": None}
 
         plot_dict = _check_kwargs(defaults, **kwargs)
 
-        for group in self._caps.keys():
-            for cap in self._caps[group].keys():
-                stat_map, atlas_fdata = _cap2statmap(atlas_file=self._parcel_approach[list(self._parcel_approach.keys())[0]]["maps"],
-                                        cap_vector=self._caps[group][cap], fwhm=fwhm, return_fdata=True)
+        groups = self._caps.keys() if hasattr(self,"_caps") and fslr_giftis_dict == None else fslr_giftis_dict.keys()
 
+        for group in groups:
+            caps = self._caps[group].keys() if hasattr(self,"_caps") and fslr_giftis_dict == None else fslr_giftis_dict[group].keys()
+            for cap in caps:
+                if fslr_giftis_dict == None:
+                    stat_map = _cap2statmap(atlas_file=self._parcel_approach[list(self._parcel_approach.keys())[0]]["maps"],
+                                            cap_vector=self._caps[group][cap], fwhm=fwhm)
+                    gii_lh, gii_rh = mni152_to_fslr(stat_map, method=method, fslr_density=fslr_density)
+                else:
+                    gii_lh, gii_rh = fslr_to_fslr([fslr_giftis_dict[group][cap]['lh'], fslr_giftis_dict[group][cap]['rh']], target_density=fslr_density, method=method)
                 # Code slightly adapted from surfplot example 2
-                gii_lh, gii_rh = mni152_to_fslr(stat_map, method=method, fslr_density=fslr_density)
                 surfaces = fetch_fslr()
                 if plot_dict["surface"] not in ["inflated", "veryinflated"]:
                     warnings.warn(f"{plot_dict['surface']} is an invalid option for `surface`. Available options include 'inflated' or 'verinflated'. Defaulting to 'inflated'")
@@ -1260,22 +1266,20 @@ class CAP(_CAPGetter):
                 p.add_layer({"left": sulc_lh, "right": sulc_rh}, cmap="binary_r", cbar=False)
 
                 if plot_dict["vmin"]: plot_min = plot_dict["vmin"]
-                else: plot_min = -1 if round(atlas_fdata.min()) == 0 else round(atlas_fdata.min())
 
-                if plot_dict["vmax"]: plot_max= plot_dict["vmax"]
-                else: plot_max = 1 if round(atlas_fdata.max()) == 0 else round(atlas_fdata.max())
+                if plot_dict["vmax"]: plot_max = plot_dict["vmax"]
+
+                try: color_range=(plot_min, plot_max)
+                except: color_range=None
                 
                 # Check cmap
                 cmap = _cmap_d[plot_dict["cmap"]] if isinstance(plot_dict["cmap"],str) else plot_dict["cmap"]
                 # Add stat map layer
                 p.add_layer({"left": gii_lh, "right": gii_rh}, cmap=cmap, 
-                            alpha=plot_dict["cbar_alpha"], color_range=(plot_min,plot_max))
+                            alpha=plot_dict["alpha"], color_range=color_range, zero_transparent=plot_dict["zero_transparent"], as_outline=plot_dict["as_outline"])
 
                 # Color bar
-                kws = dict(location=plot_dict["cbar_location"], draw_border=plot_dict["cbar_draw_border"], aspect=plot_dict["cbar_aspect"], shrink=plot_dict["cbar_shrink"],
-                        decimals=plot_dict["cbar_decimals"], pad=plot_dict["cbar_pad"], fraction=plot_dict["cbar_fraction"], n_ticks=plot_dict["cbar_n_ticks"], 
-                        fontsize=plot_dict["cbar_fontsize"])
-                fig = p.build(cbar_kws=kws, figsize=plot_dict["figsize"], scale=plot_dict["scale"])
+                fig = p.build(cbar_kws=plot_dict["cbar_kws"], figsize=plot_dict["figsize"], scale=plot_dict["scale"])
                 fig_name = f"{group} {cap} {suffix_title}" if suffix_title else f"{group} {cap}"
                 fig.axes[0].set_title(fig_name, pad=plot_dict["title_pad"])      
                 
@@ -1338,7 +1342,7 @@ class CAP(_CAPGetter):
                 Whether to close the lines
             - "bgcolor": str, default="white"
                 Color of the background
-            - "scattersize": int, default=5
+            - "scattersize": int, default=8
                 If `use_scatterpolar=True`, controls the size of the dots.
             - "connectgaps": bool, default=True
                 If `use_scatterpolar=True`, controls if missing values are connected.
@@ -1346,7 +1350,7 @@ class CAP(_CAPGetter):
                 If `use_scatterpolar=True`, sets the opacity of the trace.
             - "fill": str, default="none".
                 If "toself" the are of the dots and within the boundaries of the line will be filled.
-            - "radialaxis": dict, default={"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "ticks": "outside","tickfont": {"size": 14, "color": "black"}}
+            - "radialaxis": dict, default={"showline": False, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "ticks": "outside","tickfont": {"size": 14, "color": "black"}}
                 Customizes the radial axis. Refer to https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.radialaxis.html or
                 https://plotly.com/python/reference/layout/polar/ for valid kwargs. Note if there is no "tickvals" key, the plot will only display 
                 four ticks - [max_value/4, max_value/2, 3*max_value/4, max_value].
@@ -1405,8 +1409,8 @@ class CAP(_CAPGetter):
         """
         import numpy as np, os, pandas as pd, plotly.express as px, plotly.graph_objects as go
 
-        defaults = {"scale": 2, "height": 800, "width": 1200, "line_close": True, "bgcolor": "white", "fill": "none", "scattersize": 5, "connectgaps": True, "opacity": 0.5,
-                    "radialaxis": {"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "ticks": "outside", "tickfont": {"size": 14, "color": "black"}},
+        defaults = {"scale": 2, "height": 800, "width": 1200, "line_close": True, "bgcolor": "white", "fill": "none", "scattersize": 8, "connectgaps": True, "opacity": 0.5,
+                    "radialaxis": {"showline": False, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "ticks": "outside", "tickfont": {"size": 14, "color": "black"}},
                     "angularaxis": {"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "tickfont": {"size": 16, "color": "black"}},
                     "color_discrete_map": {"High Amplitude": "rgba(255, 0, 0, 1)", "Low Amplitude": "rgba(0, 0, 255, 1)"}, "title_font": {"family": "Times New Roman", "size": 30, "color": "black"}, "title_x": 0.5, "title_y":None,
                     "legend": {"yanchor": "top", "xanchor": "left", "y": 0.99, "x": 0.01, "title_font_family": "Times New Roman", "font": {"size": 12, "color": "black"}}}              
