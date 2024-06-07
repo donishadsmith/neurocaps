@@ -2,7 +2,20 @@
 
 All notable future changes to neurocaps will be documented in this file.
 
-*Note*: All versions in this file are deployed on pypi. 
+*Note*: All versions in this file are deployed on pypi.
+## [0.9.8.rc1] - 2024-06-07
+🚀 New/Added
+- New method in `CAP` class to plot radar plot of cosine similarity (`CAP.caps2radar()`).
+- New method in `CAP` class to save CAPs as niftis without plotting (`CAP.caps2niftis()`).
+- Added new parameter to `CAP.caps2surf()`, `fslr_giftis_dict`, to allow CAPs statistical maps that were
+converted to giftis externally, using tools such as Connectome Workbench, to be plotted. This parameter only requires the `CAP` class to be initialized.
+
+To use this version:
+
+```
+pip install neurocaps==0.9.8rc1
+``
+
 ## [0.9.7.post2] - 2024-06-03
 ### ♻ Changed
 - Minor change in merge_dicts() to make it explicitly clear that the dictionaries are returned in the order they are provided in the list.

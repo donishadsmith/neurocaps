@@ -38,7 +38,7 @@ dependencies = ["numpy>=1.22.0",
                 "neuromaps",
                 "pybids>=0.16.2; platform_system != 'Windows'",
                 "plotly",
-                "kaleido==0.1.0post1; platform_system == 'Windows'", # Plotly saving seems to work best with this version for Windows
+                "kaleido==0.1.0.post1; platform_system == 'Windows'", # Plotly saving seems to work best with this version for Windows
                 "kaleido; platform_system != 'Windows'"
                 ]
 
