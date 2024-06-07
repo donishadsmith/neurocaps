@@ -1196,14 +1196,9 @@ class CAP(_CAPGetter):
                 Scale factors for the plot.
             - "surface": str, default="inflated"
                 The surface atlas that is used for plotting. Options are "inflated" or "veryinflated"
-            - "vmin": float, default=None
-                The minimum value to display in plots. If None, the minimum value will be 
-                extracted from the statistical image and the lowest will be restricted to -1
-                if the minimum value in the statistical image higher than -1.
-            - "vmax": float, default=None
-                The maximum value to display in plots. If None, the maximum value will be 
-                extracted from the statistical image and the maximum will be restricted to 1
-                if the maximum value in the statistical image is less than 1.
+            - "color_range": tuple, default=None
+                The minimum and maximum value to display in plots. For instance, (-1,1) where minimum
+                value is first. If None, the minimum and maximum values from the image will be used.
             
             Please refer to surfplot's documentation for specifics: 
             https://surfplot.readthedocs.io/en/latest/generated/surfplot.plotting.Plot.html#surfplot.plotting.Plot
@@ -1233,7 +1228,7 @@ class CAP(_CAPGetter):
 
         # Create plot dictionary
         defaults = {"dpi": 300, "title_pad": -3, "cmap": "cold_hot", "cbar_kws":  {"location": "bottom", "n_ticks": 3}, "size": (500, 400), "layout": "grid", "zoom": 1.5, "views": ["lateral", "medial"],
-                    "alpha": 1, "zero_transparent": True, "as_outline": False,"brightness": 0.5, "figsize": None, "scale": (2, 2), "surface": "inflated", "vmin": None, "vmax": None}
+                    "alpha": 1, "zero_transparent": True, "as_outline": False,"brightness": 0.5, "figsize": None, "scale": (2, 2), "surface": "inflated", "color_range": None}
 
         plot_dict = _check_kwargs(defaults, **kwargs)
 
@@ -1264,19 +1259,12 @@ class CAP(_CAPGetter):
 
                 # Add base layer
                 p.add_layer({"left": sulc_lh, "right": sulc_rh}, cmap="binary_r", cbar=False)
-
-                if plot_dict["vmin"]: plot_min = plot_dict["vmin"]
-
-                if plot_dict["vmax"]: plot_max = plot_dict["vmax"]
-
-                try: color_range=(plot_min, plot_max)
-                except: color_range=None
                 
                 # Check cmap
                 cmap = _cmap_d[plot_dict["cmap"]] if isinstance(plot_dict["cmap"],str) else plot_dict["cmap"]
                 # Add stat map layer
                 p.add_layer({"left": gii_lh, "right": gii_rh}, cmap=cmap, 
-                            alpha=plot_dict["alpha"], color_range=color_range, zero_transparent=plot_dict["zero_transparent"], as_outline=plot_dict["as_outline"])
+                            alpha=plot_dict["alpha"], color_range=plot_dict["color_range"], zero_transparent=plot_dict["zero_transparent"], as_outline=plot_dict["as_outline"])
 
                 # Color bar
                 fig = p.build(cbar_kws=plot_dict["cbar_kws"], figsize=plot_dict["figsize"], scale=plot_dict["scale"])
@@ -1313,8 +1301,9 @@ class CAP(_CAPGetter):
         the dorsal attention network (DAN) has the highest cosine similarity and the ventral attention network (VAN) has a lowest cosine similarity, then that cap can be described as 
         (DAN +/VAN -).
 
-        Note, the radar plots only display positive values. The "Low Amplitude" group are cosine similarity values that are less than zero; however, the absolute value was taken to 
-        make them positive for aesthetic reasons. 
+        Note, the radar plots only display positive values. The "Low Amplitude" group are negative cosine similarity (below zero); however, the absolute value was taken to 
+        make them positive so that the radar plot starts at 0 and direct magnitude comparisons between the "High Amplitude" (positive cosine similarity above zero) and "Low Amplitude" 
+        groups are easier.
 
         Parameters
         ----------

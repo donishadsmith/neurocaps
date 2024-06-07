@@ -92,7 +92,7 @@ parcel_approach= {"Custom": {"maps": "/location/to/parcellation.nii.gz",
     - *Persistence:* The average time spent in a single CAP before transitioning to another CAP (average consecutive/uninterrupted time).
     - *Counts:* The frequency of each CAP observed in a run.
     - *Transition Frequency:* The number of switches between different CAPs across the entire run.
-- **Cosine Similarity Radar Plots:** Create radar plots showing the cosine similarity between CAPs and networks/regions. Especially useful as a quantitative method to categorize CAPs by determining the regions/networks containing the most nodes demonstrating increased co-activation or decreased co-deactivation [^4]. Refer to the docstring in `caps2radar` in the `CAP` class for a more detailed explanation as well as available **kwargs arguments and parameters to modify plots.
+- **Cosine Similarity Radar Plots:** Create radar plots showing the cosine similarity between CAPs and networks/regions. Especially useful as a quantitative method to categorize CAPs by determining the regions/networks containing the most nodes demonstrating increased co-activation or decreased co-deactivation [^4]. Refer to the docstring in `caps2radar` in the `CAP` class for a more detailed explanation as well as available **kwargs arguments and parameters to modify plots.**Note**,the "Low Amplitude"are negative cosine similarity values. The absolute value of those cosine similarities are taken so that the radar plot starts at 0 and magnitude comparisons between the "High Amplitude" and "Low Amplitude" groups are easier to see.
 
 **Additionally, the `neurocaps.analysis` submodule contains two additional functions:**
 
