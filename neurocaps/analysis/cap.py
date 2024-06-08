@@ -1312,7 +1312,9 @@ class CAP(_CAPGetter):
         suffix_title: str, default=None
             Appended to the title of each plot as well as the name of the saved file if `output_dir` is provided.
         show_figs: bool, default=True
-            Whether to display figures.
+            Whether to display figures. If this function detects that it is not being ran in an interactive Python environment,
+            then it uses plotly.offline, creates an html file named "temp-plot.html", and opens each plot in the default 
+            browser.
         use_scatterpolar: bool=True
             Uses plotly's Scatterpolar instead of plotly's line_polar. The difference is that Scatterpolar shows the scatter
             dots.
@@ -1396,7 +1398,7 @@ class CAP(_CAPGetter):
         Zhang, R., Yan, W., Manza, P., Shokri-Kojori, E., Demiral, S. B., Schwandt, M., Vines, L., Sotelo, D., Tomasi, D., Giddens, N. T., Wang, G., Diazgranados, N., Momenan, R., & Volkow, N. D. (2023). 
         Disrupted brain state dynamics in opioid and alcohol use disorder: attenuation by nicotine use. Neuropsychopharmacology, 49(5), 876–884. https://doi.org/10.1038/s41386-023-01750-w      
         """
-        import numpy as np, os, pandas as pd, plotly.express as px, plotly.graph_objects as go
+        import numpy as np, os, pandas as pd, plotly.express as px, plotly.graph_objects as go, plotly.offline as pyo, sys
 
         defaults = {"scale": 2, "height": 800, "width": 1200, "line_close": True, "bgcolor": "white", "fill": "none", "scattersize": 8, "connectgaps": True, "opacity": 0.5,
                     "radialaxis": {"showline": False, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "ticks": "outside", "tickfont": {"size": 14, "color": "black"}},
@@ -1494,7 +1496,9 @@ class CAP(_CAPGetter):
                     )
                 )
 
-                if show_figs: fig.show()
+                if show_figs: 
+                    if bool(getattr(sys, 'ps1', sys.flags.interactive)): fig.show()
+                    else: pyo.plot(fig, auto_open=True)
 
                 if output_dir:
                     if not os.path.exists(output_dir): os.makedirs(output_dir)

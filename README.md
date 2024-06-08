@@ -222,7 +222,7 @@ cap_analysis.caps2corr(annot=True ,figsize=(6,4),cmap="coolwarm")
 # Create the colormap
 import seaborn as sns
 palette = sns.diverging_palette(260, 10, s=80, l=55, n=256, as_cmap=True)
-cap_analysis.caps2corr(annot=True, ,figsize=(6,4), cmap=palette)
+cap_analysis.caps2corr(annot=True, figsize=(6,4), cmap=palette)
 ```
 **Plot Output:**
 ![image](https://github.com/donishadsmith/neurocaps/assets/112973674/57a2ce81-13d3-40d0-93e7-0ca910f7b0be)

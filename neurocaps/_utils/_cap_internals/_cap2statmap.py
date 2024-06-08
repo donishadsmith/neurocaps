@@ -1,7 +1,7 @@
 import nibabel as nib, numpy as np
 from nilearn import image 
 
-def _cap2statmap(atlas_file,cap_vector,fwhm,return_fdata=False):
+def _cap2statmap(atlas_file,cap_vector,fwhm):
     atlas = nib.load(atlas_file)
     atlas_fdata = atlas.get_fdata()
     # Get array containing all labels in atlas to avoid issue if atlas labels dont start at 1, like Nilearn's AAL map
