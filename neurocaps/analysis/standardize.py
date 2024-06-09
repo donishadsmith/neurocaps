@@ -1,14 +1,14 @@
 import numpy as np, pickle
-from typing import Union
+from typing import Union, Dict
 
-def standardize(subject_timeseries: Union[dict,str]) -> dict:
+def standardize(subject_timeseries: Union[Dict[str, Dict[str, np.ndarray]], str]) -> dict:
     """Standardize subject timeseries 
     
     Standardizes each run independently for all subjects in the subject timeseries.
 
     Parameters
     ----------
-    subject_timeseries_list: dict[dict[np.ndarray]] or str
+    subject_timeseries_list: Dict[str, Dict[str, np.ndarray]] or str
         A list of pickle files containing the nested subject timeseries dictionary saved by the `TimeSeriesExtractor` class or a list of nested subject 
         timeseries dictionaries produced by the `TimeSeriesExtractor` class. The first level of the nested dictionary must consist of the subject ID as a string, 
         the second level must consist of the run numbers in the form of 'run-#' (where # is the corresponding number of the run), and the last level must consist of the timeseries 
@@ -16,7 +16,7 @@ def standardize(subject_timeseries: Union[dict,str]) -> dict:
 
     Returns
     -------
-    dict
+    Dict[str, Dict[str, np.ndarray]]
     """
 
     if ".pkl" in subject_timeseries:

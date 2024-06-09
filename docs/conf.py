@@ -12,7 +12,7 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('..'))
 import neurocaps
 
 # -- Project information -----------------------------------------------------
@@ -45,7 +45,8 @@ extensions = [
 autosummary_generate = True
 autodoc_default_options = {'members': True, 'inherited-members': True}
 numpydoc_show_class_members = False
-autoclass_content = "class"
+autoclass_content = "both"
+autodoc_member_order = 'bysource'
 
 napoleon_google_docstring = False
 napoleon_numpy_docstring = True
@@ -77,3 +78,6 @@ html_theme = 'sphinx_rtd_theme'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+def setup(title):
+    title.add_css_file('custom.css')
