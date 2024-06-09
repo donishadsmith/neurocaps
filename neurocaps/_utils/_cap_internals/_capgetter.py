@@ -61,17 +61,7 @@ class _CAPGetter:
     def optimal_n_clusters(self):
         if hasattr(self, "_optimal_n_clusters"): return self._optimal_n_clusters
         else: return None
-    
-    @property
-    def region_caps(self):
-        if hasattr(self, "_region_caps"): return self._region_caps
-        else: return None
 
-    @property
-    def outer_product(self):
-        if hasattr(self, "_outer_product"): return self._outer_product
-        else: return None
-    
     @property
     def standardize(self):
         if hasattr(self, "_standardizee"): return self._standardize
@@ -90,4 +80,20 @@ class _CAPGetter:
     @property
     def stdev(self):
         if hasattr(self, "_stdev_vec"): return self._stdev_vec
+        else: return None
+    
+    @property
+    def concatenated_timeseries(self):
+        if hasattr(self, "_concatenated_timeseries"): return self._concatenated_timeseries
+        else: return None
+    
+    # Generated in `caps2plot`
+    @property
+    def region_caps(self):
+        if hasattr(self, "_region_caps"): return self._region_caps
+        else: return None
+
+    @property
+    def outer_products(self):
+        if hasattr(self, "_outer_product"): return self._outer_products
         else: return None

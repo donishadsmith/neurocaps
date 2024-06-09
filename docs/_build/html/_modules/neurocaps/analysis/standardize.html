@@ -73,32 +73,47 @@
            <div itemprop="articleBody">
              
   <h1>Source code for neurocaps.analysis.standardize</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span><span class="o">,</span> <span class="nn">pickle</span>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span><span class="o">,</span> <span class="nn">joblib</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Dict</span>
 
 <div class="viewcode-block" id="standardize">
 <a class="viewcode-back" href="../../../generated/neurocaps.analysis.standardize.html#neurocaps.analysis.standardize">[docs]</a>
-<span class="k">def</span> <span class="nf">standardize</span><span class="p">(</span><span class="n">subject_timeseries</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]],</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Standardize subject timeseries </span>
+<span class="k">def</span> <span class="nf">standardize</span><span class="p">(</span><span class="n">subject_timeseries</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]],</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    **Standardize Subject Timeseries**</span>
 <span class="sd">    </span>
 <span class="sd">    Standardizes each run independently for all subjects in the subject timeseries.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    subject_timeseries_list: Dict[str, Dict[str, np.ndarray]] or str</span>
-<span class="sd">        A list of pickle files containing the nested subject timeseries dictionary saved by the `TimeSeriesExtractor` class or a list of nested subject </span>
-<span class="sd">        timeseries dictionaries produced by the `TimeSeriesExtractor` class. The first level of the nested dictionary must consist of the subject ID as a string, </span>
-<span class="sd">        the second level must consist of the run numbers in the form of &#39;run-#&#39; (where # is the corresponding number of the run), and the last level must consist of the timeseries </span>
-<span class="sd">        (as a numpy array) associated with that run.</span>
+<span class="sd">        subject_timeseries_list: Dict[str, Dict[str, np.ndarray]] or str</span>
+<span class="sd">            A list of pickle files containing the nested subject timeseries dictionary saved by the `TimeSeriesExtractor` class or a list of nested subject </span>
+<span class="sd">            timeseries dictionaries produced by the `TimeSeriesExtractor` class. The first level of the nested dictionary must consist of the subject ID as a string, </span>
+<span class="sd">            the second level must consist of the run numbers in the form of &#39;run-#&#39; (where # is the corresponding number of the run), and the last level must consist of the timeseries </span>
+<span class="sd">            (as a numpy array) associated with that run.  The structure is as follows:</span>
+<span class="sd">                    </span>
+<span class="sd">                    ::</span>
+
+<span class="sd">                        subject_timseries = {</span>
+<span class="sd">                                &quot;101&quot;: {</span>
+<span class="sd">                                    &quot;run-0&quot;: np.array([timeseries]), # 2D array</span>
+<span class="sd">                                    &quot;run-1&quot;: np.array([timeseries]), # 2D array</span>
+<span class="sd">                                    &quot;run-2&quot;: np.array([timeseries]), # 2D array</span>
+<span class="sd">                                },</span>
+<span class="sd">                                &quot;102&quot;: {</span>
+<span class="sd">                                    &quot;run-0&quot;: np.array([timeseries]), # 2D array</span>
+<span class="sd">                                    &quot;run-1&quot;: np.array([timeseries]), # 2D array</span>
+<span class="sd">                                }</span>
+<span class="sd">                            }</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    Dict[str, Dict[str, np.ndarray]]</span>
+<span class="sd">        Dict[str, Dict[str, np.ndarray]]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="s2">&quot;.pkl&quot;</span> <span class="ow">in</span> <span class="n">subject_timeseries</span><span class="p">:</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">subject_timeseries</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">foo</span><span class="p">:</span>
-            <span class="n">subject_timeseries</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">foo</span><span class="p">)</span>
+            <span class="n">subject_timeseries</span> <span class="o">=</span> <span class="n">joblib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">foo</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">subject</span> <span class="ow">in</span> <span class="n">subject_timeseries</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
         <span class="k">for</span> <span class="n">run</span> <span class="ow">in</span> <span class="n">subject_timeseries</span><span class="p">[</span><span class="n">subject</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>

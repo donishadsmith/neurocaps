@@ -3,8 +3,10 @@
 API 
 ===
 
-:mod:`neurocaps.extraction` - Timeseries Extraction, Pickling, & Visualization
-------------------------------------------------------------------------------
+:mod:`neurocaps.extraction` - Timeseries Extraction
+---------------------------------------------------
+Module containing class that performs timeseries extraction, pickling, and visualization
+
 .. automodule:: neurocaps.extraction
    :no-members:
    :no-inherited-members:
@@ -18,7 +20,9 @@ API
    neurocaps.extraction.TimeseriesExtractor
 
 :mod:`neurocaps.analysis` - Co-Activation Patterns (CAPs) Analysis
-------------------------------------------------------------------
+-------------------------------------------------------------------
+Module containing a class and functions to merge subject timeseries, standardize subject timeseres, perform and visualize CAPs analysis
+
 .. automodule:: neurocaps.analysis
    :no-members:
    :no-inherited-members:

@@ -63,13 +63,29 @@ Example:
 The provided example demonstrates setting up a custom parcellation containing nodes for the visual network (Vis) and hippocampus regions:
 
 ```Python
-parcel_approach= {"Custom": {"maps": "/location/to/parcellation.nii.gz",
-                             "nodes": ["LH_Vis1", "LH_Vis2", "LH_Hippocampus",
-                              "RH_Vis1", "RH_Vis2", "RH_Hippocampus"],
-                             "regions": {"Vis" : {"lh": [0,1],
-                                                  "rh": [3,4]},
-                                         "Hippocampus": {"lh": [2],
-                                                         "rh": [5]}}}}
+        parcel_approach = {
+            "Custom": {
+                "maps": "/location/to/parcellation.nii.gz",
+                "nodes": [
+                    "LH_Vis1",
+                    "LH_Vis2",
+                    "LH_Hippocampus",
+                    "RH_Vis1",
+                    "RH_Vis2",
+                    "RH_Hippocampus"
+                ],
+                "regions": {
+                    "Vis": {
+                        "lh": [0, 1],
+                        "rh": [3, 4]
+                    },
+                    "Hippocampus": {
+                        "lh": [2],
+                        "rh": [5]
+                    }
+                }
+            }
+        }
  ```
 
 **Main features for `TimeseriesExtractor` includes:**

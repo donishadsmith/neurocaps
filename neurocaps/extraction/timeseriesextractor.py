@@ -1,49 +1,114 @@
 import json, os, re, sys, warnings
 from typing import Union, Optional, Dict, List
-from pathlib import Path
 from .._utils import _TimeseriesExtractorGetter, _check_kwargs, _check_confound_names, _check_parcel_approach, _extract_timeseries
 
 class TimeseriesExtractor(_TimeseriesExtractorGetter):
     """
-    Timeseries Extractor Class
+    **Timeseries Extractor Class**
 
     Initializes the TimeseriesExtractor class.
 
     Parameters
     ----------
-        space: str, default="MNI152NLin2009cAsym"
+        space : str, default="MNI152NLin2009cAsym"
             The standard template space that the preprocessed bold data is registered to.
-        standardize: bool or str, default="zscore_sample"
+        standardize : bool or str, default="zscore_sample"
             Determines whether to standardize the timeseries. Refer to Nilearn's NiftiLabelsMasker for available options.
-        detrend: bool, default=True
+        detrend : bool, default=True
             Detrends the timeseries during extraction.
-        low_pass: float or None, default=None
+        low_pass : float or None, default=None
             Filters out signals above the specified cutoff frequency.
-        high_pass: float or None, default=None
+        high_pass : float or None, default=None
             Filters out signals below the specified cutoff frequency.
-        parcel_approach: Dict[str, Dict], default={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
+        parcel_approach : Dict[str, Dict], default={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
             The approach to parcellate BOLD images. This should be a nested dictionary with the first key being the atlas name. Currently, only "Schaefer", "AAL", and "Custom" are supported.
 
-            - For "Schaefer", available options include n_rois, yeo_networks, and resolution_mm. Refer to Nilearn's datasets.fetch_atlas_schaefer_2018 for valid inputs.
-            - For "AAL", the only option is version. Refer to Nilearn's datasets.fetch_atlas_aal for valid inputs.
-            - For "Custom", the key must include a subkey called maps specifying the directory location of the parcellation Nifti file (e.g., {"Custom": {"maps": "/location/to/parcellation.nii.gz"}}).
-        use_confounds: bool, default=True
+                 - For "Schaefer", available subkeys include ``n_rois``, ``yeo_networks``, and ``resolution_mm``. Refer to Nilearn's documentation for ``datasets.fetch_atlas_schaefer_2018`` for valid inputs.
+                 - For "AAL", the only subkey is ``version``. Refer to Nilearns documentation for ``datasets.fetch_atlas_aal`` for valid inputs.
+                 - For "Custom", the key must include a subkey called maps specifying the directory location of the parcellation Nifti file.
+
+        use_confounds : bool, default=True
             Determines whether to use confounds when extracting timeseries.
-        confound_names: List[str] or None, default=None
+        confound_names : List[str] or None, default=None
             Specifies the names of confounds to use from confound files. If None, default confounds are used. Note, an asterisk ("*") can be used to find confound names that start with the term preceding the asterisk.
             For instance, "cosine*" will find all confound names in the confound files starting with "cosine".
-        fwhm: float or None, default=None
+        fwhm : float or None, default=None
             Applies spatial smoothing to data (in millimeters). Note that using parcellations already averages voxels within parcel boundaries, which can improve signal-to-noise ratio (SNR) assuming Gaussian noise distribution.
             However, smoothing may also blur parcel boundaries.
-        fd_threshold: float or None, default=None
+        fd_threshold : float or None, default=None
             Sets a threshold to remove frames after nuisance regression and timeseries extraction. This requires a column named framewise_displacement in the confounds dataframe and use_confounds set to True.
             Additionally, `framewise_displacement` should not need be specified in confound_names if using this parameter.
-        n_acompcor_separate: int or None, default=None
+        n_acompcor_separate : int or None, default=None
             Specifies the number of separate acompcor components derived from white-matter (WM) and cerebrospinal fluid (CSF) masks to use. For example, if set to 5, the first five components from the WM mask
             and the first five from the CSF mask will be used, totaling ten acompcor components. If this parameter is not None, any acompcor components listed in confound_names will be disregarded. To use acompcor
             components derived from combined masks (WM & CSF), leave this parameter as None and list the specific acompcors of interest in confound_names.
-        dummy_scans: int or None, default=None
+        dummy_scans : int or None, default=None
             Removes the first n volumes before extracting the timeseries.
+
+    Property
+    --------
+        space : str
+            The standard template space that the preprocessed BOLD data is registered to.
+        signal_clean_info : Dict[str]
+            Dictionary containing parameters for signal cleaning specified during initialization of the ``TimeseriesExtractor`` class. This 
+            information includes ``standardize``, ``detrend``, ``low_pass``, ``high_pass``, ``fwhm``, ``dummy_scans``, ``use_confounds``, ``n_compcor_separate``,
+            and ``fd_threshold``.
+        parcel_approach : Dict[str, Dict] 
+            Nested dictionary containing information about the parcellation. Can also be used as a setter. The structure is as follows:
+
+            If "Schaefer" or ""AAL" was specified during initialization of the ``TimeseriesExtractor`` class, then Nilearn's ``datasets.fetch_atlas_schaefer_2018``
+            and ``datasets.fetch_atlas_aal`` will be used to ontain the "maps" and the "labels"/"nodes". Then strin splitting is used on the "labels"/"nodes" to obtain the "regions"/"networks:
+
+            For "Schaefer", the code that obtains these elements is as follows:
+            ::
+
+                # Get atlas
+                fetched_schaefer = datasets.fetch_atlas_schaefer_2018(n_rois=parcel_approach["Schaefer"]["n_rois"], 
+                                                                    yeo_networks=parcel_approach["Schaefer"]["yeo_networks"], 
+                                                                    resolution_mm=parcel_approach["Schaefer"]["resolution_mm"])
+                parcel_approach["Schaefer"].update({"maps": fetched_schaefer.maps})
+                network_name = "7Networks_" if parcel_approach["Schaefer"]["yeo_networks"] == 7 else "17Networks_"
+                parcel_approach["Schaefer"].update({"nodes": [label.decode().split(network_name)[-1] for label in fetched_schaefer.labels]})
+                # Get node networks
+                parcel_approach["Schaefer"].update({"regions": list(dict.fromkeys([re.split("LH_|RH_", node)[-1].split("_")[0] for node in parcel_approach["Schaefer"]["nodes"]]))})
+
+            Hence, for "Schaefer" the structure will be as follows:
+            ::
+
+                {
+                    "Schaefer": 
+                    {
+                        "maps": "path/to/parcellation.nii.gz",
+                        "nodes": ["LH_Vis1", "LH_SomSot1", "RH_Vis1", "RH_Somsot1"],
+                        "regions": ["Vis", "SomSot"]
+                    }
+                }
+
+            For "AAL" string splitting, the code that obtains these elements is as follows:
+            ::
+
+                # Get atlas
+                fetched_aal = datasets.fetch_atlas_aal(version=parcel_approach["AAL"]["version"])
+                parcel_approach["AAL"].update({"maps": fetched_aal.maps})
+                parcel_approach["AAL"].update({"nodes": [label for label in fetched_aal.labels]})
+                # Get node networks
+                parcel_approach["AAL"].update({"regions": list(dict.fromkeys([node.split("_")[0] for node in parcel_approach["AAL"]["nodes"]]))})
+            
+            Hence, for "AAL" the structure will be as follows:
+            ::
+
+                {
+                    "AAL": 
+                    {
+                        "maps": "path/to/parcellation.nii.gz",
+                        "nodes": ["Precentral_L", "Precentral_R", "Frontal_Sup_L", "Frontal_Sup_R"],
+                        "regions": ["Precentral", "Frontal"]
+                    }
+                }
+                
+            If "Custom" is specified, only checks are done to ensure that the dictionary contains the proper subkeys such as "maps", "nodes", and "regions".
+            Unlike "Schaefer" and "AAL", "region" must be a nested dictionary specifying the name of the region as the first level key and the indices in the 
+            "nodes" list belonging to the "lh" and "rh" for that region. Refer to the structure example for "Custom" in the Notes for ``parcel_approach`` section below.
 
     Notes for ``confounds_names``
     -----------------------------
@@ -72,14 +137,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                           "rot_y", "rot_y_derivative1", "rot_z", "rot_z_derivative1", "a_comp_cor_00", 
                           "a_comp_cor_01", "a_comp_cor_02", "a_comp_cor_03", "a_comp_cor_04", "a_comp_cor_05"]
 
-    Notes for ``parcel_approach``
-    -----------------------------
+    Notes for using "Custom" ``parcel_approach``
+    --------------------------------------------
     If using a "Custom" parcellation approach, ensure each node in your dataset includes both left (lh) and right (rh) hemisphere versions. This function assumes that the background label is "zero".
     Do not add a background label in the "nodes" or "networks" key; the zero index should correspond to the first ID that is not zero.
 
     Custom Key Structure:
     ---------------------
-    - 'maps': Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g., .nii for NIfTI files). For plotting purposes, this key is not required.
+    - 'maps': Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g., .nii for NIfTI files). **This key is required for timeseries extraction**.
     - 'nodes': List of all node labels used in your study, arranged in the exact order they correspond to indices in your parcellation files.
       Each label should match the parcellation index it represents. For example, if the parcellation label "1" corresponds to the left hemisphere
       visual cortex area 1, then "LH_Vis1" should occupy the 0th index in this list. This ensures that data extraction and analysis accurately reflect the anatomical regions intended.
@@ -91,13 +156,29 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     The provided example demonstrates setting up a custom parcellation containing nodes for the visual network (Vis) and hippocampus regions:
     ::
 
-        parcel_approach = {"Custom": {"maps": "/location/to/parcellation.nii.gz",
-                             "nodes": ["LH_Vis1", "LH_Vis2", "LH_Hippocampus", "RH_Vis1", "RH_Vis2", "RH_Hippocampus"],
-                             "regions": {"Vis" : {"lh": [0,1],
-                                                  "rh": [3,4]},
-                                         "Hippocampus": {"lh": [2],
-                                                         "rh": [5]}}}}
-
+        parcel_approach = {
+            "Custom": {
+                "maps": "/location/to/parcellation.nii.gz",
+                "nodes": [
+                    "LH_Vis1",
+                    "LH_Vis2",
+                    "LH_Hippocampus",
+                    "RH_Vis1",
+                    "RH_Vis2",
+                    "RH_Hippocampus"
+                ],
+                "regions": {
+                    "Vis": {
+                        "lh": [0, 1],
+                        "rh": [3, 4]
+                    },
+                    "Hippocampus": {
+                        "lh": [2],
+                        "rh": [5]
+                    }
+                }
+            }
+        }
     """
     def __init__(self, space: str = "MNI152NLin2009cAsym", standardize: Union[bool, str]="zscore_sample", detrend: bool=True, low_pass: Optional[float]=None, 
                  high_pass: Optional[float]=None, parcel_approach: Dict[str, Dict]={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}, 
@@ -116,59 +197,84 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             self._signal_clean_info["confound_names"] = _check_confound_names(high_pass=high_pass, specified_confound_names=confound_names, n_acompcor_separate=n_acompcor_separate)
             self._signal_clean_info["fd_threshold"] = fd_threshold
 
-    def get_bold(self, bids_dir: Path, task: str, session: Optional[Union[int,str]]=None, runs: Optional[List[int]]=None, condition: Optional[str]=None, tr: Optional[Union[int, float]]=None, 
+    def get_bold(self, bids_dir: Union[str, os.PathLike], task: str, session: Optional[Union[int,str]]=None, runs: Optional[List[int]]=None, condition: Optional[str]=None, tr: Optional[Union[int, float]]=None, 
                  run_subjects: Optional[List[str]]=None, exclude_subjects: Optional[List[str]]= None, pipeline_name: Optional[str]=None, n_cores: Optional[int]=None, verbose: bool=True, flush_print: bool=False,
                  exclude_niftis: Optional[List[str]]=None) -> None: 
-        """Get Bold Data
+        """
+        **Get BOLD Data**
 
         Collects files needed to extract timeseries data from NIfTI files for BIDS-compliant datasets containing a derivatives folder. This function assumes that your BOLD data was preprocessed using a standard 
         preprocessing pipeline such as fMRIPrep.
 
         Parameters
         ----------
-        bids_dir: Path
-            Path to a BIDS compliant directory. 
-        task: str
-            Name of task to process.
-        session: int or None, default=None
-            Session to extract timeseries from. Only a single session can be extracted at a time. 
-        runs: List[int], default=None
-            List of run numbers to extract timeseries data from. Extracts all runs if unspecified. For instance, if only "run-0" and "run-1" should be extracted, then:
-            
-            ::
+            bids_dir : Path
+                Path to a BIDS compliant directory. 
+            task : str
+                Name of task to process.
+            session : int or None, default=None
+                Session to extract timeseries from. Only a single session can be extracted at a time. 
+            runs : List[int], default=None
+                List of run numbers to extract timeseries data from. Extracts all runs if unspecified. For instance, if only "run-0" and "run-1" should be extracted, then:
+                ::
 
-                 runs=[0,1]
-              
-        condition: str or None, default=None
-            Specific condition in the task to extract from. Only a single condition can be extracted at a time.
-        tr: int or float or None, default=None
-            Repetition time for task.
-        run_subjects: List[str] or None, default=None
-            List of subject IDs to process. Processes all subjects if None.
-        exclude_subjects: List[str] or None, default=None
-            List of subject IDs to exclude.  
-        pipeline_name: str or None, default=None
-            The name of the pipeline folder in the derivatives folder containing the preprocessed data. If None, BIDSLayout will use the name of dset_dir with derivatives=True. This parameter
-            should be used if there are multiple pipelines in the derivatives folder.
-        n_cores: int or None, default=None
-            The number of CPU cores to use for multiprocessing with joblib.
-        verbose: bool, default=True
-            Print subject-specific information such as confounds being extracted, and id and run of subject being processed during timeseries extraction.
-        flush_print: bool, default=False
-            Flush the printed subject-specific infomation produced during the timeseries extraction process.
-        exclude_niftis: List[str] or None, default=None
-            List of specific preprocessed NIfTI files to exclude, preventing their timeseries from being extracted. Used if there are specific runs across differnt participants that need to be
-            excluded.
+                    runs=[0,1]
+                
+            condition : str or None, default=None
+                Specific condition in the task to extract from. Only a single condition can be extracted at a time.
+            tr : int or float or None, default=None
+                Repetition time for task. If the tr is not specified, it will be extracted from the BOLD metadata files.
+            run_subjects : List[str] or None, default=None
+                List of subject IDs to process. Processes all subjects if None.
+            exclude_subjects : List[str] or None, default=None
+                List of subject IDs to exclude.  
+            pipeline_name : str or None, default=None
+                The name of the pipeline folder in the derivatives folder containing the preprocessed data. If None, BIDSLayout will use the name of dset_dir with derivatives=True. This parameter
+                should be used if there are multiple pipelines in the derivatives folder.
+            n_cores : int or None, default=None
+                The number of CPU cores to use for multiprocessing with ``joblib``.
+            verbose : bool, default=True
+                Print subject-specific information such as confounds being extracted, and id and run of subject being processed during timeseries extraction.
+            flush_print : bool, default=False
+                Flush the printed subject-specific infomation produced during the timeseries extraction process.
+            exclude_niftis : List[str] or None, default=None
+                List of specific preprocessed NIfTI files to exclude, preventing their timeseries from being extracted. Used if there are specific runs across differnt participants that need to be
+                excluded.
 
+        Property
+        --------
+            task_info : Dict[str]
+                Dictionary containing all task-related information such as ``task``, ``condition``, ``session``, ``runs``, and ``tr`` (if specified).
+            subject_ids : List[str]
+                A list containing all subject IDs that have retrieved from ``pybids`` and subjected to timeseries extraction.
+            n_cores : int
+                Number of cores used for multiprocessing with ``joblib``.
+            subject_timeseries : Dict[str]
+                Nested dictionary containing the subject ID, run ID, and the 2D numpy arrays for timeseries data. Can all be used as a setter. The structure is as follows:
+                
+                ::
+
+                    subject_timseries = {
+                            "101": {
+                                "run-0": np.array([timeseries]), # 2D array
+                                "run-1": np.array([timeseries]), # 2D array
+                                "run-2": np.array([timeseries]), # 2D array
+                            },
+                            "102": {
+                                "run-0": np.array([timeseries]), # 2D array
+                                "run-1": np.array([timeseries]), # 2D array
+                            }
+                        }
+                
         Note
         ----
-        This function stores the extracted timeseries as a nested dictionary and stores it in ``self.subject_timeseres``. The first level of the nested dictionary consists of the subject ID as a string, 
+        This method stores the extracted timeseries as a nested dictionary and stores it in ``self.subject_timeseres``. The first level of the nested dictionary consists of the subject ID as a string, 
         the second level consists of the run numbers in the form of 'run-#' (where # is the corresponding number of the run), and the last level must consist of the timeseries 
         (as a numpy array) associated with that run.
 
         Additionally, if your files do not specify a run number due to your subjects only having a single run, the run id key for the second level of the nested dictionary defaults to "run-0".
 
-        **This function cannot be used on Windows PCs.**
+        **This method cannot be used on Windows PCs since it relies on ``pybids``.**
         """
         import bids
         from joblib import cpu_count, delayed, Parallel
@@ -327,17 +433,18 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             self._subject_info[subj_id] = {"nifti_files": nifti_files, "event_files": event_files, "confound_files": confound_files, "confound_metadata_files": confound_metadata_files, "mask_files": mask_files,
                                            "tr": tr, "run_list": run_list}
 
-    def timeseries_to_pickle(self, output_dir: Path, file_name: Optional[str]=None) -> None:
-        """Save Bold Data
+    def timeseries_to_pickle(self, output_dir: Union[str, os.PathLike], file_name: Optional[str]=None) -> None:
+        """
+        **Save BOLD Data**
 
         Saves the timeseries dictionary obtained from running ``get_bold()`` as a pickle file.
 
         Parameters
         ----------
-        output_dir: Path
-            Directory to save to. The directory will be created if it does not exist.
-        file_name: str or None, default=None
-            Name of the file with or without the "pkl" extension.
+            output_dir : Path
+                Directory to save to. The directory will be created if it does not exist.
+            file_name : str or None, default=None
+                Name of the file with or without the "pkl" extension.
         """
         import joblib
 
@@ -354,40 +461,84 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             joblib.dump(self._subject_timeseries,f)
 
     def visualize_bold(self, subj_id: Union[int,str], run: int, roi_indx: Optional[Union[int, List[int]]]=None, region: Optional[str]=None, 
-                       show_figs: bool=True, output_dir: Optional[Path]=None, file_name: Optional[str]=None, **kwargs) -> None:
-        """Plot Bold Data
+                       show_figs: bool=True, output_dir: Optional[Union[str, os.PathLike]]=None, file_name: Optional[str]=None, **kwargs) -> None:
+        """
+        **Plot BOLD Data**
 
         Collects files needed to extract timeseries data from NIfTI files for BIDS-compliant datasets.
 
         Parameters
         ----------
-        subj_id: str pr int
-            The subject ID.
-        run: int
-            The run to plot.
-        roi_indx: int or List[int] or None, default=None
-            The indices of the parcellation nodes to plot. See self.node_indices for valid node names and indices.
-        region: str or None, default=None
-            The region of the parcellation to plot. If not None, all nodes in the specified region will be averaged then plotted. See "regions" in ``self.parcel_approach``.
-            for valid regions names.
-        show_figs: bool, default=True
-            Whether to show the figures.
-        output_dir: Path or None, default=None
-            Directory to save to. The directory will be created if it does not exist.
-        file_name: str or None, default=None
-            Name of the file without the extension.
-        **kwargs: Dict
-            Keyword arguments used when saving figures. Valid keywords include:
+            subj_id : str pr int
+                The subject ID.
+            run : int
+                The run to plot.
+            roi_indx : int or List[int] or None, default=None
+                The indices of the parcellation nodes to plot. See self.node_indices for valid node names and indices.
+            region : str or None, default=None
+                The region of the parcellation to plot. If not None, all nodes in the specified region will be averaged then plotted. See "regions" in ``self.parcel_approach``.
+                for valid regions names.
+            show_figs : bool, default=True
+                Whether to show the figures.
+            output_dir : Path or None, default=None
+                Directory to save to. The directory will be created if it does not exist.
+            file_name : str or None, default=None
+                Name of the file without the extension.
+            kwargs : Dict
+                Keyword arguments used when saving figures. Valid keywords include:
 
-            - "dpi": int, default=300
-                Dots per inch for the figure. Default is 300 if ``output_dir`` is provided and ``dpi`` is not specified.
-            - "figsize": tuple, default=(11, 5)
-                Size of the figure in inches. Default is (11, 5) if ``figsize`` is not specified.
-
+                - dpi : int, default=300
+                    Dots per inch for the figure. Default is 300 if ``output_dir`` is provided and ``dpi`` is not specified.
+                - figsize : Tuple, default=(11, 5)
+                    Size of the figure in inches. Default is (11, 5) if ``figsize`` is not specified.
+        
         Returns
         -------
-        matplotlib.Figure
-            An instance of a matplotlib figure.
+            matplotlib.Figure
+                An instance of a matplotlib figure.
+            
+        Notes for using "Custom" ``parcel_approach``
+        ---------------------------------------------
+        If using a "Custom" parcellation approach, ensure each node in your dataset includes both left (lh) and right (rh) hemisphere versions. This function assumes that the background label is "zero".
+        Do not add a background label in the "nodes" or "networks" key; the zero index should correspond to the first ID that is not zero.
+
+        Custom Key Structure:
+        ---------------------
+        - 'maps': Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g., .nii for NIfTI files). This key is not required for this method.
+        - 'nodes': List of all node labels used in your study, arranged in the exact order they correspond to indices in your parcellation files.
+          Each label should match the parcellation index it represents. For example, if the parcellation label "1" corresponds to the left hemisphere
+          visual cortex area 1, then "LH_Vis1" should occupy the 0th index in this list. This ensures that data extraction and analysis accurately reflect the anatomical regions intended.
+          **This key is required for plotting.**
+        - 'regions': Dictionary defining major brain regions. Each region should list node indices under "lh" and "rh" to specify left and right hemisphere nodes. **This key is required for plotting.**
+        
+        Example
+        --------
+        The provided example demonstrates setting up a custom parcellation containing nodes for the visual network (Vis) and hippocampus regions:
+        ::
+
+            parcel_approach = {
+                "Custom": {
+                    "maps": "/location/to/parcellation.nii.gz",
+                    "nodes": [
+                        "LH_Vis1",
+                        "LH_Vis2",
+                        "LH_Hippocampus",
+                        "RH_Vis1",
+                        "RH_Vis2",
+                        "RH_Hippocampus"
+                    ],
+                    "regions": {
+                        "Vis": {
+                            "lh": [0, 1],
+                            "rh": [3, 4]
+                        },
+                        "Hippocampus": {
+                            "lh": [2],
+                            "rh": [5]
+                        }
+                    }
+                }
+            }
         """
     
         import matplotlib.pyplot as plt, numpy as np

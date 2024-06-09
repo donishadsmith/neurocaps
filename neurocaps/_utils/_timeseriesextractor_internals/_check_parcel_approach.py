@@ -15,7 +15,7 @@ def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
         raise ValueError(f"Please include a valid `parcel_approach` in one of the following dictionary formats for 'Schaefer' or 'AAL' {valid_parcel_dict}")
     
     if len(parcel_approach.keys()) > 1:
-        raise ValueError(f"Only one parcellation approach can be selected from the following valid options: {valid_parcel_dict.keys()}.\nExample format of `parcel_approach`: {valid_parcel_dict}")
+        raise ValueError(f"Only one parcellation approach can be selected from the following valid options: {valid_parcel_dict.keys()}. Example format of `parcel_approach`: {valid_parcel_dict}")
     
     if "Schaefer" not in parcel_approach.keys() and "AAL" not in parcel_approach.keys() and "Custom" not in parcel_approach.keys():
         raise ValueError(f"Please include a valid `parcel_approach` in one of the following formats for 'Schaefer', 'AAL', or 'Custom': {valid_parcel_dict}")
@@ -38,7 +38,8 @@ def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
                                                               yeo_networks=parcel_approach["Schaefer"]["yeo_networks"], 
                                                               resolution_mm=parcel_approach["Schaefer"]["resolution_mm"])
         parcel_approach["Schaefer"].update({"maps": fetched_schaefer.maps})
-        parcel_approach["Schaefer"].update({"nodes": [label.decode().split("7Networks_")[-1]  for label in fetched_schaefer.labels]})
+        network_name = "7Networks_" if parcel_approach["Schaefer"]["yeo_networks"] == 7 else "17Networks_"
+        parcel_approach["Schaefer"].update({"nodes": [label.decode().split(network_name)[-1] for label in fetched_schaefer.labels]})
         # Get node networks
         parcel_approach["Schaefer"].update({"regions": list(dict.fromkeys([re.split("LH_|RH_", node)[-1].split("_")[0] for node in parcel_approach["Schaefer"]["nodes"]]))})
 
@@ -56,7 +57,7 @@ def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
     
     if "Custom" in parcel_approach.keys():
         if call  == "TimeseriesExtractor" and "maps" not in parcel_approach["Custom"].keys():
-            raise ValueError(f"For `Custom` parcel_approach, a nested key-value pair containing the key 'maps' with the value being a string specifying the location of the parcellation is needed.\nExample: {{'Custom' : valid_parcel_dict['Custom']}}")
+            raise ValueError(f"For `Custom` parcel_approach, a nested key-value pair containing the key 'maps' with the value being a string specifying the location of the parcellation is needed. Example: {valid_parcel_dict['Custom']}")
         check_subkeys = ["nodes" in parcel_approach["Custom"].keys(), "regions" in parcel_approach["Custom"].keys()]
         if not all(check_subkeys):
             missing_subkeys = [["nodes", "regions"][x] for x,y in enumerate(check_subkeys) if y == False]

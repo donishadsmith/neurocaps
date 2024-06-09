@@ -75,52 +75,117 @@
   <h1>Source code for neurocaps.extraction.timeseriesextractor</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">json</span><span class="o">,</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">re</span><span class="o">,</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span> <span class="nn">.._utils</span> <span class="kn">import</span> <span class="n">_TimeseriesExtractorGetter</span><span class="p">,</span> <span class="n">_check_kwargs</span><span class="p">,</span> <span class="n">_check_confound_names</span><span class="p">,</span> <span class="n">_check_parcel_approach</span><span class="p">,</span> <span class="n">_extract_timeseries</span>
 
 <div class="viewcode-block" id="TimeseriesExtractor">
 <a class="viewcode-back" href="../../../generated/neurocaps.extraction.TimeseriesExtractor.html#neurocaps.extraction.TimeseriesExtractor">[docs]</a>
 <span class="k">class</span> <span class="nc">TimeseriesExtractor</span><span class="p">(</span><span class="n">_TimeseriesExtractorGetter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Timeseries Extractor Class</span>
+<span class="sd">    **Timeseries Extractor Class**</span>
 
 <span class="sd">    Initializes the TimeseriesExtractor class.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">        space: str, default=&quot;MNI152NLin2009cAsym&quot;</span>
+<span class="sd">        space : str, default=&quot;MNI152NLin2009cAsym&quot;</span>
 <span class="sd">            The standard template space that the preprocessed bold data is registered to.</span>
-<span class="sd">        standardize: bool or str, default=&quot;zscore_sample&quot;</span>
+<span class="sd">        standardize : bool or str, default=&quot;zscore_sample&quot;</span>
 <span class="sd">            Determines whether to standardize the timeseries. Refer to Nilearn&#39;s NiftiLabelsMasker for available options.</span>
-<span class="sd">        detrend: bool, default=True</span>
+<span class="sd">        detrend : bool, default=True</span>
 <span class="sd">            Detrends the timeseries during extraction.</span>
-<span class="sd">        low_pass: float or None, default=None</span>
+<span class="sd">        low_pass : float or None, default=None</span>
 <span class="sd">            Filters out signals above the specified cutoff frequency.</span>
-<span class="sd">        high_pass: float or None, default=None</span>
+<span class="sd">        high_pass : float or None, default=None</span>
 <span class="sd">            Filters out signals below the specified cutoff frequency.</span>
-<span class="sd">        parcel_approach: Dict[str, Dict], default={&quot;Schaefer&quot;: {&quot;n_rois&quot;: 400, &quot;yeo_networks&quot;: 7, &quot;resolution_mm&quot;: 1}}</span>
+<span class="sd">        parcel_approach : Dict[str, Dict], default={&quot;Schaefer&quot;: {&quot;n_rois&quot;: 400, &quot;yeo_networks&quot;: 7, &quot;resolution_mm&quot;: 1}}</span>
 <span class="sd">            The approach to parcellate BOLD images. This should be a nested dictionary with the first key being the atlas name. Currently, only &quot;Schaefer&quot;, &quot;AAL&quot;, and &quot;Custom&quot; are supported.</span>
 
-<span class="sd">            - For &quot;Schaefer&quot;, available options include n_rois, yeo_networks, and resolution_mm. Refer to Nilearn&#39;s datasets.fetch_atlas_schaefer_2018 for valid inputs.</span>
-<span class="sd">            - For &quot;AAL&quot;, the only option is version. Refer to Nilearn&#39;s datasets.fetch_atlas_aal for valid inputs.</span>
-<span class="sd">            - For &quot;Custom&quot;, the key must include a subkey called maps specifying the directory location of the parcellation Nifti file (e.g., {&quot;Custom&quot;: {&quot;maps&quot;: &quot;/location/to/parcellation.nii.gz&quot;}}).</span>
-<span class="sd">        use_confounds: bool, default=True</span>
+<span class="sd">                 - For &quot;Schaefer&quot;, available subkeys include ``n_rois``, ``yeo_networks``, and ``resolution_mm``. Refer to Nilearn&#39;s documentation for ``datasets.fetch_atlas_schaefer_2018`` for valid inputs.</span>
+<span class="sd">                 - For &quot;AAL&quot;, the only subkey is ``version``. Refer to Nilearns documentation for ``datasets.fetch_atlas_aal`` for valid inputs.</span>
+<span class="sd">                 - For &quot;Custom&quot;, the key must include a subkey called maps specifying the directory location of the parcellation Nifti file.</span>
+
+<span class="sd">        use_confounds : bool, default=True</span>
 <span class="sd">            Determines whether to use confounds when extracting timeseries.</span>
-<span class="sd">        confound_names: List[str] or None, default=None</span>
+<span class="sd">        confound_names : List[str] or None, default=None</span>
 <span class="sd">            Specifies the names of confounds to use from confound files. If None, default confounds are used. Note, an asterisk (&quot;*&quot;) can be used to find confound names that start with the term preceding the asterisk.</span>
 <span class="sd">            For instance, &quot;cosine*&quot; will find all confound names in the confound files starting with &quot;cosine&quot;.</span>
-<span class="sd">        fwhm: float or None, default=None</span>
+<span class="sd">        fwhm : float or None, default=None</span>
 <span class="sd">            Applies spatial smoothing to data (in millimeters). Note that using parcellations already averages voxels within parcel boundaries, which can improve signal-to-noise ratio (SNR) assuming Gaussian noise distribution.</span>
 <span class="sd">            However, smoothing may also blur parcel boundaries.</span>
-<span class="sd">        fd_threshold: float or None, default=None</span>
+<span class="sd">        fd_threshold : float or None, default=None</span>
 <span class="sd">            Sets a threshold to remove frames after nuisance regression and timeseries extraction. This requires a column named framewise_displacement in the confounds dataframe and use_confounds set to True.</span>
 <span class="sd">            Additionally, `framewise_displacement` should not need be specified in confound_names if using this parameter.</span>
-<span class="sd">        n_acompcor_separate: int or None, default=None</span>
+<span class="sd">        n_acompcor_separate : int or None, default=None</span>
 <span class="sd">            Specifies the number of separate acompcor components derived from white-matter (WM) and cerebrospinal fluid (CSF) masks to use. For example, if set to 5, the first five components from the WM mask</span>
 <span class="sd">            and the first five from the CSF mask will be used, totaling ten acompcor components. If this parameter is not None, any acompcor components listed in confound_names will be disregarded. To use acompcor</span>
 <span class="sd">            components derived from combined masks (WM &amp; CSF), leave this parameter as None and list the specific acompcors of interest in confound_names.</span>
-<span class="sd">        dummy_scans: int or None, default=None</span>
+<span class="sd">        dummy_scans : int or None, default=None</span>
 <span class="sd">            Removes the first n volumes before extracting the timeseries.</span>
+
+<span class="sd">    Property</span>
+<span class="sd">    --------</span>
+<span class="sd">        space : str</span>
+<span class="sd">            The standard template space that the preprocessed BOLD data is registered to.</span>
+<span class="sd">        signal_clean_info : Dict[str]</span>
+<span class="sd">            Dictionary containing parameters for signal cleaning specified during initialization of the ``TimeseriesExtractor`` class. This </span>
+<span class="sd">            information includes ``standardize``, ``detrend``, ``low_pass``, ``high_pass``, ``fwhm``, ``dummy_scans``, ``use_confounds``, ``n_compcor_separate``,</span>
+<span class="sd">            and ``fd_threshold``.</span>
+<span class="sd">        parcel_approach : Dict[str, Dict] </span>
+<span class="sd">            Nested dictionary containing information about the parcellation. Can also be used as a setter. The structure is as follows:</span>
+
+<span class="sd">            If &quot;Schaefer&quot; or &quot;&quot;AAL&quot; was specified during initialization of the ``TimeseriesExtractor`` class, then Nilearn&#39;s ``datasets.fetch_atlas_schaefer_2018``</span>
+<span class="sd">            and ``datasets.fetch_atlas_aal`` will be used to ontain the &quot;maps&quot; and the &quot;labels&quot;/&quot;nodes&quot;. Then strin splitting is used on the &quot;labels&quot;/&quot;nodes&quot; to obtain the &quot;regions&quot;/&quot;networks:</span>
+
+<span class="sd">            For &quot;Schaefer&quot;, the code that obtains these elements is as follows:</span>
+<span class="sd">            ::</span>
+
+<span class="sd">                # Get atlas</span>
+<span class="sd">                fetched_schaefer = datasets.fetch_atlas_schaefer_2018(n_rois=parcel_approach[&quot;Schaefer&quot;][&quot;n_rois&quot;], </span>
+<span class="sd">                                                                    yeo_networks=parcel_approach[&quot;Schaefer&quot;][&quot;yeo_networks&quot;], </span>
+<span class="sd">                                                                    resolution_mm=parcel_approach[&quot;Schaefer&quot;][&quot;resolution_mm&quot;])</span>
+<span class="sd">                parcel_approach[&quot;Schaefer&quot;].update({&quot;maps&quot;: fetched_schaefer.maps})</span>
+<span class="sd">                network_name = &quot;7Networks_&quot; if parcel_approach[&quot;Schaefer&quot;][&quot;yeo_networks&quot;] == 7 else &quot;17Networks_&quot;</span>
+<span class="sd">                parcel_approach[&quot;Schaefer&quot;].update({&quot;nodes&quot;: [label.decode().split(network_name)[-1] for label in fetched_schaefer.labels]})</span>
+<span class="sd">                # Get node networks</span>
+<span class="sd">                parcel_approach[&quot;Schaefer&quot;].update({&quot;regions&quot;: list(dict.fromkeys([re.split(&quot;LH_|RH_&quot;, node)[-1].split(&quot;_&quot;)[0] for node in parcel_approach[&quot;Schaefer&quot;][&quot;nodes&quot;]]))})</span>
+
+<span class="sd">            Hence, for &quot;Schaefer&quot; the structure will be as follows:</span>
+<span class="sd">            ::</span>
+
+<span class="sd">                {</span>
+<span class="sd">                    &quot;Schaefer&quot;: </span>
+<span class="sd">                    {</span>
+<span class="sd">                        &quot;maps&quot;: &quot;path/to/parcellation.nii.gz&quot;,</span>
+<span class="sd">                        &quot;nodes&quot;: [&quot;LH_Vis1&quot;, &quot;LH_SomSot1&quot;, &quot;RH_Vis1&quot;, &quot;RH_Somsot1&quot;],</span>
+<span class="sd">                        &quot;regions&quot;: [&quot;Vis&quot;, &quot;SomSot&quot;]</span>
+<span class="sd">                    }</span>
+<span class="sd">                }</span>
+
+<span class="sd">            For &quot;AAL&quot; string splitting, the code that obtains these elements is as follows:</span>
+<span class="sd">            ::</span>
+
+<span class="sd">                # Get atlas</span>
+<span class="sd">                fetched_aal = datasets.fetch_atlas_aal(version=parcel_approach[&quot;AAL&quot;][&quot;version&quot;])</span>
+<span class="sd">                parcel_approach[&quot;AAL&quot;].update({&quot;maps&quot;: fetched_aal.maps})</span>
+<span class="sd">                parcel_approach[&quot;AAL&quot;].update({&quot;nodes&quot;: [label for label in fetched_aal.labels]})</span>
+<span class="sd">                # Get node networks</span>
+<span class="sd">                parcel_approach[&quot;AAL&quot;].update({&quot;regions&quot;: list(dict.fromkeys([node.split(&quot;_&quot;)[0] for node in parcel_approach[&quot;AAL&quot;][&quot;nodes&quot;]]))})</span>
+<span class="sd">            </span>
+<span class="sd">            Hence, for &quot;AAL&quot; the structure will be as follows:</span>
+<span class="sd">            ::</span>
+
+<span class="sd">                {</span>
+<span class="sd">                    &quot;AAL&quot;: </span>
+<span class="sd">                    {</span>
+<span class="sd">                        &quot;maps&quot;: &quot;path/to/parcellation.nii.gz&quot;,</span>
+<span class="sd">                        &quot;nodes&quot;: [&quot;Precentral_L&quot;, &quot;Precentral_R&quot;, &quot;Frontal_Sup_L&quot;, &quot;Frontal_Sup_R&quot;],</span>
+<span class="sd">                        &quot;regions&quot;: [&quot;Precentral&quot;, &quot;Frontal&quot;]</span>
+<span class="sd">                    }</span>
+<span class="sd">                }</span>
+<span class="sd">                </span>
+<span class="sd">            If &quot;Custom&quot; is specified, only checks are done to ensure that the dictionary contains the proper subkeys such as &quot;maps&quot;, &quot;nodes&quot;, and &quot;regions&quot;.</span>
+<span class="sd">            Unlike &quot;Schaefer&quot; and &quot;AAL&quot;, &quot;region&quot; must be a nested dictionary specifying the name of the region as the first level key and the indices in the </span>
+<span class="sd">            &quot;nodes&quot; list belonging to the &quot;lh&quot; and &quot;rh&quot; for that region. Refer to the structure example for &quot;Custom&quot; in the Notes for ``parcel_approach`` section below.</span>
 
 <span class="sd">    Notes for ``confounds_names``</span>
 <span class="sd">    -----------------------------</span>
@@ -149,14 +214,14 @@
 <span class="sd">                          &quot;rot_y&quot;, &quot;rot_y_derivative1&quot;, &quot;rot_z&quot;, &quot;rot_z_derivative1&quot;, &quot;a_comp_cor_00&quot;, </span>
 <span class="sd">                          &quot;a_comp_cor_01&quot;, &quot;a_comp_cor_02&quot;, &quot;a_comp_cor_03&quot;, &quot;a_comp_cor_04&quot;, &quot;a_comp_cor_05&quot;]</span>
 
-<span class="sd">    Notes for ``parcel_approach``</span>
-<span class="sd">    -----------------------------</span>
+<span class="sd">    Notes for using &quot;Custom&quot; ``parcel_approach``</span>
+<span class="sd">    --------------------------------------------</span>
 <span class="sd">    If using a &quot;Custom&quot; parcellation approach, ensure each node in your dataset includes both left (lh) and right (rh) hemisphere versions. This function assumes that the background label is &quot;zero&quot;.</span>
 <span class="sd">    Do not add a background label in the &quot;nodes&quot; or &quot;networks&quot; key; the zero index should correspond to the first ID that is not zero.</span>
 
 <span class="sd">    Custom Key Structure:</span>
 <span class="sd">    ---------------------</span>
-<span class="sd">    - &#39;maps&#39;: Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g., .nii for NIfTI files). For plotting purposes, this key is not required.</span>
+<span class="sd">    - &#39;maps&#39;: Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g., .nii for NIfTI files). **This key is required for timeseries extraction**.</span>
 <span class="sd">    - &#39;nodes&#39;: List of all node labels used in your study, arranged in the exact order they correspond to indices in your parcellation files.</span>
 <span class="sd">      Each label should match the parcellation index it represents. For example, if the parcellation label &quot;1&quot; corresponds to the left hemisphere</span>
 <span class="sd">      visual cortex area 1, then &quot;LH_Vis1&quot; should occupy the 0th index in this list. This ensures that data extraction and analysis accurately reflect the anatomical regions intended.</span>
@@ -168,13 +233,29 @@
 <span class="sd">    The provided example demonstrates setting up a custom parcellation containing nodes for the visual network (Vis) and hippocampus regions:</span>
 <span class="sd">    ::</span>
 
-<span class="sd">        parcel_approach = {&quot;Custom&quot;: {&quot;maps&quot;: &quot;/location/to/parcellation.nii.gz&quot;,</span>
-<span class="sd">                             &quot;nodes&quot;: [&quot;LH_Vis1&quot;, &quot;LH_Vis2&quot;, &quot;LH_Hippocampus&quot;, &quot;RH_Vis1&quot;, &quot;RH_Vis2&quot;, &quot;RH_Hippocampus&quot;],</span>
-<span class="sd">                             &quot;regions&quot;: {&quot;Vis&quot; : {&quot;lh&quot;: [0,1],</span>
-<span class="sd">                                                  &quot;rh&quot;: [3,4]},</span>
-<span class="sd">                                         &quot;Hippocampus&quot;: {&quot;lh&quot;: [2],</span>
-<span class="sd">                                                         &quot;rh&quot;: [5]}}}}</span>
-
+<span class="sd">        parcel_approach = {</span>
+<span class="sd">            &quot;Custom&quot;: {</span>
+<span class="sd">                &quot;maps&quot;: &quot;/location/to/parcellation.nii.gz&quot;,</span>
+<span class="sd">                &quot;nodes&quot;: [</span>
+<span class="sd">                    &quot;LH_Vis1&quot;,</span>
+<span class="sd">                    &quot;LH_Vis2&quot;,</span>
+<span class="sd">                    &quot;LH_Hippocampus&quot;,</span>
+<span class="sd">                    &quot;RH_Vis1&quot;,</span>
+<span class="sd">                    &quot;RH_Vis2&quot;,</span>
+<span class="sd">                    &quot;RH_Hippocampus&quot;</span>
+<span class="sd">                ],</span>
+<span class="sd">                &quot;regions&quot;: {</span>
+<span class="sd">                    &quot;Vis&quot;: {</span>
+<span class="sd">                        &quot;lh&quot;: [0, 1],</span>
+<span class="sd">                        &quot;rh&quot;: [3, 4]</span>
+<span class="sd">                    },</span>
+<span class="sd">                    &quot;Hippocampus&quot;: {</span>
+<span class="sd">                        &quot;lh&quot;: [2],</span>
+<span class="sd">                        &quot;rh&quot;: [5]</span>
+<span class="sd">                    }</span>
+<span class="sd">                }</span>
+<span class="sd">            }</span>
+<span class="sd">        }</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">space</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;MNI152NLin2009cAsym&quot;</span><span class="p">,</span> <span class="n">standardize</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span><span class="o">=</span><span class="s2">&quot;zscore_sample&quot;</span><span class="p">,</span> <span class="n">detrend</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">low_pass</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
                  <span class="n">high_pass</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parcel_approach</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Schaefer&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;n_rois&quot;</span><span class="p">:</span> <span class="mi">400</span><span class="p">,</span> <span class="s2">&quot;yeo_networks&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span> <span class="s2">&quot;resolution_mm&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}},</span> 
@@ -195,59 +276,84 @@
 
 <div class="viewcode-block" id="TimeseriesExtractor.get_bold">
 <a class="viewcode-back" href="../../../generated/neurocaps.extraction.TimeseriesExtractor.html#neurocaps.extraction.TimeseriesExtractor.get_bold">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_bold</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bids_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">session</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span><span class="nb">str</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">runs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">condition</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tr</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+    <span class="k">def</span> <span class="nf">get_bold</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bids_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">],</span> <span class="n">task</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">session</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span><span class="nb">str</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">runs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">condition</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tr</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
                  <span class="n">run_subjects</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude_subjects</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span><span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">pipeline_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_cores</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">flush_print</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                  <span class="n">exclude_niftis</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> 
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get Bold Data</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        **Get BOLD Data**</span>
 
 <span class="sd">        Collects files needed to extract timeseries data from NIfTI files for BIDS-compliant datasets containing a derivatives folder. This function assumes that your BOLD data was preprocessed using a standard </span>
 <span class="sd">        preprocessing pipeline such as fMRIPrep.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        bids_dir: Path</span>
-<span class="sd">            Path to a BIDS compliant directory. </span>
-<span class="sd">        task: str</span>
-<span class="sd">            Name of task to process.</span>
-<span class="sd">        session: int or None, default=None</span>
-<span class="sd">            Session to extract timeseries from. Only a single session can be extracted at a time. </span>
-<span class="sd">        runs: List[int], default=None</span>
-<span class="sd">            List of run numbers to extract timeseries data from. Extracts all runs if unspecified. For instance, if only &quot;run-0&quot; and &quot;run-1&quot; should be extracted, then:</span>
-<span class="sd">            </span>
-<span class="sd">            ::</span>
+<span class="sd">            bids_dir : Path</span>
+<span class="sd">                Path to a BIDS compliant directory. </span>
+<span class="sd">            task : str</span>
+<span class="sd">                Name of task to process.</span>
+<span class="sd">            session : int or None, default=None</span>
+<span class="sd">                Session to extract timeseries from. Only a single session can be extracted at a time. </span>
+<span class="sd">            runs : List[int], default=None</span>
+<span class="sd">                List of run numbers to extract timeseries data from. Extracts all runs if unspecified. For instance, if only &quot;run-0&quot; and &quot;run-1&quot; should be extracted, then:</span>
+<span class="sd">                ::</span>
 
-<span class="sd">                 runs=[0,1]</span>
-<span class="sd">              </span>
-<span class="sd">        condition: str or None, default=None</span>
-<span class="sd">            Specific condition in the task to extract from. Only a single condition can be extracted at a time.</span>
-<span class="sd">        tr: int or float or None, default=None</span>
-<span class="sd">            Repetition time for task.</span>
-<span class="sd">        run_subjects: List[str] or None, default=None</span>
-<span class="sd">            List of subject IDs to process. Processes all subjects if None.</span>
-<span class="sd">        exclude_subjects: List[str] or None, default=None</span>
-<span class="sd">            List of subject IDs to exclude.  </span>
-<span class="sd">        pipeline_name: str or None, default=None</span>
-<span class="sd">            The name of the pipeline folder in the derivatives folder containing the preprocessed data. If None, BIDSLayout will use the name of dset_dir with derivatives=True. This parameter</span>
-<span class="sd">            should be used if there are multiple pipelines in the derivatives folder.</span>
-<span class="sd">        n_cores: int or None, default=None</span>
-<span class="sd">            The number of CPU cores to use for multiprocessing with joblib.</span>
-<span class="sd">        verbose: bool, default=True</span>
-<span class="sd">            Print subject-specific information such as confounds being extracted, and id and run of subject being processed during timeseries extraction.</span>
-<span class="sd">        flush_print: bool, default=False</span>
-<span class="sd">            Flush the printed subject-specific infomation produced during the timeseries extraction process.</span>
-<span class="sd">        exclude_niftis: List[str] or None, default=None</span>
-<span class="sd">            List of specific preprocessed NIfTI files to exclude, preventing their timeseries from being extracted. Used if there are specific runs across differnt participants that need to be</span>
-<span class="sd">            excluded.</span>
+<span class="sd">                    runs=[0,1]</span>
+<span class="sd">                </span>
+<span class="sd">            condition : str or None, default=None</span>
+<span class="sd">                Specific condition in the task to extract from. Only a single condition can be extracted at a time.</span>
+<span class="sd">            tr : int or float or None, default=None</span>
+<span class="sd">                Repetition time for task. If the tr is not specified, it will be extracted from the BOLD metadata files.</span>
+<span class="sd">            run_subjects : List[str] or None, default=None</span>
+<span class="sd">                List of subject IDs to process. Processes all subjects if None.</span>
+<span class="sd">            exclude_subjects : List[str] or None, default=None</span>
+<span class="sd">                List of subject IDs to exclude.  </span>
+<span class="sd">            pipeline_name : str or None, default=None</span>
+<span class="sd">                The name of the pipeline folder in the derivatives folder containing the preprocessed data. If None, BIDSLayout will use the name of dset_dir with derivatives=True. This parameter</span>
+<span class="sd">                should be used if there are multiple pipelines in the derivatives folder.</span>
+<span class="sd">            n_cores : int or None, default=None</span>
+<span class="sd">                The number of CPU cores to use for multiprocessing with ``joblib``.</span>
+<span class="sd">            verbose : bool, default=True</span>
+<span class="sd">                Print subject-specific information such as confounds being extracted, and id and run of subject being processed during timeseries extraction.</span>
+<span class="sd">            flush_print : bool, default=False</span>
+<span class="sd">                Flush the printed subject-specific infomation produced during the timeseries extraction process.</span>
+<span class="sd">            exclude_niftis : List[str] or None, default=None</span>
+<span class="sd">                List of specific preprocessed NIfTI files to exclude, preventing their timeseries from being extracted. Used if there are specific runs across differnt participants that need to be</span>
+<span class="sd">                excluded.</span>
 
+<span class="sd">        Property</span>
+<span class="sd">        --------</span>
+<span class="sd">            task_info : Dict[str]</span>
+<span class="sd">                Dictionary containing all task-related information such as ``task``, ``condition``, ``session``, ``runs``, and ``tr`` (if specified).</span>
+<span class="sd">            subject_ids : List[str]</span>
+<span class="sd">                A list containing all subject IDs that have retrieved from ``pybids`` and subjected to timeseries extraction.</span>
+<span class="sd">            n_cores : int</span>
+<span class="sd">                Number of cores used for multiprocessing with ``joblib``.</span>
+<span class="sd">            subject_timeseries : Dict[str]</span>
+<span class="sd">                Nested dictionary containing the subject ID, run ID, and the 2D numpy arrays for timeseries data. Can all be used as a setter. The structure is as follows:</span>
+<span class="sd">                </span>
+<span class="sd">                ::</span>
+
+<span class="sd">                    subject_timseries = {</span>
+<span class="sd">                            &quot;101&quot;: {</span>
+<span class="sd">                                &quot;run-0&quot;: np.array([timeseries]), # 2D array</span>
+<span class="sd">                                &quot;run-1&quot;: np.array([timeseries]), # 2D array</span>
+<span class="sd">                                &quot;run-2&quot;: np.array([timeseries]), # 2D array</span>
+<span class="sd">                            },</span>
+<span class="sd">                            &quot;102&quot;: {</span>
+<span class="sd">                                &quot;run-0&quot;: np.array([timeseries]), # 2D array</span>
+<span class="sd">                                &quot;run-1&quot;: np.array([timeseries]), # 2D array</span>
+<span class="sd">                            }</span>
+<span class="sd">                        }</span>
+<span class="sd">                </span>
 <span class="sd">        Note</span>
 <span class="sd">        ----</span>
-<span class="sd">        This function stores the extracted timeseries as a nested dictionary and stores it in ``self.subject_timeseres``. The first level of the nested dictionary consists of the subject ID as a string, </span>
+<span class="sd">        This method stores the extracted timeseries as a nested dictionary and stores it in ``self.subject_timeseres``. The first level of the nested dictionary consists of the subject ID as a string, </span>
 <span class="sd">        the second level consists of the run numbers in the form of &#39;run-#&#39; (where # is the corresponding number of the run), and the last level must consist of the timeseries </span>
 <span class="sd">        (as a numpy array) associated with that run.</span>
 
 <span class="sd">        Additionally, if your files do not specify a run number due to your subjects only having a single run, the run id key for the second level of the nested dictionary defaults to &quot;run-0&quot;.</span>
 
-<span class="sd">        **This function cannot be used on Windows PCs.**</span>
+<span class="sd">        **This method cannot be used on Windows PCs since it relies on ``pybids``.**</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">import</span> <span class="nn">bids</span>
         <span class="kn">from</span> <span class="nn">joblib</span> <span class="kn">import</span> <span class="n">cpu_count</span><span class="p">,</span> <span class="n">delayed</span><span class="p">,</span> <span class="n">Parallel</span>
@@ -409,17 +515,18 @@
 
 <div class="viewcode-block" id="TimeseriesExtractor.timeseries_to_pickle">
 <a class="viewcode-back" href="../../../generated/neurocaps.extraction.TimeseriesExtractor.html#neurocaps.extraction.TimeseriesExtractor.timeseries_to_pickle">[docs]</a>
-    <span class="k">def</span> <span class="nf">timeseries_to_pickle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">file_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Save Bold Data</span>
+    <span class="k">def</span> <span class="nf">timeseries_to_pickle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">],</span> <span class="n">file_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        **Save BOLD Data**</span>
 
 <span class="sd">        Saves the timeseries dictionary obtained from running ``get_bold()`` as a pickle file.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        output_dir: Path</span>
-<span class="sd">            Directory to save to. The directory will be created if it does not exist.</span>
-<span class="sd">        file_name: str or None, default=None</span>
-<span class="sd">            Name of the file with or without the &quot;pkl&quot; extension.</span>
+<span class="sd">            output_dir : Path</span>
+<span class="sd">                Directory to save to. The directory will be created if it does not exist.</span>
+<span class="sd">            file_name : str or None, default=None</span>
+<span class="sd">                Name of the file with or without the &quot;pkl&quot; extension.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">import</span> <span class="nn">joblib</span>
 
@@ -439,40 +546,84 @@
 <div class="viewcode-block" id="TimeseriesExtractor.visualize_bold">
 <a class="viewcode-back" href="../../../generated/neurocaps.extraction.TimeseriesExtractor.html#neurocaps.extraction.TimeseriesExtractor.visualize_bold">[docs]</a>
     <span class="k">def</span> <span class="nf">visualize_bold</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subj_id</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span><span class="nb">str</span><span class="p">],</span> <span class="n">run</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">roi_indx</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">region</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
-                       <span class="n">show_figs</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">file_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Plot Bold Data</span>
+                       <span class="n">show_figs</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">file_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        **Plot BOLD Data**</span>
 
 <span class="sd">        Collects files needed to extract timeseries data from NIfTI files for BIDS-compliant datasets.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        subj_id: str pr int</span>
-<span class="sd">            The subject ID.</span>
-<span class="sd">        run: int</span>
-<span class="sd">            The run to plot.</span>
-<span class="sd">        roi_indx: int or List[int] or None, default=None</span>
-<span class="sd">            The indices of the parcellation nodes to plot. See self.node_indices for valid node names and indices.</span>
-<span class="sd">        region: str or None, default=None</span>
-<span class="sd">            The region of the parcellation to plot. If not None, all nodes in the specified region will be averaged then plotted. See &quot;regions&quot; in ``self.parcel_approach``.</span>
-<span class="sd">            for valid regions names.</span>
-<span class="sd">        show_figs: bool, default=True</span>
-<span class="sd">            Whether to show the figures.</span>
-<span class="sd">        output_dir: Path or None, default=None</span>
-<span class="sd">            Directory to save to. The directory will be created if it does not exist.</span>
-<span class="sd">        file_name: str or None, default=None</span>
-<span class="sd">            Name of the file without the extension.</span>
-<span class="sd">        **kwargs: Dict</span>
-<span class="sd">            Keyword arguments used when saving figures. Valid keywords include:</span>
+<span class="sd">            subj_id : str pr int</span>
+<span class="sd">                The subject ID.</span>
+<span class="sd">            run : int</span>
+<span class="sd">                The run to plot.</span>
+<span class="sd">            roi_indx : int or List[int] or None, default=None</span>
+<span class="sd">                The indices of the parcellation nodes to plot. See self.node_indices for valid node names and indices.</span>
+<span class="sd">            region : str or None, default=None</span>
+<span class="sd">                The region of the parcellation to plot. If not None, all nodes in the specified region will be averaged then plotted. See &quot;regions&quot; in ``self.parcel_approach``.</span>
+<span class="sd">                for valid regions names.</span>
+<span class="sd">            show_figs : bool, default=True</span>
+<span class="sd">                Whether to show the figures.</span>
+<span class="sd">            output_dir : Path or None, default=None</span>
+<span class="sd">                Directory to save to. The directory will be created if it does not exist.</span>
+<span class="sd">            file_name : str or None, default=None</span>
+<span class="sd">                Name of the file without the extension.</span>
+<span class="sd">            kwargs : Dict</span>
+<span class="sd">                Keyword arguments used when saving figures. Valid keywords include:</span>
 
-<span class="sd">            - &quot;dpi&quot;: int, default=300</span>
-<span class="sd">                Dots per inch for the figure. Default is 300 if ``output_dir`` is provided and ``dpi`` is not specified.</span>
-<span class="sd">            - &quot;figsize&quot;: tuple, default=(11, 5)</span>
-<span class="sd">                Size of the figure in inches. Default is (11, 5) if ``figsize`` is not specified.</span>
-
+<span class="sd">                - dpi : int, default=300</span>
+<span class="sd">                    Dots per inch for the figure. Default is 300 if ``output_dir`` is provided and ``dpi`` is not specified.</span>
+<span class="sd">                - figsize : Tuple, default=(11, 5)</span>
+<span class="sd">                    Size of the figure in inches. Default is (11, 5) if ``figsize`` is not specified.</span>
+<span class="sd">        </span>
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        matplotlib.Figure</span>
-<span class="sd">            An instance of a matplotlib figure.</span>
+<span class="sd">            matplotlib.Figure</span>
+<span class="sd">                An instance of a matplotlib figure.</span>
+<span class="sd">            </span>
+<span class="sd">        Notes for using &quot;Custom&quot; ``parcel_approach``</span>
+<span class="sd">        ---------------------------------------------</span>
+<span class="sd">        If using a &quot;Custom&quot; parcellation approach, ensure each node in your dataset includes both left (lh) and right (rh) hemisphere versions. This function assumes that the background label is &quot;zero&quot;.</span>
+<span class="sd">        Do not add a background label in the &quot;nodes&quot; or &quot;networks&quot; key; the zero index should correspond to the first ID that is not zero.</span>
+
+<span class="sd">        Custom Key Structure:</span>
+<span class="sd">        ---------------------</span>
+<span class="sd">        - &#39;maps&#39;: Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g., .nii for NIfTI files). This key is not required for this method.</span>
+<span class="sd">        - &#39;nodes&#39;: List of all node labels used in your study, arranged in the exact order they correspond to indices in your parcellation files.</span>
+<span class="sd">          Each label should match the parcellation index it represents. For example, if the parcellation label &quot;1&quot; corresponds to the left hemisphere</span>
+<span class="sd">          visual cortex area 1, then &quot;LH_Vis1&quot; should occupy the 0th index in this list. This ensures that data extraction and analysis accurately reflect the anatomical regions intended.</span>
+<span class="sd">          **This key is required for plotting.**</span>
+<span class="sd">        - &#39;regions&#39;: Dictionary defining major brain regions. Each region should list node indices under &quot;lh&quot; and &quot;rh&quot; to specify left and right hemisphere nodes. **This key is required for plotting.**</span>
+<span class="sd">        </span>
+<span class="sd">        Example</span>
+<span class="sd">        --------</span>
+<span class="sd">        The provided example demonstrates setting up a custom parcellation containing nodes for the visual network (Vis) and hippocampus regions:</span>
+<span class="sd">        ::</span>
+
+<span class="sd">            parcel_approach = {</span>
+<span class="sd">                &quot;Custom&quot;: {</span>
+<span class="sd">                    &quot;maps&quot;: &quot;/location/to/parcellation.nii.gz&quot;,</span>
+<span class="sd">                    &quot;nodes&quot;: [</span>
+<span class="sd">                        &quot;LH_Vis1&quot;,</span>
+<span class="sd">                        &quot;LH_Vis2&quot;,</span>
+<span class="sd">                        &quot;LH_Hippocampus&quot;,</span>
+<span class="sd">                        &quot;RH_Vis1&quot;,</span>
+<span class="sd">                        &quot;RH_Vis2&quot;,</span>
+<span class="sd">                        &quot;RH_Hippocampus&quot;</span>
+<span class="sd">                    ],</span>
+<span class="sd">                    &quot;regions&quot;: {</span>
+<span class="sd">                        &quot;Vis&quot;: {</span>
+<span class="sd">                            &quot;lh&quot;: [0, 1],</span>
+<span class="sd">                            &quot;rh&quot;: [3, 4]</span>
+<span class="sd">                        },</span>
+<span class="sd">                        &quot;Hippocampus&quot;: {</span>
+<span class="sd">                            &quot;lh&quot;: [2],</span>
+<span class="sd">                            &quot;rh&quot;: [5]</span>
+<span class="sd">                        }</span>
+<span class="sd">                    }</span>
+<span class="sd">                }</span>
+<span class="sd">            }</span>
 <span class="sd">        &quot;&quot;&quot;</span>
     
         <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span><span class="o">,</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
