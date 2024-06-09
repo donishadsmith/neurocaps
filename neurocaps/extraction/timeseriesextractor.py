@@ -42,7 +42,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Specifies the number of separate acompcor components derived from white-matter (WM) and cerebrospinal fluid (CSF) masks to use. For example, if set to 5, the first five components from the WM mask 
             and the first five from the CSF mask will be used, totaling ten acompcor components. If this parameter is not None, any acompcor components listed in confound_names will be disregarded. To use acompcor 
             components derived from combined masks (WM & CSF), leave this parameter as None and list the specific acompcors of interest in confound_names..
-        dummy_scans: float, default=None
+        dummy_scans: int, default=None
             Removes the first n volumes before extracting the timeseries.
         
         Notes for `confounds_names`
