@@ -183,8 +183,11 @@ preprocessing pipeline such as fMRIPrep.</p>
 <li><p><strong>bids_dir</strong> (<em>Path</em>) – Path to a BIDS compliant directory.</p></li>
 <li><p><strong>task</strong> (<em>str</em>) – Name of task to process.</p></li>
 <li><p><strong>session</strong> (<em>int</em><em> or </em><em>None</em><em>, </em><em>default=None</em>) – Session to extract timeseries from. Only a single session can be extracted at a time.</p></li>
-<li><p><strong>runs</strong> (<em>List</em><em>[</em><em>int</em><em>]</em><em>, </em><em>default=None</em>) – List of run numbers to extract timeseries data from. Extracts all runs if unspecified. For instance, if only “run-0” and “run-1” should be extracted, then
-<cite>runs=[0,1]</cite>.</p></li>
+<li><p><strong>runs</strong> (<em>List</em><em>[</em><em>int</em><em>]</em><em>, </em><em>default=None</em>) – <p>List of run numbers to extract timeseries data from. Extracts all runs if unspecified. For instance, if only “run-0” and “run-1” should be extracted, then:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">runs</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span>
+</pre></div>
+</div>
+</p></li>
 <li><p><strong>condition</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>default=None</em>) – Specific condition in the task to extract from. Only a single condition can be extracted at a time.</p></li>
 <li><p><strong>tr</strong> (<em>int</em><em> or </em><em>float</em><em> or </em><em>None</em><em>, </em><em>default=None</em>) – Repetition time for task.</p></li>
 <li><p><strong>run_subjects</strong> (<em>List</em><em>[</em><em>str</em><em>] or </em><em>None</em><em>, </em><em>default=None</em>) – List of subject IDs to process. Processes all subjects if None.</p></li>
@@ -201,7 +204,7 @@ excluded.</p></li>
 </dl>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>This function stores the extracted timeseries as a nested dictionary and stores it in <cite>self.subject_timeseres</cite>. The first level of the nested dictionary consists of the subject ID as a string,
+<p>This function stores the extracted timeseries as a nested dictionary and stores it in <code class="docutils literal notranslate"><span class="pre">self.subject_timeseres</span></code>. The first level of the nested dictionary consists of the subject ID as a string,
 the second level consists of the run numbers in the form of ‘run-#’ (where # is the corresponding number of the run), and the last level must consist of the timeseries
 (as a numpy array) associated with that run.</p>
 <p>Additionally, if your files do not specify a run number due to your subjects only having a single run, the run id key for the second level of the nested dictionary defaults to “run-0”.</p>
@@ -213,7 +216,7 @@ the second level consists of the run numbers in the form of ‘run-#’ (where #
 <dt class="sig sig-object py" id="neurocaps.extraction.TimeseriesExtractor.timeseries_to_pickle">
 <span class="sig-name descname"><span class="pre">timeseries_to_pickle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/neurocaps/extraction/timeseriesextractor.html#TimeseriesExtractor.timeseries_to_pickle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neurocaps.extraction.TimeseriesExtractor.timeseries_to_pickle" title="Link to this definition"></a></dt>
 <dd><p>Save Bold Data</p>
-<p>Saves the timeseries dictionary obtained from running <cite>get_bold()</cite> as a pickle file.</p>
+<p>Saves the timeseries dictionary obtained from running <code class="docutils literal notranslate"><span class="pre">get_bold()</span></code> as a pickle file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -235,7 +238,7 @@ the second level consists of the run numbers in the form of ‘run-#’ (where #
 <li><p><strong>subj_id</strong> (<em>str pr int</em>) – The subject ID.</p></li>
 <li><p><strong>run</strong> (<em>int</em>) – The run to plot.</p></li>
 <li><p><strong>roi_indx</strong> (<em>int</em><em> or </em><em>List</em><em>[</em><em>int</em><em>] or </em><em>None</em><em>, </em><em>default=None</em>) – The indices of the parcellation nodes to plot. See self.node_indices for valid node names and indices.</p></li>
-<li><p><strong>region</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>default=None</em>) – The region of the parcellation to plot. If not None, all nodes in the specified region will be averaged then plotted. See <cite>regions</cite> in self.parcel_approach
+<li><p><strong>region</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>default=None</em>) – The region of the parcellation to plot. If not None, all nodes in the specified region will be averaged then plotted. See “regions” in <code class="docutils literal notranslate"><span class="pre">self.parcel_approach</span></code>.
 for valid regions names.</p></li>
 <li><p><strong>show_figs</strong> (<em>bool</em><em>, </em><em>default=True</em>) – Whether to show the figures.</p></li>
 <li><p><strong>output_dir</strong> (<em>Path</em><em> or </em><em>None</em><em>, </em><em>default=None</em>) – Directory to save to. The directory will be created if it does not exist.</p></li>
@@ -243,12 +246,12 @@ for valid regions names.</p></li>
 <li><p><strong>**kwargs</strong> (<em>Dict</em>) – <p>Keyword arguments used when saving figures. Valid keywords include:</p>
 <ul>
 <li><dl class="simple">
-<dt>”dpi”: int, default=300</dt><dd><p>Dots per inch for the figure. Default is 300 if <cite>output_dir</cite> is provided and <cite>dpi</cite> is not specified.</p>
+<dt>”dpi”: int, default=300</dt><dd><p>Dots per inch for the figure. Default is 300 if <code class="docutils literal notranslate"><span class="pre">output_dir</span></code> is provided and <code class="docutils literal notranslate"><span class="pre">dpi</span></code> is not specified.</p>
 </dd>
 </dl>
 </li>
 <li><dl class="simple">
-<dt>”figsize”: tuple, default=(11, 5)</dt><dd><p>Size of the figure in inches. Default is (11, 5) if “figsize” is not specified.</p>
+<dt>”figsize”: tuple, default=(11, 5)</dt><dd><p>Size of the figure in inches. Default is (11, 5) if <code class="docutils literal notranslate"><span class="pre">figsize</span></code> is not specified.</p>
 </dd>
 </dl>
 </li>

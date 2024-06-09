@@ -98,8 +98,8 @@
 <span class="sd">            - &quot;regions&quot;: The regions or networks in the parcellation.</span>
 <span class="sd">            - &quot;maps&quot;: Directory path to the location of the parcellation file.</span>
 
-<span class="sd">            If the &quot;Schaefer&quot; or &quot;AAL&quot; option was used in the `TimeSeriesExtractor` class, you can initialize the `TimeSeriesExtractor` class with the `parcel_approach` </span>
-<span class="sd">            that was initially used, then set this parameter to `TimeSeriesExtractor.parcel_approach`. For this parameter, only &quot;Schaefer&quot;, &quot;AAL&quot;, and &quot;Custom&quot; are supported.</span>
+<span class="sd">            If the &quot;Schaefer&quot; or &quot;AAL&quot; option was used in the ``TimeSeriesExtractor`` class, you can initialize the ``TimeSeriesExtractor`` class with the `parcel_approach` </span>
+<span class="sd">            that was initially used, then set this parameter to ``TimeSeriesExtractor.parcel_approach``. For this parameter, only &quot;Schaefer&quot;, &quot;AAL&quot;, and &quot;Custom&quot; are supported.</span>
 <span class="sd">        n_clusters: Union[int, List[int]], default=5</span>
 <span class="sd">            The number of clusters to use. Can be a single integer or a list of integers.</span>
 <span class="sd">        cluster_selection_method: str, default=None</span>
@@ -198,21 +198,21 @@
 <span class="sd">        max_iter: int, default=300</span>
 <span class="sd">            Maximum number of iterations for a single run of KMeans.</span>
 <span class="sd">        tol: float, default=1e-4,</span>
-<span class="sd">            Stopping criterion if the change in inertia is below this value, assuming `max_iter` has not been reached.</span>
+<span class="sd">            Stopping criterion if the change in inertia is below this value, assuming ``max_iter`` has not been reached.</span>
 <span class="sd">        algorithm: &quot;lloyd or &quot;elkan&quot;, default=&quot;lloyd&quot;</span>
 <span class="sd">            The type of algorithm to use. Refer to scikit&#39;s KMeans documentation for more information.</span>
 <span class="sd">        show_figs: bool, default=False</span>
-<span class="sd">            Display the plots of inertia scores for all groups if `cluster_selection_method` is set to &quot;elbow&quot;.</span>
+<span class="sd">            Display the plots of inertia scores for all groups if ``cluster_selection_method`` is set to &quot;elbow&quot;.</span>
 <span class="sd">        output_dir: str, default=None</span>
-<span class="sd">            Directory to save plot to if `cluster_selection_method` is set to &quot;elbow&quot;. The directory will be created if it does not exist.</span>
+<span class="sd">            Directory to save plot to if ``cluster_selection_method`` is set to &quot;elbow&quot;. The directory will be created if it does not exist.</span>
 <span class="sd">        standardize: bool, default=True</span>
 <span class="sd">            Whether to z-score the features of the concatenated timeseries data.</span>
 <span class="sd">        epsilon: int or float, default=0</span>
 <span class="sd">            A small number to add to the denominator when z-scoring for numerical stability.</span>
 <span class="sd">        n_cores: int, default=None</span>
-<span class="sd">            The number of CPU cores to use for multiprocessing, with joblib, to run multiple kmeans models if `cluster_selection_method` is not None. </span>
+<span class="sd">            The number of CPU cores to use for multiprocessing, with joblib, to run multiple kmeans models if ``cluster_selection_method`` is not None. </span>
 <span class="sd">        kwargs: Dict</span>
-<span class="sd">            Dictionary to adjust certain parameters related to `cluster_selection_method` when set to &quot;elbow&quot;. Additional parameters include:</span>
+<span class="sd">            Dictionary to adjust certain parameters related to ``cluster_selection_method`` when set to &quot;elbow&quot;. Additional parameters include:</span>
 
 <span class="sd">             - &quot;S&quot;: Adjusts the sensitivity of finding the elbow. Larger values are more conservative and less sensitive to small fluctuations. This package uses KneeLocator from the kneed package to identify the elbow. Default is 1.</span>
 <span class="sd">             - &quot;dpi&quot;: Adjusts the dpi of the elbow plot. Default is 300.</span>
@@ -418,13 +418,13 @@
 <span class="sd">        continuous_runs: bool, default=False</span>
 <span class="sd">            If True, all runs will be treated as a single, uninterrupted run.</span>
 <span class="sd">        metrics: str or List[str], default=[&quot;temporal fraction&quot;, &quot;persistence&quot;, &quot;counts&quot;, &quot;transition frequency&quot;]</span>
-<span class="sd">            The metrics to calculate. Available options include `temporal fraction`, `persistence`, `counts`, and `transition frequency`.</span>
+<span class="sd">            The metrics to calculate. Available options include &quot;temporal fraction&quot;, &quot;persistence&quot;, &quot;counts&quot;, and &quot;transition frequency&quot;.</span>
 <span class="sd">        return_df: str, default=True</span>
 <span class="sd">            If True, returns the dataframe</span>
 <span class="sd">        output_dir: Path or None, default=None</span>
 <span class="sd">            Directory to save dataframe to. The directory will be created if it does not exist. If None, dataframe will not be saved.</span>
 <span class="sd">        file_name: str or None, default=None</span>
-<span class="sd">            Will serve as a prefix to append to the saved file names for the dataframes, if `output_dir` is provided.</span>
+<span class="sd">            Will serve as a prefix to append to the saved file names for the dataframes, if ``output_dir`` is provided.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -589,7 +589,7 @@
 <span class="sd">        output_dir: Path or None, default=None</span>
 <span class="sd">            Directory to save plots to. The directory will be created if it does not exist. If None, plots will not be saved.</span>
 <span class="sd">        suffix_title: str or None, default=None</span>
-<span class="sd">            Appended to the title of each plot as well as the name of the saved file if `output_dir` is provided.</span>
+<span class="sd">            Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.</span>
 <span class="sd">        plot_options: str or List[str], default=&quot;outer product&quot;</span>
 <span class="sd">            Type of plots to create. Options are &quot;outer product&quot; or &quot;heatmap&quot;.</span>
 <span class="sd">        visual_scope: str or List[str], default=&quot;regions&quot;</span>
@@ -604,7 +604,7 @@
 <span class="sd">            Keyword arguments used when saving figures. Valid keywords include:</span>
 
 <span class="sd">            - &quot;dpi&quot;: int, default=300</span>
-<span class="sd">                Dots per inch for the figure. Default is 300 if `output_dir` is provided and `dpi` is not specified.</span>
+<span class="sd">                Dots per inch for the figure. Default is 300 if ``output_dir`` is provided and ``dpi`` is not specified.</span>
 <span class="sd">            - &quot;figsize&quot;: Tuple, default=(8, 6)</span>
 <span class="sd">                Size of the figure in inches.</span>
 <span class="sd">            - &quot;fontsize&quot;: int, default=14</span>
@@ -1072,14 +1072,14 @@
 <span class="sd">        output_dir: Path or None, default=None</span>
 <span class="sd">            Directory to save plots to. The directory will be created if it does not exist. If None, plots will not be saved.</span>
 <span class="sd">        suffix_title: str or None, default=None</span>
-<span class="sd">            Appended to the title of each plot as well as the name of the saved file if `output_dir` is provided.</span>
+<span class="sd">            Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.</span>
 <span class="sd">        show_figs: bool, default=True</span>
 <span class="sd">            Whether to display figures.</span>
 <span class="sd">        **kwargs: Dict</span>
 <span class="sd">            Keyword arguments used when saving figures. Valid keywords include:</span>
 
 <span class="sd">            - &quot;dpi&quot;: int, default=300</span>
-<span class="sd">                Dots per inch for the figure. Default is 300 if `output_dir` is provided and `dpi` is not specified.</span>
+<span class="sd">                Dots per inch for the figure. Default is 300 if ``output_dir`` is provided and ``dpi`` is not specified.</span>
 <span class="sd">            - &quot;figsize&quot;: Tuple, default=(8, 6)</span>
 <span class="sd">                Size of the figure in inches.</span>
 <span class="sd">            - &quot;fontsize&quot;: int, default=14</span>
@@ -1257,7 +1257,7 @@
 <span class="sd">                - Strings to call nilearn&#39;s _cmap_d fuction. Refer to documention for nilearn&#39;s _cmap_d for valid palettes.</span>
 <span class="sd">                - Matplotlib&#39;s LinearSegmentedColormap to generate custom colormaps.</span>
 <span class="sd">            - cbar_kws: Dict, default={&quot;location&quot;: &quot;bottom&quot;, &quot;n_ticks&quot;: 3}</span>
-<span class="sd">                Customize colorbar. Refer to `_add_colorbars` at https://surfplot.readthedocs.io/en/latest/generated/surfplot.plotting.Plot.html#surfplot.plotting.Plot</span>
+<span class="sd">                Customize colorbar. Refer to ``_add_colorbars`` at https://surfplot.readthedocs.io/en/latest/generated/surfplot.plotting.Plot.html#surfplot.plotting.Plot</span>
 <span class="sd">                for valid kwargs. </span>
 <span class="sd">            - &quot;alpha&quot;: float, default=1</span>
 <span class="sd">                Transparency level of the colorbar.</span>
@@ -1398,7 +1398,7 @@
 <span class="sd">        output_dir: Path or None, default=None</span>
 <span class="sd">            Directory to save plots to. The directory will be created if it does not exist. </span>
 <span class="sd">        suffix_title: str or None, default=None</span>
-<span class="sd">            Appended to the title of each plot as well as the name of the saved file if `output_dir` is provided.</span>
+<span class="sd">            Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.</span>
 <span class="sd">        show_figs: bool, default=True</span>
 <span class="sd">            Whether to display figures. If this function detects that it is not being ran in an interactive Python environment,</span>
 <span class="sd">            then it uses plotly.offline, creates an html file named &quot;temp-plot.html&quot;, and opens each plot in the default </span>
@@ -1412,7 +1412,7 @@
 <span class="sd">            - &quot;scale&quot;: int, default=2</span>
 <span class="sd">                Controls resolution of image when saving.</span>
 <span class="sd">            - &quot;savefig_options&quot;: Dict[str], default={&quot;width&quot;: 3, &quot;height&quot;: 3, &quot;scale&quot;: 1}</span>
-<span class="sd">                If `output_dir` provided, controls the width (in inches), height (in inches), and scale of the plot.</span>
+<span class="sd">                If ``output_dir`` provided, controls the width (in inches), height (in inches), and scale of the plot.</span>
 <span class="sd">                The height and width are multiplied by the dpi.</span>
 <span class="sd">            - &quot;height&quot;: int, default=800</span>
 <span class="sd">                Height of the plot. Value is multiplied by the dpi when saving.</span>
@@ -1423,11 +1423,11 @@
 <span class="sd">            - &quot;bgcolor&quot;: str, default=&quot;white&quot;</span>
 <span class="sd">                Color of the background</span>
 <span class="sd">            - &quot;scattersize&quot;: int, default=8</span>
-<span class="sd">                If `use_scatterpolar=True`, controls the size of the dots.</span>
+<span class="sd">                If ``use_scatterpolar=True``, controls the size of the dots.</span>
 <span class="sd">            - &quot;connectgaps&quot;: bool, default=True</span>
-<span class="sd">                If `use_scatterpolar=True`, controls if missing values are connected.</span>
+<span class="sd">                If ``use_scatterpolar=True``, controls if missing values are connected.</span>
 <span class="sd">            - &quot;opacity&quot;: float, default=0.5,</span>
-<span class="sd">                If `use_scatterpolar=True`, sets the opacity of the trace.</span>
+<span class="sd">                If ``use_scatterpolar=True``, sets the opacity of the trace.</span>
 <span class="sd">            - &quot;fill&quot;: str, default=&quot;none&quot;.</span>
 <span class="sd">                If &quot;toself&quot; the are of the dots and within the boundaries of the line will be filled.</span>
 <span class="sd">            - &quot;radialaxis&quot;: dict, default={&quot;showline&quot;: False, &quot;linewidth&quot;: 2, &quot;linecolor&quot;: &quot;rgba(0, 0, 0, 0.25)&quot;, &quot;gridcolor&quot;: &quot;rgba(0, 0, 0, 0.25)&quot;, &quot;ticks&quot;: &quot;outside&quot;,&quot;tickfont&quot;: {&quot;size&quot;: 14, &quot;color&quot;: &quot;black&quot;}}</span>

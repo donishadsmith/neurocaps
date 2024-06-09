@@ -97,7 +97,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                                                   "rh": [3,4]},
                                          "Hippocampus": {"lh": [2],
                                                          "rh": [5]}}}}
-                                                         
+
     """
     def __init__(self, space: str = "MNI152NLin2009cAsym", standardize: Union[bool, str]="zscore_sample", detrend: bool=True, low_pass: Optional[float]=None, 
                  high_pass: Optional[float]=None, parcel_approach: Dict[str, Dict]={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}, 
@@ -133,8 +133,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         session: int or None, default=None
             Session to extract timeseries from. Only a single session can be extracted at a time. 
         runs: List[int], default=None
-            List of run numbers to extract timeseries data from. Extracts all runs if unspecified. For instance, if only "run-0" and "run-1" should be extracted, then 
-            `runs=[0,1]`.
+            List of run numbers to extract timeseries data from. Extracts all runs if unspecified. For instance, if only "run-0" and "run-1" should be extracted, then:
+            
+            ::
+
+                 runs=[0,1]
+              
         condition: str or None, default=None
             Specific condition in the task to extract from. Only a single condition can be extracted at a time.
         tr: int or float or None, default=None
@@ -158,7 +162,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         Note
         ----
-        This function stores the extracted timeseries as a nested dictionary and stores it in `self.subject_timeseres`. The first level of the nested dictionary consists of the subject ID as a string, 
+        This function stores the extracted timeseries as a nested dictionary and stores it in ``self.subject_timeseres``. The first level of the nested dictionary consists of the subject ID as a string, 
         the second level consists of the run numbers in the form of 'run-#' (where # is the corresponding number of the run), and the last level must consist of the timeseries 
         (as a numpy array) associated with that run.
 
@@ -326,7 +330,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     def timeseries_to_pickle(self, output_dir: Path, file_name: Optional[str]=None) -> None:
         """Save Bold Data
 
-        Saves the timeseries dictionary obtained from running `get_bold()` as a pickle file.
+        Saves the timeseries dictionary obtained from running ``get_bold()`` as a pickle file.
 
         Parameters
         ----------
@@ -364,7 +368,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         roi_indx: int or List[int] or None, default=None
             The indices of the parcellation nodes to plot. See self.node_indices for valid node names and indices.
         region: str or None, default=None
-            The region of the parcellation to plot. If not None, all nodes in the specified region will be averaged then plotted. See `regions` in self.parcel_approach 
+            The region of the parcellation to plot. If not None, all nodes in the specified region will be averaged then plotted. See "regions" in ``self.parcel_approach``.
             for valid regions names.
         show_figs: bool, default=True
             Whether to show the figures.
@@ -376,9 +380,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Keyword arguments used when saving figures. Valid keywords include:
 
             - "dpi": int, default=300
-                Dots per inch for the figure. Default is 300 if `output_dir` is provided and `dpi` is not specified.
+                Dots per inch for the figure. Default is 300 if ``output_dir`` is provided and ``dpi`` is not specified.
             - "figsize": tuple, default=(11, 5)
-                Size of the figure in inches. Default is (11, 5) if "figsize" is not specified.
+                Size of the figure in inches. Default is (11, 5) if ``figsize`` is not specified.
 
         Returns
         -------

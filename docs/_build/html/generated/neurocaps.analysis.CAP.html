@@ -104,8 +104,8 @@
 <li><p>”regions”: The regions or networks in the parcellation.</p></li>
 <li><p>”maps”: Directory path to the location of the parcellation file.</p></li>
 </ul>
-<p>If the “Schaefer” or “AAL” option was used in the <cite>TimeSeriesExtractor</cite> class, you can initialize the <cite>TimeSeriesExtractor</cite> class with the <cite>parcel_approach</cite>
-that was initially used, then set this parameter to <cite>TimeSeriesExtractor.parcel_approach</cite>. For this parameter, only “Schaefer”, “AAL”, and “Custom” are supported.</p>
+<p>If the “Schaefer” or “AAL” option was used in the <code class="docutils literal notranslate"><span class="pre">TimeSeriesExtractor</span></code> class, you can initialize the <code class="docutils literal notranslate"><span class="pre">TimeSeriesExtractor</span></code> class with the <cite>parcel_approach</cite>
+that was initially used, then set this parameter to <code class="docutils literal notranslate"><span class="pre">TimeSeriesExtractor.parcel_approach</span></code>. For this parameter, only “Schaefer”, “AAL”, and “Custom” are supported.</p>
 </p></li>
 <li><p><strong>n_clusters</strong> (<em>Union</em><em>[</em><em>int</em><em>, </em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em><em>, </em><em>default=5</em>) – The number of clusters to use. Can be a single integer or a list of integers.</p></li>
 <li><p><strong>cluster_selection_method</strong> (<em>str</em><em>, </em><em>default=None</em>) – Method to find the optimal number of clusters. Options are “silhouette” or “elbow”.</p></li>
@@ -159,14 +159,14 @@ the second level must consist of the run numbers in the form of ‘run-#’ (whe
 <li><p><strong>n_init</strong> (<em>&quot;auto&quot;</em><em> or </em><em>int</em><em>, </em><em>default=&quot;auto&quot;</em>) – Number of times KMeans is ran with different initial clusters. The model with lowest inertia from these runs will be selected.
 Refer to scikit’s KMeans documentation for more information.</p></li>
 <li><p><strong>max_iter</strong> (<em>int</em><em>, </em><em>default=300</em>) – Maximum number of iterations for a single run of KMeans.</p></li>
-<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>default=1e-4</em><em>,</em>) – Stopping criterion if the change in inertia is below this value, assuming <cite>max_iter</cite> has not been reached.</p></li>
+<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>default=1e-4</em><em>,</em>) – Stopping criterion if the change in inertia is below this value, assuming <code class="docutils literal notranslate"><span class="pre">max_iter</span></code> has not been reached.</p></li>
 <li><p><strong>algorithm</strong> (<em>&quot;lloyd</em><em> or </em><em>&quot;elkan&quot;</em><em>, </em><em>default=&quot;lloyd&quot;</em>) – The type of algorithm to use. Refer to scikit’s KMeans documentation for more information.</p></li>
-<li><p><strong>show_figs</strong> (<em>bool</em><em>, </em><em>default=False</em>) – Display the plots of inertia scores for all groups if <cite>cluster_selection_method</cite> is set to “elbow”.</p></li>
-<li><p><strong>output_dir</strong> (<em>str</em><em>, </em><em>default=None</em>) – Directory to save plot to if <cite>cluster_selection_method</cite> is set to “elbow”. The directory will be created if it does not exist.</p></li>
+<li><p><strong>show_figs</strong> (<em>bool</em><em>, </em><em>default=False</em>) – Display the plots of inertia scores for all groups if <code class="docutils literal notranslate"><span class="pre">cluster_selection_method</span></code> is set to “elbow”.</p></li>
+<li><p><strong>output_dir</strong> (<em>str</em><em>, </em><em>default=None</em>) – Directory to save plot to if <code class="docutils literal notranslate"><span class="pre">cluster_selection_method</span></code> is set to “elbow”. The directory will be created if it does not exist.</p></li>
 <li><p><strong>standardize</strong> (<em>bool</em><em>, </em><em>default=True</em>) – Whether to z-score the features of the concatenated timeseries data.</p></li>
 <li><p><strong>epsilon</strong> (<em>int</em><em> or </em><em>float</em><em>, </em><em>default=0</em>) – A small number to add to the denominator when z-scoring for numerical stability.</p></li>
-<li><p><strong>n_cores</strong> (<em>int</em><em>, </em><em>default=None</em>) – The number of CPU cores to use for multiprocessing, with joblib, to run multiple kmeans models if <cite>cluster_selection_method</cite> is not None.</p></li>
-<li><p><strong>kwargs</strong> (<em>Dict</em>) – <p>Dictionary to adjust certain parameters related to <cite>cluster_selection_method</cite> when set to “elbow”. Additional parameters include:</p>
+<li><p><strong>n_cores</strong> (<em>int</em><em>, </em><em>default=None</em>) – The number of CPU cores to use for multiprocessing, with joblib, to run multiple kmeans models if <code class="docutils literal notranslate"><span class="pre">cluster_selection_method</span></code> is not None.</p></li>
+<li><p><strong>kwargs</strong> (<em>Dict</em>) – <p>Dictionary to adjust certain parameters related to <code class="docutils literal notranslate"><span class="pre">cluster_selection_method</span></code> when set to “elbow”. Additional parameters include:</p>
 <blockquote>
 <div><ul>
 <li><p>”S”: Adjusts the sensitivity of finding the elbow. Larger values are more conservative and less sensitive to small fluctuations. This package uses KneeLocator from the kneed package to identify the elbow. Default is 1.</p></li>
@@ -206,10 +206,10 @@ the second level must consist of the run numbers in the form of ‘run-#’ (whe
 If not provided, persistence will be calculated as the average uninterrupted volumes (TRs) spent in each state.</p></li>
 <li><p><strong>runs</strong> (<em>int</em><em> or </em><em>List</em><em>[</em><em>int</em><em>]</em><em>, </em><em>default=None</em>) – The run numbers to calculate CAP metrics for. If None, CAP metrics will be calculated for each run.</p></li>
 <li><p><strong>continuous_runs</strong> (<em>bool</em><em>, </em><em>default=False</em>) – If True, all runs will be treated as a single, uninterrupted run.</p></li>
-<li><p><strong>metrics</strong> (<em>str</em><em> or </em><em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>default=</em><em>[</em><em>&quot;temporal fraction&quot;</em><em>, </em><em>&quot;persistence&quot;</em><em>, </em><em>&quot;counts&quot;</em><em>, </em><em>&quot;transition frequency&quot;</em><em>]</em>) – The metrics to calculate. Available options include <cite>temporal fraction</cite>, <cite>persistence</cite>, <cite>counts</cite>, and <cite>transition frequency</cite>.</p></li>
+<li><p><strong>metrics</strong> (<em>str</em><em> or </em><em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>default=</em><em>[</em><em>&quot;temporal fraction&quot;</em><em>, </em><em>&quot;persistence&quot;</em><em>, </em><em>&quot;counts&quot;</em><em>, </em><em>&quot;transition frequency&quot;</em><em>]</em>) – The metrics to calculate. Available options include “temporal fraction”, “persistence”, “counts”, and “transition frequency”.</p></li>
 <li><p><strong>return_df</strong> (<em>str</em><em>, </em><em>default=True</em>) – If True, returns the dataframe</p></li>
 <li><p><strong>output_dir</strong> (<em>Path</em><em> or </em><em>None</em><em>, </em><em>default=None</em>) – Directory to save dataframe to. The directory will be created if it does not exist. If None, dataframe will not be saved.</p></li>
-<li><p><strong>file_name</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>default=None</em>) – Will serve as a prefix to append to the saved file names for the dataframes, if <cite>output_dir</cite> is provided.</p></li>
+<li><p><strong>file_name</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>default=None</em>) – Will serve as a prefix to append to the saved file names for the dataframes, if <code class="docutils literal notranslate"><span class="pre">output_dir</span></code> is provided.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -235,7 +235,7 @@ NeuroImage, 237, 118193. <a class="reference external" href="https://doi.org/10.
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>output_dir</strong> (<em>Path</em><em> or </em><em>None</em><em>, </em><em>default=None</em>) – Directory to save plots to. The directory will be created if it does not exist. If None, plots will not be saved.</p></li>
-<li><p><strong>suffix_title</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>default=None</em>) – Appended to the title of each plot as well as the name of the saved file if <cite>output_dir</cite> is provided.</p></li>
+<li><p><strong>suffix_title</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>default=None</em>) – Appended to the title of each plot as well as the name of the saved file if <code class="docutils literal notranslate"><span class="pre">output_dir</span></code> is provided.</p></li>
 <li><p><strong>plot_options</strong> (<em>str</em><em> or </em><em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>default=&quot;outer product&quot;</em>) – Type of plots to create. Options are “outer product” or “heatmap”.</p></li>
 <li><p><strong>visual_scope</strong> (<em>str</em><em> or </em><em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>default=&quot;regions&quot;</em>) – Determines whether plotting is done at the region level or node level.
 For region level, the value of each nodes in the same regions are averaged together then plotted.
@@ -245,7 +245,7 @@ Options are “regions” or “nodes”.</p></li>
 <li><p><strong>**kwargs</strong> (<em>dict</em>) – <p>Keyword arguments used when saving figures. Valid keywords include:</p>
 <ul>
 <li><dl class="simple">
-<dt>”dpi”: int, default=300</dt><dd><p>Dots per inch for the figure. Default is 300 if <cite>output_dir</cite> is provided and <cite>dpi</cite> is not specified.</p>
+<dt>”dpi”: int, default=300</dt><dd><p>Dots per inch for the figure. Default is 300 if <code class="docutils literal notranslate"><span class="pre">output_dir</span></code> is provided and <code class="docutils literal notranslate"><span class="pre">dpi</span></code> is not specified.</p>
 </dd>
 </dl>
 </li>
@@ -410,12 +410,12 @@ Below is a list of valid options:</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>output_dir</strong> (<em>Path</em><em> or </em><em>None</em><em>, </em><em>default=None</em>) – Directory to save plots to. The directory will be created if it does not exist. If None, plots will not be saved.</p></li>
-<li><p><strong>suffix_title</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>default=None</em>) – Appended to the title of each plot as well as the name of the saved file if <cite>output_dir</cite> is provided.</p></li>
+<li><p><strong>suffix_title</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>default=None</em>) – Appended to the title of each plot as well as the name of the saved file if <code class="docutils literal notranslate"><span class="pre">output_dir</span></code> is provided.</p></li>
 <li><p><strong>show_figs</strong> (<em>bool</em><em>, </em><em>default=True</em>) – Whether to display figures.</p></li>
 <li><p><strong>**kwargs</strong> (<em>Dict</em>) – <p>Keyword arguments used when saving figures. Valid keywords include:</p>
 <ul>
 <li><dl class="simple">
-<dt>”dpi”: int, default=300</dt><dd><p>Dots per inch for the figure. Default is 300 if <cite>output_dir</cite> is provided and <cite>dpi</cite> is not specified.</p>
+<dt>”dpi”: int, default=300</dt><dd><p>Dots per inch for the figure. Default is 300 if <code class="docutils literal notranslate"><span class="pre">output_dir</span></code> is provided and <code class="docutils literal notranslate"><span class="pre">dpi</span></code> is not specified.</p>
 </dd>
 </dl>
 </li>
@@ -583,7 +583,7 @@ Below is a list of valid options:
 </dl>
 </li>
 <li><dl class="simple">
-<dt>cbar_kws: Dict, default={“location”: “bottom”, “n_ticks”: 3}</dt><dd><p>Customize colorbar. Refer to <cite>_add_colorbars</cite> at <a class="reference external" href="https://surfplot.readthedocs.io/en/latest/generated/surfplot.plotting.Plot.html#surfplot.plotting.Plot">https://surfplot.readthedocs.io/en/latest/generated/surfplot.plotting.Plot.html#surfplot.plotting.Plot</a>
+<dt>cbar_kws: Dict, default={“location”: “bottom”, “n_ticks”: 3}</dt><dd><p>Customize colorbar. Refer to <code class="docutils literal notranslate"><span class="pre">_add_colorbars</span></code> at <a class="reference external" href="https://surfplot.readthedocs.io/en/latest/generated/surfplot.plotting.Plot.html#surfplot.plotting.Plot">https://surfplot.readthedocs.io/en/latest/generated/surfplot.plotting.Plot.html#surfplot.plotting.Plot</a>
 for valid kwargs.</p>
 </dd>
 </dl>
@@ -695,7 +695,7 @@ groups are easier.</strong></p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>output_dir</strong> (<em>Path</em><em> or </em><em>None</em><em>, </em><em>default=None</em>) – Directory to save plots to. The directory will be created if it does not exist.</p></li>
-<li><p><strong>suffix_title</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>default=None</em>) – Appended to the title of each plot as well as the name of the saved file if <cite>output_dir</cite> is provided.</p></li>
+<li><p><strong>suffix_title</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>default=None</em>) – Appended to the title of each plot as well as the name of the saved file if <code class="docutils literal notranslate"><span class="pre">output_dir</span></code> is provided.</p></li>
 <li><p><strong>show_figs</strong> (<em>bool</em><em>, </em><em>default=True</em>) – Whether to display figures. If this function detects that it is not being ran in an interactive Python environment,
 then it uses plotly.offline, creates an html file named “temp-plot.html”, and opens each plot in the default
 browser.</p></li>
@@ -709,7 +709,7 @@ dots.</p></li>
 </dl>
 </li>
 <li><dl class="simple">
-<dt>”savefig_options”: Dict[str], default={“width”: 3, “height”: 3, “scale”: 1}</dt><dd><p>If <cite>output_dir</cite> provided, controls the width (in inches), height (in inches), and scale of the plot.
+<dt>”savefig_options”: Dict[str], default={“width”: 3, “height”: 3, “scale”: 1}</dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">output_dir</span></code> provided, controls the width (in inches), height (in inches), and scale of the plot.
 The height and width are multiplied by the dpi.</p>
 </dd>
 </dl>
@@ -735,17 +735,17 @@ The height and width are multiplied by the dpi.</p>
 </dl>
 </li>
 <li><dl class="simple">
-<dt>”scattersize”: int, default=8</dt><dd><p>If <cite>use_scatterpolar=True</cite>, controls the size of the dots.</p>
+<dt>”scattersize”: int, default=8</dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">use_scatterpolar=True</span></code>, controls the size of the dots.</p>
 </dd>
 </dl>
 </li>
 <li><dl class="simple">
-<dt>”connectgaps”: bool, default=True</dt><dd><p>If <cite>use_scatterpolar=True</cite>, controls if missing values are connected.</p>
+<dt>”connectgaps”: bool, default=True</dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">use_scatterpolar=True</span></code>, controls if missing values are connected.</p>
 </dd>
 </dl>
 </li>
 <li><dl class="simple">
-<dt>”opacity”: float, default=0.5,</dt><dd><p>If <cite>use_scatterpolar=True</cite>, sets the opacity of the trace.</p>
+<dt>”opacity”: float, default=0.5,</dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">use_scatterpolar=True</span></code>, sets the opacity of the trace.</p>
 </dd>
 </dl>
 </li>

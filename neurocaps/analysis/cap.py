@@ -21,8 +21,8 @@ class CAP(_CAPGetter):
             - "regions": The regions or networks in the parcellation.
             - "maps": Directory path to the location of the parcellation file.
 
-            If the "Schaefer" or "AAL" option was used in the `TimeSeriesExtractor` class, you can initialize the `TimeSeriesExtractor` class with the `parcel_approach` 
-            that was initially used, then set this parameter to `TimeSeriesExtractor.parcel_approach`. For this parameter, only "Schaefer", "AAL", and "Custom" are supported.
+            If the "Schaefer" or "AAL" option was used in the ``TimeSeriesExtractor`` class, you can initialize the ``TimeSeriesExtractor`` class with the `parcel_approach` 
+            that was initially used, then set this parameter to ``TimeSeriesExtractor.parcel_approach``. For this parameter, only "Schaefer", "AAL", and "Custom" are supported.
         n_clusters: Union[int, List[int]], default=5
             The number of clusters to use. Can be a single integer or a list of integers.
         cluster_selection_method: str, default=None
@@ -119,21 +119,21 @@ class CAP(_CAPGetter):
         max_iter: int, default=300
             Maximum number of iterations for a single run of KMeans.
         tol: float, default=1e-4,
-            Stopping criterion if the change in inertia is below this value, assuming `max_iter` has not been reached.
+            Stopping criterion if the change in inertia is below this value, assuming ``max_iter`` has not been reached.
         algorithm: "lloyd or "elkan", default="lloyd"
             The type of algorithm to use. Refer to scikit's KMeans documentation for more information.
         show_figs: bool, default=False
-            Display the plots of inertia scores for all groups if `cluster_selection_method` is set to "elbow".
+            Display the plots of inertia scores for all groups if ``cluster_selection_method`` is set to "elbow".
         output_dir: str, default=None
-            Directory to save plot to if `cluster_selection_method` is set to "elbow". The directory will be created if it does not exist.
+            Directory to save plot to if ``cluster_selection_method`` is set to "elbow". The directory will be created if it does not exist.
         standardize: bool, default=True
             Whether to z-score the features of the concatenated timeseries data.
         epsilon: int or float, default=0
             A small number to add to the denominator when z-scoring for numerical stability.
         n_cores: int, default=None
-            The number of CPU cores to use for multiprocessing, with joblib, to run multiple kmeans models if `cluster_selection_method` is not None. 
+            The number of CPU cores to use for multiprocessing, with joblib, to run multiple kmeans models if ``cluster_selection_method`` is not None. 
         kwargs: Dict
-            Dictionary to adjust certain parameters related to `cluster_selection_method` when set to "elbow". Additional parameters include:
+            Dictionary to adjust certain parameters related to ``cluster_selection_method`` when set to "elbow". Additional parameters include:
 
              - "S": Adjusts the sensitivity of finding the elbow. Larger values are more conservative and less sensitive to small fluctuations. This package uses KneeLocator from the kneed package to identify the elbow. Default is 1.
              - "dpi": Adjusts the dpi of the elbow plot. Default is 300.
@@ -336,13 +336,13 @@ class CAP(_CAPGetter):
         continuous_runs: bool, default=False
             If True, all runs will be treated as a single, uninterrupted run.
         metrics: str or List[str], default=["temporal fraction", "persistence", "counts", "transition frequency"]
-            The metrics to calculate. Available options include `temporal fraction`, `persistence`, `counts`, and `transition frequency`.
+            The metrics to calculate. Available options include "temporal fraction", "persistence", "counts", and "transition frequency".
         return_df: str, default=True
             If True, returns the dataframe
         output_dir: Path or None, default=None
             Directory to save dataframe to. The directory will be created if it does not exist. If None, dataframe will not be saved.
         file_name: str or None, default=None
-            Will serve as a prefix to append to the saved file names for the dataframes, if `output_dir` is provided.
+            Will serve as a prefix to append to the saved file names for the dataframes, if ``output_dir`` is provided.
 
         Returns
         -------
@@ -504,7 +504,7 @@ class CAP(_CAPGetter):
         output_dir: Path or None, default=None
             Directory to save plots to. The directory will be created if it does not exist. If None, plots will not be saved.
         suffix_title: str or None, default=None
-            Appended to the title of each plot as well as the name of the saved file if `output_dir` is provided.
+            Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
         plot_options: str or List[str], default="outer product"
             Type of plots to create. Options are "outer product" or "heatmap".
         visual_scope: str or List[str], default="regions"
@@ -519,7 +519,7 @@ class CAP(_CAPGetter):
             Keyword arguments used when saving figures. Valid keywords include:
 
             - "dpi": int, default=300
-                Dots per inch for the figure. Default is 300 if `output_dir` is provided and `dpi` is not specified.
+                Dots per inch for the figure. Default is 300 if ``output_dir`` is provided and ``dpi`` is not specified.
             - "figsize": Tuple, default=(8, 6)
                 Size of the figure in inches.
             - "fontsize": int, default=14
@@ -984,14 +984,14 @@ class CAP(_CAPGetter):
         output_dir: Path or None, default=None
             Directory to save plots to. The directory will be created if it does not exist. If None, plots will not be saved.
         suffix_title: str or None, default=None
-            Appended to the title of each plot as well as the name of the saved file if `output_dir` is provided.
+            Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
         show_figs: bool, default=True
             Whether to display figures.
         **kwargs: Dict
             Keyword arguments used when saving figures. Valid keywords include:
 
             - "dpi": int, default=300
-                Dots per inch for the figure. Default is 300 if `output_dir` is provided and `dpi` is not specified.
+                Dots per inch for the figure. Default is 300 if ``output_dir`` is provided and ``dpi`` is not specified.
             - "figsize": Tuple, default=(8, 6)
                 Size of the figure in inches.
             - "fontsize": int, default=14
@@ -1163,7 +1163,7 @@ class CAP(_CAPGetter):
                 - Strings to call nilearn's _cmap_d fuction. Refer to documention for nilearn's _cmap_d for valid palettes.
                 - Matplotlib's LinearSegmentedColormap to generate custom colormaps.
             - cbar_kws: Dict, default={"location": "bottom", "n_ticks": 3}
-                Customize colorbar. Refer to `_add_colorbars` at https://surfplot.readthedocs.io/en/latest/generated/surfplot.plotting.Plot.html#surfplot.plotting.Plot
+                Customize colorbar. Refer to ``_add_colorbars`` at https://surfplot.readthedocs.io/en/latest/generated/surfplot.plotting.Plot.html#surfplot.plotting.Plot
                 for valid kwargs. 
             - "alpha": float, default=1
                 Transparency level of the colorbar.
@@ -1301,7 +1301,7 @@ class CAP(_CAPGetter):
         output_dir: Path or None, default=None
             Directory to save plots to. The directory will be created if it does not exist. 
         suffix_title: str or None, default=None
-            Appended to the title of each plot as well as the name of the saved file if `output_dir` is provided.
+            Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
         show_figs: bool, default=True
             Whether to display figures. If this function detects that it is not being ran in an interactive Python environment,
             then it uses plotly.offline, creates an html file named "temp-plot.html", and opens each plot in the default 
@@ -1315,7 +1315,7 @@ class CAP(_CAPGetter):
             - "scale": int, default=2
                 Controls resolution of image when saving.
             - "savefig_options": Dict[str], default={"width": 3, "height": 3, "scale": 1}
-                If `output_dir` provided, controls the width (in inches), height (in inches), and scale of the plot.
+                If ``output_dir`` provided, controls the width (in inches), height (in inches), and scale of the plot.
                 The height and width are multiplied by the dpi.
             - "height": int, default=800
                 Height of the plot. Value is multiplied by the dpi when saving.
@@ -1326,11 +1326,11 @@ class CAP(_CAPGetter):
             - "bgcolor": str, default="white"
                 Color of the background
             - "scattersize": int, default=8
-                If `use_scatterpolar=True`, controls the size of the dots.
+                If ``use_scatterpolar=True``, controls the size of the dots.
             - "connectgaps": bool, default=True
-                If `use_scatterpolar=True`, controls if missing values are connected.
+                If ``use_scatterpolar=True``, controls if missing values are connected.
             - "opacity": float, default=0.5,
-                If `use_scatterpolar=True`, sets the opacity of the trace.
+                If ``use_scatterpolar=True``, sets the opacity of the trace.
             - "fill": str, default="none".
                 If "toself" the are of the dots and within the boundaries of the line will be filled.
             - "radialaxis": dict, default={"showline": False, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "ticks": "outside","tickfont": {"size": 14, "color": "black"}}
