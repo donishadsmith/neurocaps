@@ -34,9 +34,11 @@ pip install -e .
 ```
 
 # Usage
+**Note, documentation of each function can be found at https://neurocaps.readthedocs.io/en/latest/api.html**
+
 **This package contains two main classes: `TimeseriesExtractor` for extracting the timeseries, and `CAP` for performing the CAPs analysis.**
 
-**Note:** When extracting the timeseries, this package uses either the Schaefer atlas, the Automated Anatomical Labeling (AAL) atlas, or a custom parcellation where all nodes have a left and right version (bilateral nodes). The number of ROIs and networks for the Schaefer atlas can be adjusted with the parcel_approach parameter when initializing the TimeseriesExtractor class.
+**Note:** When extracting the timeseries, this package uses either the Schaefer atlas, the Automated Anatomical Labeling (AAL) atlas, or a custom parcellation where all nodes have a left and right version (bilateral nodes). The number of ROIs and networks for the Schaefer atlas can be adjusted with the parcel_approach parameter when initializing the `TimeseriesExtractor` class.
 
 To modify it, you must use a nested dictionary, where the primary key is "Schaefer" and the sub-keys are "n_rois" and "yeo_networks". For example:
 
@@ -53,8 +55,8 @@ parcel_approach = {"AAL": {"version": "SPM12"}}
 If using a "Custom" parcellation approach, ensure each node in your dataset includes both left (lh) and right (rh) hemisphere versions (bilateral nodes). 
 
 Custom Key Structure:
-- 'maps': Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g., .nii for NIFTI files). For plotting purposes, this key is not required.
-- 'nodes':  list of all node labels used in your study, arranged in the exact order they correspond to indices in your parcellation files. 
+- 'maps': Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g., .nii for Nifti files). For plotting purposes, this key is not required.
+- 'nodes': List of all node labels used in your study, arranged in the exact order they correspond to indices in your parcellation files. 
 Each label should match the parcellation index it represents. For example, if the parcellation label "0" corresponds to the left hemisphere 
 visual cortex area 1, then "LH_Vis1" should occupy the 0th index in this list. This ensures that data extraction and analysis accurately reflect the anatomical regions intended. For timeseries extraction, this key is not required.
 - 'regions': Dictionary defining major brain regions. Each region should list node indices under "lh" and "rh" to specify left and right hemisphere nodes. For timeseries extraction, this key is not required.
@@ -93,22 +95,22 @@ The provided example demonstrates setting up a custom parcellation containing no
 - **Timeseries Extraction:** Extract timeseries for resting-state or task data, creating a nested dictionary containing the subject ID, run number, and associated timeseries. This serves as input for the `get_caps()` method in the `CAP` class.
 - **Saving Timeseries:** Save the nested dictionary containing timeseries as a pickle file.
 - **Visualization:** Visualize the timeseries of a Schaefer, AAL, or Custom parcellation node or region/network in a specific subject's run, with options to save the plots.
-- **Parallel Processing:** Use parallel processing by specifying the number of CPU cores in the `n_cores` parameter in the `get_bold()` method. Testing on an HPC using a loop with TimeseriesExtractor.`get_bold()` to extract session 1 and 2 BOLD timeseries from 105 subjects from resting-state data (single run containing 360 volumes) and two task datasets (three runs containing 200 volumes each and two runs containing 200 volumes) reduced processing time from 5 hours 48 minutes to 1 hour 26 minutes (using 10 cores). *Note:* If you are using an HPC, remember to allocate the appropriate amount of CPU cores with your workload manager. For instance in slurm use `#SBATCH --cpus-per-task=10` if you intend to use 10 cores.
+- **Parallel Processing:** Use parallel processing by specifying the number of CPU cores in the `n_cores` parameter in the `get_bold()` method. Testing on an HPC using a loop with `TimeseriesExtractor.get_bold()` to extract session 1 and 2 BOLD timeseries from 105 subjects from resting-state data (single run containing 360 volumes) and two task datasets (three runs containing 200 volumes each and two runs containing 200 volumes) reduced processing time from 5 hours 48 minutes to 1 hour 26 minutes (using 10 cores). *Note:* If you are using an HPC, remember to allocate the appropriate amount of CPU cores with your workload manager. For instance in slurm use `#SBATCH --cpus-per-task=10` if you intend to use 10 cores.
 
 **Main features for `CAP` includes:**
 - **Optimal Cluster Size Identification:** Perform the silhouette or elbow method to identify the optimal cluster size, saving the optimal model as an attribute.
 - **Parallel Processing:** Use parallel processing, when using the silhouette or elbow method, by specifying the number of CPU cores in the `n_cores` parameter in the `get_caps()` method. *Note:* If you are using an HPC, remember to allocate the appropriate amount of CPU cores with your workload manager. For instance in slurm use `#SBATCH --cpus-per-task=10` if you intend to use 10 cores.
 - **Grouping:** Perform CAPs analysis for entire sample or groups of subject IDs (using the `groups` parameter when intitializing the `CAP` class). K-means clustering, silhouette and elbow methods, and plotting are done for each group when specified.
-- **CAP Visualization:** Visualize the CAPs as outer products or heatmaps, with options to use subplots to reduce the number of individual plots, as well as save. Refer to the docstring for the `caps2plot()` method in the `CAP` class for available **kwargs arguments and parameters to modify plots.
-- **Save CAPs as NIFTIs:** Convert the atlas used for parcellation to a stat map and saves them (`caps2niftis`). 
-- **Surface Plot Visualization:** Convert the atlas used for parcellation to a stat map projected onto a surface plot with options to customize and save plots. Refer to the docstring for the `caps2surf()` method in the `CAP` class for available **kwargs arguments and parameters to modify plots. Also includes the option to save the NIFTIs. There is also another a parameter in `caps2surf`, `fslr_giftis_dict`, which can be used if the CAPs NIFTI files were converted to GIFTI files using a tool such as Connectome Workbench, which may work better for converting your atlas to fslr space. This parameter allows plotting without re-running the analysis and only initializing the `CAP` class and using the `caps2surf` method is needed.
-- **Correlation Matrix Creation:** Create a correlation matrix from CAPs with options to customize and save plots. Refer to the docstring for the `caps2corr()` method in the `CAP` class for available **kwargs arguments and parameters to modify plots.
+- **CAP Visualization:** Visualize the CAPs as outer products or heatmaps, with options to use subplots to reduce the number of individual plots, as well as save. Refer to the [documentation](https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2plot) for the `caps2plot()` method in the `CAP` class for available **kwargs arguments and parameters to modify plots.
+- **Save CAPs as Niftis:** Convert the atlas used for parcellation to a stat map and saves them (`caps2Niftis`). 
+- **Surface Plot Visualization:** Convert the atlas used for parcellation to a stat map projected onto a surface plot with options to customize and save plots. Refer to the [documentation](https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2surf) for the `caps2surf()` method in the `CAP` class for available **kwargs arguments and parameters to modify plots. Also includes the option to save the Niftis. There is also another a parameter in `caps2surf`, `fslr_giftis_dict`, which can be used if the CAPs Nifti files were converted to Gifti files using a tool such as Connectome Workbench, which may work better for converting your atlas to fslr space. This parameter allows plotting without re-running the analysis and only initializing the `CAP` class and using the `caps2surf` method is needed.
+- **Correlation Matrix Creation:** Create a correlation matrix from CAPs with options to customize and save plots. Refer to the [documentation](https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2corr) for the `caps2corr()` method in the `CAP` class for available **kwargs arguments and parameters to modify plots.
 - **CAP Metrics Calculation:** Calculate CAP metrics (`calculate_metrics()`) as described in [Liu et al., 2018](https://doi.org/10.1016/j.neuroimage.2018.01.041)[^1] and [Yang et al., 2021](https://doi.org/10.1016/j.neuroimage.2021.118193)[^2]:
     - *Temporal Fraction:* The proportion of total volumes spent in a single CAP over all volumes in a run.
     - *Persistence:* The average time spent in a single CAP before transitioning to another CAP (average consecutive/uninterrupted time).
     - *Counts:* The frequency of each CAP observed in a run.
     - *Transition Frequency:* The number of switches between different CAPs across the entire run.
-- **Cosine Similarity Radar Plots:** Create radar plots showing the cosine similarity between CAPs and networks/regions. Especially useful as a quantitative method to categorize CAPs by determining the regions/networks containing the most nodes demonstrating increased co-activation or decreased co-deactivation [^4]. Refer to the docstring in `caps2radar` in the `CAP` class for a more detailed explanation as well as available **kwargs arguments and parameters to modify plots.**Note**,the "Low Amplitude"are negative cosine similarity values. The absolute value of those cosine similarities are taken so that the radar plot starts at 0 and magnitude comparisons between the "High Amplitude" and "Low Amplitude" groups are easier to see.
+- **Cosine Similarity Radar Plots:** Create radar plots showing the cosine similarity between CAPs and networks/regions. Especially useful as a quantitative method to categorize CAPs by determining the regions/networks containing the most nodes demonstrating increased co-activation or decreased co-deactivation [^3]. Refer to the [documentation](https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2radar) in `caps2radar` in the `CAP` class for a more detailed explanation as well as available **kwargs arguments and parameters to modify plots.**Note**,the "Low Amplitude"are negative cosine similarity values. The absolute value of those cosine similarities are taken so that the radar plot starts at 0 and magnitude comparisons between the "High Amplitude" and "Low Amplitude" groups are easier to see.
 
 **Additionally, the `neurocaps.analysis` submodule contains two additional functions:**
 
@@ -254,7 +256,7 @@ cap_analysis.caps2radar(radialaxis=radialaxis, fill="toself", scattersize=10)
 ![image](https://github.com/donishadsmith/neurocaps/assets/112973674/755afcc2-14d7-4613-9247-91634e0b7e34)
 
 # Testing 
-This package was tested using a closed dataset as well as a modified version of a single-subject open dataset to test the `TimeseriesExtractor` function on GitHub Actions. The open dataset provided by [Laumann & Poldrack](https://openfmri.org/dataset/ds000031/) and used in [Laumann et al., 2015](https://doi.org/10.1016/j.neuron.2015.06.037)[^5]. was also utilized. This data was obtained from the OpenfMRI database, accession number ds000031. 
+This package was tested using a closed dataset as well as a modified version of a single-subject open dataset to test the `TimeseriesExtractor` function on GitHub Actions. The open dataset provided by [Laumann & Poldrack](https://openfmri.org/dataset/ds000031/) and used in [Laumann et al., 2015](https://doi.org/10.1016/j.neuron.2015.06.037)[^4]. was also utilized. This data was obtained from the OpenfMRI database, accession number ds000031. 
 
 Modifications to the data included:
 
@@ -266,20 +268,18 @@ Modifications to the data included:
 - Slightly changing the naming style of the mask, preprocessed BOLD file, and confounds file in the fmriprep folder to conform with the naming conventions of modern fmriprep outputs.
 - Testing with custom parcellations was done using the HCPex parcellation, an extension of the HCP (Human Connectome Project) parcellation, which adds 66 subcortical areas. This original atlas can be downloaded from.
 
-Testing with custom parcellations was done with the HCPex parcellation, an extension of the HCP (Human Connectome Project) parcellation, which adds 66 subcortical areas [^6], [^7]. This original atlas can be downloaded from https://github.com/wayalan/HCPex.
+Testing with custom parcellations was done with the HCPex parcellation, an extension of the HCP (Human Connectome Project) parcellation, which adds 66 subcortical areas [^5], [^6]. This original atlas can be downloaded from https://github.com/wayalan/HCPex.
 
 # References
 [^1]: Liu, X., Zhang, N., Chang, C., & Duyn, J. H. (2018). Co-activation patterns in resting-state fMRI signals. NeuroImage, 180, 485–494. https://doi.org/10.1016/j.neuroimage.2018.01.041
 
 [^2]: Yang, H., Zhang, H., Di, X., Wang, S., Meng, C., Tian, L., & Biswal, B. (2021). Reproducible coactivation patterns of functional brain networks reveal the aberrant dynamic state transition in schizophrenia. NeuroImage, 237, 118193. https://doi.org/10.1016/j.neuroimage.2021.118193
 
-[^3]: Kupis, L., Romero, C., Dirks, B., Hoang, S., Parladé, M. V., Beaumont, A. L., Cardona, S. M., Alessandri, M., Chang, C., Nomi, J. S., & Uddin, L. Q. (2020). Evoked and intrinsic brain network dynamics in children with autism spectrum disorder. NeuroImage: Clinical, 28, 102396. https://doi.org/10.1016/j.nicl.2020.102396
-
-[^4]: Zhang, R., Yan, W., Manza, P., Shokri-Kojori, E., Demiral, S. B., Schwandt, M., Vines, L., Sotelo, D., Tomasi, D., Giddens, N. T., Wang, G., Diazgranados, N., Momenan, R., & Volkow, N. D. (2023). 
+[^3]: Zhang, R., Yan, W., Manza, P., Shokri-Kojori, E., Demiral, S. B., Schwandt, M., Vines, L., Sotelo, D., Tomasi, D., Giddens, N. T., Wang, G., Diazgranados, N., Momenan, R., & Volkow, N. D. (2023). 
 Disrupted brain state dynamics in opioid and alcohol use disorder: attenuation by nicotine use. Neuropsychopharmacology, 49(5), 876–884. https://doi.org/10.1038/s41386-023-01750-w      
 
-[^5]: Laumann, T. O., Gordon, E. M., Adeyemo, B., Snyder, A. Z., Joo, S. J., Chen, M. Y., Gilmore, A. W., McDermott, K. B., Nelson, S. M., Dosenbach, N. U., Schlaggar, B. L., Mumford, J. A., Poldrack, R. A., & Petersen, S. E. (2015). Functional system and areal organization of a highly sampled individual human brain. Neuron, 87(3), 657–670. https://doi.org/10.1016/j.neuron.2015.06.037
+[^4]: Laumann, T. O., Gordon, E. M., Adeyemo, B., Snyder, A. Z., Joo, S. J., Chen, M. Y., Gilmore, A. W., McDermott, K. B., Nelson, S. M., Dosenbach, N. U., Schlaggar, B. L., Mumford, J. A., Poldrack, R. A., & Petersen, S. E. (2015). Functional system and areal organization of a highly sampled individual human brain. Neuron, 87(3), 657–670. https://doi.org/10.1016/j.neuron.2015.06.037
 
-[^6]: Huang CC, Rolls ET, Feng J, Lin CP. An extended Human Connectome Project multimodal parcellation atlas of the human cortex and subcortical areas. Brain Struct Funct. 2022 Apr;227(3):763-778. Epub 2021 Nov 17. doi: 10.1007/s00429-021-02421-6
+[^5]: Huang CC, Rolls ET, Feng J, Lin CP. An extended Human Connectome Project multimodal parcellation atlas of the human cortex and subcortical areas. Brain Struct Funct. 2022 Apr;227(3):763-778. Epub 2021 Nov 17. doi: 10.1007/s00429-021-02421-6
 
-[^7]: Huang CC, Rolls ET, Hsu CH, Feng J, Lin CP. Extensive Cortical Connectivity of the Human Hippocampal Memory System: Beyond the "What" and "Where" Dual Stream Model. Cerebral Cortex. 2021 May 19;bhab113. doi: 10.1093/cercor/bhab113.
+[^6]: Huang CC, Rolls ET, Hsu CH, Feng J, Lin CP. Extensive Cortical Connectivity of the Human Hippocampal Memory System: Beyond the "What" and "Where" Dual Stream Model. Cerebral Cortex. 2021 May 19;bhab113. doi: 10.1093/cercor/bhab113.

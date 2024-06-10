@@ -18,7 +18,7 @@ import neurocaps
 # -- Project information -----------------------------------------------------
 
 project = 'neurocaps'
-copyright = '2024, Donisha Smith'
+copyright = '2024, neurocaps developers'
 author = 'Donisha Smith'
 
 # The full version, including alpha/beta/rc tags
