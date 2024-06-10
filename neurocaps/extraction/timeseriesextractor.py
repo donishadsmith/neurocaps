@@ -36,7 +36,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Applies spatial smoothing to data (in millimeters). Note that using parcellations already averages voxels within parcel boundaries, which can improve signal-to-noise ratio (SNR) assuming Gaussian noise distribution.
             However, smoothing may also blur parcel boundaries.
         fd_threshold : float or None, default=None
-            Sets a threshold to remove frames after nuisance regression and timeseries extraction. This requires a column named framewise_displacement in the confounds dataframe and use_confounds set to True.
+            Sets a threshold to remove frames after nuisance regression and timeseries extraction. This requires a column named `framewise_displacement` in the confounds dataframe and use_confounds set to True.
             Additionally, `framewise_displacement` should not need be specified in confound_names if using this parameter.
         n_acompcor_separate : int or None, default=None
             Specifies the number of separate acompcor components derived from white-matter (WM) and cerebrospinal fluid (CSF) masks to use. For example, if set to 5, the first five components from the WM mask

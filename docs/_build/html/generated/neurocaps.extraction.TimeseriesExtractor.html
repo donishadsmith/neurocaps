@@ -7,7 +7,7 @@
   <title>neurocaps.extraction.TimeseriesExtractor &mdash; neurocaps 0.9.8 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
-      <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css?v=7f9a90b1" />
       <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=2c5bc8c0" />
 
   
@@ -115,7 +115,7 @@
 For instance, “cosine*” will find all confound names in the confound files starting with “cosine”.</p></li>
 <li><p><strong>fwhm</strong> (<em>float</em><em> or </em><em>None</em><em>, </em><em>default=None</em>) – Applies spatial smoothing to data (in millimeters). Note that using parcellations already averages voxels within parcel boundaries, which can improve signal-to-noise ratio (SNR) assuming Gaussian noise distribution.
 However, smoothing may also blur parcel boundaries.</p></li>
-<li><p><strong>fd_threshold</strong> (<em>float</em><em> or </em><em>None</em><em>, </em><em>default=None</em>) – Sets a threshold to remove frames after nuisance regression and timeseries extraction. This requires a column named framewise_displacement in the confounds dataframe and use_confounds set to True.
+<li><p><strong>fd_threshold</strong> (<em>float</em><em> or </em><em>None</em><em>, </em><em>default=None</em>) – Sets a threshold to remove frames after nuisance regression and timeseries extraction. This requires a column named <cite>framewise_displacement</cite> in the confounds dataframe and use_confounds set to True.
 Additionally, <cite>framewise_displacement</cite> should not need be specified in confound_names if using this parameter.</p></li>
 <li><p><strong>n_acompcor_separate</strong> (<em>int</em><em> or </em><em>None</em><em>, </em><em>default=None</em>) – Specifies the number of separate acompcor components derived from white-matter (WM) and cerebrospinal fluid (CSF) masks to use. For example, if set to 5, the first five components from the WM mask
 and the first five from the CSF mask will be used, totaling ten acompcor components. If this parameter is not None, any acompcor components listed in confound_names will be disregarded. To use acompcor

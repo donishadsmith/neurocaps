@@ -1575,7 +1575,7 @@ class CAP(_CAPGetter):
                         stat_map_name = save_name.replace(".png", ".nii.gz")
                         nib.save(stat_map, stat_map_name)
 
-    def caps2radar(self, output_dir: Optional[Union[str, os.PathLike]]=None, suffix_title: Optional[str]=None, show_figs: bool=True, use_scatterpolar: bool=True, **kwargs) -> None:
+    def caps2radar(self, output_dir: Optional[Union[str, os.PathLike]]=None, suffix_title: Optional[str]=None, show_figs: bool=True, use_scatterpolar: bool=False, **kwargs) -> None:
         """
         **Generate Radar Plots**
 
@@ -1610,9 +1610,10 @@ class CAP(_CAPGetter):
                 Whether to display figures. If this function detects that it is not being ran in an interactive Python environment,
                 then it uses plotly.offline, creates an html file named "temp-plot.html", and opens each plot in the default 
                 browser.
-            use_scatterpolar: bool=True
-                Uses plotly's Scatterpolar instead of plotly's line_polar. The difference is that Scatterpolar shows the scatter
-                dots.
+            use_scatterpolar: bool=False
+                Uses plotly's ``Scatterpolar`` instead of plotly's ``line_polar``. The primary difference is that Scatterpolar 
+                shows the scatter dots. However, this can be acheived with ``line_polar`` by setting ``mode`` to "markers+lines".
+                There also seems to be a difference in default opacity behavior.
             kwargs: Dict
                 Additional parameters to pass to modify certain plot parameters. Options include:
 
@@ -1637,6 +1638,8 @@ class CAP(_CAPGetter):
                     If ``use_scatterpolar=True``, sets the opacity of the trace.
                 - fill : str, default="none".
                     If "toself" the are of the dots and within the boundaries of the line will be filled.
+                - mode : str, default="markers+lines",
+                    Determines how the trace is drawn. Can include "lines", "markers", "lines+markers", "lines+markers+text".
                 - radialaxis : Dict[str], default={"showline": False, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "ticks": "outside","tickfont": {"size": 14, "color": "black"}}
                     Customizes the radial axis. Refer to https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.radialaxis.html or
                     https://plotly.com/python/reference/layout/polar/ for valid kwargs. Note if there is no "tickvals" key, the plot will only display 
@@ -1719,7 +1722,7 @@ class CAP(_CAPGetter):
                     "radialaxis": {"showline": False, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "ticks": "outside", "tickfont": {"size": 14, "color": "black"}},
                     "angularaxis": {"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "tickfont": {"size": 16, "color": "black"}},
                     "color_discrete_map": {"High Amplitude": "rgba(255, 0, 0, 1)", "Low Amplitude": "rgba(0, 0, 255, 1)"}, "title_font": {"family": "Times New Roman", "size": 30, "color": "black"}, "title_x": 0.5, "title_y":None,
-                    "legend": {"yanchor": "top", "xanchor": "left", "y": 0.99, "x": 0.01, "title_font_family": "Times New Roman", "font": {"size": 12, "color": "black"}}}              
+                    "legend": {"yanchor": "top", "xanchor": "left", "y": 0.99, "x": 0.01, "title_font_family": "Times New Roman", "font": {"size": 12, "color": "black"}}, "mode":"markers+lines"}              
 
         plot_dict = _check_kwargs(defaults, **kwargs)
 
@@ -1788,7 +1791,7 @@ class CAP(_CAPGetter):
                                         category_orders={"regions": df["regions"]}, 
                                         color_discrete_map = plot_dict["color_discrete_map"])
                 
-                fig.update_traces(fill=plot_dict["fill"])
+                fig.update_traces(fill=plot_dict["fill"], mode=plot_dict["mode"])
                 
                 # Set max value
                 if "tickvals" not in plot_dict["radialaxis"].keys() and "range" not in plot_dict["radialaxis"].keys():

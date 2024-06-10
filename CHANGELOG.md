@@ -3,7 +3,11 @@
 All notable future changes to neurocaps will be documented in this file.
 
 *Note*: All versions in this file are deployed on pypi.
-## [0.9.8.post2] - 2024-06-08
+## [0.9.8.post3] - 2024-06-10
+### 🐛 Fixes
+- Adds a "mode" kwargs to `CAP.caps2radar` to override default plotly drawing behaviors and sets ``use_scatterpolar`` argument to False.
+
+## [0.9.8.post2] - 2024-06-09
 ### 💻 Metadata
 - Significant improvements to docstrings and added homepage.
 

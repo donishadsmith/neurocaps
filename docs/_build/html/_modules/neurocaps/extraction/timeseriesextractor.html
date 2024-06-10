@@ -6,7 +6,7 @@
   <title>neurocaps.extraction.timeseriesextractor &mdash; neurocaps 0.9.8 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/plot_directive.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/plot_directive.css?v=7f9a90b1" />
       <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=2c5bc8c0" />
 
   
@@ -113,7 +113,7 @@
 <span class="sd">            Applies spatial smoothing to data (in millimeters). Note that using parcellations already averages voxels within parcel boundaries, which can improve signal-to-noise ratio (SNR) assuming Gaussian noise distribution.</span>
 <span class="sd">            However, smoothing may also blur parcel boundaries.</span>
 <span class="sd">        fd_threshold : float or None, default=None</span>
-<span class="sd">            Sets a threshold to remove frames after nuisance regression and timeseries extraction. This requires a column named framewise_displacement in the confounds dataframe and use_confounds set to True.</span>
+<span class="sd">            Sets a threshold to remove frames after nuisance regression and timeseries extraction. This requires a column named `framewise_displacement` in the confounds dataframe and use_confounds set to True.</span>
 <span class="sd">            Additionally, `framewise_displacement` should not need be specified in confound_names if using this parameter.</span>
 <span class="sd">        n_acompcor_separate : int or None, default=None</span>
 <span class="sd">            Specifies the number of separate acompcor components derived from white-matter (WM) and cerebrospinal fluid (CSF) masks to use. For example, if set to 5, the first five components from the WM mask</span>

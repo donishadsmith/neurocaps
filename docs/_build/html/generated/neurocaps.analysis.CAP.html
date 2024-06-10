@@ -7,7 +7,7 @@
   <title>neurocaps.analysis.CAP &mdash; neurocaps 0.9.8 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
-      <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css?v=7f9a90b1" />
       <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=2c5bc8c0" />
 
   
@@ -994,7 +994,7 @@ first index of the array in <code class="docutils literal notranslate"><span cla
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neurocaps.analysis.CAP.caps2radar">
-<span class="sig-name descname"><span class="pre">caps2radar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">PathLike</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suffix_title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_figs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_scatterpolar</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/neurocaps/analysis/cap.html#CAP.caps2radar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neurocaps.analysis.CAP.caps2radar" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">caps2radar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">PathLike</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suffix_title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_figs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_scatterpolar</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/neurocaps/analysis/cap.html#CAP.caps2radar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neurocaps.analysis.CAP.caps2radar" title="Link to this definition"></a></dt>
 <dd><p><strong>Generate Radar Plots</strong></p>
 <p>This method identifies networks/regions (across both hemispheres) in each CAP that show high amplitude (high activation relative to the mean zero if z-scored) and low amplitude (high deactivation relative
 to the mean zero if z-scored) by using cosine similarity. This is accomplished by extracting the cluster centroids (CAPs), a 1 x ROI vector, and generating a binary vector
@@ -1020,8 +1020,9 @@ groups are easier.</strong></p>
 <li><p><strong>show_figs</strong> (<em>bool</em><em>, </em><em>default=True</em>) – Whether to display figures. If this function detects that it is not being ran in an interactive Python environment,
 then it uses plotly.offline, creates an html file named “temp-plot.html”, and opens each plot in the default
 browser.</p></li>
-<li><p><strong>use_scatterpolar</strong> (<em>bool=True</em>) – Uses plotly’s Scatterpolar instead of plotly’s line_polar. The difference is that Scatterpolar shows the scatter
-dots.</p></li>
+<li><p><strong>use_scatterpolar</strong> (<em>bool=False</em>) – Uses plotly’s <code class="docutils literal notranslate"><span class="pre">Scatterpolar</span></code> instead of plotly’s <code class="docutils literal notranslate"><span class="pre">line_polar</span></code>. The primary difference is that Scatterpolar
+shows the scatter dots. However, this can be acheived with <code class="docutils literal notranslate"><span class="pre">line_polar</span></code> by setting <code class="docutils literal notranslate"><span class="pre">mode</span></code> to “markers+lines”.
+There also seems to be a difference in default opacity behavior.</p></li>
 <li><p><strong>kwargs</strong> (<em>Dict</em>) – <p>Additional parameters to pass to modify certain plot parameters. Options include:</p>
 <ul>
 <li><dl class="simple">
@@ -1072,6 +1073,11 @@ The height and width are multiplied by the dpi.</p>
 </li>
 <li><dl class="simple">
 <dt>fill<span class="classifier">str, default=”none”.</span></dt><dd><p>If “toself” the are of the dots and within the boundaries of the line will be filled.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>mode<span class="classifier">str, default=”markers+lines”,</span></dt><dd><p>Determines how the trace is drawn. Can include “lines”, “markers”, “lines+markers”, “lines+markers+text”.</p>
 </dd>
 </dl>
 </li>
