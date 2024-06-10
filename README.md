@@ -253,7 +253,7 @@ radialaxis={"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)"
 cap_analysis.caps2radar(radialaxis=radialaxis, fill="toself", scattersize=10)
 ```
 **Partial Plot Outputs:** (*Note*: one image will be generated per CAP)
-![image](https://github.com/donishadsmith/neurocaps/assets/112973674/755afcc2-14d7-4613-9247-91634e0b7e34)
+![image](https://github.com/donishadsmith/neurocaps/assets/112973674/4fc57584-cf67-4d7c-924a-4ecb8d31cbc4)
 
 # Testing 
 This package was tested using a closed dataset as well as a modified version of a single-subject open dataset to test the `TimeseriesExtractor` function on GitHub Actions. The open dataset provided by [Laumann & Poldrack](https://openfmri.org/dataset/ds000031/) and used in [Laumann et al., 2015](https://doi.org/10.1016/j.neuron.2015.06.037)[^4]. was also utilized. This data was obtained from the OpenfMRI database, accession number ds000031. 
