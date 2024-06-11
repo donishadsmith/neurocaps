@@ -7,8 +7,8 @@
   <title>neurocaps.analysis.standardize &mdash; neurocaps 0.9.8 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
-      <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
-      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=2c5bc8c0" />
+      <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css?v=7f9a90b1" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=8e7c0fc3" />
 
   
   <!--[if lt IE 9]>
@@ -91,17 +91,19 @@
 <h1><a class="reference internal" href="../api.html#module-neurocaps.analysis" title="neurocaps.analysis"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neurocaps.analysis</span></code></a>.standardize<a class="headerlink" href="#neurocaps-analysis-standardize" title="Link to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="neurocaps.analysis.standardize">
-<span class="sig-prename descclassname"><span class="pre">neurocaps.analysis.</span></span><span class="sig-name descname"><span class="pre">standardize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subject_timeseries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span></span></span><a class="reference internal" href="../_modules/neurocaps/analysis/standardize.html#standardize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neurocaps.analysis.standardize" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neurocaps.analysis.</span></span><span class="sig-name descname"><span class="pre">standardize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subject_timeseries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/neurocaps/analysis/standardize.html#standardize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neurocaps.analysis.standardize" title="Link to this definition"></a></dt>
 <dd><p><strong>Standardize Subject Timeseries</strong></p>
 <p>Standardizes each run independently for all subjects in the subject timeseries.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>subject_timeseries_list</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>np.ndarray</em><em>]</em><em>] or </em><em>str</em>) – <p>A list of pickle files containing the nested subject timeseries dictionary saved by the <cite>TimeSeriesExtractor</cite> class or a list of nested subject
-timeseries dictionaries produced by the <cite>TimeSeriesExtractor</cite> class. The first level of the nested dictionary must consist of the subject ID as a string,
-the second level must consist of the run numbers in the form of ‘run-#’ (where # is the corresponding number of the run), and the last level must consist of the timeseries
-(as a numpy array) associated with that run.  The structure is as follows:</p>
+<dd class="field-odd"><p><strong>subject_timeseries_list</strong> (<em>List</em><em>[</em><em>Dict</em><em>]</em><em>] or </em><em>List</em><em>[</em><em>str</em><em>]</em>) – <p>A list of pickle files containing the nested subject timeseries dictionary saved by the
+<code class="docutils literal notranslate"><span class="pre">TimeSeriesExtractor</span></code> class or a list of nested subject timeseries dictionaries produced by the
+<code class="docutils literal notranslate"><span class="pre">TimeSeriesExtractor</span></code> class. The first level of the nested dictionary must consist of the subject ID as a
+string, the second level must consist of the run numbers in the form of ‘run-#’ (where # is the
+corresponding number of the run), and the last level must consist of the timeseries (as a numpy array)
+associated with that run.  The structure is as follows:</p>
 <blockquote>
-<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">subject_timseries</span> <span class="o">=</span> <span class="p">{</span>
+<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">subject_timeseries</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;101&quot;</span><span class="p">:</span> <span class="p">{</span>
             <span class="s2">&quot;run-0&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">timeseries</span><span class="p">]),</span> <span class="c1"># 2D array</span>
             <span class="s2">&quot;run-1&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">timeseries</span><span class="p">]),</span> <span class="c1"># 2D array</span>

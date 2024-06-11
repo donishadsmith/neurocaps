@@ -1,0 +1,24 @@
+[MESSAGES CONTROL]
+disable=too-many-branches,
+         invalid-name,
+         multiple-imports,
+         attribute-defined-outside-init,
+         too-many-locals,
+         too-many-arguments,
+         too-many-statements,
+         multiple-statements,
+         missing-function-docstring,
+         no-member,
+         too-many-lines,
+         use-a-generator,
+         missing-module-docstring,
+         too-many-instance-attributes,
+         dangerous-default-value,
+         too-many-nested-blocks,
+         possibly-used-before-assignment,
+         unnecessary-comprehension,
+         consider-using-dict-items,
+         use-dict-literal
+
+[FORMAT]
+max-line-length=120

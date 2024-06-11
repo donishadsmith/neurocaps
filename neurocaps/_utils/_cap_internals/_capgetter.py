@@ -1,99 +1,85 @@
+"""A class which is responsible for accessing all CAP metadata and to keep track of all attributes in CAP"""
 from .._timeseriesextractor_internals._check_parcel_approach import _check_parcel_approach
 
-# A class which is responsible for accessing all CAP metadata and to keep track of all attributes in CAP
 class _CAPGetter:
     def __init__(self):
         pass
-    
+
     ### Attributes exist when CAP initialized
     @property
     def n_clusters(self):
         return self._n_clusters
-    
+
     @property
     def cluster_selection_method(self):
         return self._cluster_selection_method
-    
+
     @property
     def groups(self):
         return self._groups
-    
+
     @property
     def parcel_approach(self):
         return self._parcel_approach
-    
+
     @parcel_approach.setter
     def parcel_approach(self, parcel_dict):
         self._parcel_approach = _check_parcel_approach(parcel_approach=parcel_dict, call="setter")
-    
+
     ### Attributes exist when CAP.get_caps() used
     @property
     def n_cores(self):
-        if hasattr(self, "_n_cores"): return self._n_cores
-        else: return None
-        
+        return self._n_cores if hasattr(self, "_n_cores") else None
+
     @property
     def runs(self):
-        if hasattr(self, "_runs"): return self._runs
-        else: return None
+        return self._runs if hasattr(self, "_runs") else None
 
     @property
     def caps(self):
-        if hasattr(self, "_caps"): return self._caps
-        else: return None
-    
+        return self._caps if hasattr(self, "_caps") else None
+
     @property
     def kmeans(self):
-        if hasattr(self, "_kmeans"): return self._kmeans
-        else: return None
-    
+        return self._kmeans if hasattr(self, "_kmeans") else None
+
     @property
     def silhouette_scores(self):
-        if hasattr(self, "_silhouette_scores"): return self._silhouette_scores
-        else: return None
+        return self._silhouette_scores if hasattr(self, "_silhouette_scores") else None
 
     @property
     def inertia(self):
-        if hasattr(self, "_inertia"): return self._inertia
-        else: return None
+        return self._inertia if hasattr(self, "_inertia") else None
 
     @property
     def optimal_n_clusters(self):
-        if hasattr(self, "_optimal_n_clusters"): return self._optimal_n_clusters
-        else: return None
+        return self._optimal_n_clusters if hasattr(self, "_optimal_n_clusters")else None
 
     @property
     def standardize(self):
-        if hasattr(self, "_standardizee"): return self._standardize
-        else: return None
+        return self._standardize if hasattr(self, "_standardizee") else None
 
     @property
     def epsilon(self):
-        if hasattr(self, "_epsilon"): return self._epsilon
-        else: return None
+        return self._epsilon if hasattr(self, "_epsilon") else None
 
     @property
     def means(self):
-        if hasattr(self, "_mean_vec"): return self._mean_vec
-        else: return None
+        return self._mean_vec if hasattr(self, "_mean_vec") else None
 
     @property
     def stdev(self):
-        if hasattr(self, "_stdev_vec"): return self._stdev_vec
-        else: return None
-    
+        return self._stdev_vec if hasattr(self, "_stdev_vec") else None
+
     @property
     def concatenated_timeseries(self):
-        if hasattr(self, "_concatenated_timeseries"): return self._concatenated_timeseries
-        else: return None
-    
+        return self._concatenated_timeseries if hasattr(self, "_concatenated_timeseries") else None
+
     # Generated in `caps2plot`
     @property
     def region_caps(self):
-        if hasattr(self, "_region_caps"): return self._region_caps
-        else: return None
+        return self._region_caps if hasattr(self, "_region_caps") else None
 
     @property
     def outer_products(self):
-        if hasattr(self, "_outer_product"): return self._outer_products
-        else: return None
+        return self._outer_products if hasattr(self, "_outer_product") else None
