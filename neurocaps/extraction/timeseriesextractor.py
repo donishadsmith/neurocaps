@@ -1,6 +1,6 @@
 import json, os, re, sys, warnings
 from typing import Union, Optional, Dict, List
-import bids, matplotlib.pyplot as plt, numpy as np
+import matplotlib.pyplot as plt, numpy as np
 from joblib import Parallel, cpu_count, delayed, dump
 from .._utils import (_TimeseriesExtractorGetter, _check_kwargs, _check_confound_names,
                       _check_parcel_approach, _extract_timeseries)
@@ -286,6 +286,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                               Cannot use this method on Windows devices since it relies on the `pybids` module which
                               is only compatible with POSIX systems.
                               """)
+        
+        import bids
 
         # Update attributes
         self._task_info = {"task": task, "condition": condition, "session": session, "runs": runs, "tr": tr}
