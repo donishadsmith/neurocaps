@@ -954,9 +954,18 @@ class CAP(_CAPGetter):
     **If using "Custom" parcellation approach**,, the ``nodes`` and ``regions`` sub-keys are required for this function.
 
     """
+        if not self._parcel_approach:
+            raise AttributeError("""
+                                 `self.parcel_approach` is None. Add parcel_approach
+                                 using `self.parcel_approach=parcel_approach` to use this
+                                 method.
+                                 """)
+
         if not hasattr(self,"_caps"):
-            raise AttributeError("""Cannot plot caps since `self._caps` attribute does not exist.
-                                 Run `self.get_caps()` first.""")
+            raise AttributeError("""
+                                 Cannot plot caps since `self._caps` attribute does not exist.
+                                 Run `self.get_caps()` first.
+                                 """)
 
         # Check if parcellation_approach is custom
         if "Custom" in self._parcel_approach and ("nodes" not in self._parcel_approach["Custom"] or "regions" not in self._parcel_approach["Custom"]):
@@ -1146,7 +1155,7 @@ class CAP(_CAPGetter):
                 if scope == "regions":
                     display = seaborn.heatmap(ax=ax, data=self._outer_products[group][cap], cmap=plot_dict["cmap"],
                                       linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"],
-                                      xticklabels=columns, yticklabels=columns, 
+                                      xticklabels=columns, yticklabels=columns,
                                       cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"],
                                       fmt=plot_dict["fmt"], edgecolors=plot_dict["edgecolors"],
                                       alpha=plot_dict["alpha"], vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
@@ -1566,6 +1575,13 @@ class CAP(_CAPGetter):
             `NifTI1Image`
                 `NifTI` statistical map.
         """
+        if not self._parcel_approach:
+            raise AttributeError("""
+                                 `self.parcel_approach` is None. Add parcel_approach
+                                 using `self.parcel_approach=parcel_approach` to use this
+                                 method.
+                                 """)
+
         if not hasattr(self,"_caps"):
             raise AttributeError("""
                                  Cannot plot caps since `self._caps` attribute does not exist.
@@ -1699,11 +1715,18 @@ class CAP(_CAPGetter):
         centroid vector is the first nonzero label, which is assumed to be at the first index of the array in
         ``sorted(np.unique(atlas_fdata))``.
         """
+        if not self._parcel_approach:
+            raise AttributeError("""
+                                 `self.parcel_approach` is None. Add parcel_approach
+                                 using `self.parcel_approach=parcel_approach` to use this
+                                 method.
+                                 """)
 
         if not hasattr(self,"_caps") and fslr_giftis_dict is None:
             raise AttributeError("""
                                  Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()`
-                                 first.""")
+                                 first.
+                                 """)
 
         if output_dir and not os.path.exists(output_dir): os.makedirs(output_dir)
 
@@ -1777,7 +1800,7 @@ class CAP(_CAPGetter):
                         nib.save(stat_map, stat_map_name)
 
     def caps2radar(self, output_dir: Optional[Union[str, os.PathLike]]=None, suffix_title: Optional[str]=None,
-                   show_figs: bool=True, use_scatterpolar: bool=False, 
+                   show_figs: bool=True, use_scatterpolar: bool=False,
                    **kwargs) -> Union[px.line_polar, go.Scatterpolar]:
         """
         **Generate Radar Plots**
@@ -1898,6 +1921,18 @@ class CAP(_CAPGetter):
         dynamics in opioid and alcohol use disorder: attenuation by nicotine use. Neuropsychopharmacology, 49(5),
         876–884. https://doi.org/10.1038/s41386-023-01750-w
         """
+        if not self._parcel_approach:
+            raise AttributeError("""
+                                 `self.parcel_approach` is None. Add parcel_approach
+                                 using `self.parcel_approach=parcel_approach` to use this
+                                 method.
+                                 """)
+
+        if not hasattr(self,"_caps"):
+            raise AttributeError("""
+                                 Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()`
+                                 first.""")
+
         defaults = {"scale": 2, "height": 800, "width": 1200, "line_close": True, "bgcolor": "white", "fill": "none",
                     "scattersize": 8, "connectgaps": True, "opacity": 0.5, "radialaxis": {"showline": False,
                     "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "ticks": "outside", "tickfont": {"size": 14, "color": "black"}},

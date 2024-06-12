@@ -1039,9 +1039,18 @@
 <span class="sd">    **If using &quot;Custom&quot; parcellation approach**,, the ``nodes`` and ``regions`` sub-keys are required for this function.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parcel_approach</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                                 `self.parcel_approach` is None. Add parcel_approach</span>
+<span class="s2">                                 using `self.parcel_approach=parcel_approach` to use this</span>
+<span class="s2">                                 method.</span>
+<span class="s2">                                 &quot;&quot;&quot;</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="s2">&quot;_caps&quot;</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;Cannot plot caps since `self._caps` attribute does not exist.</span>
-<span class="s2">                                 Run `self.get_caps()` first.&quot;&quot;&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                                 Cannot plot caps since `self._caps` attribute does not exist.</span>
+<span class="s2">                                 Run `self.get_caps()` first.</span>
+<span class="s2">                                 &quot;&quot;&quot;</span><span class="p">)</span>
 
         <span class="c1"># Check if parcellation_approach is custom</span>
         <span class="k">if</span> <span class="s2">&quot;Custom&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parcel_approach</span> <span class="ow">and</span> <span class="p">(</span><span class="s2">&quot;nodes&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parcel_approach</span><span class="p">[</span><span class="s2">&quot;Custom&quot;</span><span class="p">]</span> <span class="ow">or</span> <span class="s2">&quot;regions&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parcel_approach</span><span class="p">[</span><span class="s2">&quot;Custom&quot;</span><span class="p">]):</span>
@@ -1232,7 +1241,7 @@
                 <span class="k">if</span> <span class="n">scope</span> <span class="o">==</span> <span class="s2">&quot;regions&quot;</span><span class="p">:</span>
                     <span class="n">display</span> <span class="o">=</span> <span class="n">seaborn</span><span class="o">.</span><span class="n">heatmap</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_outer_products</span><span class="p">[</span><span class="n">group</span><span class="p">][</span><span class="n">cap</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="n">plot_dict</span><span class="p">[</span><span class="s2">&quot;cmap&quot;</span><span class="p">],</span>
                                       <span class="n">linewidths</span><span class="o">=</span><span class="n">plot_dict</span><span class="p">[</span><span class="s2">&quot;linewidths&quot;</span><span class="p">],</span> <span class="n">linecolor</span><span class="o">=</span><span class="n">plot_dict</span><span class="p">[</span><span class="s2">&quot;linecolor&quot;</span><span class="p">],</span>
-                                      <span class="n">xticklabels</span><span class="o">=</span><span class="n">columns</span><span class="p">,</span> <span class="n">yticklabels</span><span class="o">=</span><span class="n">columns</span><span class="p">,</span> 
+                                      <span class="n">xticklabels</span><span class="o">=</span><span class="n">columns</span><span class="p">,</span> <span class="n">yticklabels</span><span class="o">=</span><span class="n">columns</span><span class="p">,</span>
                                       <span class="n">cbar_kws</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;shrink&quot;</span><span class="p">:</span> <span class="n">plot_dict</span><span class="p">[</span><span class="s2">&quot;shrink&quot;</span><span class="p">]},</span> <span class="n">annot</span><span class="o">=</span><span class="n">plot_dict</span><span class="p">[</span><span class="s2">&quot;annot&quot;</span><span class="p">],</span>
                                       <span class="n">fmt</span><span class="o">=</span><span class="n">plot_dict</span><span class="p">[</span><span class="s2">&quot;fmt&quot;</span><span class="p">],</span> <span class="n">edgecolors</span><span class="o">=</span><span class="n">plot_dict</span><span class="p">[</span><span class="s2">&quot;edgecolors&quot;</span><span class="p">],</span>
                                       <span class="n">alpha</span><span class="o">=</span><span class="n">plot_dict</span><span class="p">[</span><span class="s2">&quot;alpha&quot;</span><span class="p">],</span> <span class="n">vmin</span><span class="o">=</span><span class="n">plot_dict</span><span class="p">[</span><span class="s2">&quot;vmin&quot;</span><span class="p">],</span> <span class="n">vmax</span><span class="o">=</span><span class="n">plot_dict</span><span class="p">[</span><span class="s2">&quot;vmax&quot;</span><span class="p">])</span>
@@ -1657,6 +1666,13 @@
 <span class="sd">            `NifTI1Image`</span>
 <span class="sd">                `NifTI` statistical map.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parcel_approach</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                                 `self.parcel_approach` is None. Add parcel_approach</span>
+<span class="s2">                                 using `self.parcel_approach=parcel_approach` to use this</span>
+<span class="s2">                                 method.</span>
+<span class="s2">                                 &quot;&quot;&quot;</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="s2">&quot;_caps&quot;</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">                                 Cannot plot caps since `self._caps` attribute does not exist.</span>
@@ -1793,11 +1809,18 @@
 <span class="sd">        centroid vector is the first nonzero label, which is assumed to be at the first index of the array in</span>
 <span class="sd">        ``sorted(np.unique(atlas_fdata))``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parcel_approach</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                                 `self.parcel_approach` is None. Add parcel_approach</span>
+<span class="s2">                                 using `self.parcel_approach=parcel_approach` to use this</span>
+<span class="s2">                                 method.</span>
+<span class="s2">                                 &quot;&quot;&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="s2">&quot;_caps&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">fslr_giftis_dict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">                                 Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()`</span>
-<span class="s2">                                 first.&quot;&quot;&quot;</span><span class="p">)</span>
+<span class="s2">                                 first.</span>
+<span class="s2">                                 &quot;&quot;&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">output_dir</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">output_dir</span><span class="p">):</span> <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
 
@@ -1874,7 +1897,7 @@
 <div class="viewcode-block" id="CAP.caps2radar">
 <a class="viewcode-back" href="../../../generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2radar">[docs]</a>
     <span class="k">def</span> <span class="nf">caps2radar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">suffix_title</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                   <span class="n">show_figs</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">use_scatterpolar</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> 
+                   <span class="n">show_figs</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">use_scatterpolar</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                    <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">px</span><span class="o">.</span><span class="n">line_polar</span><span class="p">,</span> <span class="n">go</span><span class="o">.</span><span class="n">Scatterpolar</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        **Generate Radar Plots**</span>
@@ -1995,6 +2018,18 @@
 <span class="sd">        dynamics in opioid and alcohol use disorder: attenuation by nicotine use. Neuropsychopharmacology, 49(5),</span>
 <span class="sd">        876–884. https://doi.org/10.1038/s41386-023-01750-w</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parcel_approach</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                                 `self.parcel_approach` is None. Add parcel_approach</span>
+<span class="s2">                                 using `self.parcel_approach=parcel_approach` to use this</span>
+<span class="s2">                                 method.</span>
+<span class="s2">                                 &quot;&quot;&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="s2">&quot;_caps&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                                 Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()`</span>
+<span class="s2">                                 first.&quot;&quot;&quot;</span><span class="p">)</span>
+
         <span class="n">defaults</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;scale&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;height&quot;</span><span class="p">:</span> <span class="mi">800</span><span class="p">,</span> <span class="s2">&quot;width&quot;</span><span class="p">:</span> <span class="mi">1200</span><span class="p">,</span> <span class="s2">&quot;line_close&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;bgcolor&quot;</span><span class="p">:</span> <span class="s2">&quot;white&quot;</span><span class="p">,</span> <span class="s2">&quot;fill&quot;</span><span class="p">:</span> <span class="s2">&quot;none&quot;</span><span class="p">,</span>
                     <span class="s2">&quot;scattersize&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="s2">&quot;connectgaps&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;opacity&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="s2">&quot;radialaxis&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;showline&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
                     <span class="s2">&quot;linewidth&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;linecolor&quot;</span><span class="p">:</span> <span class="s2">&quot;rgba(0, 0, 0, 0.25)&quot;</span><span class="p">,</span> <span class="s2">&quot;gridcolor&quot;</span><span class="p">:</span> <span class="s2">&quot;rgba(0, 0, 0, 0.25)&quot;</span><span class="p">,</span> <span class="s2">&quot;ticks&quot;</span><span class="p">:</span> <span class="s2">&quot;outside&quot;</span><span class="p">,</span> <span class="s2">&quot;tickfont&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;size&quot;</span><span class="p">:</span> <span class="mi">14</span><span class="p">,</span> <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="s2">&quot;black&quot;</span><span class="p">}},</span>
