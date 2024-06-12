@@ -290,12 +290,16 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         # Update attributes
         self._task_info = {"task": task, "condition": condition, "session": session, "runs": runs, "tr": tr}
 
-        # Intiialize new attributes
+        # Initialize new attributes
         self._subject_ids = []
         self._subject_timeseries = {}
         self._subject_info = {}
 
+        if bids_dir.endswith('/'): bids_dir = bids_dir[:-1]
+
         if pipeline_name:
+            if pipeline_name.endswith('/'): pipeline_name = pipeline_name[:-1]
+            if pipeline_name.startswith('/'): pipeline_name = pipeline_name[1:]
             layout = bids.BIDSLayout(bids_dir, derivatives=os.path.join(bids_dir, "derivatives", pipeline_name))
         else:
             layout = bids.BIDSLayout(bids_dir, derivatives=True)
@@ -360,39 +364,46 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 # Aggregate new timeseries
                 if isinstance(subject_timeseries, dict): self._subject_timeseries.update(subject_timeseries)
 
-    def get_files(self, layout, suffix, extension, subj_id, event=False):
+    def _get_files(self, layout, extension, subj_id, suffix=None, desc=None, event=False):
         if self._task_info["session"]:
-            if not event:
+            if event:
+                files = sorted(layout.get(return_type="filename", suffix=suffix, task=self._task_info["task"],
+                                          session=self._task_info["session"], extension=extension, subject = subj_id))
+            elif desc:
+                files = sorted(layout.get(scope="derivatives", return_type="file", desc=desc,
+                                          task=self._task_info["task"], 
+                                          session=self._task_info["session"], extension=extension, subject=subj_id))
+            else:
                 files = sorted(layout.get(scope="derivatives", return_type="file", suffix=suffix,
                                           task=self._task_info["task"], space=self._space,
                                           session=self._task_info["session"], extension=extension, subject=subj_id))
-            else:
-                files = sorted(layout.get(return_type="filename", suffix=suffix, task=self._task_info["task"],
-                                          session=self._task_info["session"], extension=extension, subject = subj_id))
+                
         else:
-            if not event:
-                files = sorted(layout.get(scope="derivatives", return_type="file", suffix="bold",
-                                          task=self._task_info["task"], space=self._space, extension=extension,
+            if event:
+                files = sorted(layout.get(return_type="filename", suffix=suffix, task=self._task_info["task"],
+                                          extension=extension, subject=subj_id))
+            elif desc:
+                files = sorted(layout.get(scope="derivatives", return_type="file", desc=desc,
+                                          task=self._task_info["task"], extension=extension,
                                           subject=subj_id))
             else:
-                files = sorted(layout.get(return_type="filename", suffix=suffix, task=self._task_info["task"],
-                                          extension=extension, subject = subj_id))
-
+                files = sorted(layout.get(scope="derivatives", return_type="file", suffix=suffix,
+                                          task=self._task_info["task"], space=self._space, extension=extension,
+                                          subject=subj_id))
         return files
-
     # Get valid subjects to iterate through
     def _setup_extraction(self, layout, subj_id_list, exclude_niftis):
         for subj_id in subj_id_list:
-            nifti_files = self.get_files(layout=layout, suffix="bold", extension="nii.gz", subj_id=subj_id)
-            mask_files = self.get_files(layout=layout, suffix="mask", extension="nii.gz", subj_id=subj_id)
-            bold_metadata_files = self.get_files(layout=layout, suffix="bold", extension="json", subj_id=subj_id)
-            if self._task_info["condition"]: event_files = self.get_files(layout=layout, suffix="events",
-                                                                          extension="tsv", subj_id=subj_id, event=True)
+            nifti_files = self._get_files(layout=layout, suffix="bold", extension="nii.gz", subj_id=subj_id)
+            mask_files = self._get_files(layout=layout, suffix="mask", extension="nii.gz", subj_id=subj_id)
+            bold_metadata_files = self._get_files(layout=layout, suffix="bold", extension="json", subj_id=subj_id)
+            if self._task_info["condition"]: 
+                event_files = self._get_files(layout=layout, suffix="events",
+                                              extension="tsv", subj_id=subj_id, event=True)
             else: event_files = []
-            confound_files = self.get_files(layout=layout, suffix="confounds", extension="tsv", subj_id=subj_id)
-            confound_metadata_files = self.get_files(layout=layout, suffix="confounds", extension="json",
-                                                     subj_id=subj_id)
-
+            confound_files = self._get_files(layout=layout, desc="confounds", extension="tsv", subj_id=subj_id)
+            confound_metadata_files = self._get_files(layout=layout, extension="json",
+                                                      desc="confounds", subj_id=subj_id)
             # Remove excluded file from the nifti_files list, which will prevent it from being processed
             if exclude_niftis and len(nifti_files) != 0:
                 nifti_files = [nifti_file for nifti_file in nifti_files

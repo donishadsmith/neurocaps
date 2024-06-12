@@ -54,9 +54,9 @@ def test_TimeseriesExtractor_no_parallel_no_session_w_custom_and_censoring():
                                     use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01,
                                     confound_names=confounds, fd_threshold=0.35)
 
-    bids_dir = os.path.join(dir, "ds000031_R1.0.4_ses001-022/ds000031_R1.0.4")
+    bids_dir = os.path.join(dir, "ds000031_R1.0.4_ses001-022/ds000031_R1.0.4/")
 
-    pipeline_name = "fmriprep_1.0.0/fmriprep"
+    pipeline_name = "/fmriprep_1.0.0/fmriprep"
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
     
     print(extractor.subject_timeseries, flush=True)
@@ -75,9 +75,9 @@ def test_TimeseriesExtractor_dummy():
                                     use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01,
                                     confound_names=confounds, dummy_scans=5)
 
-    bids_dir = os.path.join(dir, "ds000031_R1.0.4_ses001-022/ds000031_R1.0.4")
+    bids_dir = os.path.join(dir, "ds000031_R1.0.4_ses001-022/ds000031_R1.0.4/")
 
-    pipeline_name = "fmriprep_1.0.0/fmriprep"
+    pipeline_name = "fmriprep_1.0.0/fmriprep/"
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
     
     print(extractor.subject_timeseries, flush=True)
