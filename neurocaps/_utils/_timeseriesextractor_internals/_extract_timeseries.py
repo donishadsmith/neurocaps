@@ -88,7 +88,8 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
 
             if verbose: print(f"Confounds used for subject: {subj_id}; run: {run_id} - {confounds.columns}",
                               flush=flush_print)
-
+        else:
+            censor = False
         # Create the masker for extracting time series
         masker = NiftiLabelsMasker(
             mask_img=mask_file,

@@ -3,6 +3,11 @@
 All notable future changes to neurocaps will be documented in this file.
 
 *Note*: All versions in this file are deployed on pypi.
+## [0.9.9.post] - 2024-06-12
+### 🐛 Fixes
+- Reference before assignment issue when `use_confounds` is False do to `censor` only being when `use_confounds`
+is True.
+
 ## [0.9.9] - 2024-06-12
 
 **Pylint used to check for potential errors and also used to clean code**
