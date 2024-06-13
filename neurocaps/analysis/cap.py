@@ -688,8 +688,8 @@ class CAP(_CAPGetter):
         return_df : str, default=True
             If True, returns the dataframe.
         output_dir : `os.PathLike` or None, default=None
-            Directory to save dataframe to. The directory will be created if it does not exist. If ``None``, dataframe
-            will not be saved.
+            Directory to save dataframe as csv file to. The directory will be created if it does not exist.
+            If ``None``, dataframe will not be saved.
         prefix_file_name : str or None, default=None
             Will serve as a prefix to append to the saved file names for the dataframes, if ``output_dir`` is
             provided.
@@ -704,6 +704,10 @@ class CAP(_CAPGetter):
         The presence of 0 for specific CAPs in the ``"temporal fraction"``, ``"persistence"``, or ``"counts"``
         dataframes indicates that the participant had zero instances of a specific CAP. For ``"transition frequency"``,
         a 0 indicates no transitions due to all participant's frames being assigned to a single CAP.
+
+        Information for all groups will be in a single file, there is a "Group" column to denote the group the
+        subject belongs to, this column exists even when no group is specified, all subjects all listed as being
+        in the "All Subjects" group.
 
         References
         ----------
@@ -863,10 +867,10 @@ class CAP(_CAPGetter):
             if not os.path.exists(output_dir): os.makedirs(output_dir)
             for metric in df_dict:
                 if prefix_file_name:
-                    prefix_file_name = os.path.splitext(prefix_file_name.rstrip())[0].rstrip() + f"-{metric.replace(' ','_')}"
+                    file_name = os.path.splitext(prefix_file_name.rstrip())[0].rstrip() + f"-{metric.replace(' ','_')}"
                 else:
-                    prefix_file_name = f"{metric.replace(' ','_')}"
-                df_dict[f"{metric}"].to_csv(path_or_buf=os.path.join(output_dir,f"{prefix_file_name}.csv"), sep=",",
+                    file_name = f"{metric.replace(' ','_')}"
+                df_dict[f"{metric}"].to_csv(path_or_buf=os.path.join(output_dir,f"{file_name}.csv"), sep=",",
                                             index=False)
 
         if return_df: return df_dict

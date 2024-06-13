@@ -1,7 +1,7 @@
 **neurocaps**
 =============
 .. image:: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-blue
-   :target: https://doi.org/10.5281/zenodo.11642615
+   :target: https://doi.org/10.5281/zenodo.11645498
    :alt: DOI
 
 This is a Python package designed to perform Co-activation Patterns (CAPs) analyses. It utilizes k-means clustering to group timepoints (TRs) into brain states, applicable to both resting-state and task-based fMRI data. 

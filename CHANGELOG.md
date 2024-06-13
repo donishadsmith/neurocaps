@@ -3,6 +3,16 @@
 All notable future changes to neurocaps will be documented in this file.
 
 *Note*: All versions in this file are deployed on pypi.
+## [0.9.9.post3] - 2024-06-13
+### 🐛 Fixes
+- Noted an issue with file naming in `CAP.calculate_metrics()` that causes the suffix of the file name to append 
+to subsequent file names when requesting multiple metrics. While it doesn't effect the content inside the file it is an 
+irritating issue. For instance "-temporal_fraction.csv" became "-counts-temporal_fraction.csv" if user requested "counts"
+before "temporal fraction".
+
+### 💻 Metadata
+- But Zenodo on Pypi.
+
 ## [0.9.9.post2] - 2024-06-13
 ### 💻 Metadata
 - All docstrings now at a satisfactory point of being well formatted and explanatory.

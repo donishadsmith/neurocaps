@@ -495,8 +495,8 @@ spent in each CAP. If not provided, persistence will be calculated as the averag
 <li><p><strong>metrics</strong> (<em>str</em><em> or </em><em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>default=</em><em>[</em><em>&quot;temporal fraction&quot;</em><em>, </em><em>&quot;persistence&quot;</em><em>, </em><em>&quot;counts&quot;</em><em>, </em><em>&quot;transition frequency&quot;</em><em>]</em>) – The metrics to calculate. Available options include <code class="docutils literal notranslate"><span class="pre">&quot;temporal</span> <span class="pre">fraction&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;persistence&quot;</span></code>,
 <code class="docutils literal notranslate"><span class="pre">&quot;counts&quot;</span></code>, and <code class="docutils literal notranslate"><span class="pre">&quot;transition</span> <span class="pre">frequency&quot;</span></code>.</p></li>
 <li><p><strong>return_df</strong> (<em>str</em><em>, </em><em>default=True</em>) – If True, returns the dataframe.</p></li>
-<li><p><strong>output_dir</strong> (<cite>os.PathLike</cite> or None, default=None) – Directory to save dataframe to. The directory will be created if it does not exist. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, dataframe
-will not be saved.</p></li>
+<li><p><strong>output_dir</strong> (<cite>os.PathLike</cite> or None, default=None) – Directory to save dataframe as csv file to. The directory will be created if it does not exist.
+If <code class="docutils literal notranslate"><span class="pre">None</span></code>, dataframe will not be saved.</p></li>
 <li><p><strong>prefix_file_name</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>default=None</em>) – Will serve as a prefix to append to the saved file names for the dataframes, if <code class="docutils literal notranslate"><span class="pre">output_dir</span></code> is
 provided.</p></li>
 </ul>
@@ -510,6 +510,9 @@ provided.</p></li>
 <p>The presence of 0 for specific CAPs in the <code class="docutils literal notranslate"><span class="pre">&quot;temporal</span> <span class="pre">fraction&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;persistence&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;counts&quot;</span></code>
 dataframes indicates that the participant had zero instances of a specific CAP. For <code class="docutils literal notranslate"><span class="pre">&quot;transition</span> <span class="pre">frequency&quot;</span></code>,
 a 0 indicates no transitions due to all participant’s frames being assigned to a single CAP.</p>
+<p>Information for all groups will be in a single file, there is a “Group” column to denote the group the
+subject belongs to, this column exists even when no group is specified, all subjects all listed as being
+in the “All Subjects” group.</p>
 </div>
 <p class="rubric">References</p>
 <p>Liu, X., Zhang, N., Chang, C., &amp; Duyn, J. H. (2018). Co-activation patterns in resting-state fMRI signals.
