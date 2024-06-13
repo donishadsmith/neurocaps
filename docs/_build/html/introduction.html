@@ -8,7 +8,7 @@
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
       <link rel="stylesheet" type="text/css" href="_static/plot_directive.css?v=7f9a90b1" />
-      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=c808dd52" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=b77a3e96" />
 
   
   <!--[if lt IE 9]>
@@ -142,7 +142,7 @@ BOLD timeseries from 105 subjects from resting-state data (single run containing
 </section>
 <section id="main-features-for-cap-includes">
 <h2>Main features for <code class="docutils literal notranslate"><span class="pre">CAP</span></code> includes:<a class="headerlink" href="#main-features-for-cap-includes" title="Link to this heading"></a></h2>
-<ul class="simple">
+<ul>
 <li><p><strong>Optimal Cluster Size Identification:</strong> Perform the silhouette or elbow method to identify the optimal cluster size, saving the optimal model as an attribute.</p></li>
 <li><p><strong>Parallel Processing:</strong> Use parallel processing, when using the silhouette or elbow method, by specifying the number of CPU cores in the <code class="docutils literal notranslate"><span class="pre">n_cores</span></code> parameter in the <code class="docutils literal notranslate"><span class="pre">`get_caps()</span></code> method.
 <em>Note:</em> If you are using an HPC, remember to allocate the appropriate amount of CPU cores with your workload manager. For instance in slurm use <code class="docutils literal notranslate"><span class="pre">#SBATCH</span> <span class="pre">--cpus-per-task=10</span></code> if you intend to use 10 cores.</p></li>
@@ -156,12 +156,40 @@ Also includes the option to save the NifTIs. There is also another a parameter i
 converting your atlas to fslr space. This parameter allows plotting without re-running the analysis and only initializing the <code class="docutils literal notranslate"><span class="pre">CAP</span></code> class and using the <code class="docutils literal notranslate"><span class="pre">caps2surf</span></code> method is needed.</p></li>
 <li><p><strong>Correlation Matrix Creation:</strong> Create a correlation matrix from CAPs with options to customize and save plots. Refer to the <a class="reference external" href="https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2corr">documentation</a>
 for the <code class="docutils literal notranslate"><span class="pre">caps2corr()</span></code> method in the <code class="docutils literal notranslate"><span class="pre">CAP</span></code> class for available <code class="docutils literal notranslate"><span class="pre">**kwargs</span></code> arguments and parameters to modify plots.</p></li>
-<li><dl class="simple">
+<li><dl>
 <dt><strong>CAP Metrics Calculation:</strong> Calculate CAP metrics (<code class="docutils literal notranslate"><span class="pre">calculate_metrics()</span></code>) as described in <a class="reference external" href="https://doi.org/10.1016/j.neuroimage.2018.01.041">Liu et al., 2018</a> <a class="footnote-reference brackets" href="#id7" id="id3" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a> and <a class="reference external" href="https://doi.org/10.1016/j.neuroimage.2021.118193">Yang et al., 2021</a> <a class="footnote-reference brackets" href="#id8" id="id4" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a>:</dt><dd><ul>
-<li><p><em>Temporal Fraction:</em> The proportion of total volumes spent in a single CAP over all volumes in a run.</p></li>
-<li><p><em>Persistence:</em> The average time spent in a single CAP before transitioning to another CAP (average consecutive/uninterrupted time).</p></li>
-<li><p><em>Counts:</em> The frequency of each CAP observed in a run.</p></li>
-<li><p><em>Transition Frequency:</em> The number of switches between different CAPs across the entire run.</p></li>
+<li><p><em>Temporal Fraction:</em> The proportion of total volumes spent in a single CAP over all volumes in a run.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">predicted_subject_timeseries</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+<span class="n">target</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">temporal_fraction</span> <span class="o">=</span> <span class="mi">4</span><span class="o">/</span><span class="mi">6</span>
+</pre></div>
+</div>
+</li>
+<li><p><em>Persistence:</em> The average time spent in a single CAP before transitioning to another CAP (average consecutive/uninterrupted time).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">predicted_subject_timeseries</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+<span class="n">target</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="c1"># Sequences for 1 are [1] and [1,1,1]</span>
+<span class="n">persistance</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">3</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span> <span class="c1"># Average number of frames</span>
+<span class="n">tr</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="k">if</span> <span class="n">tr</span><span class="p">:</span>
+    <span class="n">persistance</span> <span class="o">=</span> <span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span> <span class="c1"># Turns average frames into average time</span>
+</pre></div>
+</div>
+</li>
+<li><p><em>Counts:</em> The frequency of each CAP observed in a run.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">predicted_subject_timeseries</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+<span class="n">target</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">counts</span> <span class="o">=</span> <span class="mi">4</span>
+</pre></div>
+</div>
+</li>
+<li><p><em>Transition Frequency:</em> The number of switches between different CAPs across the entire run.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">predicted_subject_timeseries</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+<span class="c1"># Transitions between unique CAPs occur at indices 0 -&gt; 1, 1 -&gt; 2, and 4 -&gt; 5</span>
+<span class="n">transition_frequency</span> <span class="o">=</span> <span class="mi">3</span>
+</pre></div>
+</div>
+</li>
 </ul>
 </dd>
 </dl>
@@ -169,7 +197,28 @@ for the <code class="docutils literal notranslate"><span class="pre">caps2corr()
 <li><p><strong>Cosine Similarity Radar Plots:</strong> Create radar plots showing the cosine similarity between CAPs and networks/regions. Especially useful as a quantitative method to categorize CAPs by determining the regions/networks containing the most nodes demonstrating
 increased co-activation or decreased co-deactivation <a class="footnote-reference brackets" href="#id9" id="id5" role="doc-noteref"><span class="fn-bracket">[</span>3<span class="fn-bracket">]</span></a>. Refer to the <a class="reference external" href="https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2radar">documentation</a> in <code class="docutils literal notranslate"><span class="pre">caps2radar</span></code> in the <code class="docutils literal notranslate"><span class="pre">CAP</span></code> class for a more
 detailed explanation as well as available <code class="docutils literal notranslate"><span class="pre">**kwargs</span></code> arguments and parameters to modify plots.**Note**,the “Low Amplitude”are negative cosine similarity values. The absolute value of those cosine similarities are taken so that the radar plot starts at 0 and magnitude
-comparisons between the “High Amplitude” and “Low Amplitude” groups are easier to see.</p></li>
+comparisons between the “High Amplitude” and “Low Amplitude” groups are easier to see. Below is an example of how the cosine similarity is calculated for this function.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="c1"># Nodes in order of their label ID, &quot;LH_Vis1&quot; is the 0th index in the parcellation</span>
+<span class="c1"># but has a label ID of 1, and RH_SomSot2 is in the 7th index but has a label ID</span>
+<span class="c1"># of 8 in the parcellation.</span>
+<span class="n">nodes</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;LH_Vis1&quot;</span><span class="p">,</span> <span class="s2">&quot;LH_Vis2&quot;</span><span class="p">,</span> <span class="s2">&quot;LH_SomSot1&quot;</span><span class="p">,</span> <span class="s2">&quot;LH_SomSot2&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;RH_Vis1&quot;</span><span class="p">,</span> <span class="s2">&quot;RH_Vis2&quot;</span><span class="p">,</span> <span class="s2">&quot;RH_SomSot1&quot;</span><span class="p">,</span> <span class="s2">&quot;RH_SomSot2&quot;</span><span class="p">]</span>
+<span class="c1"># Binary representation of the nodes in Vis, essentially acts as</span>
+<span class="c1"># a mask isolating the modes for for Vis</span>
+<span class="n">binary_vector</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+<span class="c1"># Cluster centroid for CAP 1</span>
+<span class="n">cap_1_cluster_centroid</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">1.3</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">]</span>
+<span class="c1"># Dot product is the sum of all the values here [-0.3, 1.5, 0, 0, 0.7, 1.3, 0, 0]</span>
+<span class="n">dot_product</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">cap_1_cluster_centroid</span><span class="p">,</span> <span class="n">binary_vector</span><span class="p">)</span>
+
+<span class="n">norm_cap_1_cluster_centroid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">cap_1_cluster_centroid</span><span class="p">)</span>
+<span class="n">norm_binary_vector</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">binary_vector</span><span class="p">)</span>
+<span class="c1"># Cosine similarity between CAP 1 and the visual network</span>
+<span class="n">cosine_similarity</span> <span class="o">=</span> <span class="n">dot_product</span><span class="o">/</span><span class="p">(</span><span class="n">norm_cap_1_cluster_centroid</span> <span class="o">*</span> <span class="n">norm_binary_vector</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
 </ul>
 <p><strong>Additionally, the `neurocaps.analysis` submodule contains two additional functions:</strong></p>
 <ul class="simple">

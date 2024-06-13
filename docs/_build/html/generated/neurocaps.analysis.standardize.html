@@ -8,7 +8,7 @@
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
       <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css?v=7f9a90b1" />
-      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=c808dd52" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=b77a3e96" />
 
   
   <!--[if lt IE 9]>
@@ -99,11 +99,10 @@
 <dd class="field-odd"><p><strong>subject_timeseries_list</strong> (<em>List</em><em>[</em><em>Dict</em><em>]</em><em>] or </em><em>List</em><em>[</em><em>str</em><em>]</em>) – <p>A list of pickle files containing the nested subject timeseries dictionary saved by the
 <code class="docutils literal notranslate"><span class="pre">TimeSeriesExtractor</span></code> class or a list of nested subject timeseries dictionaries produced by the
 <code class="docutils literal notranslate"><span class="pre">TimeSeriesExtractor</span></code> class. The first level of the nested dictionary must consist of the subject ID as a
-string, the second level must consist of the run numbers in the form of ‘run-#’ (where # is the
-corresponding number of the run), and the last level must consist of the timeseries (as a numpy array)
+string, the second level must consist of the run numbers in the form of <code class="docutils literal notranslate"><span class="pre">&quot;run-#&quot;</span></code> (where # is the
+corresponding number of the run), and the last level must consist of the timeseries (as a <code class="docutils literal notranslate"><span class="pre">numpy</span></code> array)
 associated with that run.  The structure is as follows:</p>
-<blockquote>
-<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">subject_timeseries</span> <span class="o">=</span> <span class="p">{</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">subject_timeseries</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;101&quot;</span><span class="p">:</span> <span class="p">{</span>
             <span class="s2">&quot;run-0&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">timeseries</span><span class="p">]),</span> <span class="c1"># 2D array</span>
             <span class="s2">&quot;run-1&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">timeseries</span><span class="p">]),</span> <span class="c1"># 2D array</span>
@@ -116,11 +115,10 @@ associated with that run.  The structure is as follows:</p>
     <span class="p">}</span>
 </pre></div>
 </div>
-</div></blockquote>
 </p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><em>Dict[str, Dict[str, np.ndarray]]</em></p>
+<dd class="field-even"><p><cite>Dict[str, Dict[str, np.ndarray]]</cite>.</p>
 </dd>
 </dl>
 </dd></dl>

@@ -20,231 +20,226 @@ class CAP(_CAPGetter):
 
     Parameters
     ----------
-        parcel_approach : Dict[Dict], default=None
-            The approach used to parcellate BOLD images. This should be a nested dictionary with the first key being
-            the atlas name. The sub-keys should include:
+    parcel_approach : Dict[Dict], default=None
+        The approach used to parcellate BOLD images. This should be a nested dictionary with the first key being
+        the atlas name. The sub-keys should include:
 
-             - ``maps``: Directory path to the location of the parcellation file.
-             - ``nodes``: A list of node names in the order of the label IDs in the parcellation.
-             - ``regions``: The regions or networks in the parcellation.
+            - ``"maps"``: Directory path to the location of the parcellation file.
+            - ``"nodes"``: A list of node names in the order of the label IDs in the parcellation.
+            - ``"regions"``: The regions or networks in the parcellation.
 
-            If the "Schaefer" or "AAL" option was used in the ``TimeSeriesExtractor`` class, you can initialize
-            the ``TimeSeriesExtractor`` class with the ``parcel_approach``  that was initially used, then set this
-            parameter to ``TimeSeriesExtractor.parcel_approach``. For this parameter, only "Schaefer", "AAL", and
-            "Custom" are supported. **Note**, this is not needed for using ``self.get_caps``; however, for plotting
-            it will be needed. ``self.parcel_approach=parcel_approach`` can be used.
-        n_clusters : Union[int, List[int]], default=5
-            The number of clusters to use. Can be a single integer or a list of integers
-            (if ``cluster_selection_method`` is not None).
-        cluster_selection_method : str or None, default=None
-            Method to find the optimal number of clusters. Options are "silhouette" or "elbow".
-        groups : Dict[str, List] or None, default=None
-            A mapping of group names to subject IDs. Each group contains subject IDs for separate CAP analysis.
-            If None, CAPs are not separated by group. The structure should be as follows:
-            ::
+        If the ``"Schaefer"`` or ``"AAL"`` option was used in the ``TimeSeriesExtractor`` class, you can initialize
+        the ``TimeSeriesExtractor`` class with the ``parcel_approach``  that was initially used, then set this
+        parameter to ``TimeSeriesExtractor.parcel_approach``. For this parameter, only ``"Schaefer"``, ``"AAL"``, and
+        ``"Custom"`` are supported. **Note**, this parameter is not needed for using ``self.get_caps()``; however, for
+        certain plotting functions it will be needed. This class contains a ``parcel_approach`` property that also acts
+        as a setter so ``self.parcel_approach=parcel_approach`` can be used to set the ``parcel_approach`` later on.
+    n_clusters : Union[int, List[int]], default=5
+        The number of clusters to use for ``scikit-learn``'s ``KMeans``. Can be a single integer or a list of integers
+        (if ``cluster_selection_method`` is not ``None``).
+    cluster_selection_method : str or None, default=None
+        Method to find the optimal number of clusters. Options are ``"silhouette"`` or ``"elbow"``.
+    groups : Dict[str, List] or None, default=None
+        A mapping of group names to subject IDs. Each group contains subject IDs for separate CAP analysis.
+        If ``None``, CAPs are not separated by group. The structure should be as follows:
+        ::
 
-                {
-                    "GroupName1": ["1", "2", "3"],
-                    "GroupName2": ["4", "5", "6"]
-                }
+            {
+                "GroupName1": ["1", "2", "3"],
+                "GroupName2": ["4", "5", "6"]
+            }
 
-            **Note**, if left as None, when ``get_caps()`` is used, the group name will default to "All Subjects" and
-            will contain a list will all subject IDs. The structure will be as follows
-            ::
-
-                {
-                    "All Subjects": ["1", "2", "3", "4", "5", "6"]
-                }
 
     Property
     --------
-        n_clusters : int or List[int]
-            A single integer or list of integers if ``cluster_selection_method`` is not None) that will used for
-            k-means clustering.
-        groups : Dict[str, List] or None:
-            A mapping og groups names to and subject IDS. **Note**, if left as None, when ``get_caps()`` is used, the
-            group name will default to "All Subjects" and will contain a list will all subject IDs.
-        cluster_selection_method : str or None:
-            The cluster selection method to use to identify the optimal cluster.
-        parcel_approach : Dict[str, Dict]
-            Nested dictionary containing information about the parcellation. Can also be used as a setter. If "Schaefer"
-            or ""AAL" was specified during initialization of the ``TimeseriesExtractor`` class, then `Nilearn's`
-            ``datasets.fetch_atlas_schaefer_2018` and ``datasets.fetch_atlas_aal`` will be used to obtain the "maps"
-            and the "labels"/"nodes". Then string splitting is used on the "labels"/"nodes" to obtain the
-            "regions"/"networks:
-            ::
+    n_clusters : int or List[int]
+        A single integer or list of integers if ``cluster_selection_method`` is not ``None``) that will used for
+        ``KMeans``.
+    groups : Dict[str, List] or None:
+        A mapping of groups names to subject IDs.
+    cluster_selection_method : str or None:
+        The cluster selection method to identify the optimal number of clusters.
+    parcel_approach : Dict[str, Dict]
+        Nested dictionary containing information about the parcellation. Can also be used as a setter. If ``"Schaefer"``
+        or ``"AAL"`` was specified during initialization of the ``TimeseriesExtractor`` class, then ``nilearn``'s
+        ``datasets.fetch_atlas_schaefer_2018` and ``datasets.fetch_atlas_aal`` will be used to obtain the ``"maps"``
+        and the ``"nodes"``. Then string splitting is used on the ``"nodes"`` to obtain the ``"regions"``:
+        ::
 
+            {
+                "Schaefer":
                 {
-                    "Schaefer":
-                    {
-                        "maps": "path/to/parcellation.nii.gz",
-                        "nodes": ["LH_Vis1", "LH_SomSot1", "RH_Vis1", "RH_Somsot1"],
-                        "regions": ["Vis", "SomSot"]
-                    }
+                    "maps": "path/to/parcellation.nii.gz",
+                    "nodes": ["LH_Vis1", "LH_SomSot1", "RH_Vis1", "RH_SomSot1"],
+                    "regions": ["Vis", "SomSot"]
+                }
+            }
+
+
+            {
+                "AAL":
+                {
+                    "maps": "path/to/parcellation.nii.gz",
+                    "nodes": ["Precentral_L", "Precentral_R", "Frontal_Sup_L", "Frontal_Sup_R"],
+                    "regions": ["Precentral", "Frontal"]
+                }
+            }
+
+        If ``"Custom"`` is specified, only checks are done to ensure that the dictionary contains the proper sub-keys
+        such as ``"maps"``, ``"nodes"``, and ``"regions"``. Unlike ``"Schaefer"`` and ``"AAL"``, ``"regions"`` must be
+        a nested dictionary specifying the name of the region as the first level key and the indices in the ``"nodes"``
+        list belonging to the ``"lh"`` and ``"rh"`` for that region. Refer to the example for ``"Custom"`` in
+        the **Note** section below.
+
+    n_cores : int
+        Number of cores to use for multiprocessing with ``joblib``. Is ``None`` until ``self.get_caps()`` is used
+        and ``n_cores`` is specified.
+    runs : int or List[int]
+        The runs used for the CAPs analysis. Is ``None`` until ``self.get_caps()`` is used and ``runs`` is specified.
+    caps : Dict[str, Dict[np.array]]
+        The extracted cluster centroids, representing each CAP from the k-means model. It is a nested dictionary
+        containing the group name, CAP names, and 1D ``numpy`` array. Is ``None`` until ``self.get_caps``
+        is used. The structure is as follows:
+        ::
+
+            {
+                "GroupName": {
+                    "CAP-1": np.array([...]) # 1 x ROI array,
+                    "CAP-2": np.array([...]) # 1 x ROI array,
                 }
 
-                {
-                    "AAL":
-                    {
-                        "maps": "path/to/parcellation.nii.gz",
-                        "nodes": ["Precentral_L", "Precentral_R", "Frontal_Sup_L", "Frontal_Sup_R"],
-                        "regions": ["Precentral", "Frontal"]
-                    }
+            }
+
+    kmeans : Dict[str, sklearn.cluster.KMeans]
+        Dictionary containing the ``KMeans`` model used for each group. If ``cluster_selection__method`` is not
+        ``None``, the ``KMeans`` model will be the optimal model.  Is ``None`` until ``self.get_caps()`` is used.
+        The structure is as follows:
+        ::
+
+            {
+                "GroupName": sklearn.cluster.KMeans
+            }
+
+    silhouette_scores : Dict[str, Dict[str, float]]
+        If ``cluster_selection_method`` is ``"silhouette"``, this property will be a nested dictionary containing
+        the group name, cluster number, and silhouette score. Is ``None`` until ``self.get_caps()`` is used. The
+        structure is as follows:
+        ::
+
+            {
+                "GroupName": {
+                    "2": float,
+                    "3": float,
+                    "4": float
+                }
+            }
+
+    inertia : Dict[str, Dict[str, float]]
+        If ``cluster_selection_method`` is ``"elbow"``, this property will be a nested dictionary containing the
+        group name, cluster number, and inertia. Is ``None`` until ``self.get_caps()`` is used. The structure is as
+        follows:
+        ::
+
+            {
+                "GroupName": {
+                    "2": float,
+                    "3": float,
+                    "4": float
+                }
+            }
+
+    optimal_n_clusters : Dict[str, Dict[int]]
+        If ``cluster_selection_method`` is not ``None``, this property is a nested dictionary containing the group
+        name and the optimal number of clusters. The structure is as follows:
+        ::
+
+            {
+                "GroupName": int
+            }
+
+    standardize : bool
+        Boolean denoting whether the features of the concatenated timeseries data was z-scored. Is ``None`` until
+        ``self.get_caps()`` is used.
+    epsilon : float
+        A small number added to the denominator when z-scoring for numerical stability.
+    means : Dict[str, np.array]
+        If ``standardize`` is ``True`` in ``self.get_caps()``, this property is a nested dictionary containing the
+        group names and a ``numpy`` array (participants x TR) x ROIs of the means of the features. The structure is as
+        follows:
+        ::
+
+            {
+                "GroupName": np.array([...]) # Dimensions: 1 x ROIs
+            }
+
+    stdev : Dict[str, np.array]
+        If ``standardize`` is ``True`` in ``self.get_caps()``, this property is a nested dictionary containing the
+        group names and a ``numpy`` array (participants x TR) x ROIs of the sample standard deviation of the features.
+        The structure is as follows:
+        ::
+
+            {
+                "GroupName": np.array([...]) # Dimensions: 1 x ROIs
+            }
+
+    concatenated_timeseries : Dict[str, np.array]
+        Nested dictionary containing the group name and their respective concatenated ``numpy`` arrays
+        (participants x TR) x ROIs. Is ``None`` until ``self.get_caps()`` is used. The structure is as follows:
+        ::
+
+            {
+                "GroupName": np.array([...]) # Dimensions: (participants x TR) x ROIs
+            }
+
+    region_caps : Dict[str, np.array]:
+        If ``visual_scope`` set to ``"regions"`` in ``self.caps2plot()``, this property is a nested dictionary
+        containing the group name, CAP names, and ``numpy`` array (1 x region) of the averaged z-score value for each
+        region. The structure is as follows:
+        ::
+
+            {
+                "GroupName": {
+                    "CAP-1": np.array([...]) # 1 x region array,
+                    "CAP-2": np.array([...]) # 1 x region array,
                 }
 
-            If "Custom" is specified, only checks are done to ensure that the dictionary contains the proper sub-keys
-            such as ``maps``, ``nodes``, and ``regions``. Unlike "Schaefer" and "AAL", "region" must be a nested
-            dictionary specifying the name of the region as the first level key and the indices in the "nodes" list
-            belonging to the "lh" and "rh" for that region. Refer to the structure example for "Custom" in the Notes
-            for ``parcel_approach`` section below.
+            }
 
-        n_cores : int
-            Number of cores to use for multiprocessing with ``joblib``.  Is None until ``self.get_caps`` is used
-            and ``n_cores`` is specified.
-        runs : int or List[int]
-            The runs used for the CAPs analysis. Is None until ``self.get_caps`` is used and ``runs``is specified.
-        caps : Dict[str, Dict[np.array]]
-            The extracted cluster centroids, representing each CAP from the K-means model. It is a nested
-            dictionary containing the group name, CAP names, and 1D numpy array. *Note*, if no groups were
-            specified, the default group name is "All Subjects".  Is None until ``self.get_caps`` is used.
-            The structure is as follows:
-            ::
+    outer_products : Dict[str, Dict[str, np.array]]
+        If ``plot_options`` set to " outer product" ``self.caps2plot()``, this property is a nested dictionary
+        containing the group name, CAP names, and ``numpy`` array (ROI x ROI) of the outer product. The structure is
+        as follows:
+        ::
 
-                {
-                    "GroupName": {
-                        "CAP-1": np.array([...]) # 1 x ROI array,
-                        "CAP-2": np.array([...]) # 1 x ROI array,
-                    }
-
+            {
+                "GroupName": {
+                    "CAP-1": np.array([...]) # ROI x ROI array,
+                    "CAP-2": np.array([...]) # ROI x ROI array,
                 }
 
-        kmeans : Dict[str, ``sklearn.cluster.KMeans``]
-            Dictionary containing the ``KMeans`` model used for each group. If ``cluster_selection__method`` is not
-            None, the ``KMeans`` model will be the optimal model.  Is None until ``self.get_caps`` is used.
-            The structure is as follows:
-            ::
-
-                {
-                    "GroupName": sklearn.cluster.KMeans
-                }
-
-        silhouette_scores : Dict[str, Dict[str, float]]
-            If ``cluster_selection_method`` is "silhouette", this property will be a nested dictionary containing
-            the group name, cluster number, and silhouette score.  Is None until ``self.get_caps`` is used.
-            The structure is as follows:
-            ::
-
-                {
-                    "GroupName": {
-                        "2": float,
-                        "3": float,
-                        "4": float
-                    }
-                }
-
-        inertia : Dict[str, Dict[str, float]]
-            If ``cluster_selection_method`` is "elbow", this property will be a nested dictionary containing the
-            group name, cluster number, and inertia.  Is None until ``self.get_caps`` is used.
-            The structure is as follows:
-            ::
-
-                {
-                    "GroupName": {
-                        "2": float,
-                        "3": float,
-                        "4": float
-                    }
-                }
-
-        optimal_n_clusters : Dict[str, Dict[int]]
-            If ``cluster_selection_method`` is not None, this property is a nested dictionary containing the group
-            name and the optimal number of clusters. The structure is as follows:
-            ::
-
-                {
-                    "GroupName": int
-                }
-
-        standardize : bool
-            Boolean denoting whether the features of the concatenated timeseries data was z-scored. Is None until
-            ``self.get_caps`` is used.
-        epsilon : float
-            A small number to added to the denominator when z-scoring for numerical stability.
-        means : Dict[str, np.array]
-            If ``standardize`` is True, this property is a nested dictionary containing the group names and a
-            numpy array (participants x TR) x ROIs of the means of the features.  Is None until ``self.get_caps`` is
-            used. The structure is as follows:
-            ::
-
-                {
-                    "GroupName": np.array([...])  # Dimensions: 1 x ROIs
-                }
-
-        stdev : Dict[str, np.array]
-            If ``standardize`` is True, this property is a nested dictionary containing the group names and a numpy
-            array (participants x TR) x ROIs of the sample standard deviation of the features.  Is None until
-            ``self.get_caps`` is used. The structure is as follows:
-            ::
-
-                {
-                    "GroupName": np.array([...])  # Dimensions: 1 x ROIs
-                }
-
-        concatenated_timeseries : Dict[str, np.array]
-            Nested dictionary containing the group name and their respective concatenated numpy arrays
-            (participants x TR) x ROIs. Is None until ``self.get_caps`` is used. The structure is as follows:
-            ::
-
-                {
-                    "GroupName": np.array([...])  # Dimensions: (participants x TR) x ROIs
-                }
-
-        region_caps : Dict[str, np.array]:
-            If ``visual_scope`` set to "regions" in ``self.caps2plot``, this property is a nested dictionary containing
-            the group name, CAP names, and numpy array (1 x region) of the averaged z-score value for each region.
-            The structure is as follows:
-            ::
-
-                {
-                        "GroupName": {
-                            "CAP-1": np.array([...]) # 1 x region array,
-                            "CAP-2": np.array([...]) # 1 x region array,
-                        }
-
-                    }
-
-        outer_products : Dict[str, Dict[str, np.array]]
-            If ``plot_options`` set to " outer product", this property is a nested dictionary containing the group name,
-            CAP names, and numpy array (ROI x ROI) of the outer product. The structure is as follows:
-            ::
-
-                {
-                        "GroupName": {
-                            "CAP-1": np.array([...]) # ROI x ROI array,
-                            "CAP-2": np.array([...]) # ROI x ROI array,
-                        }
-
-                    }
+            }
 
     Note
     ----
     **If no groups were specified, the default group name will be "All Subjects".**
 
-    **If using a "Custom" parcellation approach**, ensure each node in your dataset includes both left (lh) and right
-    (rh) hemisphere versions. This function assumes that the background label is "zero". Do not add a background label
-    in the "nodes" or "networks" key; the zero index should correspond to the first ID that is not zero.
+    **If using a "Custom" parcellation approach**, ensure each node in your dataset includes both left (lh) and
+    right (rh) hemisphere versions (bilateral nodes). This function assumes that the background label is "zero".
+    Do not add a background label in the ``"nodes"`` or ``"regions"`` key; the zero index should correspond to the
+    first ID that is not zero.
 
-    - ``maps``: Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g.,
+    - ``"maps"``: Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g.,
       .nii for NIfTI files).
-    - ``nodes``: List of all node labels used in your study, arranged in the exact order they correspond to indices in
+    - ``"nodes"``: List of all node labels used in your study, arranged in the exact order they correspond to indices in
       your parcellation files. Each label should match the parcellation index it represents. For example, if the
       parcellation label "1" corresponds to the left hemisphere visual cortex area 1, then "LH_Vis1" should occupy
       the 0th index in this list. This ensures that data extraction and analysis accurately reflect the anatomical
       regions intended.
-    - ``regions``: Dictionary defining major brain regions. Each region should list node indices under "lh" and "rh" to
-      specify left and right hemisphere nodes.
+    - ``"regions"``: Dictionary defining major brain regions. Each region should list node indices under
+      ``"lh"`` and ``"rh"`` to specify left and right hemisphere nodes.
 
-    **Different sub-keys are required depending on the function used.**
+    **Different sub-keys are required depending on the function used. Refer to the Note section under each function
+    for information regarding the sub-keys required for that function.**
 
     The provided example demonstrates setting up a custom parcellation containing nodes for the visual network (Vis)
     and hippocampus regions:
@@ -324,82 +319,81 @@ class CAP(_CAPGetter):
         """
         **Perform K-Means Clustering to Generate CAPs**
 
-        Concatenates the timeseries of each subject into a single numpy array with dimensions (participants x TRs) x
-        ROI and performs k-means clustering on the concatenated data. **Note, this uses `Scikit's` ``KMeans`` so the
-        distance metric used is euclidean. Additionally, the elbow method is determined using ``KneeLocator`` from
-        the ``kneed`` package and the silhouette scores are calculates with `Scikit's` ``silhouette_score``.
+        Concatenates the timeseries of each subject into a single ``numpy`` array with dimensions (participants x TRs) x
+        ROI and uses ``scikit-learn``'s ``KMeans`` on the concatenated data. **Note**, ``KMeans`` uses euclidean
+        distance Additionally, the elbow method is determined using ``KneeLocator`` from the ``kneed`` package and the
+        silhouette scores are calculated with ``scikit-learn``'s  ``silhouette_score``.
 
         Parameters
         ----------
-            subject_timeseries : Dict[str, Dict[str, np.ndarray]] or str
-                Path of the pickle file containing the nested subject timeseries dictionary saved by the
-                ``TimeSeriesExtractor`` class or the nested subject timeseries dictionary produced by the
-                ``TimeseriesExtractor`` class. The first level of the nested dictionary must consist of the subject ID
-                as a string, the second level must consist of the run numbers in the form of 'run-#' (where # is the
-                corresponding number of the run), and the last level must consist of the timeseries (as a numpy array)
-                associated with that run. The structure is as follows:
-                    ::
+        subject_timeseries : Dict[str, Dict[str, np.ndarray]] or str
+            Path of the pickle file containing the nested subject timeseries dictionary saved by the
+            ``TimeSeriesExtractor`` class or the nested subject timeseries dictionary produced by the
+            ``TimeseriesExtractor`` class. The first level of the nested dictionary must consist of the subject ID
+            as a string, the second level must consist of the run numbers in the form of ``"run-#"`` (where # is the
+            corresponding number of the run), and the last level must consist of the timeseries (as a ``numpy`` array)
+            associated with that run. The structure is as follows:
+            ::
 
-                        subject_timeseries = {
-                                "101": {
-                                    "run-0": np.array([timeseries]), # 2D array
-                                    "run-1": np.array([timeseries]), # 2D array
-                                    "run-2": np.array([timeseries]), # 2D array
-                                },
-                                "102": {
-                                    "run-0": np.array([timeseries]), # 2D array
-                                    "run-1": np.array([timeseries]), # 2D array
-                                }
-                            }
+                subject_timeseries = {
+                        "101": {
+                            "run-0": np.array([timeseries]), # 2D array
+                            "run-1": np.array([timeseries]), # 2D array
+                            "run-2": np.array([timeseries]), # 2D array
+                        },
+                        "102": {
+                            "run-0": np.array([timeseries]), # 2D array
+                            "run-1": np.array([timeseries]), # 2D array
+                        }
+                    }
 
-            runs : int or List[int] or None, default=None
-                The run numbers to perform the CAPs analysis with. If None, all runs in the subject timeseries will be
-                concatenated into a single dataframe and subjected to k-means clustering.
-            random_state : int or None, default=None
-                The random state to use for ``scikit-learn`` ``KMeans`` function.
-            init : "k-means++", "random", or array, default="k-means++"
-                Method for choosing initial cluster centroid. Refer to ``scikit-learn` ``KMeans`` documentation for more
-                information.
-            n_init : "auto" or int, default="auto"
-                Number of times KMeans is ran with different initial clusters. The model with lowest inertia from these
-                runs will be selected. Refer to ``scikit-learn` ``KMeans`` documentation for more information.
-            max_iter : int, default=300
-                Maximum number of iterations for a single run of ``KMeans``.
-            tol : float, default=1e-4,
-                Stopping criterion if the change in inertia is below this value, assuming ``max_iter`` has not been
-                reached.
-            algorithm : "lloyd or "elkan", default="lloyd"
-                The type of algorithm to use. Refer to ``scikit-learn` ``KMeans`` documentation for more information.
-            show_figs : bool, default=False
-                Display the plots of inertia scores for all groups if ``cluster_selection_method`` is set to "elbow".
-            output_dir : `os.Pathlike` or None, default=None
-                Directory to save plot to if ``cluster_selection_method`` is set to "elbow". The directory will be
-                created if it does not exist.
-            standardize : bool, default=True
-                Whether to z-score the features of the concatenated timeseries data. The sample standard deviation will
-                be used, meaning ``n-1`` in the denominator.
-            epsilon : int or float, default=0
-                A small number to add to the denominator when z-scoring for numerical stability.
-            n_cores : int or None, default=None
-                The number of CPU cores to use for multiprocessing, with ``joblib``, to run multiple ``KMeans`` models
-                if ``cluster_selection_method`` is not None.
-            kwargs : Dict
-                Dictionary to adjust certain parameters related to ``cluster_selection_method`` when set to "elbow".
-                Additional parameters include:
+        runs : int or List[int] or None, default=None
+            The run numbers to perform the CAPs analysis with. If ``None``, all runs in the subject timeseries will be
+            concatenated into a single dataframe and subjected to ``KMeans``.
+        random_state : int or None, default=None
+            The random state to use for ``scikit-learn``'s ``KMeans``. Ensures reproducible results.
+        init : "k-means++", "random", or array, default="k-means++"
+            Method for choosing initial cluster centroid for ``scikit-learn``'s ``KMeans``.
+        n_init : "auto" or int, default="auto"
+            Number of times ``scikit-learn``'s ``KMeans`` is ran with different initial clusters.
+            The model with lowest inertia from these runs will be selected.
+        max_iter : int, default=300
+            Maximum number of iterations for a single run of ``scikit-learn``'s ``KMeans``.
+        tol : float, default=1e-4,
+            Stopping criterion for ``scikit-learn``'s ``KMeans``if the change in inertia is below this value, assuming
+            ``max_iter`` has not been reached.
+        algorithm : "lloyd or "elkan", default="lloyd"
+            The type of algorithm to use for ``scikit-learn``'s ``KMeans``. Options are ``"lloyd"`` and ``"elkan"``.
+        show_figs : bool, default=False
+            Display the plots of inertia scores for all groups if ``cluster_selection_method`` is set to ``"elbow"``.
+        output_dir : `os.PathLike` or None, default=None
+            Directory to save plot to if ``cluster_selection_method`` is set to ``"elbow"``. The directory will be
+            created if it does not exist.
+        standardize : bool, default=True
+            Whether to z-score the features of the concatenated timeseries data. The sample standard deviation will
+            be used, meaning ``n-1`` in the denominator.
+        epsilon : int or float, default=0
+            A small number to add to the denominator when z-scoring for numerical stability.
+        n_cores : int or None, default=None
+            The number of CPU cores to use for multiprocessing, with ``joblib``, to run multiple ``KMeans`` models
+            if ``cluster_selection_method`` is not ``None``.
+        kwargs : Dict
+            Dictionary to adjust certain parameters related to ``cluster_selection_method`` when set to ``"elbow"``.
+            Additional parameters include:
 
-                - S : int, default=1
-                    Adjusts the sensitivity of finding the elbow. Larger values are more conservative and less
-                    sensitive to small fluctuations. This package uses ``KneeLocator`` from the ``kneed`` package to
-                    identify the elbow. Default is 1.
-                - dpi : int, default=300
-                    Adjusts the dpi of the elbow plot. Default is 300.
-                - figsize : Tuple, default=(8,6)
-                    Adjusts the size of the elbow plots.
+            - S : int, default=1
+                Adjusts the sensitivity of finding the elbow. Larger values are more conservative and less
+                sensitive to small fluctuations. This package uses ``KneeLocator`` from the ``kneed`` package to
+                identify the elbow. Default is 1.
+            - dpi : int, default=300
+                Adjusts the dpi of the elbow plot. Default is 300.
+            - figsize : Tuple, default=(8,6)
+                Adjusts the size of the elbow plots.
 
         Returns
         -------
-            `matplotlib.Figure`
-                An instance of a `matplotlib` figure.
+        `matplotlib.Figure`
+            An instance of a `matplotlib` figure.
         """
         if n_cores and self._cluster_selection_method is not None:
             if n_cores > cpu_count():
@@ -615,67 +609,101 @@ class CAP(_CAPGetter):
         """
         **Get CAPs metrics**
 
-        Creates a single pandas DataFrame containing CAP metrics for all participants, as described in Liu et al.,
-        2018 and Yang et al., 2021. The metrics include:
+        Creates a single ``pandas`` ``DataFrame`` containing CAP metrics for all participants, as described
+        Liu et al., 2018 and Yang et al., 2021. The metrics include:
 
-         - `temporal fraction`: The proportion of total volumes spent in a single CAP over all volumes in a run.
-         - `persistence`: The average time spent in a single CAP before transitioning to another CAP
+         - ``"temporal fraction"``: The proportion of total volumes spent in a single CAP over all volumes in a run.
+           ::
+
+                predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
+                target = 1
+                temporal_fraction = 4/6
+
+         - ``"persistence"``: The average time spent in a single CAP before transitioning to another CAP
            (average consecutive/uninterrupted time).
-         - `counts`: The frequency of each CAP observed in a run.
-         - `transition frequency`: The number of switches between different CAPs across the entire run.
+           ::
+
+                predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
+                target = 1
+                # Sequences for 1 are [1] and [1,1,1]
+                persistance = (1 + 3)/2 # Average number of frames
+                tr = 2
+                if tr:
+                    persistance = ((1 + 3) * 2)/2 # Turns average frames into average time
+
+         - ``"counts"``: The frequency of each CAP observed in a run.
+           ::
+
+                predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
+                target = 1
+                counts = 4
+
+         - ``"transition frequency"``: The total number of switches between different CAPs across the entire run.
+           ::
+
+                predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
+                # Transitions between unique CAPs occur at indices 0 -> 1, 1 -> 2, and 4 -> 5
+                transition_frequency = 3
 
         Parameters
         ----------
-            subject_timeseries : Dict[str, Dict[str, np.ndarray]] or str
-                Path of the pickle file containing the nested subject timeseries dictionary saved by the
-                ``TimeSeriesExtractor`` class or the nested subject timeseries dictionary produced by the
-                ``TimeseriesExtractor`` class. The first level of the nested dictionary must consist of the subject ID
-                as a string, the second level must consist of the run numbers in the form of 'run-#' (where # is the
-                corresponding number of the run), and the last level must consist of the timeseries (as a numpy array)
-                associated with that run. The structure is as follows:
-                    ::
+        subject_timeseries : Dict[str, Dict[str, np.ndarray]] or str
+            Path of the pickle file containing the nested subject timeseries dictionary saved by the
+            ``TimeSeriesExtractor`` class or the nested subject timeseries dictionary produced by the
+            ``TimeseriesExtractor`` class. The first level of the nested dictionary must consist of the subject ID
+            as a string, the second level must consist of the run numbers in the form of ``"run-#""` (where # is the
+            corresponding number of the run), and the last level must consist of the timeseries (as a ``numpy`` array)
+            associated with that run. The structure is as follows:
+            ::
 
-                        subject_timeseries = {
-                                "101": {
-                                    "run-0": np.array([timeseries]), # 2D array
-                                    "run-1": np.array([timeseries]), # 2D array
-                                    "run-2": np.array([timeseries]), # 2D array
-                                },
-                                "102": {
-                                    "run-0": np.array([timeseries]), # 2D array
-                                    "run-1": np.array([timeseries]), # 2D array
-                                }
-                            }
+                subject_timeseries = {
+                        "101": {
+                            "run-0": np.array([timeseries]), # 2D array
+                            "run-1": np.array([timeseries]), # 2D array
+                            "run-2": np.array([timeseries]), # 2D array
+                        },
+                        "102": {
+                            "run-0": np.array([timeseries]), # 2D array
+                            "run-1": np.array([timeseries]), # 2D array
+                        }
+                    }
 
-            tr : float or None, default=None
-                The repetition time (TR). If provided, persistence will be calculated as the average uninterrupted time
-                spent in each CAP. If not provided, persistence will be calculated as the average uninterrupted volumes
-                (TRs) spent in each state.
-            runs : int or List[int], default=None
-                The run numbers to calculate CAP metrics for. If None, CAP metrics will be calculated for each run.
-            continuous_runs : bool, default=False
-                If True, all runs will be treated as a single, uninterrupted run.
-            metrics : str or List[str], default=["temporal fraction", "persistence", "counts", "transition frequency"]
-                The metrics to calculate. Available options include "temporal fraction", "persistence", "counts", and
-                "transition frequency".
-            return_df : str, default=True
-                If True, returns the dataframe.
-            output_dir : `os.Pathlike` or None, default=None
-                Directory to save dataframe to. The directory will be created if it does not exist. If None, dataframe
-                will not be saved.
-            prefix_file_name : str or None, default=None
-                Will serve as a prefix to append to the saved file names for the dataframes, if ``output_dir`` is
-                provided.
+        tr : float or None, default=None
+            The repetition time (TR). If provided, persistence will be calculated as the average uninterrupted time
+            spent in each CAP. If not provided, persistence will be calculated as the average uninterrupted volumes
+            (TRs) spent in each state.
+        runs : int or List[int], default=None
+            The run numbers to calculate CAP metrics for. If ``None``, CAP metrics will be calculated for each run.
+        continuous_runs : bool, default=False
+            If ``True``, all runs will be treated as a single, uninterrupted run.
+            ::
+
+                run_1 = [0,1,1]
+                run_2 = [2,3,3]
+                continuous_runs = [0,1,1,2,3,3]
+
+        metrics : str or List[str], default=["temporal fraction", "persistence", "counts", "transition frequency"]
+            The metrics to calculate. Available options include ``"temporal fraction"``, ``"persistence"``,
+            ``"counts"``, and ``"transition frequency"``.
+        return_df : str, default=True
+            If True, returns the dataframe.
+        output_dir : `os.PathLike` or None, default=None
+            Directory to save dataframe to. The directory will be created if it does not exist. If ``None``, dataframe
+            will not be saved.
+        prefix_file_name : str or None, default=None
+            Will serve as a prefix to append to the saved file names for the dataframes, if ``output_dir`` is
+            provided.
 
         Returns
         -------
-            Dict[str, ``pd.DataFrame``]
-                Dictionary containing ``pandas`` DataFrames - one for each requested metric.
+        Dict[str, pd.DataFrame]
+            Dictionary containing `pandas` `DataFrame` - one for each requested metric.
 
         Note
         ----
-        The presence of 0 for specific CAPs in the "temporal fraction", "persistence", or "counts" dataframes indicates
-        that the participant had zero instances of a specific CAP.
+        The presence of 0 for specific CAPs in the ``"temporal fraction"``, ``"persistence"``, or ``"counts"``
+        dataframes indicates that the participant had zero instances of a specific CAP. For ``"transition frequency"``,
+        a 0 indicates no transitions due to all participant's frames being assigned to a single CAP.
 
         References
         ----------
@@ -849,109 +877,110 @@ class CAP(_CAPGetter):
         """
         **Generate heatmaps and outer product plots of CAPs**
 
-        This function produces seaborn heatmaps for each CAP. If groups were given when the CAP class was initialized,
-        plotting will be done for all CAPs for all groups.
+        This function produces ``seaborn`` heatmaps for each CAP. If groups were given when the CAP class was
+        initialized, plotting will be done for all CAPs for all groups.
 
         Parameters
         ----------
-            output_dir : Path or None, default=None
-                Directory to save plots to. The directory will be created if it does not exist. If None, plots will not
-                be saved.
-            suffix_title : str or None, default=None
-                Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
-            plot_options : str or List[str], default="outer product"
-                Type of plots to create. Options are "outer product" or "heatmap".
-            visual_scope : str or List[str], default="regions"
-                Determines whether plotting is done at the region level or node level.
-                For region level, the value of each nodes in the same regions are averaged together then plotted.
-                Options are "regions" or "nodes".
-            show_figs : bool, default=True
-                Whether to display figures.
-            subplots : bool, default=True
-                Whether to produce subplots for outer product plots.
-            kwargs : Dict
-                Keyword arguments used when saving figures. Valid keywords include:
+        output_dir : `os.PathLike` or None, default=None
+            Directory to save plots to. The directory will be created if it does not exist. If ``None``, plots will not
+            be saved.
+        suffix_title : str or None, default=None
+            Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
+        plot_options : str or List[str], default="outer product"
+            Type of plots to create. Options are ``"outer product"`` or ``"heatmap"``.
+        visual_scope : str or List[str], default="regions"
+            Determines whether plotting is done at the region level or node level.
+            For region level, the value of each nodes in the same regions (both left and right hemisphere nodes in the
+            same region) are averaged together then plotted. Options are ``"regions"`` or ``"nodes"``.
+        show_figs : bool, default=True
+            Whether to display figures.
+        subplots : bool, default=True
+            Whether to produce subplots for outer product plots.
+        kwargs : Dict
+            Keyword arguments used when saving figures. Valid keywords include:
 
-                - dpi : int, default=300
-                    Dots per inch for the figure. Default is 300 if ``output_dir`` is provided and ``dpi`` is not
-                    pecified.
-                - figsize : Tuple, default=(8, 6)
-                    Size of the figure in inches.
-                - fontsize : int, default=14
-                    Font size for the title of individual plots or subplots.
-                - hspace : float, default=0.4
-                    Height space between subplots.
-                - wspace : float, default=0.4
-                    Width space between subplots.
-                - xticklabels_size : int, default=8
-                    Font size for x-axis tick labels.
-                - yticklabels_size : int, default=8
-                    Font size for y-axis tick labels.
-                - shrink : float, default=0.8
-                    Fraction by which to shrink the colorbar.
-                - nrow : int, varies;
-                    Number of rows for subplots. Default varies.
-                - ncol : int, default varies (max 5)
-                    Number of columns for subplots. Default varies but the maximum is 5.
-                - suptitle_fontsize : float, default=0.7
-                    Font size for the main title when subplot is True.
-                - tight_layout : bool, default=True
-                    Use tight layout for subplots.
-                - rect : List[int], default=[0, 0.03, 1, 0.95]
-                    Rectangle parameter for tight layout when subplots are True to fix whitespace issues.
-                - sharey : bool, default=True
-                    Share y-axis labels for subplots.
-                - xlabel_rotation : int, default=0
-                    Rotation angle for x-axis labels.
-                - ylabel_rotation : int, default=0
-                    Rotation angle for y-axis labels.
-                - annot : bool, default=False
-                    Add values to cells.
-                - fmt : str, default=".2g"
-                    Modify how the annotated vales are presented.
-                - linewidths : float, default=0
-                    Padding between each cell in the plot.
-                - borderwidths : float, default=0
-                    Width of the border around the plot.
-                - linecolor : str, default="black"
-                    Color of the line that seperates each cell.
-                - edgecolors : str or None, default=None
-                    Color of the edges.
-                - alpha : float or None, default=None
-                    Controls transparancy and ranges from 0 (transparant) to 1 (opaque).
-                - bbox_inches : str or None, default="tight"
-                    Alters size of the whitespace in the saved image.
-                - hemisphere_labels : bool, default=False
-                    This option is only available when visual_scope="nodes". Instead of listing all individual labels
-                    this parameter simplifies the labels to indicate only the left and right hemispheres, with a
-                    division line separating the cells belonging to each hemisphere. If set to True, "edgecolors" will
-                    not be used, and both "linewidths" and "linecolor" will be applied only to the division line.
-                    This option is available exclusively for "Custom" and "Schaefer" parcellations. **Note, for the
-                    "Custom" option, the parcellation should be organized such that the first half of the labels/nodes
-                    belong to the left hemisphere and the latter half to the right hemisphere.**
-                - cmap : str, Class, or Function, default="coolwarm"
-                    Color map for the cells in the plot. For this parameter, you can use premade color palettes or
-                    create custom ones. Below is a list of valid options:
+            - dpi : int, default=300
+                Dots per inch for the figure. Default is 300 if ``output_dir`` is provided and ``dpi`` is not specified.
+            - figsize : Tuple, default=(8, 6)
+                Size of the figure in inches.
+            - fontsize : int, default=14
+                Font size for the title of individual plots or subplots.
+            - hspace : float, default=0.4
+                Height space between subplots.
+            - wspace : float, default=0.4
+                Width space between subplots.
+            - xticklabels_size : int, default=8
+                Font size for x-axis tick labels.
+            - yticklabels_size : int, default=8
+                Font size for y-axis tick labels.
+            - shrink : float, default=0.8
+                Fraction by which to shrink the colorbar.
+            - nrow : int, varies;
+                Number of rows for subplots. Default varies.
+            - ncol : int, default varies (max 5)
+                Number of columns for subplots. Default varies but the maximum is 5.
+            - suptitle_fontsize : float, default=0.7
+                Font size for the main title when subplot is ``True``.
+            - tight_layout : bool, default=True
+                Use tight layout for subplots.
+            - rect : List[int], default=[0, 0.03, 1, 0.95]
+                Rectangle parameter for tight layout when subplots are ``True`` to fix whitespace issues.
+            - sharey : bool, default=True
+                Share y-axis labels for subplots.
+            - xlabel_rotation : int, default=0
+                Rotation angle for x-axis labels.
+            - ylabel_rotation : int, default=0
+                Rotation angle for y-axis labels.
+            - annot : bool, default=False
+                Add values to cells.
+            - fmt : str, default=".2g"
+                Modify how the annotated vales are presented.
+            - linewidths : float, default=0
+                Padding between each cell in the plot.
+            - borderwidths : float, default=0
+                Width of the border around the plot.
+            - linecolor : str, default="black"
+                Color of the line that seperates each cell.
+            - edgecolors : str or None, default=None
+                Color of the edges.
+            - alpha : float or None, default=None
+                Controls transparancy and ranges from 0 (transparant) to 1 (opaque).
+            - bbox_inches : str or None, default="tight"
+                Alters size of the whitespace in the saved image.
+            - hemisphere_labels : bool, default=False
+                This option is only available when ``visual_scope="nodes"``. Instead of listing all individual labels
+                this parameter simplifies the labels to indicate only the left and right hemispheres, with a
+                division line separating the cells belonging to each hemisphere. If set to ``True``, ``"edgecolors"``
+                will not be used, and both ``"linewidths"`` and ``"linecolor"`` will be applied only to the division
+                line. This option is available exclusively for ``"Custom"`` and ``"Schaefer"`` parcellations.
+                **Note**, for the "Custom" option, the parcellation should be organized such that the first half of the
+                nodes belong to the left hemisphere and the latter half to the right hemisphere.
+            - cmap : str, Class, or Function, default="coolwarm"
+                Color map for the cells in the plot. For this parameter, you can use premade color palettes or
+                create custom ones. Below is a list of valid options:
 
-                     - Strings to call `seaborn's` premade palettes. Refer to `seaborn's` documentation for valid
-                       options.
-                     - `Seaborn's` ``diverging_palette`` function to generate custom palettes.
-                     - `Matplotlib's` ``LinearSegmentedColormap`` to generate custom palettes.
-                     - Other classes or functions compatible with `seaborn`.
+                    - Strings to call ``seaborn``'s premade palettes.
+                    - ``seaborn``'s ``diverging_palette`` function to generate custom palettes.
+                    - ``matplotlib``'s ``LinearSegmentedColormap`` to generate custom palettes.
+                    - Other classes or functions compatible with ``seaborn``.
 
-                - vmin : float, default=None
-                    The minimum value to display in plots.
-                - vmax : float, default=None
-                    The maximum value to display in plots.
+            - vmin : float, default=None
+                The minimum value to display in plots.
+            - vmax : float, default=None
+                The maximum value to display in plots.
 
     Returns
     -------
-        ``seaborn.heatmap``
-            An instance of a ``seaborn`` ``heatmap``.
+    `seaborn.heatmap`
+        An instance of a `seaborn` `heatmap`.
 
     Note
     ----
-    **If using "Custom" parcellation approach**,, the ``nodes`` and ``regions`` sub-keys are required for this function.
+    **If using "Custom" parcellation approach**, the ``"nodes"`` and ``"regions"`` sub-keys are required for this
+    function.
+
+    For valid premade paleettes for ``seaborn``, refer to https://seaborn.pydata.org/tutorial/color_palettes.html
 
     """
         if not self._parcel_approach:
@@ -1432,69 +1461,73 @@ class CAP(_CAPGetter):
         """
         **Generate Correlation Matrix for CAPs**
 
-        Produces the correlation matrix of all CAPs. If groups were given when the CAP class was initialized, a
-        correlation matrix will be generated for each group.
+        Produces the correlation matrix of all CAPs and visualizes it as a ``seaborn`` ``heatmap``. If groups were
+        given when the CAP class was initialized, a correlation matrix will be generated for each group.
 
         Parameters
         ----------
-            output_dir : `os.Pathlike` or None, default=None
-                Directory to save plots to. The directory will be created if it does not exist. If None,
-                plots will not be saved.
-            suffix_title : str or None, default=None
-                Appended to the title of each plot as well as the name of the saved file if ``output_dir``
-                is provided.
-            show_figs : bool, default=True
-                Whether to display figures.
-            kwargs : Dict
-                Keyword arguments used when saving figures. Valid keywords include:
+        output_dir : `os.PathLike` or None, default=None
+            Directory to save plots to. The directory will be created if it does not exist. If ``None``,
+            plots will not be saved.
+        suffix_title : str or None, default=None
+            Appended to the title of each plot as well as the name of the saved file if ``output_dir``
+            is provided.
+        show_figs : bool, default=True
+            Whether to display figures.
+        kwargs : Dict
+            Keyword arguments used when modifying figures. Valid keywords include:
 
-                - dpi : int, default=300
-                    Dots per inch for the figure. Default is 300 if ``output_dir`` is provided and ``dpi`` is not
-                    specified.
-                - figsize : Tuple, default=(8, 6)
-                    Size of the figure in inches.
-                - fontsize : int, default=14
-                    Font size for the title of individual plots or subplots.
-                - xticklabels_size : int, default=8
-                    Font size for x-axis tick labels.
-                - yticklabels_size : int, default=8
-                    Font size for y-axis tick labels.
-                - shrink : float, default=0.8
-                    Fraction by which to shrink the colorbar.
-                - xlabel_rotation : int, default=0
-                    Rotation angle for x-axis labels.
-                - ylabel_rotation : int, default=0
-                    Rotation angle for y-axis labels.
-                - annot : bool, default=False
-                    Add values to each cell.
-                - fmt : str, default=".2g",
-                    Modify how the annotated vales are presented.
-                - linewidths : float, default=0
-                    Padding between each cell in the plot.
-                - borderwidths : float, default=0
-                    Width of the border around the plot.
-                - linecolor : str, default="black"
-                    Color of the line that seperates each cell.
-                - edgecolors : str, default=None
-                    Color of the edges.
-                - alpha : float, default=None
-                    Controls transparancy and ranges from 0 (transparant) to 1 (opaque).
-                - bbox_inches : str or None, default="tight"
-                    Alters size of the whitespace in the saved image.
-                - cmap : str, Class, or function, default="coolwarm"
-                    Color map for the cells in the plot. For this parameter, you can use premade color palettes or
-                    create custom ones.
-                    Below is a list of valid options:
+            - dpi : int, default=300
+                Dots per inch for the figure. Default is 300 if ``output_dir`` is provided and ``dpi`` is not
+                specified.
+            - figsize : Tuple, default=(8, 6)
+                Size of the figure in inches.
+            - fontsize : int, default=14
+                Font size for the title of individual plots or subplots.
+            - xticklabels_size : int, default=8
+                Font size for x-axis tick labels.
+            - yticklabels_size : int, default=8
+                Font size for y-axis tick labels.
+            - shrink : float, default=0.8
+                Fraction by which to shrink the colorbar.
+            - xlabel_rotation : int, default=0
+                Rotation angle for x-axis labels.
+            - ylabel_rotation : int, default=0
+                Rotation angle for y-axis labels.
+            - annot : bool, default=False
+                Add values to each cell.
+            - fmt : str, default=".2g",
+                Modify how the annotated vales are presented.
+            - linewidths : float, default=0
+                Padding between each cell in the plot.
+            - borderwidths : float, default=0
+                Width of the border around the plot.
+            - linecolor : str, default="black"
+                Color of the line that seperates each cell.
+            - edgecolors : str, default=None
+                Color of the edges.
+            - alpha : float, default=None
+                Controls transparancy and ranges from 0 (transparant) to 1 (opaque).
+            - bbox_inches : str or None, default="tight"
+                Alters size of the whitespace in the saved image.
+            - cmap : str, Class, or function, default="coolwarm"
+                Color map for the cells in the plot. For this parameter, you can use premade color palettes or
+                create custom ones.
+                Below is a list of valid options:
 
-                     - Strings to call seaborn's premade palettes. Refer to seaborn's documentation for valid options.
-                     - Seaborn's diverging_palette function to generate custom palettes.
-                     - Matplotlib's LinearSegmentedColormap to generate custom palettes.
-                     - Other classes or functions compatible with seaborn.
+                    - Strings to call ``seaborn``'s premade palettes.
+                    - ``seaborn``'s ``diverging_palette`` function to generate custom palettes.
+                    - ``matplotlib``'s ``LinearSegmentedColormap`` to generate custom palettes.
+                    - Other classes or functions compatible with ``seaborn``.
 
         Returns
         -------
-            `seaborn.heatmap`
-                An instance of a `seaborn` `heatmap`.
+        `seaborn.heatmap`
+            An instance of a `seaborn` `heatmap`.
+
+        Note
+        ----
+        For valid premade paleettes for ``seaborn``, refer to https://seaborn.pydata.org/tutorial/color_palettes.html
         """
         if not hasattr(self,"_caps"):
             raise AttributeError("""
@@ -1555,25 +1588,43 @@ class CAP(_CAPGetter):
     def caps2niftis(self, output_dir: Union[str, os.PathLike], suffix_file_name: Optional[str]=None,
                     fwhm: Optional[float]=None) -> nib.Nifti1Image:
         """
-        **Standalone Method to Convert CAPs to NifTi Statistical Maps**
+        **Standalone Method to Convert CAPs to NifTI Statistical Maps**
 
         Converts atlas into a stat map by replacing labels with the corresponding from the cluster centroids then saves
-        them as compressed nii files.
+        them as compressed NifTI (nii.gz) files. Below is the internal function that converts the cluster centroids
+        into a NifTI statistical map.
+        ::
+
+            def _cap2statmap(atlas_file, cap_vector, fwhm):
+                atlas = nib.load(atlas_file)
+                atlas_fdata = atlas.get_fdata()
+                # Get array containing all labels in atlas to avoid issue if atlas labels dont start at 1,
+                # like Nilearn's AAL map
+                target_array = sorted(np.unique(atlas_fdata))
+                for indx, value in enumerate(cap_vector):
+                    actual_indx = indx + 1
+                    atlas_fdata[np.where(atlas_fdata == target_array[actual_indx])] = value
+                stat_map = nib.Nifti1Image(atlas_fdata, atlas.affine, atlas.header)
+                # Add smoothing to stat map to help mitigate potential coverage issues
+                if fwhm is not None:
+                    stat_map = image.smooth_img(stat_map, fwhm=fwhm)
+                retutn stat_map
 
         Parameters
         ----------
-            output_dir: `os.Pathlike`, default=None
-                Directory to save plots to. The directory will be created if it does not exist.
-            suffix_title: str or None, default=None
-                Appended to the name of the saved file.
-            fwhm: float or None, default=None
-                Strength of spatial smoothing to apply (in millimeters) to the statistical map prior to interpolating
-                from MNI152 space to fslr surface space. Note, this can assist with coverage issues in the plot.
+        output_dir: `os.PathLike`, default=None
+            Directory to save plots to. The directory will be created if it does not exist.
+        suffix_title: str or None, default=None
+            Appended to the name of the saved file.
+        fwhm: float or None, default=None
+            Strength of spatial smoothing to apply (in millimeters) to the statistical map prior to interpolating
+            from MNI152 space to fslr surface space. Note, this can assist with coverage issues in the plot.
+            Uses ``nilearn``'s ``image.smooth``.
 
         Returns
         -------
-            `NifTI1Image`
-                `NifTI` statistical map.
+        `NifTI1Image`
+            `NifTI` statistical map.
         """
         if not self._parcel_approach:
             raise AttributeError("""
@@ -1609,108 +1660,125 @@ class CAP(_CAPGetter):
         """
         **Project CAPs onto Surface Plots**
 
-        Converts atlas into a stat map by replacing labels with the corresponding from the cluster centroids then plots
-        on a surface plot. This function uses ``surfplot`` and ``neuromaps`` for surface plotting.
+        If not using precomputed GifTI file, this function converts the parcellation used for spatial dimensionality
+        reduction into a NifTI statistical map by replacing labels with the corresponding value from the cluster
+        centroids, converts the NifTI stastical map into fsLR (surface) space (using ``neuromaps``'s ``mni152_to_fslr``),
+        which also turns it into a `tuple-of-nib.GiftiImage` that can be plotted using ``surfplot``'s ``Plot``.
+        If ``self.caps2niftis()`` was used to convert the parcellation into a NifTI statistical map and an external
+        tool such as Connectome Workbench was used to convert these NifTI files into GifTI files in fsLR (surface)
+        space, then the ``fslr_giftis_dict`` parameter can be used for plotting. Here, ``neuromaps``'s ``fslr_to_fslr``
+        is used to convert the image into a `tuple-of-nib.GiftiImage` form that can be plotted by ``surfplot``'s
+        ``Plot``. Below is the internal function that converts the cluster centroids into a NifTI statistical map.
+        ::
+
+            def _cap2statmap(atlas_file, cap_vector, fwhm):
+                atlas = nib.load(atlas_file)
+                atlas_fdata = atlas.get_fdata()
+                # Get array containing all labels in atlas to avoid issue if atlas labels dont start at 1,
+                # like Nilearn's AAL map
+                target_array = sorted(np.unique(atlas_fdata))
+                for indx, value in enumerate(cap_vector):
+                    actual_indx = indx + 1
+                    atlas_fdata[np.where(atlas_fdata == target_array[actual_indx])] = value
+                stat_map = nib.Nifti1Image(atlas_fdata, atlas.affine, atlas.header)
+                # Add smoothing to stat map to help mitigate potential coverage issues
+                if fwhm is not None:
+                    stat_map = image.smooth_img(stat_map, fwhm=fwhm)
+                return stat_map
 
         Parameters
         ----------
-            output_dir: `os.Pathlike` or None, default=None
-                Directory to save plots to. The directory will be created if it does not exist. If None, plots will not
-                be saved.
-            suffix_title: str or None, default=None
-                Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
-            show_figs: bool, default=True
-                Whether to display figures.
-            fwhm: float or None, defualt=None
-                Strength of spatial smoothing to apply (in millimeters) to the statistical map prior to interpolating
-                from MNI152 space to fslr surface space.
-                Note, this can assist with coverage issues in the plot.
-            fslr_density: str, default="32k"
-                Density of the fslr surface when converting from MNI152 space to fslr surface. Options are "32k" or
-                "164k". If using ``fslr_giftis_dict`` options are "4k", "8k", "32k", and "164k".
-            method: str, default="linear"
-                Interpolation method to use when converting from MNI152 space to fslr surface. Options are "linear" or
-                "nearest".
-            save_stat_map: bool, default=False
-                If True, saves the statistical map for each CAP for all groups as a Nifti1Image if ``output_dir`` is
-                provided.
-            fslr_giftis_dict: dict or None, default=None
-                Dictionary specifying precomputed gifti files in fslr space for plotting stat maps. This parameter
-                should be used if the statistical CAP NIfTI files (can be obtained using ``caps2niftis``) were
-                converted to GifTi files using a tool such as Connectome Workbench.The dictionary structure is:
-                ::
+        output_dir: `os.PathLike` or None, default=None
+            Directory to save plots to. The directory will be created if it does not exist. If None, plots will not
+            be saved.
+        suffix_title: str or None, default=None
+            Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
+        show_figs: bool, default=True
+            Whether to display figures.
+        fwhm: float or None, defualt=None
+            Strength of spatial smoothing to apply (in millimeters) to the statistical map prior to interpolating
+            from MNI152 space to fsLR surface space. Uses ``nilearn``'s ``image.smooth``.
+            Note, this can assist with coverage issues in the plot.
+        fslr_density: str, default="32k"
+            Density of the fsLR surface when converting from MNI152 space to fsLR surface. Options are "32k" or
+            "164k". If using ``fslr_giftis_dict`` options are "4k", "8k", "32k", and "164k".
+        method: str, default="linear"
+            Interpolation method to use when converting from MNI152 space to fsLR surface or from fsLR to fsLR. Options
+            are ``"linear"`` or ``"nearest"``.
+        save_stat_map: bool, default=False
+            If ``True``, saves the statistical map for each CAP for all groups as a `Nifti1Image` if ``output_dir`` is
+            provided.
+        fslr_giftis_dict: dict or None, default=None
+            Dictionary specifying precomputed GifTI files in fsLR space for plotting stat maps. This parameter
+            should be used if the statistical CAP NIfTI files (can be obtained using ``self.caps2niftis()``) were
+            converted to GifTI files using a tool such as Connectome Workbench.The dictionary structure is:
+            ::
 
-                    {
-                        "GroupName": {
-                            "CAP-Name": {
-                                "lh": "path/to/left_hemisphere_gifti",
-                                "rh": "path/to/right_hemisphere_gifti"
-                            }
+                {
+                    "GroupName": {
+                        "CAP-Name": {
+                            "lh": "path/to/left_hemisphere_gifti",
+                            "rh": "path/to/right_hemisphere_gifti"
                         }
                     }
+                }
 
-                GroupName can be "All Subjects" or any specific group name. CAP-Name is the name of the CAP. This
-                parameter allows plotting without re-running the analysis. Initialize the CAP class and use this method
-                if using this parameter.
-            kwargs : Dict
-                Additional parameters to pass to modify certain plot parameters. Options include:
+            GroupName can be "All Subjects" or any specific group name. CAP-Name is the name of the CAP. This
+            parameter allows plotting without re-running the analysis. Initialize the CAP class and use this method
+            if using this parameter.
+        kwargs : Dict
+            Additional parameters to pass to modify certain plot parameters. Options include:
 
-                - dpi : int, default=300
-                    Dots per inch for the plot.
-                - title_pad : int, default=-3
-                    Padding for the plot title.
-                - cmap : str or Class, default="cold_hot"
-                    Colormap to be used for the plot. For this parameter, you can use premade color palettes orcreate
-                    custom ones.Below is a list of valid options:
+            - dpi : int, default=300
+                Dots per inch for the plot.
+            - title_pad : int, default=-3
+                Padding for the plot title.
+            - cmap : str or Class, default="cold_hot"
+                Colormap to be used for the plot. For this parameter, you can use premade color palettes orcreate
+                custom ones. Below is a list of valid options:
 
-                     - Strings to call `nilearn's` ``_cmap_d`` fuction. Refer to documention for `nilearn's` ``_cmap_d``
-                     for valid palettes.
-                     - Matplotlib's LinearSegmentedColormap to generate custom colormaps.
-
-                - cbar_kws : Dict, default={"location": "bottom", "n_ticks": 3}
-                    Customize colorbar. Refer to ``_add_colorbars`` at
-                    https://surfplot.readthedocs.io/en/latest/generated/surfplot.plotting.Plot.html#surfplot.plotting.Plot
-                    for valid kwargs.
-                - alpha : float, default=1
-                    Transparency level of the colorbar.
-                - zero_transparent : bool, default=True
-                    Turns vertices with a value of 0 transparent.
-                - as_outline : bool, default=False
-                    Plots only an outline of contiguous vertices with the same value.
-                - size : Tuple, default=(500, 400)
-                    Size of the plot in pixels.
-                - layout : str, default="grid"
-                    Layout of the plot.
-                - zoom : float, default=1.5
-                    Zoom level for the plot.
-                - views : List[str], default=["lateral", "medial"]
-                    Views to be displayed in the plot.
-                - brightness : float, default=0.5
-                    Brightness level of the plot.
-                - figsize : Tuple or None, default=None
-                    Size of the figure.
-                - scale : Tuple, default=(2, 2)
-                    Scale factors for the plot.
-                - surface : str, default="inflated"
-                    The surface atlas that is used for plotting. Options are "inflated" or "veryinflated"
-                - color_range : Tuple or None, default=None
-                    The minimum and maximum value to display in plots. For instance, (-1,1) where minimum
-                    value is first. If None, the minimum and maximum values from the image will be used.
-
-                Please refer to surfplot's documentation for specifics:
-                https://surfplot.readthedocs.io/en/latest/generated/surfplot.plotting.Plot.html#surfplot.plotting.Plot
+                - Strings to call ``nilearn``'s ``_cmap_d`` fuction.
+                - ``matplotlib``'s ``LinearSegmentedColormap`` to generate custom colormaps.
+            - cbar_kws : Dict, default={"location": "bottom", "n_ticks": 3}
+                Customize colorbar. Refer to ``_add_colorbars`` at for valid kwargs in ``surfplot's`` ``Plot``
+                documentation listed in the `Note` section.
+            - alpha : float, default=1
+                Transparency level of the colorbar.
+            - zero_transparent : bool, default=True
+                Turns vertices with a value of 0 transparent.
+            - as_outline : bool, default=False
+                Plots only an outline of contiguous vertices with the same value.
+            - size : Tuple, default=(500, 400)
+                Size of the plot in pixels.
+            - layout : str, default="grid"
+                Layout of the plot.
+            - zoom : float, default=1.5
+                Zoom level for the plot.
+            - views : List[str], default=["lateral", "medial"]
+                Views to be displayed in the plot.
+            - brightness : float, default=0.5
+                Brightness level of the plot.
+            - figsize : Tuple or None, default=None
+                Size of the figure.
+            - scale : Tuple, default=(2, 2)
+                Scale factors for the plot.
+            - surface : str, default="inflated"
+                The surface atlas that is used for plotting. Options are ``"inflated"`` or ``"veryinflated"``.
+            - color_range : Tuple or None, default=None
+                The minimum and maximum value to display in plots. For instance, (-1,1) where minimum
+                value is first. If None, the minimum and maximum values from the image will be used.
 
         Returns
         -------
-            `NifTI1Image`
-                `NifTI` statistical map.
-            `surfplot.Plot`
-                An instance of a `surfplot` `Plot`.
+        `NifTI1Image`
+            `NifTI` statistical map.
+        `surfplot.Plot`
+            An instance of a `surfplot` `Plot`.
 
         Note
         ----
-        For this to work, ``parcel_approach`` must have the "maps" sub-key containing the path to the NifTi file of the
-        atlas. Assumes that atlas background label is zero and atlas is in MNI space. Also assumes that the indices
+        For this to work, ``parcel_approach`` must have the ``"maps"`` sub-key containing the path to the NifTI file of
+        the atlas. Assumes that atlas background label is zero and atlas is in MNI space. Also assumes that the indices
         from the cluster centroids are related to the atlas by an offset of one. For instance, index 0 of the cluster
         centroid vector is the first nonzero label, which is assumed to be at the first index of the array in
         ``sorted(np.unique(atlas_fdata))``.
@@ -1809,16 +1877,35 @@ class CAP(_CAPGetter):
         activation relative to the mean zero if z-scored) and low amplitude (high deactivation relative to the mean
         zero if z-scored) by using cosine similarity. This is accomplished by extracting the cluster centroids (CAPs),
         a 1 x ROI vector, and generating a binary vector (a vector 1 x ROI vector consisting of 0's and 1's) where 1's
-        indicate the indices/ROIs (Regions of Interest) in a specific region. For instance, if elements at indices 0,
-        5, and 10 in the cluster centroid are nodes in the Visual Network, then a binary vector is generated where
-        those indices are 1, and all others are 0. This binary vector essentially operates like a 1-dimensional binary
-        mask to capture relevant ROIs in a given region/network.
+        indicate the indices/ROIs (Regions of Interest) in a specific region (in the left and right hemispheres).
+        For instance, if elements at indices 0, 1, 4, and 5 in the cluster centroid are nodes in the Visual Network,
+        then a binary vector is generated where those indices are 1, and all others are 0. This binary vector
+        essentially operates like a 1-dimensional binary mask to capture relevant ROIs in a given region.
+        ::
+
+            import numpy as np
+            # Nodes in order of their label ID, "LH_Vis1" is the 0th index in the parcellation
+            # but has a label ID of 1, and RH_SomSot2 is in the 7th index but has a label ID
+            # of 8 in the parcellation.
+            nodes = ["LH_Vis1", "LH_Vis2", "LH_SomSot1", "LH_SomSot2",
+                     "RH_Vis1", "RH_Vis2", "RH_SomSot1", "RH_SomSot2"]
+            # Binary representation of the nodes in Vis, essentially acts as
+            # a mask isolating the modes for for Vis
+            binary_vector = [1,1,0,0,1,1,0,0]
+            # Cluster centroid for CAP 1
+            cap_1_cluster_centroid = [-0.3, 1.5, 2, -0.2, 0.7, 1.3, -0.5, 0.4]
+            # Dot product is the sum of all the values here [-0.3, 1.5, 0, 0, 0.7, 1.3, 0, 0]
+            dot_product = np.dot(cap_1_cluster_centroid, binary_vector)
 
         Once, the dot product of the cluster centroid and binary vector is then calculated it is normalized by the
         product of the norms of the cluster centroid and the binary vector to restrict the range to -1 and 1, hence
-        cosine similarity. For example, with the Schaefer 7-network parcellation, if your analysis has five CAPs,
-        then each cluster centroid (CAP) will be multiplied by seven different binary vectors (where the 1's represent
-        the nodes in that network).
+        cosine similarity.
+        ::
+
+            norm_cap_1_cluster_centroid = np.linalg.norm(cap_1_cluster_centroid)
+            norm_binary_vector = np.linalg.norm(binary_vector)
+            # Cosine similarity between CAP 1 and the visual network
+            cosine_similarity = dot_product/(norm_cap_1_cluster_centroid * norm_binary_vector)
 
         Cosine similarities notably above zero suggest that many nodes in that network/region are highly activating
         together, cosine similarities around zero suggest that nodes in that network/region are co-activating and
@@ -1833,86 +1920,94 @@ class CAP(_CAPGetter):
         **Note, the radar plots only display positive values. The "Low Amplitude" group are negative cosine similarity
         (below zero); however, the absolute value was taken to make them positive so that the radar plot starts at 0
         and direct magnitude comparisons between the "High Amplitude" (positive cosine similarity above zero) and
-        "Low Amplitude" groups are easier.**
+        "Low Amplitude" groups are easier to see.**
 
         Parameters
         ----------
-            output_dir: `os.Pathlike` or None, default=None
-                Directory to save plots to. The directory will be created if it does not exist.
-            suffix_title: str or None, default=None
-                Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
-            show_figs: bool, default=True
-                Whether to display figures. If this function detects that it is not being ran in an interactive Python
-                environment, then it uses plotly.offline, creates an html file named "temp-plot.html", and opens each
-                plot in the default browser.
-            use_scatterpolar: bool=False
-                Uses plotly's ``Scatterpolar`` instead of plotly's ``line_polar``. The primary difference is that
-                ``Scatterpolar`` shows the scatter dots. However, this can be acheived with ``line_polar`` by setting
-                ``mode`` to "markers+lines". There also seems to be a difference in default opacity behavior.
-            kwargs: Dict
-                Additional parameters to pass to modify certain plot parameters. Options include:
+        output_dir: `os.PathLike` or None, default=None
+            Directory to save plots to. The directory will be created if it does not exist.
+        suffix_title: str or None, default=None
+            Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
+        show_figs: bool, default=True
+            Whether to display figures. If this function detects that it is not being ran in an interactive Python
+            environment, then it uses ``plotly.offline``, creates an html file named "temp-plot.html", and opens each
+            plot in the default browser.
+        use_scatterpolar: bool=False
+            Uses ``plotly``'s ``Scatterpolar`` instead of ``plotly``'s ``line_polar``. The primary difference is that
+            ``Scatterpolar`` shows the scatter dots. However, this can be acheived with ``line_polar`` by setting
+            ``mode`` to ``"markers+lines"``. There also seems to be a difference in default opacity behavior.
+        kwargs: Dict
+            Additional parameters to pass to modify certain plot parameters. Options include:
 
-                - scale : int, default=2
-                    Controls resolution of image when saving.
-                - savefig_options : Dict[str], default={"width": 3, "height": 3, "scale": 1}
-                    If ``output_dir`` provided, controls the width (in inches), height (in inches), and scale of the
-                    plot.
-                    The height and width are multiplied by the dpi.
-                - height : int, default=800
-                    Height of the plot. Value is multiplied by the dpi when saving.
-                - width : int, defualt=1200
-                    Width of the plot. Value is multiplied by the dpi when saving.
-                - line_close : int, default=True
-                    Whether to close the lines
-                - bgcolor : str, default="white"
-                    Color of the background
-                - scattersize : int, default=8
-                    If ``use_scatterpolar=True``, controls the size of the dots.
-                - connectgaps : bool, default=True
-                    If ``use_scatterpolar=True``, controls if missing values are connected.
-                - opacity : float, default=0.5,
-                    If ``use_scatterpolar=True``, sets the opacity of the trace.
-                - fill : str, default="none".
-                    If "toself" the are of the dots and within the boundaries of the line will be filled.
-                - mode : str, default="markers+lines",
-                    Determines how the trace is drawn. Can include "lines", "markers", "lines+markers", "lines+markers+text".
-                - radialaxis : Dict[str], default={"showline": False, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "ticks": "outside","tickfont": {"size": 14, "color": "black"}}
-                    Customizes the radial axis.
-                    Refer to https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.radialaxis.html or
-                    https://plotly.com/python/reference/layout/polar/ for valid kwargs.
-                - angularaxis : Dict[str], default= {"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "tickfont": {"size": 16, "color": "black"}}
-                    Customizes the angular axis.
-                    Refer to https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.angularaxis.html
-                    or https://plotly.com/python/reference/layout/polar/ for valid kwargs.
-                - color_discrete_map : Dict[str], default={"High Amplitude": "red", "Low Amplitude": "blue"},
-                    Change color of the "High Amplitude" and "Low Amplitude" groups. Must use the keys
-                    "High Amplitude" and "Low Amplitude" to work.
-                - title_font : Dict[str], default={"family": "Times New Roman", "size": 30, "color": "black"}
-                    Modifies the font of the title. Refer to https://plotly.com/python/reference/layout/ for valid
-                    kwargs.
-                - title_x : float, default=0.5
-                    Modifies x position of title.
-                - title_y : float, default=None
-                    Modifies y position of title.
-                - legend : Dict[str], default={"yanchor": "top", "xanchor": "left", "y": 0.99, "x": 0.01,"title_font_family": "Times New Roman", "font": {"size": 12, "color": "black"}}
-                    Customized legend. Refer to https://plotly.com/python/reference/layout/ for valid kwargs.
-                - engine : str, default="kaleido"
-                    Engine used for saving plots.
+            - scale : int, default=2
+                Controls resolution of image when saving.
+            - savefig_options : Dict[str], default={"width": 3, "height": 3, "scale": 1}
+                If ``output_dir`` provided, controls the width (in inches), height (in inches), and scale of the
+                plot.
+                The height and width are multiplied by the dpi.
+            - height : int, default=800
+                Height of the plot. Value is multiplied by the dpi when saving.
+            - width : int, defualt=1200
+                Width of the plot. Value is multiplied by the dpi when saving.
+            - line_close : int, default=True
+                Whether to close the lines
+            - bgcolor : str, default="white"
+                Color of the background
+            - scattersize : int, default=8
+                If ``use_scatterpolar=True``, controls the size of the dots.
+            - connectgaps : bool, default=True
+                If ``use_scatterpolar=True``, controls if missing values are connected.
+            - opacity : float, default=0.5,
+                If ``use_scatterpolar=True``, sets the opacity of the trace.
+            - fill : str, default="none".
+                If "toself" the are of the dots and within the boundaries of the line will be filled.
+            - mode : str, default="markers+lines",
+                Determines how the trace is drawn. Can include "lines", "markers", "lines+markers", "lines+markers+text".
+            - radialaxis : Dict[str], default={"showline": False, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "ticks": "outside","tickfont": {"size": 14, "color": "black"}}
+                Customizes the radial axis.
+            - angularaxis : Dict[str], default= {"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "tickfont": {"size": 16, "color": "black"}}
+                Customizes the angular axis.
+            - color_discrete_map : Dict[str], default={"High Amplitude": "red", "Low Amplitude": "blue"},
+                Change color of the "High Amplitude" and "Low Amplitude" groups. Must use the keys
+                "High Amplitude" and "Low Amplitude" to work.
+            - title_font : Dict[str], default={"family": "Times New Roman", "size": 30, "color": "black"}
+                Modifies the font of the title.
+            - title_x : float, default=0.5
+                Modifies x position of title.
+            - title_y : float, default=None
+                Modifies y position of title.
+            - legend : Dict[str], default={"yanchor": "top", "xanchor": "left", "y": 0.99, "x": 0.01,"title_font_family": "Times New Roman", "font": {"size": 12, "color": "black"}}
+                Customizes the legend.
+            - engine : str, default="kaleido"
+                Engine used for saving plots.
 
         Returns
         -------
-            `plotly.express.line_polar`
-                An instance of a `plotly` `line_polar` radar plot.
-            `plotly.express.Scatterplot`
-                An instance of a `plotly` `Scatterplot` radar plot.
+        `plotly.express.line_polar`
+            An instance of a `plotly` `line_polar` radar plot.
+        `plotly.express.Scatterplot`
+            An instance of a `plotly` `Scatterplot` radar plot.
 
         Note
         -----
-        To save, the kaleido package is needed, which is a dependency in this package. The kaleido package on Windows
-        seems to only work with plotly if it is a specific version, such as version 0.1.0.post1. Additionally, if
-        another engine such as ``orca`` is used, then it must be installed.
+        By default, this function uses ``"kaleido"`` (which is also a dependency in this package) to save plots.
+        For other engines such as ``"orca"``, those packages must be installed seperately.
 
-        **If using "Custom" parcellation approach**, the ``regions`` sub-key is required
+        **If using "Custom" parcellation approach**, the ``"regions"`` sub-key is required.
+
+        In this code, if the ``tickvals`` or  ``range`` sub-keys in this code are not specified in the ``radialaxis``
+        kwarg, then four values are shown - 0.25*(max value), 0.50*(max value), 0.75*(max value), and the max value.
+
+        For valid keys for ``radialaxis`` refer to ``plotly``'s documentation at
+        Refer to https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.radialaxis.html or
+        https://plotly.com/python/reference/layout/polar/ for valid kwargs.
+
+        For valid keys for ``angularaxis`` refer to ``plotly``'s documentation at
+        https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.angularaxis.html or
+        https://plotly.com/python/reference/layout/polar/ for valid kwargs.
+
+        For valid keys for ``legend`` and ``title_font``, Refer to ``plotly``'s documentation at
+        https://plotly.com/python/reference/layout/ for valid kwargs.
 
         References
         ----------

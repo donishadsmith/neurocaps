@@ -89,13 +89,62 @@ Main features for ``CAP`` includes:
   for the ``caps2corr()`` method in the ``CAP`` class for available ``**kwargs`` arguments and parameters to modify plots.
 - **CAP Metrics Calculation:** Calculate CAP metrics (``calculate_metrics()``) as described in `Liu et al., 2018 <https://doi.org/10.1016/j.neuroimage.2018.01.041>`_ [1]_ and `Yang et al., 2021 <https://doi.org/10.1016/j.neuroimage.2021.118193>`_ [2]_:
     - *Temporal Fraction:* The proportion of total volumes spent in a single CAP over all volumes in a run.
+      ::
+
+          predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
+          target = 1
+          temporal_fraction = 4/6
+
     - *Persistence:* The average time spent in a single CAP before transitioning to another CAP (average consecutive/uninterrupted time).
+      ::
+
+          predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
+          target = 1
+          # Sequences for 1 are [1] and [1,1,1]
+          persistance = (1 + 3)/2 # Average number of frames
+          tr = 2
+          if tr:
+              persistance = ((1 + 3) * 2)/2 # Turns average frames into average time
+
     - *Counts:* The frequency of each CAP observed in a run.
+      ::
+
+          predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
+          target = 1
+          counts = 4
+
+
     - *Transition Frequency:* The number of switches between different CAPs across the entire run.
+      ::
+
+          predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
+          # Transitions between unique CAPs occur at indices 0 -> 1, 1 -> 2, and 4 -> 5
+          transition_frequency = 3
+
 - **Cosine Similarity Radar Plots:** Create radar plots showing the cosine similarity between CAPs and networks/regions. Especially useful as a quantitative method to categorize CAPs by determining the regions/networks containing the most nodes demonstrating 
   increased co-activation or decreased co-deactivation [3]_. Refer to the `documentation <https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2radar>`_ in ``caps2radar`` in the ``CAP`` class for a more 
   detailed explanation as well as available ``**kwargs`` arguments and parameters to modify plots.**Note**,the "Low Amplitude"are negative cosine similarity values. The absolute value of those cosine similarities are taken so that the radar plot starts at 0 and magnitude 
-  comparisons between the "High Amplitude" and "Low Amplitude" groups are easier to see.
+  comparisons between the "High Amplitude" and "Low Amplitude" groups are easier to see. Below is an example of how the cosine similarity is calculated for this function.
+  ::
+
+      import numpy as np
+      # Nodes in order of their label ID, "LH_Vis1" is the 0th index in the parcellation
+      # but has a label ID of 1, and RH_SomSot2 is in the 7th index but has a label ID
+      # of 8 in the parcellation.
+      nodes = ["LH_Vis1", "LH_Vis2", "LH_SomSot1", "LH_SomSot2",
+                  "RH_Vis1", "RH_Vis2", "RH_SomSot1", "RH_SomSot2"]
+      # Binary representation of the nodes in Vis, essentially acts as
+      # a mask isolating the modes for for Vis
+      binary_vector = [1,1,0,0,1,1,0,0]
+      # Cluster centroid for CAP 1
+      cap_1_cluster_centroid = [-0.3, 1.5, 2, -0.2, 0.7, 1.3, -0.5, 0.4]
+      # Dot product is the sum of all the values here [-0.3, 1.5, 0, 0, 0.7, 1.3, 0, 0]
+      dot_product = np.dot(cap_1_cluster_centroid, binary_vector)
+
+      norm_cap_1_cluster_centroid = np.linalg.norm(cap_1_cluster_centroid)
+      norm_binary_vector = np.linalg.norm(binary_vector)
+      # Cosine similarity between CAP 1 and the visual network
+      cosine_similarity = dot_product/(norm_cap_1_cluster_centroid * norm_binary_vector)
 
 **Additionally, the `neurocaps.analysis` submodule contains two additional functions:**
 
