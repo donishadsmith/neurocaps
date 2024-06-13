@@ -626,10 +626,10 @@ class CAP(_CAPGetter):
                 predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
                 target = 1
                 # Sequences for 1 are [1] and [1,1,1]
-                persistance = (1 + 3)/2 # Average number of frames
+                persistence = (1 + 3)/2 # Average number of frames
                 tr = 2
                 if tr:
-                    persistance = ((1 + 3) * 2)/2 # Turns average frames into average time
+                    persistence = ((1 + 3) * 2)/2 # Turns average frames into average time
 
          - ``"counts"``: The frequency of each CAP observed in a run.
            ::

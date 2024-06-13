@@ -76,6 +76,7 @@
              
   <section id="neurocaps">
 <h1><strong>neurocaps</strong><a class="headerlink" href="#neurocaps" title="Link to this heading"></a></h1>
+<a class="reference external image-reference" href="https://doi.org/10.5281/zenodo.11642615"><img alt="DOI" src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-blue" /></a>
 <p>This is a Python package designed to perform Co-activation Patterns (CAPs) analyses. It utilizes k-means clustering to group timepoints (TRs) into brain states, applicable to both resting-state and task-based fMRI data.
 The package is compatible with data preprocessed using <strong>fMRIPrep</strong> and assumes your directory is BIDS-compliant, containing a derivatives folder with a pipeline folder (such as fMRIPrep) that holds the preprocessed BOLD data.</p>
 </section>
@@ -170,10 +171,10 @@ for the <code class="docutils literal notranslate"><span class="pre">caps2corr()
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">predicted_subject_timeseries</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
 <span class="n">target</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="c1"># Sequences for 1 are [1] and [1,1,1]</span>
-<span class="n">persistance</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">3</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span> <span class="c1"># Average number of frames</span>
+<span class="n">persistence</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">3</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span> <span class="c1"># Average number of frames</span>
 <span class="n">tr</span> <span class="o">=</span> <span class="mi">2</span>
 <span class="k">if</span> <span class="n">tr</span><span class="p">:</span>
-    <span class="n">persistance</span> <span class="o">=</span> <span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span> <span class="c1"># Turns average frames into average time</span>
+    <span class="n">persistence</span> <span class="o">=</span> <span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span> <span class="c1"># Turns average frames into average time</span>
 </pre></div>
 </div>
 </li>

@@ -435,10 +435,10 @@ Liu et al., 2018 and Yang et al., 2021. The metrics include:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">predicted_subject_timeseries</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
 <span class="n">target</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="c1"># Sequences for 1 are [1] and [1,1,1]</span>
-<span class="n">persistance</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">3</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span> <span class="c1"># Average number of frames</span>
+<span class="n">persistence</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">3</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span> <span class="c1"># Average number of frames</span>
 <span class="n">tr</span> <span class="o">=</span> <span class="mi">2</span>
 <span class="k">if</span> <span class="n">tr</span><span class="p">:</span>
-    <span class="n">persistance</span> <span class="o">=</span> <span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span> <span class="c1"># Turns average frames into average time</span>
+    <span class="n">persistence</span> <span class="o">=</span> <span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span> <span class="c1"># Turns average frames into average time</span>
 </pre></div>
 </div>
 </li>

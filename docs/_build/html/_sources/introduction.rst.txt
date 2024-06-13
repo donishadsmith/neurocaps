@@ -1,5 +1,8 @@
 **neurocaps**
 =============
+.. image:: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-blue
+   :target: https://doi.org/10.5281/zenodo.11642615
+   :alt: DOI
 
 This is a Python package designed to perform Co-activation Patterns (CAPs) analyses. It utilizes k-means clustering to group timepoints (TRs) into brain states, applicable to both resting-state and task-based fMRI data. 
 The package is compatible with data preprocessed using **fMRIPrep** and assumes your directory is BIDS-compliant, containing a derivatives folder with a pipeline folder (such as fMRIPrep) that holds the preprocessed BOLD data.
@@ -101,10 +104,10 @@ Main features for ``CAP`` includes:
           predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
           target = 1
           # Sequences for 1 are [1] and [1,1,1]
-          persistance = (1 + 3)/2 # Average number of frames
+          persistence = (1 + 3)/2 # Average number of frames
           tr = 2
           if tr:
-              persistance = ((1 + 3) * 2)/2 # Turns average frames into average time
+              persistence = ((1 + 3) * 2)/2 # Turns average frames into average time
 
     - *Counts:* The frequency of each CAP observed in a run.
       ::
