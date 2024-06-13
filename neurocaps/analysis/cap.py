@@ -24,9 +24,9 @@ class CAP(_CAPGetter):
         The approach used to parcellate BOLD images. This should be a nested dictionary with the first key being
         the atlas name. The sub-keys should include:
 
-            - ``"maps"``: Directory path to the location of the parcellation file.
-            - ``"nodes"``: A list of node names in the order of the label IDs in the parcellation.
-            - ``"regions"``: The regions or networks in the parcellation.
+            - ``"maps"`` : Directory path to the location of the parcellation file.
+            - ``"nodes"`` : A list of node names in the order of the label IDs in the parcellation.
+            - ``"regions"`` : The regions or networks in the parcellation.
 
         If the ``"Schaefer"`` or ``"AAL"`` option was used in the ``TimeSeriesExtractor`` class, you can initialize
         the ``TimeSeriesExtractor`` class with the ``parcel_approach``  that was initially used, then set this
