@@ -522,27 +522,22 @@ NeuroImage, 237, 118193. <a class="reference external" href="https://doi.org/10.
 <dl class="py method">
 <dt class="sig sig-object py" id="neurocaps.analysis.CAP.caps2plot">
 <span class="sig-name descname"><span class="pre">caps2plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">PathLike</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suffix_title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_options</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'outer</span> <span class="pre">product'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">visual_scope</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'regions'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_figs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subplots</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">heatmap</span></span></span><a class="reference internal" href="../_modules/neurocaps/analysis/cap.html#CAP.caps2plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neurocaps.analysis.CAP.caps2plot" title="Link to this definition"></a></dt>
-<dd><blockquote>
-<div><p><strong>Generate heatmaps and outer product plots of CAPs</strong></p>
+<dd><p><strong>Generate heatmaps and outer product plots of CAPs</strong></p>
 <p>This function produces <code class="docutils literal notranslate"><span class="pre">seaborn</span></code> heatmaps for each CAP. If groups were given when the CAP class was
 initialized, plotting will be done for all CAPs for all groups.</p>
-<dl>
-<dt>output_dir<span class="classifier"><cite>os.PathLike</cite> or None, default=None</span></dt><dd><p>Directory to save plots to. The directory will be created if it does not exist. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, plots will not
-be saved.</p>
-</dd>
-<dt>suffix_title<span class="classifier">str or None, default=None</span></dt><dd><p>Appended to the title of each plot as well as the name of the saved file if <code class="docutils literal notranslate"><span class="pre">output_dir</span></code> is provided.</p>
-</dd>
-<dt>plot_options<span class="classifier">str or List[str], default=”outer product”</span></dt><dd><p>Type of plots to create. Options are <code class="docutils literal notranslate"><span class="pre">&quot;outer</span> <span class="pre">product&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;heatmap&quot;</span></code>.</p>
-</dd>
-<dt>visual_scope<span class="classifier">str or List[str], default=”regions”</span></dt><dd><p>Determines whether plotting is done at the region level or node level.
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>output_dir</strong> (<cite>os.PathLike</cite> or None, default=None) – Directory to save plots to. The directory will be created if it does not exist. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, plots will not
+be saved.</p></li>
+<li><p><strong>suffix_title</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>default=None</em>) – Appended to the title of each plot as well as the name of the saved file if <code class="docutils literal notranslate"><span class="pre">output_dir</span></code> is provided.</p></li>
+<li><p><strong>plot_options</strong> (<em>str</em><em> or </em><em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>default=&quot;outer product&quot;</em>) – Type of plots to create. Options are <code class="docutils literal notranslate"><span class="pre">&quot;outer</span> <span class="pre">product&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;heatmap&quot;</span></code>.</p></li>
+<li><p><strong>visual_scope</strong> (<em>str</em><em> or </em><em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>default=&quot;regions&quot;</em>) – Determines whether plotting is done at the region level or node level.
 For region level, the value of each nodes in the same regions (both left and right hemisphere nodes in the
-same region) are averaged together then plotted. Options are <code class="docutils literal notranslate"><span class="pre">&quot;regions&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;nodes&quot;</span></code>.</p>
-</dd>
-<dt>show_figs<span class="classifier">bool, default=True</span></dt><dd><p>Whether to display figures.</p>
-</dd>
-<dt>subplots<span class="classifier">bool, default=True</span></dt><dd><p>Whether to produce subplots for outer product plots.</p>
-</dd>
-<dt>kwargs<span class="classifier">Dict</span></dt><dd><p>Keyword arguments used when saving figures. Valid keywords include:</p>
+same region) are averaged together then plotted. Options are <code class="docutils literal notranslate"><span class="pre">&quot;regions&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;nodes&quot;</span></code>.</p></li>
+<li><p><strong>show_figs</strong> (<em>bool</em><em>, </em><em>default=True</em>) – Whether to display figures.</p></li>
+<li><p><strong>subplots</strong> (<em>bool</em><em>, </em><em>default=True</em>) – Whether to produce subplots for outer product plots.</p></li>
+<li><p><strong>kwargs</strong> (<em>Dict</em>) – <p>Keyword arguments used when saving figures. Valid keywords include:</p>
 <ul>
 <li><dl class="simple">
 <dt>dpi<span class="classifier">int, default=300</span></dt><dd><p>Dots per inch for the figure. Default is 300 if <code class="docutils literal notranslate"><span class="pre">output_dir</span></code> is provided and <code class="docutils literal notranslate"><span class="pre">dpi</span></code> is not specified.</p>
@@ -585,12 +580,12 @@ same region) are averaged together then plotted. Options are <code class="docuti
 </dl>
 </li>
 <li><dl class="simple">
-<dt>nrow<span class="classifier">int, varies;</span></dt><dd><p>Number of rows for subplots. Default varies.</p>
+<dt>nrow<span class="classifier">int, default=varies (max 5)</span></dt><dd><p>Number of rows for subplots. Default varies but the maximum is 5.</p>
 </dd>
 </dl>
 </li>
 <li><dl class="simple">
-<dt>ncol<span class="classifier">int, default varies (max 5)</span></dt><dd><p>Number of columns for subplots. Default varies but the maximum is 5.</p>
+<dt>ncol<span class="classifier">int, default=None</span></dt><dd><p>Number of columns for subplots. Default varies but the maximum is 5.</p>
 </dd>
 </dl>
 </li>
@@ -700,12 +695,11 @@ create custom ones. Below is a list of valid options:</p>
 </dl>
 </li>
 </ul>
+</p></li>
+</ul>
 </dd>
-</dl>
-</div></blockquote>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p><cite>seaborn.heatmap</cite> – An instance of a <cite>seaborn</cite> <cite>heatmap</cite>.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><cite>seaborn.heatmap</cite> – An instance of a <cite>seaborn</cite> <cite>heatmap</cite>.</p>
 </dd>
 </dl>
 <div class="admonition note">

@@ -916,9 +916,9 @@ class CAP(_CAPGetter):
                 Font size for y-axis tick labels.
             - shrink : float, default=0.8
                 Fraction by which to shrink the colorbar.
-            - nrow : int, varies;
-                Number of rows for subplots. Default varies.
-            - ncol : int, default varies (max 5)
+            - nrow : int, default=varies (max 5)
+                Number of rows for subplots. Default varies but the maximum is 5.
+            - ncol : int, default=None
                 Number of columns for subplots. Default varies but the maximum is 5.
             - suptitle_fontsize : float, default=0.7
                 Font size for the main title when subplot is ``True``.
@@ -970,19 +970,19 @@ class CAP(_CAPGetter):
             - vmax : float, default=None
                 The maximum value to display in plots.
 
-    Returns
-    -------
-    `seaborn.heatmap`
-        An instance of a `seaborn` `heatmap`.
+        Returns
+        -------
+        `seaborn.heatmap`
+            An instance of a `seaborn` `heatmap`.
 
-    Note
-    ----
-    **If using "Custom" parcellation approach**, the ``"nodes"`` and ``"regions"`` sub-keys are required for this
-    function.
+        Note
+        ----
+        **If using "Custom" parcellation approach**, the ``"nodes"`` and ``"regions"`` sub-keys are required for this
+        function.
 
-    For valid premade paleettes for ``seaborn``, refer to https://seaborn.pydata.org/tutorial/color_palettes.html
+        For valid premade paleettes for ``seaborn``, refer to https://seaborn.pydata.org/tutorial/color_palettes.html
 
-    """
+        """
         if not self._parcel_approach:
             raise AttributeError("""
                                  `self.parcel_approach` is None. Add parcel_approach
