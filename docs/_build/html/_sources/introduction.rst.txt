@@ -121,9 +121,9 @@ Main features for ``CAP`` includes:
           # Transitions between unique CAPs occur at indices 0 -> 1, 1 -> 2, and 4 -> 5
           transition_frequency = 3
 
-- **Cosine Similarity Radar Plots:** Create radar plots showing the cosine similarity between CAPs and networks/regions. Especially useful as a quantitative method to categorize CAPs by determining the regions/networks containing the most nodes demonstrating 
+- **Cosine Similarity Radar Plots:** Create radar plots showing the cosine similarity between CAPs and networks/regions. Especially useful as a quantitative method to categorize CAPs by determining the regions containing the most nodes demonstrating 
   increased co-activation or decreased co-deactivation [3]_. Refer to the `documentation <https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2radar>`_ in ``caps2radar`` in the ``CAP`` class for a more 
-  detailed explanation as well as available ``**kwargs`` arguments and parameters to modify plots.**Note**,the "Low Amplitude"are negative cosine similarity values. The absolute value of those cosine similarities are taken so that the radar plot starts at 0 and magnitude 
+  detailed explanation as well as available ``**kwargs`` arguments and parameters to modify plots. **Note**, the "Low Amplitude"are negative cosine similarity values. The absolute value of those cosine similarities are taken so that the radar plot starts at 0 and magnitude 
   comparisons between the "High Amplitude" and "Low Amplitude" groups are easier to see. Below is an example of how the cosine similarity is calculated for this function.
   ::
 

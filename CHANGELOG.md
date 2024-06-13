@@ -3,7 +3,12 @@
 All notable future changes to neurocaps will be documented in this file.
 
 *Note*: All versions in this file are deployed on pypi.
-## [0.9.9.post] - 2024-06-12
+## [0.9.9.post2] - 2024-06-13
+### 💻 Metadata
+- All docstrings now at a satisfactory point of being well formatted and explanatory.
+- Fixes issues with docstring not being formatted correctly when reading in an IDE like Jupyter notebook
+
+## [0.9.9.post1] - 2024-06-12
 ### 🐛 Fixes
 - Reference before assignment issue when `use_confounds` is False do to `censor` only being when `use_confounds`
 is True.
