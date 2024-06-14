@@ -984,7 +984,7 @@ class CAP(_CAPGetter):
         **If using "Custom" parcellation approach**, the ``"nodes"`` and ``"regions"`` sub-keys are required for this
         function.
 
-        For valid premade paleettes for ``seaborn``, refer to https://seaborn.pydata.org/tutorial/color_palettes.html
+        For valid premade palettes for ``seaborn``, refer to https://seaborn.pydata.org/tutorial/color_palettes.html
 
         """
         if not self._parcel_approach:
@@ -1531,7 +1531,7 @@ class CAP(_CAPGetter):
 
         Note
         ----
-        For valid premade paleettes for ``seaborn``, refer to https://seaborn.pydata.org/tutorial/color_palettes.html
+        For valid premade palettes for ``seaborn``, refer to https://seaborn.pydata.org/tutorial/color_palettes.html
         """
         if not hasattr(self,"_caps"):
             raise AttributeError("""
@@ -2003,14 +2003,14 @@ class CAP(_CAPGetter):
         kwarg, then four values are shown - 0.25*(max value), 0.50*(max value), 0.75*(max value), and the max value.
 
         For valid keys for ``radialaxis`` refer to ``plotly``'s documentation at
-        Refer to https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.radialaxis.html or
+        https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.radialaxis.html or
         https://plotly.com/python/reference/layout/polar/ for valid kwargs.
 
         For valid keys for ``angularaxis`` refer to ``plotly``'s documentation at
         https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.angularaxis.html or
         https://plotly.com/python/reference/layout/polar/ for valid kwargs.
 
-        For valid keys for ``legend`` and ``title_font``, Refer to ``plotly``'s documentation at
+        For valid keys for ``legend`` and ``title_font``, refer to ``plotly``'s documentation at
         https://plotly.com/python/reference/layout/ for valid kwargs.
 
         References

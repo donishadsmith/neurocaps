@@ -3,9 +3,17 @@
 }
 
 .wy-side-nav-search, .wy-nav-top {
-    background: black;
+    background: rgb(0, 0, 0);
 }
 
 section {
     text-align: justify;
+    word-spacing: -0.08em;
 }
+
+.note .reference,
+.note .external,
+.reference {
+    word-break: break-all;
+}
+

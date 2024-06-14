@@ -22,7 +22,7 @@ copyright = '2024, neurocaps developers'
 author = 'Donisha Smith'
 
 # The full version, including alpha/beta/rc tags
-release = '0.9.9.post1'
+release = '0.9.9.post3'
 
 # -- General configuration ---------------------------------------------------
 

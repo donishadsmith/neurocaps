@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>neurocaps.analysis.cap &mdash; neurocaps 0.9.9.post1 documentation</title>
+  <title>neurocaps.analysis.cap &mdash; neurocaps 0.9.9.post3 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/plot_directive.css?v=7f9a90b1" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=b77a3e96" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/plot_directive.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=a8be93fa" />
 
   
   <!--[if lt IE 9]>
@@ -16,7 +16,7 @@
   
         <script src="../../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="../../../_static/documentation_options.js?v=6b452a4c"></script>
+        <script src="../../../_static/documentation_options.js?v=f8c5243f"></script>
         <script src="../../../_static/doctools.js?v=9a2dae69"></script>
         <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/js/theme.js"></script>
@@ -1069,7 +1069,7 @@
 <span class="sd">        **If using &quot;Custom&quot; parcellation approach**, the ``&quot;nodes&quot;`` and ``&quot;regions&quot;`` sub-keys are required for this</span>
 <span class="sd">        function.</span>
 
-<span class="sd">        For valid premade paleettes for ``seaborn``, refer to https://seaborn.pydata.org/tutorial/color_palettes.html</span>
+<span class="sd">        For valid premade palettes for ``seaborn``, refer to https://seaborn.pydata.org/tutorial/color_palettes.html</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parcel_approach</span><span class="p">:</span>
@@ -1619,7 +1619,7 @@
 
 <span class="sd">        Note</span>
 <span class="sd">        ----</span>
-<span class="sd">        For valid premade paleettes for ``seaborn``, refer to https://seaborn.pydata.org/tutorial/color_palettes.html</span>
+<span class="sd">        For valid premade palettes for ``seaborn``, refer to https://seaborn.pydata.org/tutorial/color_palettes.html</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="s2">&quot;_caps&quot;</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
@@ -2100,14 +2100,14 @@
 <span class="sd">        kwarg, then four values are shown - 0.25*(max value), 0.50*(max value), 0.75*(max value), and the max value.</span>
 
 <span class="sd">        For valid keys for ``radialaxis`` refer to ``plotly``&#39;s documentation at</span>
-<span class="sd">        Refer to https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.radialaxis.html or</span>
+<span class="sd">        https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.radialaxis.html or</span>
 <span class="sd">        https://plotly.com/python/reference/layout/polar/ for valid kwargs.</span>
 
 <span class="sd">        For valid keys for ``angularaxis`` refer to ``plotly``&#39;s documentation at</span>
 <span class="sd">        https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.angularaxis.html or</span>
 <span class="sd">        https://plotly.com/python/reference/layout/polar/ for valid kwargs.</span>
 
-<span class="sd">        For valid keys for ``legend`` and ``title_font``, Refer to ``plotly``&#39;s documentation at</span>
+<span class="sd">        For valid keys for ``legend`` and ``title_font``, refer to ``plotly``&#39;s documentation at</span>
 <span class="sd">        https://plotly.com/python/reference/layout/ for valid kwargs.</span>
 
 <span class="sd">        References</span>
