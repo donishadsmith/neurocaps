@@ -55,11 +55,11 @@ parcel_approach = {"AAL": {"version": "SPM12"}}
 If using a "Custom" parcellation approach, ensure each node in your dataset includes both left (lh) and right (rh) hemisphere versions (bilateral nodes). 
 
 Custom Key Structure:
-- 'maps': Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g., .nii for NifTI files). For plotting purposes, this key is not required.
-- 'nodes': List of all node labels used in your study, arranged in the exact order they correspond to indices in your parcellation files. 
+- `"maps'`: Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g., .nii for NifTI files). For plotting purposes, this key is not required.
+- `"nodes"`: List of all node labels used in your study, arranged in the exact order they correspond to indices in your parcellation files. 
 Each label should match the parcellation index it represents. For example, if the parcellation label "0" corresponds to the left hemisphere 
 visual cortex area 1, then "LH_Vis1" should occupy the 0th index in this list. This ensures that data extraction and analysis accurately reflect the anatomical regions intended. For timeseries extraction, this key is not required.
-- 'regions': Dictionary defining major brain regions. Each region should list node indices under "lh" and "rh" to specify left and right hemisphere nodes. For timeseries extraction, this key is not required.
+- `"regions"`: Dictionary defining major brain regions. Each region should list node indices under "lh" and "rh" to specify left and right hemisphere nodes. For timeseries extraction, this key is not required.
         
 Example:
 The provided example demonstrates setting up a custom parcellation containing nodes for the visual network (Vis) and hippocampus regions:
@@ -196,16 +196,16 @@ bids_dir = "/path/to/bids/dir"
 pipeline_name = "fmriprep-1.4.0"
 
 # Resting State
-# extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
+extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
 
 # Task; use parallel processing with `n_cores`
 extractor.get_bold(bids_dir=bids_dir, task="emo", condition="positive", 
                    pipeline_name=pipeline_name, n_cores=10)
 
-cap_analysis = CAP(parcel_approach=extractor.parcel_approach,
-                    n_clusters=6)
+cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
 
 cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, 
+                      n_clusters=6,
                       standardize = True)
 
 # Visualize CAPs
@@ -213,17 +213,17 @@ cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
 # Using seaborn's diverging_palette function, matplotlib's LinearSegmentedColormap, 
 # or other Classes or functions compatable with seaborn
 
-cap_analysis.caps2plot(visual_scope="regions", plot_options="outer product", 
-                            suffix_title="- Positive Valence", ncol=3, sharey=True, 
-                            subplots=True, cmap="coolwarm")
+cap_analysis.caps2plot(visual_scope="regions", plot_options="outer_product", 
+                       suffix_title="- Positive Valence", ncol=3, sharey=True, 
+                       subplots=True, cmap="coolwarm")
 # Create the colormap
 import seaborn as sns
 palette = sns.diverging_palette(260, 10, s=80, l=55, n=256, as_cmap=True)
 
-cap_analysis.caps2plot(visual_scope="nodes", plot_options="outer product", 
-                            suffix_title="- Positive Valence", ncol=3,sharey=True, 
-                            subplots=True, xlabel_rotation=90, tight_layout=False, 
-                            hspace = 0.4, cmap=palette)
+cap_analysis.caps2plot(visual_scope="nodes", plot_options="outer_product", 
+                       suffix_title="- Positive Valence", ncol=3,sharey=True, 
+                       subplots=True, xlabel_rotation=90, tight_layout=False, 
+                       hspace = 0.4, cmap=palette)
 
 ```
 **Plot Outputs:**
@@ -235,24 +235,24 @@ cap_analysis.caps2plot(visual_scope="nodes", plot_options="outer product",
 # Get CAP metrics
 outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, tr=2.0, 
                                          return_df=True, output_dir=output_dir,
-                                         metrics=["temporal fraction", "persistence"],
+                                         metrics=["temporal_fraction", "persistence"],
                                          continuous_runs=True, file_name="All_Subjects_CAPs_metrics")
 
-print(outputs["temporal fraction"])
+print(outputs["temporal_fraction"])
 ```
 **DataFrame Output:**
 | Subject_ID | Group | Run | CAP-1 | CAP-2 | CAP-3 | CAP-4 | CAP-5 | CAP-6 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | All Subjects | Continuous Runs | 0.14 | 0.17 | 0.14 | 0.2 | 0.15 | 0.19 |
-| 2 | All Subjects | Continuous Runs | 0.17 | 0.17 | 0.16 | 0.16 | 0.15 | 0.19 |
-| 3 | All Subjects | Continuous Runs | 0.15 | 0.2 | 0.14 | 0.18 | 0.17 | 0.17 |
-| 4 | All Subjects | Continuous Runs | 0.17 | 0.21 | 0.18 | 0.17 | 0.1 | 0.16 |
-| 5 | All Subjects | Continuous Runs | 0.14 | 0.19 | 0.14 | 0.16 | 0.2 | 0.18 |
-| 6 | All Subjects | Continuous Runs | 0.16 | 0.21 | 0.16 | 0.18 | 0.16 | 0.13 |
-| 7 | All Subjects | Continuous Runs | 0.16 | 0.16 | 0.17 | 0.15 | 0.19 | 0.17 |
-| 8 | All Subjects | Continuous Runs | 0.17 | 0.21 | 0.13 | 0.14 | 0.17 | 0.18 |
-| 9 | All Subjects | Continuous Runs | 0.18 | 0.1 | 0.17 | 0.18 | 0.16 | 0.2 |
-| 10 | All Subjects | Continuous Runs | 0.14 | 0.19 | 0.14 | 0.17 | 0.19 | 0.16 |
+| 1 | All_Subjects | continuous_runs | 0.14 | 0.17 | 0.14 | 0.2 | 0.15 | 0.19 |
+| 2 | All_Subjects | continuous_runs | 0.17 | 0.17 | 0.16 | 0.16 | 0.15 | 0.19 |
+| 3 | All_Subjects | continuous_runs | 0.15 | 0.2 | 0.14 | 0.18 | 0.17 | 0.17 |
+| 4 | All_Subjects | continuous_runs | 0.17 | 0.21 | 0.18 | 0.17 | 0.1 | 0.16 |
+| 5 | All_Subjects | continuous_runs | 0.14 | 0.19 | 0.14 | 0.16 | 0.2 | 0.18 |
+| 6 | All_Subjects | continuous_runs | 0.16 | 0.21 | 0.16 | 0.18 | 0.16 | 0.13 |
+| 7 | All_Subjects | continuous_runs | 0.16 | 0.16 | 0.17 | 0.15 | 0.19 | 0.17 |
+| 8 | All_Subjects | continuous_runs | 0.17 | 0.21 | 0.13 | 0.14 | 0.17 | 0.18 |
+| 9 | All_Subjects | continuous_runs | 0.18 | 0.1 | 0.17 | 0.18 | 0.16 | 0.2 |
+| 10 | All_Subjects | continuous_runs | 0.14 | 0.19 | 0.14 | 0.17 | 0.19 | 0.16 |
 
 ```python
 # Create surface plots of CAPs; there will be as many plots as CAPs

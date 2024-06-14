@@ -17,3 +17,6 @@ section {
     word-break: break-all;
 }
 
+.wy-nav-content {
+    max-width: none;
+ }

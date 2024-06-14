@@ -13,7 +13,6 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
-import neurocaps
 
 # -- Project information -----------------------------------------------------
 
@@ -22,7 +21,7 @@ copyright = '2024, neurocaps developers'
 author = 'Donisha Smith'
 
 # The full version, including alpha/beta/rc tags
-release = '0.9.9.post3'
+release = '1.0.0'
 
 # -- General configuration ---------------------------------------------------
 
@@ -38,7 +37,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
     'sphinx_rtd_theme',
-    'matplotlib.sphinxext.plot_directive',
+    "myst_parser"
 ]
 
 # Generate the API documentation when building
@@ -58,7 +57,7 @@ napoleon_use_rtype = False
 napoleon_include_private_with_doc = False
 
 # The suffix(es) of source filenames.
-source_suffix = '.rst'
+source_suffix = ['.rst', '.md']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

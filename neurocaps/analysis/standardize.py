@@ -1,8 +1,9 @@
 """Function to standardize timeseries within subject runs"""
-from typing import Union, Dict
+from typing import Union
 import numpy as np, joblib
+from .._utils import _convert_pickle_to_dict
 
-def standardize(subject_timeseries: Union[Dict[str, Dict[str, np.ndarray]], str]) -> Dict[str, np.ndarray]:
+def standardize(subject_timeseries: Union[dict[str, dict[str, np.ndarray]], str]) -> dict[str, np.ndarray]:
     """
     **Standardize Subject Timeseries**
 
@@ -10,13 +11,13 @@ def standardize(subject_timeseries: Union[Dict[str, Dict[str, np.ndarray]], str]
 
     Parameters
     ----------
-    subject_timeseries_list: List[Dict]] or List[str]
+    subject_timeseries_list: :obj:`list[dict]]` or :obj:`list[str]`
         A list of pickle files containing the nested subject timeseries dictionary saved by the
         ``TimeSeriesExtractor`` class or a list of nested subject timeseries dictionaries produced by the
         ``TimeSeriesExtractor`` class. The first level of the nested dictionary must consist of the subject ID as a
-        string, the second level must consist of the run numbers in the form of ``"run-#"`` (where # is the
-        corresponding number of the run), and the last level must consist of the timeseries (as a ``numpy`` array)
-        associated with that run.  The structure is as follows:
+        string, the second level must consist of the run numbers in the form of "run-#"
+        (where # is the corresponding number of the run), and the last level must consist of the timeseries
+        (as a numpy array) associated with that run. The structure is as follows:
         ::
 
             subject_timeseries = {
@@ -33,12 +34,11 @@ def standardize(subject_timeseries: Union[Dict[str, Dict[str, np.ndarray]], str]
 
     Returns
     -------
-        `Dict[str, Dict[str, np.ndarray]]`.
+        `dict[str, dict[str, np.ndarray]]`.
     """
 
-    if ".pkl" in subject_timeseries:
-        with open(subject_timeseries, "rb") as pickle_file:
-            subject_timeseries = joblib.load(pickle_file)
+    if isinstance(subject_timeseries, str) and subject_timeseries.endswith(".pkl"):
+        subject_timeseries = _convert_pickle_to_dict()
 
     for subject in subject_timeseries:
         for run in subject_timeseries[subject]:

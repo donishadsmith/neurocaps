@@ -1,6 +1,6 @@
 
 import collections, itertools, os, re, sys, warnings
-from typing import Union, Literal, List, Dict, Optional
+from typing import Union, Literal, Optional
 import numpy as np, nibabel as nib, matplotlib.pyplot as plt, pandas as pd, seaborn, surfplot
 import plotly.express as px, plotly.graph_objects as go, plotly.offline as pyo
 from kneed import KneeLocator
@@ -20,28 +20,24 @@ class CAP(_CAPGetter):
 
     Parameters
     ----------
-    parcel_approach : Dict[Dict], default=None
+    parcel_approach : :obj:`dict[str, dict]`, default=None
         The approach used to parcellate BOLD images. This should be a nested dictionary with the first key being
         the atlas name. The sub-keys should include:
 
-            - ``"maps"`` : Directory path to the location of the parcellation file.
-            - ``"nodes"`` : A list of node names in the order of the label IDs in the parcellation.
-            - ``"regions"`` : The regions or networks in the parcellation.
+            - "maps" : Directory path to the location of the parcellation file.
+            - "nodes" : A list of node names in the order of the label IDs in the parcellation.
+            - "regions" : The regions or networks in the parcellation.
 
-        If the ``"Schaefer"`` or ``"AAL"`` option was used in the ``TimeSeriesExtractor`` class, you can initialize
+        If the "Schaefer" or "AAL" option was used in the ``TimeSeriesExtractor`` class, you can initialize
         the ``TimeSeriesExtractor`` class with the ``parcel_approach``  that was initially used, then set this
-        parameter to ``TimeSeriesExtractor.parcel_approach``. For this parameter, only ``"Schaefer"``, ``"AAL"``, and
-        ``"Custom"`` are supported. **Note**, this parameter is not needed for using ``self.get_caps()``; however, for
+        parameter to ``TimeSeriesExtractor.parcel_approach``. For this parameter, only "Schaefer", "AAL", and
+        "Custom" are supported. Note, this parameter is not needed for using ``self.get_caps()``; however, for
         certain plotting functions it will be needed. This class contains a ``parcel_approach`` property that also acts
         as a setter so ``self.parcel_approach=parcel_approach`` can be used to set the ``parcel_approach`` later on.
-    n_clusters : Union[int, List[int]], default=5
-        The number of clusters to use for ``scikit-learn``'s ``KMeans``. Can be a single integer or a list of integers
-        (if ``cluster_selection_method`` is not ``None``).
-    cluster_selection_method : str or None, default=None
-        Method to find the optimal number of clusters. Options are ``"silhouette"`` or ``"elbow"``.
-    groups : Dict[str, List] or None, default=None
+
+    groups : :obj:`dict[str, list]` or :obj:`None`, default=None
         A mapping of group names to subject IDs. Each group contains subject IDs for separate CAP analysis.
-        If ``None``, CAPs are not separated by group. The structure should be as follows:
+        If None, CAPs are not separated by group. The structure should be as follows:
         ::
 
             {
@@ -52,18 +48,22 @@ class CAP(_CAPGetter):
 
     Property
     --------
-    n_clusters : int or List[int]
-        A single integer or list of integers if ``cluster_selection_method`` is not ``None``) that will used for
-        ``KMeans``.
-    groups : Dict[str, List] or None:
+    n_clusters : :obj:`int` or :obj:`list[int]`
+        A single integer or list of integers if ``cluster_selection_method`` is not None) that will used for
+        ``sklearn.cluster.KMeans``. Is None until ``self.get_caps()`` is used.
+
+    groups : :obj:`dict[str, list]` or :obj:`None`:
         A mapping of groups names to subject IDs.
-    cluster_selection_method : str or None:
-        The cluster selection method to identify the optimal number of clusters.
-    parcel_approach : Dict[str, Dict]
-        Nested dictionary containing information about the parcellation. Can also be used as a setter. If ``"Schaefer"``
-        or ``"AAL"`` was specified during initialization of the ``TimeseriesExtractor`` class, then ``nilearn``'s
-        ``datasets.fetch_atlas_schaefer_2018` and ``datasets.fetch_atlas_aal`` will be used to obtain the ``"maps"``
-        and the ``"nodes"``. Then string splitting is used on the ``"nodes"`` to obtain the ``"regions"``:
+
+    cluster_selection_method : :obj:`str` or :obj:`None`:
+        The cluster selection method to identify the optimal number of clusters. Is None until ``self.get_caps()``
+        is used.
+
+    parcel_approach : :obj:`dict[str, dict]`
+        Nested dictionary containing information about the parcellation. Can also be used as a setter. If "Schaefer"
+        or "AAL" was specified during initialization of the ``TimeseriesExtractor`` class, then 
+        ``nilearn.datasets.fetch_atlas_schaefer_2018`` and ``nilearn.datasets.fetch_atlas_aal`` will be used to obtain
+        the "maps" and the "nodes". Then string splitting is used on the "nodes" to obtain the "regions":
         ::
 
             {
@@ -85,44 +85,46 @@ class CAP(_CAPGetter):
                 }
             }
 
-        If ``"Custom"`` is specified, only checks are done to ensure that the dictionary contains the proper sub-keys
-        such as ``"maps"``, ``"nodes"``, and ``"regions"``. Unlike ``"Schaefer"`` and ``"AAL"``, ``"regions"`` must be
-        a nested dictionary specifying the name of the region as the first level key and the indices in the ``"nodes"``
-        list belonging to the ``"lh"`` and ``"rh"`` for that region. Refer to the example for ``"Custom"`` in
-        the **Note** section below.
+        If "Custom" is specified, only checks are done to ensure that the dictionary contains the proper sub-keys
+        such as "maps", "nodes", and "regions". Unlike "Schaefer" and "AAL", "regions" must be
+        a nested dictionary specifying the name of the region as the first level key and the indices in the "nodes"
+        list belonging to the "lh" and "rh" for that region. Refer to the example for "Custom" in
+        the Note section below.
 
-    n_cores : int
-        Number of cores to use for multiprocessing with ``joblib``. Is ``None`` until ``self.get_caps()`` is used
+    n_cores : :obj:`int`
+        Number of cores to use for multiprocessing with joblib. Is None until ``self.get_caps()`` is used
         and ``n_cores`` is specified.
-    runs : int or List[int]
-        The runs used for the CAPs analysis. Is ``None`` until ``self.get_caps()`` is used and ``runs`` is specified.
-    caps : Dict[str, Dict[np.array]]
+
+    runs : :obj:`int` or :obj:`list[int]`
+        The runs used for the CAPs analysis. Is None until ``self.get_caps()`` is used and ``runs`` is specified.
+
+    caps : :obj:`dict[str, dict[np.array]]`
         The extracted cluster centroids, representing each CAP from the k-means model. It is a nested dictionary
-        containing the group name, CAP names, and 1D ``numpy`` array. Is ``None`` until ``self.get_caps``
+        containing the group name, CAP names, and 1D numpy array. Is None until ``self.get_caps``
         is used. The structure is as follows:
         ::
 
             {
                 "GroupName": {
-                    "CAP-1": np.array([...]) # 1 x ROI array,
-                    "CAP-2": np.array([...]) # 1 x ROI array,
+                    "CAP-1": np.array([...]) # 1 x ROI array
+                    "CAP-2": np.array([...]) # 1 x ROI array
                 }
 
             }
 
-    kmeans : Dict[str, sklearn.cluster.KMeans]
-        Dictionary containing the ``KMeans`` model used for each group. If ``cluster_selection__method`` is not
-        ``None``, the ``KMeans`` model will be the optimal model.  Is ``None`` until ``self.get_caps()`` is used.
-        The structure is as follows:
+    kmeans : :obj:`dict[str, sklearn.cluster.KMeans]`
+        Dictionary containing the ``sklearn.cluster.KMeans`` model used for each group. If ``cluster_selection__method``
+        is not None, the ``sklearn.cluster.KMeans`` model will be the optimal model.  Is None until 
+        ``self.get_caps()`` is used. The structure is as follows:
         ::
 
             {
                 "GroupName": sklearn.cluster.KMeans
             }
 
-    silhouette_scores : Dict[str, Dict[str, float]]
-        If ``cluster_selection_method`` is ``"silhouette"``, this property will be a nested dictionary containing
-        the group name, cluster number, and silhouette score. Is ``None`` until ``self.get_caps()`` is used. The
+    silhouette_scores : :obj:`dict[str, dict[str, float]]`
+        If ``cluster_selection_method`` is "silhouette", this property will be a nested dictionary containing
+        the group name, cluster number, and silhouette score. Is None until ``self.get_caps()`` is used. The
         structure is as follows:
         ::
 
@@ -134,9 +136,9 @@ class CAP(_CAPGetter):
                 }
             }
 
-    inertia : Dict[str, Dict[str, float]]
-        If ``cluster_selection_method`` is ``"elbow"``, this property will be a nested dictionary containing the
-        group name, cluster number, and inertia. Is ``None`` until ``self.get_caps()`` is used. The structure is as
+    inertia : :obj:`dict[str, dict[str, float]]`
+        If ``cluster_selection_method`` is "elbow", this property will be a nested dictionary containing the
+        group name, cluster number, and inertia. Is None until ``self.get_caps()`` is used. The structure is as
         follows:
         ::
 
@@ -148,8 +150,8 @@ class CAP(_CAPGetter):
                 }
             }
 
-    optimal_n_clusters : Dict[str, Dict[int]]
-        If ``cluster_selection_method`` is not ``None``, this property is a nested dictionary containing the group
+    optimal_n_clusters : :obj:`dict[str, dict[int]]`
+        If ``cluster_selection_method`` is not None, this property is a nested dictionary containing the group
         name and the optimal number of clusters. The structure is as follows:
         ::
 
@@ -157,14 +159,16 @@ class CAP(_CAPGetter):
                 "GroupName": int
             }
 
-    standardize : bool
-        Boolean denoting whether the features of the concatenated timeseries data was z-scored. Is ``None`` until
+    standardize : :obj:`bool`
+        Boolean denoting whether the features of the concatenated timeseries data was z-scored. Is None until
         ``self.get_caps()`` is used.
-    epsilon : float
+
+    epsilon : :obj:`float`
         A small number added to the denominator when z-scoring for numerical stability.
-    means : Dict[str, np.array]
-        If ``standardize`` is ``True`` in ``self.get_caps()``, this property is a nested dictionary containing the
-        group names and a ``numpy`` array (participants x TR) x ROIs of the means of the features. The structure is as
+
+    means : :obj:`dict[str, np.array]`
+        If ``standardize`` is True in ``self.get_caps()``, this property is a nested dictionary containing the
+        group names and a numpy array (participants x TR) x ROIs of the means of the features. The structure is as
         follows:
         ::
 
@@ -172,9 +176,9 @@ class CAP(_CAPGetter):
                 "GroupName": np.array([...]) # Dimensions: 1 x ROIs
             }
 
-    stdev : Dict[str, np.array]
-        If ``standardize`` is ``True`` in ``self.get_caps()``, this property is a nested dictionary containing the
-        group names and a ``numpy`` array (participants x TR) x ROIs of the sample standard deviation of the features.
+    stdev : :obj:`dict[str, np.array]`
+        If ``standardize`` is True in ``self.get_caps()``, this property is a nested dictionary containing the
+        group names and a numpy array (participants x TR) x ROIs of the sample standard deviation of the features.
         The structure is as follows:
         ::
 
@@ -182,18 +186,18 @@ class CAP(_CAPGetter):
                 "GroupName": np.array([...]) # Dimensions: 1 x ROIs
             }
 
-    concatenated_timeseries : Dict[str, np.array]
-        Nested dictionary containing the group name and their respective concatenated ``numpy`` arrays
-        (participants x TR) x ROIs. Is ``None`` until ``self.get_caps()`` is used. The structure is as follows:
+    concatenated_timeseries : :obj:`dict[str, np.array]`
+        Nested dictionary containing the group name and their respective concatenated numpy arrays
+        (participants x TR) x ROIs. Is None until ``self.get_caps()`` is used. The structure is as follows:
         ::
 
             {
                 "GroupName": np.array([...]) # Dimensions: (participants x TR) x ROIs
             }
 
-    region_caps : Dict[str, np.array]:
-        If ``visual_scope`` set to ``"regions"`` in ``self.caps2plot()``, this property is a nested dictionary
-        containing the group name, CAP names, and ``numpy`` array (1 x region) of the averaged z-score value for each
+    region_caps : :obj:`dict[str, np.array]`
+        If ``visual_scope`` set to "regions" in ``self.caps2plot()``, this property is a nested dictionary
+        containing the group name, CAP names, and numpy array (1 x region) of the averaged z-score value for each
         region. The structure is as follows:
         ::
 
@@ -205,9 +209,9 @@ class CAP(_CAPGetter):
 
             }
 
-    outer_products : Dict[str, Dict[str, np.array]]
-        If ``plot_options`` set to " outer product" ``self.caps2plot()``, this property is a nested dictionary
-        containing the group name, CAP names, and ``numpy`` array (ROI x ROI) of the outer product. The structure is
+    outer_products : :obj:`dict[str, dict[str, np.array]]`
+        If ``plot_options`` set to "outer_product" ``self.caps2plot()``, this property is a nested dictionary
+        containing the group name, CAP names, and numpy array (ROI x ROI) of the outer product. The structure is
         as follows:
         ::
 
@@ -225,18 +229,18 @@ class CAP(_CAPGetter):
 
     **If using a "Custom" parcellation approach**, ensure each node in your dataset includes both left (lh) and
     right (rh) hemisphere versions (bilateral nodes). This function assumes that the background label is "zero".
-    Do not add a background label in the ``"nodes"`` or ``"regions"`` key; the zero index should correspond to the
+    Do not add a background label in the "nodes" or "regions" key; the zero index should correspond to the
     first ID that is not zero.
 
-    - ``"maps"``: Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g.,
+    - "maps": Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g.,
       .nii for NIfTI files).
-    - ``"nodes"``: List of all node labels used in your study, arranged in the exact order they correspond to indices in
+    - "nodes": List of all node labels used in your study, arranged in the exact order they correspond to indices in
       your parcellation files. Each label should match the parcellation index it represents. For example, if the
       parcellation label "1" corresponds to the left hemisphere visual cortex area 1, then "LH_Vis1" should occupy
       the 0th index in this list. This ensures that data extraction and analysis accurately reflect the anatomical
       regions intended.
-    - ``"regions"``: Dictionary defining major brain regions. Each region should list node indices under
-      ``"lh"`` and ``"rh"`` to specify left and right hemisphere nodes.
+    - "regions": Dictionary defining major brain regions. Each region should list node indices under
+      "lh" and "rh" to specify left and right hemisphere nodes.
 
     **Different sub-keys are required depending on the function used. Refer to the Note section under each function
     for information regarding the sub-keys required for that function.**
@@ -269,23 +273,7 @@ class CAP(_CAPGetter):
             }
         }
     """
-    def __init__(self, parcel_approach: Dict[str, Dict]=None, n_clusters: Union[int, List[int]]=5,
-                 cluster_selection_method: Literal["elbow","silhouette"]=None, groups: Dict[str, List]=None) -> None:
-        # Ensure all unique values if n_clusters is a list
-        self._n_clusters = n_clusters if isinstance(n_clusters, int) else sorted(list(set(n_clusters)))
-        self._cluster_selection_method = cluster_selection_method
-
-        if isinstance(n_clusters, list):
-            self._n_clusters =  self._n_clusters[0] if all([isinstance(self._n_clusters, list),
-                                                            len(self._n_clusters) == 1]) else self._n_clusters
-            # Raise error if n_clusters is a list and no cluster selection method is specified
-            if all([len(n_clusters) > 1, self._cluster_selection_method is None]):
-                raise ValueError("`cluster_selection_method` cannot be None since n_clusters is a list.")
-
-        # Raise error if silhouette_method is requested when n_clusters is an integer
-        if all([self._cluster_selection_method is not None, isinstance(self._n_clusters, int)]):
-            raise ValueError("`cluster_selection_method` only valid if n_clusters is a range of unique integers.")
-
+    def __init__(self, parcel_approach: dict[str, dict]=None, groups: dict[str, list]=None) -> None:
         self._groups = groups
         # Raise error if self groups is not a dictionary
         if self._groups:
@@ -308,30 +296,37 @@ class CAP(_CAPGetter):
 
         self._parcel_approach = parcel_approach
 
-    def get_caps(self, subject_timeseries: Union[Dict[str, Dict[str, np.ndarray]], str],
-                 runs: Optional[Union[int, List[int]]]=None, random_state: Optional[int]=None,
+    def get_caps(self,
+                 subject_timeseries: Union[dict[str, dict[str, np.ndarray]], str],
+                 runs: Optional[Union[int, list[int]]]=None,
+                 n_clusters: Union[int, list[int]]=5,
+                 cluster_selection_method: Literal["elbow","silhouette"]=None,
+                 random_state: Optional[int]=None,
                  init: Union[np.array, Literal["k-means++", "random"]]="k-means++",
                  n_init: Union[Literal["auto"],int]='auto',
                  max_iter: int=300, tol: float=0.0001, algorithm: Literal["lloyd", "elkan"]="lloyd",
+                 standardize: bool=True,
+                 epsilon: Union[int,float]=0,
+                 n_cores: Optional[int]=None,
                  show_figs: bool=False,
-                 output_dir: Optional[Union[str, os.PathLike]]=None, standardize: bool=True,
-                 epsilon: Union[int,float]=0, n_cores: Optional[int]=None, **kwargs) -> plt.figure:
+                 output_dir: Optional[Union[str, os.PathLike]]=None,
+                 **kwargs) -> plt.figure:
         """
         **Perform K-Means Clustering to Generate CAPs**
 
-        Concatenates the timeseries of each subject into a single ``numpy`` array with dimensions (participants x TRs) x
-        ROI and uses ``scikit-learn``'s ``KMeans`` on the concatenated data. **Note**, ``KMeans`` uses euclidean
-        distance Additionally, the elbow method is determined using ``KneeLocator`` from the ``kneed`` package and the
-        silhouette scores are calculated with ``scikit-learn``'s  ``silhouette_score``.
+        Concatenates the timeseries of each subject into a single numpy array with dimensions
+        (participants x TRs) x ROI and uses ``sklearn.cluster.KMeans`` on the concatenated data. **Note**,
+        ``KMeans`` uses euclidean distance. Additionally, the elbow method is determined using ``KneeLocator`` from
+        the kneed package and the silhouette scores are calculated with scikit-learn's ``silhouette_score``.
 
         Parameters
         ----------
-        subject_timeseries : Dict[str, Dict[str, np.ndarray]] or str
+        subject_timeseries : :obj:`dict[str, Dict[str, np.ndarray]]` or :obj:`str`
             Path of the pickle file containing the nested subject timeseries dictionary saved by the
             ``TimeSeriesExtractor`` class or the nested subject timeseries dictionary produced by the
             ``TimeseriesExtractor`` class. The first level of the nested dictionary must consist of the subject ID
-            as a string, the second level must consist of the run numbers in the form of ``"run-#"`` (where # is the
-            corresponding number of the run), and the last level must consist of the timeseries (as a ``numpy`` array)
+            as a string, the second level must consist of the run numbers in the form of "run-#" (where # is the
+            corresponding number of the run), and the last level must consist of the timeseries (as a numpy array)
             associated with that run. The structure is as follows:
             ::
 
@@ -347,54 +342,93 @@ class CAP(_CAPGetter):
                         }
                     }
 
-        runs : int or List[int] or None, default=None
-            The run numbers to perform the CAPs analysis with. If ``None``, all runs in the subject timeseries will be
-            concatenated into a single dataframe and subjected to ``KMeans``.
-        random_state : int or None, default=None
-            The random state to use for ``scikit-learn``'s ``KMeans``. Ensures reproducible results.
-        init : "k-means++", "random", or array, default="k-means++"
-            Method for choosing initial cluster centroid for ``scikit-learn``'s ``KMeans``.
-        n_init : "auto" or int, default="auto"
-            Number of times ``scikit-learn``'s ``KMeans`` is ran with different initial clusters.
+        runs : :obj:`int` or :obj:`list[int]` or :obj:`None`, default=None
+            The run numbers to perform the CAPs analysis with. If None, all runs in the subject timeseries will be
+            concatenated into a single dataframe and subjected to k-means clustering.
+
+        n_clusters : :obj:`Union[int, list[int]]`, default=5
+            The number of clusters to use for ``sklearn.cluster.KMeans``. Can be a single integer or a list of
+            integers (if ``cluster_selection_method`` is not None).
+
+        cluster_selection_method : {"silhouette", "elbow"} or :obj:`None`, default=None
+            Method to find the optimal number of clusters. Options are "silhouette" or "elbow".
+
+        random_state : :obj:`int` or :obj:`None`, default=None
+            The random state to use for ``sklearn.cluster.KMeans``. Ensures reproducible results.
+
+        init : {"k-means++","random"}, or :class:`np.ndarray`, default="k-means++"
+            Method for choosing initial cluster centroid for ``sklearn.cluster.KMeans``. Options are "k-means++",
+            "random", or np.array.
+
+        n_init : {"auto"} or :obj:`int`, default="auto"
+            Number of times ``sklearn.cluster.KMeans`` is ran with different initial clusters.
             The model with lowest inertia from these runs will be selected.
-        max_iter : int, default=300
-            Maximum number of iterations for a single run of ``scikit-learn``'s ``KMeans``.
-        tol : float, default=1e-4,
-            Stopping criterion for ``scikit-learn``'s ``KMeans``if the change in inertia is below this value, assuming
+
+        max_iter : :obj:`int`, default=300
+            Maximum number of iterations for a single run of ``sklearn.cluster.KMeans``.
+
+        tol : :obj:`float`, default=1e-4,
+            Stopping criterion for ``sklearn.cluster.KMeans``if the change in inertia is below this value, assuming
             ``max_iter`` has not been reached.
-        algorithm : "lloyd or "elkan", default="lloyd"
-            The type of algorithm to use for ``scikit-learn``'s ``KMeans``. Options are ``"lloyd"`` and ``"elkan"``.
-        show_figs : bool, default=False
-            Display the plots of inertia scores for all groups if ``cluster_selection_method`` is set to ``"elbow"``.
-        output_dir : `os.PathLike` or None, default=None
-            Directory to save plot to if ``cluster_selection_method`` is set to ``"elbow"``. The directory will be
-            created if it does not exist.
-        standardize : bool, default=True
+
+        algorithm : {"lloyd", "elkan"}, default="lloyd"
+            The type of algorithm to use for ``sklearn.cluster.KMeans``. Options are "lloyd" and "elkan".
+
+        standardize : :obj:`bool`, default=True
             Whether to z-score the features of the concatenated timeseries data. The sample standard deviation will
-            be used, meaning ``n-1`` in the denominator.
-        epsilon : int or float, default=0
+            be used, meaning n-1 in the denominator.
+
+        epsilon : :obj:`int` or :obj:`float`, default=0
             A small number to add to the denominator when z-scoring for numerical stability.
-        n_cores : int or None, default=None
-            The number of CPU cores to use for multiprocessing, with ``joblib``, to run multiple ``KMeans`` models
-            if ``cluster_selection_method`` is not ``None``.
-        kwargs : Dict
-            Dictionary to adjust certain parameters related to ``cluster_selection_method`` when set to ``"elbow"``.
+
+        n_cores : :obj:`int` or :obj:`None`, default=None
+            The number of CPU cores to use for multiprocessing, with joblib, to run multiple ``sklearn.cluster.KMeans``
+            models if ``cluster_selection_method`` is not None.
+
+        show_figs : :obj:`bool`, default=False
+            Display the plots of inertia or silhouette scores for all groups if ``cluster_selection_method`` is not
+            None.
+
+        output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
+            Directory to save plot to if ``cluster_selection_method`` is set to "elbow". The directory will be
+            created if it does not exist.
+
+        kwargs : :obj:`dict`
+            Dictionary to adjust certain parameters related to ``cluster_selection_method`` when set to "elbow".
             Additional parameters include:
 
-            - S : int, default=1
+            - S : :obj:`int`, default=1
                 Adjusts the sensitivity of finding the elbow. Larger values are more conservative and less
-                sensitive to small fluctuations. This package uses ``KneeLocator`` from the ``kneed`` package to
+                sensitive to small fluctuations. This package uses ``KneeLocator`` from the kneed package to
                 identify the elbow. Default is 1.
-            - dpi : int, default=300
+            - dpi : :obj:`int`, default=300
                 Adjusts the dpi of the elbow plot. Default is 300.
-            - figsize : Tuple, default=(8,6)
+            - figsize : :obj:`tuple`, default=(8,6)
                 Adjusts the size of the elbow plots.
+            - step : :obj:`int`, default=None
+                An integer value that controls the progression of the x-axis in plots for the silhouette or elbow
+                method. When set, only integer values will be displayed on the x-axis.
 
         Returns
         -------
         `matplotlib.Figure`
-            An instance of a `matplotlib` figure.
+            An instance of `matplotlib.Figure`.
         """
+        # Ensure all unique values if n_clusters is a list
+        self._n_clusters = n_clusters if isinstance(n_clusters, int) else sorted(list(set(n_clusters)))
+        self._cluster_selection_method = cluster_selection_method
+
+        if isinstance(n_clusters, list):
+            self._n_clusters =  self._n_clusters[0] if all([isinstance(self._n_clusters, list),
+                                                            len(self._n_clusters) == 1]) else self._n_clusters
+            # Raise error if n_clusters is a list and no cluster selection method is specified
+            if all([len(n_clusters) > 1, self._cluster_selection_method is None]):
+                raise ValueError("`cluster_selection_method` cannot be None since n_clusters is a list.")
+
+        # Raise error if silhouette_method is requested when n_clusters is an integer
+        if all([self._cluster_selection_method is not None, isinstance(self._n_clusters, int)]):
+            raise ValueError("`cluster_selection_method` only valid if n_clusters is a range of unique integers.")
+
         if n_cores and self._cluster_selection_method is not None:
             if n_cores > cpu_count():
                 raise ValueError(f"""
@@ -416,7 +450,7 @@ class CAP(_CAPGetter):
         self._standardize = standardize
         self._epsilon = epsilon
 
-        if isinstance(subject_timeseries, str) and "pkl" in subject_timeseries:
+        if isinstance(subject_timeseries, str) and subject_timeseries.endswith(".pkl"):
             subject_timeseries = _convert_pickle_to_dict(pickle_file=subject_timeseries)
 
         self._concatenated_timeseries = self._get_concatenated_timeseries(subject_timeseries=subject_timeseries,
@@ -424,11 +458,11 @@ class CAP(_CAPGetter):
 
         if self._cluster_selection_method == "silhouette":
             self._perform_silhouette_method(random_state=random_state, init=init, n_init=n_init, max_iter=max_iter,
-                                            tol=tol, algorithm=algorithm)
+                                            tol=tol, algorithm=algorithm, show_figs=show_figs, output_dir=output_dir,
+                                            **kwargs)
         elif self._cluster_selection_method == "elbow":
-            self._perform_elbow_method(random_state=random_state, show_figs=show_figs, output_dir=output_dir,
-                                       init=init, n_init=n_init, max_iter=max_iter, tol=tol, algorithm=algorithm,
-                                       **kwargs)
+            self._perform_elbow_method(random_state=random_state, init=init, n_init=n_init, max_iter=max_iter, tol=tol,
+                                       algorithm=algorithm, show_figs=show_figs, output_dir=output_dir, **kwargs)
         else:
             self._kmeans = {}
             for group in self._groups:
@@ -440,11 +474,15 @@ class CAP(_CAPGetter):
         # Create states dict
         self._create_caps_dict()
 
-    def _perform_silhouette_method(self, random_state, init, n_init, max_iter, tol, algorithm) -> None:
+    def _perform_silhouette_method(self, random_state, init, n_init, max_iter, tol, algorithm,
+                                   show_figs, output_dir, **kwargs) -> None:
         # Initialize attribute
         self._silhouette_scores = {}
         self._optimal_n_clusters = {}
         self._kmeans = {}
+        # Defaults
+        defaults = {"dpi": 300, "figsize": (8,6), "step": None}
+        plot_dict = _check_kwargs(defaults, **kwargs)
 
         for group in self._groups:
             self._silhouette_scores[group] = {}
@@ -453,7 +491,7 @@ class CAP(_CAPGetter):
                     silhouette_dict = _run_kmeans(n_cluster=n_cluster, random_state=random_state, init=init,
                                                   n_init=n_init, max_iter=max_iter, tol=tol, algorithm=algorithm,
                                                   concatenated_timeseries=self._concatenated_timeseries[group],
-                                                  method="elbow")
+                                                  method="silhouette")
                     self._silhouette_scores[group].update(silhouette_dict)
             else:
                 with Parallel(n_jobs=self._n_cores) as parallel:
@@ -470,6 +508,25 @@ class CAP(_CAPGetter):
                                          algorithm=algorithm).fit(self._concatenated_timeseries[group])
             print(f"Optimal cluster size for {group} is {self._optimal_n_clusters[group]}.")
 
+            if show_figs or output_dir is not None:
+                plt.figure(figsize=plot_dict["figsize"])
+                silhouette_values = [y for x,y in self._silhouette_scores[group].items()]
+                plt.plot(self._n_clusters, silhouette_values)
+                if plot_dict["step"]:
+                    x_ticks = range(self._n_clusters[0], self._n_clusters[-1] + 1, plot_dict["step"])
+                    plt.xticks(x_ticks)
+                plt.xlabel("K")
+                plt.ylabel("Silhouette Score")
+                plt.title(group)
+
+            if output_dir:
+                if not os.path.exists(output_dir): os.makedirs(output_dir)
+                plt.savefig(os.path.join(output_dir,f"{group.replace(' ','_')}_silhouette.png"),
+                            dpi=plot_dict["dpi"])
+
+            if show_figs is False: plt.close()
+            else: plt.show()
+
     def _perform_elbow_method(self, random_state, show_figs, output_dir, init, n_init, max_iter, tol, algorithm,
                               **kwargs) -> None:
         # Initialize attribute
@@ -478,6 +535,9 @@ class CAP(_CAPGetter):
         self._kmeans = {}
 
         knee_dict = {"S": kwargs["S"] if "S" in kwargs else 1}
+        # Defaults
+        defaults = {"dpi": 300, "figsize": (8,6), "step": None}
+        plot_dict = _check_kwargs(defaults, **kwargs)
 
         for group in self._groups:
             self._inertia[group] = {}
@@ -503,8 +563,8 @@ class CAP(_CAPGetter):
                                                         direction='decreasing', S=knee_dict["S"])
 
             self._optimal_n_clusters[group] = kneedle.elbow
-            if not self._optimal_n_clusters[group]:
-                warnings.warn("""
+            if self._optimal_n_clusters[group] is None:
+                raise ValueError("""
                                No elbow detected so optimal cluster size is None. Try adjusting the sensitivity
                                parameter, `S`, to increase or decrease sensitivity (higher values are less sensitive),
                                expanding the list of clusters to test, or setting `cluster_selection_method` to
@@ -517,14 +577,12 @@ class CAP(_CAPGetter):
                 print(f"Optimal cluster size for {group} is {self._optimal_n_clusters[group]}.\n")
 
                 if show_figs or output_dir is not None:
-                    # Defaults
-                    defaults = {"dpi": 300,"figsize": (8,6)}
-
-                    plot_dict = _check_kwargs(defaults, **kwargs)
-
                     plt.figure(figsize=plot_dict["figsize"])
                     inertia_values = [y for x,y in self._inertia[group].items()]
                     plt.plot(self._n_clusters, inertia_values)
+                    if plot_dict["step"]:
+                        x_ticks = range(self._n_clusters[0], self._n_clusters[-1] + 1, plot_dict["step"])
+                        plt.xticks(x_ticks)
                     plt.vlines(self._optimal_n_clusters[group], plt.ylim()[0], plt.ylim()[1],
                                linestyles="--", label="elbow")
                     plt.legend(loc="best")
@@ -601,18 +659,18 @@ class CAP(_CAPGetter):
                 else:
                     self._subject_table.update({subj_id : group})
 
-    def calculate_metrics(self, subject_timeseries: Union[Dict[str, Dict[str, np.ndarray]], str],
+    def calculate_metrics(self, subject_timeseries: Union[dict[str, dict[str, np.ndarray]], str],
                           tr: Optional[float]=None, runs: Optional[Union[int]]=None, continuous_runs: bool=False,
-                          metrics: Union[str, List[str]]=["temporal fraction", "persistence", "counts", "transition frequency"],
+                          metrics: Union[str, list[str]]=["temporal_fraction", "persistence", "counts", "transition_frequency"],
                           return_df: bool=True, output_dir: Optional[Union[str, os.PathLike]]=None,
-                          prefix_file_name: Optional[str]=None) -> Dict[str, pd.DataFrame]:
+                          prefix_file_name: Optional[str]=None) -> dict[str, pd.DataFrame]:
         """
         **Get CAPs metrics**
 
-        Creates a single ``pandas`` ``DataFrame`` containing CAP metrics for all participants, as described
+        Creates a single ``pandas.DataFrame`` per CAP metric for all participants. As described by
         Liu et al., 2018 and Yang et al., 2021. The metrics include:
 
-         - ``"temporal fraction"``: The proportion of total volumes spent in a single CAP over all volumes in a run.
+         - ``"temporal_fraction"``: The proportion of total volumes spent in a single CAP over all volumes in a run.
            ::
 
                 predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
@@ -629,7 +687,7 @@ class CAP(_CAPGetter):
                 persistence = (1 + 3)/2 # Average number of frames
                 tr = 2
                 if tr:
-                    persistence = ((1 + 3) * 2)/2 # Turns average frames into average time
+                    persistence = ((1 + 3)/2)*2 # Turns average frames into average time
 
          - ``"counts"``: The frequency of each CAP observed in a run.
            ::
@@ -638,7 +696,7 @@ class CAP(_CAPGetter):
                 target = 1
                 counts = 4
 
-         - ``"transition frequency"``: The total number of switches between different CAPs across the entire run.
+         - ``"transition_frequency"``: The total number of switches between different CAPs across the entire run.
            ::
 
                 predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
@@ -647,12 +705,12 @@ class CAP(_CAPGetter):
 
         Parameters
         ----------
-        subject_timeseries : Dict[str, Dict[str, np.ndarray]] or str
+        subject_timeseries : :obj:`dict[str, dict[str, np.ndarray]]` or :obj:`str`
             Path of the pickle file containing the nested subject timeseries dictionary saved by the
             ``TimeSeriesExtractor`` class or the nested subject timeseries dictionary produced by the
             ``TimeseriesExtractor`` class. The first level of the nested dictionary must consist of the subject ID
-            as a string, the second level must consist of the run numbers in the form of ``"run-#""` (where # is the
-            corresponding number of the run), and the last level must consist of the timeseries (as a ``numpy`` array)
+            as a string, the second level must consist of the run numbers in the form of "run-#" (where # is the
+            corresponding number of the run), and the last level must consist of the timeseries (as a numpy array)
             associated with that run. The structure is as follows:
             ::
 
@@ -668,41 +726,47 @@ class CAP(_CAPGetter):
                         }
                     }
 
-        tr : float or None, default=None
+        tr : :obj:`float` or :obj:`None`, default=None
             The repetition time (TR). If provided, persistence will be calculated as the average uninterrupted time
             spent in each CAP. If not provided, persistence will be calculated as the average uninterrupted volumes
             (TRs) spent in each state.
-        runs : int or List[int], default=None
-            The run numbers to calculate CAP metrics for. If ``None``, CAP metrics will be calculated for each run.
-        continuous_runs : bool, default=False
-            If ``True``, all runs will be treated as a single, uninterrupted run.
+
+        runs : :obj:`int` or :obj:`list[int]`, default=None
+            The run numbers to calculate CAP metrics for. If None, CAP metrics will be calculated for each run.
+
+        continuous_runs : :obj:`bool`, default=False
+            If True, all runs will be treated as a single, uninterrupted run.
             ::
 
                 run_1 = [0,1,1]
                 run_2 = [2,3,3]
                 continuous_runs = [0,1,1,2,3,3]
 
-        metrics : str or List[str], default=["temporal fraction", "persistence", "counts", "transition frequency"]
-            The metrics to calculate. Available options include ``"temporal fraction"``, ``"persistence"``,
-            ``"counts"``, and ``"transition frequency"``.
-        return_df : str, default=True
-            If True, returns the dataframe.
-        output_dir : `os.PathLike` or None, default=None
-            Directory to save dataframe as csv file to. The directory will be created if it does not exist.
-            If ``None``, dataframe will not be saved.
-        prefix_file_name : str or None, default=None
-            Will serve as a prefix to append to the saved file names for the dataframes, if ``output_dir`` is
-            provided.
+        metrics : {"temporal_fraction", "persistence", "counts", "transition_frequency"} or :obj:`List[{"temporal_fraction", "persistence", "counts", "transition_frequency"}]`, default=["temporal_fraction", "persistence", "counts", "transition_frequency"]
+            The metrics to calculate. Available options include "temporal_fraction", "persistence",
+            "counts", and "transition_frequency".
+
+        return_df : :obj:`str`, default=True
+            If True, returns ``pandas.DataFrame`` inside a ``dict``, where the key corresponds to the
+            metric requested.
+
+        output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
+            Directory to save ``pandas.DataFrame`` as csv file to. The directory will be created if it does not exist.
+            Will not be saved if None.
+
+        prefix_file_name : :obj:`str` or :obj:`None`, default=None
+            Will serve as a prefix to append to the saved file names for each ``pandas.DataFrame``, if
+            ``output_dir`` is provided.
 
         Returns
         -------
-        Dict[str, pd.DataFrame]
-            Dictionary containing `pandas` `DataFrame` - one for each requested metric.
+        dict[str, pd.DataFrame]
+            Dictionary containing `pandas.DataFrame` - one for each requested metric.
 
         Note
         ----
-        The presence of 0 for specific CAPs in the ``"temporal fraction"``, ``"persistence"``, or ``"counts"``
-        dataframes indicates that the participant had zero instances of a specific CAP. For ``"transition frequency"``,
+        The presence of 0 for specific CAPs in the "temporal_fraction", "persistence", or "counts"
+        DataFrames indicates that the participant had zero instances of a specific CAP. For "transition_frequency",
         a 0 indicates no transitions due to all participant's frames being assigned to a single CAP.
 
         Information for all groups will be in a single file, there is a "Group" column to denote the group the
@@ -730,7 +794,7 @@ class CAP(_CAPGetter):
 
         metrics = [metrics] if isinstance(metrics, str) else metrics
 
-        valid_metrics = ["temporal fraction", "persistence", "counts", "transition frequency"]
+        valid_metrics = ["temporal_fraction", "persistence", "counts", "transition_frequency"]
 
         boolean_list = [element in valid_metrics for element in metrics]
 
@@ -741,7 +805,7 @@ class CAP(_CAPGetter):
         else:
             raise ValueError(f"No valid metrics in `metrics` list. Valid metrics are {', '.join(valid_metrics)}")
 
-        if isinstance(subject_timeseries, str) and "pkl" in subject_timeseries:
+        if isinstance(subject_timeseries, str) and subject_timeseries.endswith(".pkl"):
             subject_timeseries = _convert_pickle_to_dict(pickle_file=subject_timeseries)
 
         group_cap_dict = {}
@@ -773,7 +837,7 @@ class CAP(_CAPGetter):
                         timeseries = subject_timeseries[subj_id][curr_run]
                     predicted_subject_timeseries[subj_id].update({curr_run: self._kmeans[group].predict(timeseries) + 1})
             else:
-                subject_runs = "Continuous Runs"
+                subject_runs = "continuous_runs"
                 timeseries = {subject_runs: {}}
                 for curr_run in subject_timeseries[subj_id]:
                     if len(timeseries[subject_runs]) != 0:
@@ -790,7 +854,7 @@ class CAP(_CAPGetter):
 
         for metric in metrics:
             if metric in valid_metrics:
-                if metric != "transition frequency":
+                if metric != "transition_frequency":
                     df_dict.update({metric: pd.DataFrame(columns=["Subject_ID", "Group","Run"] + list(cap_names))})
                 else:
                     df_dict.update({metric: pd.DataFrame(columns=["Subject_ID", "Group","Run","Transition_Frequency"])})
@@ -801,21 +865,22 @@ class CAP(_CAPGetter):
                 distributed_list.append([subj_id,group,curr_run])
 
         for subj_id, group, curr_run in distributed_list:
-            if "temporal fraction" in metrics or "counts" in metrics:
+            group_name = group.replace(" ","_")
+            if "temporal_fraction" in metrics or "counts" in metrics:
                 frequency_dict = dict(collections.Counter(predicted_subject_timeseries[subj_id][curr_run]))
                 sorted_frequency_dict = {key: frequency_dict[key] for key in sorted(list(frequency_dict))}
                 if len(sorted_frequency_dict) != len(cap_numbers):
                     sorted_frequency_dict = {cap_number: sorted_frequency_dict[cap_number] if cap_number in
                                              list(sorted_frequency_dict) else 0 for cap_number in cap_numbers}
-                if "temporal fraction" in metrics:
+                if "temporal_fraction" in metrics:
                     proportion_dict = {key: item/(len(predicted_subject_timeseries[subj_id][curr_run]))
                                        for key, item in sorted_frequency_dict.items()}
                     # Populate Dataframe
-                    new_row = [subj_id, group, curr_run] +[items for _ , items in proportion_dict.items()]
-                    df_dict["temporal fraction"].loc[len(df_dict["temporal fraction"])] = new_row
+                    new_row = [subj_id, group_name, curr_run] +[items for _ , items in proportion_dict.items()]
+                    df_dict["temporal_fraction"].loc[len(df_dict["temporal_fraction"])] = new_row
                 if "counts" in metrics:
                     # Populate Dataframe
-                    new_row = [subj_id, group, curr_run] + [items for _ , items in sorted_frequency_dict.items()]
+                    new_row = [subj_id, group_name, curr_run] + [items for _ , items in sorted_frequency_dict.items()]
                     df_dict["counts"].loc[len(df_dict["counts"])] = new_row
             if "persistence" in metrics:
                 # Initialize variable
@@ -840,19 +905,20 @@ class CAP(_CAPGetter):
                         uninterrupted_volumes.append(count)
                     # If uninterrupted_volumes not zero, multiply elements in the list by repetition time, sum and divide
                     if len(uninterrupted_volumes) > 0:
+                        persistence_value = np.array(uninterrupted_volumes).sum()/len(uninterrupted_volumes)
                         if tr:
-                            persistence_dict.update({target: np.sum(np.array(uninterrupted_volumes)*tr)/(len(uninterrupted_volumes))})
+                            persistence_dict.update({target: persistence_value*tr})
                         else:
-                            persistence_dict.update({target: np.sum(np.array(uninterrupted_volumes))/(len(uninterrupted_volumes))})
+                            persistence_dict.update({target: persistence_value})
                     else:
                         persistence_dict.update({target: 0})
                     # Reset variables
                     count = 0
                     uninterrupted_volumes = []
                 # Populate Dataframe
-                new_row = [subj_id, group, curr_run] + [items for _ , items in persistence_dict.items()]
+                new_row = [subj_id, group_name, curr_run] + [items for _ , items in persistence_dict.items()]
                 df_dict["persistence"].loc[len(df_dict["persistence"])] = new_row
-            if "transition frequency" in metrics:
+            if "transition_frequency" in metrics:
                 count = 0
                 # Iterate through predicted values
                 for index in range(0,len(predicted_subject_timeseries[subj_id][curr_run])):
@@ -860,131 +926,137 @@ class CAP(_CAPGetter):
                         # If the subsequent element does not equal the previous element, this is considered a transition
                         if predicted_subject_timeseries[subj_id][curr_run][index-1] != predicted_subject_timeseries[subj_id][curr_run][index]:
                             count +=1
-                new_row = [subj_id, group, curr_run, count]
-                df_dict["transition frequency"].loc[len(df_dict["transition frequency"])] = new_row
+                new_row = [subj_id, group_name, curr_run, count]
+                df_dict["transition_frequency"].loc[len(df_dict["transition_frequency"])] = new_row
 
         if output_dir:
             if not os.path.exists(output_dir): os.makedirs(output_dir)
             for metric in df_dict:
                 if prefix_file_name:
-                    file_name = os.path.splitext(prefix_file_name.rstrip())[0].rstrip() + f"-{metric.replace(' ','_')}"
+                    file_name = os.path.splitext(prefix_file_name.rstrip())[0].rstrip() + f"-{metric}"
                 else:
-                    file_name = f"{metric.replace(' ','_')}"
+                    file_name = f"{metric}"
                 df_dict[f"{metric}"].to_csv(path_or_buf=os.path.join(output_dir,f"{file_name}.csv"), sep=",",
                                             index=False)
 
         if return_df: return df_dict
 
     def caps2plot(self, output_dir: Optional[Union[str, os.PathLike]]=None, suffix_title: Optional[str]=None,
-                  plot_options: Union[str, List[str]]="outer product", visual_scope: List[str]="regions",
+                  plot_options: Union[Literal["outer_product", "heatmap"], list[Literal["outer_product", "heatmap"]]]="outer_product",
+                  visual_scope: Union[Literal["regions", "nodes"], list[Literal["regions", "nodes"]]]="regions",
                   show_figs: bool=True, subplots: bool=False, **kwargs) -> seaborn.heatmap:
         """
         **Generate heatmaps and outer product plots of CAPs**
 
-        This function produces ``seaborn`` heatmaps for each CAP. If groups were given when the CAP class was
+        This function produces a ``seaborn.heatmap`` for each CAP. If groups were given when the CAP class was
         initialized, plotting will be done for all CAPs for all groups.
 
         Parameters
         ----------
-        output_dir : `os.PathLike` or None, default=None
-            Directory to save plots to. The directory will be created if it does not exist. If ``None``, plots will not
+        output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
+            Directory to save plots to. The directory will be created if it does not exist. If None, plots will not
             be saved.
-        suffix_title : str or None, default=None
+
+        suffix_title : :obj:`str` or :obj:`None`, default=None
             Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
-        plot_options : str or List[str], default="outer product"
-            Type of plots to create. Options are ``"outer product"`` or ``"heatmap"``.
-        visual_scope : str or List[str], default="regions"
+
+        plot_options : {"outer_product", "heatmap"} or :obj:`list[{"outer_product", "heatmap"}]`, default="outer_product"
+            Type of plots to create. Options are "outer_product" or "heatmap".
+
+        visual_scope : {"regions", "nodes"} or :obj:`list[{"regions", "nodes"}]`, default="regions"
             Determines whether plotting is done at the region level or node level.
             For region level, the value of each nodes in the same regions (both left and right hemisphere nodes in the
-            same region) are averaged together then plotted. Options are ``"regions"`` or ``"nodes"``.
-        show_figs : bool, default=True
+            same region) are averaged together then plotted. Options are "regions" or "nodes".
+
+        show_figs : :obj:`bool`, default=True
             Whether to display figures.
-        subplots : bool, default=True
+
+        subplots : :obj:`bool`, default=True
             Whether to produce subplots for outer product plots.
-        kwargs : Dict
+
+        kwargs : :obj:`dict`
             Keyword arguments used when saving figures. Valid keywords include:
 
-            - dpi : int, default=300
+            - dpi : :obj:`int`, default=300
                 Dots per inch for the figure. Default is 300 if ``output_dir`` is provided and ``dpi`` is not specified.
-            - figsize : Tuple, default=(8, 6)
+            - figsize : :obj:`tuple`, default=(8, 6)
                 Size of the figure in inches.
-            - fontsize : int, default=14
+            - fontsize : :obj:`int`, default=14
                 Font size for the title of individual plots or subplots.
-            - hspace : float, default=0.4
+            - hspace : :obj:`float`, default=0.4
                 Height space between subplots.
-            - wspace : float, default=0.4
+            - wspace : :obj:`float`, default=0.4
                 Width space between subplots.
-            - xticklabels_size : int, default=8
+            - xticklabels_size : :obj:`int`, default=8
                 Font size for x-axis tick labels.
-            - yticklabels_size : int, default=8
+            - yticklabels_size : :obj:`int`, default=8
                 Font size for y-axis tick labels.
-            - shrink : float, default=0.8
+            - shrink : :obj:`float`, default=0.8
                 Fraction by which to shrink the colorbar.
-            - nrow : int, default=varies (max 5)
+            - nrow : :obj:`int`, default=varies (max 5)
                 Number of rows for subplots. Default varies but the maximum is 5.
-            - ncol : int, default=None
+            - ncol : :obj:`int` or :obj:`None`, default=None
                 Number of columns for subplots. Default varies but the maximum is 5.
-            - suptitle_fontsize : float, default=0.7
-                Font size for the main title when subplot is ``True``.
-            - tight_layout : bool, default=True
+            - suptitle_fontsize : :obj:`float`, default=0.7
+                Font size for the main title when subplot is True.
+            - tight_layout : :obj:`bool`, default=True
                 Use tight layout for subplots.
-            - rect : List[int], default=[0, 0.03, 1, 0.95]
-                Rectangle parameter for tight layout when subplots are ``True`` to fix whitespace issues.
-            - sharey : bool, default=True
+            - rect : :obj:`list[int]`, default=[0, 0.03, 1, 0.95]
+                Rectangle parameter for tight layout when subplots are True to fix whitespace issues.
+            - sharey : :obj:`bool`, default=True
                 Share y-axis labels for subplots.
-            - xlabel_rotation : int, default=0
+            - xlabel_rotation : :obj:`int`, default=0
                 Rotation angle for x-axis labels.
-            - ylabel_rotation : int, default=0
+            - ylabel_rotation : :obj:`int`, default=0
                 Rotation angle for y-axis labels.
-            - annot : bool, default=False
+            - annot : :obj:`bool`, default=False
                 Add values to cells.
-            - fmt : str, default=".2g"
+            - fmt : :obj:`str`, default=".2g"
                 Modify how the annotated vales are presented.
-            - linewidths : float, default=0
+            - linewidths : :obj:`float`, default=0
                 Padding between each cell in the plot.
-            - borderwidths : float, default=0
+            - borderwidths : :obj:`float`, default=0
                 Width of the border around the plot.
-            - linecolor : str, default="black"
+            - linecolor : :obj:`str`, default="black"
                 Color of the line that seperates each cell.
-            - edgecolors : str or None, default=None
+            - edgecolors : :obj:`str` or :obj:`None`, default=None
                 Color of the edges.
-            - alpha : float or None, default=None
+            - alpha : :obj:`float` or :obj:`None`, default=None
                 Controls transparancy and ranges from 0 (transparant) to 1 (opaque).
-            - bbox_inches : str or None, default="tight"
+            - bbox_inches : :obj:`str` or :obj:`None`, default="tight"
                 Alters size of the whitespace in the saved image.
-            - hemisphere_labels : bool, default=False
+            - hemisphere_labels : :obj:`bool`, default=False
                 This option is only available when ``visual_scope="nodes"``. Instead of listing all individual labels
                 this parameter simplifies the labels to indicate only the left and right hemispheres, with a
-                division line separating the cells belonging to each hemisphere. If set to ``True``, ``"edgecolors"``
-                will not be used, and both ``"linewidths"`` and ``"linecolor"`` will be applied only to the division
-                line. This option is available exclusively for ``"Custom"`` and ``"Schaefer"`` parcellations.
-                **Note**, for the "Custom" option, the parcellation should be organized such that the first half of the
-                nodes belong to the left hemisphere and the latter half to the right hemisphere.
-            - cmap : str, Class, or Function, default="coolwarm"
+                division line separating the cells belonging to each hemisphere. If set to True, ``edgecolors``
+                will not be used, and both ``linewidths`` and ``linecolor`` will be applied only to the division
+                line. This option is available exclusively for "Custom" and "Schaefer" parcellations.
+                **Note, for the "Custom" option, the parcellation should be organized such that the first half of the
+                nodes belong to the left hemisphere and the latter half to the right hemisphere.**
+            - cmap : :obj:`str` or :obj:`callable` default="coolwarm"
                 Color map for the cells in the plot. For this parameter, you can use premade color palettes or
                 create custom ones. Below is a list of valid options:
 
-                    - Strings to call ``seaborn``'s premade palettes.
-                    - ``seaborn``'s ``diverging_palette`` function to generate custom palettes.
-                    - ``matplotlib``'s ``LinearSegmentedColormap`` to generate custom palettes.
-                    - Other classes or functions compatible with ``seaborn``.
+                    - Strings to call seaborn's premade palettes.
+                    - ``seaborn.diverging_palette`` function to generate custom palettes.
+                    - ``matplotlib.colors.LinearSegmentedColormap`` to generate custom palettes.
 
-            - vmin : float, default=None
+            - vmin : :obj:`float` or :obj:`None`, default=None
                 The minimum value to display in plots.
-            - vmax : float, default=None
+            - vmax : :obj:`float` or :obj:`None`, default=None
                 The maximum value to display in plots.
 
         Returns
         -------
         `seaborn.heatmap`
-            An instance of a `seaborn` `heatmap`.
+            An instance of `seaborn.heatmap`.
 
         Note
         ----
-        **If using "Custom" parcellation approach**, the ``"nodes"`` and ``"regions"`` sub-keys are required for this
+        **If using "Custom" parcellation approach**, the "nodes" and "regions" sub-keys are required for this
         function.
 
-        For valid premade palettes for ``seaborn``, refer to https://seaborn.pydata.org/tutorial/color_palettes.html
+        For valid premade palettes for seaborn, refer to https://seaborn.pydata.org/tutorial/color_palettes.html
 
         """
         if not self._parcel_approach:
@@ -1024,8 +1096,8 @@ class CAP(_CAPGetter):
         if isinstance(visual_scope, str): visual_scope = [visual_scope]
 
         # Check inputs for plot_options and visual_scope
-        if not any(["heatmap" in plot_options, "outer product" in plot_options]):
-            raise ValueError("Valid inputs for `plot_options` are 'heatmap' and 'outer product'.")
+        if not any(["heatmap" in plot_options, "outer_product" in plot_options]):
+            raise ValueError("Valid inputs for `plot_options` are 'heatmap' and 'outer_product'.")
 
         if not any(["regions" in visual_scope, "nodes" in visual_scope]):
             raise ValueError("Valid inputs for `visual_scope` are 'regions' and 'nodes'.")
@@ -1052,7 +1124,7 @@ class CAP(_CAPGetter):
         plot_options = plot_options if isinstance(plot_options, list) else list(plot_options)
         visual_scope = visual_scope if isinstance(visual_scope, list) else list(visual_scope)
         # Initialize outer product attribute
-        if "outer product" in plot_options: self._outer_products = {}
+        if "outer_product" in plot_options: self._outer_products = {}
 
         distributed_list = list(itertools.product(plot_options,visual_scope,self._groups))
 
@@ -1072,14 +1144,14 @@ class CAP(_CAPGetter):
                                                                                   self._parcel_approach["Custom"]["regions"]))]
 
             #  Generate plot for each group
-            if plot_option == "outer product": self._generate_outer_product_plots(group=group, plot_dict=plot_dict,
-                                                                                    cap_dict=cap_dict,
-                                                                                    columns=columns,
-                                                                                    subplots=subplots,
-                                                                                    output_dir=output_dir,
-                                                                                    suffix_title=suffix_title,
-                                                                                    show_figs=show_figs, scope=scope,
-                                                                                    parcellation_name=parcellation_name)
+            if plot_option == "outer_product": self._generate_outer_product_plots(group=group, plot_dict=plot_dict,
+                                                                                  cap_dict=cap_dict,
+                                                                                  columns=columns,
+                                                                                  subplots=subplots,
+                                                                                  output_dir=output_dir,
+                                                                                  suffix_title=suffix_title,
+                                                                                  show_figs=show_figs, scope=scope,
+                                                                                  parcellation_name=parcellation_name)
             elif plot_option == "heatmap": self._generate_heatmap_plots(group=group, plot_dict=plot_dict,
                                                                         cap_dict=cap_dict, columns=columns,
                                                                         output_dir=output_dir,
@@ -1465,69 +1537,71 @@ class CAP(_CAPGetter):
         """
         **Generate Correlation Matrix for CAPs**
 
-        Produces the correlation matrix of all CAPs and visualizes it as a ``seaborn`` ``heatmap``. If groups were
+        Produces the correlation matrix of all CAPs and visualizes it as a ``seaborn.heatmap``. If groups were
         given when the CAP class was initialized, a correlation matrix will be generated for each group.
 
         Parameters
         ----------
-        output_dir : `os.PathLike` or None, default=None
-            Directory to save plots to. The directory will be created if it does not exist. If ``None``,
+        output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
+            Directory to save plots to. The directory will be created if it does not exist. If None,
             plots will not be saved.
-        suffix_title : str or None, default=None
+
+        suffix_title : :obj:`str` or :obj:`None`, default=None
             Appended to the title of each plot as well as the name of the saved file if ``output_dir``
             is provided.
-        show_figs : bool, default=True
+
+        show_figs : :obj:`bool`, default=True
             Whether to display figures.
-        kwargs : Dict
+
+        kwargs : :obj:`dict`
             Keyword arguments used when modifying figures. Valid keywords include:
 
-            - dpi : int, default=300
+            - dpi : :obj:`int`, default=300
                 Dots per inch for the figure. Default is 300 if ``output_dir`` is provided and ``dpi`` is not
                 specified.
-            - figsize : Tuple, default=(8, 6)
+            - figsize : :obj:`tuple`, default=(8, 6)
                 Size of the figure in inches.
-            - fontsize : int, default=14
+            - fontsize : :obj:`int`, default=14
                 Font size for the title of individual plots or subplots.
-            - xticklabels_size : int, default=8
+            - xticklabels_size : :obj:`int`, default=8
                 Font size for x-axis tick labels.
-            - yticklabels_size : int, default=8
+            - yticklabels_size : :obj:`int`, default=8
                 Font size for y-axis tick labels.
-            - shrink : float, default=0.8
+            - shrink : :obj:`float`, default=0.8
                 Fraction by which to shrink the colorbar.
-            - xlabel_rotation : int, default=0
+            - xlabel_rotation : :obj:`int`, default=0
                 Rotation angle for x-axis labels.
-            - ylabel_rotation : int, default=0
+            - ylabel_rotation : :obj:`int`, default=0
                 Rotation angle for y-axis labels.
-            - annot : bool, default=False
+            - annot : :obj:`bool`, default=False
                 Add values to each cell.
-            - fmt : str, default=".2g",
+            - fmt : :obj:`str`, default=".2g",
                 Modify how the annotated vales are presented.
-            - linewidths : float, default=0
+            - linewidths : :obj:`float`, default=0
                 Padding between each cell in the plot.
-            - borderwidths : float, default=0
+            - borderwidths : :obj:`float`, default=0
                 Width of the border around the plot.
-            - linecolor : str, default="black"
+            - linecolor : :obj:`str`, default="black"
                 Color of the line that seperates each cell.
-            - edgecolors : str, default=None
+            - edgecolors : :obj:`str` or :obj:`None`, default=None
                 Color of the edges.
-            - alpha : float, default=None
+            - alpha : :obj:`float` or :obj:`None`, default=None
                 Controls transparancy and ranges from 0 (transparant) to 1 (opaque).
-            - bbox_inches : str or None, default="tight"
+            - bbox_inches : :obj:`str` or :obj:`None`, default="tight"
                 Alters size of the whitespace in the saved image.
-            - cmap : str, Class, or function, default="coolwarm"
+            - cmap : :obj:`str`, :obj:`callable` default="coolwarm"
                 Color map for the cells in the plot. For this parameter, you can use premade color palettes or
                 create custom ones.
                 Below is a list of valid options:
 
-                    - Strings to call ``seaborn``'s premade palettes.
-                    - ``seaborn``'s ``diverging_palette`` function to generate custom palettes.
-                    - ``matplotlib``'s ``LinearSegmentedColormap`` to generate custom palettes.
-                    - Other classes or functions compatible with ``seaborn``.
+                    - Strings to call seaborn's premade palettes.
+                    - ``seaborn.diverging_palette`` function to generate custom palettes.
+                    - ``matplotlib.color.LinearSegmentedColormap`` to generate custom palettes.
 
         Returns
         -------
         `seaborn.heatmap`
-            An instance of a `seaborn` `heatmap`.
+            An instance of `seaborn.heatmap`.
 
         Note
         ----
@@ -1583,9 +1657,9 @@ class CAP(_CAPGetter):
             if output_dir:
                 if not os.path.exists(output_dir): os.makedirs(output_dir)
                 if suffix_title:
-                    full_filename = f"{group.replace(' ', '_')}_correlation_matrix_{suffix_title}.png"
+                    full_filename = f"{group.replace(' ', '_')}_CAPs_correlation_matrix_{suffix_title}.png"
                 else:
-                    full_filename = f"{group.replace(' ', '_')}_correlation_matrix.png"
+                    full_filename = f"{group.replace(' ', '_')}_CAPs_correlation_matrix.png"
                 display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"],
                                              bbox_inches=plot_dict["bbox_inches"])
 
@@ -1616,14 +1690,16 @@ class CAP(_CAPGetter):
 
         Parameters
         ----------
-        output_dir: `os.PathLike`, default=None
+        output_dir: :obj:`os.PathLike`, default=None
             Directory to save plots to. The directory will be created if it does not exist.
-        suffix_title: str or None, default=None
+
+        suffix_title: :obj:`str` or :obj:`None`, default=None
             Appended to the name of the saved file.
-        fwhm: float or None, default=None
+
+        fwhm: :obj:`float` or :obj:`None`, default=None
             Strength of spatial smoothing to apply (in millimeters) to the statistical map prior to interpolating
             from MNI152 space to fslr surface space. Note, this can assist with coverage issues in the plot.
-            Uses ``nilearn``'s ``image.smooth``.
+            Uses ``nilearn.image.smooth_img``.
 
         Returns
         -------
@@ -1659,20 +1735,21 @@ class CAP(_CAPGetter):
                 nib.save(stat_map, os.path.join(output_dir,save_name))
 
     def caps2surf(self, output_dir: Optional[Union[str, os.PathLike]]=None, suffix_title: Optional[str]=None,
-                  show_figs: bool=True, fwhm: Optional[float]=None, fslr_density: str="32k", method: str="linear",
+                  show_figs: bool=True, fwhm: Optional[float]=None,
+                  fslr_density: Literal["4k", "8k", "32k", "164k"]="32k", method: Literal["linear", "nearest"]="linear",
                   save_stat_map: bool=False, fslr_giftis_dict: Optional[dict]=None, **kwargs) -> surfplot.Plot:
         """
         **Project CAPs onto Surface Plots**
 
         If not using precomputed GifTI file, this function converts the parcellation used for spatial dimensionality
         reduction into a NifTI statistical map by replacing labels with the corresponding value from the cluster
-        centroids, converts the NifTI stastical map into fsLR (surface) space (using ``neuromaps``'s ``mni152_to_fslr``),
-        which also turns it into a `tuple-of-nib.GiftiImage` that can be plotted using ``surfplot``'s ``Plot``.
+        centroids, converts the NifTI stastical map into fsLR (surface) space (using ``neuromaps.transforms.mni152_to_fslr``),
+        which also turns it into a tuple-of-nib.GiftiImage that can be plotted using ``surfplot.plotting.Plot``.
         If ``self.caps2niftis()`` was used to convert the parcellation into a NifTI statistical map and an external
         tool such as Connectome Workbench was used to convert these NifTI files into GifTI files in fsLR (surface)
-        space, then the ``fslr_giftis_dict`` parameter can be used for plotting. Here, ``neuromaps``'s ``fslr_to_fslr``
-        is used to convert the image into a `tuple-of-nib.GiftiImage` form that can be plotted by ``surfplot``'s
-        ``Plot``. Below is the internal function that converts the cluster centroids into a NifTI statistical map.
+        space, then the ``fslr_giftis_dict`` parameter can be used for plotting. Here, ``neuromaps.transforms.fslr_to_fslr``
+        is used to convert the image into a `tuple-of-nib.GiftiImage` form that can be plotted by ``surfplot.plotting.Plot``.
+        Below is the internal function that converts the cluster centroids into a NifTI statistical map.
         ::
 
             def _cap2statmap(atlas_file, cap_vector, fwhm):
@@ -1692,27 +1769,34 @@ class CAP(_CAPGetter):
 
         Parameters
         ----------
-        output_dir: `os.PathLike` or None, default=None
+        output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
             Directory to save plots to. The directory will be created if it does not exist. If None, plots will not
             be saved.
-        suffix_title: str or None, default=None
+
+        suffix_title: :obj:`str` or :obj:`None`, default=None
             Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
-        show_figs: bool, default=True
+
+        show_figs: :obj:`bool`, default=True
             Whether to display figures.
-        fwhm: float or None, defualt=None
+
+        fwhm: :obj:`float` or :obj:`None`, defualt=None
             Strength of spatial smoothing to apply (in millimeters) to the statistical map prior to interpolating
             from MNI152 space to fsLR surface space. Uses ``nilearn``'s ``image.smooth``.
             Note, this can assist with coverage issues in the plot.
-        fslr_density: str, default="32k"
+
+        fslr_density: {"4k", "8k", "32k", "164k"}, default="32k"
             Density of the fsLR surface when converting from MNI152 space to fsLR surface. Options are "32k" or
             "164k". If using ``fslr_giftis_dict`` options are "4k", "8k", "32k", and "164k".
-        method: str, default="linear"
+
+        method: {"linear", "nearest"}, default="linear"
             Interpolation method to use when converting from MNI152 space to fsLR surface or from fsLR to fsLR. Options
-            are ``"linear"`` or ``"nearest"``.
-        save_stat_map: bool, default=False
-            If ``True``, saves the statistical map for each CAP for all groups as a `Nifti1Image` if ``output_dir`` is
+            are "linear" or "nearest".
+
+        save_stat_map: :obj:`bool`, default=False
+            If True, saves the statistical map for each CAP for all groups as a Nifti1Image if ``output_dir`` is
             provided.
-        fslr_giftis_dict: dict or None, default=None
+
+        fslr_giftis_dict: :obj:`dict` or :obj:`None`, default=None
             Dictionary specifying precomputed GifTI files in fsLR space for plotting stat maps. This parameter
             should be used if the statistical CAP NIfTI files (can be obtained using ``self.caps2niftis()``) were
             converted to GifTI files using a tool such as Connectome Workbench.The dictionary structure is:
@@ -1730,45 +1814,46 @@ class CAP(_CAPGetter):
             GroupName can be "All Subjects" or any specific group name. CAP-Name is the name of the CAP. This
             parameter allows plotting without re-running the analysis. Initialize the CAP class and use this method
             if using this parameter.
-        kwargs : Dict
+
+        kwargs : :obj:`dict`
             Additional parameters to pass to modify certain plot parameters. Options include:
 
-            - dpi : int, default=300
+            - dpi : :obj:`int`, default=300
                 Dots per inch for the plot.
             - title_pad : int, default=-3
                 Padding for the plot title.
-            - cmap : str or Class, default="cold_hot"
-                Colormap to be used for the plot. For this parameter, you can use premade color palettes orcreate
+            - cmap : :obj:`str` or :obj:`callable`, default="cold_hot"
+                Colormap to be used for the plot. For this parameter, you can use premade color palettes or create
                 custom ones. Below is a list of valid options:
 
-                - Strings to call ``nilearn``'s ``_cmap_d`` fuction.
-                - ``matplotlib``'s ``LinearSegmentedColormap`` to generate custom colormaps.
-            - cbar_kws : Dict, default={"location": "bottom", "n_ticks": 3}
-                Customize colorbar. Refer to ``_add_colorbars`` at for valid kwargs in ``surfplot's`` ``Plot``
-                documentation listed in the `Note` section.
-            - alpha : float, default=1
+                - Strings to call ``nilearn.plotting.cm._cmap_d`` fuction.
+                - ``matplotlib.colors.LinearSegmentedColormap`` to generate custom colormaps.
+            - cbar_kws : :obj:`dict`, default={"location": "bottom", "n_ticks": 3}
+                Customize colorbar. Refer to ``_add_colorbars`` at for valid kwargs in ``surfplot.plotting.Plot``
+                documentation listed in the Note section.
+            - alpha : :obj:`float`, default=1
                 Transparency level of the colorbar.
-            - zero_transparent : bool, default=True
+            - zero_transparent : :obj:`bool`, default=True
                 Turns vertices with a value of 0 transparent.
-            - as_outline : bool, default=False
+            - as_outline : :obj:`bool`, default=False
                 Plots only an outline of contiguous vertices with the same value.
-            - size : Tuple, default=(500, 400)
+            - size : :obj:`tuple`, default=(500, 400)
                 Size of the plot in pixels.
-            - layout : str, default="grid"
+            - layout : :obj:`str`, default="grid"
                 Layout of the plot.
-            - zoom : float, default=1.5
+            - zoom : :obj:`float`, default=1.5
                 Zoom level for the plot.
-            - views : List[str], default=["lateral", "medial"]
+            - views : {"lateral", "medial"} or :obj:`list[{"lateral", "medial}]`, default=["lateral", "medial"]
                 Views to be displayed in the plot.
-            - brightness : float, default=0.5
+            - brightness : :obj:`float`, default=0.5
                 Brightness level of the plot.
-            - figsize : Tuple or None, default=None
+            - figsize : :obj:`tuple` or :obj:`None`, default=None
                 Size of the figure.
-            - scale : Tuple, default=(2, 2)
+            - scale : :obj:`tuple`, default=(2, 2)
                 Scale factors for the plot.
-            - surface : str, default="inflated"
-                The surface atlas that is used for plotting. Options are ``"inflated"`` or ``"veryinflated"``.
-            - color_range : Tuple or None, default=None
+            - surface : {"inflated", "veryinflated"}, default="inflated"
+                The surface atlas that is used for plotting. Options are "inflated" or "veryinflated".
+            - color_range : :obj:`tuple` or :obj:`None`, default=None
                 The minimum and maximum value to display in plots. For instance, (-1,1) where minimum
                 value is first. If None, the minimum and maximum values from the image will be used.
 
@@ -1776,12 +1861,12 @@ class CAP(_CAPGetter):
         -------
         `NifTI1Image`
             `NifTI` statistical map.
-        `surfplot.Plot`
-            An instance of a `surfplot` `Plot`.
+        `surfplot.plotting.Plot`
+            An instance of `surfplot.plotting.Plot`.
 
         Note
         ----
-        For this to work, ``parcel_approach`` must have the ``"maps"`` sub-key containing the path to the NifTI file of
+        For this to work, ``parcel_approach`` must have the "maps" sub-key containing the path to the NifTI file of
         the atlas. Assumes that atlas background label is zero and atlas is in MNI space. Also assumes that the indices
         from the cluster centroids are related to the atlas by an offset of one. For instance, index 0 of the cluster
         centroid vector is the first nonzero label, which is assumed to be at the first index of the array in
@@ -1861,9 +1946,9 @@ class CAP(_CAPGetter):
 
                 if output_dir:
                     if suffix_title:
-                        save_name = f"{group.replace(' ', '_')}_{cap.replace('-', '_')}_{suffix_title}.png"
+                        save_name = f"{group.replace(' ', '_')}_{cap}_{suffix_title}_surface.png"
                     else:
-                        save_name = f"{group.replace(' ', '_')}_{cap.replace('-', '_')}.png"
+                        save_name = f"{group.replace(' ', '_')}_{cap}_surface.png"
 
                     fig.savefig(os.path.join(output_dir, save_name), dpi=plot_dict["dpi"])
                     # Save stat map
@@ -1928,89 +2013,94 @@ class CAP(_CAPGetter):
 
         Parameters
         ----------
-        output_dir: `os.PathLike` or None, default=None
+        output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
             Directory to save plots to. The directory will be created if it does not exist.
-        suffix_title: str or None, default=None
+
+        suffix_title: :obj:`str` or :obj:`None`, default=None
             Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
-        show_figs: bool, default=True
+
+        show_figs: :obj:`bool`, default=True
             Whether to display figures. If this function detects that it is not being ran in an interactive Python
             environment, then it uses ``plotly.offline``, creates an html file named "temp-plot.html", and opens each
             plot in the default browser.
-        use_scatterpolar: bool=False
-            Uses ``plotly``'s ``Scatterpolar`` instead of ``plotly``'s ``line_polar``. The primary difference is that
-            ``Scatterpolar`` shows the scatter dots. However, this can be acheived with ``line_polar`` by setting
-            ``mode`` to ``"markers+lines"``. There also seems to be a difference in default opacity behavior.
-        kwargs: Dict
+
+        use_scatterpolar: :obj:`bool`, default=False
+            Uses ``plotly.graph_objects.Scatterpolar`` instead of ``plotly.express.line_polar``. The primary difference
+            is that ``plotly.graph_objects.Scatterpolar`` shows the scatter dots. However, this can be acheived with
+            ``plotly.express.line_polar`` by setting ``mode`` to "markers+lines". There also seems to be a difference
+            in default opacity behavior.
+
+        kwargs: :obj:`dict`
             Additional parameters to pass to modify certain plot parameters. Options include:
 
-            - scale : int, default=2
+            - scale : :obj:`int`, default=2
                 Controls resolution of image when saving.
-            - savefig_options : Dict[str], default={"width": 3, "height": 3, "scale": 1}
+            - savefig_options : :obj:`dict[str]`, default={"width": 3, "height": 3, "scale": 1}
                 If ``output_dir`` provided, controls the width (in inches), height (in inches), and scale of the
                 plot.
                 The height and width are multiplied by the dpi.
-            - height : int, default=800
+            - height : :obj:`int`, default=800
                 Height of the plot. Value is multiplied by the dpi when saving.
-            - width : int, defualt=1200
+            - width : :obj:`int`, defualt=1200
                 Width of the plot. Value is multiplied by the dpi when saving.
-            - line_close : int, default=True
+            - line_close : :obj:`bool`, default=True
                 Whether to close the lines
-            - bgcolor : str, default="white"
+            - bgcolor : :obj:`str`, default="white"
                 Color of the background
-            - scattersize : int, default=8
+            - scattersize : :obj:`int`, default=8
                 If ``use_scatterpolar=True``, controls the size of the dots.
-            - connectgaps : bool, default=True
+            - connectgaps : :obj:`bool`, default=True
                 If ``use_scatterpolar=True``, controls if missing values are connected.
-            - opacity : float, default=0.5,
+            - opacity : :obj:`float`, default=0.5,
                 If ``use_scatterpolar=True``, sets the opacity of the trace.
-            - fill : str, default="none".
+            - fill : :obj:`str`, default="none".
                 If "toself" the are of the dots and within the boundaries of the line will be filled.
-            - mode : str, default="markers+lines",
+            - mode : :obj:`str`, default="markers+lines",
                 Determines how the trace is drawn. Can include "lines", "markers", "lines+markers", "lines+markers+text".
-            - radialaxis : Dict[str], default={"showline": False, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "ticks": "outside","tickfont": {"size": 14, "color": "black"}}
+            - radialaxis : :obj:`dict[str]`, default={"showline": False, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "ticks": "outside","tickfont": {"size": 14, "color": "black"}}
                 Customizes the radial axis.
-            - angularaxis : Dict[str], default= {"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "tickfont": {"size": 16, "color": "black"}}
+            - angularaxis : :obj:`dict[str]`, default={"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "tickfont": {"size": 16, "color": "black"}}
                 Customizes the angular axis.
-            - color_discrete_map : Dict[str], default={"High Amplitude": "red", "Low Amplitude": "blue"},
+            - color_discrete_map : :obj:`dict[str]`, default={"High Amplitude": "red", "Low Amplitude": "blue"},
                 Change color of the "High Amplitude" and "Low Amplitude" groups. Must use the keys
                 "High Amplitude" and "Low Amplitude" to work.
-            - title_font : Dict[str], default={"family": "Times New Roman", "size": 30, "color": "black"}
+            - title_font : :obj:`dict[str]`, default={"family": "Times New Roman", "size": 30, "color": "black"}
                 Modifies the font of the title.
-            - title_x : float, default=0.5
+            - title_x : :obj:`float`, default=0.5
                 Modifies x position of title.
-            - title_y : float, default=None
+            - title_y : :obj:`float`, default=None
                 Modifies y position of title.
-            - legend : Dict[str], default={"yanchor": "top", "xanchor": "left", "y": 0.99, "x": 0.01,"title_font_family": "Times New Roman", "font": {"size": 12, "color": "black"}}
+            - legend : :obj:`dict[str]`, default={"yanchor": "top", "xanchor": "left", "y": 0.99, "x": 0.01,"title_font_family": "Times New Roman", "font": {"size": 12, "color": "black"}}
                 Customizes the legend.
-            - engine : str, default="kaleido"
+            - engine : {"kaleido", "orca"}, default="kaleido"
                 Engine used for saving plots.
 
         Returns
         -------
         `plotly.express.line_polar`
-            An instance of a `plotly` `line_polar` radar plot.
-        `plotly.express.Scatterplot`
-            An instance of a `plotly` `Scatterplot` radar plot.
+            An instance of `plotly.express.line_polar`.
+        `plotly.graph_objects.Scatterpolar`
+            An instance of `plotly.graph_objects.Scatterpolar`.
 
         Note
         -----
-        By default, this function uses ``"kaleido"`` (which is also a dependency in this package) to save plots.
-        For other engines such as ``"orca"``, those packages must be installed seperately.
+        By default, this function uses "kaleido" (which is also a dependency in this package) to save plots.
+        For other engines such as "orca", those packages must be installed seperately.
 
-        **If using "Custom" parcellation approach**, the ``"regions"`` sub-key is required.
+        **If using "Custom" parcellation approach**, the "regions" sub-key is required.
 
         In this code, if the ``tickvals`` or  ``range`` sub-keys in this code are not specified in the ``radialaxis``
         kwarg, then four values are shown - 0.25*(max value), 0.50*(max value), 0.75*(max value), and the max value.
 
-        For valid keys for ``radialaxis`` refer to ``plotly``'s documentation at
+        For valid keys for ``radialaxis`` refer to plotly's documentation at
         https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.radialaxis.html or
         https://plotly.com/python/reference/layout/polar/ for valid kwargs.
 
-        For valid keys for ``angularaxis`` refer to ``plotly``'s documentation at
+        For valid keys for ``angularaxis`` refer to plotly's documentation at
         https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.angularaxis.html or
         https://plotly.com/python/reference/layout/polar/ for valid kwargs.
 
-        For valid keys for ``legend`` and ``title_font``, refer to ``plotly``'s documentation at
+        For valid keys for ``legend`` and ``title_font``, refer to plotly's documentation at
         https://plotly.com/python/reference/layout/ for valid kwargs.
 
         References
@@ -2034,11 +2124,17 @@ class CAP(_CAPGetter):
 
         defaults = {"scale": 2, "height": 800, "width": 1200, "line_close": True, "bgcolor": "white", "fill": "none",
                     "scattersize": 8, "connectgaps": True, "opacity": 0.5, "radialaxis": {"showline": False,
-                    "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "ticks": "outside", "tickfont": {"size": 14, "color": "black"}},
-                    "angularaxis": {"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "tickfont": {"size": 16, "color": "black"}},
-                    "color_discrete_map": {"High Amplitude": "rgba(255, 0, 0, 1)", "Low Amplitude": "rgba(0, 0, 255, 1)"},
-                    "title_font": {"family": "Times New Roman", "size": 30, "color": "black"}, "title_x": 0.5,
-                    "title_y":None,"legend": {"yanchor": "top", "xanchor": "left", "y": 0.99, "x": 0.01, "title_font_family": "Times New Roman", "font": {"size": 12, "color": "black"}},
+                    "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)",
+                    "ticks": "outside", "tickfont": {"size": 14, "color": "black"}},
+                    "angularaxis": {"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)",
+                                    "gridcolor": "rgba(0, 0, 0, 0.25)", "tickfont": {"size": 16, "color": "black"}},
+                    "color_discrete_map": {"High Amplitude": "rgba(255, 0, 0, 1)",
+                                           "Low Amplitude": "rgba(0, 0, 255, 1)"},
+                    "title_font": {"family": "Times New Roman", "size": 30, "color": "black"},
+                    "title_x": 0.5,
+                    "title_y":None,
+                    "legend": {"yanchor": "top", "xanchor": "left", "y": 0.99, "x": 0.01,
+                               "title_font_family": "Times New Roman", "font": {"size": 12, "color": "black"}},
                     "mode": "markers+lines", "engine": "kaleido"}
 
         plot_dict = _check_kwargs(defaults, **kwargs)
@@ -2150,7 +2246,7 @@ class CAP(_CAPGetter):
                 if output_dir:
                     if not os.path.exists(output_dir): os.makedirs(output_dir)
                     if suffix_title:
-                        file_name = f"{group}_{cap}_radar_{suffix_title}.png"
-                    else: file_name = f"{group}_{cap}_radar.png"
+                        file_name = f"{group.replace(' ', '_')}_{cap}_radar_{suffix_title}.png"
+                    else: file_name = f"{group.replace(' ', '_')}_{cap}_radar.png"
                     fig.write_image(os.path.join(output_dir,file_name), scale=plot_dict["scale"],
                                     engine=plot_dict["engine"])

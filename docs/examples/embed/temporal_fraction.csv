@@ -1,0 +1,11 @@
+Subject_ID,Group,Run,CAP-1,CAP-2
+1,A,continuous_runs,0.5066666666666667,0.49333333333333335
+2,A,continuous_runs,0.5333333333333333,0.4666666666666667
+3,A,continuous_runs,0.6,0.4
+5,A,continuous_runs,0.54,0.46
+4,B,continuous_runs,0.41333333333333333,0.5866666666666667
+6,B,continuous_runs,0.47333333333333333,0.5266666666666666
+7,B,continuous_runs,0.44,0.56
+8,B,continuous_runs,0.5,0.5
+9,B,continuous_runs,0.4866666666666667,0.5133333333333333
+10,B,continuous_runs,0.46,0.54

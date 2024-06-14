@@ -99,5 +99,5 @@ def test_TimeseriesExtractor_check_exclusion():
     bids_dir = os.path.join(dir, "ds000031_R1.0.4_ses001-022/ds000031_R1.0.4")
 
     pipeline_name = "fmriprep_1.0.0/fmriprep"
-    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, exclude_niftis=["sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"])
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, exclude_niftis=["sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"])
     assert len(extractor.subject_timeseries) == 0

@@ -1,8 +1,27 @@
-# What's New
+# Changelog
 
 All notable future changes to neurocaps will be documented in this file.
 
 *Note*: All versions in this file are deployed on pypi.
+
+## [1.0.0] - 2024-06-16
+
+Any changes in defaults, function names, etc will start to have proper deprecation warnings after this starting at this.
+Additionally development will slow down.
+
+### ♻ Changed
+- Default for `CAP.caps2plots()` from "outer product" to "outer_product"
+- Default for `CAP.calculate_metrics()` from "temporal fraction" to "temporal fraction" and "transition frequency"
+to "transition_frequency".
+- `n_clusters` and `cluster_selection_method` parameters moved to  `CAP.get_caps` instead of being parameters in
+`CAP`.
+
+### 🐛 Fixes
+- Added try-except block in ``TimeseriesExtractor.get_bold`` when attempting to obtain the ``tr``, to issue a warning
+when ``tr`` isn't specified and can't be extracted from BOLD metadata. Extraction will be continued.
+- Fixed error when using `silhouette` method without multiprocessing where the function called the elbow method instead
+of the silhouette method. This error affects versions 0.9.6 to 0.9.9.
+
 ## [0.9.9.post3] - 2024-06-13
 ### 🐛 Fixes
 - Noted an issue with file naming in `CAP.calculate_metrics()` that causes the suffix of the file name to append 

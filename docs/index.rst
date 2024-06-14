@@ -7,3 +7,5 @@ Contents
 
    installation
    api
+   examples/examples
+   changelog

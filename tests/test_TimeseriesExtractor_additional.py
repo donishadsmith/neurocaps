@@ -1,4 +1,4 @@
-import os, pytest
+import os, pytest, numpy as np
 from neurocaps.extraction import TimeseriesExtractor
 
 # Changing file name in github actions to test different file naming configurations
@@ -23,3 +23,10 @@ def test_TimeseriesExtractor_no_parallel_additional():
 
     assert extractor.subject_timeseries["01"]["run-0"].shape[-1] == 100
     assert extractor.subject_timeseries["01"]["run-0"].shape[0] == 40
+
+    old_subject_timeseries = extractor.subject_timeseries
+
+    extractor2 = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
+                                    use_confounds=False)
+    
+    extractor2.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)    
