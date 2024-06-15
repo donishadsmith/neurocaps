@@ -21,15 +21,20 @@ class CAP(_CAPGetter):
     Parameters
     ----------
     parcel_approach : :obj:`dict[str, dict]`, default=None
-        The approach used to parcellate BOLD images. This should be a nested dictionary with the first key being
-        the atlas name. The sub-keys should include:
+        The approach used to parcellate BOLD images. Similar to ``TimeseriesExtractor``, "Schaefer" and "AAL"
+        can be initialized here to create the appropriate ``parcel_approach`` that includes the sub-keys 
+        "maps", "nodes", and "regions", which are needed for plotting.
+
+        - For "Schaefer", available sub-keys include "n_rois", "yeo_networks", and "resolution_mm". Refer to documentation for ``nilearn.datasets.fetch_atlas_schaefer_2018`` for valid inputs.    
+        - For "AAL", the only sub-key is "version". Refer to documentation for ``nilearn.datasets.fetch_atlas_aal`` for valid inputs.
+        - For "Custom", the sub-keys should include:
 
             - "maps" : Directory path to the location of the parcellation file.
             - "nodes" : A list of node names in the order of the label IDs in the parcellation.
             - "regions" : The regions or networks in the parcellation.
 
         If the "Schaefer" or "AAL" option was used in the ``TimeSeriesExtractor`` class, you can initialize
-        the ``TimeSeriesExtractor`` class with the ``parcel_approach``  that was initially used, then set this
+        the ``TimeSeriesExtractor`` class with the ``parcel_approach`` that was initially used, then set this
         parameter to ``TimeSeriesExtractor.parcel_approach``. For this parameter, only "Schaefer", "AAL", and
         "Custom" are supported. Note, this parameter is not needed for using ``self.get_caps()``; however, for
         certain plotting functions it will be needed. This class contains a ``parcel_approach`` property that also acts
@@ -163,9 +168,6 @@ class CAP(_CAPGetter):
         Boolean denoting whether the features of the concatenated timeseries data was z-scored. Is None until
         ``self.get_caps()`` is used.
 
-    epsilon : :obj:`float`
-        A small number added to the denominator when z-scoring for numerical stability.
-
     means : :obj:`dict[str, np.array]`
         If ``standardize`` is True in ``self.get_caps()``, this property is a nested dictionary containing the
         group names and a numpy array (participants x TR) x ROIs of the means of the features. The structure is as
@@ -227,8 +229,8 @@ class CAP(_CAPGetter):
     ----
     **If no groups were specified, the default group name will be "All Subjects".**
 
-    **If using a "Custom" parcellation approach**, ensure each node in your dataset includes both left (lh) and
-    right (rh) hemisphere versions (bilateral nodes). This function assumes that the background label is "zero".
+    **If using a "Custom" parcellation approach**, ensure each region in your dataset includes both left (lh) and
+    right (rh) hemisphere versions of nodes (bilateral nodes). This function assumes that the background label is "zero".
     Do not add a background label in the "nodes" or "regions" key; the zero index should correspond to the
     first ID that is not zero.
 
@@ -292,12 +294,12 @@ class CAP(_CAPGetter):
                                        else subj_id for subj_id in self._groups[group]]
 
         if parcel_approach is not None:
-            _check_parcel_approach(parcel_approach=parcel_approach, call="CAP")
+           parcel_approach = _check_parcel_approach(parcel_approach=parcel_approach, call="CAP")
 
         self._parcel_approach = parcel_approach
 
     def get_caps(self,
-                 subject_timeseries: Union[dict[str, dict[str, np.ndarray]], str],
+                 subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.PathLike],
                  runs: Optional[Union[int, list[int]]]=None,
                  n_clusters: Union[int, list[int]]=5,
                  cluster_selection_method: Literal["elbow","silhouette"]=None,
@@ -306,10 +308,9 @@ class CAP(_CAPGetter):
                  n_init: Union[Literal["auto"],int]='auto',
                  max_iter: int=300, tol: float=0.0001, algorithm: Literal["lloyd", "elkan"]="lloyd",
                  standardize: bool=True,
-                 epsilon: Union[int,float]=0,
                  n_cores: Optional[int]=None,
                  show_figs: bool=False,
-                 output_dir: Optional[Union[str, os.PathLike]]=None,
+                 output_dir: Optional[os.PathLike]=None,
                  **kwargs) -> plt.figure:
         """
         **Perform K-Means Clustering to Generate CAPs**
@@ -321,7 +322,7 @@ class CAP(_CAPGetter):
 
         Parameters
         ----------
-        subject_timeseries : :obj:`dict[str, Dict[str, np.ndarray]]` or :obj:`str`
+        subject_timeseries : :obj:`dict[str, Dict[str, np.ndarray]]` or :obj:`os.PathLike`
             Path of the pickle file containing the nested subject timeseries dictionary saved by the
             ``TimeSeriesExtractor`` class or the nested subject timeseries dictionary produced by the
             ``TimeseriesExtractor`` class. The first level of the nested dictionary must consist of the subject ID
@@ -377,9 +378,6 @@ class CAP(_CAPGetter):
         standardize : :obj:`bool`, default=True
             Whether to z-score the features of the concatenated timeseries data. The sample standard deviation will
             be used, meaning n-1 in the denominator.
-
-        epsilon : :obj:`int` or :obj:`float`, default=0
-            A small number to add to the denominator when z-scoring for numerical stability.
 
         n_cores : :obj:`int` or :obj:`None`, default=None
             The number of CPU cores to use for multiprocessing, with joblib, to run multiple ``sklearn.cluster.KMeans``
@@ -448,7 +446,6 @@ class CAP(_CAPGetter):
 
         self._runs = runs if runs else "all"
         self._standardize = standardize
-        self._epsilon = epsilon
 
         if isinstance(subject_timeseries, str) and subject_timeseries.endswith(".pkl"):
             subject_timeseries = _convert_pickle_to_dict(pickle_file=subject_timeseries)
@@ -643,7 +640,9 @@ class CAP(_CAPGetter):
             for group in self._groups:
                 self._mean_vec[group] = np.mean(concatenated_timeseries[group], axis=0)
                 self._stdev_vec[group] = np.std(concatenated_timeseries[group], ddof=1, axis=0)
-                concatenated_timeseries[group] = (concatenated_timeseries[group] - self._mean_vec[group])/(self._stdev_vec[group] + self._epsilon)
+                # Taken from nilearn pipeline, used for numerical stability purposes to avoid numpy division error
+                self._stdev_vec[group][self._stdev_vec[group] < np.finfo(np.float64).eps] = 1.0
+                concatenated_timeseries[group] = (concatenated_timeseries[group] - self._mean_vec[group])/self._stdev_vec[group]
 
         return concatenated_timeseries
 
@@ -659,10 +658,10 @@ class CAP(_CAPGetter):
                 else:
                     self._subject_table.update({subj_id : group})
 
-    def calculate_metrics(self, subject_timeseries: Union[dict[str, dict[str, np.ndarray]], str],
+    def calculate_metrics(self, subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.PathLike],
                           tr: Optional[float]=None, runs: Optional[Union[int]]=None, continuous_runs: bool=False,
                           metrics: Union[str, list[str]]=["temporal_fraction", "persistence", "counts", "transition_frequency"],
-                          return_df: bool=True, output_dir: Optional[Union[str, os.PathLike]]=None,
+                          return_df: bool=True, output_dir: Optional[os.PathLike]=None,
                           prefix_file_name: Optional[str]=None) -> dict[str, pd.DataFrame]:
         """
         **Get CAPs metrics**
@@ -705,7 +704,7 @@ class CAP(_CAPGetter):
 
         Parameters
         ----------
-        subject_timeseries : :obj:`dict[str, dict[str, np.ndarray]]` or :obj:`str`
+        subject_timeseries : :obj:`dict[str, dict[str, np.ndarray]]` or :obj:`os.PathLike`
             Path of the pickle file containing the nested subject timeseries dictionary saved by the
             ``TimeSeriesExtractor`` class or the nested subject timeseries dictionary produced by the
             ``TimeseriesExtractor`` class. The first level of the nested dictionary must consist of the subject ID
@@ -832,7 +831,7 @@ class CAP(_CAPGetter):
             if not continuous_runs or len(requested_runs) == 1:
                 for curr_run in subject_runs:
                     if self._standardize:
-                        timeseries = (subject_timeseries[subj_id][curr_run] - self._mean_vec[group])/(self._stdev_vec[group] + self._epsilon)
+                        timeseries = (subject_timeseries[subj_id][curr_run] - self._mean_vec[group])/self._stdev_vec[group]
                     else:
                         timeseries = subject_timeseries[subj_id][curr_run]
                     predicted_subject_timeseries[subj_id].update({curr_run: self._kmeans[group].predict(timeseries) + 1})
@@ -845,7 +844,7 @@ class CAP(_CAPGetter):
                                                               subject_timeseries[subj_id][curr_run]])
                     else: timeseries[subject_runs] = subject_timeseries[subj_id][curr_run]
                 if self._standardize:
-                    timeseries = (timeseries[subject_runs] - self._mean_vec[group])/(self._stdev_vec[group] + self._epsilon)
+                    timeseries = (timeseries[subject_runs] - self._mean_vec[group])/self._stdev_vec[group]
                 else:
                     timeseries = timeseries[subject_runs]
                 predicted_subject_timeseries[subj_id].update({subject_runs: self._kmeans[group].predict(timeseries) + 1})
@@ -941,7 +940,7 @@ class CAP(_CAPGetter):
 
         if return_df: return df_dict
 
-    def caps2plot(self, output_dir: Optional[Union[str, os.PathLike]]=None, suffix_title: Optional[str]=None,
+    def caps2plot(self, output_dir: Optional[os.PathLike]=None, suffix_title: Optional[str]=None,
                   plot_options: Union[Literal["outer_product", "heatmap"], list[Literal["outer_product", "heatmap"]]]="outer_product",
                   visual_scope: Union[Literal["regions", "nodes"], list[Literal["regions", "nodes"]]]="regions",
                   show_figs: bool=True, subplots: bool=False, **kwargs) -> seaborn.heatmap:
@@ -1408,9 +1407,9 @@ class CAP(_CAPGetter):
                 if output_dir:
                     partial_filename = f"{group}_{cap}_{suffix_title}" if suffix_title else f"{group}_{cap}"
                     if scope == "regions":
-                        full_filename = f"{partial_filename.replace(' ','_')}_outer_product_heatmap-regions.png"
+                        full_filename = f"{partial_filename.replace(' ','_')}_outer_product-regions.png"
                     else:
-                        full_filename = f"{partial_filename.replace(' ','_')}_outer_product_heatmap-nodes.png"
+                        full_filename = f"{partial_filename.replace(' ','_')}_outer_product-nodes.png"
 
                     display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"],
                                                  bbox_inches=plot_dict["bbox_inches"])
@@ -1422,9 +1421,9 @@ class CAP(_CAPGetter):
         if subplots and output_dir:
             partial_filename = f"{group}_CAPs_{suffix_title}" if suffix_title else f"{group}_CAPs"
             if scope == "regions":
-                full_filename = f"{partial_filename.replace(' ','_')}_outer_product_heatmap-regions.png"
+                full_filename = f"{partial_filename.replace(' ','_')}_outer_product-regions.png"
             else:
-                full_filename = f"{partial_filename.replace(' ','_')}_outer_product_heatmap-nodes.png"
+                full_filename = f"{partial_filename.replace(' ','_')}_outer_product-nodes.png"
             display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"],
                                          bbox_inches=plot_dict["bbox_inches"])
 
@@ -1532,7 +1531,7 @@ class CAP(_CAPGetter):
         # Display figures
         if not show_figs: plt.close()
 
-    def caps2corr(self, output_dir: Optional[Union[str, os.PathLike]]=None, suffix_title: Optional[str]=None,
+    def caps2corr(self, output_dir: Optional[os.PathLike]=None, suffix_title: Optional[str]=None,
                   show_figs: bool=True, **kwargs) -> seaborn.heatmap:
         """
         **Generate Correlation Matrix for CAPs**
@@ -1663,7 +1662,7 @@ class CAP(_CAPGetter):
                 display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"],
                                              bbox_inches=plot_dict["bbox_inches"])
 
-    def caps2niftis(self, output_dir: Union[str, os.PathLike], suffix_file_name: Optional[str]=None,
+    def caps2niftis(self, output_dir: os.PathLike, suffix_file_name: Optional[str]=None,
                     fwhm: Optional[float]=None) -> nib.Nifti1Image:
         """
         **Standalone Method to Convert CAPs to NifTI Statistical Maps**
@@ -1734,7 +1733,7 @@ class CAP(_CAPGetter):
                     save_name = f"{group.replace(' ', '_')}_{cap.replace('-', '_')}.nii.gz"
                 nib.save(stat_map, os.path.join(output_dir,save_name))
 
-    def caps2surf(self, output_dir: Optional[Union[str, os.PathLike]]=None, suffix_title: Optional[str]=None,
+    def caps2surf(self, output_dir: Optional[os.PathLike]=None, suffix_title: Optional[str]=None,
                   show_figs: bool=True, fwhm: Optional[float]=None,
                   fslr_density: Literal["4k", "8k", "32k", "164k"]="32k", method: Literal["linear", "nearest"]="linear",
                   save_stat_map: bool=False, fslr_giftis_dict: Optional[dict]=None, **kwargs) -> surfplot.Plot:
@@ -1956,7 +1955,7 @@ class CAP(_CAPGetter):
                         stat_map_name = save_name.replace(".png", ".nii.gz")
                         nib.save(stat_map, stat_map_name)
 
-    def caps2radar(self, output_dir: Optional[Union[str, os.PathLike]]=None, suffix_title: Optional[str]=None,
+    def caps2radar(self, output_dir: Optional[os.PathLike]=None, suffix_title: Optional[str]=None,
                    show_figs: bool=True, use_scatterpolar: bool=False,
                    **kwargs) -> Union[px.line_polar, go.Scatterpolar]:
         """

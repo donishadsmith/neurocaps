@@ -33,12 +33,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         The approach to parcellate BOLD images. This should be a nested dictionary with the first key being the
         atlas name. Currently, only "Schaefer", "AAL", and "Custom" are supported.
 
-            - For "Schaefer", available sub-keys include "n_rois", "yeo_networks", and "resolution_mm".
-              Refer to nilearn's documentation for ``datasets.fetch_atlas_schaefer_2018`` for valid inputs.    
-            - For "AAL", the only sub-key is "version". Refer to nilearn's documentation for
-              ``datasets.fetch_atlas_aal`` for valid inputs.
-            - For "Custom", the key must include a sub-key called "maps" specifying the directory
-              location of the parcellation NifTI file.
+        - For "Schaefer", available sub-keys include "n_rois", "yeo_networks", and "resolution_mm".  Refer to documentation for ``nilearn.datasets.fetch_atlas_schaefer_2018`` for valid inputs.    
+        - For "AAL", the only sub-key is "version". Refer to documentation for  ``nilearn.datasets.fetch_atlas_aal`` for valid inputs.
+        - For "Custom", the key must include a sub-key called "maps" specifying the directory location of the parcellation NifTI file.
 
     use_confounds : :obj:`bool`, default=True
         Determines whether to perform nuisance regression using confounds when extracting timeseries.
@@ -56,7 +53,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     fd_threshold : :obj:`float` or :obj:`None`, default=None
         Sets a threshold to remove frames after nuisance regression and timeseries extraction. This requires a
         column named `framewise_displacement` in the confounds file and ``use_confounds`` set to True.
-        Additionally, `framewise_displacement` should not need be specified in confound_names if using this
+        Additionally, `framewise_displacement` should not need be specified in ``confound_names`` if using this
         parameter.
 
     n_acompcor_separate : :obj:`int` or :obj:`None`, default=None
@@ -84,8 +81,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     parcel_approach : :obj:`dict[str, dict]`
         Nested dictionary containing information about the parcellation. Can also be used as a setter, which accepts a
         dictionary or a dictionary saved as pickle file. If "Schaefer" or "AAL" was specified during
-        initialization of the ``TimeseriesExtractor`` class, then nilearn's ``datasets.fetch_atlas_schaefer_2018``
-        and ``datasets.fetch_atlas_aal`` will be used to obtain the "maps" and the "nodes". Then string
+        initialization of the ``TimeseriesExtractor`` class, then``nilearn.datasets.fetch_atlas_schaefer_2018``
+        and ``nilearn.datasets.fetch_atlas_aal`` will be used to obtain the "maps" and the "nodes". Then string
         splitting is used on the "nodes" to obtain the "regions":
         ::
 
@@ -173,10 +170,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                           "rot_y", "rot_y_derivative1", "rot_z", "rot_z_derivative1", "a_comp_cor_00",
                           "a_comp_cor_01", "a_comp_cor_02", "a_comp_cor_03", "a_comp_cor_04", "a_comp_cor_05"]
 
-    **If using a "Custom" parcellation approach**, ensure each node in your dataset includes both left (lh) and right
-    (rh) hemisphere versions (bilateral nodes). This function assumes that the background label is "zero". Do not add a
-    background label in the "nodes" or "regions" key; the zero index should correspond to the first ID that is
-    not zero.
+    **If using a "Custom" parcellation approach**, ensure each region in your dataset includes both left (lh) and right
+    (rh) hemisphere versions of nodes (bilateral nodes). This function assumes that the background label is "zero".
+    Do not add a background label in the "nodes" or "regions" key; the zero index should correspond to the first ID
+    that is not zero.
 
     - "maps": Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g.,
       .nii for NIfTI files). **This key is required for timeseries extraction**.
@@ -239,7 +236,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                                                                               n_acompcor_separate=n_acompcor_separate)
             self._signal_clean_info["fd_threshold"] = fd_threshold
 
-    def get_bold(self, bids_dir: Union[str, os.PathLike], task: str, session: Optional[Union[int,str]]=None,
+    def get_bold(self, bids_dir: os.PathLike, task: str, session: Optional[Union[int,str]]=None,
                  runs: Optional[list[int]]=None, condition: Optional[str]=None, tr: Optional[Union[int, float]]=None,
                  run_subjects: Optional[list[str]]=None, exclude_subjects: Optional[list[str]]= None,
                  pipeline_name: Optional[str]=None, n_cores: Optional[int]=None, verbose: bool=True,

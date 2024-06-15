@@ -1,5 +1,7 @@
 # neurocaps
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-blue)](https://doi.org/10.5281/zenodo.11645498)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-blue)](https://doi.org/10.5281/zenodo.11699020)
+[![Test Status](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg)](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 This is a Python package designed to perform Co-activation Patterns (CAPs) analyses. It utilizes k-means clustering to group timepoints (TRs) into brain states, applicable to both resting-state and task-based fMRI data. The package is compatible with data preprocessed using **fMRIPrep** and assumes your directory is BIDS-compliant, containing a derivatives folder with a pipeline folder (such as fMRIPrep) that holds the preprocessed BOLD data.
 
@@ -52,7 +54,7 @@ Similarly, the version of the AAL atlas can be modified using:
 parcel_approach = {"AAL": {"version": "SPM12"}}
 ```
 
-If using a "Custom" parcellation approach, ensure each node in your dataset includes both left (lh) and right (rh) hemisphere versions (bilateral nodes). 
+If using a "Custom" parcellation approach, ensure each region in your dataset includes both left (lh) and right (rh) hemisphere versions of nodes (bilateral nodes). 
 
 Custom Key Structure:
 - `"maps'`: Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g., .nii for NifTI files). For plotting purposes, this key is not required.
@@ -161,7 +163,7 @@ The provided example demonstrates setting up a custom parcellation containing no
 - `merge_dicts`: Merge the subject_timeseries dictionaries for overlapping subjects across tasks to identify similar CAPs across different tasks. The merged dictionary can be saved as a pickle file.
 - `standardize`: Standardizes each run independently for all subjects in the subject timeseries.
 
-Please refer to [demo.ipynb](https://github.com/donishadsmith/neurocaps/blob/main/demo.ipynb) for a more extensive demonstration of the features included in this package.
+Please refer to [demo.ipynb](https://github.com/donishadsmith/neurocaps/blob/main/demo.ipynb) or https://neurocaps.readthedocs.io/en/latest/examples/examples.html for a more extensive demonstration of the features included in this package.
 
 Quick code example:
 

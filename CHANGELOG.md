@@ -4,14 +4,31 @@ All notable future changes to neurocaps will be documented in this file.
 
 *Note*: All versions in this file are deployed on pypi.
 
-## [1.0.0] - 2024-06-16
+## [1.0.0.post2] - 2024-06-15
+### 💻 Metadata
+- Corrects docstring for `standardize` from parameter being `subject_timeseries_list` to `subject_timeseries`.
+
+## [1.0.0.post1] - 2024-06-15
+### 🐛 Fixes
+- Some important fixes were left out of the original version.
+    - These fixes includes:
+        - Removal of the `epsilon` parameter in `self.get_caps` and replacement with `std[std < np.finfo(np.float64).eps] = 1.0`
+          to prevent divide by 0 issues and numerical instability issues.
+        - Deep copy `subject_timeseries` in `standardize()` and `parcel_approach`. In their functions, in-place operations
+        are performed which could unintentionally change the external versions of these parameters
+
+## [1.0.0] - 2024-06-15
 
 Any changes in defaults, function names, etc will start to have proper deprecation warnings after this starting at this.
 Additionally development will slow down.
 
+🚀 New/Added
+- Can now plot silhouette score and have some control over the `x-axis` of elbow and silhouette plot with the "step"
+`**kwarg`.
+
 ### ♻ Changed
-- Default for `CAP.caps2plots()` from "outer product" to "outer_product"
-- Default for `CAP.calculate_metrics()` from "temporal fraction" to "temporal fraction" and "transition frequency"
+- Default for `CAP.caps2plots()` from "outer product" to "outer_product".
+- Default for `CAP.calculate_metrics()` from "temporal fraction" to "temporal_fraction" and "transition frequency"
 to "transition_frequency".
 - `n_clusters` and `cluster_selection_method` parameters moved to  `CAP.get_caps` instead of being parameters in
 `CAP`.
@@ -21,6 +38,7 @@ to "transition_frequency".
 when ``tr`` isn't specified and can't be extracted from BOLD metadata. Extraction will be continued.
 - Fixed error when using `silhouette` method without multiprocessing where the function called the elbow method instead
 of the silhouette method. This error affects versions 0.9.6 to 0.9.9.
+- Fix some file names of output by adding underscores for spaces in group names.
 
 ## [0.9.9.post3] - 2024-06-13
 ### 🐛 Fixes
@@ -35,7 +53,7 @@ before "temporal fraction".
 ## [0.9.9.post2] - 2024-06-13
 ### 💻 Metadata
 - All docstrings now at a satisfactory point of being well formatted and explanatory.
-- Fixes issues with docstring not being formatted correctly when reading in an IDE like Jupyter notebook
+- Fixes issues with docstring not being formatted correctly when reading in an IDE like Jupyter notebook.
 
 ## [0.9.9.post1] - 2024-06-12
 ### 🐛 Fixes

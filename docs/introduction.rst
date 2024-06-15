@@ -1,8 +1,16 @@
 **neurocaps**
 =============
 .. image:: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-blue
-   :target: https://doi.org/10.5281/zenodo.11645498
+   :target: https://doi.org/10.5281/zenodo.11699020
    :alt: DOI
+
+.. image:: https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg
+   :target: https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml
+   :alt: Test Status
+
+.. image:: https://img.shields.io/badge/License-MIT-blue.svg
+   :target: https://opensource.org/licenses/MIT
+   :alt: License
 
 This is a Python package designed to perform Co-activation Patterns (CAPs) analyses. It utilizes k-means clustering to group timepoints (TRs) into brain states, applicable to both resting-state and task-based fMRI data. 
 The package is compatible with data preprocessed using **fMRIPrep** and assumes your directory is BIDS-compliant, containing a derivatives folder with a pipeline folder (such as fMRIPrep) that holds the preprocessed BOLD data.
@@ -11,7 +19,7 @@ Usage
 =====
 This package contains two main classes: ``TimeseriesExtractor`` for extracting the timeseries, and ``CAP`` for performing the CAPs analysis.
 
-**Note:** When extracting the timeseries, this package uses either the Schaefer atlas, the Automated Anatomical Labeling (AAL) atlas, or a custom parcellation where all nodes have a left and right version (bilateral nodes). 
+**Note:** When extracting the timeseries, this package uses either the Schaefer atlas, the Automated Anatomical Labeling (AAL) atlas, or a custom parcellation where all regions have a left and right version of nodes (bilateral nodes). 
 The number of ROIs and networks for the Schaefer atlas can be adjusted with the parcel_approach parameter when initializing the ``TimeseriesExtractor`` class.
 
 To modify it, you must use a nested dictionary, where the primary key is "Schaefer" and the sub-keys are "n_rois" and "yeo_networks". For example:

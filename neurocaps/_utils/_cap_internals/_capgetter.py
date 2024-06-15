@@ -60,11 +60,7 @@ class _CAPGetter:
 
     @property
     def standardize(self):
-        return self._standardize if hasattr(self, "_standardizee") else None
-
-    @property
-    def epsilon(self):
-        return self._epsilon if hasattr(self, "_epsilon") else None
+        return self._standardize if hasattr(self, "_standardize") else None
 
     @property
     def means(self):

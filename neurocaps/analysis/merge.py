@@ -3,7 +3,7 @@ from typing import Union, Optional
 import numpy as np, joblib
 from .._utils import _convert_pickle_to_dict
 
-def merge_dicts(subject_timeseries_list: Union[list[dict], list[str]], return_combined_dict: bool=True,
+def merge_dicts(subject_timeseries_list: Union[list[dict], list[os.PathLike]], return_combined_dict: bool=True,
                 return_reduced_dicts: bool=False, output_dir: Optional[Union[str, os.PathLike]]=None,
                 file_name: Optional[str]=None) -> dict[str, np.ndarray]:
     """
@@ -15,7 +15,7 @@ def merge_dicts(subject_timeseries_list: Union[list[dict], list[str]], return_co
 
     Parameters
     ----------
-    subject_timeseries_list: :obj:`list[dict]]` or :obj:`list[str]`
+    subject_timeseries_list: :obj:`list[dict]]` or :obj:`list[os.PathLike]`
         A list of pickle files containing the nested subject timeseries dictionary saved by the
         ``TimeSeriesExtractor`` class or a list of nested subject timeseries dictionaries produced by the
         ``TimeSeriesExtractor`` class. The first level of the nested dictionary must consist of the subject ID as a

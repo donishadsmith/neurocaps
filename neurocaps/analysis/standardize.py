@@ -1,9 +1,10 @@
 """Function to standardize timeseries within subject runs"""
+import copy, os
 from typing import Union
 import numpy as np, joblib
 from .._utils import _convert_pickle_to_dict
 
-def standardize(subject_timeseries: Union[dict[str, dict[str, np.ndarray]], str]) -> dict[str, np.ndarray]:
+def standardize(subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.PathLike]) -> dict[str, np.ndarray]:
     """
     **Standardize Subject Timeseries**
 
@@ -11,9 +12,9 @@ def standardize(subject_timeseries: Union[dict[str, dict[str, np.ndarray]], str]
 
     Parameters
     ----------
-    subject_timeseries_list: :obj:`list[dict]]` or :obj:`list[str]`
-        A list of pickle files containing the nested subject timeseries dictionary saved by the
-        ``TimeSeriesExtractor`` class or a list of nested subject timeseries dictionaries produced by the
+    subject_timeseries: :obj:`dict[str, dict[str, np.ndarray]]` or :obj:`os.PathLike`
+        A pickle file containing the nested subject timeseries dictionary saved by the
+        ``TimeSeriesExtractor`` class or a nested subject timeseries dictionary produced by the
         ``TimeSeriesExtractor`` class. The first level of the nested dictionary must consist of the subject ID as a
         string, the second level must consist of the run numbers in the form of "run-#"
         (where # is the corresponding number of the run), and the last level must consist of the timeseries
@@ -36,16 +37,18 @@ def standardize(subject_timeseries: Union[dict[str, dict[str, np.ndarray]], str]
     -------
         `dict[str, dict[str, np.ndarray]]`.
     """
+    # Deep copy
+    subject_timeseries = copy.deepcopy(subject_timeseries)
 
     if isinstance(subject_timeseries, str) and subject_timeseries.endswith(".pkl"):
         subject_timeseries = _convert_pickle_to_dict()
 
     for subject in subject_timeseries:
         for run in subject_timeseries[subject]:
-            subject_timeseries[subject][run] -= subject_timeseries[subject][run].mean(axis=0)
             std = subject_timeseries[subject][run].std(axis=0, ddof=1)
             # Taken from nilearn pipeline, used for numerical stability purposes to avoid numpy division error
             std[std < np.finfo(np.float64).eps] = 1.0
+            subject_timeseries[subject][run] -= subject_timeseries[subject][run].mean(axis=0)
             subject_timeseries[subject][run] /= std
 
     return subject_timeseries

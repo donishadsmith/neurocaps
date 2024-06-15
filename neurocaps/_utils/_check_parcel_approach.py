@@ -1,8 +1,9 @@
 """Internal function for checking the validity of parcel_approach."""
-import os, re, warnings
+import copy, os, re, warnings
 from nilearn import datasets
 
 def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
+    parcel_approach = copy.deepcopy(parcel_approach)
     valid_parcel_dict = {"Schaefer": {"n_rois" : 400, "yeo_networks": 7, "resolution_mm": 1},
                          "AAL": {"version": "SPM12"},
                          "Custom": {"maps": "/location/to/parcellation.nii.gz",
