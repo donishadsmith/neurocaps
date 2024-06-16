@@ -1,4 +1,5 @@
 """A class which is responsible for accessing all CAP metadata and to keep track of all attributes in CAP"""
+import copy
 from .._check_parcel_approach import _check_parcel_approach
 from .._pickle_to_dict import _convert_pickle_to_dict
 
@@ -82,3 +83,12 @@ class _CAPGetter:
     @property
     def outer_products(self):
         return self._outer_products if hasattr(self, "_outer_product") else None
+
+    @property
+    def subject_table(self):
+        return self._subject_table if hasattr(self, "_subject_table") else None
+
+    @subject_table.setter
+    def subject_table(self, subject_dict):
+        if isinstance(subject_dict, dict):
+            self._subject_table = copy.deepcopy(subject_dict)

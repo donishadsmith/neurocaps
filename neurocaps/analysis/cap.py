@@ -1,5 +1,5 @@
 
-import collections, itertools, os, re, sys, warnings
+import collections, copy, itertools, os, re, sys, warnings
 from typing import Union, Literal, Optional
 import numpy as np, nibabel as nib, matplotlib.pyplot as plt, pandas as pd, seaborn, surfplot
 import plotly.express as px, plotly.graph_objects as go, plotly.offline as pyo
@@ -22,10 +22,10 @@ class CAP(_CAPGetter):
     ----------
     parcel_approach : :obj:`dict[str, dict]`, default=None
         The approach used to parcellate BOLD images. Similar to ``TimeseriesExtractor``, "Schaefer" and "AAL"
-        can be initialized here to create the appropriate ``parcel_approach`` that includes the sub-keys 
+        can be initialized here to create the appropriate ``parcel_approach`` that includes the sub-keys
         "maps", "nodes", and "regions", which are needed for plotting.
 
-        - For "Schaefer", available sub-keys include "n_rois", "yeo_networks", and "resolution_mm". Refer to documentation for ``nilearn.datasets.fetch_atlas_schaefer_2018`` for valid inputs.    
+        - For "Schaefer", available sub-keys include "n_rois", "yeo_networks", and "resolution_mm". Refer to documentation for ``nilearn.datasets.fetch_atlas_schaefer_2018`` for valid inputs.
         - For "AAL", the only sub-key is "version". Refer to documentation for ``nilearn.datasets.fetch_atlas_aal`` for valid inputs.
         - For "Custom", the sub-keys should include:
 
@@ -66,7 +66,7 @@ class CAP(_CAPGetter):
 
     parcel_approach : :obj:`dict[str, dict]`
         Nested dictionary containing information about the parcellation. Can also be used as a setter. If "Schaefer"
-        or "AAL" was specified during initialization of the ``TimeseriesExtractor`` class, then 
+        or "AAL" was specified during initialization of the ``TimeseriesExtractor`` class, then
         ``nilearn.datasets.fetch_atlas_schaefer_2018`` and ``nilearn.datasets.fetch_atlas_aal`` will be used to obtain
         the "maps" and the "nodes". Then string splitting is used on the "nodes" to obtain the "regions":
         ::
@@ -119,7 +119,7 @@ class CAP(_CAPGetter):
 
     kmeans : :obj:`dict[str, sklearn.cluster.KMeans]`
         Dictionary containing the ``sklearn.cluster.KMeans`` model used for each group. If ``cluster_selection__method``
-        is not None, the ``sklearn.cluster.KMeans`` model will be the optimal model.  Is None until 
+        is not None, the ``sklearn.cluster.KMeans`` model will be the optimal model.  Is None until
         ``self.get_caps()`` is used. The structure is as follows:
         ::
 
@@ -223,6 +223,16 @@ class CAP(_CAPGetter):
                     "CAP-2": np.array([...]) # ROI x ROI array,
                 }
 
+            }
+
+    subject_table : :obj:`dict[str]`
+        A dictionary generated when ``self.get_caps()`` is used. Operates as a lookup table that pairs each subject ID
+        with the associated group. Also can be used as a setter. The structure is as follows.
+        ::
+
+            {
+                "Subject-ID": "GroupName"
+                "Subject-ID": "GroupName"
             }
 
     Note
@@ -376,8 +386,8 @@ class CAP(_CAPGetter):
             The type of algorithm to use for ``sklearn.cluster.KMeans``. Options are "lloyd" and "elkan".
 
         standardize : :obj:`bool`, default=True
-            Whether to z-score the features of the concatenated timeseries data. The sample standard deviation will
-            be used, meaning n-1 in the denominator.
+            Whether to z-score the columns/ROIs of the concatenated timeseries data. The sample standard deviation will
+            be used, meaning Bessel's correction, `n-1`, will be used in the denominator.
 
         n_cores : :obj:`int` or :obj:`None`, default=None
             The number of CPU cores to use for multiprocessing, with joblib, to run multiple ``sklearn.cluster.KMeans``
@@ -449,6 +459,10 @@ class CAP(_CAPGetter):
 
         if isinstance(subject_timeseries, str) and subject_timeseries.endswith(".pkl"):
             subject_timeseries = _convert_pickle_to_dict(pickle_file=subject_timeseries)
+        elif isinstance(subject_timeseries, dict) and len(list(subject_timeseries)) == 1:
+            # Potential mutability issue if only a single subject in dictionary potentially due to the variable
+            # for the concatenated data being set to the subject timeseries if concatenated data is empty.
+            subject_timeseries = copy.deepcopy(subject_timeseries)
 
         self._concatenated_timeseries = self._get_concatenated_timeseries(subject_timeseries=subject_timeseries,
                                                                           runs=runs)
@@ -710,7 +724,17 @@ class CAP(_CAPGetter):
             ``TimeseriesExtractor`` class. The first level of the nested dictionary must consist of the subject ID
             as a string, the second level must consist of the run numbers in the form of "run-#" (where # is the
             corresponding number of the run), and the last level must consist of the timeseries (as a numpy array)
-            associated with that run. The structure is as follows:
+            associated with that run. **This does not need to be the same subject timeseries dictionary used for
+            generating the k-means model but should have the same number of columns/ROIs. If your ``subject_timeseries``
+            does not contain the same subject IDs then use the ``self.subject_table`` setter to generate the
+            appropriate subject ID and group name mapping. Note, if standardizing was requested in ``self.get_caps()``,
+            then the columns/ROIs of the ``subject_timeseries`` provided to this method will be scaled using the mean
+            and sample standard deviation derived from the concatenated data used to generate the k-means model. This
+            is to ensure that each subject's frames are correctly assigned to the cluster centroid it is closest to as
+            it will be on the same scale of the data used to generate the k-means model. If the same
+            ``subject_timeseries`` that was used to generate the k-means model is specified here, then the
+            predicted label assignments will be equivalent to the original label assignment in the k-means model. The
+            structure of is as follows:
             ::
 
                 subject_timeseries = {
@@ -806,6 +830,10 @@ class CAP(_CAPGetter):
 
         if isinstance(subject_timeseries, str) and subject_timeseries.endswith(".pkl"):
             subject_timeseries = _convert_pickle_to_dict(pickle_file=subject_timeseries)
+        elif isinstance(subject_timeseries, dict) and len(list(subject_timeseries)) == 1:
+            # Potential mutability issue if only a single subject in dictionary potentially due to the variable
+            # for the concatenated data being set to the subject timeseries if concatenated data is empty.
+            subject_timeseries = copy.deepcopy(subject_timeseries)
 
         group_cap_dict = {}
         # Get group with most CAPs
@@ -824,9 +852,9 @@ class CAP(_CAPGetter):
             subject_runs = [subject_run for subject_run in subject_timeseries[subj_id] if subject_run in requested_runs]
             if len(subject_runs) == 0:
                 warnings.warn(f"""
-                              Skipping subject {subj_id} since they do not have the requested run numbers
-                              {','.join(requested_runs)}
-                              """)
+                            Skipping subject {subj_id} since they do not have the requested run numbers
+                            {','.join(requested_runs)}.
+                            """)
                 continue
             if not continuous_runs or len(requested_runs) == 1:
                 for curr_run in subject_runs:
@@ -841,7 +869,7 @@ class CAP(_CAPGetter):
                 for curr_run in subject_timeseries[subj_id]:
                     if len(timeseries[subject_runs]) != 0:
                         timeseries[subject_runs] = np.vstack([timeseries[subject_runs],
-                                                              subject_timeseries[subj_id][curr_run]])
+                                                            subject_timeseries[subj_id][curr_run]])
                     else: timeseries[subject_runs] = subject_timeseries[subj_id][curr_run]
                 if self._standardize:
                     timeseries = (timeseries[subject_runs] - self._mean_vec[group])/self._stdev_vec[group]
@@ -875,7 +903,7 @@ class CAP(_CAPGetter):
                     proportion_dict = {key: item/(len(predicted_subject_timeseries[subj_id][curr_run]))
                                        for key, item in sorted_frequency_dict.items()}
                     # Populate Dataframe
-                    new_row = [subj_id, group_name, curr_run] +[items for _ , items in proportion_dict.items()]
+                    new_row = [subj_id, group_name, curr_run] + [items for _ , items in proportion_dict.items()]
                     df_dict["temporal_fraction"].loc[len(df_dict["temporal_fraction"])] = new_row
                 if "counts" in metrics:
                     # Populate Dataframe

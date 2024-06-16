@@ -8,7 +8,8 @@ def standardize(subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.P
     """
     **Standardize Subject Timeseries**
 
-    Standardizes each run independently for all subjects in the subject timeseries.
+    Standardizes the columns/ROIs of each run independently for all subjects in the subject timeseries. This function
+    uses sample standard deviation, meaning Bessel's correction, `n-1` is used in the denominator.
 
     Parameters
     ----------
@@ -35,9 +36,9 @@ def standardize(subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.P
 
     Returns
     -------
-        `dict[str, dict[str, np.ndarray]]`.
+        `dict[str, np.ndarray]`.
     """
-    # Deep copy
+    # Deep Copy
     subject_timeseries = copy.deepcopy(subject_timeseries)
 
     if isinstance(subject_timeseries, str) and subject_timeseries.endswith(".pkl"):
@@ -45,10 +46,10 @@ def standardize(subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.P
 
     for subject in subject_timeseries:
         for run in subject_timeseries[subject]:
-            std = subject_timeseries[subject][run].std(axis=0, ddof=1)
+            std = np.std(subject_timeseries[subject][run], axis=0, ddof=1)
             # Taken from nilearn pipeline, used for numerical stability purposes to avoid numpy division error
             std[std < np.finfo(np.float64).eps] = 1.0
-            subject_timeseries[subject][run] -= subject_timeseries[subject][run].mean(axis=0)
-            subject_timeseries[subject][run] /= std
+            mean = np.mean(subject_timeseries[subject][run], axis=0)
+            subject_timeseries[subject][run] = (subject_timeseries[subject][run] - mean)/std
 
     return subject_timeseries

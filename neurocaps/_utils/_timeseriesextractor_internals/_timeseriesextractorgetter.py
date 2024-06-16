@@ -1,5 +1,6 @@
 """# A class which is responsible for accessing all TimeseriesExtractorGetter and to keep track of all
 attributes in TimeSeriesExtractor"""
+import copy
 import numpy as np
 from .._check_parcel_approach import _check_parcel_approach
 from .._pickle_to_dict import _convert_pickle_to_dict
@@ -63,7 +64,7 @@ class _TimeseriesExtractorGetter:
             if isinstance(subject_dict[first_level_indx], dict) and len(subject_dict[first_level_indx]) != 0 and "run" in list(subject_dict[first_level_indx])[0]:
                 run = list(subject_dict[first_level_indx])[0]
                 if isinstance(subject_dict[first_level_indx][run],np.ndarray):
-                    self._subject_timeseries = subject_dict
+                    self._subject_timeseries = copy.deepcopy(subject_dict)
                 else: raise TypeError(error_message)
             else: raise TypeError(error_message)
         else: raise TypeError(error_message)

@@ -3,6 +3,20 @@
 All notable future changes to neurocaps will be documented in this file.
 
 *Note*: All versions in this file are deployed on pypi.
+## [1.0.0.post3] - 2024-06-16
+🚀 New/Added
+- Made another internal attribute in CAP ``CAP.subject_table`` a property and setter. This property acts as a lookup
+table. As a setter, it can be used to modify the table to use another subject dictionary with different subjects
+not used to generate the k-means model.
+
+### 💻 Metadata
+- Clarifications of some doc strings, stating that Bessel's correction is used for standardizing and that for
+`CAP.calculate_metrics()` can accept subject timeseries not used for generating the k-means model.
+
+### 🐛 Fixes
+- Removes in-place operations when standardizing to avoid numpy casting issues due to incompatible dtypes.
+- Additional deep copy such as deep copying any setter properties to ensure external changes does not result internal
+changes.
 
 ## [1.0.0.post2] - 2024-06-15
 ### 💻 Metadata
