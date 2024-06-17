@@ -92,3 +92,7 @@ class _CAPGetter:
     def subject_table(self, subject_dict):
         if isinstance(subject_dict, dict):
             self._subject_table = copy.deepcopy(subject_dict)
+
+    @property
+    def cosine_similarity(self):
+        return self._cosine_similarity if hasattr(self, "_cosine_similarity") else None

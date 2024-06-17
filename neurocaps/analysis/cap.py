@@ -47,7 +47,7 @@ class CAP(_CAPGetter):
 
             {
                 "GroupName1": ["1", "2", "3"],
-                "GroupName2": ["4", "5", "6"]
+                "GroupName2": ["4", "5", "6"],
             }
 
 
@@ -111,8 +111,8 @@ class CAP(_CAPGetter):
 
             {
                 "GroupName": {
-                    "CAP-1": np.array([...]) # 1 x ROI array
-                    "CAP-2": np.array([...]) # 1 x ROI array
+                    "CAP-1": np.array([...]), # 1 x ROI array
+                    "CAP-2": np.array([...]), # 1 x ROI array
                 }
 
             }
@@ -124,7 +124,7 @@ class CAP(_CAPGetter):
         ::
 
             {
-                "GroupName": sklearn.cluster.KMeans
+                "GroupName": sklearn.cluster.KMeans,
             }
 
     silhouette_scores : :obj:`dict[str, dict[str, float]]`
@@ -137,7 +137,7 @@ class CAP(_CAPGetter):
                 "GroupName": {
                     "2": float,
                     "3": float,
-                    "4": float
+                    "4": float,
                 }
             }
 
@@ -151,7 +151,7 @@ class CAP(_CAPGetter):
                 "GroupName": {
                     "2": float,
                     "3": float,
-                    "4": float
+                    "4": float,
                 }
             }
 
@@ -161,7 +161,7 @@ class CAP(_CAPGetter):
         ::
 
             {
-                "GroupName": int
+                "GroupName": int,
             }
 
     standardize : :obj:`bool`
@@ -175,7 +175,7 @@ class CAP(_CAPGetter):
         ::
 
             {
-                "GroupName": np.array([...]) # Dimensions: 1 x ROIs
+                "GroupName": np.array([...]), # Dimensions: 1 x ROIs
             }
 
     stdev : :obj:`dict[str, np.array]`
@@ -185,7 +185,7 @@ class CAP(_CAPGetter):
         ::
 
             {
-                "GroupName": np.array([...]) # Dimensions: 1 x ROIs
+                "GroupName": np.array([...]), # Dimensions: 1 x ROIs
             }
 
     concatenated_timeseries : :obj:`dict[str, np.array]`
@@ -194,7 +194,7 @@ class CAP(_CAPGetter):
         ::
 
             {
-                "GroupName": np.array([...]) # Dimensions: (participants x TR) x ROIs
+                "GroupName": np.array([...]), # Dimensions: (participants x TR) x ROIs
             }
 
     region_caps : :obj:`dict[str, np.array]`
@@ -205,8 +205,8 @@ class CAP(_CAPGetter):
 
             {
                 "GroupName": {
-                    "CAP-1": np.array([...]) # 1 x region array,
-                    "CAP-2": np.array([...]) # 1 x region array,
+                    "CAP-1": np.array([...]), # 1 x region array
+                    "CAP-2": np.array([...]), # 1 x region array
                 }
 
             }
@@ -219,8 +219,8 @@ class CAP(_CAPGetter):
 
             {
                 "GroupName": {
-                    "CAP-1": np.array([...]) # ROI x ROI array,
-                    "CAP-2": np.array([...]) # ROI x ROI array,
+                    "CAP-1": np.array([...]), # ROI x ROI array
+                    "CAP-2": np.array([...]), # ROI x ROI array
                 }
 
             }
@@ -231,8 +231,24 @@ class CAP(_CAPGetter):
         ::
 
             {
-                "Subject-ID": "GroupName"
-                "Subject-ID": "GroupName"
+                "Subject-ID": "GroupName",
+                "Subject-ID": "GroupName",
+            }
+
+    cosine_similarity : :obj: `dict[str, dict[list]]`
+        Nested dictionary that is generates when ``self.caps2radar`` is used. Each group contains the "regions" key,
+        containing a list of region, these are the regions that the nodes used to generate the binary vector are from.
+        This key is followed by the cap names, which consist of a list of cosine similarities, where the index of the
+        cosine similarity corresponds to the index of the region in the "regions" key. The structure is as followd:
+        ::
+
+            {
+                "GroupName": {
+                    "regions": [...],
+                    "CAP-1": [...], # Length of list corresponds to length of "regions" list
+                    "CAP-2": [...], # Length of list corresponds to length of "regions" list
+                }
+
             }
 
     Note
@@ -315,7 +331,7 @@ class CAP(_CAPGetter):
                  cluster_selection_method: Literal["elbow","silhouette"]=None,
                  random_state: Optional[int]=None,
                  init: Union[np.array, Literal["k-means++", "random"]]="k-means++",
-                 n_init: Union[Literal["auto"],int]='auto',
+                 n_init: Union[Literal["auto"],int]="auto",
                  max_iter: int=300, tol: float=0.0001, algorithm: Literal["lloyd", "elkan"]="lloyd",
                  standardize: bool=True,
                  n_cores: Optional[int]=None,
@@ -570,8 +586,8 @@ class CAP(_CAPGetter):
             # Get optimal cluster size
             kneedle = KneeLocator(x=list(self._inertia[group]),
                                                         y=list(self._inertia[group].values()),
-                                                        curve='convex',
-                                                        direction='decreasing', S=knee_dict["S"])
+                                                        curve="convex",
+                                                        direction="decreasing", S=knee_dict["S"])
 
             self._optimal_n_clusters[group] = kneedle.elbow
             if self._optimal_n_clusters[group] is None:
@@ -683,14 +699,14 @@ class CAP(_CAPGetter):
         Creates a single ``pandas.DataFrame`` per CAP metric for all participants. As described by
         Liu et al., 2018 and Yang et al., 2021. The metrics include:
 
-         - ``"temporal_fraction"``: The proportion of total volumes spent in a single CAP over all volumes in a run.
+         - ``"temporal_fraction"`` : The proportion of total volumes spent in a single CAP over all volumes in a run.
            ::
 
                 predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
                 target = 1
                 temporal_fraction = 4/6
 
-         - ``"persistence"``: The average time spent in a single CAP before transitioning to another CAP
+         - ``"persistence"`` : The average time spent in a single CAP before transitioning to another CAP
            (average consecutive/uninterrupted time).
            ::
 
@@ -702,14 +718,14 @@ class CAP(_CAPGetter):
                 if tr:
                     persistence = ((1 + 3)/2)*2 # Turns average frames into average time
 
-         - ``"counts"``: The frequency of each CAP observed in a run.
+         - ``"counts"`` : The frequency of each CAP observed in a run.
            ::
 
                 predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
                 target = 1
                 counts = 4
 
-         - ``"transition_frequency"``: The total number of switches between different CAPs across the entire run.
+         - ``"transition_frequency"`` : The total number of switches between different CAPs across the entire run.
            ::
 
                 predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
@@ -1328,7 +1344,7 @@ class CAP(_CAPGetter):
                         ax.axvline(division_line, color=plot_dict["linecolor"], linewidth=plot_dict["linewidths"])
 
                 # Add border
-                if plot_dict['borderwidths'] != 0:
+                if plot_dict["borderwidths"] != 0:
                     border_length = self._outer_products[group][cap].shape[0]
 
                     display.axhline(y=0, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
@@ -1370,7 +1386,7 @@ class CAP(_CAPGetter):
                                                                  linewidths=plot_dict["linewidths"],
                                                                  linecolor=plot_dict["linecolor"],
                                                                  xticklabels=columns, yticklabels=columns,
-                                                                 cbar_kws={'shrink': plot_dict["shrink"]},
+                                                                 cbar_kws={"shrink": plot_dict["shrink"]},
                                                                  annot=plot_dict["annot"], fmt=plot_dict["fmt"],
                                                                  edgecolors=plot_dict["edgecolors"],
                                                                  alpha=plot_dict["alpha"],
@@ -1379,13 +1395,13 @@ class CAP(_CAPGetter):
                     if plot_dict["hemisphere_labels"] is False:
                         display = seaborn.heatmap(self._outer_products[group][cap], cmap=plot_dict["cmap"],
                                           linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"],
-                                          xticklabels=[], yticklabels=[], cbar_kws={'shrink': plot_dict["shrink"]},
+                                          xticklabels=[], yticklabels=[], cbar_kws={"shrink": plot_dict["shrink"]},
                                           annot=plot_dict["annot"], fmt=plot_dict["fmt"],
                                           edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"],
                                           vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
                     else:
                         display = seaborn.heatmap(self._outer_products[group][cap], cmap=plot_dict["cmap"], xticklabels=[],
-                                          yticklabels=[], cbar_kws={'shrink': plot_dict["shrink"]},
+                                          yticklabels=[], cbar_kws={"shrink": plot_dict["shrink"]},
                                           annot=plot_dict["annot"], fmt=plot_dict["fmt"], alpha=plot_dict["alpha"],
                                           vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
 
@@ -1414,7 +1430,7 @@ class CAP(_CAPGetter):
                         plt.axvline(division_line, color=plot_dict["linecolor"], linewidth=plot_dict["linewidths"])
 
                 # Add border
-                if plot_dict['borderwidths'] != 0:
+                if plot_dict["borderwidths"] != 0:
                     border_length = self._outer_products[group][cap].shape[0]
 
                     display.axhline(y=0, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
@@ -1422,7 +1438,7 @@ class CAP(_CAPGetter):
                     display.axvline(x=0, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
                     display.axvline(x=border_length, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
 
-                display.set_title(plot_title, fontdict= {'fontsize': plot_dict["fontsize"]})
+                display.set_title(plot_title, fontdict= {"fontsize": plot_dict["fontsize"]})
 
                 display.set_xticklabels(display.get_xticklabels(),
                                         size = plot_dict["xticklabels_size"],
@@ -1466,7 +1482,7 @@ class CAP(_CAPGetter):
         if scope == "regions":
             display = seaborn.heatmap(pd.DataFrame(cap_dict[group], index=columns), xticklabels=True, yticklabels=True,
                               cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"],
-                              linecolor=plot_dict["linecolor"], cbar_kws={'shrink': plot_dict["shrink"]},
+                              linecolor=plot_dict["linecolor"], cbar_kws={"shrink": plot_dict["shrink"]},
                               fmt=plot_dict["fmt"], edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"],
                               vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
         else:
@@ -1502,7 +1518,7 @@ class CAP(_CAPGetter):
                 display = seaborn.heatmap(pd.DataFrame(cap_dict[group], columns=list(cap_dict[group])),
                                           xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"],
                                           linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"],
-                                          cbar_kws={'shrink': plot_dict["shrink"]}, annot=plot_dict["annot"],
+                                          cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"],
                                           fmt=plot_dict["fmt"], edgecolors=plot_dict["edgecolors"],
                                           alpha=plot_dict["alpha"], vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
 
@@ -1511,7 +1527,7 @@ class CAP(_CAPGetter):
             else:
                 display = seaborn.heatmap(pd.DataFrame(cap_dict[group], columns=list(cap_dict[group])),
                                           xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"],
-                                          cbar_kws={'shrink': plot_dict["shrink"]}, annot=plot_dict["annot"],
+                                          cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"],
                                           fmt=plot_dict["fmt"], alpha=plot_dict["alpha"], vmin=plot_dict["vmin"],
                                           vmax=plot_dict["vmax"])
 
@@ -1527,7 +1543,7 @@ class CAP(_CAPGetter):
 
                 plt.axhline(division_line, color=plot_dict["linecolor"], linewidth=plot_dict["linewidths"])
 
-        if plot_dict['borderwidths'] != 0:
+        if plot_dict["borderwidths"] != 0:
             y_length = len(cap_dict[group][list(cap_dict[group])[0]])
 
             display.axhline(y=0, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
@@ -1544,7 +1560,7 @@ class CAP(_CAPGetter):
                                 rotation=plot_dict["ylabel_rotation"])
 
         plot_title = f"{group} CAPs {suffix_title}" if suffix_title else f"{group} CAPs"
-        display.set_title(plot_title, fontdict= {'fontsize': plot_dict["fontsize"]})
+        display.set_title(plot_title, fontdict= {"fontsize": plot_dict["fontsize"]})
 
         # Save plots
         if output_dir:
@@ -1655,7 +1671,7 @@ class CAP(_CAPGetter):
             df = pd.DataFrame(self._caps[group])
             display = seaborn.heatmap(df.corr(), xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"],
                               linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"],
-                              cbar_kws={'shrink': plot_dict["shrink"]}, annot=plot_dict["annot"],
+                              cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"],
                               fmt=plot_dict["fmt"], edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"])
             # Add Border
             if plot_dict["borderwidths"] != 0:
@@ -1676,7 +1692,7 @@ class CAP(_CAPGetter):
                 plot_title = f"{group} CAPs Correlation Matrix {suffix_title}"
             else:
                 plot_title = f"{group} CAPs Correlation Matrix"
-            display.set_title(plot_title, fontdict= {'fontsize': plot_dict["fontsize"]})
+            display.set_title(plot_title, fontdict= {"fontsize": plot_dict["fontsize"]})
 
             # Display figures
             if not show_figs: plt.close()
@@ -1717,13 +1733,13 @@ class CAP(_CAPGetter):
 
         Parameters
         ----------
-        output_dir: :obj:`os.PathLike`, default=None
+        output_dir : :obj:`os.PathLike`, default=None
             Directory to save plots to. The directory will be created if it does not exist.
 
-        suffix_title: :obj:`str` or :obj:`None`, default=None
+        suffix_title : :obj:`str` or :obj:`None`, default=None
             Appended to the name of the saved file.
 
-        fwhm: :obj:`float` or :obj:`None`, default=None
+        fwhm : :obj:`float` or :obj:`None`, default=None
             Strength of spatial smoothing to apply (in millimeters) to the statistical map prior to interpolating
             from MNI152 space to fslr surface space. Note, this can assist with coverage issues in the plot.
             Uses ``nilearn.image.smooth_img``.
@@ -1796,34 +1812,34 @@ class CAP(_CAPGetter):
 
         Parameters
         ----------
-        output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
+        output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
             Directory to save plots to. The directory will be created if it does not exist. If None, plots will not
             be saved. Outputs as png file.
 
-        suffix_title: :obj:`str` or :obj:`None`, default=None
+        suffix_title : :obj:`str` or :obj:`None`, default=None
             Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
 
-        show_figs: :obj:`bool`, default=True
+        show_figs : :obj:`bool`, default=True
             Whether to display figures.
 
-        fwhm: :obj:`float` or :obj:`None`, defualt=None
+        fwhm : :obj:`float` or :obj:`None`, defualt=None
             Strength of spatial smoothing to apply (in millimeters) to the statistical map prior to interpolating
-            from MNI152 space to fsLR surface space. Uses ``nilearn``'s ``image.smooth``.
+            from MNI152 space to fsLR surface space. Uses nilearn's ``image.smooth``.
             Note, this can assist with coverage issues in the plot.
 
-        fslr_density: {"4k", "8k", "32k", "164k"}, default="32k"
+        fslr_density : {"4k", "8k", "32k", "164k"}, default="32k"
             Density of the fsLR surface when converting from MNI152 space to fsLR surface. Options are "32k" or
             "164k". If using ``fslr_giftis_dict`` options are "4k", "8k", "32k", and "164k".
 
-        method: {"linear", "nearest"}, default="linear"
+        method : {"linear", "nearest"}, default="linear"
             Interpolation method to use when converting from MNI152 space to fsLR surface or from fsLR to fsLR. Options
             are "linear" or "nearest".
 
-        save_stat_map: :obj:`bool`, default=False
+        save_stat_map : :obj:`bool`, default=False
             If True, saves the statistical map for each CAP for all groups as a Nifti1Image if ``output_dir`` is
             provided.
 
-        fslr_giftis_dict: :obj:`dict` or :obj:`None`, default=None
+        fslr_giftis_dict : :obj:`dict` or :obj:`None`, default=None
             Dictionary specifying precomputed GifTI files in fsLR space for plotting stat maps. This parameter
             should be used if the statistical CAP NIfTI files (can be obtained using ``self.caps2niftis()``) were
             converted to GifTI files using a tool such as Connectome Workbench.The dictionary structure is:
@@ -1934,21 +1950,21 @@ class CAP(_CAPGetter):
                                             cap_vector=self._caps[group][cap], fwhm=fwhm)
                     gii_lh, gii_rh = mni152_to_fslr(stat_map, method=method, fslr_density=fslr_density)
                 else:
-                    gii_lh, gii_rh = fslr_to_fslr([fslr_giftis_dict[group][cap]['lh'],
-                                                   fslr_giftis_dict[group][cap]['rh']],
+                    gii_lh, gii_rh = fslr_to_fslr([fslr_giftis_dict[group][cap]["lh"],
+                                                   fslr_giftis_dict[group][cap]["rh"]],
                                                    target_density=fslr_density, method=method)
                 # Code slightly adapted from surfplot example 2
                 surfaces = fetch_fslr()
                 if plot_dict["surface"] not in ["inflated", "veryinflated"]:
                     warnings.warn(f"""
-                                  {plot_dict['surface']} is an invalid option for `surface`. Available options
+                                  {plot_dict["surface"]} is an invalid option for `surface`. Available options
                                   include 'inflated' or 'verinflated'. Defaulting to 'inflated'
                                   """)
                     plot_dict["surface"] = "inflated"
                 lh, rh = surfaces[plot_dict["surface"]]
                 lh = str(lh) if not isinstance(lh, str) else lh
                 rh = str(rh) if not isinstance(rh, str) else rh
-                sulc_lh, sulc_rh = surfaces['sulc']
+                sulc_lh, sulc_rh = surfaces["sulc"]
                 sulc_lh = str(sulc_lh) if not isinstance(sulc_lh, str) else sulc_lh
                 sulc_rh = str(sulc_rh) if not isinstance(sulc_rh, str) else sulc_rh
                 p = surfplot.Plot(lh, rh, size=plot_dict["size"], layout=plot_dict["layout"], zoom=plot_dict["zoom"],
@@ -1984,7 +2000,7 @@ class CAP(_CAPGetter):
                         nib.save(stat_map, stat_map_name)
 
     def caps2radar(self, output_dir: Optional[os.PathLike]=None, suffix_title: Optional[str]=None,
-                   show_figs: bool=True, use_scatterpolar: bool=False,
+                   show_figs: bool=True, use_scatterpolar: bool=False, as_html: bool=False,
                    **kwargs) -> Union[px.line_polar, go.Scatterpolar]:
         """
         **Generate Radar Plots**
@@ -2040,22 +2056,27 @@ class CAP(_CAPGetter):
 
         Parameters
         ----------
-        output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
+        output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
             Directory to save plots to. The directory will be created if it does not exist. Outputs as png file.
 
-        suffix_title: :obj:`str` or :obj:`None`, default=None
+        suffix_title : :obj:`str` or :obj:`None`, default=None
             Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
 
-        show_figs: :obj:`bool`, default=True
+        show_figs : :obj:`bool`, default=True
             Whether to display figures. If this function detects that it is not being ran in an interactive Python
             environment, then it uses ``plotly.offline``, creates an html file named "temp-plot.html", and opens each
             plot in the default browser.
 
-        use_scatterpolar: :obj:`bool`, default=False
+        use_scatterpolar : :obj:`bool`, default=False
             Uses ``plotly.graph_objects.Scatterpolar`` instead of ``plotly.express.line_polar``. The primary difference
             is that ``plotly.graph_objects.Scatterpolar`` shows the scatter dots. However, this can be acheived with
             ``plotly.express.line_polar`` by setting ``mode`` to "markers+lines". There also seems to be a difference
             in default opacity behavior.
+
+        as_html : :obj:`bool`, default=False
+            When ``output_dir`` is specified, plots are saved as html images instead of png images. The advantage is
+            that plotly's radar plots will retain its interactive properties, cna be opened in a browser, and also
+            still be saved as a png in the browser.
 
         kwargs: :obj:`dict`
             Additional parameters to pass to modify certain plot parameters. Options include:
@@ -2168,6 +2189,10 @@ class CAP(_CAPGetter):
 
         parcellation_name = list(self.parcel_approach)[0]
 
+        # Initialize cosine_similarity attribute
+
+        self._cosine_similarity = {}
+
         # Create radar dict
         for group in self._caps:
             if parcellation_name == "Custom":
@@ -2198,12 +2223,14 @@ class CAP(_CAPGetter):
                     # Store value in dict
                     radar_dict[cap].append(cosine_similarity)
 
+            self._cosine_similarity[group] = radar_dict
+
             # Create dataframe
             df = pd.DataFrame(radar_dict)
 
             for cap in df.columns[df.columns != "regions"]:
 
-                groups = df[cap].apply(lambda x: 'High Amplitude' if x > 0 else ('Low Amplitude' if x < 0 else np.nan))
+                groups = df[cap].apply(lambda x: "High Amplitude" if x > 0 else ("Low Amplitude" if x < 0 else np.nan))
                 df[cap] = df[cap].abs()
 
                 if use_scatterpolar:
@@ -2267,7 +2294,7 @@ class CAP(_CAPGetter):
                 )
 
                 if show_figs:
-                    if bool(getattr(sys, 'ps1', sys.flags.interactive)): fig.show()
+                    if bool(getattr(sys, "ps1", sys.flags.interactive)): fig.show()
                     else: pyo.plot(fig, auto_open=True)
 
                 if output_dir:
@@ -2275,5 +2302,9 @@ class CAP(_CAPGetter):
                     if suffix_title:
                         file_name = f"{group.replace(' ', '_')}_{cap}_radar_{suffix_title}.png"
                     else: file_name = f"{group.replace(' ', '_')}_{cap}_radar.png"
-                    fig.write_image(os.path.join(output_dir,file_name), scale=plot_dict["scale"],
-                                    engine=plot_dict["engine"])
+                    if not as_html:
+                        fig.write_image(os.path.join(output_dir,file_name), scale=plot_dict["scale"],
+                                        engine=plot_dict["engine"])
+                    else:
+                        file_name = file_name.replace(".png", ".html")
+                        fig.write_html(os.path.join(output_dir,file_name))

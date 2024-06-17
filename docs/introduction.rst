@@ -1,7 +1,7 @@
 **neurocaps**
 =============
 .. image:: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-blue
-   :target: https://doi.org/10.5281/zenodo.11908533
+   :target: https://doi.org/10.5281/zenodo.12036930
    :alt: DOI
 
 .. image:: https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg

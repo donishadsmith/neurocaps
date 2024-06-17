@@ -3,55 +3,27 @@
 All notable future changes to neurocaps will be documented in this file.
 
 *Note*: All versions in this file are deployed on pypi.
-## [1.0.0.post4] - 2024-06-17
-### 🐛 Fixes
-- In ``TimeseriesExtractor.get_bold()``, several checks are done to ensure that subjects have the necessary files for
-extraction. Subjects that have zero nifti, confound files (if confounds requested), event files (if requested), etc
-are automatically eliminated from being added to the list for timeseries extraction. A final check assesses, the run 
-ID of the files to see if the subject has at least one run with all necessary files to avoid having subjects with all
-the necessary files needed but all are from different runs. This is most likely a rare occurrence but it is better to be
-safer to ensure that even a rare occurrence doesn't result in a crash. The continue statement that skips the subject
-only worked if no condition was specified.
 
-### 💻 Metadata
-- Ensure user knows that all image files are outputted as pngs.
+**Versioning Notice:**
+Versions `1.0.0` through `1.0.0.post4` were released in error due to a versioning mistake.
+The package should have incremented from 0.9.9 to 0.10.0. These versions have been removed and superseded by version
+`0.10.0`. Please use version `0.10.0` or later, which includes all changes and fixes from the erroneous versions numbers
+plus some additional updates.
 
-## [1.0.0.post3] - 2024-06-16
-🚀 New/Added
+Use `pip install neurocaps==0.10.0` for the latest release.
+
+## [0.10.0] - 2024-06-17
+Any changes in defaults, function names, etc will start to have proper deprecation warnings after this starting at this.
+Additionally major development will slow down, except for any major fixes needed.
+
+### 🚀 New/Added
+- ``CAP`` class as a ``cosine_similarity`` property and in ``CAP.caps2radar``, there is now a ``as_html`` parameter to save
+plotly's radar plots as an html file instead of a static png. The html files can be opened in a browser and saved as a
+png from the browser. Most importantly, they are interactive. - new to [0.10.0]
 - Made another internal attribute in CAP ``CAP.subject_table`` a property and setter. This property acts as a lookup
 table. As a setter, it can be used to modify the table to use another subject dictionary with different subjects
 not used to generate the k-means model.
-
-### 💻 Metadata
-- Clarifications of some doc strings, stating that Bessel's correction is used for standardizing and that for
-`CAP.calculate_metrics()` can accept subject timeseries not used for generating the k-means model.
-
-### 🐛 Fixes
-- Removes in-place operations when standardizing to avoid numpy casting issues due to incompatible dtypes.
-- Additional deep copy such as deep copying any setter properties to ensure external changes does not result internal
-changes.
-
-## [1.0.0.post2] - 2024-06-15
-### 💻 Metadata
-- Corrects docstring for `standardize` from parameter being `subject_timeseries_list` to `subject_timeseries`.
-
-## [1.0.0.post1] - 2024-06-15
-### 🐛 Fixes
-- Some important fixes were left out of the original version.
-    - These fixes includes:
-        - Removal of the `epsilon` parameter in `self.get_caps` and replacement with `std[std < np.finfo(np.float64).eps] = 1.0`
-          to prevent divide by 0 issues and numerical instability issues.
-        - Deep copy `subject_timeseries` in `standardize()` and `parcel_approach`. In their functions, in-place operations
-        are performed which could unintentionally change the external versions of these parameters
-
-## [1.0.0] - 2024-06-15
-
-Any changes in defaults, function names, etc will start to have proper deprecation warnings after this starting at this.
-Additionally development will slow down.
-
-🚀 New/Added
-- Can now plot silhouette score and have some control over the `x-axis` of elbow and silhouette plot with the "step"
-`**kwarg`.
+- Can now plot silhouette score and have some control over the `x-axis` of elbow and silhouette plot with the "step" `**kwarg`.
 
 ### ♻ Changed
 - Default for `CAP.caps2plots()` from "outer product" to "outer_product".
@@ -61,11 +33,39 @@ to "transition_frequency".
 `CAP`.
 
 ### 🐛 Fixes
+- Restriction that numpy must be less than version 2 since this breaks brainspace vtk, which is needed for plotting to
+surface space. - new to [0.10.0]
+- Adds nbformat as dependency for plotly. - new to [0.10.0]
+- In ``TimeseriesExtractor.get_bold()``, several checks are done to ensure that subjects have the necessary files for
+extraction. Subjects that have zero nifti, confound files (if confounds requested), event files (if requested), etc
+are automatically eliminated from being added to the list for timeseries extraction. A final check assesses, the run 
+ID of the files to see if the subject has at least one run with all necessary files to avoid having subjects with all
+the necessary files needed but all are from different runs. This is most likely a rare occurrence but it is better to be
+safer to ensure that even a rare occurrence doesn't result in a crash. The continue statement that skips the subject
+only worked if no condition was specified.
+- Removes in-place operations when standardizing to avoid numpy casting issues due to incompatible dtypes.
+- Additional deep copy such as deep copying any setter properties to ensure external changes does not result internal
+changes.
+- Some important fixes were left out of the original version.
+    - These fixes includes:
+        - Removal of the `epsilon` parameter in `self.get_caps` and replacement with `std[std < np.finfo(np.float64).eps] = 1.0`
+          to prevent divide by 0 issues and numerical instability issues.
+        - Deep copy `subject_timeseries` in `standardize()` and `parcel_approach`. In their functions, in-place operations
+        are performed which could unintentionally change the external versions of these parameters
 - Added try-except block in ``TimeseriesExtractor.get_bold`` when attempting to obtain the ``tr``, to issue a warning
 when ``tr`` isn't specified and can't be extracted from BOLD metadata. Extraction will be continued.
 - Fixed error when using `silhouette` method without multiprocessing where the function called the elbow method instead
 of the silhouette method. This error affects versions 0.9.6 to 0.9.9.
 - Fix some file names of output by adding underscores for spaces in group names.
+
+### 💻 Metadata
+- Drops the python 3.12 classifier. All functions except for ``CAP.caps2surf`` works on python 3.12. Additionally, for
+python 3.12, you may need to use ``pip install setuptools`` if you receive an error stating that
+"ModuleNotFoundError: No module named 'pkg_resources'". - new to [0.10.0]
+- Ensure user knows that all image files are outputted as pngs.
+- Clarifications of some doc strings, stating that Bessel's correction is used for standardizing and that for
+`CAP.calculate_metrics()` can accept subject timeseries not used for generating the k-means model.
+- Corrects docstring for `standardize` from parameter being `subject_timeseries_list` to `subject_timeseries`.
 
 ## [0.9.9.post3] - 2024-06-13
 ### 🐛 Fixes
