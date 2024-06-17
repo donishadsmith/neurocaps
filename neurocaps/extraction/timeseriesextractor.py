@@ -544,7 +544,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                                           Skipping subject: {subj_id} due to no NifTI file, mask file, event file,
                                           confound tsv file, confound json file being from the same run.
                                           """)
-                            continue
+                        continue
                     else:
                         warnings.warn(f"""
                                       Subject: {subj_id} only has the following
@@ -634,7 +634,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Whether to show the figures.
 
         output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
-            Directory to save to. The directory will be created if it does not exist.
+            Directory to save to. The directory will be created if it does not exist. Outputs as png file.
 
         file_name : :obj:`str` or :obj:`None`, default=None
             Name of the file without the extension.

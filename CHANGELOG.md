@@ -3,6 +3,19 @@
 All notable future changes to neurocaps will be documented in this file.
 
 *Note*: All versions in this file are deployed on pypi.
+## [1.0.0.post4] - 2024-06-17
+### 🐛 Fixes
+- In ``TimeseriesExtractor.get_bold()``, several checks are done to ensure that subjects have the necessary files for
+extraction. Subjects that have zero nifti, confound files (if confounds requested), event files (if requested), etc
+are automatically eliminated from being added to the list for timeseries extraction. A final check assesses, the run 
+ID of the files to see if the subject has at least one run with all necessary files to avoid having subjects with all
+the necessary files needed but all are from different runs. This is most likely a rare occurrence but it is better to be
+safer to ensure that even a rare occurrence doesn't result in a crash. The continue statement that skips the subject
+only worked if no condition was specified.
+
+### 💻 Metadata
+- Ensure user knows that all image files are outputted as pngs.
+
 ## [1.0.0.post3] - 2024-06-16
 🚀 New/Added
 - Made another internal attribute in CAP ``CAP.subject_table`` a property and setter. This property acts as a lookup

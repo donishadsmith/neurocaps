@@ -399,7 +399,7 @@ class CAP(_CAPGetter):
 
         output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
             Directory to save plot to if ``cluster_selection_method`` is set to "elbow". The directory will be
-            created if it does not exist.
+            created if it does not exist. Outputs as png file.
 
         kwargs : :obj:`dict`
             Dictionary to adjust certain parameters related to ``cluster_selection_method`` when set to "elbow".
@@ -824,7 +824,7 @@ class CAP(_CAPGetter):
         if any(boolean_list):
             invalid_metrics = [metrics[indx] for indx,boolean in enumerate(boolean_list) if boolean is False]
             if len(invalid_metrics) > 0:
-                warnings.warn(f"invalid metrics will be ignored: {' '.join(invalid_metrics)}")
+                warnings.warn(f"Invalid metrics will be ignored: {', '.join(invalid_metrics)}")
         else:
             raise ValueError(f"No valid metrics in `metrics` list. Valid metrics are {', '.join(valid_metrics)}")
 
@@ -982,7 +982,7 @@ class CAP(_CAPGetter):
         ----------
         output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
             Directory to save plots to. The directory will be created if it does not exist. If None, plots will not
-            be saved.
+            be saved. Outputs as png file.
 
         suffix_title : :obj:`str` or :obj:`None`, default=None
             Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
@@ -1571,7 +1571,7 @@ class CAP(_CAPGetter):
         ----------
         output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
             Directory to save plots to. The directory will be created if it does not exist. If None,
-            plots will not be saved.
+            plots will not be saved. Outputs as png file.
 
         suffix_title : :obj:`str` or :obj:`None`, default=None
             Appended to the title of each plot as well as the name of the saved file if ``output_dir``
@@ -1798,7 +1798,7 @@ class CAP(_CAPGetter):
         ----------
         output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
             Directory to save plots to. The directory will be created if it does not exist. If None, plots will not
-            be saved.
+            be saved. Outputs as png file.
 
         suffix_title: :obj:`str` or :obj:`None`, default=None
             Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
@@ -2041,7 +2041,7 @@ class CAP(_CAPGetter):
         Parameters
         ----------
         output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
-            Directory to save plots to. The directory will be created if it does not exist.
+            Directory to save plots to. The directory will be created if it does not exist. Outputs as png file.
 
         suffix_title: :obj:`str` or :obj:`None`, default=None
             Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
