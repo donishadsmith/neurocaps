@@ -21,6 +21,7 @@ def test_TimeseriesExtractor_no_parallel():
 
     assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 100
     assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 40
+    extractor.visualize_bold(subj_id="01",run="001", region="Vis", show_figs=False)
 
 def test_TimeseriesExtractor_no_parallel_no_session_w_custom():
     dir = os.path.dirname(__file__)

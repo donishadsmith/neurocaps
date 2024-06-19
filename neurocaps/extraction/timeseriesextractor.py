@@ -237,7 +237,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             self._signal_clean_info["fd_threshold"] = fd_threshold
 
     def get_bold(self, bids_dir: os.PathLike, task: str, session: Optional[Union[int,str]]=None,
-                 runs: Optional[list[int]]=None, condition: Optional[str]=None, tr: Optional[Union[int, float]]=None,
+                 runs: Optional[Union[list[int], list[str]]]=None, condition: Optional[str]=None, tr: Optional[Union[int, float]]=None,
                  run_subjects: Optional[list[str]]=None, exclude_subjects: Optional[list[str]]= None,
                  pipeline_name: Optional[str]=None, n_cores: Optional[int]=None, verbose: bool=True,
                  flush_print: bool=False, exclude_niftis: Optional[list[str]]=None) -> None:
@@ -260,12 +260,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Session to extract timeseries from. Only a single session can be extracted at a time. An error will be
             issued if more than one session is detected in the preprocessed NifTI files.
 
-        runs : :obj:`list[int]`, default=None
+        runs : :obj:`list[int]` or :obj:`list[str]`, default=None
             List of run numbers to extract timeseries data from. Extracts all runs if unspecified.
             For instance, if only "run-0" and "run-1" should be extracted, then:
             ::
 
                 runs=[0,1]
+                # Or if run IDs are not integers
+                runs=["000","001"]
 
         condition : :obj:`str` or :obj:`None`, default=None
             Specific condition in the task to extract from. Only a single condition can be extracted at a time.
@@ -604,7 +606,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         with open(os.path.join(output_dir,save_file_name), "wb") as f:
             dump(self._subject_timeseries,f)
 
-    def visualize_bold(self, subj_id: Union[int,str], run: int,
+    def visualize_bold(self, subj_id: Union[int,str], run: Union[int, str],
                        roi_indx: Optional[Union[Union[int,str], Union[list[str],list[int]]]]=None,
                        region: Optional[str]=None, show_figs: bool=True,
                        output_dir: Optional[Union[str, os.PathLike]]=None,
@@ -619,7 +621,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         subj_id : :obj:`str` or :obj:`int`
             The subject ID.
 
-        run : :obj:`int`
+        run : :obj:`int` or :obj:`str`
             The run to plot.
 
         roi_indx : :obj:`int` or :obj:`str` or :obj:`list[int]` or :obj:`list[int]` or :obj:`None`, default=None

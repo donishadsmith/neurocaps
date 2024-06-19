@@ -32,12 +32,25 @@ pip install -e .
 
 **As this package is still in the version 0.x.x series, aspects of the package may change rapidly to improve convenience and ease of use.**
 
+**Additionally, as of version 0.10.0, versioning for the 0.x.x series for this package will work as:**
+
+`0.minor.patch.postN`
+
+- *.minor* : Introduces new features and may include potential breaking changes. Any breaking changes will be explicitly
+noted in the changelog.
+- *.patch* : Contains no new features, simply fixes any identified bugs.
+- *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
+
+## [0.10.0.post1] - 2024-06-19
+### 💻 Metadata
+- Minor metadata update to denote that `run` and `runs` parameter can be a string too.
+
 ## [0.10.0] - 2024-06-17
 ### 🚀 New/Added
-- ``CAP`` class as a ``cosine_similarity`` property and in ``CAP.caps2radar``, there is now a ``as_html`` parameter to save
+- `CAP` class as a `cosine_similarity` property and in `CAP.caps2radar`, there is now a `as_html` parameter to save
 plotly's radar plots as an html file instead of a static png. The html files can be opened in a browser and saved as a
 png from the browser. Most importantly, they are interactive. - **new to [0.10.0]**
-- Made another internal attribute in CAP ``CAP.subject_table`` a property and setter. This property acts as a lookup
+- Made another internal attribute in CAP `CAP.subject_table` a property and setter. This property acts as a lookup
 table. As a setter, it can be used to modify the table to use another subject dictionary with different subjects
 not used to generate the k-means model.
 - Can now plot silhouette score and have some control over the `x-axis` of elbow and silhouette plot with the "step" `**kwarg`.
@@ -53,7 +66,7 @@ to "transition_frequency".
 - Restriction that numpy must be less than version 2 since this breaks brainspace vtk, which is needed for plotting to
 surface space. - **new to [0.10.0]**
 - Adds nbformat as dependency for plotly. - **new to [0.10.0]**
-- In ``TimeseriesExtractor.get_bold()``, several checks are done to ensure that subjects have the necessary files for
+- In `TimeseriesExtractor.get_bold()`, several checks are done to ensure that subjects have the necessary files for
 extraction. Subjects that have zero nifti, confound files (if confounds requested), event files (if requested), etc
 are automatically eliminated from being added to the list for timeseries extraction. A final check assesses, the run 
 ID of the files to see if the subject has at least one run with all necessary files to avoid having subjects with all
@@ -69,15 +82,15 @@ changes.
           to prevent divide by 0 issues and numerical instability issues.
         - Deep copy `subject_timeseries` in `standardize()` and `parcel_approach`. In their functions, in-place operations
         are performed which could unintentionally change the external versions of these parameters
-- Added try-except block in ``TimeseriesExtractor.get_bold`` when attempting to obtain the ``tr``, to issue a warning
-when ``tr`` isn't specified and can't be extracted from BOLD metadata. Extraction will be continued.
+- Added try-except block in `TimeseriesExtractor.get_bold` when attempting to obtain the `tr`, to issue a warning
+when `tr` isn't specified and can't be extracted from BOLD metadata. Extraction will be continued.
 - Fixed error when using `silhouette` method without multiprocessing where the function called the elbow method instead
 of the silhouette method. This error affects versions 0.9.6 to 0.9.9.
 - Fix some file names of output by adding underscores for spaces in group names.
 
 ### 💻 Metadata
-- Drops the python 3.12 classifier. All functions except for ``CAP.caps2surf`` works on python 3.12. Additionally, for
-python 3.12, you may need to use ``pip install setuptools`` if you receive an error stating that
+- Drops the python 3.12 classifier. All functions except for `CAP.caps2surf` works on python 3.12. Additionally, for
+python 3.12, you may need to use `pip install setuptools` if you receive an error stating that
 "ModuleNotFoundError: No module named 'pkg_resources'". - new to [0.10.0]
 - Ensure user knows that all image files are outputted as pngs.
 - Clarifications of some doc strings, stating that Bessel's correction is used for standardizing and that for
@@ -122,7 +135,7 @@ properly afterwards.
 
 ## [0.9.8.post3] - 2024-06-10
 ### 🐛 Fixes
-- Adds a "mode" kwargs to `CAP.caps2radar` to override default plotly drawing behaviors and sets ``use_scatterpolar``
+- Adds a "mode" kwargs to `CAP.caps2radar` to override default plotly drawing behaviors and sets `use_scatterpolar`
 argument to False.
 
 ## [0.9.8.post2] - 2024-06-09
@@ -148,12 +161,6 @@ It just uses the max and min values from the data.
 - Added new parameter to `CAP.caps2surf()`, `fslr_giftis_dict`, to allow CAPs statistical maps that were
 converted to giftis externally, using tools such as Connectome Workbench, to be plotted. This parameter only requires
 the `CAP` class to be initialized.
-
-To use this version:
-
-```
-pip install neurocaps==0.9.8rc1
-``
 
 ## [0.9.7.post2] - 2024-06-03
 ### ♻ Changed

@@ -13,7 +13,7 @@ def test_CAP_get_caps_no_groups():
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, n_clusters=2)
     assert cap_analysis.caps["All Subjects"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["All Subjects"]["CAP-2"].shape == (100,)
-    
+
 def test_CAP_get_caps_with_groups():
     warnings.simplefilter('ignore')
     parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
@@ -66,7 +66,7 @@ def test_CAP_get_caps_no_groups_pkl():
                           n_clusters=2)
     assert cap_analysis.caps["All Subjects"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["All Subjects"]["CAP-2"].shape == (100,)
-    
+
 def test_CAP_get_caps_with_groups_pkl():
     warnings.simplefilter('ignore')
     parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
@@ -122,9 +122,19 @@ def test_CAP_get_caps_with_groups_and_silhouette_method_pkl():
     cap_analysis = CAP(parcel_approach=extractor.parcel_approach, groups={"A": [1,2,3,5], "B": [4,6,7,8,9,10,7]})
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
                           n_clusters=[2,3,4,5], cluster_selection_method="silhouette")
-    
+
     assert all(elem > 0  or elem < 0 for elem in cap_analysis.silhouette_scores["A"].values())
     assert all(elem > 0  or elem < 0 for elem in cap_analysis.silhouette_scores["A"].values())
 
     df_dict = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True)
     assert len(df_dict) == 4
+    cap_analysis.caps2plot(subplots=True, xlabel_rotation=90, sharey=True, borderwidths=10, show_figs=False)
+
+    cap_analysis.caps2plot(subplots=False, yticklabels_size=5, wspace = 0.1, visual_scope="nodes", xlabel_rotation=90,
+                        xticklabels_size = 5, hspace = 0.6, tight_layout = False, show_figs=False)
+
+    cap_analysis.caps2corr(annot=True, show_figs=False)
+    radialaxis={"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)",
+            "ticks": "outside" , "tickfont": {"size": 14, "color": "black"}, "range": [0,0.3],
+            "tickvals": [0.1,0.2,0.3]}
+    cap_analysis.caps2radar(radialaxis=radialaxis, fill="toself", scattersize=10, show_figs=False, as_html=True)
