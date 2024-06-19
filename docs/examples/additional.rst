@@ -51,7 +51,8 @@ is appended to run-1 of the other task. For this to work, all dictionaries must 
                 timeseries = combined_dicts[dict_id][subj_id][run_id]
                 print(f"For {dict_id} sub-{subj_id}; {run_id} shape is {timeseries.shape}")
 
-.. code-block:: text  
+.. rubric:: Output
+.. code-block:: text
 
     For dict_0 sub-1; run-1 shape is (10, 100)
     For dict_0 sub-1; run-2 shape is (10, 100)
@@ -95,7 +96,8 @@ timeseries extraction.
     print(np.array_equal(standardized_subject_timeseries["1"]["run-1"], standardized_1))
     print(np.array_equal(standardized_subject_timeseries["1"]["run-2"], standardized_2))
 
-.. code-block:: text  
+.. rubric:: Output
+.. code-block:: text
 
     True
     True
