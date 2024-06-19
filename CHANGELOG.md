@@ -4,22 +4,39 @@ All notable future changes to neurocaps will be documented in this file.
 
 *Note*: All versions in this file are deployed on pypi.
 
-**Versioning Notice:**
-Versions `1.0.0` through `1.0.0.post4` were released in error due to a versioning mistake.
-The package should have incremented from 0.9.9 to 0.10.0. These versions have been removed and superseded by version
-`0.10.0`. Please use version `0.10.0` or later, which includes all changes and fixes from the erroneous versions numbers
-plus some additional updates.
+## [Versioning Notice]
 
-Use `pip install neurocaps==0.10.0` for the latest release.
+**Affected Versions: 1.0.0 through 1.0.0.post4**
+
+Due to a versioning mistake, versions 1.0.0 through 1.0.0.post4 were released in error. These versions have now been
+removed from pypi. The correct versioning was intended to be incremented from 0.9.9.post3 to 0.10.0.
+
+All changes and fixes from the erroneous versions have been included in version 0.10.0, along with some additional
+updates.
+
+Please use version 0.10.0 or later:
+
+```python
+
+pip install neurocaps==0.10.0
+
+```
+For local installations, you may need to run:
+
+```python
+
+pip uninstall neurocaps
+pip install -e .
+
+```
+
+**As this package is still in the version 0.x.x series, aspects of the package may change rapidly to improve convenience and ease of use.**
 
 ## [0.10.0] - 2024-06-17
-Any changes in defaults, function names, etc will start to have proper deprecation warnings after this starting at this.
-Additionally major development will slow down, except for any major fixes needed.
-
 ### 🚀 New/Added
 - ``CAP`` class as a ``cosine_similarity`` property and in ``CAP.caps2radar``, there is now a ``as_html`` parameter to save
 plotly's radar plots as an html file instead of a static png. The html files can be opened in a browser and saved as a
-png from the browser. Most importantly, they are interactive. - new to [0.10.0]
+png from the browser. Most importantly, they are interactive. - **new to [0.10.0]**
 - Made another internal attribute in CAP ``CAP.subject_table`` a property and setter. This property acts as a lookup
 table. As a setter, it can be used to modify the table to use another subject dictionary with different subjects
 not used to generate the k-means model.
@@ -34,8 +51,8 @@ to "transition_frequency".
 
 ### 🐛 Fixes
 - Restriction that numpy must be less than version 2 since this breaks brainspace vtk, which is needed for plotting to
-surface space. - new to [0.10.0]
-- Adds nbformat as dependency for plotly. - new to [0.10.0]
+surface space. - **new to [0.10.0]**
+- Adds nbformat as dependency for plotly. - **new to [0.10.0]**
 - In ``TimeseriesExtractor.get_bold()``, several checks are done to ensure that subjects have the necessary files for
 extraction. Subjects that have zero nifti, confound files (if confounds requested), event files (if requested), etc
 are automatically eliminated from being added to the list for timeseries extraction. A final check assesses, the run 
