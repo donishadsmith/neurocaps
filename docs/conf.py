@@ -21,7 +21,7 @@ copyright = '2024, neurocaps developers'
 author = 'Donisha Smith'
 
 # The full version, including alpha/beta/rc tags
-release = '0.10.0.post1'
+release = '0.10.0.post2'
 
 # -- General configuration ---------------------------------------------------
 
@@ -37,7 +37,8 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
     'sphinx_rtd_theme',
-    "myst_parser"
+    "myst_parser",
+    'sphinx_gallery.load_style'
 ]
 
 # Generate the API documentation when building
