@@ -41,6 +41,12 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 - *.patch* : Contains no new features, simply fixes any identified bugs.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.10.0.post2] - 2024-06-20
+### 💻 Metadata
+- Minor metadata update to docstrings to remove curly braces from inside the list object of certain parameters to 
+not make it seem as if it is supposed to be a strings inside a dictionary which is inside a list as opposed to strings
+in a list.
+
 ## [0.10.0.post1] - 2024-06-19
 ### 💻 Metadata
 - Minor metadata update to denote that `run` and `runs` parameter can be a string too.

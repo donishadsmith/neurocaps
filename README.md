@@ -165,10 +165,9 @@ The provided example demonstrates setting up a custom parcellation containing no
 
 Please refer to [demo.ipynb](https://github.com/donishadsmith/neurocaps/blob/main/demo.ipynb) or https://neurocaps.readthedocs.io/en/latest/examples/examples.html for a more extensive demonstration of the features included in this package.
 
-Quick code example:
+**Quick Code Examples (Examples use randomized data)**:
 
 ```python
-# Examples use randomized data
 
 from neurocaps.extraction import TimeseriesExtractor
 from neurocaps.analysis import CAP
@@ -296,10 +295,9 @@ cap_analysis.caps2corr(annot=True, figsize=(6,4), cmap=palette)
 # Create radar plots showing cosine similarity between region/networks and caps
 radialaxis={"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "ticks": "outside" , "tickfont": {"size": 14, "color": "black"},
 "range": [0,0.3], "tickvals": [0.1,0.2,0.3]}
-cap_analysis.caps2radar(radialaxis=radialaxis, fill="toself", scattersize=10)
+cap_analysis.caps2radar(radialaxis=radialaxis, fill="toself")
 ```
-**Partial Plot Outputs:** (*Note*: one image will be generated per CAP)
-![image](https://github.com/donishadsmith/neurocaps/assets/112973674/755afcc2-14d7-4613-9247-91634e0b7e34)
+![image](https://github.com/donishadsmith/neurocaps/assets/112973674/5ab17b92-bac9-48a9-9f4c-25bb1a69bf1c)
 
 # Testing 
 This package was tested using a closed dataset as well as a modified version of a single-subject open dataset to test the `TimeseriesExtractor` function on GitHub Actions. The open dataset provided by [Laumann & Poldrack](https://openfmri.org/dataset/ds000031/) and used in [Laumann et al., 2015](https://doi.org/10.1016/j.neuron.2015.06.037)[^4]. was also utilized. This data was obtained from the OpenfMRI database, accession number ds000031. 

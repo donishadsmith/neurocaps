@@ -502,7 +502,7 @@ class CAP(_CAPGetter):
         self._create_caps_dict()
 
     def _perform_silhouette_method(self, random_state, init, n_init, max_iter, tol, algorithm,
-                                   show_figs, output_dir, **kwargs) -> None:
+                                   show_figs, output_dir, **kwargs):
         # Initialize attribute
         self._silhouette_scores = {}
         self._optimal_n_clusters = {}
@@ -555,7 +555,7 @@ class CAP(_CAPGetter):
             else: plt.show()
 
     def _perform_elbow_method(self, random_state, show_figs, output_dir, init, n_init, max_iter, tol, algorithm,
-                              **kwargs) -> None:
+                              **kwargs):
         # Initialize attribute
         self._inertia = {}
         self._optimal_n_clusters = {}
@@ -625,7 +625,7 @@ class CAP(_CAPGetter):
                     if show_figs is False: plt.close()
                     else: plt.show()
 
-    def _create_caps_dict(self) -> None:
+    def _create_caps_dict(self):
         # Initialize dictionary
         self._caps = {}
         for group in self._groups:
@@ -635,7 +635,7 @@ class CAP(_CAPGetter):
             self._caps[group].update({f"CAP-{state_number}": state_vector
                                         for state_number, state_vector in cluster_centroids})
 
-    def _get_concatenated_timeseries(self, subject_timeseries, runs) -> None:
+    def _get_concatenated_timeseries(self, subject_timeseries, runs):
         # Create dictionary for "All Subjects" if no groups are specified to reuse the same loop instead of having to
         # create logic for grouped and non-grouped version of the same code
         if not self._groups: self._groups = {"All Subjects": [subject for subject in subject_timeseries]}
@@ -676,7 +676,7 @@ class CAP(_CAPGetter):
 
         return concatenated_timeseries
 
-    def _generate_lookup_table(self) -> None:
+    def _generate_lookup_table(self):
         self._subject_table = {}
         for group in self._groups:
             for subj_id in self._groups[group]:
@@ -741,14 +741,14 @@ class CAP(_CAPGetter):
             as a string, the second level must consist of the run numbers in the form of "run-#" (where # is the
             corresponding number of the run), and the last level must consist of the timeseries (as a numpy array)
             associated with that run. **This does not need to be the same subject timeseries dictionary used for
-            generating the k-means model but should have the same number of columns/ROIs. If your ``subject_timeseries``
-            does not contain the same subject IDs then use the ``self.subject_table`` setter to generate the
-            appropriate subject ID and group name mapping. Note, if standardizing was requested in ``self.get_caps()``,
-            then the columns/ROIs of the ``subject_timeseries`` provided to this method will be scaled using the mean
-            and sample standard deviation derived from the concatenated data used to generate the k-means model. This
-            is to ensure that each subject's frames are correctly assigned to the cluster centroid it is closest to as
-            it will be on the same scale of the data used to generate the k-means model. If the same
-            ``subject_timeseries`` that was used to generate the k-means model is specified here, then the
+            generating the k-means model but should have the same number of columns/ROIs**. If your
+            ``subject_timeseries`` does not contain the same subject IDs then use the ``self.subject_table`` setter to
+            generate the appropriate subject ID and group name mapping. Note, if standardizing was requested in
+            ``self.get_caps()``, then the columns/ROIs of the ``subject_timeseries`` provided to this method will be
+            scaled using the mean and sample standard deviation derived from the concatenated data used to generate the
+            k-means model. This is to ensure that each subject's frames are correctly assigned to the cluster centroid
+            it is closest to as it will be on the same scale of the data used to generate the k-means model. If the
+            same ``subject_timeseries`` that was used to generate the k-means model is specified here, then the
             predicted label assignments will be equivalent to the original label assignment in the k-means model. The
             structure of is as follows:
             ::
@@ -781,7 +781,7 @@ class CAP(_CAPGetter):
                 run_2 = [2,3,3]
                 continuous_runs = [0,1,1,2,3,3]
 
-        metrics : {"temporal_fraction", "persistence", "counts", "transition_frequency"} or :obj:`List[{"temporal_fraction", "persistence", "counts", "transition_frequency"}]`, default=["temporal_fraction", "persistence", "counts", "transition_frequency"]
+        metrics : {"temporal_fraction", "persistence", "counts", "transition_frequency"} or :obj:`list["temporal_fraction", "persistence", "counts", "transition_frequency"]`, default=["temporal_fraction", "persistence", "counts", "transition_frequency"]
             The metrics to calculate. Available options include "temporal_fraction", "persistence",
             "counts", and "transition_frequency".
 
@@ -1003,10 +1003,10 @@ class CAP(_CAPGetter):
         suffix_title : :obj:`str` or :obj:`None`, default=None
             Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
 
-        plot_options : {"outer_product", "heatmap"} or :obj:`list[{"outer_product", "heatmap"}]`, default="outer_product"
+        plot_options : {"outer_product", "heatmap"} or :obj:`list["outer_product", "heatmap"]`, default="outer_product"
             Type of plots to create. Options are "outer_product" or "heatmap".
 
-        visual_scope : {"regions", "nodes"} or :obj:`list[{"regions", "nodes"}]`, default="regions"
+        visual_scope : {"regions", "nodes"} or :obj:`list["regions", "nodes"]`, default="regions"
             Determines whether plotting is done at the region level or node level.
             For region level, the value of each nodes in the same regions (both left and right hemisphere nodes in the
             same region) are averaged together then plotted. Options are "regions" or "nodes".

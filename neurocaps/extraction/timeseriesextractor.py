@@ -33,7 +33,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         The approach to parcellate BOLD images. This should be a nested dictionary with the first key being the
         atlas name. Currently, only "Schaefer", "AAL", and "Custom" are supported.
 
-        - For "Schaefer", available sub-keys include "n_rois", "yeo_networks", and "resolution_mm".  Refer to documentation for ``nilearn.datasets.fetch_atlas_schaefer_2018`` for valid inputs.    
+        - For "Schaefer", available sub-keys include "n_rois", "yeo_networks", and "resolution_mm".  Refer to documentation for ``nilearn.datasets.fetch_atlas_schaefer_2018`` for valid inputs.
         - For "AAL", the only sub-key is "version". Refer to documentation for  ``nilearn.datasets.fetch_atlas_aal`` for valid inputs.
         - For "Custom", the key must include a sub-key called "maps" specifying the directory location of the parcellation NifTI file.
 
@@ -237,10 +237,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             self._signal_clean_info["fd_threshold"] = fd_threshold
 
     def get_bold(self, bids_dir: os.PathLike, task: str, session: Optional[Union[int,str]]=None,
-                 runs: Optional[Union[list[int], list[str]]]=None, condition: Optional[str]=None, tr: Optional[Union[int, float]]=None,
-                 run_subjects: Optional[list[str]]=None, exclude_subjects: Optional[list[str]]= None,
-                 pipeline_name: Optional[str]=None, n_cores: Optional[int]=None, verbose: bool=True,
-                 flush_print: bool=False, exclude_niftis: Optional[list[str]]=None) -> None:
+                 runs: Optional[Union[list[int], list[str]]]=None, condition: Optional[str]=None,
+                 tr: Optional[Union[int, float]]=None, run_subjects: Optional[list[str]]=None,
+                 exclude_subjects: Optional[list[str]]= None, pipeline_name: Optional[str]=None,
+                 n_cores: Optional[int]=None, verbose: bool=True, flush_print: bool=False,
+                 exclude_niftis: Optional[list[str]]=None) -> None:
         """
         **Get BOLD Data**
 
