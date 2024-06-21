@@ -1,14 +1,14 @@
 .document h2 {
-    font-size: 1.25em
+    font-size: 1.25em;
 }
 
 .wy-side-nav-search, .wy-nav-top {
     background: rgb(0, 0, 0);
 }
 
+
 section {
     text-align: justify;
-    word-spacing: -0.08em;
 }
 
 .note .reference,
@@ -20,3 +20,12 @@ section {
 .wy-nav-content {
     max-width: none;
  }
+
+.sphx-glr-thumbcontainer {
+    text-align: left;
+}
+
+.sphx-glr-thumbnail-title {
+    font-size: 0.9em;
+    text-align: left;
+}

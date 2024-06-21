@@ -57,6 +57,12 @@ napoleon_use_ivar = True
 napoleon_use_rtype = False
 napoleon_include_private_with_doc = False
 
+pygments_style = 'sphinx'
+
+sphinx_gallery_conf = {
+    'thumbnail_size': (350, 250),
+}
+
 # The suffix(es) of source filenames.
 source_suffix = ['.rst', '.md']
 

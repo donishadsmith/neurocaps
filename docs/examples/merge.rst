@@ -30,13 +30,15 @@ is appended to run-1 of the other task. For this to work, all dictionaries must 
             timeseries = subject_timeseries_combined[subj_id][run_id]
             print(f"sub-{subj_id}; {run_id} shape is {timeseries.shape}")
 
-.. code-block:: text  
+.. rst-class:: sphx-glr-script-out
 
-    sub-1; run-1 shape is (30, 100)
-    sub-1; run-2 shape is (10, 100)
-    sub-1; run-3 shape is (10, 100)
-    sub-2; run-1 shape is (30, 100)
-    sub-2; run-2 shape is (10, 100)
+    .. code-block:: none
+
+        sub-1; run-1 shape is (30, 100)
+        sub-1; run-2 shape is (10, 100)
+        sub-1; run-3 shape is (10, 100)
+        sub-2; run-1 shape is (30, 100)
+        sub-2; run-2 shape is (10, 100)
 
 .. code-block:: python
 
@@ -51,53 +53,19 @@ is appended to run-1 of the other task. For this to work, all dictionaries must 
                 timeseries = combined_dicts[dict_id][subj_id][run_id]
                 print(f"For {dict_id} sub-{subj_id}; {run_id} shape is {timeseries.shape}")
 
-.. rubric:: Output
-.. code-block:: text
-
-    For dict_0 sub-1; run-1 shape is (10, 100)
-    For dict_0 sub-1; run-2 shape is (10, 100)
-    For dict_0 sub-1; run-3 shape is (10, 100)
-    For dict_0 sub-2; run-1 shape is (10, 100)
-    For dict_0 sub-2; run-2 shape is (10, 100)
-    For dict_1 sub-1; run-1 shape is (20, 100)
-    For dict_1 sub-2; run-1 shape is (20, 100)
-    For combined sub-1; run-1 shape is (30, 100)
-    For combined sub-1; run-2 shape is (10, 100)
-    For combined sub-1; run-3 shape is (10, 100)
-    For combined sub-2; run-1 shape is (30, 100)
-    For combined sub-2; run-2 shape is (10, 100)
-
-Tutorial 4: Standardizing Within Runs Using ``neurocaps.analysis.standardize``
-==============================================================================
-While standardizing the features/columns within runs can be done with the ``standardize`` parameter within 
-``TimeseriesExtractor``, standardizing can also be done using ``neurocaps.analysis.standardize`` if not done during
-timeseries extraction.
-
-.. code-block:: python
-
-    import numpy as np
-    from neurocaps.analysis import standardize
-
-    subject_timeseries = {str(x) : {f"run-{y}": np.random.rand(10,100) for y in range(1,4)} for x in range(1,6)}
-
-    # Getting mean and standard deviation for run 1 and 2 of subject 1
-    mean_vec_1, std_vec_1 = subject_timeseries["1"]["run-1"].mean(axis=0), subject_timeseries["1"]["run-1"].std(ddof=1, axis=0) 
-    mean_vec_2, std_vec_2 = subject_timeseries["1"]["run-2"].mean(axis=0), subject_timeseries["1"]["run-2"].std(ddof=1, axis=0)
-
-    # Avoid numerical stability issues
-    std_vec_1[std_vec_1 < np.finfo(np.float64).eps] = 1.0
-    std_vec_2[std_vec_2 < np.finfo(np.float64).eps] = 1.0
-
-    standardized_subject_timeseries = standardize(subject_timeseries)
+.. rst-class:: sphx-glr-script-out
     
-    standardized_1 = (subject_timeseries["1"]["run-1"] - mean_vec_1)/std_vec_1
-    standardized_2 = (subject_timeseries["1"]["run-2"] - mean_vec_2)/std_vec_2
+    .. code-block:: none
 
-    print(np.array_equal(standardized_subject_timeseries["1"]["run-1"], standardized_1))
-    print(np.array_equal(standardized_subject_timeseries["1"]["run-2"], standardized_2))
-
-.. rubric:: Output
-.. code-block:: text
-
-    True
-    True
+        For dict_0 sub-1; run-1 shape is (10, 100)
+        For dict_0 sub-1; run-2 shape is (10, 100)
+        For dict_0 sub-1; run-3 shape is (10, 100)
+        For dict_0 sub-2; run-1 shape is (10, 100)
+        For dict_0 sub-2; run-2 shape is (10, 100)
+        For dict_1 sub-1; run-1 shape is (20, 100)
+        For dict_1 sub-2; run-1 shape is (20, 100)
+        For combined sub-1; run-1 shape is (30, 100)
+        For combined sub-1; run-2 shape is (10, 100)
+        For combined sub-1; run-3 shape is (10, 100)
+        For combined sub-2; run-1 shape is (30, 100)
+        For combined sub-2; run-2 shape is (10, 100)

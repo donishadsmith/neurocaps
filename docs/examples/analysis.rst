@@ -1,5 +1,5 @@
-Tutorial 2: Using ``CAP``
-=========================
+Tutorial 2: Using ``neurocaps.analysis.CAP``
+============================================
 
 Performing CAPs on All Subjects
 -------------------------------
@@ -29,10 +29,11 @@ Performing CAPs on All Subjects
                           n_clusters=list(range(2,11)),
                           cluster_selection_method="elbow", show_figs=True, step=2)
 
-.. rubric:: Output
-.. code-block:: text
+.. rst-class:: sphx-glr-script-out
 
-    Optimal cluster size for All Subjects is 6.
+    .. code-block:: none
+
+        Optimal cluster size for All Subjects is 6.
 
 .. image:: embed/All_Subjects_elbow.png
     :width: 600
@@ -47,11 +48,12 @@ Performing CAPs on Groups
                           n_clusters=list(range(2,21)),
                           cluster_selection_method="silhouette", show_figs=True, step=2)
 
-.. rubric:: Output
-.. code-block:: text
+.. rst-class:: sphx-glr-script-out
 
-    Optimal cluster size for A is 2.
-    Optimal cluster size for B is 2.
+    .. code-block:: none
+
+        Optimal cluster size for A is 2.
+        Optimal cluster size for B is 2.
 
 .. image:: embed/A_silhouette.png
     :width: 600
@@ -123,10 +125,11 @@ Creating Surface Plots
     # Apply custom cmap to surface plots
     cap_analysis.caps2surf(cmap=custom_cmap, size=(500, 100), layout="row")
 
-.. rubric:: Output
-.. code-block:: text
+.. rst-class:: sphx-glr-script-out
+    
+    .. code-block:: none
 
-    Optimal cluster size for All Subjects is 2.
+        Optimal cluster size for All Subjects is 2.
 
 .. image:: embed/All_Subjects_CAP-1_surface_plot.png
     :width: 800

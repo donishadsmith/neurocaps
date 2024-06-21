@@ -54,8 +54,7 @@ def merge_dicts(subject_timeseries_list: Union[list[dict], list[os.PathLike]], r
 
     Returns
     -------
-        `dict[str, dict[str, np.ndarray]]` or `dict[str, dict[str, dict[str, np.ndarray]]]` if ``return_reduced_dicts``
-        is True.
+        `dict[str, dict[str, np.ndarray]]` or `dict[str, dict[str, dict[str, np.ndarray]]]` if ``return_reduced_dicts`` is True.
     """
     assert len(subject_timeseries_list) > 1, "Merging cannot be done with less than two dictionaries or files."
 
