@@ -60,7 +60,7 @@ and used in `Laumann et al., 2015 <https://doi.org/10.1016/j.neuron.2015.06.037>
    
 .. raw:: html
 
-      <div class="sphx-glr-thumbnail-title">Tutorial 3: Merging Timeseries with <code>merge_dicts</code></div>
+      <div class="sphx-glr-thumbnail-title">Tutorial 3: Merging Timeseries With <code>merge_dicts</code></div>
       </a>
       </div>
 
@@ -93,7 +93,7 @@ and used in `Laumann et al., 2015 <https://doi.org/10.1016/j.neuron.2015.06.037>
    
 .. raw:: html
 
-      <div class="sphx-glr-thumbnail-title">Tutorial 5: Changing dtype with <code>change_dtype</code></div>
+      <div class="sphx-glr-thumbnail-title">Tutorial 5: Changing Dtype With <code>change_dtype</code></div>
       </a>
       </div>
 

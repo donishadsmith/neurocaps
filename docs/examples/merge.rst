@@ -1,4 +1,4 @@
-Tutorial 3: Merging Timeseries with ``neurocaps.analysis.merge_dicts``
+Tutorial 3: Merging Timeseries With ``neurocaps.analysis.merge_dicts``
 ======================================================================
 
 Combining the timeseries from different tasks is possible with ``merge_dicts``, this permits running analyses to 

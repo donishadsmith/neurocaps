@@ -1,4 +1,4 @@
-Tutorial 5: Changing dtype with ``neurocaps.analysis.change_dtype``
+Tutorial 5: Changing Dtype With ``neurocaps.analysis.change_dtype``
 ===================================================================
 Changes the dtype of all participant's numpy arrays to assist with memory usage.
 
