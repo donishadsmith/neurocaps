@@ -1,7 +1,7 @@
 import os, numpy as np, pickle, pytest, warnings
 
 from neurocaps.extraction import TimeseriesExtractor
-from neurocaps.analysis import CAP
+from neurocaps.analysis import CAP, change_dtype
 
 def test_CAP_get_caps_no_groups():
     warnings.simplefilter('ignore')
@@ -128,6 +128,15 @@ def test_CAP_get_caps_with_groups_and_silhouette_method_pkl():
 
     df_dict = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True)
     assert len(df_dict) == 4
+
+    new_timeseries = change_dtype(extractor.subject_timeseries, dtype="float16")
+    cap_analysis.calculate_metrics(subject_timeseries=new_timeseries, return_df=True)
+
+    cap_analysis.get_caps(subject_timeseries=new_timeseries,
+                          n_clusters=[2,3,4,5], cluster_selection_method="silhouette")
+    
+    cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True)
+
     cap_analysis.caps2plot(subplots=True, xlabel_rotation=90, sharey=True, borderwidths=10, show_figs=False)
 
     cap_analysis.caps2plot(subplots=False, yticklabels_size=5, wspace = 0.1, visual_scope="nodes", xlabel_rotation=90,

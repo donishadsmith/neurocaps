@@ -2,9 +2,12 @@
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.dynamic]
+version = {attr = "neurocaps.__version__"}
+
 [project]
 name = "neurocaps"
-version = "0.10.0.post2"
+dynamic = ["version"]
 license = {text = "MIT License"}
 authors = [{name = "Donisha Smith", email = "donishasmith@outlook.com"}]
 description = "Co-activation Patterns (CAPs) Python package"
@@ -19,12 +22,13 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Operating System :: MacOS :: MacOS X",
     "Operating System :: POSIX :: Linux",
     "Operating System :: Microsoft :: Windows :: Windows 11",
     "Development Status :: 4 - Beta"
 ]
-dependencies = ["numpy>=1.22.0, <2", # Allows brainspace to work
+dependencies = ["numpy>=1.22.0, <2.0.0", # Allows brainspace to work
                 "pandas>=2.0.0",
                 "joblib>=1.3.0",
                 "matplotlib>=3.6.0",
@@ -39,7 +43,8 @@ dependencies = ["numpy>=1.22.0, <2", # Allows brainspace to work
                 "plotly>=4.9",
                 "nbformat>=4.2.0", # For plotly
                 "kaleido==0.1.0.post1; platform_system == 'Windows'", # Plotly saving seems to work best with this version for Windows
-                "kaleido; platform_system != 'Windows'"
+                "kaleido; platform_system != 'Windows'",
+                "setuptools; python_version>='3.12'"
                 ]
 
 [project.urls]

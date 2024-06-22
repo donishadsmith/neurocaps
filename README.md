@@ -1,5 +1,5 @@
 # neurocaps
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-blue)](https://doi.org/10.5281/zenodo.11908533)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-blue)](https://doi.org/10.5281/zenodo.12216782)
 [![Test Status](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg)](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
@@ -162,6 +162,7 @@ The provided example demonstrates setting up a custom parcellation containing no
 
 - `merge_dicts`: Merge the subject_timeseries dictionaries for overlapping subjects across tasks to identify similar CAPs across different tasks. The merged dictionary can be saved as a pickle file.
 - `standardize`: Standardizes each run independently for all subjects in the subject timeseries.
+- `change_dtype`: Changes the dtype of all subjects in the subject timeseries to help with memory usage.
 
 Please refer to [demo.ipynb](https://github.com/donishadsmith/neurocaps/blob/main/demo.ipynb) or https://neurocaps.readthedocs.io/en/latest/examples/examples.html for a more extensive demonstration of the features included in this package.
 

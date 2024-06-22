@@ -3,8 +3,9 @@ from typing import Union, Optional
 import numpy as np, joblib
 from .._utils import _convert_pickle_to_dict
 
-def merge_dicts(subject_timeseries_list: Union[list[dict], list[os.PathLike]], return_combined_dict: bool=True,
-                return_reduced_dicts: bool=False, output_dir: Optional[Union[str, os.PathLike]]=None,
+def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarray]]], list[os.PathLike]],
+                return_combined_dict: bool=True, return_reduced_dicts: bool=False,
+                output_dir: Optional[Union[str, os.PathLike]]=None,
                 file_name: Optional[str]=None) -> dict[str, np.ndarray]:
     """
     **Merge subject timeseries**
@@ -15,7 +16,7 @@ def merge_dicts(subject_timeseries_list: Union[list[dict], list[os.PathLike]], r
 
     Parameters
     ----------
-    subject_timeseries_list: :obj:`list[dict]]` or :obj:`list[os.PathLike]`
+    subject_timeseries_list : :obj:`list[dict[str, dict[str, np.ndarray]]]` or :obj:`list[os.PathLike]`
         A list of pickle files containing the nested subject timeseries dictionary saved by the
         ``TimeSeriesExtractor`` class or a list of nested subject timeseries dictionaries produced by the
         ``TimeSeriesExtractor`` class. The first level of the nested dictionary must consist of the subject ID as a
@@ -26,35 +27,35 @@ def merge_dicts(subject_timeseries_list: Union[list[dict], list[os.PathLike]], r
 
             subject_timeseries = {
                     "101": {
-                        "run-0": np.array([timeseries]), # 2D array
-                        "run-1": np.array([timeseries]), # 2D array
-                        "run-2": np.array([timeseries]), # 2D array
+                        "run-0": np.array([...]), # 2D array
+                        "run-1": np.array([...]), # 2D array
+                        "run-2": np.array([...]), # 2D array
                     },
                     "102": {
-                        "run-0": np.array([timeseries]), # 2D array
-                        "run-1": np.array([timeseries]), # 2D array
+                        "run-0": np.array([...]), # 2D array
+                        "run-1": np.array([...]), # 2D array
                     }
                 }
 
-    return_combined_dict: :obj:`bool`, default=True,
+    return_combined_dict : :obj:`bool`, default=True
         If True, returns the merged dictionary.
 
-    return_reduced_dicts: :obj:`bool`, default=False
+    return_reduced_dicts : :obj:`bool`, default=False
         If True, returns the list of dictionaries provided with only the subjects present in the combined
         dictionary. The dictionaries are returned in the same order as listed in the ``subject_timeseries_list``
         parameter. The keys will be names "dict_#", with "#" indicating the index of the dictionary or pickle file
         in the ``subject_timeseries_list`` parameter.
 
-    output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
+    output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
         Directory to save the merged dictionary to. Will be saved as a pickle file. The directory will be created
         if it does not exist.
 
-    file_name: :obj:`str` or :obj:`None`, default=None
+    file_name : :obj:`str` or :obj:`None`, default=None
         Name to save the merged dictionary as.
 
     Returns
     -------
-        `dict[str, dict[str, np.ndarray]]` or `dict[str, dict[str, dict[str, np.ndarray]]]` if ``return_reduced_dicts`` is True.
+    `dict[str, dict[str, np.ndarray]]` or `dict[str, dict[str, dict[str, np.ndarray]]]` if ``return_reduced_dicts`` is True.
     """
     assert len(subject_timeseries_list) > 1, "Merging cannot be done with less than two dictionaries or files."
 
@@ -94,7 +95,10 @@ def merge_dicts(subject_timeseries_list: Union[list[dict], list[os.PathLike]], r
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
-        with open(os.path.join(output_dir,file_name + ".pkl"), "wb") as f:
+        if file_name: save_file_name = f"{os.path.splitext(file_name.rstrip())[0].rstrip()}.pkl"
+        else: save_file_name = f"merged_subject_timeseries.pkl"
+
+        with open(os.path.join(output_dir,save_file_name), "wb") as f:
             joblib.dump(subject_timeseries_combined,f)
 
     if return_reduced_dicts:

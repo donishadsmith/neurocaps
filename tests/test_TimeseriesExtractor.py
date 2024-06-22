@@ -1,5 +1,6 @@
 import os, pytest
 from neurocaps.extraction import TimeseriesExtractor
+from neurocaps.analysis import change_dtype
 
 def test_TimeseriesExtractor_no_parallel():
     dir = os.path.dirname(__file__)
@@ -22,6 +23,11 @@ def test_TimeseriesExtractor_no_parallel():
     assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 100
     assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 40
     extractor.visualize_bold(subj_id="01",run="001", region="Vis", show_figs=False)
+
+    converted_timeseries = change_dtype(extractor.subject_timeseries,dtype="float16")
+
+    assert converted_timeseries["01"]["run-001"].dtype == "float16"
+    assert extractor.subject_timeseries["01"]["run-001"].dtype != converted_timeseries["01"]["run-001"].dtype
 
 def test_TimeseriesExtractor_no_parallel_no_session_w_custom():
     dir = os.path.dirname(__file__)

@@ -41,6 +41,25 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 - *.patch* : Contains no new features, simply fixes any identified bugs.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.11.0] - 2024-06-22
+### 🚀 New/Added
+- Added new function `change_dtype` to make it easier to change the dtypes of each subject's numpy array to assist with
+memory usage, especially if doing the CAPs analysis on a local machine.
+- Added new parameters - `output_dir`, `file_name`, and `return_dict` ` to `standardize` to save dictionary, the 
+`return_dict` defaults to True.
+- Adds a new version attribute so you can check the current version using `neurocaps.__version__`
+
+### ♻ Changed
+- Adds back python 3.12 classifier. The `CAP.caps2surf()` function may still not work well but if its detected that
+neurocaps is being installed using python 3.12, setuptools is installed to prevent the pkgresources error.
+
+### 🐛 Fixes
+- Minor fix for `file_name` parameter in `merge_dicts`. If user does not supply a `file_name` when saving the dictionary,
+it will provide a default file_name now instead of producing a Nonetype error.
+
+### 💻 Metadata
+- Minor docstrings revisions, mostly to the typehint for ``subject_timeseries``.
+
 ## [0.10.0.post2] - 2024-06-20
 ### 💻 Metadata
 - Minor metadata update to docstrings to remove curly braces from inside the list object of certain parameters to 

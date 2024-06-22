@@ -348,7 +348,7 @@ class CAP(_CAPGetter):
 
         Parameters
         ----------
-        subject_timeseries : :obj:`dict[str, Dict[str, np.ndarray]]` or :obj:`os.PathLike`
+        subject_timeseries : :obj:`dict[str, dict[str, np.ndarray]]` or :obj:`os.PathLike`
             Path of the pickle file containing the nested subject timeseries dictionary saved by the
             ``TimeSeriesExtractor`` class or the nested subject timeseries dictionary produced by the
             ``TimeseriesExtractor`` class. The first level of the nested dictionary must consist of the subject ID
@@ -359,13 +359,13 @@ class CAP(_CAPGetter):
 
                 subject_timeseries = {
                         "101": {
-                            "run-0": np.array([timeseries]), # 2D array
-                            "run-1": np.array([timeseries]), # 2D array
-                            "run-2": np.array([timeseries]), # 2D array
+                            "run-0": np.array([...]), # 2D array
+                            "run-1": np.array([...]), # 2D array
+                            "run-2": np.array([...]), # 2D array
                         },
                         "102": {
-                            "run-0": np.array([timeseries]), # 2D array
-                            "run-1": np.array([timeseries]), # 2D array
+                            "run-0": np.array([...]), # 2D array
+                            "run-1": np.array([...]), # 2D array
                         }
                     }
 
@@ -755,13 +755,13 @@ class CAP(_CAPGetter):
 
                 subject_timeseries = {
                         "101": {
-                            "run-0": np.array([timeseries]), # 2D array
-                            "run-1": np.array([timeseries]), # 2D array
-                            "run-2": np.array([timeseries]), # 2D array
+                            "run-0": np.array([...]), # 2D array
+                            "run-1": np.array([...]), # 2D array
+                            "run-2": np.array([...]), # 2D array
                         },
                         "102": {
-                            "run-0": np.array([timeseries]), # 2D array
-                            "run-1": np.array([timeseries]), # 2D array
+                            "run-0": np.array([...]), # 2D array
+                            "run-1": np.array([...]), # 2D array
                         }
                     }
 

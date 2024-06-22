@@ -20,8 +20,9 @@ project = 'neurocaps'
 copyright = '2024, neurocaps developers'
 author = 'Donisha Smith'
 
+import neurocaps
 # The full version, including alpha/beta/rc tags
-release = '0.10.0.post2'
+release = neurocaps.__version__
 
 # -- General configuration ---------------------------------------------------
 

@@ -1,10 +1,14 @@
 """Function to standardize timeseries within subject runs"""
 import copy, os
-from typing import Union
+from typing import Union, Optional
 import numpy as np, joblib
 from .._utils import _convert_pickle_to_dict
 
-def standardize(subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.PathLike]) -> dict[str, np.ndarray]:
+def standardize(subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.PathLike],
+                return_dict: bool=True,
+                output_dir: Optional[os.PathLike]=None,
+                file_name: Optional[str]=None) -> dict[str, dict[str, np.ndarray]]:
+
     """
     **Standardize Subject Timeseries**
 
@@ -24,19 +28,35 @@ def standardize(subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.P
 
             subject_timeseries = {
                     "101": {
-                        "run-0": np.array([timeseries]), # 2D array
-                        "run-1": np.array([timeseries]), # 2D array
-                        "run-2": np.array([timeseries]), # 2D array
+                        "run-0": np.array([...]), # 2D array
+                        "run-1": np.array([...]), # 2D array
+                        "run-2": np.array([...]), # 2D array
                     },
                     "102": {
-                        "run-0": np.array([timeseries]), # 2D array
-                        "run-1": np.array([timeseries]), # 2D array
+                        "run-0": np.array([...]), # 2D array
+                        "run-1": np.array([...]), # 2D array
                     }
                 }
 
+    return_dict: :obj:`bool`, default=True
+        If True, returns the standardized ``subject_timeseries``.
+
+        .. versionadded:: 0.11.0
+
+    output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
+        Directory to save the standardized ``subject_timeseries`` to. Will be saved as a pickle file. The directory will
+        be created if it does not exist.
+
+        .. versionadded:: 0.11.0
+
+    file_name: :obj:`str` or :obj:`None`, default=None
+        Name to save the standardized ``subject_timeseries`` as.
+
+        .. versionadded:: 0.11.0
+
     Returns
     -------
-        `dict[str, np.ndarray]`.
+    `dict[str, dict[str, np.ndarray]]`.
     """
     # Deep Copy
     subject_timeseries = copy.deepcopy(subject_timeseries)
@@ -52,4 +72,12 @@ def standardize(subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.P
             mean = np.mean(subject_timeseries[subject][run], axis=0)
             subject_timeseries[subject][run] = (subject_timeseries[subject][run] - mean)/std
 
-    return subject_timeseries
+    if output_dir:
+
+        if file_name: save_file_name = f"{os.path.splitext(file_name.rstrip())[0].rstrip()}.pkl"
+        else: save_file_name = f"standardized_subject_timeseries.pkl"
+
+        with open(os.path.join(output_dir,save_file_name), "wb") as f:
+            joblib.dump(subject_timeseries,f)
+
+    if return_dict: return subject_timeseries

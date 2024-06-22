@@ -1,7 +1,7 @@
 **neurocaps**
 =============
 .. image:: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-blue
-   :target: https://doi.org/10.5281/zenodo.12036930
+   :target: https://doi.org/10.5281/zenodo.12216782
    :alt: DOI
 
 .. image:: https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg
@@ -19,7 +19,7 @@ Citing
 ======
 ::
   
-  Smith, D. (2024). neurocaps. Zenodo. https://doi.org/10.5281/zenodo.12036930
+  Smith, D. (2024). neurocaps. Zenodo. https://doi.org/10.5281/zenodo.12216782
 
 Usage
 =====
@@ -167,6 +167,7 @@ Main features for ``CAP`` includes:
 
 - ``merge_dicts``: Merge the subject_timeseries dictionaries for overlapping subjects across tasks to identify similar CAPs across different tasks. The merged dictionary can be saved as a pickle file.
 - ``standardize``: Standardizes each run independently for all subjects in the subject timeseries.
+- ``change_dtype``: Changes the dtype of all subjects in the subject timeseries to help with memory usage.
 
 Please refer to `demo.ipynb <https://github.com/donishadsmith/neurocaps/blob/main/demo.ipynb>`_ for a more extensive demonstration of the features included in this package.
 
@@ -177,23 +178,24 @@ Dependencies
 
 :: 
 
-    dependencies = ["numpy>=1.22.0, <2",
-                "pandas>=2.0.0",
-                "joblib>=1.3.0",
-                "matplotlib>=3.6.0",
-                "seaborn>=0.11.0",
-                "kneed>=0.8.0",
-                "nibabel>=3.2.0",
-                "nilearn>=0.10.1, !=0.10.3",
-                "scikit-learn>=1.4.0",
-                "surfplot>=0.2.0",
-                "neuromaps>=0.0.5",
-                "pybids>=0.16.2; platform_system != 'Windows'",
-                "plotly>=4.9",
-                "nbformat>=4.2.0", # For plotly
-                "kaleido==0.1.0.post1; platform_system == 'Windows'", # Plotly saving seems to work best with this version for Windows
-                "kaleido; platform_system != 'Windows'"
-                ]
+    dependencies = ["numpy>=1.22.0, <2.0.0",
+                    "pandas>=2.0.0",
+                    "joblib>=1.3.0",
+                    "matplotlib>=3.6.0",
+                    "seaborn>=0.11.0",
+                    "kneed>=0.8.0",
+                    "nibabel>=3.2.0",
+                    "nilearn>=0.10.1, !=0.10.3",
+                    "scikit-learn>=1.4.0",
+                    "surfplot>=0.2.0",
+                    "neuromaps>=0.0.5",
+                    "pybids>=0.16.2; platform_system != 'Windows'",
+                    "plotly>=4.9",
+                    "nbformat>=4.2.0", # For plotly
+                    "kaleido==0.1.0.post1; platform_system == 'Windows'", # Plotly saving seems to work best with this version for Windows
+                    "kaleido; platform_system != 'Windows'",
+                    "setuptools; python_version>='3.12'"
+                   ]
 
 References
 ==========

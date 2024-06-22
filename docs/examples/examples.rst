@@ -12,6 +12,7 @@ and used in `Laumann et al., 2015 <https://doi.org/10.1016/j.neuron.2015.06.037>
    analysis
    merge
    standardize
+   dtype
 
 .. raw:: html
 
@@ -79,6 +80,22 @@ and used in `Laumann et al., 2015 <https://doi.org/10.1016/j.neuron.2015.06.037>
       </a>
       </div>
 
+
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbcontainer" tooltip="Tutorial to change the dtype of each subject's numpy array to reduce memory usage.">
+      <a href="dtype.html">
+   
+.. only:: html
+
+   .. image:: embed/thumbnail/neurocaps.png
+   
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Tutorial 5: Changing dtype with <code>change_dtype</code></div>
+      </a>
+      </div>
 
 .. raw:: html
 

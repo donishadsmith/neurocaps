@@ -121,7 +121,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     n_cores : :obj:`int`
         Number of cores used for multiprocessing with joblib.
 
-    subject_timeseries : :obj:`dict[str]`
+    subject_timeseries : :obj:`dict[str, dict[str, np.ndarray]`
         Nested dictionary containing the subject ID, run ID, and the 2D numpy arrays for timeseries data. Can
         all be used as a setter, which accepts a dictionary or a dictionary saved as pickle file.
         The structure is as follows:
@@ -129,13 +129,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             subject_timeseries = {
                     "101": {
-                        "run-0": np.array([timeseries]), # 2D array
-                        "run-1": np.array([timeseries]), # 2D array
-                        "run-2": np.array([timeseries]), # 2D array
+                        "run-0": np.array([...]), # 2D array
+                        "run-1": np.array([...]), # 2D array
+                        "run-2": np.array([...]), # 2D array
                     },
                     "102": {
-                        "run-0": np.array([timeseries]), # 2D array
-                        "run-1": np.array([timeseries]), # 2D array
+                        "run-0": np.array([...]), # 2D array
+                        "run-1": np.array([...]), # 2D array
                     }
                 }
 

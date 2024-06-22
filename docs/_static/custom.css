@@ -29,3 +29,21 @@ section {
     font-size: 0.9em;
     text-align: left;
 }
+
+.versionadded {
+    border: 2px solid #28a745;
+    background-color: #eaf8f0;
+    color: #000000;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    margin: 10px 0;
+}
+
+.versionmodified.added::before {
+    content: "\f06a";
+    color: #000000;
+    font-family: 'FontAwesome';
+    margin-right: 5px;
+}
