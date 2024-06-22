@@ -747,10 +747,10 @@ class CAP(_CAPGetter):
             ``self.get_caps()``, then the columns/ROIs of the ``subject_timeseries`` provided to this method will be
             scaled using the mean and sample standard deviation derived from the concatenated data used to generate the
             k-means model. This is to ensure that each subject's frames are correctly assigned to the cluster centroid
-            it is closest to as it will be on the same scale of the data used to generate the k-means model. If the
-            same ``subject_timeseries`` that was used to generate the k-means model is specified here, then the
-            predicted label assignments will be equivalent to the original label assignment in the k-means model. The
-            structure of is as follows:
+            it is closest to as it will be on the same scale of the data used to generate the k-means model. If you
+            specify the same ``subject_timeseries`` (or any of the individual dictionaries that were combined to form
+            the ``subject_timeseries``) used for creating the k-means model, the predicted label assignments will align
+            with the original label assignments from the k-means model. The structure of is as follows:
             ::
 
                 subject_timeseries = {

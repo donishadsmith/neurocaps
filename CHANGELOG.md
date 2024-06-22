@@ -41,6 +41,11 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 - *.patch* : Contains no new features, simply fixes any identified bugs.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.11.0.post2] - 2024-06-22
+### 💻 Metadata
+- Very minor explanation added to `CAP.calculate_metrics()` regarding using individual dictionaries from merged
+dictionaries as inputs.
+
 ## [0.11.0.post1] - 2024-06-22
 ### 💻 Metadata
 - Two docstring changes for `merge_dicts`, which includes nesting the return type hint and capitalizing all letters of
