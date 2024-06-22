@@ -41,6 +41,11 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 - *.patch* : Contains no new features, simply fixes any identified bugs.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.11.0.post1] - 2024-06-22
+### 💻 Metadata
+- Two docstring changes for `merge_dicts`, which includes nesting the return type hint and capitalizing all letters of
+the docstring header for aesthetics.
+
 ## [0.11.0] - 2024-06-22
 ### 🚀 New/Added
 - Added new function `change_dtype` to make it easier to change the dtypes of each subject's numpy array to assist with

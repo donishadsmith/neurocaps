@@ -6,9 +6,9 @@ from .._utils import _convert_pickle_to_dict
 def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarray]]], list[os.PathLike]],
                 return_combined_dict: bool=True, return_reduced_dicts: bool=False,
                 output_dir: Optional[Union[str, os.PathLike]]=None,
-                file_name: Optional[str]=None) -> dict[str, np.ndarray]:
+                file_name: Optional[str]=None) -> dict[str, dict[str, np.ndarray]]:
     """
-    **Merge subject timeseries**
+    **Merge Subject Timeseries**
 
     Merge subject timeseries dictionaries or pickle files into the first dictionary or pickle file in the list.
     Repetition times/frames from the same subject and run are merged together. The combined dictionary will only
