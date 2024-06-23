@@ -1,6 +1,6 @@
 """Internal Function for checking confound names"""
 
-import warnings
+import textwrap, warnings
 def _check_confound_names(high_pass, specified_confound_names, n_acompcor_separate):
     if specified_confound_names is None:
         if high_pass:
@@ -26,17 +26,17 @@ def _check_confound_names(high_pass, specified_confound_names, n_acompcor_separa
         if len(confound_names) > len(check_confounds):
             removed_confounds = [element for element in confound_names if element not in check_confounds]
             if specified_confound_names:
-                warnings.warn(f"""
+                warnings.warn(textwrap.dedent(f"""
                               Since `n_acompcor_separate` has been specified, specified acompcor components in
                               `confound_names` will be disregarded and replaced with the first {n_acompcor_separate}
                               components of the white matter and cerebrospinal fluid masks for each participant.
                               The following components will not be used {removed_confounds}
-                              """)
+                              """))
             confound_names = check_confounds
 
-    print(f"""
+    print(textwrap.dedent(f"""
           List of confound regressors that will be used during timeseries extraction if available in confound
           dataframe: {confound_names}
-          """, flush=True)
+          """), flush=True)
 
     return confound_names

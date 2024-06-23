@@ -1,5 +1,5 @@
 
-import collections, copy, itertools, os, re, sys, warnings
+import collections, copy, itertools, os, re, sys, tempfile, textwrap, warnings
 from typing import Union, Literal, Optional
 import numpy as np, nibabel as nib, matplotlib.pyplot as plt, pandas as pd, seaborn, surfplot
 import plotly.express as px, plotly.graph_objects as go, plotly.offline as pyo
@@ -42,7 +42,11 @@ class CAP(_CAPGetter):
 
     groups : :obj:`dict[str, list]` or :obj:`None`, default=None
         A mapping of group names to subject IDs. Each group contains subject IDs for separate CAP analysis.
-        If None, CAPs are not separated by group. The structure should be as follows:
+        Additionally, IDs should not be duplicated across groups or else a warning will be raised. Duplicate IDs in the
+        same groups will be removed and in the case of IDs duplicated across groups, only the first instance is retained.
+        This parameter is used to create ``self.subject_table``, which is used for concatenating data and calculating
+        metrics. This is done to avoid issues with duplicate IDs. If ``groups`` left as None, CAPs are not separated by
+        group and are performed on all subjects. The structure should be as follows:
         ::
 
             {
@@ -306,10 +310,10 @@ class CAP(_CAPGetter):
         # Raise error if self groups is not a dictionary
         if self._groups:
             if not isinstance(self._groups, dict):
-                raise TypeError("""
+                raise TypeError(textwrap.dedent("""
                                 `groups` must be a dictionary where the keys are the group names and the items
                                 correspond to subject ids in the groups.
-                                """)
+                                """))
 
             for group_name in self._groups:
                 assert len(self._groups[group_name]) > 0, f"{group_name} has zero subject ids."
@@ -318,6 +322,7 @@ class CAP(_CAPGetter):
             for group in self._groups:
                 self._groups[group] = [str(subj_id) if not isinstance(subj_id,str)
                                        else subj_id for subj_id in self._groups[group]]
+                self._groups[group] = sorted(list(set(self._groups[group])))
 
         if parcel_approach is not None:
            parcel_approach = _check_parcel_approach(parcel_approach=parcel_approach, call="CAP")
@@ -455,11 +460,11 @@ class CAP(_CAPGetter):
 
         if n_cores and self._cluster_selection_method is not None:
             if n_cores > cpu_count():
-                raise ValueError(f"""
+                raise ValueError(textwrap.dedent(f"""
                                  More cores specified than available -
                                  Number of cores specified: {n_cores};
                                  Max cores available: {cpu_count()}.
-                                 """)
+                                 """))
             if isinstance(n_cores, int): self._n_cores = n_cores
             else: raise ValueError("`n_cores` must be an integer.")
         else:
@@ -591,12 +596,12 @@ class CAP(_CAPGetter):
 
             self._optimal_n_clusters[group] = kneedle.elbow
             if self._optimal_n_clusters[group] is None:
-                raise ValueError("""
+                raise ValueError(textwrap.dedent("""
                                No elbow detected so optimal cluster size is None. Try adjusting the sensitivity
                                parameter, `S`, to increase or decrease sensitivity (higher values are less sensitive),
                                expanding the list of clusters to test, or setting `cluster_selection_method` to
                                'silhouette'.
-                               """)
+                               """))
             else:
                 self._kmeans[group] = KMeans(n_clusters=self._optimal_n_clusters[group], random_state=random_state,
                                              init=init, n_init=n_init, max_iter=max_iter, tol=tol,
@@ -640,31 +645,29 @@ class CAP(_CAPGetter):
         # create logic for grouped and non-grouped version of the same code
         if not self._groups: self._groups = {"All Subjects": [subject for subject in subject_timeseries]}
 
-        concatenated_timeseries = {group: {} for group in self._groups}
+        concatenated_timeseries = {group: None for group in self._groups}
 
         self._generate_lookup_table()
 
-        self._mean_vec = {group: {} for group in self._groups}
-        self._stdev_vec = {group: {} for group in self._groups}
+        self._mean_vec = {group: None for group in self._groups}
+        self._stdev_vec = {group: None for group in self._groups}
 
         for subj_id, group in self._subject_table.items():
             requested_runs = [f"run-{run}" for run in runs] if runs else list(subject_timeseries[subj_id])
             subject_runs = [subject_run for subject_run in subject_timeseries[subj_id]
                             if subject_run in requested_runs]
             if len(subject_runs) == 0:
-                warnings.warn(f"""
+                warnings.warn(textwrap.dedent(f"""
                               Skipping subject {subj_id} since they do not have the
                               requested run numbers {','.join(requested_runs)}
-                              """)
+                              """))
                 continue
             for curr_run in subject_runs:
-                if len(concatenated_timeseries[group]) == 0:
-                    if subj_id in list(set(self._groups[group])):
-                        concatenated_timeseries[group] = subject_timeseries[subj_id][curr_run]
+                if concatenated_timeseries[group] is None:
+                    concatenated_timeseries[group] = subject_timeseries[subj_id][curr_run]
                 else:
-                    if subj_id in list(set(self._groups[group])):
-                        concatenated_timeseries[group] = np.vstack([concatenated_timeseries[group],
-                                                                    subject_timeseries[subj_id][curr_run]])
+                    concatenated_timeseries[group] = np.vstack([concatenated_timeseries[group],
+                                                                subject_timeseries[subj_id][curr_run]])
         # Standardize
         if self._standardize:
             for group in self._groups:
@@ -681,10 +684,10 @@ class CAP(_CAPGetter):
         for group in self._groups:
             for subj_id in self._groups[group]:
                 if subj_id in self._subject_table:
-                    warnings.warn(f"""
+                    warnings.warn(textwrap.dedent(f"""
                                   Subject: {subj_id} appears more than once, only including the first instance
                                   of this subject in the analysis.
-                                  """)
+                                  """))
                 else:
                     self._subject_table.update({subj_id : group})
 
@@ -823,10 +826,10 @@ class CAP(_CAPGetter):
 
         """
         if not hasattr(self,"_kmeans"):
-            raise AttributeError("""
+            raise AttributeError(textwrap.dedent("""
                                  Cannot calculate metrics since `self._kmeans` attribute does not exist.
                                  Run `self.get_caps()` first.
-                                 """)
+                                 """))
 
         if prefix_file_name is not None and output_dir is None:
             warnings.warn("`prefix_name` supplied but no `output_dir` specified. Files will not be saved.")
@@ -867,10 +870,10 @@ class CAP(_CAPGetter):
             requested_runs = [f"run-{run}" for run in runs] if runs else list(subject_timeseries[subj_id])
             subject_runs = [subject_run for subject_run in subject_timeseries[subj_id] if subject_run in requested_runs]
             if len(subject_runs) == 0:
-                warnings.warn(f"""
+                warnings.warn(textwrap.dedent(f"""
                             Skipping subject {subj_id} since they do not have the requested run numbers
                             {','.join(requested_runs)}.
-                            """)
+                            """))
                 continue
             if not continuous_runs or len(requested_runs) == 1:
                 for curr_run in subject_runs:
@@ -1103,17 +1106,17 @@ class CAP(_CAPGetter):
 
         """
         if not self._parcel_approach:
-            raise AttributeError("""
+            raise AttributeError(textwrap.dedent("""
                                  `self.parcel_approach` is None. Add parcel_approach
                                  using `self.parcel_approach=parcel_approach` to use this
                                  method.
-                                 """)
+                                 """))
 
         if not hasattr(self,"_caps"):
-            raise AttributeError("""
+            raise AttributeError(textwrap.dedent("""
                                  Cannot plot caps since `self._caps` attribute does not exist.
                                  Run `self.get_caps()` first.
-                                 """)
+                                 """))
 
         # Check if parcellation_approach is custom
         if "Custom" in self._parcel_approach and ("nodes" not in self._parcel_approach["Custom"] or "regions" not in self._parcel_approach["Custom"]):
@@ -1126,10 +1129,10 @@ class CAP(_CAPGetter):
         check_caps = self._caps[list(self._caps)[0]]
         check_caps = check_caps[list(check_caps)[0]]
         if check_caps.shape[0] != len(self._parcel_approach[parcellation_name]["nodes"]):
-            raise ValueError("""
-                                Number of rois/nodes used for CAPs does not equal the
-                                number of rois/nodes specified in `parcel_approach`.
-                                """)
+            raise ValueError(textwrap.dedent("""
+                            Number of rois/nodes used for CAPs does not equal the
+                            number of rois/nodes specified in `parcel_approach`.
+                            """))
 
         if output_dir:
             if not os.path.exists(output_dir): os.makedirs(output_dir)
@@ -1187,20 +1190,13 @@ class CAP(_CAPGetter):
                                                                                   self._parcel_approach["Custom"]["regions"]))]
 
             #  Generate plot for each group
-            if plot_option == "outer_product": self._generate_outer_product_plots(group=group, plot_dict=plot_dict,
-                                                                                  cap_dict=cap_dict,
-                                                                                  columns=columns,
-                                                                                  subplots=subplots,
-                                                                                  output_dir=output_dir,
-                                                                                  suffix_title=suffix_title,
-                                                                                  show_figs=show_figs, scope=scope,
-                                                                                  parcellation_name=parcellation_name)
-            elif plot_option == "heatmap": self._generate_heatmap_plots(group=group, plot_dict=plot_dict,
-                                                                        cap_dict=cap_dict, columns=columns,
-                                                                        output_dir=output_dir,
-                                                                        suffix_title=suffix_title,
-                                                                        show_figs=show_figs, scope=scope,
-                                                                        parcellation_name=parcellation_name)
+            input_keys = dict(group=group, plot_dict=plot_dict, cap_dict=cap_dict, columns=columns,
+                              output_dir=output_dir,suffix_title=suffix_title,show_figs=show_figs,scope=scope,
+                              parcellation_name=parcellation_name)
+
+            #  Generate plot for each group
+            if plot_option == "outer_product": self._generate_outer_product_plots(**input_keys,subplots=subplots)
+            elif plot_option == "heatmap": self._generate_heatmap_plots(**input_keys)
 
     def _create_regions(self, parcellation_name):
         # Internal function to create an attribute called `region_caps`. Purpose is to average the values of all nodes
@@ -1651,10 +1647,10 @@ class CAP(_CAPGetter):
         For valid premade palettes for ``seaborn``, refer to https://seaborn.pydata.org/tutorial/color_palettes.html
         """
         if not hasattr(self,"_caps"):
-            raise AttributeError("""
+            raise AttributeError(textwrap.dedent("""
                                  Cannot plot caps since `self._caps` attribute does not exist.
                                  Run `self.get_caps()` first.
-                                 """)
+                                 """))
 
         # Create plot dictionary
         defaults = {"dpi": 300, "figsize": (8, 6), "fontsize": 14, "xticklabels_size": 8, "yticklabels_size": 8,
@@ -1750,17 +1746,17 @@ class CAP(_CAPGetter):
             `NifTI` statistical map.
         """
         if not self._parcel_approach:
-            raise AttributeError("""
+            raise AttributeError(textwrap.dedent("""
                                  `self.parcel_approach` is None. Add parcel_approach
                                  using `self.parcel_approach=parcel_approach` to use this
                                  method.
-                                 """)
+                                 """))
 
         if not hasattr(self,"_caps"):
-            raise AttributeError("""
+            raise AttributeError(textwrap.dedent("""
                                  Cannot plot caps since `self._caps` attribute does not exist.
                                  Run `self.get_caps()` first.
-                                 """)
+                                 """))
 
         if not os.path.exists(output_dir): os.makedirs(output_dir)
 
@@ -1916,17 +1912,17 @@ class CAP(_CAPGetter):
         ``sorted(np.unique(atlas_fdata))``.
         """
         if not self._parcel_approach:
-            raise AttributeError("""
+            raise AttributeError(textwrap.dedent("""
                                  `self.parcel_approach` is None. Add parcel_approach
                                  using `self.parcel_approach=parcel_approach` to use this
                                  method.
-                                 """)
+                                 """))
 
         if not hasattr(self,"_caps") and fslr_giftis_dict is None:
-            raise AttributeError("""
+            raise AttributeError(textwrap.dedent("""
                                  Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()`
                                  first.
-                                 """)
+                                 """))
 
         if output_dir and not os.path.exists(output_dir): os.makedirs(output_dir)
 
@@ -1948,7 +1944,27 @@ class CAP(_CAPGetter):
                 if fslr_giftis_dict is None:
                     stat_map = _cap2statmap(atlas_file=self._parcel_approach[parcellation_name]["maps"],
                                             cap_vector=self._caps[group][cap], fwhm=fwhm)
-                    gii_lh, gii_rh = mni152_to_fslr(stat_map, method=method, fslr_density=fslr_density)
+
+                # Fix for python 3.12, saving stat map so that it is path instead of a NifTi
+                    try:
+                        gii_lh, gii_rh = mni152_to_fslr(stat_map, method=method, fslr_density=fslr_density)
+                    except TypeError:
+                        # Create temp
+                        temp_nifti = tempfile.NamedTemporaryFile(delete=False, suffix=".nii.gz")
+                        warnings.warn(textwrap.dedent(f"""
+                                      Potential error due to changes in pathlib.py in Python 3.12 causing the error
+                                      message to output as "not 'Nifti1Image'" instead of "not Nifti1Image", which
+                                      neuromaps uses to determine if the input is a Nifti1Image object.
+                                      Converting stat_map into a temporary nii.gz file (which will be automatically
+                                      deleted afterwards) at {temp_nifti.name}
+                                      """))
+                        # Ensure file is closed
+                        temp_nifti.close()
+                        # Save temporary nifti to temp file
+                        nib.save(stat_map, temp_nifti.name)
+                        gii_lh, gii_rh = mni152_to_fslr(temp_nifti.name, method=method, fslr_density=fslr_density)
+                        # Delete
+                        os.unlink(temp_nifti.name)
                 else:
                     gii_lh, gii_rh = fslr_to_fslr([fslr_giftis_dict[group][cap]["lh"],
                                                    fslr_giftis_dict[group][cap]["rh"]],
@@ -1956,10 +1972,10 @@ class CAP(_CAPGetter):
                 # Code slightly adapted from surfplot example 2
                 surfaces = fetch_fslr()
                 if plot_dict["surface"] not in ["inflated", "veryinflated"]:
-                    warnings.warn(f"""
+                    warnings.warn(textwrap.dedent(f"""
                                   {plot_dict["surface"]} is an invalid option for `surface`. Available options
                                   include 'inflated' or 'verinflated'. Defaulting to 'inflated'
-                                  """)
+                                  """))
                     plot_dict["surface"] = "inflated"
                 lh, rh = surfaces[plot_dict["surface"]]
                 lh = str(lh) if not isinstance(lh, str) else lh
@@ -2159,16 +2175,16 @@ class CAP(_CAPGetter):
         876–884. https://doi.org/10.1038/s41386-023-01750-w
         """
         if not self._parcel_approach:
-            raise AttributeError("""
+            raise AttributeError(textwrap.dedent("""
                                  `self.parcel_approach` is None. Add parcel_approach
                                  using `self.parcel_approach=parcel_approach` to use this
                                  method.
-                                 """)
+                                 """))
 
         if not hasattr(self,"_caps"):
-            raise AttributeError("""
+            raise AttributeError(textwrap.dedent("""
                                  Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()`
-                                 first.""")
+                                 first."""))
 
         defaults = {"scale": 2, "height": 800, "width": 1200, "line_close": True, "bgcolor": "white", "fill": "none",
                     "scattersize": 8, "connectgaps": True, "opacity": 0.5, "radialaxis": {"showline": False,

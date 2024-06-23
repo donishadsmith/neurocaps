@@ -41,6 +41,42 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 - *.patch* : Contains no new features, simply fixes any identified bugs.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.11.1] - 2024-06-23
+### 🐛 Fixes
+- Fix for python 3.12 when using `CAP.caps2surf()`. 
+    - Changes in pathlib.py in Python 3.12 results in an error message format change. The error message now includes
+      quotes (e.g., "not 'Nifti1Image'") instead of the previous format without quotes ("not Nifti1Image"). This issue
+      arises when using ``neuromaps.transforms.mni_to_fslr`` within CAP.caps2surf() as neuromaps captures the error as a
+      string and checks if "not Nifti1Image" is in the string to determine if the input is a NifTI image. As a patch,
+      if the error occurs, a temporary .nii.gz file is created, the statistical image is saved to this file, and it is
+      used as input for neuromaps.transforms.mni_to_fslr. The temporary file is deleted after use. Below is the code
+      implementing this fix.
+
+```python3
+# Fix for python 3.12, saving stat_map so that it is path instead of a NifTI
+try:
+    gii_lh, gii_rh = mni152_to_fslr(stat_map, method=method, fslr_density=fslr_density)
+except TypeError:
+    # Create temp
+    temp_nifti = tempfile.NamedTemporaryFile(delete=False, suffix=".nii.gz")
+    warnings.warn(textwrap.dedent(f"""
+                    Error potentially due to change in pathlib.py in python 3.12 causing the error
+                    message to output as "not 'Nifti1Image'" instead of "not Nifti1Image", which
+                    neuromaps uses to determine if the input is a Nifti1Image object.
+                    Converting stat_map into a temporary nii.gz file (which will be automatically
+                    deleted afterwards) at {temp_nifti.name}
+                    """))
+    # Ensure file is closed
+    temp_nifti.close()
+    # Save temporary nifti to temp file
+    nib.save(stat_map, temp_nifti.name)
+    gii_lh, gii_rh = mni152_to_fslr(temp_nifti.name, method=method, fslr_density=fslr_density)
+    # Delete
+    os.unlink(temp_nifti.name)
+```
+- Final patch is for strings in triple quotes. The standard textwrap module is used to remove the indentations at each
+new line.
+
 ## [0.11.0.post2] - 2024-06-22
 ### 💻 Metadata
 - Very minor explanation added to `CAP.calculate_metrics()` regarding using individual dictionaries from merged

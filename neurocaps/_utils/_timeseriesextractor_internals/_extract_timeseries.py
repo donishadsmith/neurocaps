@@ -1,6 +1,6 @@
 """Internal function to extract timeseries with or without multiprocessing"""
 
-import copy, json, math, os, warnings
+import copy, json, math, os, textwrap, warnings
 import numpy as np, pandas as pd
 from nilearn.maskers import NiftiLabelsMasker
 from nilearn.image import index_img, load_img
@@ -79,10 +79,10 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
                     fd_array = confound_df["framewise_displacement"].fillna(0).values
                 else:
                     censor = False
-                    warnings.warn(f"""For subject {subj_id}, `fd_threshold` specified but 'framewise_displacement' is
+                    warnings.warn(textwrap.dedent(f"""For subject {subj_id}, `fd_threshold` specified but 'framewise_displacement' is
                                   not a column in the confound dataframe so removal of volumes after nuisance
                                   regression will not be done.
-                                  """)
+                                  """))
             else:
                 censor = False
 
@@ -149,10 +149,10 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
                 timeseries = np.delete(timeseries, censor_volumes, axis=0)
 
         if timeseries.shape[0] == 0:
-            warnings.warn(f"""
+            warnings.warn(textwrap.dedent(f"""
                           Subject {subj_id} timeseries is empty for {run}. Most likely due to condition not
                           existing or TRs corresponding to the condition being removed by `dummy_scans`.
-                          """)
+                          """))
         else:
             subject_timeseries[subj_id].update({run_id: timeseries})
 
