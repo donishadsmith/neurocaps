@@ -90,7 +90,7 @@ def test_CAP_get_caps_with_no_groups_and_silhouette_method_pkl():
     extractor.subject_timeseries = subject_timeseries
     cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
-                          n_clusters=[2,3,4,5], cluster_selection_method="silhouette")
+                          n_clusters=[2,3,4,5], cluster_selection_method="silhouette", n_cores=1)
     assert cap_analysis.caps["All Subjects"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["All Subjects"]["CAP-2"].shape == (100,)
     assert all(elem > 0  or elem < 0 for elem in cap_analysis.silhouette_scores["All Subjects"].values())

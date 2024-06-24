@@ -404,8 +404,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                           self._subject_info[subj_id]["tr"], condition, self._parcel_approach, self._signal_clean_info,
                           verbose, flush_print) for subj_id in self._subject_ids]
 
-            with Parallel(n_jobs=self._n_cores) as parallel:
-                outputs = parallel(delayed(_extract_timeseries)(*args) for args in args_list)
+            parallel = Parallel(return_as="generator", n_jobs=self._n_cores)
+            outputs = parallel(delayed(_extract_timeseries)(*args) for args in args_list)
 
             for output in outputs:
                 if isinstance(output, dict):

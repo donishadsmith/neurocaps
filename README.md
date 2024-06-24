@@ -1,5 +1,5 @@
 # neurocaps
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-blue)](https://doi.org/10.5281/zenodo.12216782)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-blue)](https://doi.org/10.5281/zenodo.12523896)
 [![Test Status](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg)](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 

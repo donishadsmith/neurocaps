@@ -526,10 +526,10 @@ class CAP(_CAPGetter):
                                                   method="silhouette")
                     self._silhouette_scores[group].update(silhouette_dict)
             else:
-                with Parallel(n_jobs=self._n_cores) as parallel:
-                    outputs = parallel(delayed(_run_kmeans)(n_cluster, random_state, init, n_init, max_iter, tol,
-                                                            algorithm, self._concatenated_timeseries[group],
-                                                            "silhouette") for n_cluster in self._n_clusters)
+                parallel = Parallel(return_as="generator", n_jobs=self._n_cores)
+                outputs = parallel(delayed(_run_kmeans)(n_cluster, random_state, init, n_init, max_iter, tol,
+                                                        algorithm, self._concatenated_timeseries[group],
+                                                        "silhouette") for n_cluster in self._n_clusters)
                 for output in outputs:
                     self._silhouette_scores[group].update(output)
 
@@ -581,10 +581,10 @@ class CAP(_CAPGetter):
                                                method="elbow")
                     self._inertia[group].update(inertia_dict)
             else:
-                with Parallel(n_jobs=self._n_cores) as parallel:
-                    outputs = parallel(delayed(_run_kmeans)(n_cluster, random_state, init, n_init, max_iter,
-                                                            tol, algorithm,self._concatenated_timeseries[group],
-                                                            "elbow") for n_cluster in self._n_clusters)
+                parallel = Parallel(return_as="generator", n_jobs=self._n_cores)
+                outputs = parallel(delayed(_run_kmeans)(n_cluster, random_state, init, n_init, max_iter,
+                                                        tol, algorithm,self._concatenated_timeseries[group],
+                                                        "elbow") for n_cluster in self._n_clusters)
                 for output in outputs:
                     self._inertia[group].update(output)
 

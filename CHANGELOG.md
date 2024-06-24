@@ -41,6 +41,11 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 - *.patch* : Contains no new features, simply fixes any identified bugs.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.11.3] - 2024-06-24
+### ♻ Changed
+- With parallel processing, joblib outputs are now returned as a generator as opposed to the default, which is a list,
+to reduce memory usage.
+
 ## [0.11.2] - 2024-06-23
 ### ♻ Changed
 - Changed how ids are organized in respective group when initializing the `CAP` class. In version 0.11.1, the ids are
