@@ -41,6 +41,15 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 - *.patch* : Contains no new features, simply fixes any identified bugs.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.11.2] - 2024-06-23
+### ♻ Changed
+- Changed how ids are organized in respective group when initializing the `CAP` class. In version 0.11.1, the ids are
+sorted lexicographically:
+```python3
+self._groups[group] = sorted(list(set(self._groups[group])))
+```
+This doesn't affect functionality but it may be better to respect the original user ordering.This is no longer the case.
+
 ## [0.11.1] - 2024-06-23
 ### 🐛 Fixes
 - Fix for python 3.12 when using `CAP.caps2surf()`. 
@@ -53,14 +62,15 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
       implementing this fix.
 
 ```python3
-# Fix for python 3.12, saving stat_map so that it is path instead of a NifTI
+
+# Fix for python 3.12, saving stat map so that it is path instead of a NifTi
 try:
     gii_lh, gii_rh = mni152_to_fslr(stat_map, method=method, fslr_density=fslr_density)
 except TypeError:
     # Create temp
     temp_nifti = tempfile.NamedTemporaryFile(delete=False, suffix=".nii.gz")
     warnings.warn(textwrap.dedent(f"""
-                    Error potentially due to change in pathlib.py in python 3.12 causing the error
+                    Potential error due to changes in pathlib.py in Python 3.12 causing the error
                     message to output as "not 'Nifti1Image'" instead of "not Nifti1Image", which
                     neuromaps uses to determine if the input is a Nifti1Image object.
                     Converting stat_map into a temporary nii.gz file (which will be automatically

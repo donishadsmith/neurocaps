@@ -6,7 +6,7 @@ from .._utils import _convert_pickle_to_dict
 def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarray]]], list[os.PathLike]],
                 return_combined_dict: bool=True, return_reduced_dicts: bool=False,
                 output_dir: Optional[Union[str, os.PathLike]]=None,
-                file_name: Optional[str]=None) -> dict[str, dict[str, np.ndarray]]:
+                file_name: Optional[str]=None) -> Union[dict[str, dict[str, np.ndarray]], dict[str, dict[str, dict[str, np.ndarray]]]]:
     """
     **Merge Subject Timeseries**
 

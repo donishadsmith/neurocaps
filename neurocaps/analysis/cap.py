@@ -42,11 +42,11 @@ class CAP(_CAPGetter):
 
     groups : :obj:`dict[str, list]` or :obj:`None`, default=None
         A mapping of group names to subject IDs. Each group contains subject IDs for separate CAP analysis.
-        Additionally, IDs should not be duplicated across groups or else a warning will be raised. Duplicate IDs in the
-        same groups will be removed and in the case of IDs duplicated across groups, only the first instance is retained.
-        This parameter is used to create ``self.subject_table``, which is used for concatenating data and calculating
-        metrics. This is done to avoid issues with duplicate IDs. If ``groups`` left as None, CAPs are not separated by
-        group and are performed on all subjects. The structure should be as follows:
+        Additionally, if duplicate IDs are detected within or across groups, a warning is issued and only the first
+        instance is retained. This parameter is used to create a dictionary (``self.subject_table``), which pairs each
+        subject ID (keys) with their group name (values) and is used for concatenating data and calculating metrics.
+        This is done to avoid issues with duplicate IDs. If ``groups`` left as None, CAPs are not separated by group
+        and are performed on all subjects. The structure should be as follows:
         ::
 
             {
@@ -69,10 +69,11 @@ class CAP(_CAPGetter):
         is used.
 
     parcel_approach : :obj:`dict[str, dict]`
-        Nested dictionary containing information about the parcellation. Can also be used as a setter. If "Schaefer"
-        or "AAL" was specified during initialization of the ``TimeseriesExtractor`` class, then
-        ``nilearn.datasets.fetch_atlas_schaefer_2018`` and ``nilearn.datasets.fetch_atlas_aal`` will be used to obtain
-        the "maps" and the "nodes". Then string splitting is used on the "nodes" to obtain the "regions":
+        Nested dictionary containing information about the parcellation. Can also be used as a setter, which accepts
+        a dictionary or a dictionary saved as a pickle file. If "Schaefer" or "AAL" was specified during initialization
+        of the ``TimeseriesExtractor`` class, then ``nilearn.datasets.fetch_atlas_schaefer_2018`` and
+        ``nilearn.datasets.fetch_atlas_aal`` will be used to obtain the "maps" and the "nodes". Then string splitting
+        is used on the "nodes" to obtain the "regions":
         ::
 
             {
@@ -322,7 +323,6 @@ class CAP(_CAPGetter):
             for group in self._groups:
                 self._groups[group] = [str(subj_id) if not isinstance(subj_id,str)
                                        else subj_id for subj_id in self._groups[group]]
-                self._groups[group] = sorted(list(set(self._groups[group])))
 
         if parcel_approach is not None:
            parcel_approach = _check_parcel_approach(parcel_approach=parcel_approach, call="CAP")
