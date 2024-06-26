@@ -27,7 +27,7 @@ def test_CAP_get_caps_with_groups():
     assert cap_analysis.caps["B"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["B"]["CAP-2"].shape == (100,)
 
-def test_CAP_get_caps_with_no_groups_and_silhouette_method():
+def test_CAP_get_caps_with_no_groups_cluster_selection():
     warnings.simplefilter('ignore')
     parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
     extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
@@ -36,11 +36,27 @@ def test_CAP_get_caps_with_no_groups_and_silhouette_method():
     cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
                           n_clusters=[2,3,4,5], cluster_selection_method="silhouette")
+    
+    assert max(cap_analysis.silhouette_scores["All Subjects"], key=cap_analysis.silhouette_scores["All Subjects"].get) == cap_analysis.optimal_n_clusters["All Subjects"]
+
     assert cap_analysis.caps["All Subjects"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["All Subjects"]["CAP-2"].shape == (100,)
     assert all(elem > 0  or elem < 0 for elem in cap_analysis.silhouette_scores["All Subjects"].values())
+    cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
+                          n_clusters=[2,3,4,5], cluster_selection_method="variance_ratio")
+    
+    assert max(cap_analysis.variance_ratio["All Subjects"], key=cap_analysis.variance_ratio["All Subjects"].get) == cap_analysis.optimal_n_clusters["All Subjects"]
+    
+    assert all(elem >= 0 for elem in cap_analysis.variance_ratio["All Subjects"].values())
 
-def test_CAP_get_caps_with_groups_and_silhouette_method():
+    cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
+                          n_clusters=[2,3,4,5], cluster_selection_method="davies_bouldin")
+    
+    assert min(cap_analysis.davies_bouldin["All Subjects"], key=cap_analysis.davies_bouldin["All Subjects"].get) == cap_analysis.optimal_n_clusters["All Subjects"]
+    
+    assert all(elem >= 0 for elem in cap_analysis.davies_bouldin["All Subjects"].values())
+
+def test_CAP_get_caps_with_groups_and_cluster_selection():
     warnings.simplefilter('ignore')
     parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
     extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
@@ -53,6 +69,22 @@ def test_CAP_get_caps_with_groups_and_silhouette_method():
     assert cap_analysis.caps["A"]["CAP-2"].shape == (100,)
     assert cap_analysis.caps["B"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["B"]["CAP-2"].shape == (100,)
+
+    assert max(cap_analysis.silhouette_scores["A"], key=cap_analysis.silhouette_scores["A"].get) == cap_analysis.optimal_n_clusters["A"]
+    assert max(cap_analysis.silhouette_scores["B"], key=cap_analysis.silhouette_scores["B"].get) == cap_analysis.optimal_n_clusters["B"]
+
+    cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
+                          n_clusters=[2,3,4,5], cluster_selection_method="davies_bouldin")
+    
+    assert min(cap_analysis.davies_bouldin["A"], key=cap_analysis.davies_bouldin["A"].get) == cap_analysis.optimal_n_clusters["A"]
+    assert min(cap_analysis.davies_bouldin["B"], key=cap_analysis.davies_bouldin["B"].get) == cap_analysis.optimal_n_clusters["B"]
+    
+    cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
+                          n_clusters=[2,3,4,5], cluster_selection_method="variance_ratio")
+    
+    assert max(cap_analysis.variance_ratio["A"], key=cap_analysis.variance_ratio["A"].get) == cap_analysis.optimal_n_clusters["A"]
+    assert max(cap_analysis.variance_ratio["B"], key=cap_analysis.variance_ratio["B"].get) == cap_analysis.optimal_n_clusters["B"]
+
 
 def test_CAP_get_caps_no_groups_pkl():
     warnings.simplefilter('ignore')

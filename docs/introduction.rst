@@ -1,7 +1,11 @@
 **neurocaps**
 =============
+.. image:: https://img.shields.io/pypi/v/neurocaps.svg
+   :target: https://pypi.python.org/pypi/neurocaps/
+   :alt: Latest Version
+
 .. image:: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-blue
-   :target: https://doi.org/10.5281/zenodo.12523896
+   :target: https://doi.org/10.5281/zenodo.12555589
    :alt: DOI
 
 .. image:: https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg
@@ -19,7 +23,7 @@ Citing
 ======
 ::
   
-  Smith, D. (2024). neurocaps. Zenodo. https://doi.org/10.5281/zenodo.12523896
+  Smith, D. (2024). neurocaps. Zenodo. https://doi.org/10.5281/zenodo.12555589
 
 Usage
 =====
@@ -91,10 +95,10 @@ Main features for ``TimeseriesExtractor`` includes:
 Main features for ``CAP`` includes:
 -----------------------------------
 
-- **Optimal Cluster Size Identification:** Perform the silhouette or elbow method to identify the optimal cluster size, saving the optimal model as an attribute.
-- **Parallel Processing:** Use parallel processing, when using the silhouette or elbow method, by specifying the number of CPU cores in the ``n_cores`` parameter in the ```get_caps()`` method. 
+- **Optimal Cluster Size Identification:** Perform the Davies Bouldin, Silhouette, Elbow, or Variance Ratio criterions to identify the optimal cluster size, saving the optimal model as an attribute.
+- **Parallel Processing:** Use parallel processing, when using the Davies Bouldin, Silhouette, Elbow, or Variance Ratio criterions by specifying the number of CPU cores in the ``n_cores`` parameter in the ```get_caps()`` method. 
   *Note:* If you are using an HPC, remember to allocate the appropriate amount of CPU cores with your workload manager. For instance in slurm use ``#SBATCH --cpus-per-task=10`` if you intend to use 10 cores.
-- **Grouping:** Perform CAPs analysis for entire sample or groups of subject IDs (using the ``groups`` parameter when initializing the ``CAP`` class). K-means clustering, silhouette and elbow methods, and plotting are done for each group when specified.
+- **Grouping:** Perform CAPs analysis for entire sample or groups of subject IDs (using the ``groups`` parameter when initializing the ``CAP`` class). K-means clustering, all cluster selection methods (Davies Bouldin, Silhouette, Elbow, or Variance Ratio criterions), and plotting are done for each group when specified.
 - **CAP Visualization:** Visualize the CAPs as outer products or heatmaps, with options to use subplots to reduce the number of individual plots, as well as save. 
   Refer to the `documentation <https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2plot>`_ for the ``caps2plot()`` method in the ``CAP`` class for available ``**kwargs`` arguments and parameters to modify plots.
 - **Save CAPs as NifTIs:** Convert the atlas used for parcellation to a stat map and saves them (``caps2niftis``). 

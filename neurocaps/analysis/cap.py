@@ -9,7 +9,7 @@ from nilearn.plotting.cm import _cmap_d
 from neuromaps.transforms import mni152_to_fslr, fslr_to_fslr
 from neuromaps.datasets import fetch_fslr
 from sklearn.cluster import KMeans
-from .._utils import (_CAPGetter, _cap2statmap, _check_kwargs, _convert_pickle_to_dict,
+from .._utils import (_CAPGetter, _cap2statmap, _check_kwargs, _create_node_labels, _convert_pickle_to_dict,
                       _check_parcel_approach, _run_kmeans)
 
 class CAP(_CAPGetter):
@@ -132,9 +132,39 @@ class CAP(_CAPGetter):
                 "GroupName": sklearn.cluster.KMeans,
             }
 
+    davies_bouldin : :obj:`dict[str, dict[str, float]]`
+        If ``cluster_selection_method`` is "davies_bouldin", this property will be a nested dictionary containing the
+        group name, cluster number, and davies_bouldin scores. Is None until ``self.get_caps()`` is used.
+        The structure is as follows:
+        ::
+
+            {
+                "GroupName": {
+                    "2": float,
+                    "3": float,
+                    "4": float,
+                }
+            }
+
+        .. versionadded:: 0.12.0
+
+    inertia : :obj:`dict[str, dict[str, float]]`
+        If ``cluster_selection_method`` is "elbow", this property will be a nested dictionary containing the
+        group name, cluster number, and inertia values. Is None until ``self.get_caps()`` is used. The structure is as
+        follows:
+        ::
+
+            {
+                "GroupName": {
+                    "2": float,
+                    "3": float,
+                    "4": float,
+                }
+            }
+
     silhouette_scores : :obj:`dict[str, dict[str, float]]`
         If ``cluster_selection_method`` is "silhouette", this property will be a nested dictionary containing
-        the group name, cluster number, and silhouette score. Is None until ``self.get_caps()`` is used. The
+        the group name, cluster number, and silhouette scores. Is None until ``self.get_caps()`` is used. The
         structure is as follows:
         ::
 
@@ -146,10 +176,11 @@ class CAP(_CAPGetter):
                 }
             }
 
-    inertia : :obj:`dict[str, dict[str, float]]`
-        If ``cluster_selection_method`` is "elbow", this property will be a nested dictionary containing the
-        group name, cluster number, and inertia. Is None until ``self.get_caps()`` is used. The structure is as
-        follows:
+
+    variance_ratio : :obj:`dict[str, dict[str, float]]`
+        If ``cluster_selection_method`` is "variance_ratio", this property will be a nested dictionary containing
+        the group name, cluster number, and variance ratio scores. Is None until ``self.get_caps()`` is used. The
+        structure is as follows:
         ::
 
             {
@@ -159,6 +190,8 @@ class CAP(_CAPGetter):
                     "4": float,
                 }
             }
+
+        .. versionadded:: 0.12.0
 
     optimal_n_clusters : :obj:`dict[str, dict[int]]`
         If ``cluster_selection_method`` is not None, this property is a nested dictionary containing the group
@@ -195,7 +228,9 @@ class CAP(_CAPGetter):
 
     concatenated_timeseries : :obj:`dict[str, np.array]`
         Nested dictionary containing the group name and their respective concatenated numpy arrays
-        (participants x TR) x ROIs. Is None until ``self.get_caps()`` is used. The structure is as follows:
+        (participants x TR) x ROIs. Is None until ``self.get_caps()`` is used. If this property needs to be deleted due
+        to space issues, ``delattr(self,"_concatenated_timeseries")`` can be used to delete the array.
+        The structure is as follows:
         ::
 
             {
@@ -333,7 +368,7 @@ class CAP(_CAPGetter):
                  subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.PathLike],
                  runs: Optional[Union[int, list[int]]]=None,
                  n_clusters: Union[int, list[int]]=5,
-                 cluster_selection_method: Literal["elbow","silhouette"]=None,
+                 cluster_selection_method: Literal["elbow", "davies_bouldin", "silhouette", "variance_ratio"]=None,
                  random_state: Optional[int]=None,
                  init: Union[np.array, Literal["k-means++", "random"]]="k-means++",
                  n_init: Union[Literal["auto"],int]="auto",
@@ -382,8 +417,11 @@ class CAP(_CAPGetter):
             The number of clusters to use for ``sklearn.cluster.KMeans``. Can be a single integer or a list of
             integers (if ``cluster_selection_method`` is not None).
 
-        cluster_selection_method : {"silhouette", "elbow"} or :obj:`None`, default=None
-            Method to find the optimal number of clusters. Options are "silhouette" or "elbow".
+        cluster_selection_method : {"elbow", "davies_bouldin", "silhouette", "variance_ratio"} or :obj:`None`, default=None
+            Method to find the optimal number of clusters. Options are "elbow", "davies_bouldin", "silhouette", and
+            "variance_ratio".
+
+            .. versionadded:: 0.12.0 "davies_bouldin" and "variance_ratio"
 
         random_state : :obj:`int` or :obj:`None`, default=None
             The random state to use for ``sklearn.cluster.KMeans``. Ensures reproducible results.
@@ -488,13 +526,16 @@ class CAP(_CAPGetter):
         self._concatenated_timeseries = self._get_concatenated_timeseries(subject_timeseries=subject_timeseries,
                                                                           runs=runs)
 
-        if self._cluster_selection_method == "silhouette":
-            self._perform_silhouette_method(random_state=random_state, init=init, n_init=n_init, max_iter=max_iter,
-                                            tol=tol, algorithm=algorithm, show_figs=show_figs, output_dir=output_dir,
-                                            **kwargs)
-        elif self._cluster_selection_method == "elbow":
-            self._perform_elbow_method(random_state=random_state, init=init, n_init=n_init, max_iter=max_iter, tol=tol,
-                                       algorithm=algorithm, show_figs=show_figs, output_dir=output_dir, **kwargs)
+        valid_methods = ["elbow", "davies_bouldin", "silhouette", "variance_ratio"]
+
+        if self._cluster_selection_method is not None:
+            if self._cluster_selection_method not in valid_methods:
+                formatted_string = ', '.join(["'{a}'".format(a=x) for x in valid_methods])
+                raise ValueError(f"Options for `cluster_selection_method` are - {formatted_string}")
+            else:
+                self._select_optimal_clusters(random_state=random_state, init=init, n_init=n_init, max_iter=max_iter,
+                                              tol=tol, algorithm=algorithm, show_figs=show_figs, output_dir=output_dir,
+                                              **kwargs)
         else:
             self._kmeans = {}
             for group in self._groups:
@@ -506,139 +547,17 @@ class CAP(_CAPGetter):
         # Create states dict
         self._create_caps_dict()
 
-    def _perform_silhouette_method(self, random_state, init, n_init, max_iter, tol, algorithm,
-                                   show_figs, output_dir, **kwargs):
-        # Initialize attribute
-        self._silhouette_scores = {}
-        self._optimal_n_clusters = {}
-        self._kmeans = {}
-        # Defaults
-        defaults = {"dpi": 300, "figsize": (8,6), "step": None}
-        plot_dict = _check_kwargs(defaults, **kwargs)
-
+    def _generate_lookup_table(self):
+        self._subject_table = {}
         for group in self._groups:
-            self._silhouette_scores[group] = {}
-            if self._n_cores is None:
-                for n_cluster in self._n_clusters:
-                    silhouette_dict = _run_kmeans(n_cluster=n_cluster, random_state=random_state, init=init,
-                                                  n_init=n_init, max_iter=max_iter, tol=tol, algorithm=algorithm,
-                                                  concatenated_timeseries=self._concatenated_timeseries[group],
-                                                  method="silhouette")
-                    self._silhouette_scores[group].update(silhouette_dict)
-            else:
-                parallel = Parallel(return_as="generator", n_jobs=self._n_cores)
-                outputs = parallel(delayed(_run_kmeans)(n_cluster, random_state, init, n_init, max_iter, tol,
-                                                        algorithm, self._concatenated_timeseries[group],
-                                                        "silhouette") for n_cluster in self._n_clusters)
-                for output in outputs:
-                    self._silhouette_scores[group].update(output)
-
-            # Get max score
-            self._optimal_n_clusters[group] = max(self._silhouette_scores[group],key=self._silhouette_scores[group].get)
-            self._kmeans[group] = KMeans(n_clusters=self._optimal_n_clusters[group], random_state=random_state,
-                                         init=init, n_init=n_init, max_iter=max_iter, tol=tol,
-                                         algorithm=algorithm).fit(self._concatenated_timeseries[group])
-            print(f"Optimal cluster size for {group} is {self._optimal_n_clusters[group]}.")
-
-            if show_figs or output_dir is not None:
-                plt.figure(figsize=plot_dict["figsize"])
-                silhouette_values = [y for x,y in self._silhouette_scores[group].items()]
-                plt.plot(self._n_clusters, silhouette_values)
-                if plot_dict["step"]:
-                    x_ticks = range(self._n_clusters[0], self._n_clusters[-1] + 1, plot_dict["step"])
-                    plt.xticks(x_ticks)
-                plt.xlabel("K")
-                plt.ylabel("Silhouette Score")
-                plt.title(group)
-
-            if output_dir:
-                if not os.path.exists(output_dir): os.makedirs(output_dir)
-                plt.savefig(os.path.join(output_dir,f"{group.replace(' ','_')}_silhouette.png"),
-                            dpi=plot_dict["dpi"])
-
-            if show_figs is False: plt.close()
-            else: plt.show()
-
-    def _perform_elbow_method(self, random_state, show_figs, output_dir, init, n_init, max_iter, tol, algorithm,
-                              **kwargs):
-        # Initialize attribute
-        self._inertia = {}
-        self._optimal_n_clusters = {}
-        self._kmeans = {}
-
-        knee_dict = {"S": kwargs["S"] if "S" in kwargs else 1}
-        # Defaults
-        defaults = {"dpi": 300, "figsize": (8,6), "step": None}
-        plot_dict = _check_kwargs(defaults, **kwargs)
-
-        for group in self._groups:
-            self._inertia[group] = {}
-            if self._n_cores is None:
-                for n_cluster in self._n_clusters:
-                    inertia_dict = _run_kmeans(n_cluster=n_cluster, random_state=random_state, init=init, n_init=n_init,
-                                               max_iter=max_iter, tol=tol, algorithm=algorithm,
-                                               concatenated_timeseries=self._concatenated_timeseries[group],
-                                               method="elbow")
-                    self._inertia[group].update(inertia_dict)
-            else:
-                parallel = Parallel(return_as="generator", n_jobs=self._n_cores)
-                outputs = parallel(delayed(_run_kmeans)(n_cluster, random_state, init, n_init, max_iter,
-                                                        tol, algorithm,self._concatenated_timeseries[group],
-                                                        "elbow") for n_cluster in self._n_clusters)
-                for output in outputs:
-                    self._inertia[group].update(output)
-
-            # Get optimal cluster size
-            kneedle = KneeLocator(x=list(self._inertia[group]),
-                                                        y=list(self._inertia[group].values()),
-                                                        curve="convex",
-                                                        direction="decreasing", S=knee_dict["S"])
-
-            self._optimal_n_clusters[group] = kneedle.elbow
-            if self._optimal_n_clusters[group] is None:
-                raise ValueError(textwrap.dedent("""
-                               No elbow detected so optimal cluster size is None. Try adjusting the sensitivity
-                               parameter, `S`, to increase or decrease sensitivity (higher values are less sensitive),
-                               expanding the list of clusters to test, or setting `cluster_selection_method` to
-                               'silhouette'.
-                               """))
-            else:
-                self._kmeans[group] = KMeans(n_clusters=self._optimal_n_clusters[group], random_state=random_state,
-                                             init=init, n_init=n_init, max_iter=max_iter, tol=tol,
-                                             algorithm=algorithm).fit(self._concatenated_timeseries[group])
-                print(f"Optimal cluster size for {group} is {self._optimal_n_clusters[group]}.\n")
-
-                if show_figs or output_dir is not None:
-                    plt.figure(figsize=plot_dict["figsize"])
-                    inertia_values = [y for x,y in self._inertia[group].items()]
-                    plt.plot(self._n_clusters, inertia_values)
-                    if plot_dict["step"]:
-                        x_ticks = range(self._n_clusters[0], self._n_clusters[-1] + 1, plot_dict["step"])
-                        plt.xticks(x_ticks)
-                    plt.vlines(self._optimal_n_clusters[group], plt.ylim()[0], plt.ylim()[1],
-                               linestyles="--", label="elbow")
-                    plt.legend(loc="best")
-                    plt.xlabel("K")
-                    plt.ylabel("Inertia")
-                    plt.title(group)
-
-                    if output_dir:
-                        if not os.path.exists(output_dir): os.makedirs(output_dir)
-                        plt.savefig(os.path.join(output_dir,f"{group.replace(' ','_')}_elbow.png"),
-                                    dpi=plot_dict["dpi"])
-
-                    if show_figs is False: plt.close()
-                    else: plt.show()
-
-    def _create_caps_dict(self):
-        # Initialize dictionary
-        self._caps = {}
-        for group in self._groups:
-            self._caps[group] = {}
-            cluster_centroids = zip([num for num in range(1,len(self._kmeans[group].cluster_centers_)+1)],
-                                    self._kmeans[group].cluster_centers_)
-            self._caps[group].update({f"CAP-{state_number}": state_vector
-                                        for state_number, state_vector in cluster_centroids})
+            for subj_id in self._groups[group]:
+                if subj_id in self._subject_table:
+                    warnings.warn(textwrap.dedent(f"""
+                                  Subject: {subj_id} appears more than once, only including the first instance
+                                  of this subject in the analysis.
+                                  """))
+                else:
+                    self._subject_table.update({subj_id : group})
 
     def _get_concatenated_timeseries(self, subject_timeseries, runs):
         # Create dictionary for "All Subjects" if no groups are specified to reuse the same loop instead of having to
@@ -679,21 +598,118 @@ class CAP(_CAPGetter):
 
         return concatenated_timeseries
 
-    def _generate_lookup_table(self):
-        self._subject_table = {}
+    def _select_optimal_clusters(self, random_state, init, n_init, max_iter, tol, algorithm,
+                                 show_figs, output_dir, **kwargs):
+
+        # Initialize attributes
+        self._davies_bouldin = {}
+        self._inertia = {}
+        self._silhouette_scores = {}
+        self._variance_ratio = {}
+        self._optimal_n_clusters = {}
+        self._kmeans = {}
+        self._cluster_metric = {}
+        performance_dict = {}
+
+        method = self._cluster_selection_method
+
+        y_titles = {"elbow": "Inertia", "davies_bouldin": "Davies Bouldin Score", "silhouette": "Silhouette Score",
+                    "variance_ratio": "Variance Ratio Score"}
+        # Defaults
+        defaults = {"dpi": 300, "figsize": (8,6), "step": None}
+        plot_dict = _check_kwargs(defaults, **kwargs)
+
         for group in self._groups:
-            for subj_id in self._groups[group]:
-                if subj_id in self._subject_table:
-                    warnings.warn(textwrap.dedent(f"""
-                                  Subject: {subj_id} appears more than once, only including the first instance
-                                  of this subject in the analysis.
-                                  """))
-                else:
-                    self._subject_table.update({subj_id : group})
+            performance_dict[group] = {}
+            if self._n_cores is None:
+                for n_cluster in self._n_clusters:
+                    output_score = _run_kmeans(n_cluster=n_cluster, random_state=random_state, init=init,
+                                               n_init=n_init, max_iter=max_iter, tol=tol, algorithm=algorithm,
+                                               concatenated_timeseries=self._concatenated_timeseries[group],
+                                               method=method)
+                    performance_dict[group].update(output_score)
+            else:
+                parallel = Parallel(return_as="generator", n_jobs=self._n_cores)
+                output_scores = parallel(delayed(_run_kmeans)(n_cluster, random_state, init, n_init, max_iter, tol,
+                                                              algorithm, self._concatenated_timeseries[group],
+                                                              method) for n_cluster in self._n_clusters)
+
+                for output in output_scores: performance_dict[group].update(output)
+
+            # Select optimal clusters
+            if method == "elbow":
+                knee_dict = {"S": kwargs["S"] if "S" in kwargs else 1}
+                kneedle = KneeLocator(x=list(performance_dict[group]),
+                                    y=list(performance_dict[group].values()),
+                                    curve="convex", direction="decreasing", S=knee_dict["S"])
+                self._optimal_n_clusters[group] = kneedle.elbow
+                if self._optimal_n_clusters[group] is None:
+                    raise ValueError(textwrap.dedent("""
+                                No elbow detected so optimal cluster size is None. Try adjusting the sensitivity
+                                parameter, `S`, to increase or decrease sensitivity (higher values are less sensitive),
+                                expanding the list of clusters to test, or using another `cluster_selection_method`.
+                                """))
+            elif method == "davies_bouldin":
+                # Get minimum for davies bouldin
+                self._optimal_n_clusters[group] = min(performance_dict[group],
+                                                      key=performance_dict[group].get)
+            else:
+                # Get max for silhouette and variance ratio
+                self._optimal_n_clusters[group] = max(performance_dict[group],
+                                                      key=performance_dict[group].get)
+
+            # Get the optimal kmeans model
+            self._kmeans[group] = KMeans(n_clusters=self._optimal_n_clusters[group], random_state=random_state,
+                                         init=init, n_init=n_init, max_iter=max_iter, tol=tol,
+                                         algorithm=algorithm).fit(self._concatenated_timeseries[group])
+
+            # Plot
+            if show_figs or output_dir is not None:
+                y_title = y_titles[method]
+                plt.figure(figsize=plot_dict["figsize"])
+                y_values = [y for _ , y in  performance_dict[group].items()]
+                plt.plot(self._n_clusters, y_values)
+                if plot_dict["step"]:
+                    x_ticks = range(self._n_clusters[0], self._n_clusters[-1] + 1, plot_dict["step"])
+                    plt.xticks(x_ticks)
+                plt.xlabel("K")
+                plt.ylabel(y_title)
+                plt.title(group)
+                # Add vertical line for elbow method
+                if y_title == "Inertia":
+                    plt.vlines(self._optimal_n_clusters[group], plt.ylim()[0], plt.ylim()[1], linestyles="--",
+                               label="elbow")
+
+                if output_dir:
+                    if not os.path.exists(output_dir): os.makedirs(output_dir)
+                    save_name = f"{group.replace(' ','_')}_{self._cluster_selection_method}.png"
+                    plt.savefig(os.path.join(output_dir,save_name), dpi=plot_dict["dpi"])
+
+                if show_figs is False: plt.close()
+                else: plt.show()
+
+        if method == "elbow": self._inertia = performance_dict
+        elif method == "davies_bouldin": self._davies_bouldin = performance_dict
+        elif method == "silhouette": self._silhouette_scores = performance_dict
+        else: self._variance_ratio = performance_dict
+
+    def _create_caps_dict(self):
+        # Initialize dictionary
+        self._caps = {}
+        for group in self._groups:
+            self._caps[group] = {}
+            cluster_centroids = zip([num for num in range(1,len(self._kmeans[group].cluster_centers_)+1)],
+                                    self._kmeans[group].cluster_centers_)
+            self._caps[group].update({f"CAP-{state_number}": state_vector
+                                        for state_number, state_vector in cluster_centroids})
 
     def calculate_metrics(self, subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.PathLike],
-                          tr: Optional[float]=None, runs: Optional[Union[int]]=None, continuous_runs: bool=False,
-                          metrics: Union[str, list[str]]=["temporal_fraction", "persistence", "counts", "transition_frequency"],
+                          tr: Optional[float]=None, runs: Optional[Union[int, list[int]]]=None,
+                          continuous_runs: bool=False,
+                          metrics: Union[
+                              Literal["temporal_fraction", "persistence", "counts", "transition_frequency"],
+                              list[Literal["temporal_fraction", "persistence","counts","transition_frequency"]]
+                              ]=["temporal_fraction", "persistence","counts","transition_frequency"],
                           return_df: bool=True, output_dir: Optional[os.PathLike]=None,
                           prefix_file_name: Optional[str]=None) -> dict[str, pd.DataFrame]:
         """
@@ -807,13 +823,22 @@ class CAP(_CAPGetter):
 
         Note
         ----
-        The presence of 0 for specific CAPs in the "temporal_fraction", "persistence", or "counts"
-        DataFrames indicates that the participant had zero instances of a specific CAP. For "transition_frequency",
-        a 0 indicates no transitions due to all participant's frames being assigned to a single CAP.
-
         Information for all groups will be in a single file, there is a "Group" column to denote the group the
         subject belongs to, this column exists even when no group is specified, all subjects all listed as being
         in the "All Subjects" group.
+
+        The presence of 0 for specific CAPs in the "temporal_fraction", "persistence", or "counts" DataFrames
+        indicates that the participant had zero instances of a specific CAP. If performing an analysis on groups
+        where each group has a different number of CAPs, then for "temporal_fraction", "persistence", and "counts",
+        "nan" values will be seen for CAP numbers that exceed the group's number of CAPs.
+
+        For instance, if group "A" has 2 CAPs but group "B" has 4 CAPs, the DataFrame will contain columns for CAP-1,
+        CAP-2, CAP-3, and CAP-4. However, for all members in group "A", CAP-3 and CAP-4 will contain "nan" values to
+        indicate that these CAPs are not applicable to the group. This differentiation helps distinguish between CAPs
+        that are not applicable to the group and CAPs that are applicable but had zero instances for a specific member.
+
+        For "transition_frequency", a 0 indicates no transitions due to all participant's frames being assigned to a
+        single CAP.
 
         References
         ----------
@@ -843,9 +868,14 @@ class CAP(_CAPGetter):
         if any(boolean_list):
             invalid_metrics = [metrics[indx] for indx,boolean in enumerate(boolean_list) if boolean is False]
             if len(invalid_metrics) > 0:
-                warnings.warn(f"Invalid metrics will be ignored: {', '.join(invalid_metrics)}")
+                formatted_string = ', '.join(["'{a}'".format(a=x) for x in invalid_metrics])
+                warnings.warn(f"Invalid metrics will be ignored: {formatted_string}")
         else:
-            raise ValueError(f"No valid metrics in `metrics` list. Valid metrics are {', '.join(valid_metrics)}")
+            formatted_string = ', '.join(["'{a}'".format(a=x) for x in valid_metrics])
+            raise ValueError(textwrap.dedent(f"""
+                                             No valid metrics in `metrics` list.
+                                             Valid metrics are {formatted_string}
+                                             """))
 
         if isinstance(subject_timeseries, str) and subject_timeseries.endswith(".pkl"):
             subject_timeseries = _convert_pickle_to_dict(pickle_file=subject_timeseries)
@@ -854,12 +884,13 @@ class CAP(_CAPGetter):
             # for the concatenated data being set to the subject timeseries if concatenated data is empty.
             subject_timeseries = copy.deepcopy(subject_timeseries)
 
-        group_cap_dict = {}
+        group_cap_counts = {}
         # Get group with most CAPs
         for group in self._groups:
-            group_cap_dict.update({group: len(self._caps[group])})
+            # Store the length of caps in each group
+            group_cap_counts.update({group: len(self._caps[group])})
 
-        cap_names = list(self._caps[max(group_cap_dict, key=group_cap_dict.get)])
+        cap_names = list(self._caps[max(group_cap_counts, key=group_cap_counts.get)])
         cap_numbers = [int(name.split("-")[-1]) for name in cap_names]
 
         # Assign each subject TRs to CAP
@@ -875,26 +906,30 @@ class CAP(_CAPGetter):
                             {','.join(requested_runs)}.
                             """))
                 continue
-            if not continuous_runs or len(requested_runs) == 1:
-                for curr_run in subject_runs:
-                    if self._standardize:
-                        timeseries = (subject_timeseries[subj_id][curr_run] - self._mean_vec[group])/self._stdev_vec[group]
-                    else:
-                        timeseries = subject_timeseries[subj_id][curr_run]
-                    predicted_subject_timeseries[subj_id].update({curr_run: self._kmeans[group].predict(timeseries) + 1})
-            else:
-                subject_runs = "continuous_runs"
-                timeseries = {subject_runs: {}}
-                for curr_run in subject_timeseries[subj_id]:
-                    if len(timeseries[subject_runs]) != 0:
-                        timeseries[subject_runs] = np.vstack([timeseries[subject_runs],
-                                                            subject_timeseries[subj_id][curr_run]])
-                    else: timeseries[subject_runs] = subject_timeseries[subj_id][curr_run]
+            for curr_run in subject_runs:
+                # Standardize or not
                 if self._standardize:
-                    timeseries = (timeseries[subject_runs] - self._mean_vec[group])/self._stdev_vec[group]
+                    timeseries = (subject_timeseries[subj_id][curr_run] - self._mean_vec[group])/self._stdev_vec[group]
                 else:
-                    timeseries = timeseries[subject_runs]
-                predicted_subject_timeseries[subj_id].update({subject_runs: self._kmeans[group].predict(timeseries) + 1})
+                    timeseries = subject_timeseries[subj_id][curr_run]
+
+                # Set run_id
+                run_id = curr_run if not continuous_runs or len(subject_runs) == 1 else "continuous_runs"
+
+                prediction_vector = self._kmeans[group].predict(timeseries)
+                # Add 1 to the prediction vector since labels start at 0; avoid inplace operation in the event of casting error
+                # Adding one needed to ensure that the labels map onto the cap_numbers       
+                prediction_vector = prediction_vector + 1
+
+                if run_id != "continuous_runs" or len(subject_runs) == 1:
+                    predicted_subject_timeseries[subj_id].update({run_id: prediction_vector})
+                else:
+                    # Horizontally stack predicted runs 
+                    if curr_run == subject_runs[0]: predicted_continuous_timeseries = prediction_vector
+                    else: predicted_continuous_timeseries = np.hstack([predicted_continuous_timeseries,
+                                                                       prediction_vector])
+            if run_id == "continuous_runs":
+                predicted_subject_timeseries[subj_id].update({run_id: predicted_continuous_timeseries})
 
         df_dict = {}
 
@@ -913,11 +948,20 @@ class CAP(_CAPGetter):
         for subj_id, group, curr_run in distributed_list:
             group_name = group.replace(" ","_")
             if "temporal_fraction" in metrics or "counts" in metrics:
+                # Get frequency
                 frequency_dict = dict(collections.Counter(predicted_subject_timeseries[subj_id][curr_run]))
+                # Sort the keys
                 sorted_frequency_dict = {key: frequency_dict[key] for key in sorted(list(frequency_dict))}
+                # Add zero to missing CAPs for participants that exhibit zero instances of a certain CAP
                 if len(sorted_frequency_dict) != len(cap_numbers):
                     sorted_frequency_dict = {cap_number: sorted_frequency_dict[cap_number] if cap_number in
                                              list(sorted_frequency_dict) else 0 for cap_number in cap_numbers}
+                # Replace zeros with nan for groups with less caps than the group with the max caps
+                if len(cap_numbers) > group_cap_counts[group]:
+                    sorted_frequency_dict = {cap_number: sorted_frequency_dict[cap_number] if
+                                             cap_number <= group_cap_counts[group] else float("nan") for cap_number in
+                                             cap_numbers}
+
                 if "temporal_fraction" in metrics:
                     proportion_dict = {key: item/(len(predicted_subject_timeseries[subj_id][curr_run]))
                                        for key, item in sorted_frequency_dict.items()}
@@ -957,10 +1001,18 @@ class CAP(_CAPGetter):
                         else:
                             persistence_dict.update({target: persistence_value})
                     else:
+                        # Zero indicates that a participant has zero instances of the CAP
                         persistence_dict.update({target: 0})
                     # Reset variables
                     count = 0
                     uninterrupted_volumes = []
+
+                # Replace zeros with nan for groups with less caps than the group with the max caps
+                if len(cap_numbers) > group_cap_counts[group]:
+                    persistence_dict = {cap_number: persistence_dict[cap_number] if
+                                        cap_number <= group_cap_counts[group] else float("nan") for cap_number in
+                                        cap_numbers}
+                    
                 # Populate Dataframe
                 new_row = [subj_id, group_name, curr_run] + [items for _ , items in persistence_dict.items()]
                 df_dict["persistence"].loc[len(df_dict["persistence"])] = new_row
@@ -972,6 +1024,7 @@ class CAP(_CAPGetter):
                         # If the subsequent element does not equal the previous element, this is considered a transition
                         if predicted_subject_timeseries[subj_id][curr_run][index-1] != predicted_subject_timeseries[subj_id][curr_run][index]:
                             count +=1
+                # Populate DataFrame
                 new_row = [subj_id, group_name, curr_run, count]
                 df_dict["transition_frequency"].loc[len(df_dict["transition_frequency"])] = new_row
 
@@ -988,8 +1041,10 @@ class CAP(_CAPGetter):
         if return_df: return df_dict
 
     def caps2plot(self, output_dir: Optional[os.PathLike]=None, suffix_title: Optional[str]=None,
-                  plot_options: Union[Literal["outer_product", "heatmap"], list[Literal["outer_product", "heatmap"]]]="outer_product",
-                  visual_scope: Union[Literal["regions", "nodes"], list[Literal["regions", "nodes"]]]="regions",
+                  plot_options: Union[Literal["outer_product", "heatmap"],
+                                      list[Literal["outer_product", "heatmap"]]]="outer_product",
+                  visual_scope: Union[Literal["regions", "nodes"],
+                                      list[Literal["regions", "nodes"]]]="regions",
                   show_figs: bool=True, subplots: bool=False, **kwargs) -> seaborn.heatmap:
         """
         **Generate heatmaps and outer product plots of CAPs**
@@ -1119,7 +1174,7 @@ class CAP(_CAPGetter):
                                  """))
 
         # Check if parcellation_approach is custom
-        if "Custom" in self._parcel_approach and ("nodes" not in self._parcel_approach["Custom"] or "regions" not in self._parcel_approach["Custom"]):
+        if "Custom" in self._parcel_approach and any(key not in self._parcel_approach["Custom"] for key in ["nodes", "regions"]):
             _check_parcel_approach(parcel_approach=self._parcel_approach, call="caps2plot")
 
         # Get parcellation name
@@ -1152,11 +1207,11 @@ class CAP(_CAPGetter):
 
         # Create plot dictionary
         defaults= {"dpi": 300, "figsize": (8, 6), "fontsize": 14, "hspace": 0.2, "wspace": 0.2, "xticklabels_size": 8,
-                    "yticklabels_size": 8, "shrink": 0.8, "nrow": None, "ncol": None, "suptitle_fontsize": 20,
-                    "tight_layout": True, "rect": [0, 0.03, 1, 0.95], "sharey": True, "xlabel_rotation": 0,
-                    "ylabel_rotation": 0, "annot": False, "fmt": ".2g", "linewidths": 0, "linecolor": "black",
-                    "cmap": "coolwarm", "edgecolors": None, "alpha": None, "hemisphere_labels": False,
-                    "borderwidths": 0, "vmin": None, "vmax": None, "bbox_inches": "tight"}
+                   "yticklabels_size": 8, "shrink": 0.8, "nrow": None, "ncol": None, "suptitle_fontsize": 20,
+                   "tight_layout": True, "rect": [0, 0.03, 1, 0.95], "sharey": True, "xlabel_rotation": 0,
+                   "ylabel_rotation": 0, "annot": False, "fmt": ".2g", "linewidths": 0, "linecolor": "black",
+                   "cmap": "coolwarm", "edgecolors": None, "alpha": None, "hemisphere_labels": False,
+                   "borderwidths": 0, "vmin": None, "vmax": None, "bbox_inches": "tight"}
 
         plot_dict = _check_kwargs(defaults, **kwargs)
 
@@ -1186,8 +1241,8 @@ class CAP(_CAPGetter):
                     cap_dict, columns = self._caps, self._parcel_approach[parcellation_name]["nodes"]
                 else:
                     cap_dict = self._caps
-                    columns =  [x[0] + " " + x[1] for x in list(itertools.product(["LH", "RH"],
-                                                                                  self._parcel_approach["Custom"]["regions"]))]
+                    columns =  [x[0] + " " + x[1] for x in
+                                list(itertools.product(["LH", "RH"], self._parcel_approach["Custom"]["regions"]))]
 
             #  Generate plot for each group
             input_keys = dict(group=group, plot_dict=plot_dict, cap_dict=cap_dict, columns=columns,
@@ -1262,36 +1317,8 @@ class CAP(_CAPGetter):
             self._outer_products[group].update({cap: np.outer(cap_dict[group][cap],cap_dict[group][cap])})
             # Create labels if nodes requested for scope
             if scope == "nodes" and plot_dict["hemisphere_labels"] is False:
-                # Get frequency of each major hemisphere and region in Schaefer,
-                # AAL, or Custom atlas
-                if parcellation_name == "Schaefer":
-                    names_list = [name.split("_")[0:2] for name in self._parcel_approach[parcellation_name]["nodes"]]
-                    frequency_dict = dict(collections.Counter([names[0] + " " + names[1] for names in names_list]))
-                elif parcellation_name == "AAL":
-                    frequency_dict = collections.Counter([name.split("_")[0] for name in
-                                                          self._parcel_approach[parcellation_name]["nodes"]])
-                else:
-                    frequency_dict = {}
-                    for names_id in columns:
-                        hemisphere_id = "LH" if names_id.startswith("LH ") else "RH"
-                        region_id = re.split("LH |RH ", names_id)[-1]
-                        frequency_dict.update({names_id: len(self._parcel_approach["Custom"]["regions"][region_id][hemisphere_id.lower()])})
-                # Get the names, which indicate the hemisphere and region
-                names_list = list(frequency_dict)
-                labels = ["" for _ in range(0,len(self._parcel_approach[parcellation_name]["nodes"]))]
-
-                starting_value = 0
-
-                # Iterate through names_list and assign the starting indices corresponding to unique region and
-                # hemisphere key
-                for num, name in enumerate(names_list):
-                    if num == 0:
-                        labels[0] = name
-                    else:
-                        # Shifting to previous frequency of the preceding netwerk to obtain the new starting value of
-                        # the subsequent region and hemosphere pair
-                        starting_value += frequency_dict[names_list[num-1]]
-                        labels[starting_value] = name
+                labels, _ = _create_node_labels(parcellation_name=parcellation_name,
+                                                parcel_approach=self._parcel_approach, columns=columns)
 
             if subplots:
                 ax = axes[axes_y] if nrow == 1 else axes[axes_x,axes_y]
@@ -1390,16 +1417,15 @@ class CAP(_CAPGetter):
                 else:
                     if plot_dict["hemisphere_labels"] is False:
                         display = seaborn.heatmap(self._outer_products[group][cap], cmap=plot_dict["cmap"],
-                                          linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"],
-                                          xticklabels=[], yticklabels=[], cbar_kws={"shrink": plot_dict["shrink"]},
-                                          annot=plot_dict["annot"], fmt=plot_dict["fmt"],
-                                          edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"],
-                                          vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
+                                                  linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"],
+                                                  xticklabels=[], yticklabels=[], cbar_kws={"shrink": plot_dict["shrink"]},
+                                                  edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"],
+                                                  vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
                     else:
                         display = seaborn.heatmap(self._outer_products[group][cap], cmap=plot_dict["cmap"], xticklabels=[],
-                                          yticklabels=[], cbar_kws={"shrink": plot_dict["shrink"]},
-                                          annot=plot_dict["annot"], fmt=plot_dict["fmt"], alpha=plot_dict["alpha"],
-                                          vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
+                                                  yticklabels=[], cbar_kws={"shrink": plot_dict["shrink"]},
+                                                  annot=plot_dict["annot"], fmt=plot_dict["fmt"], alpha=plot_dict["alpha"],
+                                                  vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
 
                     if plot_dict["hemisphere_labels"] is False:
                         ticks = [i for i, label in enumerate(labels) if label]
@@ -1477,39 +1503,15 @@ class CAP(_CAPGetter):
 
         if scope == "regions":
             display = seaborn.heatmap(pd.DataFrame(cap_dict[group], index=columns), xticklabels=True, yticklabels=True,
-                              cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"],
-                              linecolor=plot_dict["linecolor"], cbar_kws={"shrink": plot_dict["shrink"]},
-                              fmt=plot_dict["fmt"], edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"],
-                              vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
+                                      cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"],
+                                      linecolor=plot_dict["linecolor"], cbar_kws={"shrink": plot_dict["shrink"]},
+                                      fmt=plot_dict["fmt"], edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"],
+                                      vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
         else:
             # Create Labels
             if plot_dict["hemisphere_labels"] is False:
-                if parcellation_name == "Schaefer":
-                    names_list = [name.split("_")[0:2] for name in self._parcel_approach[parcellation_name]["nodes"]]
-                    frequency_dict = dict(collections.Counter([names[0] + " " + names[1] for names in names_list]))
-                elif parcellation_name == "AAL":
-                    frequency_dict = collections.Counter([name.split("_")[0] for name in self._parcel_approach[parcellation_name]["nodes"]])
-                else:
-                    frequency_dict = {}
-                    for names_id in columns:
-                        hemisphere_id = "LH" if names_id.startswith("LH ") else "RH"
-                        region_id = re.split("LH |RH ", names_id)[-1]
-                        frequency_dict.update({names_id: len(self._parcel_approach["Custom"]["regions"][region_id][hemisphere_id.lower()])})
-                names_list = list(frequency_dict)
-                labels = ["" for _ in range(0,len(self._parcel_approach[parcellation_name]["nodes"]))]
-
-                starting_value = 0
-
-                # Iterate through names_list and assign the starting indices corresponding to unique region
-                # and hemisphere key
-                for num, name in enumerate(names_list):
-                    if num == 0:
-                        labels[0] = name
-                    else:
-                        # Shifting to previous frequency of the preceding netwerk to obtain the new starting value of
-                        # the subsequent region and hemosphere pair
-                        starting_value += frequency_dict[names_list[num-1]]
-                        labels[starting_value] = name
+                labels, names_list = _create_node_labels(parcellation_name=parcellation_name,
+                                                         parcel_approach=self._parcel_approach, columns=columns)
 
                 display = seaborn.heatmap(pd.DataFrame(cap_dict[group], columns=list(cap_dict[group])),
                                           xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"],
@@ -2001,8 +2003,6 @@ class CAP(_CAPGetter):
                 fig_name = f"{group} {cap} {suffix_title}" if suffix_title else f"{group} {cap}"
                 fig.axes[0].set_title(fig_name, pad=plot_dict["title_pad"])
 
-                if show_figs: fig.show()
-
                 if output_dir:
                     if suffix_title:
                         save_name = f"{group.replace(' ', '_')}_{cap}_{suffix_title}_surface.png"
@@ -2014,6 +2014,8 @@ class CAP(_CAPGetter):
                     if save_stat_map:
                         stat_map_name = save_name.replace(".png", ".nii.gz")
                         nib.save(stat_map, stat_map_name)
+
+                if not show_figs: plt.close(fig)
 
     def caps2radar(self, output_dir: Optional[os.PathLike]=None, suffix_title: Optional[str]=None,
                    show_figs: bool=True, use_scatterpolar: bool=False, as_html: bool=False,
@@ -2211,16 +2213,15 @@ class CAP(_CAPGetter):
 
         # Create radar dict
         for group in self._caps:
-            if parcellation_name == "Custom":
-                radar_dict = {"regions": list(self.parcel_approach[parcellation_name]["regions"])}
-            else:
-                radar_dict = {"regions": list(self.parcel_approach[parcellation_name]["regions"])}
+            radar_dict = {"regions": list(self.parcel_approach[parcellation_name]["regions"])}
             for cap in self._caps[group]:
                 cap_vector = self._caps[group][cap]
                 radar_dict[cap] = []
                 for region in radar_dict["regions"]:
                     if parcellation_name == "Custom":
-                        indxs = self._parcel_approach[parcellation_name]["regions"][region]["lh"] + self._parcel_approach[parcellation_name]["regions"][region]["rh"]
+                        lh = self._parcel_approach[parcellation_name]["regions"][region]["lh"]
+                        rh = self._parcel_approach[parcellation_name]["regions"][region]["rh"]
+                        indxs = lh + rh
                     else:
                         indxs = np.array([value for value, node in
                                           enumerate(self._parcel_approach[parcellation_name]["nodes"])

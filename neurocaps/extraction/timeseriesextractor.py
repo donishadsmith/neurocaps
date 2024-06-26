@@ -124,7 +124,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     subject_timeseries : :obj:`dict[str, dict[str, np.ndarray]`
         Nested dictionary containing the subject ID, run ID, and the 2D numpy arrays for timeseries data. Can
         all be used as a setter, which accepts a dictionary or a dictionary saved as pickle file.
-        The structure is as follows:
+        If this property needs to be deleted due to space issues, ``delattr(self,"_subject_timeseries")``
+        can be used to delete the array. The structure is as follows:
         ::
 
             subject_timeseries = {
@@ -565,11 +566,18 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     with open(bold_metadata_files[0], "r") as json_file:
                         tr = json.load(json_file)["RepetitionTime"]
             except:
-                warnings.warn(textwrap.dedent(f"""
-                                `tr` not specified and `tr` could not be extracted for subject: {subj_id} since BOLD
-                                metadata file could not be opened.
-                                """))
-                tr=None
+                if self._task_info["condition"]:
+                    raise ValueError(textwrap.dedent(f"""
+                                    `tr` not specified and `tr` could not be extracted for subject: {subj_id} since BOLD
+                                    metadata file could not be opened. The `tr` must be given when `condition` is 
+                                    specified.
+                                    """))
+                else:
+                    warnings.warn(textwrap.dedent(f"""
+                                    `tr` not specified and `tr` could not be extracted for subject: {subj_id} since BOLD
+                                    metadata file could not be opened.
+                                    """))
+                    tr=None
 
             # Store subject specific information
             self._subject_info[subj_id] = {"nifti_files": nifti_files,

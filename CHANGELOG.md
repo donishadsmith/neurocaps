@@ -41,6 +41,26 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 - *.patch* : Contains no new features, simply fixes any identified bugs.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.12.0] - 2024-06-26
+- Entails some code cleaning and verification to ensure that the code cleaned for clarity purposes produces the same
+results.
+
+### 🚀 New/Added
+- Davies Bouldin and Variance Ratio (Calinski Harabasz) added
+
+### ♻ Changed
+- For `CAPs.calculate_metrics()` if performing an analysis on groups where each group has a different number of CAPs, then for "temporal_fraction",
+"persistence", and "counts", "nan" values will be seen for CAP numbers that exceed the group's number of CAPs.
+    - For instance, if group "A" has 2 CAPs but group "B" has 4 CAPs, the DataFrame will contain columns for CAP-1,
+      CAP-2, CAP-3, and CAP-4. However, for all members in group "A", CAP-3 and CAP-4 will contain "nan" values to
+      indicate that these CAPs are not applicable to the group. This differentiation helps distinguish between CAPs
+      that are not applicable to the group and CAPs that are applicable but had zero instances for a specific member.
+
+### 🐛 Fixes
+- Adds error earlier when tr is not specified or able to be retrieved form the bold metadata when the condition is specified
+instead of allowing the pipeline to produce this error later.
+- Fixed issue with `show_figs` in `CAP.caps2surf()` showing figure when set to False.
+
 ## [0.11.3] - 2024-06-24
 ### ♻ Changed
 - With parallel processing, joblib outputs are now returned as a generator as opposed to the default, which is a list,

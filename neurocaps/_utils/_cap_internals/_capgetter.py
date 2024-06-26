@@ -9,14 +9,6 @@ class _CAPGetter:
 
     ### Attributes exist when CAP initialized
     @property
-    def n_clusters(self):
-        return self._n_clusters
-
-    @property
-    def cluster_selection_method(self):
-        return self._cluster_selection_method
-
-    @property
     def groups(self):
         return self._groups
 
@@ -31,6 +23,14 @@ class _CAPGetter:
         self._parcel_approach = _check_parcel_approach(parcel_approach=parcel_dict, call="setter")
 
     ### Attributes exist when CAP.get_caps() used
+    @property
+    def n_clusters(self):
+        return self._n_clusters if hasattr(self, "_n_clusters") else None
+
+    @property
+    def cluster_selection_method(self):
+        return self._cluster_selection_method if hasattr(self, "_cluster_selection_method") else None
+
     @property
     def n_cores(self):
         return self._n_cores if hasattr(self, "_n_cores") else None
@@ -48,12 +48,20 @@ class _CAPGetter:
         return self._kmeans if hasattr(self, "_kmeans") else None
 
     @property
+    def davies_bouldin(self):
+        return self._davies_bouldin if hasattr(self, "_davies_bouldin") else None
+
+    @property
     def silhouette_scores(self):
         return self._silhouette_scores if hasattr(self, "_silhouette_scores") else None
 
     @property
     def inertia(self):
         return self._inertia if hasattr(self, "_inertia") else None
+
+    @property
+    def variance_ratio(self):
+        return self._variance_ratio if hasattr(self, "_variance_ratio") else None
 
     @property
     def optimal_n_clusters(self):
