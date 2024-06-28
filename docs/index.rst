@@ -1,8 +1,7 @@
 .. include:: introduction.rst
 
-Contents
---------
 .. toctree::
+   :hidden:
    :maxdepth: 2
 
    installation

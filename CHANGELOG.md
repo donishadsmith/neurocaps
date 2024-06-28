@@ -43,11 +43,14 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 
 ## [0.12.1.post2] - 2024-06-27
 ### 💻 Metadata
-- Updates potential unsupported type hint for earlier Python versions included in the first .post, which is yanked.
+- Includes the updated type hints in 0.12.1.post1 and removes the unsupported operand for compatibility with
+Python 3.9.
 
-## [0.12.1.post1] - 2024-06-27
+## [0.12.1.post1] - 2024-06-27 [YANKED]
 ### 💻 Metadata
 - Additional type hint updates.
+- **Reason for Yanking**: Yanked due to potentially unsupported operand for type hinting (the vertical bar `|`)
+in earlier Python versions (3.9).
 
 ## [0.12.1] - 2024-06-27
 
