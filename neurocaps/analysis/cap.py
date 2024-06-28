@@ -20,7 +20,7 @@ class CAP(_CAPGetter):
 
     Parameters
     ----------
-    parcel_approach : :obj:`dict[str, dict]`, default=None
+    parcel_approach : :obj:`dict[str, dict[str, os.PathLike | list[str]]]` or :obj:`dict[str, dict[str, str | int]]`, default=None
         The approach used to parcellate BOLD images. Similar to ``TimeseriesExtractor``, "Schaefer" and "AAL"
         can be initialized here to create the appropriate ``parcel_approach`` that includes the sub-keys
         "maps", "nodes", and "regions", which are needed for plotting.
@@ -61,14 +61,14 @@ class CAP(_CAPGetter):
         A single integer or list of integers if ``cluster_selection_method`` is not None) that will used for
         ``sklearn.cluster.KMeans``. Is None until ``self.get_caps()`` is used.
 
-    groups : :obj:`dict[str, list]` or :obj:`None`:
+    groups : :obj:`dict[str, list[str]]` or :obj:`None`:
         A mapping of groups names to subject IDs.
 
     cluster_selection_method : :obj:`str` or :obj:`None`:
         The cluster selection method to identify the optimal number of clusters. Is None until ``self.get_caps()``
         is used.
 
-    parcel_approach : :obj:`dict[str, dict]`
+    parcel_approach : :obj:`dict[str, dict[str, os.PathLike | list[str]]]`
         Nested dictionary containing information about the parcellation. Can also be used as a setter, which accepts
         a dictionary or a dictionary saved as a pickle file. If "Schaefer" or "AAL" was specified during initialization
         of the ``TimeseriesExtractor`` class, then ``nilearn.datasets.fetch_atlas_schaefer_2018`` and
@@ -108,7 +108,7 @@ class CAP(_CAPGetter):
     runs : :obj:`int` or :obj:`list[int]`
         The runs used for the CAPs analysis. Is None until ``self.get_caps()`` is used and ``runs`` is specified.
 
-    caps : :obj:`dict[str, dict[np.array]]`
+    caps : :obj:`dict[str, dict[str, np.array]]`
         The extracted cluster centroids, representing each CAP from the k-means model. It is a nested dictionary
         containing the group name, CAP names, and 1D numpy array. Is None until ``self.get_caps``
         is used. The structure is as follows:
@@ -265,7 +265,7 @@ class CAP(_CAPGetter):
 
             }
 
-    subject_table : :obj:`dict[str]`
+    subject_table : :obj:`dict[str, str]`
         A dictionary generated when ``self.get_caps()`` is used. Operates as a lookup table that pairs each subject ID
         with the associated group. Also can be used as a setter. The structure is as follows.
         ::
@@ -341,7 +341,9 @@ class CAP(_CAPGetter):
             }
         }
     """
-    def __init__(self, parcel_approach: dict[str, dict]=None, groups: dict[str, list[str]]=None) -> None:
+    def __init__(self, parcel_approach: Union[dict[str, dict[str, Union[os.PathLike, list[str]]]],
+                                              dict[str, dict[str, Union[str,int]]]]=None,
+                 groups: dict[str, list[str]]=None) -> None:
         self._groups = groups
         # Raise error if self groups is not a dictionary
         if self._groups:
@@ -413,7 +415,7 @@ class CAP(_CAPGetter):
             The run numbers to perform the CAPs analysis with. If None, all runs in the subject timeseries will be
             concatenated into a single dataframe and subjected to k-means clustering.
 
-        n_clusters : :obj:`Union[int, list[int]]`, default=5
+        n_clusters : :obj:`int | list[int]`, default=5
             The number of clusters to use for ``sklearn.cluster.KMeans``. Can be a single integer or a list of
             integers (if ``cluster_selection_method`` is not None).
 
@@ -917,10 +919,8 @@ class CAP(_CAPGetter):
                 # Set run_id
                 run_id = curr_run if not continuous_runs or len(subject_runs) == 1 else "continuous_runs"
 
-                prediction_vector = self._kmeans[group].predict(timeseries)
-                # Add 1 to the prediction vector since labels start at 0; avoid inplace operation in the event of casting error
-                # Adding one needed to ensure that the labels map onto the cap_numbers       
-                prediction_vector = prediction_vector + 1
+                # Add 1 to the prediction vector since labels start at 0, needed to ensure that the labels map onto the cap_numbers     
+                prediction_vector = self._kmeans[group].predict(timeseries) + 1  
 
                 if run_id != "continuous_runs":
                     predicted_subject_timeseries[subj_id].update({run_id: prediction_vector})

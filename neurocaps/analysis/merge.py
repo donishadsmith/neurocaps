@@ -91,7 +91,7 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
                     subject_timeseries_combined[subj_id].update({curr_run: curr_dict[subj_id][curr_run]})
             # Sort runs lexicographically, keys may be disordered if the first curr_dict does not contain the earliest run_id 
             if list(subject_timeseries_combined[subj_id]) != sorted(subject_timeseries_combined[subj_id].keys()):
-                subject_timeseries_combined[subj_id] = {run_id: subject_timeseries_combined[subj_id][run_id]for run_id
+                subject_timeseries_combined[subj_id] = {run_id: subject_timeseries_combined[subj_id][run_id] for run_id
                                                         in sorted(subject_timeseries_combined[subj_id].keys())}
 
     if output_dir:

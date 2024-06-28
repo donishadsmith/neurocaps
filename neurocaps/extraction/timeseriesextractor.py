@@ -29,7 +29,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     high_pass : :obj:`float` or :obj:`None`, default=None
         Filters out signals below the specified cutoff frequency.
 
-    parcel_approach : :obj:`dict[str, dict]`, default={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
+    parcel_approach : :obj:`dict[str, dict[str, str | int]]`, default={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
         The approach to parcellate BOLD images. This should be a nested dictionary with the first key being the
         atlas name. Currently, only "Schaefer", "AAL", and "Custom" are supported.
 
@@ -78,7 +78,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         ``TimeseriesExtractor`` class. This information includes ``standardize``, ``detrend``, ``low_pass``,
         ``high_pass``, ``fwhm``, ``dummy_scans``, ``use_confounds``, ``n_compcor_separate``, and ``fd_threshold``.
 
-    parcel_approach : :obj:`dict[str, dict]`
+    parcel_approach : :obj:`dict[str, dict[str, os.PathLike | list[str]]]`
         Nested dictionary containing information about the parcellation. Can also be used as a setter, which accepts a
         dictionary or a dictionary saved as pickle file. If "Schaefer" or "AAL" was specified during
         initialization of the ``TimeseriesExtractor`` class, then``nilearn.datasets.fetch_atlas_schaefer_2018``
@@ -217,7 +217,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     def __init__(self, space: str = "MNI152NLin2009cAsym",
                  standardize: Union[bool, Literal["zscore_sample", "zscore", "psc"]]="zscore_sample",
                  detrend: bool=True, low_pass: Optional[float]=None, high_pass: Optional[float]=None,
-                 parcel_approach: dict[str, dict]={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}},
+                 parcel_approach: dict[str, dict[str, Union[str, int]]]={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}},
                  use_confounds: bool=True, confound_names: Optional[list[str]]=None, fwhm: Optional[float]=None,
                  fd_threshold: Optional[float]=None, n_acompcor_separate: Optional[int]=None,
                  dummy_scans: Optional[int]=None) -> None:

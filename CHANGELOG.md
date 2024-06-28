@@ -41,6 +41,14 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 - *.patch* : Contains no new features, simply fixes any identified bugs.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.12.1.post2] - 2024-06-27
+### 💻 Metadata
+- Updates potential unsupported type hint for earlier Python versions included in the first .post, which is yanked.
+
+## [0.12.1.post1] - 2024-06-27
+### 💻 Metadata
+- Additional type hint updates.
+
 ## [0.12.1] - 2024-06-27
 
 ### ♻ Changed
