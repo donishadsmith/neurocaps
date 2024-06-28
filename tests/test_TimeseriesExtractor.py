@@ -16,7 +16,7 @@ def test_TimeseriesExtractor_no_parallel():
     bids_dir = os.path.join(dir, "ds000031_R1.0.4_ses001-022/ds000031_R1.0.4")
 
     pipeline_name = "fmriprep_1.0.0/fmriprep"
-    extractor.get_bold(bids_dir=bids_dir, session='002', task="rest", pipeline_name=pipeline_name, tr=1.2, n_cores=1)
+    extractor.get_bold(bids_dir=bids_dir, session='002', runs="001",task="rest", pipeline_name=pipeline_name, tr=1.2, n_cores=1)
     
     print(extractor.subject_timeseries, flush=True)
 
@@ -43,7 +43,7 @@ def test_TimeseriesExtractor_no_parallel_no_session_w_custom():
     bids_dir = os.path.join(dir, "ds000031_R1.0.4_ses001-022/ds000031_R1.0.4")
 
     pipeline_name = "fmriprep_1.0.0/fmriprep"
-    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+    extractor.get_bold(bids_dir=bids_dir, task="rest", runs=["001"],pipeline_name=pipeline_name, tr=1.2)
     
     print(extractor.subject_timeseries, flush=True)
 

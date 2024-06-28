@@ -41,6 +41,15 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 - *.patch* : Contains no new features, simply fixes any identified bugs.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.12.2] - 2024-06-27
+### ♻ Changed
+- When specified, allows `runs` parameter to be string, int, list of strings, or list of integers instead of just lists.
+Always ensures it is converted to list if integer or string.
+- Clarifies warning if tr not specified in `TimeseriesExtractor` by stating the `tr` is set to `None` and that extraction
+will continue.
+- For `CAP.get_caps()`, if runs is `None`, the `self.runs` property is just None instead of being set to "all". Only affects what
+is returned by `self.runs` when nothing is specified.
+
 ## [0.12.1.post2] - 2024-06-27
 ### 💻 Metadata
 - Includes the updated type hints in 0.12.1.post1 and removes the unsupported operand for compatibility with

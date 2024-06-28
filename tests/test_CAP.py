@@ -165,9 +165,13 @@ def test_CAP_get_caps_with_groups_and_silhouette_method_pkl():
     cap_analysis.calculate_metrics(subject_timeseries=new_timeseries, return_df=True)
 
     cap_analysis.get_caps(subject_timeseries=new_timeseries,
-                          n_clusters=[2,3,4,5], cluster_selection_method="silhouette")
+                          n_clusters=[2,3,4,5], cluster_selection_method="silhouette", runs=["1", "2"])
     
-    cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True)
+    cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, runs=1)
+    cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, runs=1, continuous_runs=True)
+
+    cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, runs="1")
+
 
     cap_analysis.caps2plot(subplots=True, xlabel_rotation=90, sharey=True, borderwidths=10, show_figs=False)
 

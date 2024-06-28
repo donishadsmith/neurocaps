@@ -34,7 +34,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         atlas name. Currently, only "Schaefer", "AAL", and "Custom" are supported.
 
         - For "Schaefer", available sub-keys include "n_rois", "yeo_networks", and "resolution_mm".  Refer to documentation for ``nilearn.datasets.fetch_atlas_schaefer_2018`` for valid inputs.
-        - For "AAL", the only sub-key is "version". Refer to documentation for  ``nilearn.datasets.fetch_atlas_aal`` for valid inputs.
+        - For "AAL", the only sub-key is "version". Refer to documentation for ``nilearn.datasets.fetch_atlas_aal`` for valid inputs.
         - For "Custom", the key must include a sub-key called "maps" specifying the directory location of the parcellation NifTI file.
 
     use_confounds : :obj:`bool`, default=True
@@ -81,7 +81,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     parcel_approach : :obj:`dict[str, dict[str, os.PathLike | list[str]]]`
         Nested dictionary containing information about the parcellation. Can also be used as a setter, which accepts a
         dictionary or a dictionary saved as pickle file. If "Schaefer" or "AAL" was specified during
-        initialization of the ``TimeseriesExtractor`` class, then``nilearn.datasets.fetch_atlas_schaefer_2018``
+        initialization of the ``TimeseriesExtractor`` class, then ``nilearn.datasets.fetch_atlas_schaefer_2018``
         and ``nilearn.datasets.fetch_atlas_aal`` will be used to obtain the "maps" and the "nodes". Then string
         splitting is used on the "nodes" to obtain the "regions":
         ::
@@ -238,7 +238,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             self._signal_clean_info["fd_threshold"] = fd_threshold
 
     def get_bold(self, bids_dir: os.PathLike, task: str, session: Optional[Union[int,str]]=None,
-                 runs: Optional[Union[list[int], list[str]]]=None, condition: Optional[str]=None,
+                 runs: Optional[Union[int, str, list[int], list[str]]]=None, condition: Optional[str]=None,
                  tr: Optional[Union[int, float]]=None, run_subjects: Optional[list[str]]=None,
                  exclude_subjects: Optional[list[str]]= None, pipeline_name: Optional[str]=None,
                  n_cores: Optional[int]=None, verbose: bool=True, flush_print: bool=False,
@@ -262,7 +262,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Session to extract timeseries from. Only a single session can be extracted at a time. An error will be
             issued if more than one session is detected in the preprocessed NifTI files.
 
-        runs : :obj:`list[int]` or :obj:`list[str]`, default=None
+        runs : :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
             List of run numbers to extract timeseries data from. Extracts all runs if unspecified.
             For instance, if only "run-0" and "run-1" should be extracted, then:
             ::
@@ -348,6 +348,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                               """))
 
         import bids
+
+        if runs:
+            if not isinstance(runs,list): runs = [runs]
 
         # Update attributes
         self._task_info = {"task": task, "condition": condition, "session": session, "runs": runs, "tr": tr}
@@ -575,7 +578,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 else:
                     warnings.warn(textwrap.dedent(f"""
                                     `tr` not specified and `tr` could not be extracted for subject: {subj_id} since BOLD
-                                    metadata file could not be opened.
+                                    metadata file could not be opened. `tr` has been set to None and extraction will
+                                    continue.
                                     """))
                     tr=None
 

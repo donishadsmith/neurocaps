@@ -411,7 +411,7 @@ class CAP(_CAPGetter):
                         }
                     }
 
-        runs : :obj:`int`, :obj:`str`, :obj:`list[int]`, or :obj:`list[str]` or :obj:`None`, default=None
+        runs : :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
             The run numbers to perform the CAPs analysis with. If None, all runs in the subject timeseries will be
             concatenated into a single dataframe and subjected to k-means clustering.
 
@@ -513,9 +513,9 @@ class CAP(_CAPGetter):
             self._n_cores = None
 
         if runs:
-            if isinstance(runs,int): runs = list(runs)
+            if not isinstance(runs,list): runs = [runs]
 
-        self._runs = runs if runs else "all"
+        self._runs = runs
         self._standardize = standardize
 
         if isinstance(subject_timeseries, str) and subject_timeseries.endswith(".pkl"):
@@ -533,7 +533,7 @@ class CAP(_CAPGetter):
         if self._cluster_selection_method is not None:
             if self._cluster_selection_method not in valid_methods:
                 formatted_string = ', '.join(["'{a}'".format(a=x) for x in valid_methods])
-                raise ValueError(f"Options for `cluster_selection_method` are - {formatted_string}")
+                raise ValueError(f"Options for `cluster_selection_method` are - {formatted_string}.")
             else:
                 self._select_optimal_clusters(random_state=random_state, init=init, n_init=n_init, max_iter=max_iter,
                                               tol=tol, algorithm=algorithm, show_figs=show_figs, output_dir=output_dir,
@@ -580,7 +580,7 @@ class CAP(_CAPGetter):
             if len(subject_runs) == 0:
                 warnings.warn(textwrap.dedent(f"""
                               Skipping subject {subj_id} since they do not have the
-                              requested run numbers {','.join(requested_runs)}
+                              requested run numbers {','.join(requested_runs)}.
                               """))
                 continue
             for curr_run in subject_runs:
@@ -792,7 +792,7 @@ class CAP(_CAPGetter):
             spent in each CAP. If not provided, persistence will be calculated as the average uninterrupted volumes
             (TRs) spent in each state.
 
-        runs : :obj:`int` or :obj:`list[int]`, default=None
+        runs : :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
             The run numbers to calculate CAP metrics for. If None, CAP metrics will be calculated for each run.
 
         continuous_runs : :obj:`bool`, default=False
@@ -862,6 +862,9 @@ class CAP(_CAPGetter):
         if prefix_file_name is not None and output_dir is None:
             warnings.warn("`prefix_name` supplied but no `output_dir` specified. Files will not be saved.")
 
+        if runs:
+            if not isinstance(runs,list): runs = [runs]
+
         metrics = [metrics] if isinstance(metrics, str) else metrics
 
         valid_metrics = ["temporal_fraction", "persistence", "counts", "transition_frequency"]
@@ -872,12 +875,12 @@ class CAP(_CAPGetter):
             invalid_metrics = [metrics[indx] for indx,boolean in enumerate(boolean_list) if boolean is False]
             if len(invalid_metrics) > 0:
                 formatted_string = ', '.join(["'{a}'".format(a=x) for x in invalid_metrics])
-                warnings.warn(f"Invalid metrics will be ignored: {formatted_string}")
+                warnings.warn(f"Invalid metrics will be ignored: {formatted_string}.")
         else:
             formatted_string = ', '.join(["'{a}'".format(a=x) for x in valid_metrics])
             raise ValueError(textwrap.dedent(f"""
                                              No valid metrics in `metrics` list.
-                                             Valid metrics are {formatted_string}
+                                             Valid metrics are {formatted_string}.
                                              """))
 
         if isinstance(subject_timeseries, str) and subject_timeseries.endswith(".pkl"):
@@ -919,13 +922,13 @@ class CAP(_CAPGetter):
                 # Set run_id
                 run_id = curr_run if not continuous_runs or len(subject_runs) == 1 else "continuous_runs"
 
-                # Add 1 to the prediction vector since labels start at 0, needed to ensure that the labels map onto the cap_numbers     
-                prediction_vector = self._kmeans[group].predict(timeseries) + 1  
+                # Add 1 to the prediction vector since labels start at 0, needed to ensure that the labels map onto the cap_numbers
+                prediction_vector = self._kmeans[group].predict(timeseries) + 1
 
                 if run_id != "continuous_runs":
                     predicted_subject_timeseries[subj_id].update({run_id: prediction_vector})
                 else:
-                    # Horizontally stack predicted runs 
+                    # Horizontally stack predicted runs
                     if curr_run == subject_runs[0]: predicted_continuous_timeseries = prediction_vector
                     else: predicted_continuous_timeseries = np.hstack([predicted_continuous_timeseries,
                                                                        prediction_vector])
@@ -1013,7 +1016,7 @@ class CAP(_CAPGetter):
                     persistence_dict = {cap_number: persistence_dict[cap_number] if
                                         cap_number <= group_cap_counts[group] else float("nan") for cap_number in
                                         cap_numbers}
-                    
+
                 # Populate Dataframe
                 new_row = [subj_id, group_name, curr_run] + [items for _ , items in persistence_dict.items()]
                 df_dict["persistence"].loc[len(df_dict["persistence"])] = new_row
