@@ -82,14 +82,17 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
         for subj_id in intersect_subjects:
             if subj_id not in subject_timeseries_combined: subject_timeseries_combined.update({subj_id: {}})
             # Get run names in the current iteration
-            subject_runs = curr_dict[subj_id]
-            for curr_run in subject_runs:
+            for curr_run in curr_dict[subj_id]:
                 # If run is in combined dict, stack. If not, add
                 if curr_run in subject_timeseries_combined[subj_id]:
                     subject_timeseries_combined[subj_id][curr_run] = np.vstack([subject_timeseries_combined[subj_id][curr_run],
                                                                                 curr_dict[subj_id][curr_run]])
                 else:
                     subject_timeseries_combined[subj_id].update({curr_run: curr_dict[subj_id][curr_run]})
+            # Sort runs lexicographically, keys may be disordered if the first curr_dict does not contain the earliest run_id 
+            if list(subject_timeseries_combined[subj_id]) != sorted(subject_timeseries_combined[subj_id].keys()):
+                subject_timeseries_combined[subj_id] = {run_id: subject_timeseries_combined[subj_id][run_id]for run_id
+                                                        in sorted(subject_timeseries_combined[subj_id].keys())}
 
     if output_dir:
         if not os.path.exists(output_dir):

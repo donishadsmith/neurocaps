@@ -274,7 +274,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         condition : :obj:`str` or :obj:`None`, default=None
             Specific condition in the task to extract from. Only a single condition can be extracted at a time.
 
-        tr : :obj:`int` or :obj:`float` or :obj:`None`, default=None
+        tr : :obj:`int`, :obj:`float`, or :obj:`None`, default=None
             Repetition time for task. If the ``tr`` is not specified, it will be extracted from the BOLD metadata
             files that should be located in the derivatives folder with the preprocessed BOLD images.
 
@@ -634,7 +634,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         run : :obj:`int` or :obj:`str`
             The run to plot.
 
-        roi_indx : :obj:`int` or :obj:`str` or :obj:`list[int]` or :obj:`list[int]` or :obj:`None`, default=None
+        roi_indx : :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[int]` or :obj:`None`, default=None
             The indices of the parcellation nodes to plot. See "nodes" in ``self.parcel_approach`` for valid
             nodes.
 

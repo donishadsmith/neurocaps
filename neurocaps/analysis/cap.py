@@ -40,7 +40,7 @@ class CAP(_CAPGetter):
         certain plotting functions it will be needed. This class contains a ``parcel_approach`` property that also acts
         as a setter so ``self.parcel_approach=parcel_approach`` can be used to set the ``parcel_approach`` later on.
 
-    groups : :obj:`dict[str, list]` or :obj:`None`, default=None
+    groups : :obj:`dict[str, list[str]]` or :obj:`None`, default=None
         A mapping of group names to subject IDs. Each group contains subject IDs for separate CAP analysis.
         Additionally, if duplicate IDs are detected within or across groups, a warning is issued and only the first
         instance is retained. This parameter is used to create a dictionary (``self.subject_table``), which pairs each
@@ -341,7 +341,7 @@ class CAP(_CAPGetter):
             }
         }
     """
-    def __init__(self, parcel_approach: dict[str, dict]=None, groups: dict[str, list]=None) -> None:
+    def __init__(self, parcel_approach: dict[str, dict]=None, groups: dict[str, list[str]]=None) -> None:
         self._groups = groups
         # Raise error if self groups is not a dictionary
         if self._groups:
@@ -366,7 +366,7 @@ class CAP(_CAPGetter):
 
     def get_caps(self,
                  subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.PathLike],
-                 runs: Optional[Union[int, list[int]]]=None,
+                 runs: Optional[Union[int, str, list[int], list[str]]]=None,
                  n_clusters: Union[int, list[int]]=5,
                  cluster_selection_method: Literal["elbow", "davies_bouldin", "silhouette", "variance_ratio"]=None,
                  random_state: Optional[int]=None,
@@ -409,7 +409,7 @@ class CAP(_CAPGetter):
                         }
                     }
 
-        runs : :obj:`int` or :obj:`list[int]` or :obj:`None`, default=None
+        runs : :obj:`int`, :obj:`str`, :obj:`list[int]`, or :obj:`list[str]` or :obj:`None`, default=None
             The run numbers to perform the CAPs analysis with. If None, all runs in the subject timeseries will be
             concatenated into a single dataframe and subjected to k-means clustering.
 
@@ -704,7 +704,8 @@ class CAP(_CAPGetter):
                                         for state_number, state_vector in cluster_centroids})
 
     def calculate_metrics(self, subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.PathLike],
-                          tr: Optional[float]=None, runs: Optional[Union[int, list[int]]]=None,
+                          tr: Optional[float]=None,
+                          runs: Optional[Union[int, str, list[int], list[str]]]=None,
                           continuous_runs: bool=False,
                           metrics: Union[
                               Literal["temporal_fraction", "persistence", "counts", "transition_frequency"],
@@ -921,7 +922,7 @@ class CAP(_CAPGetter):
                 # Adding one needed to ensure that the labels map onto the cap_numbers       
                 prediction_vector = prediction_vector + 1
 
-                if run_id != "continuous_runs" or len(subject_runs) == 1:
+                if run_id != "continuous_runs":
                     predicted_subject_timeseries[subj_id].update({run_id: prediction_vector})
                 else:
                     # Horizontally stack predicted runs 

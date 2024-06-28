@@ -41,6 +41,16 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 - *.patch* : Contains no new features, simply fixes any identified bugs.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.12.1] - 2024-06-27
+
+### ♻ Changed
+- For `merge_dicts` sorts the run keys lexicographically so that subjects that don't have the earliest run-id in the 
+first dictionary due to not having that run or the run being excluded still have ordered run keys in the merged
+dictionary. 
+
+### 💻 Metadata
+- Updates `runs` parameters type hints so that it is known that strings can be used to0.
+
 ## [0.12.0] - 2024-06-26
 - Entails some code cleaning and verification to ensure that the code cleaned for clarity purposes produces the same
 results.
