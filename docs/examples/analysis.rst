@@ -68,7 +68,7 @@ Calculate Metrics
     df_dict = cap_analysis.calculate_metrics(subject_timeseries="subject_timeseries.pkl", return_df=True,
                                              metrics = ["temporal_fraction", "counts"], continuous_runs=True)
 
-    df_dict["temporal_fraction"]
+    print(df_dict["temporal_fraction"])
 
 .. csv-table::
    :file: embed/temporal_fraction.csv
@@ -110,6 +110,15 @@ Generate Correlation Matrix
 
 .. image:: embed/All_Subjects_CAPs_correlation_matrix.png
     :width: 600
+
+.. code-block:: python
+
+    corr_dict = cap_analysis.caps2corr(return_df=True)
+    print(corr_dict["All Subjects"])
+
+.. csv-table::
+   :file: embed/All_Subjects_CAPs_correlation_matrix.csv
+   :header-rows: 1
 
 Creating Surface Plots
 ----------------------

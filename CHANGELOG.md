@@ -41,6 +41,16 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 - *.patch* : Contains no new features, simply fixes any identified bugs.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.13.0] - 2024-06-28
+### 🚀 New/Added
+- Minor update that adds some features to `CAP.caps2corr()`, specifically adds three parameters - `return_df`, `save_df`,
+and `save_plots`. Now, in addition to visualizing a correlation matrix, this function can also return a pandas dataframe
+containing a correlation matrix, where each element in the correlation matrix is accompanied by its p-value in
+parenthesis, which is followed by an asterisk (single asterisk for < 0.05, double asterisk for 0.01, and triple asterisk
+for < 0.001). These dataframes can also be saves as csv files.
+- All plotting functions that use matplotlib includes `bbox_inches` as a kwarg and defaults to "tight".
+- Added `annot_kws` kwargs to `CAPs.caps2plot` and `CAP.caps2corr`.
+
 ## [0.12.2] - 2024-06-28
 ### ♻ Changed
 - When specified, allows `runs` parameter to be string, int, list of strings, or list of integers instead of just lists.

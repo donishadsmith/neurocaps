@@ -663,6 +663,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 specified.
             - figsize : :obj:`tuple`, default=(11, 5)
                 Size of the figure in inches. Default is (11, 5) if ``figsize`` is not specified.
+            - bbox_inches : :obj:`str` or :obj:`None`, default="tight"
+                Alters size of the whitespace in the saved image.
 
         Returns
         -------
@@ -695,7 +697,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         parcellation_name = list(self._parcel_approach)[0]
         # Defaults
-        defaults = {"dpi": 300,"figsize": (11,5)}
+        defaults = {"dpi": 300,"figsize": (11,5), "bbox_inches": "tight"}
 
         plot_dict = _check_kwargs(defaults, **kwargs)
 
@@ -748,7 +750,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             if not os.path.exists(output_dir): os.makedirs(output_dir)
             if file_name: save_file_name = f"{os.path.splitext(file_name.rstrip())[0].rstrip()}.png"
             else: save_file_name = f'subject-{subj_id}_run-{run}_timeseries.png'
-            plt.savefig(os.path.join(output_dir,save_file_name), dpi=plot_dict["dpi"])
+            plt.savefig(os.path.join(output_dir,save_file_name), dpi=plot_dict["dpi"],
+                        bbox_inches=plot_dict["bbox_inches"])
 
         if show_figs is False: plt.close()
         else: plt.show()

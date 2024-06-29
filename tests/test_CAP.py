@@ -1,4 +1,4 @@
-import os, numpy as np, pickle, pytest, warnings
+import os, numpy as np, pandas as pd, pickle, pytest, warnings
 
 from neurocaps.extraction import TimeseriesExtractor
 from neurocaps.analysis import CAP, change_dtype
@@ -178,7 +178,11 @@ def test_CAP_get_caps_with_groups_and_silhouette_method_pkl():
     cap_analysis.caps2plot(subplots=False, yticklabels_size=5, wspace = 0.1, visual_scope="nodes", xlabel_rotation=90,
                         xticklabels_size = 5, hspace = 0.6, tight_layout = False, show_figs=False)
 
-    cap_analysis.caps2corr(annot=True, show_figs=False)
+    df = cap_analysis.caps2corr(annot=True, show_figs=False, return_df=True)
+    assert isinstance(df, dict)
+    assert isinstance(df["A"], pd.DataFrame)
+    assert len(list(df)) == 2
+    
     radialaxis={"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)",
             "ticks": "outside" , "tickfont": {"size": 14, "color": "black"}, "range": [0,0.3],
             "tickvals": [0.1,0.2,0.3]}

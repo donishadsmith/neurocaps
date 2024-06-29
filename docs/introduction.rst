@@ -106,7 +106,8 @@ Main features for ``CAP`` includes:
   Refer to the `documentation <https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2surf>`_ for the ``caps2surf()`` method in the ``CAP`` class for available ``**kwargs`` arguments and parameters to modify plots. 
   Also includes the option to save the NifTIs. There is also another a parameter in ``caps2surf``, ``fslr_giftis_dict``, which can be used if the CAPs NifTI files were converted to GifTI files using a tool such as Connectome Workbench, which may work better for 
   converting your atlas to fslr space. This parameter allows plotting without re-running the analysis and only initializing the ``CAP`` class and using the ``caps2surf`` method is needed.
-- **Correlation Matrix Creation:** Create a correlation matrix from CAPs with options to customize and save plots. Refer to the `documentation <https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2corr>`_
+- **Correlation Matrix Creation:** Create a correlation matrix from CAPs with options to customize and save plots. Additionally can produce dataframes where each element contains its associated p-value in parentheses that is accompanied by an asterisk using the following significance
+  code ``{"<0.05": "*", "<0.01": "**", "<0.001": "***"}``. Refer to the `documentation <https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2corr>`_
   for the ``caps2corr()`` method in the ``CAP`` class for available ``**kwargs`` arguments and parameters to modify plots.
 - **CAP Metrics Calculation:** Calculate CAP metrics (``calculate_metrics()``) as described in `Liu et al., 2018 <https://doi.org/10.1016/j.neuroimage.2018.01.041>`_ [1]_ and `Yang et al., 2021 <https://doi.org/10.1016/j.neuroimage.2021.118193>`_ [2]_:
     - *Temporal Fraction:* The proportion of total volumes spent in a single CAP over all volumes in a run.
@@ -191,6 +192,7 @@ Dependencies
                     "nibabel>=3.2.0",
                     "nilearn>=0.10.1, !=0.10.3",
                     "scikit-learn>=1.4.0",
+                    "scipy",
                     "surfplot>=0.2.0",
                     "neuromaps>=0.0.5",
                     "pybids>=0.16.2; platform_system != 'Windows'",

@@ -8,6 +8,7 @@ from joblib import cpu_count, delayed, Parallel
 from nilearn.plotting.cm import _cmap_d
 from neuromaps.transforms import mni152_to_fslr, fslr_to_fslr
 from neuromaps.datasets import fetch_fslr
+from scipy.stats import pearsonr
 from sklearn.cluster import KMeans
 from .._utils import (_CAPGetter, _cap2statmap, _check_kwargs, _create_node_labels, _convert_pickle_to_dict,
                       _check_parcel_approach, _run_kmeans)
@@ -474,6 +475,8 @@ class CAP(_CAPGetter):
                 Adjusts the dpi of the elbow plot. Default is 300.
             - figsize : :obj:`tuple`, default=(8,6)
                 Adjusts the size of the elbow plots.
+            - bbox_inches : :obj:`str` or :obj:`None`, default="tight"
+                Alters size of the whitespace in the saved image.
             - step : :obj:`int`, default=None
                 An integer value that controls the progression of the x-axis in plots for the silhouette or elbow
                 method. When set, only integer values will be displayed on the x-axis.
@@ -618,7 +621,7 @@ class CAP(_CAPGetter):
         y_titles = {"elbow": "Inertia", "davies_bouldin": "Davies Bouldin Score", "silhouette": "Silhouette Score",
                     "variance_ratio": "Variance Ratio Score"}
         # Defaults
-        defaults = {"dpi": 300, "figsize": (8,6), "step": None}
+        defaults = {"dpi": 300, "figsize": (8,6), "step": None, "bbox_inches": "tight"}
         plot_dict = _check_kwargs(defaults, **kwargs)
 
         for group in self._groups:
@@ -685,7 +688,8 @@ class CAP(_CAPGetter):
                 if output_dir:
                     if not os.path.exists(output_dir): os.makedirs(output_dir)
                     save_name = f"{group.replace(' ','_')}_{self._cluster_selection_method}.png"
-                    plt.savefig(os.path.join(output_dir,save_name), dpi=plot_dict["dpi"])
+                    plt.savefig(os.path.join(output_dir,save_name), dpi=plot_dict["dpi"],
+                                bbox_inches=plot_dict["bbox_inches"])
 
                 if show_figs is False: plt.close()
                 else: plt.show()
@@ -1116,6 +1120,8 @@ class CAP(_CAPGetter):
                 Rotation angle for y-axis labels.
             - annot : :obj:`bool`, default=False
                 Add values to cells.
+            - annot_kws : :obj:`dict`, default=None,
+                Customize the annotations.
             - fmt : :obj:`str`, default=".2g"
                 Modify how the annotated vales are presented.
             - linewidths : :obj:`float`, default=0
@@ -1213,9 +1219,9 @@ class CAP(_CAPGetter):
         defaults= {"dpi": 300, "figsize": (8, 6), "fontsize": 14, "hspace": 0.2, "wspace": 0.2, "xticklabels_size": 8,
                    "yticklabels_size": 8, "shrink": 0.8, "nrow": None, "ncol": None, "suptitle_fontsize": 20,
                    "tight_layout": True, "rect": [0, 0.03, 1, 0.95], "sharey": True, "xlabel_rotation": 0,
-                   "ylabel_rotation": 0, "annot": False, "fmt": ".2g", "linewidths": 0, "linecolor": "black",
-                   "cmap": "coolwarm", "edgecolors": None, "alpha": None, "hemisphere_labels": False,
-                   "borderwidths": 0, "vmin": None, "vmax": None, "bbox_inches": "tight"}
+                   "ylabel_rotation": 0, "annot": False, "annot_kws": None, "fmt": ".2g", "linewidths": 0,
+                   "linecolor": "black", "cmap": "coolwarm", "edgecolors": None, "alpha": None,
+                   "hemisphere_labels": False, "borderwidths": 0, "vmin": None, "vmax": None, "bbox_inches": "tight"}
 
         plot_dict = _check_kwargs(defaults, **kwargs)
 
@@ -1332,20 +1338,22 @@ class CAP(_CAPGetter):
                                       linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"],
                                       xticklabels=columns, yticklabels=columns,
                                       cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"],
-                                      fmt=plot_dict["fmt"], edgecolors=plot_dict["edgecolors"],
-                                      alpha=plot_dict["alpha"], vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
+                                      annot_kws=plot_dict["annot_kws"], fmt=plot_dict["fmt"],
+                                      edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"],
+                                      vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
                 else:
                     if plot_dict["hemisphere_labels"] is False:
                         display = seaborn.heatmap(ax=ax, data=self._outer_products[group][cap], cmap=plot_dict["cmap"],
                                           linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"],
                                           cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"],
-                                          fmt=plot_dict["fmt"], edgecolors=plot_dict["edgecolors"],
-                                          alpha=plot_dict["alpha"], vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
+                                          annot_kws=plot_dict["annot_kws"], fmt=plot_dict["fmt"],
+                                          edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"],
+                                          vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
                     else:
                         display = seaborn.heatmap(ax=ax, data=self._outer_products[group][cap], cmap=plot_dict["cmap"],
                                           cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"],
-                                          fmt=plot_dict["fmt"], alpha=plot_dict["alpha"], vmin=plot_dict["vmin"],
-                                          vmax=plot_dict["vmax"])
+                                          annot_kws=plot_dict["annot_kws"], fmt=plot_dict["fmt"],
+                                          alpha=plot_dict["alpha"], vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
 
                     if plot_dict["hemisphere_labels"] is False:
                         ticks = [i for i, label in enumerate(labels) if label]
@@ -1414,7 +1422,9 @@ class CAP(_CAPGetter):
                                                                  linecolor=plot_dict["linecolor"],
                                                                  xticklabels=columns, yticklabels=columns,
                                                                  cbar_kws={"shrink": plot_dict["shrink"]},
-                                                                 annot=plot_dict["annot"], fmt=plot_dict["fmt"],
+                                                                 annot=plot_dict["annot"],
+                                                                 annot_kws=plot_dict["annot_kws"],
+                                                                 fmt=plot_dict["fmt"],
                                                                  edgecolors=plot_dict["edgecolors"],
                                                                  alpha=plot_dict["alpha"],
                                                                  vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
@@ -1428,7 +1438,8 @@ class CAP(_CAPGetter):
                     else:
                         display = seaborn.heatmap(self._outer_products[group][cap], cmap=plot_dict["cmap"], xticklabels=[],
                                                   yticklabels=[], cbar_kws={"shrink": plot_dict["shrink"]},
-                                                  annot=plot_dict["annot"], fmt=plot_dict["fmt"], alpha=plot_dict["alpha"],
+                                                  annot=plot_dict["annot"], annot_kws=plot_dict["annot_kws"],
+                                                  fmt=plot_dict["fmt"], alpha=plot_dict["alpha"],
                                                   vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
 
                     if plot_dict["hemisphere_labels"] is False:
@@ -1521,8 +1532,9 @@ class CAP(_CAPGetter):
                                           xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"],
                                           linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"],
                                           cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"],
-                                          fmt=plot_dict["fmt"], edgecolors=plot_dict["edgecolors"],
-                                          alpha=plot_dict["alpha"], vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
+                                          annot_kws=plot_dict["annot_kws"], fmt=plot_dict["fmt"],
+                                          edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"],
+                                          vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
 
                 plt.yticks(ticks=[pos for pos, label in enumerate(labels) if label], labels=names_list)
 
@@ -1530,7 +1542,8 @@ class CAP(_CAPGetter):
                 display = seaborn.heatmap(pd.DataFrame(cap_dict[group], columns=list(cap_dict[group])),
                                           xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"],
                                           cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"],
-                                          fmt=plot_dict["fmt"], alpha=plot_dict["alpha"], vmin=plot_dict["vmin"],
+                                          annot_kws=plot_dict["annot_kws"], fmt=plot_dict["fmt"],
+                                          alpha=plot_dict["alpha"], vmin=plot_dict["vmin"],
                                           vmax=plot_dict["vmax"])
 
                 n_labels = len(self._parcel_approach[parcellation_name]["nodes"])
@@ -1578,18 +1591,24 @@ class CAP(_CAPGetter):
         if not show_figs: plt.close()
 
     def caps2corr(self, output_dir: Optional[os.PathLike]=None, suffix_title: Optional[str]=None,
-                  show_figs: bool=True, **kwargs) -> seaborn.heatmap:
+                  show_figs: bool=True, save_plots: bool=True, return_df: bool=False, save_df: bool=False,
+                  **kwargs) -> Union[seaborn.heatmap, dict[str, pd.DataFrame]]:
         """
         **Generate Correlation Matrix for CAPs**
 
         Produces the correlation matrix of all CAPs and visualizes it as a ``seaborn.heatmap``. If groups were
         given when the CAP class was initialized, a correlation matrix will be generated for each group.
+        Additionally, DataFrames of the correlation matrix with thier corresponding p-value can be generated too.
+        For correlation matrices, each element in the correlation matrix will contain its associated p-value in
+        parenthesis, with a single asterisk if < 0.05, a double asterisk if < 0.01, and a triple asterisk < 0.001
+        - ``{"<0.05": "*", "<0.01": "**", "<0.001": "***"}``. Additionally, all elements will be rounded using the
+        formatting style provided by the ``fmt`` kwarg. Checking significance is fone before formatting.
 
         Parameters
         ----------
         output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
-            Directory to save plots to. The directory will be created if it does not exist. If None,
-            plots will not be saved. Outputs as png file.
+            Directory to save plots and correlation matrices DataFrames to. The directory will be created if it does
+            not exist. If None, plots and dataFrame will not be saved.
 
         suffix_title : :obj:`str` or :obj:`None`, default=None
             Appended to the title of each plot as well as the name of the saved file if ``output_dir``
@@ -1597,6 +1616,22 @@ class CAP(_CAPGetter):
 
         show_figs : :obj:`bool`, default=True
             Whether to display figures.
+
+        save_plots : :obj:`bool`, default=True
+            If True, plots are saves as png images. For this to be used, ``output_dir`` must be specified.
+
+            .. versionadded :: 0.13.0
+
+        return_df : :obj:`bool`, default=False
+            If True, returns a dictionary with a correlation matrix for each group.
+
+            .. versionadded :: 0.13.0
+
+        save_df : :obj:`bool`, default=False,
+            If True, saves the correlation matrix contained in the DataFrames as csv files. For this to be used,
+            ``output_dir`` must be specified.
+
+            .. versionadded :: 0.13.0
 
         kwargs : :obj:`dict`
             Keyword arguments used when modifying figures. Valid keywords include:
@@ -1620,6 +1655,8 @@ class CAP(_CAPGetter):
                 Rotation angle for y-axis labels.
             - annot : :obj:`bool`, default=False
                 Add values to each cell.
+            - annot_kws : :obj:`dict`, default=None,
+                Customize the annotations.
             - fmt : :obj:`str`, default=".2g",
                 Modify how the annotated vales are presented.
             - linewidths : :obj:`float`, default=0
@@ -1647,11 +1684,15 @@ class CAP(_CAPGetter):
         -------
         `seaborn.heatmap`
             An instance of `seaborn.heatmap`.
+        `dict[str, pd.DataFrame]`
+            An instance of a pandas DataFrame for each group.
 
         Note
         ----
         For valid premade palettes for ``seaborn``, refer to https://seaborn.pydata.org/tutorial/color_palettes.html
         """
+        corr_dict = {group: None for group in self._groups} if return_df or save_df else None
+
         if not hasattr(self,"_caps"):
             raise AttributeError(textwrap.dedent("""
                                  Cannot plot caps since `self._caps` attribute does not exist.
@@ -1662,7 +1703,7 @@ class CAP(_CAPGetter):
         defaults = {"dpi": 300, "figsize": (8, 6), "fontsize": 14, "xticklabels_size": 8, "yticklabels_size": 8,
                     "shrink": 0.8, "xlabel_rotation": 0, "ylabel_rotation": 0, "annot": False, "linewidths": 0,
                     "linecolor": "black", "cmap": "coolwarm", "fmt": ".2g", "borderwidths": 0, "edgecolors": None,
-                    "alpha": None, "bbox_inches": "tight"}
+                    "alpha": None, "bbox_inches": "tight", "annot_kws": None}
 
         plot_dict = _check_kwargs(defaults, **kwargs)
 
@@ -1671,10 +1712,14 @@ class CAP(_CAPGetter):
             plt.figure(figsize=plot_dict["figsize"])
 
             df = pd.DataFrame(self._caps[group])
-            display = seaborn.heatmap(df.corr(), xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"],
-                              linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"],
-                              cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"],
-                              fmt=plot_dict["fmt"], edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"])
+
+            corr_df = df.corr(method="pearson")
+
+            display = seaborn.heatmap(corr_df, xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"],
+                                      linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"],
+                                      cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"],
+                                      annot_kws=plot_dict["annot_kws"], fmt=plot_dict["fmt"],
+                                      edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"])
             # Add Border
             if plot_dict["borderwidths"] != 0:
                 display.axhline(y=0, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
@@ -1698,6 +1743,17 @@ class CAP(_CAPGetter):
 
             # Display figures
             if not show_figs: plt.close()
+
+            if corr_dict:
+                # Get p-values; use np.eye to make main diagonals equal zero
+                pval_df = df.corr(method=lambda x, y: pearsonr(x, y)[1]) - np.eye(*corr_df.shape)
+                # Add asterisk to values that meet the threshold
+                pval_df = pval_df.map(
+                    lambda x: f'({format(x, plot_dict["fmt"])})' + "".join(["*" for code in [0.05, 0.01, 0.001] if x < code])
+                    )
+                # Add the p-values to the correlation matrix
+                corr_dict[group] = corr_df.map(lambda x: f'{format(x, plot_dict["fmt"])}') + " " + pval_df
+
             # Save figure
             if output_dir:
                 if not os.path.exists(output_dir): os.makedirs(output_dir)
@@ -1705,8 +1761,19 @@ class CAP(_CAPGetter):
                     full_filename = f"{group.replace(' ', '_')}_CAPs_correlation_matrix_{suffix_title}.png"
                 else:
                     full_filename = f"{group.replace(' ', '_')}_CAPs_correlation_matrix.png"
-                display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"],
-                                             bbox_inches=plot_dict["bbox_inches"])
+
+                if save_plots:
+                    display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"],
+                                                bbox_inches=plot_dict["bbox_inches"])
+
+                if save_df:
+                    full_filename = full_filename.replace(".png", ".csv")
+                    corr_dict[group].to_csv(path_or_buf=os.path.join(output_dir,full_filename), sep=",",
+                                            index=True)
+
+        if return_df: return corr_dict
+
+
 
     def caps2niftis(self, output_dir: os.PathLike, suffix_file_name: Optional[str]=None,
                     fwhm: Optional[float]=None) -> nib.Nifti1Image:
@@ -1901,6 +1968,8 @@ class CAP(_CAPGetter):
             - color_range : :obj:`tuple` or :obj:`None`, default=None
                 The minimum and maximum value to display in plots. For instance, (-1,1) where minimum
                 value is first. If None, the minimum and maximum values from the image will be used.
+            - bbox_inches : :obj:`str` or :obj:`None`, default="tight"
+                Alters size of the whitespace in the saved image.
 
         Returns
         -------
@@ -1936,7 +2005,7 @@ class CAP(_CAPGetter):
         defaults = {"dpi": 300, "title_pad": -3, "cmap": "cold_hot", "cbar_kws":  {"location": "bottom", "n_ticks": 3},
                     "size": (500, 400), "layout": "grid", "zoom": 1.5, "views": ["lateral", "medial"], "alpha": 1,
                     "zero_transparent": True, "as_outline": False,"brightness": 0.5, "figsize": None, "scale": (2, 2),
-                    "surface": "inflated", "color_range": None}
+                    "surface": "inflated", "color_range": None, "bbox_inches": "tight"}
 
         plot_dict = _check_kwargs(defaults, **kwargs)
 
@@ -2013,7 +2082,8 @@ class CAP(_CAPGetter):
                     else:
                         save_name = f"{group.replace(' ', '_')}_{cap}_surface.png"
 
-                    fig.savefig(os.path.join(output_dir, save_name), dpi=plot_dict["dpi"])
+                    fig.savefig(os.path.join(output_dir, save_name), dpi=plot_dict["dpi"],
+                                bbox_inches=plot_dict["bbox_inches"])
                     # Save stat map
                     if save_stat_map:
                         stat_map_name = save_name.replace(".png", ".nii.gz")
@@ -2104,7 +2174,7 @@ class CAP(_CAPGetter):
             Additional parameters to pass to modify certain plot parameters. Options include:
 
             - scale : :obj:`int`, default=2
-                Controls resolution of image when saving.
+                If ``output_dir`` provided, controls resolution of image when saving. Serves a similar purpose as dpi.
             - savefig_options : :obj:`dict[str]`, default={"width": 3, "height": 3, "scale": 1}
                 If ``output_dir`` provided, controls the width (in inches), height (in inches), and scale of the
                 plot.
@@ -2127,20 +2197,20 @@ class CAP(_CAPGetter):
                 If "toself" the are of the dots and within the boundaries of the line will be filled.
             - mode : :obj:`str`, default="markers+lines",
                 Determines how the trace is drawn. Can include "lines", "markers", "lines+markers", "lines+markers+text".
-            - radialaxis : :obj:`dict[str]`, default={"showline": False, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "ticks": "outside","tickfont": {"size": 14, "color": "black"}}
+            - radialaxis : :obj:`dict`, default={"showline": False, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "ticks": "outside","tickfont": {"size": 14, "color": "black"}}
                 Customizes the radial axis.
-            - angularaxis : :obj:`dict[str]`, default={"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "tickfont": {"size": 16, "color": "black"}}
+            - angularaxis : :obj:`dict`, default={"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "tickfont": {"size": 16, "color": "black"}}
                 Customizes the angular axis.
-            - color_discrete_map : :obj:`dict[str]`, default={"High Amplitude": "red", "Low Amplitude": "blue"},
+            - color_discrete_map : :obj:`dict`, default={"High Amplitude": "red", "Low Amplitude": "blue"},
                 Change color of the "High Amplitude" and "Low Amplitude" groups. Must use the keys
                 "High Amplitude" and "Low Amplitude" to work.
-            - title_font : :obj:`dict[str]`, default={"family": "Times New Roman", "size": 30, "color": "black"}
+            - title_font : :obj:`dict`, default={"family": "Times New Roman", "size": 30, "color": "black"}
                 Modifies the font of the title.
             - title_x : :obj:`float`, default=0.5
                 Modifies x position of title.
             - title_y : :obj:`float`, default=None
                 Modifies y position of title.
-            - legend : :obj:`dict[str]`, default={"yanchor": "top", "xanchor": "left", "y": 0.99, "x": 0.01,"title_font_family": "Times New Roman", "font": {"size": 12, "color": "black"}}
+            - legend : :obj:`dict`, default={"yanchor": "top", "xanchor": "left", "y": 0.99, "x": 0.01,"title_font_family": "Times New Roman", "font": {"size": 12, "color": "black"}}
                 Customizes the legend.
             - engine : {"kaleido", "orca"}, default="kaleido"
                 Engine used for saving plots.
