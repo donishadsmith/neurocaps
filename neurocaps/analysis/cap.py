@@ -1598,11 +1598,12 @@ class CAP(_CAPGetter):
 
         Produces the correlation matrix of all CAPs and visualizes it as a ``seaborn.heatmap``. If groups were
         given when the CAP class was initialized, a correlation matrix will be generated for each group.
-        Additionally, DataFrames of the correlation matrix with thier corresponding p-value can be generated too.
-        For correlation matrices, each element in the correlation matrix will contain its associated p-value in
-        parenthesis, with a single asterisk if < 0.05, a double asterisk if < 0.01, and a triple asterisk < 0.001
-        - ``{"<0.05": "*", "<0.01": "**", "<0.001": "***"}``. Additionally, all elements will be rounded using the
-        formatting style provided by the ``fmt`` kwarg. Checking significance is fone before formatting.
+        Additionally, DataFrames of the correlation matrix with thier corresponding uncorrected p-value can be
+        generated too. For correlation matrices, each element in the correlation matrix will contain its
+        associated uncorrected p-value in parenthesis, with a single asterisk if < 0.05, a double asterisk if
+        < 0.01, and a triple asterisk < 0.001 - ``{"<0.05": "*", "<0.01": "**", "<0.001": "***"}``. Additionally,
+        all elements will be rounded using the formatting style provided by the ``fmt`` kwarg. Checking significance is
+        done before formatting.
 
         Parameters
         ----------
@@ -1772,8 +1773,6 @@ class CAP(_CAPGetter):
                                             index=True)
 
         if return_df: return corr_dict
-
-
 
     def caps2niftis(self, output_dir: os.PathLike, suffix_file_name: Optional[str]=None,
                     fwhm: Optional[float]=None) -> nib.Nifti1Image:
