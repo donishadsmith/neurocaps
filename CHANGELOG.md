@@ -41,6 +41,11 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 - *.patch* : Contains no new features, simply fixes any identified bugs.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.13.1] - 2024-06-30
+### ♻ Changed
+- For `CAP.caps2radar()`, the `scattersize` kwarg can be used to control the size of the scatter/markers regardless
+if `use_scatterpolar` is used.
+
 ## [0.13.0.post1] - 2024-06-28
 ### 💻 Metadata
 - Clarifies that the p-values obtained in  `CAP.caps2corr()` are uncorrected.

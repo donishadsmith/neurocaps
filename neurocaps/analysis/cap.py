@@ -2187,7 +2187,7 @@ class CAP(_CAPGetter):
             - bgcolor : :obj:`str`, default="white"
                 Color of the background
             - scattersize : :obj:`int`, default=8
-                If ``use_scatterpolar=True``, controls the size of the dots.
+                Controls size of the dots when markers are used.
             - connectgaps : :obj:`bool`, default=True
                 If ``use_scatterpolar=True``, controls if missing values are connected.
             - opacity : :obj:`float`, default=0.5,
@@ -2262,9 +2262,10 @@ class CAP(_CAPGetter):
                                  first."""))
 
         defaults = {"scale": 2, "height": 800, "width": 1200, "line_close": True, "bgcolor": "white", "fill": "none",
-                    "scattersize": 8, "connectgaps": True, "opacity": 0.5, "radialaxis": {"showline": False,
-                    "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)",
-                    "ticks": "outside", "tickfont": {"size": 14, "color": "black"}},
+                    "scattersize": 8, "connectgaps": True, "opacity": 0.5,
+                    "radialaxis": {"showline": False, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)",
+                                   "gridcolor": "rgba(0, 0, 0, 0.25)","ticks": "outside",
+                                   "tickfont": {"size": 14, "color": "black"}},
                     "angularaxis": {"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)",
                                     "gridcolor": "rgba(0, 0, 0, 0.25)", "tickfont": {"size": 16, "color": "black"}},
                     "color_discrete_map": {"High Amplitude": "rgba(255, 0, 0, 1)",
@@ -2360,7 +2361,11 @@ class CAP(_CAPGetter):
                                         category_orders={"regions": df["regions"]},
                                         color_discrete_map = plot_dict["color_discrete_map"])
 
-                fig.update_traces(fill=plot_dict["fill"], mode=plot_dict["mode"])
+                if use_scatterpolar:
+                    fig.update_traces(fill=plot_dict["fill"], mode=plot_dict["mode"])
+                else:
+                    fig.update_traces(fill=plot_dict["fill"], mode=plot_dict["mode"],
+                                      marker=dict(size=plot_dict["scattersize"]))
 
                 # Set max value
                 if "tickvals" not in plot_dict["radialaxis"] and "range" not in plot_dict["radialaxis"]:
