@@ -1819,6 +1819,7 @@ class CAP(_CAPGetter):
 
             - "k" : An integer that determines the number of nearest neighbors to consider, with the majority vote determining the new value. If not specified, the default is 1.
             - "resolution_mm" : An integer (1 or 2) that determines the resolution of the Schaefer parcellation. If not specified, the default is 1.
+            - "remove_subcortical": A boolean to remove subcortical values only if True. 
 
             This method is applied after the `fwhm` method.
 
@@ -1946,6 +1947,7 @@ class CAP(_CAPGetter):
 
             - "k": An integer that determines the number of nearest neighbors to consider, with the majority vote determining the new value. If not specified, the default is 1.
             - "resolution_mm": An integer (1 or 2) that determines the resolution of the Schaefer parcellation. If not specified, the default is 1.
+            - "remove_subcortical": A boolean to remove subcortical values only if True. 
 
             This method is applied after the `fwhm` method.
 

@@ -20,7 +20,7 @@ def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
     # Knn implementation to aid in coverage issues
     if knn_dict:
         # Get target indices
-        target_indices = _get_target_indices(atlas=atlas, knn_dict=knn_dict)
+        target_indices, resampled_schaefer = _get_target_indices(atlas=atlas, knn_dict=knn_dict)
         # Get non-zero indices of the stat map
         non_zero_indices = np.array(np.where(stat_map.get_fdata() != 0)).T
         if "k" not in knn_dict:
@@ -47,6 +47,9 @@ def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
 
             # Assign the new value to the current index
             stat_map.get_fdata()[tuple(target_indx)] = new_value
+        
+        if "remove_subcortical" in knn_dict and knn_dict["remove_subcortical"] is True:
+           stat_map.get_fdata()[np.where(resampled_schaefer.get_fdata() == 0)] = 0
 
     return stat_map
 
@@ -72,4 +75,4 @@ def _get_target_indices(atlas, knn_dict):
     # Get the non-background indices through subtraction
     target_indices = list(background_indices_atlas - background_indices_schaefer)
 
-    return target_indices
+    return target_indices, resampled_schaefer
