@@ -1821,7 +1821,7 @@ class CAP(_CAPGetter):
             - "resolution_mm" : An integer (1 or 2) that determines the resolution of the Schaefer parcellation. If not specified, the default is 1.
             - "remove_subcortical": A list or  array of label ids as integers of the subcortical regions in the parcellation.
 
-            This method is applied after the `fwhm` method.
+            This method is applied before the `fwhm` method.
 
             .. versionadded:: 0.13.2
 
@@ -1949,7 +1949,7 @@ class CAP(_CAPGetter):
             - "resolution_mm": An integer (1 or 2) that determines the resolution of the Schaefer parcellation. If not specified, the default is 1.
             - "remove_subcortical": A list or array of label ids as integers of the subcortical regions in the parcellation.
 
-            This method is applied after the `fwhm` method.
+            This method is applied before the `fwhm` method.
 
             .. versionadded:: 0.13.2
 

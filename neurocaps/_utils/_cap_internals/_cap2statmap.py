@@ -13,10 +13,6 @@ def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
         atlas_fdata[np.where(atlas_fdata == target_array[indx])] = value
     stat_map = nib.Nifti1Image(atlas_fdata, atlas.affine, atlas.header)
 
-    # Add smoothing to stat map to help mitigate potential coverage issues
-    if fwhm is not None:
-        stat_map = image.smooth_img(stat_map, fwhm=fwhm)
-
     # Knn implementation to aid in coverage issues
     if knn_dict:
 
@@ -25,14 +21,14 @@ def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
             original_atlas = nib.load(atlas_file)
             subcortical_indices = np.where(np.isin(original_atlas.get_fdata(),knn_dict["remove_subcortical"]))
             stat_map.get_fdata()[subcortical_indices] = 0
-  
+
             # Get target indices
             target_indices = _get_target_indices(atlas_file=atlas_file, knn_dict=knn_dict,
                                                 subcortical_indices=subcortical_indices)
         else:
              # Get target indices
             target_indices = _get_target_indices(atlas_file=atlas_file, knn_dict=knn_dict, subcortical_indices=None)
-        
+
         # Get non-zero indices of the stat map
         non_zero_indices = np.array(np.where(stat_map.get_fdata() != 0)).T
         if "k" not in knn_dict:
@@ -59,6 +55,10 @@ def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
 
             # Assign the new value to the current index
             stat_map.get_fdata()[tuple(target_indx)] = new_value
+
+    # Add smoothing to stat map to help mitigate potential coverage issues
+    if fwhm is not None:
+        stat_map = image.smooth_img(stat_map, fwhm=fwhm)
 
     return stat_map
 
