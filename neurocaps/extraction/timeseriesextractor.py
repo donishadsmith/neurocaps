@@ -335,7 +335,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         **This pipeline is most optimized towards BOLD data preprocessed by fMRIPrep.**
 
         When extracting specific conditions, this function uses ``math.ceil`` when calculating the duration of a
-        condition to round up.
+        condition to round up and ``int`` to round down for the onset.
         ::
 
             onset_scan = int(condition_df.loc[i,"onset"]/tr)

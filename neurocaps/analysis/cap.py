@@ -1775,7 +1775,7 @@ class CAP(_CAPGetter):
         if return_df: return corr_dict
 
     def caps2niftis(self, output_dir: os.PathLike, suffix_file_name: Optional[str]=None,
-                    fwhm: Optional[float]=None) -> nib.Nifti1Image:
+                    fwhm: Optional[float]=None, knn_dict: dict[str, Union[int, bool]]=None) -> nib.Nifti1Image:
         """
         **Standalone Method to Convert CAPs to NifTI Statistical Maps**
 
@@ -1787,17 +1787,11 @@ class CAP(_CAPGetter):
             def _cap2statmap(atlas_file, cap_vector, fwhm):
                 atlas = nib.load(atlas_file)
                 atlas_fdata = atlas.get_fdata()
-                # Get array containing all labels in atlas to avoid issue if atlas labels dont start at 1,
-                # like Nilearn's AAL map
+                # Get array containing all labels in atlas to avoid issue if the first non-zero atlas label is not 1
                 target_array = sorted(np.unique(atlas_fdata))
-                for indx, value in enumerate(cap_vector):
-                    actual_indx = indx + 1
-                    atlas_fdata[np.where(atlas_fdata == target_array[actual_indx])] = value
+                for indx, value in enumerate(cap_vector, start=1):
+                    atlas_fdata[np.where(atlas_fdata == target_array[indx])] = value
                 stat_map = nib.Nifti1Image(atlas_fdata, atlas.affine, atlas.header)
-                # Add smoothing to stat map to help mitigate potential coverage issues
-                if fwhm is not None:
-                    stat_map = image.smooth_img(stat_map, fwhm=fwhm)
-                retutn stat_map
 
         Parameters
         ----------
@@ -1811,6 +1805,24 @@ class CAP(_CAPGetter):
             Strength of spatial smoothing to apply (in millimeters) to the statistical map prior to interpolating
             from MNI152 space to fslr surface space. Note, this can assist with coverage issues in the plot.
             Uses ``nilearn.image.smooth_img``.
+
+        knn_dict : :obj:`dict[str, int | bool]`, default=None
+            Use KNN (k-nearest neighbors) interpolation to fill in non-background values that are assigned zero. This is
+            primarily used as a fix for when a custom parcellation does not project well from volumetric to surface
+            space. This method involves resampling the Schaefer parcellation, a volumetric parcellation that projects
+            well onto surface space, to the target parcellation specified in the "maps" sub-key in ``self.parcel_approach``.
+            The background indices are extracted from the Schaefer parcellation, and these indices are used to obtain
+            the non-background indices (parcels) that are set to zero in the target parcellation.
+
+            These indices are then iterated over, and the zero values are replaced with the value of the nearest neighbor,
+            determined by the sub-key "k". The dictionary contains the following sub-keys:
+
+            - "k" : An integer that determines the number of nearest neighbors to consider, with the majority vote determining the new value. If not specified, the default is 1.
+            - "resolution_mm" : An integer (1 or 2) that determines the resolution of the Schaefer parcellation. If not specified, the default is 1.
+
+            This method is applied after the `fwhm` method.
+
+            .. versionadded:: 0.13.2
 
         Returns
         -------
@@ -1837,7 +1849,7 @@ class CAP(_CAPGetter):
         for group in self._caps:
             for cap in self._caps[group]:
                 stat_map = _cap2statmap(atlas_file=self._parcel_approach[parcellation_name]["maps"],
-                                        cap_vector=self._caps[group][cap], fwhm=fwhm)
+                                        cap_vector=self._caps[group][cap], fwhm=fwhm, knn_dict=knn_dict)
 
                 if suffix_file_name:
                     save_name = f"{group.replace(' ', '_')}_{cap.replace('-', '_')}_{suffix_file_name}.nii.gz"
@@ -1848,7 +1860,8 @@ class CAP(_CAPGetter):
     def caps2surf(self, output_dir: Optional[os.PathLike]=None, suffix_title: Optional[str]=None,
                   show_figs: bool=True, fwhm: Optional[float]=None,
                   fslr_density: Literal["4k", "8k", "32k", "164k"]="32k", method: Literal["linear", "nearest"]="linear",
-                  save_stat_map: bool=False, fslr_giftis_dict: Optional[dict]=None, **kwargs) -> surfplot.Plot:
+                  save_stat_map: bool=False, fslr_giftis_dict: Optional[dict]=None,
+                  knn_dict: dict[str, Union[int, bool]]=None, **kwargs) -> surfplot.Plot:
         """
         **Project CAPs onto Surface Plots**
 
@@ -1866,17 +1879,11 @@ class CAP(_CAPGetter):
             def _cap2statmap(atlas_file, cap_vector, fwhm):
                 atlas = nib.load(atlas_file)
                 atlas_fdata = atlas.get_fdata()
-                # Get array containing all labels in atlas to avoid issue if atlas labels dont start at 1,
-                # like Nilearn's AAL map
+                # Get array containing all labels in atlas to avoid issue if the first non-zero atlas label is not 1
                 target_array = sorted(np.unique(atlas_fdata))
-                for indx, value in enumerate(cap_vector):
-                    actual_indx = indx + 1
-                    atlas_fdata[np.where(atlas_fdata == target_array[actual_indx])] = value
+                for indx, value in enumerate(cap_vector, start=1):
+                    atlas_fdata[np.where(atlas_fdata == target_array[indx])] = value
                 stat_map = nib.Nifti1Image(atlas_fdata, atlas.affine, atlas.header)
-                # Add smoothing to stat map to help mitigate potential coverage issues
-                if fwhm is not None:
-                    stat_map = image.smooth_img(stat_map, fwhm=fwhm)
-                return stat_map
 
         Parameters
         ----------
@@ -1925,6 +1932,24 @@ class CAP(_CAPGetter):
             GroupName can be "All Subjects" or any specific group name. CAP-Name is the name of the CAP. This
             parameter allows plotting without re-running the analysis. Initialize the CAP class and use this method
             if using this parameter.
+
+        knn_dict : :obj:`dict[str, int | bool]`, default=None
+            Use KNN (k-nearest neighbors) interpolation to fill in non-background values that are assigned zero. This is
+            primarily used as a fix for when a custom parcellation does not project well from volumetric to surface
+            space. This method involves resampling the Schaefer parcellation, a volumetric parcellation that projects
+            well onto surface space, to the target parcellation specified in the "maps" sub-key in ``self.parcel_approach``.
+            The background indices are extracted from the Schaefer parcellation, and these indices are used to obtain
+            the non-background indices (parcels) that are set to zero in the target parcellation.
+
+            These indices are then iterated over, and the zero values are replaced with the value of the nearest neighbor,
+            determined by the sub-key "k". The dictionary contains the following sub-keys:
+
+            - "k": An integer that determines the number of nearest neighbors to consider, with the majority vote determining the new value. If not specified, the default is 1.
+            - "resolution_mm": An integer (1 or 2) that determines the resolution of the Schaefer parcellation. If not specified, the default is 1.
+
+            This method is applied after the `fwhm` method.
+
+            .. versionadded:: 0.13.2
 
         kwargs : :obj:`dict`
             Additional parameters to pass to modify certain plot parameters. Options include:
@@ -1985,7 +2010,7 @@ class CAP(_CAPGetter):
         centroid vector is the first nonzero label, which is assumed to be at the first index of the array in
         ``sorted(np.unique(atlas_fdata))``.
         """
-        if not self._parcel_approach:
+        if not self._parcel_approach and fslr_giftis_dict is None:
             raise AttributeError(textwrap.dedent("""
                                  `self.parcel_approach` is None. Add parcel_approach
                                  using `self.parcel_approach=parcel_approach` to use this
@@ -2010,14 +2035,14 @@ class CAP(_CAPGetter):
 
         groups = self._caps if hasattr(self,"_caps") and fslr_giftis_dict is None else fslr_giftis_dict
 
-        parcellation_name = list(self._parcel_approach)[0]
+        if fslr_giftis_dict is None: parcellation_name = list(self._parcel_approach)[0]
 
         for group in groups:
             caps = self._caps[group] if hasattr(self,"_caps") and fslr_giftis_dict is None else fslr_giftis_dict[group]
             for cap in caps:
                 if fslr_giftis_dict is None:
                     stat_map = _cap2statmap(atlas_file=self._parcel_approach[parcellation_name]["maps"],
-                                            cap_vector=self._caps[group][cap], fwhm=fwhm)
+                                            cap_vector=self._caps[group][cap], fwhm=fwhm, knn_dict=knn_dict)
 
                 # Fix for python 3.12, saving stat map so that it is path instead of a NifTi
                     try:
@@ -2040,8 +2065,8 @@ class CAP(_CAPGetter):
                         # Delete
                         os.unlink(temp_nifti.name)
                 else:
-                    gii_lh, gii_rh = fslr_to_fslr([fslr_giftis_dict[group][cap]["lh"],
-                                                   fslr_giftis_dict[group][cap]["rh"]],
+                    gii_lh, gii_rh = fslr_to_fslr((fslr_giftis_dict[group][cap]["lh"],
+                                                   fslr_giftis_dict[group][cap]["rh"]),
                                                    target_density=fslr_density, method=method)
                 # Code slightly adapted from surfplot example 2
                 surfaces = fetch_fslr()

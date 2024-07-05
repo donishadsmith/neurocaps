@@ -41,6 +41,13 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 - *.patch* : Contains no new features, simply fixes any identified bugs.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.13.2] - 2024-07-05
+### 🐛 Fixes
+- Certain custom atlases may not project well from volume to surface space. A new parameter, `knn_dict` has been added to
+`CAP.caps2surf()` and `CAP.caps2niftis()` to apply k-nearest neighbors (knn) interpolation while leveraging the
+Schaefer atlas, which projects well from volumetric to surface space.
+- No longer need to add `parcel_approach` when using `CAP.caps2surf()` with `fslr_giftis_dict`.
+
 ## [0.13.1] - 2024-06-30
 ### ♻ Changed
 - For `CAP.caps2radar()`, the `scattersize` kwarg can be used to control the size of the scatter/markers regardless
