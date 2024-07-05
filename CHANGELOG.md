@@ -44,6 +44,8 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 ## [0.13.3] - 2024-07-05
 ### 🐛 Fixes
 - Adds a "remove_subcortical" key to `knn_dict`.
+- Uses "nearest" interpolation for Schaefer resampling so the labels are retained.
+- Fixes "resolution_mm" default in `knn_dict`, which was set to "1mm" instead of 1 if not specified.
 
 ## [0.13.2] - 2024-07-05
 ### 🐛 Fixes

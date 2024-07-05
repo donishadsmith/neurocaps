@@ -19,8 +19,20 @@ def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
 
     # Knn implementation to aid in coverage issues
     if knn_dict:
-        # Get target indices
-        target_indices, resampled_schaefer = _get_target_indices(atlas=atlas, knn_dict=knn_dict)
+
+        if "remove_subcortical" in knn_dict:
+            # Get original atlas or else the indices won't be obtained due to mutability
+            original_atlas = nib.load(atlas_file)
+            subcortical_indices = np.where(np.isin(original_atlas.get_fdata(),knn_dict["remove_subcortical"]))
+            stat_map.get_fdata()[subcortical_indices] = 0
+  
+            # Get target indices
+            target_indices = _get_target_indices(atlas_file=atlas_file, knn_dict=knn_dict,
+                                                subcortical_indices=subcortical_indices)
+        else:
+             # Get target indices
+            target_indices = _get_target_indices(atlas_file=atlas_file, knn_dict=knn_dict, subcortical_indices=None)
+        
         # Get non-zero indices of the stat map
         non_zero_indices = np.array(np.where(stat_map.get_fdata() != 0)).T
         if "k" not in knn_dict:
@@ -47,32 +59,37 @@ def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
 
             # Assign the new value to the current index
             stat_map.get_fdata()[tuple(target_indx)] = new_value
-        
-        if "remove_subcortical" in knn_dict and knn_dict["remove_subcortical"] is True:
-           stat_map.get_fdata()[np.where(resampled_schaefer.get_fdata() == 0)] = 0
 
     return stat_map
 
-def _get_target_indices(atlas, knn_dict):
+def _get_target_indices(atlas_file, knn_dict, subcortical_indices=None):
+    atlas = nib.load(atlas_file)
     # Get schaefer atlas, which projects well onto cortical surface plots
     if "resolution_mm" not in knn_dict:
         warnings.warn(textwrap.dedent("""
                                       Defaulting to 1mm resolution for the Schaefer atlas since 'resolution_knn' was
                                       not specified in `knn_dict`.
                                       """))
-        resolution_mm = "1mm"
+        resolution_mm = 1
     else:
         resolution_mm = knn_dict["resolution_mm"]
 
     schaefer_atlas = datasets.fetch_atlas_schaefer_2018(resolution_mm=resolution_mm)["maps"]
 
-    # Resample schaefer to atlas file
-    resampled_schaefer = image.resample_to_img(schaefer_atlas, atlas)
+    # Resample schaefer to atlas file using nearest interpolation to retain labels
+    resampled_schaefer = image.resample_to_img(schaefer_atlas, atlas, interpolation="nearest")
     # Get indices that equal zero in schaefer atlas to avoid interpolating background values, will also get the indices for subcortical
     background_indices_schaefer = set(zip(*np.where(resampled_schaefer.get_fdata() == 0)))
     # Get indices 0 indices for atlas
     background_indices_atlas = set(zip(*np.where(atlas.get_fdata() == 0)))
-    # Get the non-background indices through subtraction
-    target_indices = list(background_indices_atlas - background_indices_schaefer)
 
-    return target_indices, resampled_schaefer
+    # Get the non-background indices through subtraction
+    if subcortical_indices:
+        subcortical_indices = set(zip(*subcortical_indices))
+        target_indices = list(background_indices_atlas - background_indices_schaefer - subcortical_indices)
+    else:
+        target_indices = list(background_indices_atlas - background_indices_schaefer)
+
+    target_indices = sorted(target_indices)
+
+    return target_indices

@@ -1775,7 +1775,7 @@ class CAP(_CAPGetter):
         if return_df: return corr_dict
 
     def caps2niftis(self, output_dir: os.PathLike, suffix_file_name: Optional[str]=None,
-                    fwhm: Optional[float]=None, knn_dict: dict[str, Union[int, bool]]=None) -> nib.Nifti1Image:
+                    fwhm: Optional[float]=None, knn_dict: dict[str, Union[int, list[int], np.array]]=None) -> nib.Nifti1Image:
         """
         **Standalone Method to Convert CAPs to NifTI Statistical Maps**
 
@@ -1819,7 +1819,7 @@ class CAP(_CAPGetter):
 
             - "k" : An integer that determines the number of nearest neighbors to consider, with the majority vote determining the new value. If not specified, the default is 1.
             - "resolution_mm" : An integer (1 or 2) that determines the resolution of the Schaefer parcellation. If not specified, the default is 1.
-            - "remove_subcortical": A boolean to remove subcortical values only if True. 
+            - "remove_subcortical": A list or  array of label ids as integers of the subcortical regions in the parcellation.
 
             This method is applied after the `fwhm` method.
 
@@ -1862,7 +1862,7 @@ class CAP(_CAPGetter):
                   show_figs: bool=True, fwhm: Optional[float]=None,
                   fslr_density: Literal["4k", "8k", "32k", "164k"]="32k", method: Literal["linear", "nearest"]="linear",
                   save_stat_map: bool=False, fslr_giftis_dict: Optional[dict]=None,
-                  knn_dict: dict[str, Union[int, bool]]=None, **kwargs) -> surfplot.Plot:
+                  knn_dict: dict[str, Union[int, list[int], np.array]]=None, **kwargs) -> surfplot.Plot:
         """
         **Project CAPs onto Surface Plots**
 
@@ -1947,7 +1947,7 @@ class CAP(_CAPGetter):
 
             - "k": An integer that determines the number of nearest neighbors to consider, with the majority vote determining the new value. If not specified, the default is 1.
             - "resolution_mm": An integer (1 or 2) that determines the resolution of the Schaefer parcellation. If not specified, the default is 1.
-            - "remove_subcortical": A boolean to remove subcortical values only if True. 
+            - "remove_subcortical": A list or array of label ids as integers of the subcortical regions in the parcellation.
 
             This method is applied after the `fwhm` method.
 
