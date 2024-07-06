@@ -41,6 +41,10 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 - *.patch* : Contains no new features, simply fixes any identified bugs.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.13.4.post1] - 2024-07-05
+### 💻 Metadata
+- Spelling fix in error message to refer to the correct variable name.
+
 ## [0.13.4] - 2024-07-05
 ### 🐛 Fixes
 - For `CAP.caps2surf()` and `CAP.caps2niftis()`, fwhm comes after the knn method, if requested.
