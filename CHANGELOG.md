@@ -41,6 +41,11 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 - *.patch* : Contains no new features, simply fixes any identified bugs.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.13.5] - 2024-07-06
+### 🐛 Fixes
+- For `knn_dict`, replaces method for majority vote to another method that is more appropriate for floats
+when k is greater than 1. Current method is more appropriate for atlases, which have integer values.
+
 ## [0.13.4.post1] - 2024-07-05
 ### 💻 Metadata
 - Spelling fix in error message to refer to the correct variable name.

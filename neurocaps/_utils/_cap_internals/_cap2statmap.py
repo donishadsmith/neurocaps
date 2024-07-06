@@ -48,7 +48,7 @@ def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
                 # Values of nearest neighbors
                 neighbor_values = [stat_map.get_fdata()[tuple(nearest_neighbor)] for nearest_neighbor in nearest_neighbors]
                 # Majority vote
-                new_value = np.bincount(neighbor_values).argmax()
+                new_value = max(set(neighbor_values), key=neighbor_values.count)
             else:
                 nearest_neighbor = non_zero_indices[neighbor_indx]
                 new_value = stat_map.get_fdata()[tuple(nearest_neighbor)]
