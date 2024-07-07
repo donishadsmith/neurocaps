@@ -5,7 +5,7 @@
    :alt: Latest Version
 
 .. image:: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-blue
-   :target: https://doi.org/10.5281/zenodo.12555589
+   :target: https://doi.org/10.5281/zenodo.12682514
    :alt: DOI
 
 .. image:: https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg
@@ -23,7 +23,7 @@ Citing
 ======
 ::
   
-  Smith, D. (2024). neurocaps. Zenodo. https://doi.org/10.5281/zenodo.12555589
+  Smith, D. (2024). neurocaps. Zenodo. https://doi.org/10.5281/zenodo.12682514
 
 Usage
 =====

@@ -336,7 +336,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         When extracting specific conditions, this function uses ``math.ceil`` when calculating the duration of a
         condition to round up and ``int`` to round down for the onset. This is to allow for partial scans. Any
-        overlapping TRs are removed used set, then are sorted.
+        overlapping/duplicate TRs are removed using set then are sorted.
         ::
 
             for i in condition_df.index:
