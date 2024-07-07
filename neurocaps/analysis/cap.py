@@ -1621,18 +1621,18 @@ class CAP(_CAPGetter):
         save_plots : :obj:`bool`, default=True
             If True, plots are saves as png images. For this to be used, ``output_dir`` must be specified.
 
-            .. versionadded :: 0.13.0
+            .. versionadded:: 0.13.0
 
         return_df : :obj:`bool`, default=False
             If True, returns a dictionary with a correlation matrix for each group.
 
-            .. versionadded :: 0.13.0
+            .. versionadded:: 0.13.0
 
         save_df : :obj:`bool`, default=False,
             If True, saves the correlation matrix contained in the DataFrames as csv files. For this to be used,
             ``output_dir`` must be specified.
 
-            .. versionadded :: 0.13.0
+            .. versionadded:: 0.13.0
 
         kwargs : :obj:`dict`
             Keyword arguments used when modifying figures. Valid keywords include:
@@ -1971,6 +1971,8 @@ class CAP(_CAPGetter):
                 documentation listed in the Note section.
             - alpha : :obj:`float`, default=1
                 Transparency level of the colorbar.
+            - outline_alpha : :obj:`float`, default=1
+                Transparency level of the colorbar for outline if ``as_outline`` is True.
             - zero_transparent : :obj:`bool`, default=True
                 Turns vertices with a value of 0 transparent.
             - as_outline : :obj:`bool`, default=False
@@ -2031,7 +2033,7 @@ class CAP(_CAPGetter):
         defaults = {"dpi": 300, "title_pad": -3, "cmap": "cold_hot", "cbar_kws":  {"location": "bottom", "n_ticks": 3},
                     "size": (500, 400), "layout": "grid", "zoom": 1.5, "views": ["lateral", "medial"], "alpha": 1,
                     "zero_transparent": True, "as_outline": False,"brightness": 0.5, "figsize": None, "scale": (2, 2),
-                    "surface": "inflated", "color_range": None, "bbox_inches": "tight"}
+                    "surface": "inflated", "color_range": None, "bbox_inches": "tight", "outline_alpha": 1}
 
         plot_dict = _check_kwargs(defaults, **kwargs)
 
@@ -2095,7 +2097,11 @@ class CAP(_CAPGetter):
                 # Add stat map layer
                 p.add_layer({"left": gii_lh, "right": gii_rh}, cmap=cmap,
                             alpha=plot_dict["alpha"], color_range=plot_dict["color_range"],
-                            zero_transparent=plot_dict["zero_transparent"], as_outline=plot_dict["as_outline"])
+                            zero_transparent=plot_dict["zero_transparent"], as_outline=False)
+
+                if plot_dict["as_outline"] is True:
+                    p.add_layer({"left": gii_lh, "right": gii_rh}, cmap="gray", cbar=False,
+                                alpha=plot_dict["outline_alpha"], as_outline=True)
 
                 # Color bar
                 fig = p.build(cbar_kws=plot_dict["cbar_kws"], figsize=plot_dict["figsize"], scale=plot_dict["scale"])
@@ -2117,7 +2123,8 @@ class CAP(_CAPGetter):
 
                 if not show_figs: plt.close(fig)
 
-    def caps2radar(self, output_dir: Optional[os.PathLike]=None, suffix_title: Optional[str]=None,
+    def caps2radar(self, method: Literal["traditional", "selective", "combined"]="traditional", alpha: float=0.5,
+                   output_dir: Optional[os.PathLike]=None, suffix_title: Optional[str]=None,
                    show_figs: bool=True, use_scatterpolar: bool=False, as_html: bool=False,
                    **kwargs) -> Union[px.line_polar, go.Scatterpolar]:
         """
@@ -2148,8 +2155,8 @@ class CAP(_CAPGetter):
             dot_product = np.dot(cap_1_cluster_centroid, binary_vector)
 
         Once, the dot product of the cluster centroid and binary vector is then calculated it is normalized by the
-        product of the norms of the cluster centroid and the binary vector to restrict the range to -1 and 1, hence
-        cosine similarity.
+        product of the magnitudes (Euclidean norms) of the cluster centroid and the binary vector to restrict the range
+        to -1 and 1, hence cosine similarity.
         ::
 
             norm_cap_1_cluster_centroid = np.linalg.norm(cap_1_cluster_centroid)
@@ -2174,6 +2181,51 @@ class CAP(_CAPGetter):
 
         Parameters
         ----------
+        method : {"traditional", "selective", "combined"}, default="traditional"
+            Determines the method to use for norming the dot product when calculating the cosine similarity.
+            Options are:
+
+            - "traditional": Calculates cosine similarity by considering the network's/regions's global contribution to
+              the CAP. This method uses the entire cluster centroid vector for normalization, making the cosine
+              similarity reflect the network's/region's dominance relative to all networks/regions in the CAP.
+              For instance, if a network/region, has a high positive cosine similarity, then the nodes within the
+              network/region are highly co-activating relative to the overall activation pattern of all
+              networks/regions in the CAP.
+            - "selective": Focuses on the internal consistency of nodes within a specific network/region. Here, only the
+              nodes within the network are considered for normalization, allowing the cosine similarity to reflect
+              how strongly the nodes within the network co-activate or co-deactivate while ignoring its overall
+              contribution to the CAP.
+            - "combined": Integrates both the "traditional" and "selective" methods by using a weighted approach.
+              The final cosine similarity is a combination of both methods, with the weight determined by the ``alpha``
+              parameter.
+
+            .. versionadded:: 0.14.0
+
+        alpha : :obj:`float`, default=0.5
+            Only used if ``method`` is set to "combined". This value determines the relative contributions of the
+            "traditional" and "selective" methods in the final cosine similarity calculation. It must be between 0
+            and 1. A value closer to 1 gives more weight to the "traditional" method, while a value closer to 0
+            gives more weight to the "selective" method. The calculation is
+            ::
+
+                # Calculate dot product
+                dot_product = np.dot(cap_vector, binary_vector)
+
+                # Calculate traditional norm
+                norm_cap_vector_traditional = np.linalg.norm(cap_vector)
+                norm_binary_vector_traditional = np.linalg.norm(binary_vector)
+                cosine_similarity_traditional = dot_product/(norm_cap_vector_traditional * norm_binary_vector_traditional)
+
+                # Calculate selective norm, by only selecting the values from nodes in a specific network/region
+                norm_cap_vector_selective = np.linalg.norm(cap_vector[binary_vector == 1])
+                norm_binary_vector_selective = np.linalg.norm(binary_vector[binary_vector == 1])
+                cosine_similarity_selective = dot_product/(norm_cap_vector_selective * norm_binary_vector_selective)
+
+                # Use alpha to determine contributions of traditional and selective method to cosine similarity
+                cosine_similarity = (cosine_similarity_traditional * alpha) + (cosine_similarity_selective* (1-alpha))
+
+            .. versionadded:: 0.14.0
+
         output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
             Directory to save plots to. The directory will be created if it does not exist. Outputs as png file.
 
@@ -2288,6 +2340,14 @@ class CAP(_CAPGetter):
                                  Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()`
                                  first."""))
 
+        if method == "combined" and (alpha <= 0 or alpha >= 1):
+                raise ValueError("`alpha` must be a float between 0 and 1.")
+
+        valid_methods = ["traditional", "selective", "combined"]
+        if not isinstance(method, str) or method not in valid_methods:
+            formatted_string = ', '.join(["'{a}'".format(a=x) for x in valid_methods])
+            raise ValueError(f"Valid options for methods are {formatted_string}.")
+
         defaults = {"scale": 2, "height": 800, "width": 1200, "line_close": True, "bgcolor": "white", "fill": "none",
                     "scattersize": 8, "connectgaps": True, "opacity": 0.5,
                     "radialaxis": {"showline": False, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)",
@@ -2309,7 +2369,6 @@ class CAP(_CAPGetter):
         parcellation_name = list(self.parcel_approach)[0]
 
         # Initialize cosine_similarity attribute
-
         self._cosine_similarity = {}
 
         # Create radar dict
@@ -2332,11 +2391,44 @@ class CAP(_CAPGetter):
                     binary_vector = np.zeros_like(cap_vector)
                     binary_vector[indxs] = 1
 
-                    #Calculate cosine similarity
+                    # Dot product remains the same regardless of the method used
                     dot_product = np.dot(cap_vector, binary_vector)
-                    norm_cap_vector = np.linalg.norm(cap_vector)
-                    norm_binary_vector = np.linalg.norm(binary_vector)
-                    cosine_similarity = dot_product/(norm_cap_vector * norm_binary_vector)
+
+                    if method == "traditional":
+                        # Consider all nodes in the norm
+                        norm_cap_vector = np.linalg.norm(cap_vector)
+                        norm_binary_vector = np.linalg.norm(binary_vector)
+                        try: 
+                            cosine_similarity = dot_product/(norm_cap_vector * norm_binary_vector)
+                        except:
+                            cosine_similarity = 0
+
+                    elif method == "selective":
+                        # Only consider nodes within the network when norming
+                        norm_cap_vector = np.linalg.norm(cap_vector[binary_vector == 1])
+                        norm_binary_vector = np.linalg.norm(binary_vector[binary_vector == 1])
+                        try:
+                            cosine_similarity = dot_product/(norm_cap_vector * norm_binary_vector)
+                        except:
+                            cosine_similarity = 0
+
+                    elif method == "combined":
+                        # Calculate traditional norm
+                        norm_cap_vector_traditional = np.linalg.norm(cap_vector)
+                        norm_binary_vector_traditional = np.linalg.norm(binary_vector)
+                        try:
+                            cosine_similarity_traditional = dot_product/(norm_cap_vector_traditional * norm_binary_vector_traditional)
+                        except:
+                            cosine_similarity_traditional = 0
+                        # Calculate selective norm, by only selecting the values from nodes in a specific network/region
+                        norm_cap_vector_selective = np.linalg.norm(cap_vector[binary_vector == 1])
+                        norm_binary_vector_selective = np.linalg.norm(binary_vector[binary_vector == 1])
+                        try:
+                            cosine_similarity_selective = dot_product/(norm_cap_vector_selective * norm_binary_vector_selective)
+                        except:
+                            cosine_similarity_selective = 0
+                        # Use alpha to determine contributions of traditional and selective method to cosine similarity
+                        cosine_similarity = (cosine_similarity_traditional * alpha) + (cosine_similarity_selective * (1-alpha))
 
                     # Store value in dict
                     radar_dict[cap].append(cosine_similarity)

@@ -41,6 +41,17 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 - *.patch* : Contains no new features, simply fixes any identified bugs.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.14.0] - 2024-07-07
+### 🚀 New/Added
+- More flexibility when calculating cosine similarity in the `CAP.caps2radar` function. Now a `method` and `alpha` parameter
+is added to choose between calculating "traditional" cosine similarity, a more "selective" cosine similarity, or
+a "combined" approach where `alpha` is used to determine the relative contributions of the `traditional` and `selective`
+approach.
+### 🐛 Fixes
+- Added try except blocks in `CAP.caps2radar`, to handle division by zero cases.
+- In `CAP.caps2surf`, `as_outline` kwarg is now its own separate layer, which should allow the outline to be build
+on top of the stat map when requested.
+
 ## [0.13.5] - 2024-07-06
 ### 🐛 Fixes
 - For `knn_dict`, replaces method for majority vote to another method that is more appropriate for floats

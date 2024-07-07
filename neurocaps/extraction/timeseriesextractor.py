@@ -335,11 +335,24 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         **This pipeline is most optimized towards BOLD data preprocessed by fMRIPrep.**
 
         When extracting specific conditions, this function uses ``math.ceil`` when calculating the duration of a
-        condition to round up and ``int`` to round down for the onset.
+        condition to round up and ``int`` to round down for the onset. This is to allow for partial scans. Any
+        overlapping TRs are removed used set, then are sorted.
         ::
 
-            onset_scan = int(condition_df.loc[i,"onset"]/tr)
-            duration_scan = math.ceil((condition_df.loc[i,"onset"] + condition_df.loc[i,"duration"])/tr)
+            for i in condition_df.index:
+                onset_scan = int(condition_df.loc[i,"onset"]/tr)
+                duration_scan = math.ceil((condition_df.loc[i,"onset"] + condition_df.loc[i,"duration"])/tr)
+                if signal_clean_info["dummy_scans"]:
+                    scan_list.extend([scan - offset for scan in range(onset_scan, duration_scan + 1)
+                                      if scan not in range(0, signal_clean_info["dummy_scans"])])
+                else:
+                    scan_list.extend(list(range(onset_scan, duration_scan + 1)))
+                if censor:
+                    scan_list = [volume for volume in scan_list if volume not in censor_volumes]
+
+            # Timeseries with the extracted scans corresponding to condition; set is used to remove overlapping TRs
+            timeseries = timeseries[sorted(list(set(scan_list))),:]
+
         """
         if sys.platform == "win32":
             raise SystemError(textwrap.dedent("""
