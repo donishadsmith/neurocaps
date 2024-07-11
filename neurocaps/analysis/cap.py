@@ -1746,7 +1746,7 @@ class CAP(_CAPGetter):
             if not show_figs: plt.close()
 
             if corr_dict:
-                # Get p-values; use np.eye to make main diagonals equal zero
+                # Get p-values; use np.eye to make main diagonals equal zero; implementation of tozCSS from https://stackoverflow.com/questions/25571882/pandas-columns-correlation-with-statistical-significance
                 pval_df = df.corr(method=lambda x, y: pearsonr(x, y)[1]) - np.eye(*corr_df.shape)
                 # Add asterisk to values that meet the threshold
                 pval_df = pval_df.map(
@@ -2210,16 +2210,16 @@ class CAP(_CAPGetter):
 
                 # Calculate dot product
                 dot_product = np.dot(cap_vector, binary_vector)
+                # Calculate norm binary vector
+                norm_binary_vector = np.linalg.norm(binary_vector)
 
                 # Calculate traditional norm
                 norm_cap_vector_traditional = np.linalg.norm(cap_vector)
-                norm_binary_vector_traditional = np.linalg.norm(binary_vector)
-                cosine_similarity_traditional = dot_product/(norm_cap_vector_traditional * norm_binary_vector_traditional)
+                cosine_similarity_traditional = dot_product/(norm_cap_vector_traditional * norm_binary_vector)
 
                 # Calculate selective norm, by only selecting the values from nodes in a specific network/region
                 norm_cap_vector_selective = np.linalg.norm(cap_vector[binary_vector == 1])
-                norm_binary_vector_selective = np.linalg.norm(binary_vector[binary_vector == 1])
-                cosine_similarity_selective = dot_product/(norm_cap_vector_selective * norm_binary_vector_selective)
+                cosine_similarity_selective = dot_product/(norm_cap_vector_selective * norm_binary_vector)
 
                 # Use alpha to determine contributions of traditional and selective method to cosine similarity
                 cosine_similarity = (cosine_similarity_traditional * alpha) + (cosine_similarity_selective* (1-alpha))
@@ -2393,39 +2393,42 @@ class CAP(_CAPGetter):
 
                     # Dot product remains the same regardless of the method used
                     dot_product = np.dot(cap_vector, binary_vector)
+                    # Calculate norm_binary_vector
+                    norm_binary_vector = np.linalg.norm(binary_vector)
 
-                    if method == "traditional":
-                        # Consider all nodes in the norm
-                        norm_cap_vector = np.linalg.norm(cap_vector)
-                        norm_binary_vector = np.linalg.norm(binary_vector)
-                        try: 
-                            cosine_similarity = dot_product/(norm_cap_vector * norm_binary_vector)
-                        except:
-                            cosine_similarity = 0
-
-                    elif method == "selective":
-                        # Only consider nodes within the network when norming
-                        norm_cap_vector = np.linalg.norm(cap_vector[binary_vector == 1])
-                        norm_binary_vector = np.linalg.norm(binary_vector[binary_vector == 1])
+                    if method in ["traditional", "selective"]:
+                        # Use all nodes if traditional or use region specific nodes if selective
+                        norm_cap_vector = np.linalg.norm(cap_vector) if method == "traditional" else np.linalg.norm(cap_vector[binary_vector == 1])
                         try:
                             cosine_similarity = dot_product/(norm_cap_vector * norm_binary_vector)
                         except:
+                            warnings.warn(textwrap.dedent(f"""
+                                          Division by zero error when calculating cosine similarity for
+                                          group - {group} for {region} in {cap}. Setting cosine similarity to zero.
+                                          """))
                             cosine_similarity = 0
-
-                    elif method == "combined":
+                    else:
                         # Calculate traditional norm
                         norm_cap_vector_traditional = np.linalg.norm(cap_vector)
-                        norm_binary_vector_traditional = np.linalg.norm(binary_vector)
-                        try:
-                            cosine_similarity_traditional = dot_product/(norm_cap_vector_traditional * norm_binary_vector_traditional)
-                        except:
-                            cosine_similarity_traditional = 0
                         # Calculate selective norm, by only selecting the values from nodes in a specific network/region
                         norm_cap_vector_selective = np.linalg.norm(cap_vector[binary_vector == 1])
-                        norm_binary_vector_selective = np.linalg.norm(binary_vector[binary_vector == 1])
                         try:
-                            cosine_similarity_selective = dot_product/(norm_cap_vector_selective * norm_binary_vector_selective)
+                            cosine_similarity_traditional = dot_product/(norm_cap_vector_traditional * norm_binary_vector)
                         except:
+                            warnings.warn(textwrap.dedent(f"""
+                                          Division by zero error when calculating cosine similarity using the
+                                          'traditional' method for group - {group} for {region} in {cap}. Setting
+                                          'traditional' cosine similarity to zero.
+                                          """))
+                            cosine_similarity_traditional = 0
+                        try:
+                            cosine_similarity_selective = dot_product/(norm_cap_vector_selective * norm_binary_vector)
+                        except:
+                            warnings.warn(textwrap.dedent(f"""
+                                          Division by zero error when calculating cosine similarity using the
+                                          'selective' method for group - {group} for {region} in {cap}. Setting
+                                          'selective' cosine similarity to zero.
+                                          """))
                             cosine_similarity_selective = 0
                         # Use alpha to determine contributions of traditional and selective method to cosine similarity
                         cosine_similarity = (cosine_similarity_traditional * alpha) + (cosine_similarity_selective * (1-alpha))
@@ -2439,7 +2442,6 @@ class CAP(_CAPGetter):
             df = pd.DataFrame(radar_dict)
 
             for cap in df.columns[df.columns != "regions"]:
-
                 groups = df[cap].apply(lambda x: "High Amplitude" if x > 0 else ("Low Amplitude" if x < 0 else np.nan))
                 df[cap] = df[cap].abs()
 

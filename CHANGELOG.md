@@ -38,8 +38,31 @@ pip install -e .
 
 - *.minor* : Introduces new features and may include potential breaking changes. Any breaking changes will be explicitly
 noted in the changelog (i.e new functions or parameters, changes in parameter defaults or function names, etc).
-- *.patch* : Contains no new features, simply fixes any identified bugs.
+- *.patch* : Will contain fixes for any identified bugs, may include modifications or an added parameter for improvements.
+Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
+
+## [0.14.1.post1] - 2024-07-12
+### 💻 Metadata
+- Updates typehint `fd_threshold` since it was only updated in the doc string.
+
+## [0.14.1] - 2024-07-12
+### ♻ Changed
+- In `TimeseriesExtractor()`, `fd_threshold` can now be a dictionary, which includes a sub-key called "outlier_percentage",
+a float value between 0 and 1 representing a percentage. Runs where the proportion of volumes exceeding the "threshold"
+is higher than this percentage are removed. If `condition` is specified in `self.get_bold`, only the runs where the
+proportion of volumes exceeds this value for the specific condition of interest are removed. A warning is issued
+whenever a run is flagged.
+- As of now, flagging and removal of runs, due to "outlier_percentage", is conducted after timeseries extraction.
+This was done to minimize disrupting the original code and for easier testing for feature reliability as significant
+code refactoring could cause unintended behaviors and requires longer testing for reliability. In a future patch, runs
+will be assessed to see if they meet the exclusion criteria due to "outlier_percentage" prior to extraction and will be
+skipped if flagged.
+### 💻 Metadata
+- Warning issue if cosine similarity is 0.
+- Minor improvements to warning clarity.
+- Changelog versioning updated for transparency since patches may include changes to parameters to improve behavior or
+added paramaters to fix behavior. But these changes will be backwards compatible.
 
 ## [0.14.0] - 2024-07-07
 ### 🚀 New/Added

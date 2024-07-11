@@ -27,7 +27,7 @@ def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
                          """))
 
     if "Schaefer" not in parcel_approach and "AAL" not in parcel_approach and "Custom" not in parcel_approach:
-        raise ValueError(textwrap.dedent(f"""
+        raise KeyError(textwrap.dedent(f"""
                          Please include a valid `parcel_approach` in one of the following formats for
                          'Schaefer', 'AAL', or 'Custom': {valid_parcel_dict}
                          """))
