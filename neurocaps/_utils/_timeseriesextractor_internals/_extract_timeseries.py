@@ -12,6 +12,8 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
     subject_timeseries = {subj_id: {}}
 
     for run in run_list:
+        # Initialize flag; This is for flagging runs where the percentage of volumes exceeding the "fd_threshold" is greater than "outlier_percentage"
+        flagged = False
 
         run_id = "run-0" if run is None else run
         run = run if run is not None else ""
@@ -79,10 +81,11 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
                     fd_array = confound_df["framewise_displacement"].fillna(0).values
                 else:
                     censor = False
-                    warnings.warn(textwrap.dedent(f"""For subject {subj_id}, `fd_threshold` specified but 'framewise_displacement' is
-                                  not a column in the confound dataframe so removal of volumes after nuisance
-                                  regression will not be done.
-                                  """))
+                    warnings.warn(textwrap.dedent(f"""
+                                                  For subject {subj_id}, `fd_threshold` specified but
+                                                  'framewise_displacement' is not a column in the confound dataframe so
+                                                  removal of volumes after nuisance regression will not be done.
+                                                  """))
             else:
                 censor = False
 
@@ -119,7 +122,21 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
         else: timeseries = masker.fit_transform(nifti_img)
 
         if censor:
-            censor_volumes = list(np.where(fd_array > signal_clean_info["fd_threshold"])[0])
+            # Check if float or dict
+            if isinstance(signal_clean_info["fd_threshold"], dict):
+                threshold = signal_clean_info["fd_threshold"]["threshold"]
+                if "outlier_percentage" in signal_clean_info["fd_threshold"]:
+                    outlier_limit = signal_clean_info["fd_threshold"]["outlier_percentage"]
+                else:
+                    outlier_limit = None
+            else:
+                threshold, outlier_limit = signal_clean_info["fd_threshold"], None
+
+            censor_volumes = list(np.where(fd_array > threshold)[0])
+
+            if outlier_limit:
+                # ToDo: refactor code to skipped extraction if outlier limit and file preparation when flagged due to outliers
+                flagged = True if len(censor_volumes)/len(fd_array) > outlier_limit else False
 
         if event_file:
             event_df = pd.read_csv(event_file[0], sep="\t")
@@ -139,8 +156,13 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
                                       if scan not in range(0, signal_clean_info["dummy_scans"])])
                 else:
                     scan_list.extend(list(range(onset_scan, duration_scan + 1)))
-                if censor:
-                    scan_list = [volume for volume in scan_list if volume not in censor_volumes]
+
+            if censor:
+                # Get length of scan list prior to assess outliers if requested
+                before_censor = len(scan_list)
+                scan_list = [volume for volume in scan_list if volume not in censor_volumes]
+                if outlier_limit:
+                    flagged = True if 1 - (len(scan_list)/before_censor) > outlier_limit else False
 
             # Timeseries with the extracted scans corresponding to condition; set is used to remove overlapping TRs
             timeseries = timeseries[sorted(list(set(scan_list))),:]
@@ -152,6 +174,11 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
             warnings.warn(textwrap.dedent(f"""
                           Subject {subj_id} timeseries is empty for {run}. Most likely due to condition not
                           existing or TRs corresponding to the condition being removed by `dummy_scans`.
+                          """))
+        elif flagged is True:
+            warnings.warn(textwrap.dedent(f"""
+                          Subject {subj_id} for {run} has been flagged because more than {outlier_limit*100}%
+                          of the volumes exceeded the framewise displacement (FD) threshold limit of {threshold}.
                           """))
         else:
             subject_timeseries[subj_id].update({run_id: timeseries})

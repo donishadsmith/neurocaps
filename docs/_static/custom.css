@@ -30,7 +30,7 @@ section {
     text-align: left;
 }
 
-.versionadded {
+.versionadded, .versionchanged {
     border: 2px solid #28a745;
     background-color: #eaf8f0;
     color: #000000;
@@ -41,7 +41,7 @@ section {
     margin: 10px 0;
 }
 
-.versionmodified.added::before {
+.versionmodified.added::before, .versionchanged.added::before {
     content: "\f06a";
     color: #000000;
     font-family: 'FontAwesome';

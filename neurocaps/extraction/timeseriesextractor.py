@@ -33,9 +33,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         The approach to parcellate BOLD images. This should be a nested dictionary with the first key being the
         atlas name. Currently, only "Schaefer", "AAL", and "Custom" are supported.
 
-        - For "Schaefer", available sub-keys include "n_rois", "yeo_networks", and "resolution_mm".  Refer to documentation for ``nilearn.datasets.fetch_atlas_schaefer_2018`` for valid inputs.
-        - For "AAL", the only sub-key is "version". Refer to documentation for ``nilearn.datasets.fetch_atlas_aal`` for valid inputs.
-        - For "Custom", the key must include a sub-key called "maps" specifying the directory location of the parcellation NifTI file.
+        - For "Schaefer", available sub-keys include "n_rois", "yeo_networks", and "resolution_mm". 
+          Refer to documentation for ``nilearn.datasets.fetch_atlas_schaefer_2018`` for valid inputs.
+        - For "AAL", the only sub-key is "version". Refer to documentation for ``nilearn.datasets.fetch_atlas_aal``
+          for valid inputs.
+        - For "Custom", the key must include a sub-key called "maps" specifying the directory location of the
+          parcellation NifTI file.
 
     use_confounds : :obj:`bool`, default=True
         Determines whether to perform nuisance regression using confounds when extracting timeseries.
@@ -50,11 +53,21 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         within parcel boundaries, which can improve signal-to-noise ratio (SNR) assuming Gaussian noise
         distribution. However, smoothing may also blur parcel boundaries.
 
-    fd_threshold : :obj:`float` or :obj:`None`, default=None
-        Sets a threshold to remove frames after nuisance regression and timeseries extraction. This requires a
+    fd_threshold : :obj:`float`, :obj:`dict[str, float]`, or :obj:`None`, default=None
+        Sets a threshold to remove volumes after nuisance regression and timeseries extraction. This requires a
         column named `framewise_displacement` in the confounds file and ``use_confounds`` set to True.
         Additionally, `framewise_displacement` should not need be specified in ``confound_names`` if using this
-        parameter.
+        parameter. As of version 14.1, ``fd_threshold`` can be a dictionary containing the following keys:
+
+        - "threshold": A float value. Volumes with a `framewise_displacement` value exceeding this threshold are removed.
+        - "outlier_percentage": A float value between 0 and 1 representing a percentage. Runs where the proportion of
+          volumes exceeding the "threshold" is higher than this percentage are removed. If ``condition`` is specified
+          in ``self.get_bold``, only the runs where the proportion of volumes exceeds this value for the specific
+          condition of interest are removed. **Note**, this proportion is calculated after dummy scans have been removed.
+          A warning is issued whenever a run is flagged.
+
+        .. versionchanged:: 0.14.1 ``fd_threshold`` can now be a dictionary that includes a sub-key, "outlier_percentage",
+          which specifies the percentage of TRs exceeding the "threshold" value that would trigger a discard of the entire run.
 
     n_acompcor_separate : :obj:`int` or :obj:`None`, default=None
         Specifies the number of separate acompcor components derived from white-matter (WM) and cerebrospinal
@@ -235,6 +248,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             self._signal_clean_info["confound_names"] = _check_confound_names(high_pass=high_pass,
                                                                               specified_confound_names=confound_names,
                                                                               n_acompcor_separate=n_acompcor_separate)
+
+            if isinstance(fd_threshold, dict):
+                if "threshold" not in fd_threshold:
+                    raise KeyError("'threshold' sub-key must be included in `fd_threshold` dictionary.")
+                if "outlier_percentage" in fd_threshold:
+                    if fd_threshold["outlier_percentage"] >= 1 or fd_threshold["outlier_percentage"] <= 0:
+                        raise ValueError("'outlier_percentage' must be a positive float between 0 and 1.")
+
             self._signal_clean_info["fd_threshold"] = fd_threshold
 
     def get_bold(self, bids_dir: os.PathLike, task: str, session: Optional[Union[int,str]]=None,
@@ -514,7 +535,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                                          """))
 
             if len(nifti_files) == 0:
-                warnings.warn(f"Skipping subject: {subj_id} due to missing NifTI files.")
+                warnings.warn(f"Skipping subject: {subj_id} due to missing or excluded NifTI files.")
                 continue
 
             if len(mask_files) == 0:
@@ -585,7 +606,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 if self._task_info["condition"]:
                     raise ValueError(textwrap.dedent(f"""
                                     `tr` not specified and `tr` could not be extracted for subject: {subj_id} since BOLD
-                                    metadata file could not be opened. The `tr` must be given when `condition` is 
+                                    metadata file could not be opened. The `tr` must be given when `condition` is
                                     specified.
                                     """))
                 else:
