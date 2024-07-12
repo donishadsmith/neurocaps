@@ -232,7 +232,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                  detrend: bool=True, low_pass: Optional[float]=None, high_pass: Optional[float]=None,
                  parcel_approach: dict[str, dict[str, Union[str, int]]]={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}},
                  use_confounds: bool=True, confound_names: Optional[list[str]]=None, fwhm: Optional[float]=None,
-                 fd_threshold: Optional[float]=None, n_acompcor_separate: Optional[int]=None,
+                 fd_threshold: Optional[Union[float, dict[str, float]]]=None, n_acompcor_separate: Optional[int]=None,
                  dummy_scans: Optional[int]=None) -> None:
 
         self._space = space

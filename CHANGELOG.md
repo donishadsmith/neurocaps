@@ -42,6 +42,10 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.14.1.post1] - 2024-07-12
+### 💻 Metadata
+- Updates typehint `fd_threshold` since it was only updated in the doc string.
+
 ## [0.14.1] - 2024-07-12
 ### ♻ Changed
 - In `TimeseriesExtractor()`, `fd_threshold` can now be a dictionary, which includes a sub-key called "outlier_percentage",
