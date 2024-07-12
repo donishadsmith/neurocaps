@@ -368,8 +368,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                                       if scan not in range(0, signal_clean_info["dummy_scans"])])
                 else:
                     scan_list.extend(list(range(onset_scan, duration_scan + 1)))
-                if censor:
-                    scan_list = [volume for volume in scan_list if volume not in censor_volumes]
+
+            if censor:
+                # Get length of scan list prior to assess outliers if requested
+                before_censor = len(scan_list)
+                scan_list = [volume for volume in scan_list if volume not in censor_volumes]
+                if outlier_limit:
+                    flagged = True if 1 - (len(scan_list)/before_censor) > outlier_limit else False
 
             # Timeseries with the extracted scans corresponding to condition; set is used to remove overlapping TRs
             timeseries = timeseries[sorted(list(set(scan_list))),:]
