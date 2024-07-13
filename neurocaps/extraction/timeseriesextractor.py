@@ -357,7 +357,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         When extracting specific conditions, this function uses ``math.ceil`` when calculating the duration of a
         condition to round up and ``int`` to round down for the onset. This is to allow for partial scans. Any
-        overlapping/duplicate TRs are removed using set then are sorted.
+        overlapping/duplicate TRs are removed using set then are sorted. Python uses 0-based indexing so the scan
+        number corresponds to the index in the timeseries (i.e onset of 0 corresponds to the 0th index/row in the
+        timeseries).
         ::
 
             for i in condition_df.index:
@@ -517,15 +519,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                                if os.path.basename(nifti_file) not in exclude_niftis]
 
             # Generate a list of runs to iterate through based on runs in nifti_files
+            check_runs = []
             if self._task_info["runs"]:
-                check_runs = [f"run-{run}" for run in self._task_info["runs"]]
-            elif len(nifti_files) != 0:
-                if "run-" in os.path.basename(nifti_files[0]):
-                    check_runs = [re.search("run-(\\S+?)[-_]",os.path.basename(x))[0][:-1] for x in nifti_files]
-                else:
-                    check_runs = []
+                check_runs.extend([f"run-{run}" for run in self._task_info["runs"]])
             else:
-                check_runs = []
+                if len(nifti_files) != 0 and "run-" in os.path.basename(nifti_files[0]):
+                    check_runs.extend([re.search("run-(\\S+?)[-_]",os.path.basename(x))[0][:-1] for x in nifti_files])
 
             # Generate a list of runs to iterate through based on runs in nifti_files
             if not self._task_info["session"] and len(nifti_files) != 0:
@@ -540,7 +539,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                                          """))
 
             if len(nifti_files) == 0:
-                warnings.warn(f"Skipping subject: {subj_id} due to missing or excluded NifTI files.")
+                warnings.warn(f"Skipping subject: {subj_id} due to all NifTI files missing or excluded.")
                 continue
 
             if len(mask_files) == 0:
@@ -597,6 +596,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                                       runs available:{', '.join(run_list)}.
                                       """))
             else:
+                # Allows for nifti files that do not have the run- description
                 run_list = [None]
             # Add subject list to subject attribute. These are subjects that will be ran
             self._subject_ids.append(subj_id)
@@ -607,7 +607,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 else:
                     with open(bold_metadata_files[0], "r") as json_file:
                         tr = json.load(json_file)["RepetitionTime"]
-            except:
+            except ValueError:
                 if self._task_info["condition"]:
                     raise ValueError(textwrap.dedent(f"""
                                     `tr` not specified and `tr` could not be extracted for subject: {subj_id} since BOLD

@@ -14,8 +14,8 @@ def test_merge_dicts():
     all_dicts = merge_dicts([subject_timeseries,subject_timeseries_2], return_reduced_dicts= True, return_combined_dict=True)
     assert all_dicts["dict_0"].keys() == all_dicts["dict_1"].keys() == all_dicts["combined"].keys()
     all_dicts = merge_dicts([subject_timeseries,subject_timeseries_2], return_reduced_dicts= True, return_combined_dict=False)
-    assert all_dicts["dict_0"].keys() == all_dicts["dict_1"].keys() 
-    assert len(all_dicts["dict_0"].keys()) == len(all_dicts["dict_1"].keys()) 
+    assert all_dicts["dict_0"].keys() == all_dicts["dict_1"].keys()
+    assert len(all_dicts["dict_0"].keys()) == len(all_dicts["dict_1"].keys())
 
 def test_merge_dicts_pkl():
     with open("sample_timeseries.pkl", "rb") as f:
@@ -27,4 +27,4 @@ def test_merge_dicts_pkl():
     all_dicts = merge_dicts([subject_timeseries,subject_timeseries], return_reduced_dicts= True, return_combined_dict=True)
     assert all_dicts["dict_0"].keys() == all_dicts["dict_1"].keys() == all_dicts["combined"].keys()
     all_dicts = merge_dicts([subject_timeseries,subject_timeseries], return_reduced_dicts= True, return_combined_dict=False)
-    assert all_dicts["dict_0"].keys() == all_dicts["dict_1"].keys() 
+    assert all_dicts["dict_0"].keys() == all_dicts["dict_1"].keys()

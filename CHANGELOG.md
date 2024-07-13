@@ -42,6 +42,17 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.14.2] - 2024-07-14
+### ♻ Changed
+- Implemented a minor code refactoring that allows runs flagged due to "outlier_percentage", runs were all volumes will
+be scrubbed due to all volumes exceeding the threshold for framewise displacement, and runs were the specified condition
+returns zero indices will not undergo timeseries extraction.
+- Also clarified the language in a warning that occurs when all NifTI files have been excluded or missing for a subject.
+### 🐛 Fixes
+- If a condition does not exist in the event file, a warning will be issued if this occurs. This should prevent empty
+timeseries or errors. In the warning the condition will be named in the event of a spelling error.
+- Added specific error type to except blocks for the cosine similarities that cause a division by zero error.
+
 ## [0.14.1.post1] - 2024-07-12
 ### 💻 Metadata
 - Updates typehint `fd_threshold` since it was only updated in the doc string.

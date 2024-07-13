@@ -64,18 +64,18 @@ def standardize(subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.P
     if isinstance(subject_timeseries, str) and subject_timeseries.endswith(".pkl"):
         subject_timeseries = _convert_pickle_to_dict()
 
-    for subject in subject_timeseries:
-        for run in subject_timeseries[subject]:
-            std = np.std(subject_timeseries[subject][run], axis=0, ddof=1)
+    for subj_id in subject_timeseries:
+        for run in subject_timeseries[subj_id]:
+            std = np.std(subject_timeseries[subj_id][run], axis=0, ddof=1)
             # Taken from nilearn pipeline, used for numerical stability purposes to avoid numpy division error
             std[std < np.finfo(np.float64).eps] = 1.0
-            mean = np.mean(subject_timeseries[subject][run], axis=0)
-            subject_timeseries[subject][run] = (subject_timeseries[subject][run] - mean)/std
+            mean = np.mean(subject_timeseries[subj_id][run], axis=0)
+            subject_timeseries[subj_id][run] = (subject_timeseries[subj_id][run] - mean)/std
 
     if output_dir:
 
         if file_name: save_file_name = f"{os.path.splitext(file_name.rstrip())[0].rstrip()}.pkl"
-        else: save_file_name = f"standardized_subject_timeseries.pkl"
+        else: save_file_name = "standardized_subject_timeseries.pkl"
 
         with open(os.path.join(output_dir,save_file_name), "wb") as f:
             joblib.dump(subject_timeseries,f)

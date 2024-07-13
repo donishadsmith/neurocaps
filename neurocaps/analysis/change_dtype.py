@@ -14,7 +14,7 @@ def change_dtype(subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.
 
     Changes the dtypes of each participants numpy array. This function uses the ``.astype()`` method from numpy.
     This function can assist with memory usage. For instance, converting a numpy array from "float64" to "float32"
-    can halve the memory required, which is especially useful when performing analyses on larger datasets on a 
+    can halve the memory required, which is especially useful when performing analyses on larger datasets on a
     local machine.
 
     .. versionadded:: 0.11.0
@@ -72,15 +72,15 @@ def change_dtype(subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.
 
     if isinstance(subject_timeseries, str) and subject_timeseries.endswith(".pkl"):
         subject_timeseries = _convert_pickle_to_dict()
-    
-    for subject in subject_timeseries:
-        for run in subject_timeseries[subject]:
-            subject_timeseries[subject][run] = subject_timeseries[subject][run].astype(dtype)
+
+    for subj_id in subject_timeseries:
+        for run in subject_timeseries[subj_id]:
+            subject_timeseries[subj_id][run] = subject_timeseries[subj_id][run].astype(dtype)
 
     if output_dir:
         if file_name: save_file_name = f"{os.path.splitext(file_name.rstrip())[0].rstrip()}.pkl"
         else: save_file_name = file_name if file_name else f"subject_timeseries_desc-{dtype}.pkl"
         with open(os.path.join(output_dir, save_file_name), "wb") as f:
             joblib.dump(subject_timeseries,f)
-        
+
     if return_dict: return subject_timeseries

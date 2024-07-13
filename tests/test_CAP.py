@@ -36,7 +36,7 @@ def test_CAP_get_caps_with_no_groups_cluster_selection():
     cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
                           n_clusters=[2,3,4,5], cluster_selection_method="silhouette")
-    
+
     assert max(cap_analysis.silhouette_scores["All Subjects"], key=cap_analysis.silhouette_scores["All Subjects"].get) == cap_analysis.optimal_n_clusters["All Subjects"]
 
     assert cap_analysis.caps["All Subjects"]["CAP-1"].shape == (100,)
@@ -44,16 +44,16 @@ def test_CAP_get_caps_with_no_groups_cluster_selection():
     assert all(elem > 0  or elem < 0 for elem in cap_analysis.silhouette_scores["All Subjects"].values())
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
                           n_clusters=[2,3,4,5], cluster_selection_method="variance_ratio")
-    
+
     assert max(cap_analysis.variance_ratio["All Subjects"], key=cap_analysis.variance_ratio["All Subjects"].get) == cap_analysis.optimal_n_clusters["All Subjects"]
-    
+
     assert all(elem >= 0 for elem in cap_analysis.variance_ratio["All Subjects"].values())
 
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
                           n_clusters=[2,3,4,5], cluster_selection_method="davies_bouldin")
-    
+
     assert min(cap_analysis.davies_bouldin["All Subjects"], key=cap_analysis.davies_bouldin["All Subjects"].get) == cap_analysis.optimal_n_clusters["All Subjects"]
-    
+
     assert all(elem >= 0 for elem in cap_analysis.davies_bouldin["All Subjects"].values())
 
 def test_CAP_get_caps_with_groups_and_cluster_selection():
@@ -75,13 +75,13 @@ def test_CAP_get_caps_with_groups_and_cluster_selection():
 
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
                           n_clusters=[2,3,4,5], cluster_selection_method="davies_bouldin")
-    
+
     assert min(cap_analysis.davies_bouldin["A"], key=cap_analysis.davies_bouldin["A"].get) == cap_analysis.optimal_n_clusters["A"]
     assert min(cap_analysis.davies_bouldin["B"], key=cap_analysis.davies_bouldin["B"].get) == cap_analysis.optimal_n_clusters["B"]
-    
+
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
                           n_clusters=[2,3,4,5], cluster_selection_method="variance_ratio")
-    
+
     assert max(cap_analysis.variance_ratio["A"], key=cap_analysis.variance_ratio["A"].get) == cap_analysis.optimal_n_clusters["A"]
     assert max(cap_analysis.variance_ratio["B"], key=cap_analysis.variance_ratio["B"].get) == cap_analysis.optimal_n_clusters["B"]
 
@@ -166,7 +166,7 @@ def test_CAP_get_caps_with_groups_and_silhouette_method_pkl():
 
     cap_analysis.get_caps(subject_timeseries=new_timeseries,
                           n_clusters=[2,3,4,5], cluster_selection_method="silhouette", runs=["1", "2"])
-    
+
     cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, runs=1)
     cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, runs=1,
                                    continuous_runs=True)
@@ -183,7 +183,7 @@ def test_CAP_get_caps_with_groups_and_silhouette_method_pkl():
     assert isinstance(df, dict)
     assert isinstance(df["A"], pd.DataFrame)
     assert len(list(df)) == 2
-    
+
     radialaxis={"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)",
             "ticks": "outside" , "tickfont": {"size": 14, "color": "black"}, "range": [0,0.3],
             "tickvals": [0.1,0.2,0.3]}

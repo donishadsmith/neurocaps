@@ -89,7 +89,7 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
                                                                                 curr_dict[subj_id][curr_run]])
                 else:
                     subject_timeseries_combined[subj_id].update({curr_run: curr_dict[subj_id][curr_run]})
-            # Sort runs lexicographically, keys may be disordered if the first curr_dict does not contain the earliest run_id 
+            # Sort runs lexicographically, keys may be disordered if the first curr_dict does not contain the earliest run_id
             if list(subject_timeseries_combined[subj_id]) != sorted(subject_timeseries_combined[subj_id].keys()):
                 subject_timeseries_combined[subj_id] = {run_id: subject_timeseries_combined[subj_id][run_id] for run_id
                                                         in sorted(subject_timeseries_combined[subj_id].keys())}
@@ -99,7 +99,7 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
             os.makedirs(output_dir)
 
         if file_name: save_file_name = f"{os.path.splitext(file_name.rstrip())[0].rstrip()}.pkl"
-        else: save_file_name = f"merged_subject_timeseries.pkl"
+        else: save_file_name = "merged_subject_timeseries.pkl"
 
         with open(os.path.join(output_dir,save_file_name), "wb") as f:
             joblib.dump(subject_timeseries_combined,f)

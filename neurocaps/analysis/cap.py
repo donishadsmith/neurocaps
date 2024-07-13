@@ -363,7 +363,7 @@ class CAP(_CAPGetter):
                                        else subj_id for subj_id in self._groups[group]]
 
         if parcel_approach is not None:
-           parcel_approach = _check_parcel_approach(parcel_approach=parcel_approach, call="CAP")
+            parcel_approach = _check_parcel_approach(parcel_approach=parcel_approach, call="CAP")
 
         self._parcel_approach = parcel_approach
 
@@ -2341,7 +2341,7 @@ class CAP(_CAPGetter):
                                  first."""))
 
         if method == "combined" and (alpha <= 0 or alpha >= 1):
-                raise ValueError("`alpha` must be a float between 0 and 1.")
+            raise ValueError("`alpha` must be a float between 0 and 1.")
 
         valid_methods = ["traditional", "selective", "combined"]
         if not isinstance(method, str) or method not in valid_methods:
@@ -2401,7 +2401,7 @@ class CAP(_CAPGetter):
                         norm_cap_vector = np.linalg.norm(cap_vector) if method == "traditional" else np.linalg.norm(cap_vector[binary_vector == 1])
                         try:
                             cosine_similarity = dot_product/(norm_cap_vector * norm_binary_vector)
-                        except:
+                        except ValueError:
                             warnings.warn(textwrap.dedent(f"""
                                           Division by zero error when calculating cosine similarity for
                                           group - {group} for {region} in {cap}. Setting cosine similarity to zero.
@@ -2414,7 +2414,7 @@ class CAP(_CAPGetter):
                         norm_cap_vector_selective = np.linalg.norm(cap_vector[binary_vector == 1])
                         try:
                             cosine_similarity_traditional = dot_product/(norm_cap_vector_traditional * norm_binary_vector)
-                        except:
+                        except ValueError:
                             warnings.warn(textwrap.dedent(f"""
                                           Division by zero error when calculating cosine similarity using the
                                           'traditional' method for group - {group} for {region} in {cap}. Setting
@@ -2423,7 +2423,7 @@ class CAP(_CAPGetter):
                             cosine_similarity_traditional = 0
                         try:
                             cosine_similarity_selective = dot_product/(norm_cap_vector_selective * norm_binary_vector)
-                        except:
+                        except ValueError:
                             warnings.warn(textwrap.dedent(f"""
                                           Division by zero error when calculating cosine similarity using the
                                           'selective' method for group - {group} for {region} in {cap}. Setting

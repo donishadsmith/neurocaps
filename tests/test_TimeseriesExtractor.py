@@ -1,4 +1,4 @@
-import os, pytest
+import os, pytest, numpy as np
 from neurocaps.extraction import TimeseriesExtractor
 from neurocaps.analysis import change_dtype
 
@@ -10,7 +10,7 @@ def test_TimeseriesExtractor_no_parallel():
     parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
 
     extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
-                                    use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01,
+                                    use_confounds=True, detrend=False, low_pass=0.15, high_pass=None,
                                     confound_names=confounds)
 
     bids_dir = os.path.join(dir, "ds000031_R1.0.4_ses001-022/ds000031_R1.0.4")
@@ -18,7 +18,7 @@ def test_TimeseriesExtractor_no_parallel():
     pipeline_name = "fmriprep_1.0.0/fmriprep"
     extractor.get_bold(bids_dir=bids_dir, session='002', runs="001",task="rest", pipeline_name=pipeline_name,
                        tr=1.2, n_cores=1)
-    
+
     print(extractor.subject_timeseries, flush=True)
 
     assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 100
@@ -45,7 +45,7 @@ def test_TimeseriesExtractor_no_parallel_no_session_w_custom():
 
     pipeline_name = "fmriprep_1.0.0/fmriprep"
     extractor.get_bold(bids_dir=bids_dir, task="rest", runs=["001"],pipeline_name=pipeline_name, tr=1.2)
-    
+
     print(extractor.subject_timeseries, flush=True)
 
     assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
@@ -66,7 +66,7 @@ def test_TimeseriesExtractor_no_parallel_no_session_w_custom_and_censoring():
 
     pipeline_name = "/fmriprep_1.0.0/fmriprep"
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
-    
+
     print(extractor.subject_timeseries, flush=True)
 
     assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
@@ -76,11 +76,27 @@ def test_TimeseriesExtractor_no_parallel_no_session_w_custom_and_censoring():
                                     use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01,
                                     confound_names=confounds, fd_threshold={"threshold": 0.35,
                                                                             "outlier_percentage": 0.0001})
-    
+
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
-    
+
     assert extractor.subject_timeseries == {}
-    
+
+    extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
+                                    use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01,
+                                    confound_names=confounds, fd_threshold={"threshold": 0.35,
+                                                                            "outlier_percentage": 0.30})
+
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+    assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
+    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 39
+
+    extractor2 = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
+                                    use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01,
+                                    confound_names=confounds, fd_threshold=0.35)
+
+    extractor2.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+    assert np.array_equal(extractor.subject_timeseries["01"]["run-001"], extractor2.subject_timeseries["01"]["run-001"])
+
 def test_TimeseriesExtractor_dummy():
     dir = os.path.dirname(__file__)
 
@@ -96,11 +112,40 @@ def test_TimeseriesExtractor_dummy():
 
     pipeline_name = "fmriprep_1.0.0/fmriprep/"
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
-    
+
     print(extractor.subject_timeseries, flush=True)
 
     assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
     assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 35
+
+def test_TimeseriesExtractor_dummy_and_fd():
+    dir = os.path.dirname(__file__)
+
+    confounds=["Cosine*", "aComp*", "Rot*"]
+
+    parcel_approach = {"Custom": {"maps": os.path.join(dir, "HCPex.nii.gz")}}
+
+    extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
+                                    use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01,
+                                    confound_names=confounds, dummy_scans=5, fd_threshold=0.35)
+
+    bids_dir = os.path.join(dir, "ds000031_R1.0.4_ses001-022/ds000031_R1.0.4/")
+
+    pipeline_name = "fmriprep_1.0.0/fmriprep/"
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+
+    print(extractor.subject_timeseries, flush=True)
+
+    assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
+    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 34
+
+    extractor2 = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
+                                    use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01,
+                                    confound_names=confounds, dummy_scans=5)
+
+    extractor2.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+
+    assert np.array_equal(extractor.subject_timeseries["01"]["run-001"], extractor2.subject_timeseries["01"]["run-001"][:34,:])
 
 def test_TimeseriesExtractor_check_exclusion():
     dir = os.path.dirname(__file__)
