@@ -42,6 +42,11 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.14.2.post1] - 2024-07-14
+### 💻 Metadata
+- Updated a warning during timeseries extraction that only included a partial reason for why the indices for condition
+have been filtered out. Added information about `fd_threshold` being the reason why.
+
 ## [0.14.2] - 2024-07-14
 ### ♻ Changed
 - Implemented a minor code refactoring that allows runs flagged due to "outlier_percentage", runs were all volumes will

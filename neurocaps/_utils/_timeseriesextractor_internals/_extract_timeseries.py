@@ -114,7 +114,8 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
                 warnings.warn(textwrap.dedent(f"""
                           Subject {subj_id} timeseries will be empty for {run} when filtered to only include volumes
                           from condition - {condition}. Most likely due to TRs corresponding to the condition being
-                          removed by `dummy_scans`. Skipping timeseries extraction.
+                          removed by `dummy_scans` or filtered due meeting threshold for `fd_threshold`.
+                          Skipping timeseries extraction.
                           """))
                 continue
 
