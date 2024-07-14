@@ -649,8 +649,8 @@ class CAP(_CAPGetter):
                                     curve="convex", direction="decreasing", S=knee_dict["S"])
                 self._optimal_n_clusters[group] = kneedle.elbow
                 if self._optimal_n_clusters[group] is None:
-                    raise ValueError(textwrap.dedent("""
-                                No elbow detected so optimal cluster size is None. Try adjusting the sensitivity
+                    raise ValueError(textwrap.dedent(f"""
+                                No elbow detected for {group} so optimal cluster size is None. Try adjusting the sensitivity
                                 parameter, `S`, to increase or decrease sensitivity (higher values are less sensitive),
                                 expanding the list of clusters to test, or using another `cluster_selection_method`.
                                 """))
@@ -667,6 +667,8 @@ class CAP(_CAPGetter):
             self._kmeans[group] = KMeans(n_clusters=self._optimal_n_clusters[group], random_state=random_state,
                                          init=init, n_init=n_init, max_iter=max_iter, tol=tol,
                                          algorithm=algorithm).fit(self._concatenated_timeseries[group])
+
+            print(f"Optimal cluster size using {method} method for {group} is {self._optimal_n_clusters[group]}.", flush=True)
 
             # Plot
             if show_figs or output_dir is not None:

@@ -29,6 +29,12 @@ Performing CAPs on All Subjects
                           n_clusters=list(range(2,11)),
                           cluster_selection_method="elbow", show_figs=True, step=2)
 
+.. rst-class:: sphx-glr-script-out
+
+    .. code-block:: none
+
+        Optimal cluster size using elbow method for All Subjects is 6.
+
 .. image:: embed/All_Subjects_elbow.png
     :width: 600
 
@@ -42,8 +48,20 @@ Performing CAPs on Groups
                           n_clusters=list(range(2,21)),
                           cluster_selection_method="silhouette", show_figs=True, step=2)
 
+.. rst-class:: sphx-glr-script-out
+
+    .. code-block:: none
+
+        Optimal cluster size using silhouette method for A is 2.
+
 .. image:: embed/A_silhouette.png
     :width: 600
+
+.. rst-class:: sphx-glr-script-out
+
+    .. code-block:: none
+
+        Optimal cluster size using silhouette method for B is 2.
 
 .. image:: embed/B_silhouette.png
     :width: 600
@@ -122,7 +140,7 @@ Creating Surface Plots
     cap_analysis.caps2surf(cmap=custom_cmap, size=(500, 100), layout="row")
 
 .. rst-class:: sphx-glr-script-out
-    
+
     .. code-block:: none
 
         Optimal cluster size for All Subjects is 2.

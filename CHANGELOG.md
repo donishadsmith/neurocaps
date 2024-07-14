@@ -42,6 +42,9 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.14.3.post1] - 2024-07-14
+- Minor update that prints the optimal cluster size for each group. Just for information purposes.
+
 ## [0.14.3] - 2024-07-14
 - Thought of some minor changes.
 
