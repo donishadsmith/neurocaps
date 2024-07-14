@@ -29,12 +29,6 @@ Performing CAPs on All Subjects
                           n_clusters=list(range(2,11)),
                           cluster_selection_method="elbow", show_figs=True, step=2)
 
-.. rst-class:: sphx-glr-script-out
-
-    .. code-block:: none
-
-        Optimal cluster size for All Subjects is 6.
-
 .. image:: embed/All_Subjects_elbow.png
     :width: 600
 
@@ -47,13 +41,6 @@ Performing CAPs on Groups
     cap_analysis.get_caps(subject_timeseries="subject_timeseries.pkl",
                           n_clusters=list(range(2,21)),
                           cluster_selection_method="silhouette", show_figs=True, step=2)
-
-.. rst-class:: sphx-glr-script-out
-
-    .. code-block:: none
-
-        Optimal cluster size for A is 2.
-        Optimal cluster size for B is 2.
 
 .. image:: embed/A_silhouette.png
     :width: 600

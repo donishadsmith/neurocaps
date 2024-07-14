@@ -2401,7 +2401,7 @@ class CAP(_CAPGetter):
                         norm_cap_vector = np.linalg.norm(cap_vector) if method == "traditional" else np.linalg.norm(cap_vector[binary_vector == 1])
                         try:
                             cosine_similarity = dot_product/(norm_cap_vector * norm_binary_vector)
-                        except ValueError:
+                        except ZeroDivisionError:
                             warnings.warn(textwrap.dedent(f"""
                                           Division by zero error when calculating cosine similarity for
                                           group - {group} for {region} in {cap}. Setting cosine similarity to zero.
@@ -2414,7 +2414,7 @@ class CAP(_CAPGetter):
                         norm_cap_vector_selective = np.linalg.norm(cap_vector[binary_vector == 1])
                         try:
                             cosine_similarity_traditional = dot_product/(norm_cap_vector_traditional * norm_binary_vector)
-                        except ValueError:
+                        except ZeroDivisionError:
                             warnings.warn(textwrap.dedent(f"""
                                           Division by zero error when calculating cosine similarity using the
                                           'traditional' method for group - {group} for {region} in {cap}. Setting
@@ -2423,7 +2423,7 @@ class CAP(_CAPGetter):
                             cosine_similarity_traditional = 0
                         try:
                             cosine_similarity_selective = dot_product/(norm_cap_vector_selective * norm_binary_vector)
-                        except ValueError:
+                        except ZeroDivisionError:
                             warnings.warn(textwrap.dedent(f"""
                                           Division by zero error when calculating cosine similarity using the
                                           'selective' method for group - {group} for {region} in {cap}. Setting

@@ -23,17 +23,17 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     detrend : :obj:`bool`, default=True
         Detrends the timeseries during extraction.
 
-    low_pass : :obj:`float` or :obj:`None`, default=None
+    low_pass : :obj:`float`, :obj:`int`, or :obj:`None`, default=None
         Filters out signals above the specified cutoff frequency.
 
-    high_pass : :obj:`float` or :obj:`None`, default=None
+    high_pass : :obj:`float`, :obj:`int`, or :obj:`None``, default=None
         Filters out signals below the specified cutoff frequency.
 
     parcel_approach : :obj:`dict[str, dict[str, str | int]]`, default={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
         The approach to parcellate BOLD images. This should be a nested dictionary with the first key being the
         atlas name. Currently, only "Schaefer", "AAL", and "Custom" are supported.
 
-        - For "Schaefer", available sub-keys include "n_rois", "yeo_networks", and "resolution_mm". 
+        - For "Schaefer", available sub-keys include "n_rois", "yeo_networks", and "resolution_mm".
           Refer to documentation for ``nilearn.datasets.fetch_atlas_schaefer_2018`` for valid inputs.
         - For "AAL", the only sub-key is "version". Refer to documentation for ``nilearn.datasets.fetch_atlas_aal``
           for valid inputs.
@@ -48,7 +48,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         Note, an asterisk ("*") can be used to find confound names that start with the term preceding the
         asterisk. For instance, "cosine*" will find all confound names in the confound files starting with "cosine".
 
-    fwhm : :obj:`float` or :obj:`None`, default=None
+    fwhm : :obj:`float`, :obj:`int`, or :obj:`None`, default=None
         Applies spatial smoothing to data (in millimeters). Note that using parcellations already averages voxels
         within parcel boundaries, which can improve signal-to-noise ratio (SNR) assuming Gaussian noise
         distribution. However, smoothing may also blur parcel boundaries.
@@ -229,9 +229,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     """
     def __init__(self, space: str = "MNI152NLin2009cAsym",
                  standardize: Union[bool, Literal["zscore_sample", "zscore", "psc"]]="zscore_sample",
-                 detrend: bool=True, low_pass: Optional[float]=None, high_pass: Optional[float]=None,
+                 detrend: bool=True, low_pass: Optional[Union[float, int]]=None, high_pass: Optional[Union[float, int]]=None,
                  parcel_approach: dict[str, dict[str, Union[str, int]]]={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}},
-                 use_confounds: bool=True, confound_names: Optional[list[str]]=None, fwhm: Optional[float]=None,
+                 use_confounds: bool=True, confound_names: Optional[list[str]]=None, fwhm: Optional[Union[float, int]]=None,
                  fd_threshold: Optional[Union[float, dict[str, float]]]=None, n_acompcor_separate: Optional[int]=None,
                  dummy_scans: Optional[int]=None) -> None:
 
@@ -257,6 +257,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                         raise ValueError("'outlier_percentage' must be a positive float between 0 and 1.")
 
             self._signal_clean_info["fd_threshold"] = fd_threshold
+
+        if self._signal_clean_info["use_confounds"] is not True and fd_threshold:
+            warnings.warn(textwrap.dedent("""
+                                          `fd_threshold` specified but `use_confounds` is not True so removal of
+                                          volumes after nuisance regression will not be done.
+                                            """))
 
     def get_bold(self, bids_dir: os.PathLike, task: str, session: Optional[Union[int,str]]=None,
                  runs: Optional[Union[int, str, list[int], list[str]]]=None, condition: Optional[str]=None,
@@ -724,6 +730,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         if isinstance(subj_id, int): subj_id = str(subj_id)
 
+        if roi_indx is None and region is None:
+            raise ValueError("either `roi_indx` or `region` must be specified.")
+
         if roi_indx is not None and region is not None:
             raise ValueError("`roi_indx` and `region` can not be used simultaneously.")
 
@@ -751,7 +760,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_bold")
                 plot_indxs = self._parcel_approach[parcellation_name]["nodes"].index(roi_indx)
 
-            elif isinstance(roi_indx, list):
+            else:
                 if all([isinstance(indx,int) for indx in roi_indx]):
                     plot_indxs = np.array(roi_indx)
                 elif all([isinstance(indx,str) for indx in roi_indx]):
@@ -762,8 +771,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                                            for index in roi_indx])
                 else:
                     raise ValueError("All elements in `roi_indx` need to be all strings or all integers.")
-
-        elif region:
+        else:
             if "Custom" in self._parcel_approach:
                 if "regions" not in self._parcel_approach["Custom"]:
                     _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_bold")
@@ -780,7 +788,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         subject_timeseries = self._subject_timeseries[subj_id][f"run-{run}"]
         if roi_indx or roi_indx == 0:
             plt.plot(range(1, subject_timeseries.shape[0] + 1), subject_timeseries[:,plot_indxs])
-        elif region:
+            if isinstance(roi_indx, int) or isinstance(roi_indx, str) or (isinstance(roi_indx, list) and len(roi_indx) == 1):
+                if isinstance(roi_indx, int): roi_title = self._parcel_approach[parcellation_name]["nodes"][roi_indx]
+                elif isinstance(roi_indx, str): roi_title = roi_indx
+                else: roi_title = roi_indx[0]
+                plt.title(roi_title)
+        else:
             plt.plot(range(1, subject_timeseries.shape[0] + 1), np.mean(subject_timeseries[:,plot_indxs], axis=1))
             plt.title(region)
         plt.xlabel("TR")
