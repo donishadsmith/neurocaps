@@ -42,6 +42,11 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.14.2.post2] - 2024-07-14
+### 💻 Metadata
+- Simply wanted the latest metadata update to be on Zenodo and to have the same DOI as I forgot to upload
+version 0.14.2.post1 there.
+
 ## [0.14.2.post1] - 2024-07-14
 ### 💻 Metadata
 - Updated a warning during timeseries extraction that only included a partial reason for why the indices for condition
