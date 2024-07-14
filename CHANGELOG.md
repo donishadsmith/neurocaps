@@ -42,6 +42,17 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.14.3] - 2024-07-14
+- Thought of some minor changes.
+
+### ♻ Changed
+- Added new warning if `fd_threshold` is specified but `use_confounds` is False since `fd_threshold` needs the confound
+file from fMRIPrep. In previous version, censoring just didn't occur and never issued a warning.
+- Changed the error exception types for cosine similarity in `CAP.caps2radar` from ValueError to ZeroDivisionError
+- Added ValueError in `TimeseriesExtractor.visualize_bold` if both `region` and `roi_indx` is None.
+- In `TimeseriesExtractor.visualize_bold` if `roi_indx` is a string, int, or list with a single element, a title is
+added to the plot.
+
 ## [0.14.2.post2] - 2024-07-14
 ### 💻 Metadata
 - Simply wanted the latest metadata update to be on Zenodo and to have the same DOI as I forgot to upload

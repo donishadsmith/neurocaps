@@ -40,7 +40,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
         event_file = None if len(event_files) == 0 else [event_file for event_file in event_files
                                                          if run in os.path.basename(event_file)]
 
-        # Initialize variables
+        # Initialize variables; fd_threshold and even_file checked first for a "fail fast" approach that avoids extracting timeseries for runs that will be empty or flagged
         scan_list, censor_volumes = [], []
         censor = False
         threshold, outlier_limit = None, None
@@ -214,7 +214,7 @@ def _continue_extraction(subj_id, run_id, nifti_file, mask_file, confound_df, co
         timeseries = np.delete(timeseries, censor_volumes, axis=0)
 
     if condition:
-        # Extract specific condition from timeseries while removing any overlapping indices
+        # Extract specific condition from timeseries while removing any overlapping indices; scan list will have censored indices already removed
         timeseries = timeseries[sorted(list(set(scan_list))),:]
 
     return timeseries
