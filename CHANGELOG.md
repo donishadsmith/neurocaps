@@ -38,12 +38,24 @@ pip install -e .
 
 - *.minor* : Introduces new features and may include potential breaking changes. Any breaking changes will be explicitly
 noted in the changelog (i.e new functions or parameters, changes in parameter defaults or function names, etc).
-- *.patch* : Will contain fixes for any identified bugs, may include modifications or an added parameter for improvements.
-Fixes and modifications will be backwards compatible.
+- *.patch* : Will contain fixes for any identified bugs, may include modifications or an added parameter for
+improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
-## [0.14.3.post1] - 2024-07-14
-- Minor update that prints the optimal cluster size for each group. Just for information purposes.
+## [0.14.4] - 2024-07-15
+### ♻ Changed
+- Minor update that prints the optimal cluster size for each group when using `cluster_selection_method` in
+`CAP.get_caps()`. Just for information purposes.
+- When error raised due to kneed not being able to detect the elbow, the group it failed for is now stated.
+- Previously version 0.14.3.post1
+
+## [0.14.3.post1] - YANKED
+### ♻ Changed
+- Minor update that prints the optimal cluster size for each group when using `cluster_selection_method` in
+`CAP.get_caps()`. Just for information purposes.
+- When error raised due to kneed not being able to detect the elbow, the group it failed for is now stated.
+- Yanked due to not being a metadata update, this should be a patch update to denote a behavioral change,
+this is now version 0.14.4 to adhere a bit better to versioning practices.
 
 ## [0.14.3] - 2024-07-14
 - Thought of some minor changes.
