@@ -42,8 +42,19 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
-## [0.14.3.post1] - 2024-07-14
-- Minor update that prints the optimal cluster size for each group. Just for information purposes.
+## [0.14.4] - 2024-07-15
+### ♻ Changed
+- Minor update that prints the optimal cluster size for each group when using `cluster_selection_method` in
+`CAP.get_caps()`. Just for information purposes.
+- Previously version 0.14.3.post1
+
+## [0.14.3.post1] - YANKED
+### ♻ Changed
+- Minor update that prints the optimal cluster size for each group when using `cluster_selection_method` in
+`CAP.get_caps()`. Just for information purposes.
+
+- Yanked due to not being a metadata update, this should be a patch update to denote a behavioral change,
+this is now version 0.14.4 to adhere a bit better to versioning practices.
 
 ## [0.14.3] - 2024-07-14
 - Thought of some minor changes.
