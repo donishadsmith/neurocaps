@@ -1,38 +1,89 @@
-import os, numpy as np, pandas as pd, pickle, pytest, warnings
+import numpy as np, pandas as pd, pickle, pytest, warnings
 
 from neurocaps.extraction import TimeseriesExtractor
 from neurocaps.analysis import CAP, change_dtype
 
-def test_CAP_get_caps_no_groups():
-    warnings.simplefilter('ignore')
-    parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
-    extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
-    subject_timeseries = {str(x) : {f"run-{y}": np.random.rand(100,100) for y in range(1,4)} for x in range(1,11)}
-    extractor.subject_timeseries = subject_timeseries
-    cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
-    cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, n_clusters=2)
+warnings.simplefilter('ignore')
+parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
+extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
+subject_timeseries = {str(x) : {f"run-{y}": np.random.rand(100,100) for y in range(1,4)} for x in range(1,11)}
+extractor.subject_timeseries = subject_timeseries
+
+# Similar to internal function used in CAP
+def concat_data(subject_table, standardize,runs=[1,2,3]):
+    concatenated_timeseries = {group: None for group in set(subject_table.values())}
+    mean = {group: None for group in set(subject_table.values())}
+    std = {group: None for group in set(subject_table.values())}
+
+    for sub, group in subject_table.items():
+        for run in subject_timeseries[sub]:
+            if int(run.split("run-")[-1]) in runs:
+                if concatenated_timeseries[group] is None:
+                    concatenated_timeseries[group] = subject_timeseries[sub][run]
+                else:
+                    concatenated_timeseries[group] = np.vstack([concatenated_timeseries[group],
+                                                                subject_timeseries[sub][run]])
+
+    if standardize:
+        for _, group in subject_table.items():
+            concatenated_timeseries[group] -= np.mean(concatenated_timeseries[group], axis=0)
+            std[group] = np.std(concatenated_timeseries[group], ddof=1, axis=0)
+            # Taken from nilearn pipeline, used for numerical stability purposes to avoid numpy division error
+            std[group][std[group] < np.finfo(np.float64).eps] = 1.0
+            concatenated_timeseries[group] /= std[group]
+
+    return concatenated_timeseries
+
+@pytest.mark.parametrize("standardize", [True, False])
+def test_no_groups_no_cluster_selection(standardize):
+    cap_analysis = CAP(parcel_approach=parcel_approach)
+    cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, n_clusters=2, standardize=standardize)
     assert cap_analysis.caps["All Subjects"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["All Subjects"]["CAP-2"].shape == (100,)
 
-def test_CAP_get_caps_with_groups():
-    warnings.simplefilter('ignore')
-    parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
-    extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
-    subject_timeseries = {str(x) : {f"run-{y}": np.random.rand(100,100) for y in range(1,4)} for x in range(1,11)}
-    extractor.subject_timeseries = subject_timeseries
+    concatenated_timeseries = concat_data(cap_analysis.subject_table, standardize=standardize)
+
+    # Concatenated data used for kmeans
+    assert cap_analysis.concatenated_timeseries["All Subjects"].shape == (3000,100)
+    if standardize is False:
+        assert np.array_equal(cap_analysis.concatenated_timeseries["All Subjects"], concatenated_timeseries["All Subjects"])
+    else:
+        # Floating point differences
+        assert np.allclose(cap_analysis.concatenated_timeseries["All Subjects"], concatenated_timeseries["All Subjects"])
+
+@pytest.mark.parametrize("standardize", [True, False])
+def test_groups_no_cluster_selection(standardize):
+    # Should ignore duplicate id
     cap_analysis = CAP(parcel_approach=extractor.parcel_approach, groups={"A": [1,2,3,5], "B": [4,6,7,8,9,10,7]})
-    cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries)
+    cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,standardize=standardize)
     assert cap_analysis.caps["A"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["A"]["CAP-2"].shape == (100,)
     assert cap_analysis.caps["B"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["B"]["CAP-2"].shape == (100,)
+    # Concatenated data used in kmeans
+    cap_analysis.concatenated_timeseries["A"].shape == (1200,100)
+    cap_analysis.concatenated_timeseries["A"].shape == (1800,100)
+    concatenated_timeseries = concat_data(cap_analysis.subject_table, standardize=standardize)
+    if standardize is False:
+        assert np.array_equal(cap_analysis.concatenated_timeseries["A"], concatenated_timeseries["A"])
+        assert np.array_equal(cap_analysis.concatenated_timeseries["B"], concatenated_timeseries["B"])
+    else:
+        assert np.allclose(cap_analysis.concatenated_timeseries["A"], concatenated_timeseries["A"])
+        assert np.allclose(cap_analysis.concatenated_timeseries["B"], concatenated_timeseries["B"])
 
-def test_CAP_get_caps_with_no_groups_cluster_selection():
-    warnings.simplefilter('ignore')
-    parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
-    extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
-    subject_timeseries = {str(x) : {f"run-{y}": np.random.rand(100,100) for y in range(1,4)} for x in range(1,11)}
-    extractor.subject_timeseries = subject_timeseries
+    cap_analysis = CAP(parcel_approach=extractor.parcel_approach, groups={"A": [1,2,3,5], "B": [4,6,7,8,9,10,7]})
+    cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, runs=[1,2],standardize=standardize)
+    cap_analysis.concatenated_timeseries["A"].shape == (800,100)
+    cap_analysis.concatenated_timeseries["A"].shape == (1200,100)
+    concatenated_timeseries = concat_data(cap_analysis.subject_table, standardize=standardize, runs=[1,2])
+    if standardize is False:
+        assert np.array_equal(cap_analysis.concatenated_timeseries["A"], concatenated_timeseries["A"])
+        assert np.array_equal(cap_analysis.concatenated_timeseries["B"], concatenated_timeseries["B"])
+    else:
+        assert np.allclose(cap_analysis.concatenated_timeseries["A"], concatenated_timeseries["A"])
+        assert np.allclose(cap_analysis.concatenated_timeseries["B"], concatenated_timeseries["B"])
+
+def test_no_groups_cluster_selection():
     cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
                           n_clusters=[2,3,4,5], cluster_selection_method="silhouette")
@@ -56,12 +107,7 @@ def test_CAP_get_caps_with_no_groups_cluster_selection():
 
     assert all(elem >= 0 for elem in cap_analysis.davies_bouldin["All Subjects"].values())
 
-def test_CAP_get_caps_with_groups_and_cluster_selection():
-    warnings.simplefilter('ignore')
-    parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
-    extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
-    subject_timeseries = {str(x) : {f"run-{y}": np.random.rand(100,100) for y in range(1,4)} for x in range(1,11)}
-    extractor.subject_timeseries = subject_timeseries
+def test_groups_and_cluster_selection():
     cap_analysis = CAP(parcel_approach=extractor.parcel_approach, groups={"A": [1,2,3,5], "B": [4,6,7,8,9,10,7]})
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
                           n_clusters=[2,3,4,5], cluster_selection_method="silhouette")
@@ -85,11 +131,7 @@ def test_CAP_get_caps_with_groups_and_cluster_selection():
     assert max(cap_analysis.variance_ratio["A"], key=cap_analysis.variance_ratio["A"].get) == cap_analysis.optimal_n_clusters["A"]
     assert max(cap_analysis.variance_ratio["B"], key=cap_analysis.variance_ratio["B"].get) == cap_analysis.optimal_n_clusters["B"]
 
-
-def test_CAP_get_caps_no_groups_pkl():
-    warnings.simplefilter('ignore')
-    parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
-    extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
+def test_no_groups_pkl():
     with open("sample_timeseries.pkl", "rb") as f:
         subject_timeseries = pickle.load(f)
     extractor.subject_timeseries = subject_timeseries
@@ -99,10 +141,7 @@ def test_CAP_get_caps_no_groups_pkl():
     assert cap_analysis.caps["All Subjects"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["All Subjects"]["CAP-2"].shape == (100,)
 
-def test_CAP_get_caps_with_groups_pkl():
-    warnings.simplefilter('ignore')
-    parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
-    extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
+def test_groups_pkl():
     with open("sample_timeseries.pkl", "rb") as f:
         subject_timeseries = pickle.load(f)
     extractor.subject_timeseries = subject_timeseries
@@ -113,12 +152,7 @@ def test_CAP_get_caps_with_groups_pkl():
     assert cap_analysis.caps["B"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["B"]["CAP-2"].shape == (100,)
 
-def test_CAP_get_caps_with_no_groups_and_silhouette_method_pkl():
-    warnings.simplefilter('ignore')
-    parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
-    extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
-    with open("sample_timeseries.pkl", "rb") as f:
-        subject_timeseries = pickle.load(f)
+def test_no_groups_and_silhouette_method():
     extractor.subject_timeseries = subject_timeseries
     cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
@@ -127,13 +161,7 @@ def test_CAP_get_caps_with_no_groups_and_silhouette_method_pkl():
     assert cap_analysis.caps["All Subjects"]["CAP-2"].shape == (100,)
     assert all(elem > 0  or elem < 0 for elem in cap_analysis.silhouette_scores["All Subjects"].values())
 
-def test_CAP_get_caps_with_groups_and_silhouette_method_pkl():
-    warnings.simplefilter('ignore')
-    parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
-    extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
-    with open("sample_timeseries.pkl", "rb") as f:
-        subject_timeseries = pickle.load(f)
-    extractor.subject_timeseries = subject_timeseries
+def test_groups_and_silhouette_method():
     cap_analysis = CAP(parcel_approach=extractor.parcel_approach, groups={"A": [1,2,3,5], "B": [4,6,7,8,9,10,7]})
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
                           n_clusters=[2,3,4,5], cluster_selection_method="silhouette")
@@ -144,13 +172,7 @@ def test_CAP_get_caps_with_groups_and_silhouette_method_pkl():
     assert cap_analysis.caps["B"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["B"]["CAP-2"].shape == (100,)
 
-def test_CAP_get_caps_with_groups_and_silhouette_method_pkl():
-    warnings.simplefilter('ignore')
-    parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
-    extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
-    with open("sample_timeseries.pkl", "rb") as f:
-        subject_timeseries = pickle.load(f)
-    extractor.subject_timeseries = subject_timeseries
+def test_multiple_methods():
     cap_analysis = CAP(parcel_approach=extractor.parcel_approach, groups={"A": [1,2,3,5], "B": [4,6,7,8,9,10,7]})
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
                           n_clusters=[2,3,4,5], cluster_selection_method="silhouette")
@@ -162,17 +184,25 @@ def test_CAP_get_caps_with_groups_and_silhouette_method_pkl():
     assert len(df_dict) == 4
 
     new_timeseries = change_dtype(extractor.subject_timeseries, dtype="float16")
+
     cap_analysis.calculate_metrics(subject_timeseries=new_timeseries, return_df=True)
 
-    cap_analysis.get_caps(subject_timeseries=new_timeseries,
-                          n_clusters=[2,3,4,5], cluster_selection_method="silhouette", runs=["1", "2"])
-
-    cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, runs=1)
-    cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, runs=1,
+    # No crashing
+    met1 = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, runs=1)
+    met2 = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, runs=1,
                                    continuous_runs=True)
+    
+    # If only one run continuous_runs should not differ
+    assert met1["persistence"].equals(met2["persistence"])
 
-    cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, runs="1")
+    met1 = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True)
+    met2 = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True,continuous_runs=True)
+    
+    # Should differ
+    assert not met1["persistence"].equals(met2["persistence"])
 
+    # Continuous run should have 1/3 the number of rows since each subject in the randomized data has three runs
+    assert met1["persistence"].shape[0]/3 == met2["persistence"].shape[0]
 
     cap_analysis.caps2plot(subplots=True, xlabel_rotation=90, sharey=True, borderwidths=10, show_figs=False)
 

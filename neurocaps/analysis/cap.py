@@ -358,7 +358,7 @@ class CAP(_CAPGetter):
                 assert len(self._groups[group_name]) > 0, f"{group_name} has zero subject ids."
 
             # Convert ids to strings
-            for group in self._groups:
+            for group in set(self._groups):
                 self._groups[group] = [str(subj_id) if not isinstance(subj_id,str)
                                        else subj_id for subj_id in self._groups[group]]
 
@@ -1274,15 +1274,12 @@ class CAP(_CAPGetter):
                 region_caps = {}
                 if parcellation_name != "Custom":
                     for region in self._parcel_approach[parcellation_name]["regions"]:
+                        region_indxs = np.array([index for index, node in
+                                                 enumerate(self._parcel_approach[parcellation_name]["nodes"])
+                                                 if region in node])
                         if len(region_caps) == 0:
-                            region_indxs = np.array([index for index, node in
-                                                     enumerate(self._parcel_approach[parcellation_name]["nodes"])
-                                                     if region in node])
                             region_caps = np.array([np.average(self._caps[group][cap][region_indxs])])
                         else:
-                            region_indxs = np.array([index for index, node in
-                                                     enumerate(self._parcel_approach[parcellation_name]["nodes"])
-                                                     if region in node])
                             region_caps = np.hstack([region_caps, np.average(self._caps[group][cap][region_indxs])])
                 else:
                     region_dict = self._parcel_approach["Custom"]["regions"]

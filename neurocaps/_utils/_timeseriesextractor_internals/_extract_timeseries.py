@@ -33,7 +33,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
                                   in confound_metadata_files if run in os.path.basename(confound_metadata_file)]
         else: confound_metadata_file = None
 
-        if verbose: print(f"Running subject: {subj_id}; run: {run_id}; \n {nifti_file}", flush=flush_print)
+        if verbose: print(f"Running subject: {subj_id}; run: {run_id};\n {nifti_file}", flush=flush_print)
 
         confound_df = pd.read_csv(confound_file[0], sep="\t") if signal_clean_info["use_confounds"] else None
 
@@ -44,13 +44,27 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
         scan_list, censor_volumes = [], []
         censor = False
         threshold, outlier_limit = None, None
+        dummy_scans = None
+
+        # Check for non-steady_state if requested
+        if signal_clean_info["dummy_scans"]:
+            if isinstance(signal_clean_info["dummy_scans"], dict) and ("auto" in signal_clean_info["dummy_scans"] and signal_clean_info["dummy_scans"]["auto"] is True):
+                dummy_scans = len([col for col in confound_df.columns if "non_steady_state" in col])
+                if dummy_scans == 0: dummy_scans = None
+                if verbose:
+                    print(textwrap.dedent(f"""
+                                          For subject: {subj_id}; run: {run_id}; number of dummy scans to be removed
+                                          based on 'non_steady_state_outlier_XX' columns is {dummy_scans}\n"""),
+                                          flush=flush_print)
+            else:
+                dummy_scans = signal_clean_info["dummy_scans"]
 
         if signal_clean_info["use_confounds"] and signal_clean_info["fd_threshold"]:
             if "framewise_displacement" in confound_df.columns:
                 censor = True
                 fd_array = confound_df["framewise_displacement"].fillna(0).values
                 # Truncate fd_array if dummy scans; done to only assess if the truncated array meets the "outlier_percentage" criteria
-                if signal_clean_info["dummy_scans"]: fd_array = fd_array[signal_clean_info["dummy_scans"]:]
+                if dummy_scans: fd_array = fd_array[dummy_scans:]
 
                 # Check if float or dict
                 if isinstance(signal_clean_info["fd_threshold"], dict):
@@ -95,13 +109,15 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
             # condition of interest; include partial scans
             for i in condition_df.index:
                 onset_scan = int(condition_df.loc[i,"onset"]/tr)
-                duration_scan = math.ceil((condition_df.loc[i,"onset"] + condition_df.loc[i,"duration"])/tr)
-                if signal_clean_info["dummy_scans"]:
-                    scan_list.extend([scan - signal_clean_info["dummy_scans"]
-                                      for scan in range(onset_scan, duration_scan + 1)
-                                      if scan not in range(0, signal_clean_info["dummy_scans"])])
-                else:
-                    scan_list.extend(list(range(onset_scan, duration_scan + 1)))
+                end_scan = math.ceil((condition_df.loc[i,"onset"] + condition_df.loc[i,"duration"])/tr)
+                # Add one since range is not inclusive
+                scan_list.extend(list(range(onset_scan, end_scan + 1)))
+
+            # Get unique scans to not duplicate information
+            scan_list = sorted(list(set(scan_list)))
+
+            # Adjust for dummy before censoring since censoring is dummy adjusted above
+            if dummy_scans: scan_list = [scan - dummy_scans for scan in scan_list if scan not in range(0, dummy_scans)]
 
             if censor:
                 # Get length of scan list prior to assess outliers if requested
@@ -129,9 +145,10 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
 
         timeseries = _continue_extraction(subj_id=subj_id, run_id=run_id, nifti_file=nifti_file, mask_file=mask_file,
                                           confound_df=confound_df, confound_metadata_file=confound_metadata_file,
-                                          condition=condition, signal_clean_info=signal_clean_info, tr=tr,
-                                          parcel_approach=parcel_approach, flush_print=flush_print, verbose=verbose,
-                                          censor_volumes=censor_volumes, scan_list=scan_list)
+                                          condition=condition, signal_clean_info=signal_clean_info,
+                                          dummy_scans=dummy_scans,tr=tr, parcel_approach=parcel_approach,
+                                          flush_print=flush_print, verbose=verbose, censor_volumes=censor_volumes,
+                                          scan_list=scan_list)
 
         if timeseries.shape[0] == 0:
             warnings.warn(textwrap.dedent(f"""
@@ -148,7 +165,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
     return subject_timeseries
 
 def _continue_extraction(subj_id, run_id, nifti_file, mask_file, confound_df, confound_metadata_file, signal_clean_info,
-                         condition, tr, parcel_approach, flush_print, verbose, censor_volumes, scan_list):
+                         dummy_scans, condition, tr, parcel_approach, flush_print, verbose, censor_volumes, scan_list):
     # Extract confound information of interest and ensure confound file does not contain NAs
     if signal_clean_info["use_confounds"]:
         # Extract first "n" numbers of specified WM and CSF components
@@ -201,10 +218,10 @@ def _continue_extraction(subj_id, run_id, nifti_file, mask_file, confound_df, co
 
     # Load and discard volumes if needed
     nifti_img = load_img(nifti_file[0])
-    if signal_clean_info["dummy_scans"]:
-        nifti_img = index_img(nifti_img, slice(signal_clean_info["dummy_scans"], None))
+    if dummy_scans:
+        nifti_img = index_img(nifti_img, slice(dummy_scans, None))
         if signal_clean_info["use_confounds"]:
-            confounds.drop(list(range(0,signal_clean_info["dummy_scans"])),axis=0,inplace=True)
+            confounds.drop(list(range(0,dummy_scans)),axis=0,inplace=True)
 
     # Extract timeseries
     if signal_clean_info["use_confounds"]: timeseries = masker.fit_transform(nifti_img, confounds=confounds)
@@ -214,7 +231,20 @@ def _continue_extraction(subj_id, run_id, nifti_file, mask_file, confound_df, co
         timeseries = np.delete(timeseries, censor_volumes, axis=0)
 
     if condition:
+        # Quick check to ensure that max index in scan list is in timeseries in event there is an issue with timing info
+        # truncation issue with the bold file, or incorrect tr. Remove the out of bound indices instead of failing.
+        if max(scan_list) > timeseries.shape[0] - 1:
+            warnings.warn(textwrap.dedent(f"""
+                                          For subject {subj_id} - {run_id}, the max scan index corresponding to
+                                          condition - {condition} exceeds the max index the max index in the timeseries
+                                          length. Max index for the condition is {max(scan_list)} while the max index
+                                          for the timeseries is {timeseries.shape[0] - 1}. Timing information may be
+                                          misaligned or repetition time may be incorrect. If this is intended, ignore
+                                          warning. Only extracting indices corresponding to condition for indices that
+                                          exist in the timeseries.
+                                          """))
+            scan_list = [scan for scan in scan_list if scan in range(0,timeseries.shape[0])]
         # Extract specific condition from timeseries while removing any overlapping indices; scan list will have censored indices already removed
-        timeseries = timeseries[sorted(list(set(scan_list))),:]
+        timeseries = timeseries[scan_list,:]
 
     return timeseries
