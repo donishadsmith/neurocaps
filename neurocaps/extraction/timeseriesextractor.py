@@ -59,8 +59,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         Additionally, `framewise_displacement` should not need be specified in ``confound_names`` if using this
         parameter. As of version 14.1, ``fd_threshold`` can be a dictionary containing the following keys:
 
-        - "threshold": A float value. Volumes with a `framewise_displacement` value exceeding this threshold are removed.
-        - "outlier_percentage": A float value between 0 and 1 representing a percentage. Runs where the proportion of
+        - "threshold" : A float value. Volumes with a `framewise_displacement` value exceeding this threshold are removed.
+        - "outlier_percentage" : A float value between 0 and 1 representing a percentage. Runs where the proportion of
           volumes exceeding the "threshold" is higher than this percentage are removed. If ``condition`` is specified
           in ``self.get_bold``, only the runs where the proportion of volumes exceeds this value for the specific
           condition of interest are removed. **Note**, this proportion is calculated after dummy scans have been removed.
@@ -77,9 +77,20 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         components derived from combined masks (WM & CSF), leave this parameter as None and list the specific
         acompcors of interest in ``confound_names``.
 
-    dummy_scans : :obj:`int` or :obj:`None`, default=None
-        Removes the first n volumes before extracting the timeseries.
+    dummy_scans : :obj:`int`, :obj:`dict[str, bool]`, or :obj:`None`, default=None
+        Removes the first n volumes before extracting the timeseries. As of verision 0.14.5, ``dummy_scans`` can now
+        be a dictionary contains the following keys:
 
+        - "auto" : A boolean value. If True, the number of dummy scans removed depend on the number of
+          "non_steady_state_outlier_XX" columns in the participants fMRIPrep confounds tsv file. For instance, if
+          there are two "non_steady_state_outlier_XX" columns detected, then ``dummy_scans`` is set to two since
+          there is one "non_steady_state_outlier_XX" per outlier volume for fMRIPrep. This is assessed for each run of
+          all participants so ``dummy_scans`` depends on the number number of "non_steady_state_outlier_XX" in the
+          confound file associated with the specific participant, task, and run number.
+
+        .. versionchanged:: 0.14.5 ``dummy_scans`` can now be a dictionary that includes the sub-key "auto", which
+          allows the number of dummy scans to be based on the number of "non_steady_state_outlier_XX" columns in the
+          fMRIPrep confounds file.
 
     Property
     --------
@@ -233,9 +244,33 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                  parcel_approach: dict[str, dict[str, Union[str, int]]]={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}},
                  use_confounds: bool=True, confound_names: Optional[list[str]]=None, fwhm: Optional[Union[float, int]]=None,
                  fd_threshold: Optional[Union[float, dict[str, float]]]=None, n_acompcor_separate: Optional[int]=None,
-                 dummy_scans: Optional[int]=None) -> None:
+                 dummy_scans: Optional[Union[int, dict[str, bool]]]=None) -> None:
 
         self._space = space
+
+        if isinstance(dummy_scans, dict):
+            if "auto" not in dummy_scans:
+                raise KeyError("'auto' sub-key must be included when `dummy_scans` is a dictionary.")
+            if use_confounds is not True:
+                raise ValueError(textwrap.dedent("""
+                                                 `use_confounds` must be True to use 'auto' for `dummy_scans` has the
+                                                 fMRIPrep confounds tvs file is needed to detect the number of
+                                                 'non_steady_state_outlier_XX' columns.
+                                                 """))
+
+        if use_confounds is not True and fd_threshold:
+            warnings.warn(textwrap.dedent("""
+                                          `fd_threshold` specified but `use_confounds` is not True so removal of
+                                          volumes after nuisance regression will not be done.
+                                            """))
+
+        if isinstance(fd_threshold, dict):
+            if "threshold" not in fd_threshold:
+                raise KeyError("'threshold' sub-key must be included in `fd_threshold` dictionary.")
+            if "outlier_percentage" in fd_threshold:
+                if fd_threshold["outlier_percentage"] >= 1 or fd_threshold["outlier_percentage"] <= 0:
+                    raise ValueError("'outlier_percentage' must be a positive float between 0 and 1.")
+
         self._signal_clean_info = {"standardize": standardize, "detrend": detrend, "low_pass": low_pass,
                                    "high_pass": high_pass, "fwhm": fwhm, "dummy_scans": dummy_scans,
                                    "use_confounds": use_confounds,  "n_acompcor_separate": n_acompcor_separate,
@@ -249,20 +284,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                                                                               specified_confound_names=confound_names,
                                                                               n_acompcor_separate=n_acompcor_separate)
 
-            if isinstance(fd_threshold, dict):
-                if "threshold" not in fd_threshold:
-                    raise KeyError("'threshold' sub-key must be included in `fd_threshold` dictionary.")
-                if "outlier_percentage" in fd_threshold:
-                    if fd_threshold["outlier_percentage"] >= 1 or fd_threshold["outlier_percentage"] <= 0:
-                        raise ValueError("'outlier_percentage' must be a positive float between 0 and 1.")
-
             self._signal_clean_info["fd_threshold"] = fd_threshold
-
-        if self._signal_clean_info["use_confounds"] is not True and fd_threshold:
-            warnings.warn(textwrap.dedent("""
-                                          `fd_threshold` specified but `use_confounds` is not True so removal of
-                                          volumes after nuisance regression will not be done.
-                                            """))
 
     def get_bold(self, bids_dir: os.PathLike, task: str, session: Optional[Union[int,str]]=None,
                  runs: Optional[Union[int, str, list[int], list[str]]]=None, condition: Optional[str]=None,
@@ -361,21 +383,32 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         **This pipeline is most optimized towards BOLD data preprocessed by fMRIPrep.**
 
-        When extracting specific conditions, this function uses ``math.ceil`` when calculating the duration of a
+        When extracting specific conditions, this function uses ``math.ceil`` when calculating the ending scan of a
         condition to round up and ``int`` to round down for the onset. This is to allow for partial scans. Any
         overlapping/duplicate TRs are removed using set then are sorted. Python uses 0-based indexing so the scan
         number corresponds to the index in the timeseries (i.e onset of 0 corresponds to the 0th index/row in the
-        timeseries).
+        timeseries). Below is the general code to extract the condition indices from the timeseries. There are
+        several checks, such as skipping timeseries extraction when an entire run is flagged due to framewise
+        displacement or having zero condition indices, that are not shown below.
         ::
 
+            event_df = pd.read_csv(event_file[0], sep="\t")
+            # Get specific timing information for specific condition
+            condition_df = event_df[event_df["trial_type"] == condition]
+
+            # Convert times into scan numbers to obtain the scans taken when the participant was exposed to the
+            # condition of interest; include partial scans
             for i in condition_df.index:
                 onset_scan = int(condition_df.loc[i,"onset"]/tr)
-                duration_scan = math.ceil((condition_df.loc[i,"onset"] + condition_df.loc[i,"duration"])/tr)
-                if signal_clean_info["dummy_scans"]:
-                    scan_list.extend([scan - offset for scan in range(onset_scan, duration_scan + 1)
-                                      if scan not in range(0, signal_clean_info["dummy_scans"])])
-                else:
-                    scan_list.extend(list(range(onset_scan, duration_scan + 1)))
+                end_scan = math.ceil((condition_df.loc[i,"onset"] + condition_df.loc[i,"duration"])/tr)
+                # Add one since range is not inclusive
+                scan_list.extend(list(range(onset_scan, end_scan + 1)))
+
+            # Get unique scans to not duplicate information
+            scan_list = sorted(list(set(scan_list)))
+
+            # Adjust for dummy before censoring since censoring is dummy adjusted above
+            if dummy_scans: scan_list = [scan - dummy_scans for scan in scan_list if scan not in range(0, dummy_scans)]
 
             if censor:
                 # Get length of scan list prior to assess outliers if requested
@@ -384,8 +417,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 if outlier_limit:
                     flagged = True if 1 - (len(scan_list)/before_censor) > outlier_limit else False
 
-            # Timeseries with the extracted scans corresponding to condition; set is used to remove overlapping TRs
-            timeseries = timeseries[sorted(list(set(scan_list))),:]
+            timeseries = timeseries[scan_list,:]
 
         """
         if sys.platform == "win32":

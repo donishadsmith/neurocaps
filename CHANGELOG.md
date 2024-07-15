@@ -42,6 +42,22 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.14.5] - 2024-07-16
+### ♻ Changed
+- In `TimeseriesExtractor`, `dummy_scans` can now be a dictionary that uses the "auto" sub-key If "auto" is set to
+True, the number of dummy scans removed depend on the number of "non_steady_state_outlier_XX" columns in the
+participants fMRIPrep confounds tsv file. For instance, if  there are two "non_steady_state_outlier_XX" columns
+detected, then `dummy_scans` is set to two since there is one "non_steady_state_outlier_XX" per outlier volume for
+fMRIPrep. This is assessed for each run of all participants so ``dummy_scans`` depends on the number number of
+"non_steady_state_outlier_XX" in the confound file associated with the specific participant, task, and run number.
+### 🐛 Fixes
+- For defensive programming purposes, instead of assuming the timing information in the event file perfectly
+coincides with the timeseries. When a condition is specified and onset and duration must be used to extract the
+indices corresponding to the condition of interest, the max scan index is checked to see if it exceeds the length of
+the timeseries. If this condition is met, a warning is issued in the event of timing misalignment (i.e errors in event
+file, incorrect repetition time, etc) and invalid indices are ignored to only extract the valid indices from the timeseries.
+This is done in the event this was that are greater than the timeseries shape are ignored.
+
 ## [0.14.4] - 2024-07-15
 ### ♻ Changed
 - Minor update that prints the optimal cluster size for each group when using `cluster_selection_method` in
