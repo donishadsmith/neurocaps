@@ -18,4 +18,6 @@ def _run_kmeans(n_cluster, random_state, init, n_init, max_iter, tol, algorithm,
         # Variance Ratio
         performance = {n_cluster: calinski_harabasz_score(concatenated_timeseries, cluster_labels)}
 
-    return performance
+    model_dict = {n_cluster: model}
+
+    return performance, model_dict

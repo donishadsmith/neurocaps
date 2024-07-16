@@ -626,20 +626,25 @@ class CAP(_CAPGetter):
 
         for group in self._groups:
             performance_dict[group] = {}
+            # Don't want to store model dict for all groups; re-initialize for each group 
+            model_dict = {}
             if self._n_cores is None:
                 for n_cluster in self._n_clusters:
-                    output_score = _run_kmeans(n_cluster=n_cluster, random_state=random_state, init=init,
+                    output_score, model = _run_kmeans(n_cluster=n_cluster, random_state=random_state, init=init,
                                                n_init=n_init, max_iter=max_iter, tol=tol, algorithm=algorithm,
                                                concatenated_timeseries=self._concatenated_timeseries[group],
                                                method=method)
                     performance_dict[group].update(output_score)
+                    model_dict.update(model)
             else:
                 parallel = Parallel(return_as="generator", n_jobs=self._n_cores)
-                output_scores = parallel(delayed(_run_kmeans)(n_cluster, random_state, init, n_init, max_iter, tol,
+                output = parallel(delayed(_run_kmeans)(n_cluster, random_state, init, n_init, max_iter, tol,
                                                               algorithm, self._concatenated_timeseries[group],
                                                               method) for n_cluster in self._n_clusters)
-
+                
+                output_scores, models = zip(*output)
                 for output in output_scores: performance_dict[group].update(output)
+                for model in models: model_dict.update(model)
 
             # Select optimal clusters
             if method == "elbow":
@@ -664,9 +669,7 @@ class CAP(_CAPGetter):
                                                       key=performance_dict[group].get)
 
             # Get the optimal kmeans model
-            self._kmeans[group] = KMeans(n_clusters=self._optimal_n_clusters[group], random_state=random_state,
-                                         init=init, n_init=n_init, max_iter=max_iter, tol=tol,
-                                         algorithm=algorithm).fit(self._concatenated_timeseries[group])
+            self._kmeans[group] = model_dict[self._optimal_n_clusters[group]]
 
             print(f"Optimal cluster size using {method} method for {group} is {self._optimal_n_clusters[group]}.", flush=True)
 

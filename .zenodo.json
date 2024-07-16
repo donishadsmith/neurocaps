@@ -1,0 +1,19 @@
+
+{
+    "creators": [
+      {
+        "name": "Smith, Donisha",
+        "affiliation": "Florida International University",
+        "orcid": "https://orcid.org/0000-0001-7019-3520"
+      }
+    ],
+    "keywords": [
+      "neuroimaging",
+      "fMRI",
+      "CAP",
+      "Co-Activation Patterns",
+      "fMRIPrep"
+    ],
+    "license": "MIT",
+    "upload_type": "software"
+  }

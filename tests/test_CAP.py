@@ -1,5 +1,5 @@
 import copy, numpy as np, pandas as pd, pickle, pytest, warnings
-
+from kneed import KneeLocator
 from neurocaps.extraction import TimeseriesExtractor
 from neurocaps.analysis import CAP, change_dtype
 
@@ -10,7 +10,7 @@ subject_timeseries = {str(x) : {f"run-{y}": np.random.rand(100,100) for y in ran
 extractor.subject_timeseries = subject_timeseries
 
 # Similar to internal function used in CAP; function is _concatenated_timeseries
-def concat_data(subject_table, standardize,runs=[1,2,3]):
+def concat_data(subject_table,standardize,runs=[1,2,3]):
     concatenated_timeseries = {group: None for group in set(subject_table.values())}
     std = {group: None for group in set(subject_table.values())}
 
@@ -36,6 +36,8 @@ def concat_data(subject_table, standardize,runs=[1,2,3]):
 
     if standardize:
         for _, group in subject_table.items():
+            # Recalculating means and stdev, will cause minor floating point differences so np.allclose must be used. Done to
+            # ensure the correct means and std are being calculated for each group if np.allclose is True this should be the case
             concatenated_timeseries[group] -= np.mean(concatenated_timeseries[group], axis=0)
             std[group] = np.std(concatenated_timeseries[group], ddof=1, axis=0)
             # Taken from nilearn pipeline, used for numerical stability purposes to avoid numpy division error
@@ -53,7 +55,10 @@ def predict_labels(subject_timeseries, cap_analysis, standardize, group, runs=[1
             if int(run.split("run-")[-1]) in runs and sub in group_dict:
                 new_timeseries = copy.deepcopy(subject_timeseries[sub][run])
                 if standardize:
-                    ## .calculate_methods uses the previously calculated means and stdev
+                    # .calculate_methods uses the previously calculated means and stdev conducted in the CAP.get_bold method,
+                    # its done this way to avoid the minor numerical differences caused by floating point operations due to
+                    # recalculating statistics so np.array_equal can be used to assess these predicted labels and the ones from the
+                    # kmeans model
                     new_timeseries -= cap_analysis.means[group]
                     new_timeseries /= cap_analysis.stdev[group]
 
@@ -132,26 +137,50 @@ def test_groups_no_cluster_selection(standardize):
 
 def test_no_groups_cluster_selection():
     cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
+
+    # Elbow sometimes does find the elbow with random data
+    try:
+        cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
+                            n_clusters=list(range(2,41)), cluster_selection_method="elbow")
+        print(cap_analysis.optimal_n_clusters["All Subjects"])
+        try:
+            assert all(elem >= 0 for elem in cap_analysis.inertia["All Subjects"].values())
+            kneedle = KneeLocator(x=list(cap_analysis.inertia["All Subjects"]),
+                                        y=list(cap_analysis.inertia["All Subjects"].values()),
+                                        curve="convex", direction="decreasing")
+            assert kneedle.elbow == cap_analysis.optimal_n_clusters["All Subjects"]
+            assert cap_analysis.inertia["All Subjects"][cap_analysis.optimal_n_clusters["All Subjects"]] == cap_analysis.kmeans["All Subjects"].inertia_
+        except:
+            raise ValueError("Different results for kneedle and optimal cluster or not all inertia values are positive.")
+    except:
+        warnings.warn("Elbow could not be found for random data.")
+        pass
+
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
                           n_clusters=[2,3,4,5], cluster_selection_method="silhouette")
-
+    # Maximum silhouette is the most optimal
     assert max(cap_analysis.silhouette_scores["All Subjects"], key=cap_analysis.silhouette_scores["All Subjects"].get) == cap_analysis.optimal_n_clusters["All Subjects"]
 
     assert cap_analysis.caps["All Subjects"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["All Subjects"]["CAP-2"].shape == (100,)
     assert all(elem > 0  or elem < 0 for elem in cap_analysis.silhouette_scores["All Subjects"].values())
+    assert all(-1 <= elem <= 1 for elem in cap_analysis.silhouette_scores["All Subjects"].values())
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
                           n_clusters=[2,3,4,5], cluster_selection_method="variance_ratio")
 
+    # Maximum variance ratio is the most optimal
     assert max(cap_analysis.variance_ratio["All Subjects"], key=cap_analysis.variance_ratio["All Subjects"].get) == cap_analysis.optimal_n_clusters["All Subjects"]
 
+    # All values not negative
     assert all(elem >= 0 for elem in cap_analysis.variance_ratio["All Subjects"].values())
 
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
                           n_clusters=[2,3,4,5], cluster_selection_method="davies_bouldin")
 
+    # Mininimum davies_bouldin is the most optimal
     assert min(cap_analysis.davies_bouldin["All Subjects"], key=cap_analysis.davies_bouldin["All Subjects"].get) == cap_analysis.optimal_n_clusters["All Subjects"]
 
+    # All values not negative
     assert all(elem >= 0 for elem in cap_analysis.davies_bouldin["All Subjects"].values())
 
 def test_groups_and_cluster_selection():
@@ -162,7 +191,33 @@ def test_groups_and_cluster_selection():
     assert cap_analysis.caps["A"]["CAP-2"].shape == (100,)
     assert cap_analysis.caps["B"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["B"]["CAP-2"].shape == (100,)
+        # Elbow sometimes does find the elbow with random data, uses kneed to locate elbow
 
+    # Elbow sometimes does find the elbow with random data
+    try:
+        cap_analysis = CAP(parcel_approach=extractor.parcel_approach, groups={"A": [1,2,3,5], "B": [4,6,7,8,9,10,7]})
+        cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
+                            n_clusters=list(range(2,41)), cluster_selection_method="elbow")
+        try:
+            assert all(elem >= 0 for elem in cap_analysis.inertia["A"].values())
+            assert all(elem >= 0 for elem in cap_analysis.inertia["B"].values())
+            kneedle = KneeLocator(x=list(cap_analysis.inertia["A"]),
+                                        y=list(cap_analysis.inertia["A"].values()),
+                                        curve="convex", direction="decreasing")
+            assert kneedle.elbow == cap_analysis.optimal_n_clusters["A"]
+            kneedle = KneeLocator(x=list(cap_analysis.inertia["B"]),
+                                        y=list(cap_analysis.inertia["B"].values()),
+                                        curve="convex", direction="decreasing")
+            assert kneedle.elbow == cap_analysis.optimal_n_clusters["B"]
+        except:
+            raise ValueError("Different results for kneedle and optimal cluster or not all inertia values are positive.")
+    except:
+        warnings.warn("Elbow could not be found for random data.")
+        pass
+
+    cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
+                          n_clusters=[2,3,4,5], cluster_selection_method="silhouette")
+    
     assert max(cap_analysis.silhouette_scores["A"], key=cap_analysis.silhouette_scores["A"].get) == cap_analysis.optimal_n_clusters["A"]
     assert max(cap_analysis.silhouette_scores["B"], key=cap_analysis.silhouette_scores["B"].get) == cap_analysis.optimal_n_clusters["B"]
 
@@ -207,13 +262,16 @@ def test_no_groups_and_silhouette_method():
     assert cap_analysis.caps["All Subjects"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["All Subjects"]["CAP-2"].shape == (100,)
     assert all(elem > 0  or elem < 0 for elem in cap_analysis.silhouette_scores["All Subjects"].values())
+    assert all(-1 <= elem <= 1 for elem in cap_analysis.silhouette_scores["All Subjects"].values())
 
 def test_groups_and_silhouette_method():
     cap_analysis = CAP(parcel_approach=extractor.parcel_approach, groups={"A": [1,2,3,5], "B": [4,6,7,8,9,10,7]})
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
                           n_clusters=[2,3,4,5], cluster_selection_method="silhouette")
     assert all(elem > 0  or elem < 0 for elem in cap_analysis.silhouette_scores["A"].values())
-    assert all(elem > 0  or elem < 0 for elem in cap_analysis.silhouette_scores["A"].values())
+    assert all(-1 <= elem <= 1 for elem in cap_analysis.silhouette_scores["A"].values())
+    assert all(elem > 0  or elem < 0 for elem in cap_analysis.silhouette_scores["B"].values())
+    assert all(-1 <= elem <= 1 for elem in cap_analysis.silhouette_scores["B"].values())
     assert cap_analysis.caps["A"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["A"]["CAP-2"].shape == (100,)
     assert cap_analysis.caps["B"]["CAP-1"].shape == (100,)

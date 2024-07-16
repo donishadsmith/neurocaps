@@ -42,9 +42,25 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.14.6] - 2024-07-16
+### 🐛 Fixes
+- For `CAP.get_caps`, when `cluster_selection_method` was used to find the optimal cluster size, the model would be
+re-estimated and stored in the `self.kmeans` property for later use. Previously, the internal function that generated the
+model using scikit's `KMeans` only returned the performance metrics. These metrics for each cluster size were assessed,
+and the best cluster size was used to generate the optimal KMeans model with the same parameters. This is fine when
+setting `random_seed` with the same k since the model would produce the same initial cluster centroids and produces similar
+clustering solution regardless of the number of times the model is re-generated. However, if a random seed was not used,
+the newly re-generated optimal model would technically differ despite having the same k, due to the random nature of KMeans
+when initializing the cluster centroids. Now, the internal function returns both the performance metrics and the models,
+ensuring the exact same model that was assessed is stored in the `self.kmeans`. Shouldn't be an incredibly major issue
+if your models are generally stable and produce similar cluster solutions. Though when not using a random seed, even
+minor differences in the kmeans model even when using the same k can produce some statistical differences. Ultimately,
+it is always best to ensure that the same model that the same model used for assessment and for later analyses are the
+same to ensure robust results.
+
 ## [0.14.5] - 2024-07-16
 ### ♻ Changed
-- In `TimeseriesExtractor`, `dummy_scans` can now be a dictionary that uses the "auto" sub-key If "auto" is set to
+- In `TimeseriesExtractor`, `dummy_scans` can now be a dictionary that uses the "auto" sub-key if "auto" is set to
 True, the number of dummy scans removed depend on the number of "non_steady_state_outlier_XX" columns in the
 participants fMRIPrep confounds tsv file. For instance, if  there are two "non_steady_state_outlier_XX" columns
 detected, then `dummy_scans` is set to two since there is one "non_steady_state_outlier_XX" per outlier volume for
