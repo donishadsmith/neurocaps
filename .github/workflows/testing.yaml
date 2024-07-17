@@ -3,6 +3,9 @@ name: testing
 on:
   push:
     branches: [main, master, test]
+    # Run weekly on Friday
+    schedule:
+    - cron: 0 0 * * 5
 
 jobs:
   test-build:
@@ -11,7 +14,6 @@ jobs:
       matrix:
         os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
         python-ver: ['3.9', '3.10', '3.11', '3.12']
-        #python-ver: ['3.9', '3.10', '3.11']
     name: Python ${{ matrix.python-ver }} check on ${{ matrix.os }} 
     steps:
       - uses: actions/checkout@v3

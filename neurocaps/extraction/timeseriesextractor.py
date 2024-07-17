@@ -255,14 +255,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 raise ValueError(textwrap.dedent("""
                                                  `use_confounds` must be True to use 'auto' for `dummy_scans` has the
                                                  fMRIPrep confounds tvs file is needed to detect the number of
-                                                 'non_steady_state_outlier_XX' columns.
-                                                 """))
+                                                 'non_steady_state_outlier_XX' columns."""))
 
         if use_confounds is not True and fd_threshold:
             warnings.warn(textwrap.dedent("""
                                           `fd_threshold` specified but `use_confounds` is not True so removal of
-                                          volumes after nuisance regression will not be done.
-                                            """))
+                                          volumes after nuisance regression will not be done."""))
 
         if isinstance(fd_threshold, dict):
             if "threshold" not in fd_threshold:
@@ -425,8 +423,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         if sys.platform == "win32":
             raise SystemError(textwrap.dedent("""
                               Cannot use this method on Windows devices since it relies on the `pybids` module which
-                              is only compatible with POSIX systems.
-                              """))
+                              is only compatible with POSIX systems."""))
 
         import bids
 
@@ -473,8 +470,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             if n_cores > cpu_count():
                 raise ValueError(textwrap.dedent(f"""
                                                  More cores specified than available - Number of cores specified: {n_cores};
-                                                 Max cores available: {cpu_count()}.
-                                                 """))
+                                                 Max cores available: {cpu_count()}."""))
             if isinstance(n_cores, int): self._n_cores = n_cores
             else: raise TypeError("`n_cores` must be an integer.")
 
@@ -574,8 +570,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                                                           `session` not specified but subject {subj_id}
                                                           has more than one session - {sorted(list(set(check_sessions)))}.
                                                           In order to continue timeseries extraction, the specific session to
-                                                          extract must be specified.
-                                                          """))
+                                                          extract must be specified."""))
             
             base_message = f'[SUBJECT: {subj_id} | SESSION: {self._task_info["session"]} | TASK: {self.task_info["task"]}]'
             underline = '-'*len(base_message)
@@ -584,8 +579,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 warnings.warn(textwrap.dedent(f"""
                                               {base_message}
                                               {underline}
-                                              Skipping due to all NifTI files missing or excluded.
-                                              """))
+                                              Processing skipped: No NifTI files were found or all NifTI files were excluded."""))
                 continue
 
             if len(mask_files) == 0:
@@ -599,26 +593,22 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     warnings.warn(textwrap.dedent(f"""
                                                   {base_message}
                                                   {underline}
-                                                  Skipping due to having no confound files available when
-                                                  `use_confounds` was requested.
-                                                  """))
+                                                  Processing skipped: No confound files available when `use_confounds` is requested."""))
                     continue
                 if len(confound_metadata_files) == 0 and self._signal_clean_info["n_acompcor_separate"]:
                     warnings.warn(textwrap.dedent(f"""
                                                   {base_message}
                                                   {underline}
-                                                  Skipping due to missing confound metadata to locate the
-                                                  first six components of the white-matter and cerebrospinal fluid
-                                                  masks separately.
-                                                  """))
+                                                  Processing skipped: No confound metadata file found, which is
+                                                  needed to locate the first n components of the white-matter and
+                                                  cerebrospinal fluid masks separately."""))
                     continue
 
             if self._task_info["condition"] and len(event_files) == 0:
                 warnings.warn(textwrap.dedent(f"""
                                               {base_message}
                                               {underline}
-                                              Skipping due to having no event files available when `condition` specified.
-                                              """))
+                                              Processing skipped: No event files available when `condition` is specified."""))
                 continue
 
             if len(check_runs) != 0:
@@ -644,23 +634,20 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                             warnings.warn(textwrap.dedent(f"""
                                                           {base_message}
                                                           {underline}
-                                                          Skipping due to no NifTI file, mask file,
-                                                          confound tsv file, confound json file being from the same run.
-                                                          """))
+                                                          Processing skipped: No NifTI file, mask file, confound tsv file,
+                                                          confound json file are from the same run."""))
                         else:
                             warnings.warn(textwrap.dedent(f"""
                                                           {base_message}
                                                           {underline}
-                                                          Skipping due to no NifTI file, mask file, event file,
-                                                          confound tsv file, confound json file being from the same run.
-                                                          """))
+                                                          Processing skipped: No NifTI file, mask file, event file,
+                                                          confound tsv file, confound json file are from the same run."""))
                         continue
                     else:
                         warnings.warn(textwrap.dedent(f"""
                                                       {base_message}
                                                       {underline}
-                                                      Only has the following runs available: {', '.join(run_list)}.
-                                                      """))
+                                                      Only the following runs available: {', '.join(run_list)}."""))
             else:
                 # Allows for nifti files that do not have the run- description
                 run_list = [None]
@@ -680,17 +667,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                                                      {underline}
                                                      `tr` not specified and could not be extracted since BOLD
                                                      metadata file could not be opened. The `tr` must be given when
-                                                     `condition` is specified.
-                                                     """))
+                                                     `condition` is specified."""))
                 else:
                     warnings.warn(textwrap.dedent(f"""
                                                   {base_message}
                                                   {underline}
                                                   `tr` not specified and could not be extracted since BOLD
                                                   metadata file could not be opened. `tr` has been set to None and
-                                                  extraction will
-                                                  continue.
-                                                  """))
+                                                  extraction will continue."""))
                     tr=None
 
             # Store subject specific information
@@ -790,8 +774,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             raise AttributeError(textwrap.dedent("""
                                  Cannot plot bold data since `self._subject_timeseries` does not
                                  exist, either run `self.get_bold()` or assign a valid timeseries structure
-                                 to self.subject_timeseries.
-                                 """))
+                                 to self.subject_timeseries."""))
 
         if isinstance(subj_id, int): subj_id = str(subj_id)
 

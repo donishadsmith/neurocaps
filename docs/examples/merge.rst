@@ -1,6 +1,5 @@
 Tutorial 3: Merging Timeseries With ``neurocaps.analysis.merge_dicts``
 ======================================================================
-
 Combining the timeseries from different tasks is possible with ``merge_dicts``, this permits running analyses to 
 identify similar CAPs across different tasks, assuming these tasks use the same subjects. The ``merge_dicts()``
 function will produce a combined subject timeseries dictionary that contains only the subject IDs present across both

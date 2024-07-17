@@ -196,7 +196,7 @@ def test_no_session_w_custom():
                                     confound_names=confounds)
 
     # Should allow subjects with only a single session to pass
-    extractor.get_bold(bids_dir=bids_dir, task="rest", runs=["001"],pipeline_name=pipeline_name, tr=1.2)
+    extractor.get_bold(bids_dir=bids_dir, task="rest", runs=["001"],pipeline_name=pipeline_name, tr=1.2, verbose=False)
 
     assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
     assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 40

@@ -33,7 +33,7 @@ Performing CAPs on All Subjects
 
     .. code-block:: none
 
-        Optimal cluster size using elbow method for All Subjects is 6.
+        [GROUP: All Subjects | METHOD: elbow] - Optimal cluster size is 6.
 
 .. image:: embed/All_Subjects_elbow.png
     :width: 600
@@ -138,12 +138,6 @@ Creating Surface Plots
 
     # Apply custom cmap to surface plots
     cap_analysis.caps2surf(cmap=custom_cmap, size=(500, 100), layout="row")
-
-.. rst-class:: sphx-glr-script-out
-
-    .. code-block:: none
-
-        Optimal cluster size for All Subjects is 2.
 
 .. image:: embed/All_Subjects_CAP-1_surface_plot.png
     :width: 800

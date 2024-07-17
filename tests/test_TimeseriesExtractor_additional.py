@@ -9,8 +9,8 @@ parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
 
 # Changing file name in github actions to test different file naming configurations; file no longer has run-01 or ses-002
 
-@pytest.mark.parametrize("use_confounds", [True,False])
-def test_removal_of_run_desc(use_confounds):
+@pytest.mark.parametrize("use_confounds,verbose", [(True,True),(False,False), (True,False), (False,True)])
+def test_removal_of_run_desc(use_confounds, verbose):
     extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
                                     use_confounds=use_confounds, detrend=True, low_pass=0.15, high_pass=0.01,
                                     confound_names=confounds, fwhm=2)

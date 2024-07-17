@@ -56,8 +56,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
                                   {base_message}
                                   {underline}
                                   Preparing for timeseries extraction using -
-                                  [FILE: {nifti_file}]
-                                  """), flush=flush_print)
+                                  [FILE: {nifti_file}]"""), flush=flush_print)
 
         # Initialize variables; fd_threshold and even_file checked first for a "fail fast" approach that avoids
         # extracting timeseries for runs that will be empty or flagged
@@ -76,8 +75,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
                                           {base_message}
                                           {underline}
                                           Number of dummy scans to be removed based on 'non_steady_state_outlier_XX'
-                                          columns is {dummy_scans}\n"""),
-                                          flush=flush_print)
+                                          columns is {dummy_scans}"""),flush=flush_print)
             else:
                 dummy_scans = signal_clean_info["dummy_scans"]
 
@@ -102,9 +100,8 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
                     warnings.warn(textwrap.dedent(f"""
                                                   {base_message}
                                                   {underline}
-                                                  Timeseries empty due to the framewise displacement of all volumes
-                                                  exceeding {threshold}.
-                                                  """))
+                                                  Processing skipped: Timeseries will be empty due to the framewise
+                                                  displacement of all volumes exceeding {threshold}."""))
                     continue
 
                 if outlier_limit and condition is None:
@@ -114,10 +111,9 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
                 warnings.warn(textwrap.dedent(f"""
                                               {base_message}
                                               {underline}
-                                              `fd_threshold` specified but 'framewise_displacement' is not a column in
-                                              the confound dataframe so removal of volumes after nuisance regression
-                                              will not be done.
-                                              """))
+                                              `fd_threshold` specified but 'framewise_displacement' column not in
+                                              the confound tsv file. Removal of volumes after nuisance regression
+                                              will not be done."""))
 
         if event_file:
             event_df = pd.read_csv(event_file, sep="\t")
@@ -128,9 +124,8 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
                 warnings.warn(textwrap.dedent(f"""
                                               {base_message}
                                               {underline}
-                                              [CONDITION: {condition}] - Does not exist in the "trial_type" column of
-                                              the event file. Skipping timeseries extraction.
-                                              """))
+                                              [CONDITION: {condition}] - Processing skipped: Condition does not
+                                              exist in the "trial_type" column of the event file."""))
                 continue
 
             # Convert times into scan numbers to obtain the scans taken when the participant was exposed to the
@@ -158,21 +153,18 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
                 warnings.warn(textwrap.dedent(f"""
                                               {base_message}
                                               {underline}
-                                              [CONDITION: {condition}] - Timeseries will be empty when filtered to only
-                                              include volumes from this specific condition. Most likely due to TRs
-                                              corresponding to the condition being removed by `dummy_scans` or filtered
-                                              due meeting threshold for `fd_threshold`. Skipping timeseries extraction.
-                                              """))
+                                              [CONDITION: {condition}] - Processing skipped: Timeseries will be empty
+                                              when filtered to only include volumes from this specific condition.
+                                              Possibly due to TRs corresponding to the condition being removed by
+                                              `dummy_scans` or filtered due to exceeding threshold for `fd_threshold`."""))
                 continue
 
         if flagged is True:
             warnings.warn(textwrap.dedent(f"""
                                           {base_message}
                                           {underline}
-                                          Run has been flagged due to more than {outlier_limit*100}% of the volumes
-                                          exceeded the framewise displacement (FD) threshold limit of {threshold}.
-                                          Skipping timeseries extraction.
-                                          """))
+                                          Processing skipped: Run flagged due to more than {outlier_limit*100}% of the
+                                          volumes exceeding the framewise displacement (FD) threshold limit of {threshold}"""))
             continue
 
         timeseries = _continue_extraction(nifti_file=nifti_file, mask_file=mask_file, confound_df=confound_df,
@@ -186,16 +178,16 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
             warnings.warn(textwrap.dedent(f"""
                                           {base_message}
                                           {underline}
-                                          Timeseries is empty for {run}. Skipping appending run to the final dictionary.
-                                          """))
+                                          Timeseries is empty for {run} and will not be appended to the
+                                          `subject_timeseries` dictionary."""))
         else:
             subject_timeseries[subj_id].update({run_id: timeseries})
 
     if len(subject_timeseries[subj_id]) == 0:
         warnings.warn(textwrap.dedent(f"""
                                       {base_message.split(' | RUN:')[0]}]
-                                      {underline}
-                                      No runs were extracted."""))
+                                      {'-'*len(base_message.split(' | RUN:')[0])}
+                                      Processing skipped: No runs were extracted."""))
         subject_timeseries = None
 
     return subject_timeseries
@@ -239,8 +231,8 @@ def _continue_extraction(nifti_file, mask_file, confound_df, confound_metadata_f
                 print(textwrap.dedent(f"""
                                       {base_message}
                                       {underline}
-                                      The following confounds were not found - {invalid_confounds}
-                                      """), flush=flush_print)
+                                      The following confounds were not found - {invalid_confounds}"""),
+                                      flush=flush_print)
 
         confounds = confound_df[valid_confounds]
         confounds = confounds.fillna(0)
@@ -248,8 +240,8 @@ def _continue_extraction(nifti_file, mask_file, confound_df, confound_metadata_f
             print(textwrap.dedent(f"""
                                   {base_message}
                                   {underline}
-                                  The following confounds will be for nuisance regression - {list(confounds.columns)}
-                                  """), flush=flush_print)
+                                  The following confounds will be for nuisance regression - {list(confounds.columns)}"""),
+                                  flush=flush_print)
 
     # Create the masker for extracting time series
     masker = NiftiLabelsMasker(
@@ -290,8 +282,7 @@ def _continue_extraction(nifti_file, mask_file, confound_df, confound_metadata_f
                                           while the max index for the timeseries is {timeseries.shape[0] - 1}. Timing
                                           information may be misaligned or repetition time may be incorrect. If this is
                                           intended, ignore warning. Only extracting indices corresponding to condition
-                                          for indices that exist in the timeseries.
-                                          """))
+                                          for indices that exist in the timeseries."""))
             scan_list = [scan for scan in scan_list if scan in range(0,timeseries.shape[0])]
         # Extract specific condition from timeseries while removing any overlapping indices; scan list will have
         # censored indices already removed
