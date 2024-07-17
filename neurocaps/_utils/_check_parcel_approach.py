@@ -17,20 +17,17 @@ def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
     if not isinstance(parcel_approach,dict) or isinstance(parcel_approach,dict) and len(parcel_approach) > 0 and not isinstance(parcel_approach[list(parcel_approach)[0]],dict):
         raise ValueError(textwrap.dedent(f"""
                          Please include a valid `parcel_approach` in one of the following dictionary
-                         formats for 'Schaefer' or 'AAL' {valid_parcel_dict}
-                         """))
+                         formats for 'Schaefer' or 'AAL' {valid_parcel_dict}"""))
 
     if len(parcel_approach) > 1:
         raise ValueError(textwrap.dedent(f"""
                          Only one parcellation approach can be selected.
-                         Example format of `parcel_approach`: {valid_parcel_dict}
-                         """))
+                         Example format of `parcel_approach`: {valid_parcel_dict}"""))
 
     if "Schaefer" not in parcel_approach and "AAL" not in parcel_approach and "Custom" not in parcel_approach:
         raise KeyError(textwrap.dedent(f"""
                          Please include a valid `parcel_approach` in one of the following formats for
-                         'Schaefer', 'AAL', or 'Custom': {valid_parcel_dict}
-                         """))
+                         'Schaefer', 'AAL', or 'Custom': {valid_parcel_dict}"""))
 
     if "Schaefer" in parcel_approach:
         if "n_rois" not in parcel_approach["Schaefer"]:
@@ -75,8 +72,7 @@ def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
             raise ValueError(textwrap.dedent(f"""
                              For `Custom` parcel_approach, a nested key-value pair containing the key 'maps' with the
                              value being a string specifying the location of the parcellation is needed.
-                             Example: {valid_parcel_dict['Custom']}
-                             """))
+                             Example: {valid_parcel_dict['Custom']}"""))
         check_subkeys = ["nodes" in parcel_approach["Custom"], "regions" in parcel_approach["Custom"]]
         if not all(check_subkeys):
             missing_subkeys = [["nodes", "regions"][x] for x,y in enumerate(check_subkeys) if y is False]

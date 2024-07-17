@@ -558,9 +558,8 @@ class CAP(_CAPGetter):
             for subj_id in self._groups[group]:
                 if subj_id in self._subject_table:
                     warnings.warn(textwrap.dedent(f"""
-                                  Subject: {subj_id} appears more than once, only including the first instance
-                                  of this subject in the analysis.
-                                  """))
+                                  [SUBJECT: {subj_id}] - appears more than once. Only the first instance of this subject
+                                  will be included in the analysis."""))
                 else:
                     self._subject_table.update({subj_id : group})
 
@@ -582,9 +581,7 @@ class CAP(_CAPGetter):
                             if subject_run in requested_runs]
             if len(subject_runs) == 0:
                 warnings.warn(textwrap.dedent(f"""
-                              Skipping subject {subj_id} since they do not have the
-                              requested run numbers {','.join(requested_runs)}.
-                              """))
+                              [SUBJECT: {subj_id}] - Does not have the requested run numbers: {','.join(requested_runs)}."""))
                 continue
             for curr_run in subject_runs:
                 if concatenated_timeseries[group] is None:
@@ -655,9 +652,9 @@ class CAP(_CAPGetter):
                 self._optimal_n_clusters[group] = kneedle.elbow
                 if self._optimal_n_clusters[group] is None:
                     raise ValueError(textwrap.dedent(f"""
-                                No elbow detected for {group} so optimal cluster size is None. Try adjusting the sensitivity
-                                parameter, `S`, to increase or decrease sensitivity (higher values are less sensitive),
-                                expanding the list of clusters to test, or using another `cluster_selection_method`.
+                                [GROUP: {group}] - No elbow detected. Try adjusting the sensitivity parameter, `S`, to
+                                increase or decrease sensitivity (higher values are less sensitive), expanding the list
+                                of clusters to test, or using another `cluster_selection_method`.
                                 """))
             elif method == "davies_bouldin":
                 # Get minimum for davies bouldin
@@ -865,8 +862,7 @@ class CAP(_CAPGetter):
         if not hasattr(self,"_kmeans"):
             raise AttributeError(textwrap.dedent("""
                                  Cannot calculate metrics since `self._kmeans` attribute does not exist.
-                                 Run `self.get_caps()` first.
-                                 """))
+                                 Run `self.get_caps()` first."""))
 
         if prefix_file_name is not None and output_dir is None:
             warnings.warn("`prefix_name` supplied but no `output_dir` specified. Files will not be saved.")
@@ -889,8 +885,7 @@ class CAP(_CAPGetter):
             formatted_string = ', '.join(["'{a}'".format(a=x) for x in valid_metrics])
             raise ValueError(textwrap.dedent(f"""
                                              No valid metrics in `metrics` list.
-                                             Valid metrics are {formatted_string}.
-                                             """))
+                                             Valid metrics are {formatted_string}."""))
 
         if isinstance(subject_timeseries, str) and subject_timeseries.endswith(".pkl"):
             subject_timeseries = _convert_pickle_to_dict(pickle_file=subject_timeseries)
@@ -917,9 +912,7 @@ class CAP(_CAPGetter):
             subject_runs = [subject_run for subject_run in subject_timeseries[subj_id] if subject_run in requested_runs]
             if len(subject_runs) == 0:
                 warnings.warn(textwrap.dedent(f"""
-                            Skipping subject {subj_id} since they do not have the requested run numbers
-                            {','.join(requested_runs)}.
-                            """))
+                            [SUBJECT: {subj_id}] - Does not have the requested run numbers: {','.join(requested_runs)}."""))
                 continue
             for curr_run in subject_runs:
                 # Standardize or not
@@ -1179,14 +1172,12 @@ class CAP(_CAPGetter):
             raise AttributeError(textwrap.dedent("""
                                  `self.parcel_approach` is None. Add parcel_approach
                                  using `self.parcel_approach=parcel_approach` to use this
-                                 method.
-                                 """))
+                                 method."""))
 
         if not hasattr(self,"_caps"):
             raise AttributeError(textwrap.dedent("""
                                  Cannot plot caps since `self._caps` attribute does not exist.
-                                 Run `self.get_caps()` first.
-                                 """))
+                                 Run `self.get_caps()` first."""))
 
         # Check if parcellation_approach is custom
         if "Custom" in self._parcel_approach and any(key not in self._parcel_approach["Custom"] for key in ["nodes", "regions"]):
@@ -1201,8 +1192,7 @@ class CAP(_CAPGetter):
         if check_caps.shape[0] != len(self._parcel_approach[parcellation_name]["nodes"]):
             raise ValueError(textwrap.dedent("""
                             Number of rois/nodes used for CAPs does not equal the
-                            number of rois/nodes specified in `parcel_approach`.
-                            """))
+                            number of rois/nodes specified in `parcel_approach`."""))
 
         if output_dir:
             if not os.path.exists(output_dir): os.makedirs(output_dir)
@@ -1699,8 +1689,7 @@ class CAP(_CAPGetter):
         if not hasattr(self,"_caps"):
             raise AttributeError(textwrap.dedent("""
                                  Cannot plot caps since `self._caps` attribute does not exist.
-                                 Run `self.get_caps()` first.
-                                 """))
+                                 Run `self.get_caps()` first."""))
 
         # Create plot dictionary
         defaults = {"dpi": 300, "figsize": (8, 6), "fontsize": 14, "xticklabels_size": 8, "yticklabels_size": 8,
@@ -1836,14 +1825,12 @@ class CAP(_CAPGetter):
             raise AttributeError(textwrap.dedent("""
                                  `self.parcel_approach` is None. Add parcel_approach
                                  using `self.parcel_approach=parcel_approach` to use this
-                                 method.
-                                 """))
+                                 method."""))
 
         if not hasattr(self,"_caps"):
             raise AttributeError(textwrap.dedent("""
                                  Cannot plot caps since `self._caps` attribute does not exist.
-                                 Run `self.get_caps()` first.
-                                 """))
+                                 Run `self.get_caps()` first."""))
 
         if not os.path.exists(output_dir): os.makedirs(output_dir)
 
@@ -2020,14 +2007,12 @@ class CAP(_CAPGetter):
             raise AttributeError(textwrap.dedent("""
                                  `self.parcel_approach` is None. Add parcel_approach
                                  using `self.parcel_approach=parcel_approach` to use this
-                                 method.
-                                 """))
+                                 method."""))
 
         if not hasattr(self,"_caps") and fslr_giftis_dict is None:
             raise AttributeError(textwrap.dedent("""
                                  Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()`
-                                 first.
-                                 """))
+                                 first."""))
 
         if output_dir and not os.path.exists(output_dir): os.makedirs(output_dir)
 
@@ -2061,8 +2046,7 @@ class CAP(_CAPGetter):
                                       message to output as "not 'Nifti1Image'" instead of "not Nifti1Image", which
                                       neuromaps uses to determine if the input is a Nifti1Image object.
                                       Converting stat_map into a temporary nii.gz file (which will be automatically
-                                      deleted afterwards) at {temp_nifti.name}
-                                      """))
+                                      deleted afterwards) [TEMP FILE: {temp_nifti.name}]"""))
                         # Ensure file is closed
                         temp_nifti.close()
                         # Save temporary nifti to temp file
@@ -2079,8 +2063,7 @@ class CAP(_CAPGetter):
                 if plot_dict["surface"] not in ["inflated", "veryinflated"]:
                     warnings.warn(textwrap.dedent(f"""
                                   {plot_dict["surface"]} is an invalid option for `surface`. Available options
-                                  include 'inflated' or 'verinflated'. Defaulting to 'inflated'
-                                  """))
+                                  include 'inflated' or 'verinflated'. Defaulting to 'inflated'"""))
                     plot_dict["surface"] = "inflated"
                 lh, rh = surfaces[plot_dict["surface"]]
                 lh = str(lh) if not isinstance(lh, str) else lh
@@ -2334,8 +2317,7 @@ class CAP(_CAPGetter):
             raise AttributeError(textwrap.dedent("""
                                  `self.parcel_approach` is None. Add parcel_approach
                                  using `self.parcel_approach=parcel_approach` to use this
-                                 method.
-                                 """))
+                                 method."""))
 
         if not hasattr(self,"_caps"):
             raise AttributeError(textwrap.dedent("""
@@ -2405,9 +2387,9 @@ class CAP(_CAPGetter):
                             cosine_similarity = dot_product/(norm_cap_vector * norm_binary_vector)
                         except ZeroDivisionError:
                             warnings.warn(textwrap.dedent(f"""
-                                          Division by zero error when calculating cosine similarity for
-                                          group - {group} for {region} in {cap}. Setting cosine similarity to zero.
-                                          """))
+                                          [GROUP: {group} | REGION: {region} | CAP: {cap} | METHOD: {method}] -
+                                          Division by zero error when calculating cosine similarity. Setting cosine
+                                          similarity to zero."""))
                             cosine_similarity = 0
                     else:
                         # Calculate traditional norm
@@ -2418,19 +2400,17 @@ class CAP(_CAPGetter):
                             cosine_similarity_traditional = dot_product/(norm_cap_vector_traditional * norm_binary_vector)
                         except ZeroDivisionError:
                             warnings.warn(textwrap.dedent(f"""
-                                          Division by zero error when calculating cosine similarity using the
-                                          'traditional' method for group - {group} for {region} in {cap}. Setting
-                                          'traditional' cosine similarity to zero.
-                                          """))
+                                          [GROUP: {group} | REGION: {region} | CAP: {cap} | METHOD: traditional] -
+                                          Division by zero error when calculating cosine similarity. Setting cosine
+                                          similarity to zero."""))
                             cosine_similarity_traditional = 0
                         try:
                             cosine_similarity_selective = dot_product/(norm_cap_vector_selective * norm_binary_vector)
                         except ZeroDivisionError:
                             warnings.warn(textwrap.dedent(f"""
-                                          Division by zero error when calculating cosine similarity using the
-                                          'selective' method for group - {group} for {region} in {cap}. Setting
-                                          'selective' cosine similarity to zero.
-                                          """))
+                                          [GROUP: {group} | REGION: {region} | CAP: {cap} | METHOD: selective] -
+                                          Division by zero error when calculating cosine similarity. Setting cosine
+                                          similarity to zero."""))
                             cosine_similarity_selective = 0
                         # Use alpha to determine contributions of traditional and selective method to cosine similarity
                         cosine_similarity = (cosine_similarity_traditional * alpha) + (cosine_similarity_selective * (1-alpha))

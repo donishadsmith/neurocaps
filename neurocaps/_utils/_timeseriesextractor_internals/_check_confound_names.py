@@ -30,13 +30,11 @@ def _check_confound_names(high_pass, specified_confound_names, n_acompcor_separa
                               Since `n_acompcor_separate` has been specified, specified acompcor components in
                               `confound_names` will be disregarded and replaced with the first {n_acompcor_separate}
                               components of the white matter and cerebrospinal fluid masks for each participant.
-                              The following components will not be used {removed_confounds}
-                              """))
+                              The following components will not be used {removed_confounds}"""))
             confound_names = check_confounds
 
     print(textwrap.dedent(f"""
           List of confound regressors that will be used during timeseries extraction if available in confound
-          dataframe - {confound_names}
-          """), flush=True)
+          dataframe - {confound_names}"""), flush=True)
 
     return confound_names

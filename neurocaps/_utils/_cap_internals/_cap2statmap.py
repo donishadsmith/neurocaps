@@ -68,8 +68,7 @@ def _get_target_indices(atlas_file, knn_dict, subcortical_indices=None):
     if "resolution_mm" not in knn_dict:
         warnings.warn(textwrap.dedent("""
                                       Defaulting to 1mm resolution for the Schaefer atlas since 'resolution_mm' was
-                                      not specified in `knn_dict`.
-                                      """))
+                                      not specified in `knn_dict`."""))
         resolution_mm = 1
     else:
         resolution_mm = knn_dict["resolution_mm"]

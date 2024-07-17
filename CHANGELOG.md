@@ -59,8 +59,7 @@ improvements/enhancements. Fixes and modifications will be backwards compatible.
         Message
         ```
 
-    - In `CAP.get_caps`, the output for the optimal cluster size has been restructured for better comprehension
-    when `cluster_selection_method` is not None:
+    - In `CAP` class numerous warnings and statements have been changed to improve clarity:
 
         - Previous Format:
         ```
@@ -73,6 +72,7 @@ improvements/enhancements. Fixes and modifications will be backwards compatible.
         ```
 
     - These changes should improve clarity when viewing in a terminal or when redirected to an output file by SLURM.
+    - Language in many statements and warnings have also been improved.
 
 ## [0.14.6] - 2024-07-16
 ### 🐛 Fixes

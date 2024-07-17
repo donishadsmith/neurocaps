@@ -1,6 +1,6 @@
 # neurocaps
 [![Latest Version](https://img.shields.io/pypi/v/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-blue)](https://doi.org/10.5281/zenodo.12752348)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-blue)](https://doi.org/10.5281/zenodo.12762165)
 [![Test Status](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg)](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
@@ -179,10 +179,7 @@ from neurocaps.analysis import CAP
 """If an asterisk '*' is after a name, all confounds starting with the 
 term preceding the parameter will be used. in this case, all parameters 
 starting with cosine will be used."""
-confounds = ["cosine*", "trans_x", "trans_x_derivative1", "trans_y", 
-             "trans_y_derivative1", "trans_z","trans_z_derivative1", 
-             "rot_x", "rot_x_derivative1", "rot_y", "rot_y_derivative1", 
-             "rot_z","rot_z_derivative1"]
+confounds = ['Cosine*', 'Rot*']
 
 """If use_confounds is True but no confound_names provided, there are hardcoded 
 confound names that will extract the data from the confound files outputted by fMRIPrep
@@ -193,16 +190,37 @@ parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7, "resolution_mm
 
 extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
                                  use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01, 
-                                 confound_names=confounds, n_acompcor_separate=6)
+                                 confound_names=confounds, n_acompcor_separate=2)
 
 bids_dir = "/path/to/bids/dir"
 
 # If there are multiple pipelines in the derivatives folder, you can specify a specific pipeline
-pipeline_name = "fmriprep-1.4.0"
+#pipeline_name = "fmriprep-1.4.0"
+pipeline_name = fmriprep_1.0.0/fmriprep/
 
 # Resting State
-extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
+extractor.get_bold(bids_dir=bids_dir, task="rest", session='002',pipeline_name=pipeline_name, verbose=True,
+                   flush_print=True)
+```
+**Output:**
+```
+List of confound regressors that will be used during timeseries extraction if available in confound
+dataframe: ['Cosine*','Rot*']
 
+BIDS Layout: ...0.4_ses001-022/ds000031_R1.0.4 | Subjects: 1 | Sessions: 1 | Runs: 1
+
+[SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001]
+----------------------------------------------------
+Preparing for timeseries extraction using -
+[FILE: '/Users/runner/work/neurocaps/neurocaps/tests/ds000031_R1.0.4_ses001-022/ds000031_R1.0.4/derivatives/fmriprep_1.0.0/fmriprep/sub-01/ses-002/func/sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz']
+
+[SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001]
+----------------------------------------------------
+The following confounds will be for nuisance regression - ['Cosine00', 'Cosine01', 'Cosine02', 'Cosine03', 'Cosine04', 'Cosine05',
+'Cosine06', 'a_comp_cor_00', 'a_comp_cor_01', 'a_comp_cor_03', 'a_comp_cor_04', 'RotX', 'RotY', 'RotZ']
+```
+
+```python
 # Task; use parallel processing with `n_cores`
 extractor.get_bold(bids_dir=bids_dir, task="emo", condition="positive", 
                    pipeline_name=pipeline_name, n_cores=10)
@@ -229,7 +247,6 @@ cap_analysis.caps2plot(visual_scope="nodes", plot_options="outer_product",
                        suffix_title="- Positive Valence", ncol=3,sharey=True, 
                        subplots=True, xlabel_rotation=90, tight_layout=False, 
                        hspace = 0.4, cmap=palette)
-
 ```
 **Plot Outputs:**
 ![image](https://github.com/donishadsmith/neurocaps/assets/112973674/e1ab0f55-0c4c-4701-8f3a-838c2470d44d)
