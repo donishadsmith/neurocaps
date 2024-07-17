@@ -9,22 +9,30 @@ parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
 
 # Changing file name in github actions to test different file naming configurations; file no longer has run-01 or ses-002
 
-def test_removal_of_run_desc():
+@pytest.mark.parametrize("use_confounds", [True,False])
+def test_removal_of_run_desc(use_confounds):
     extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
-                                    use_confounds=False, detrend=True, low_pass=0.15, high_pass=0.01,
+                                    use_confounds=use_confounds, detrend=True, low_pass=0.15, high_pass=0.01,
                                     confound_names=confounds, fwhm=2)
 
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, verbose=False)
+
+    assert extractor.subject_timeseries["01"]["run-0"].shape[-1] == 100
+    assert extractor.subject_timeseries["01"]["run-0"].shape[0] == 40
+
+def test_acompcor_seperate():
+    confounds=["Cosine*", "Rot*","a_comp_cor_01","a_comp_cor_02", "a_comp_cor*"]
+    extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
+                                    use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.08,
+                                    confound_names=confounds, n_acompcor_separate=3)
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+    assert all("a_comp_cor" not in x for x in extractor.signal_clean_info["confound_names"])
 
-    assert extractor.subject_timeseries["01"]["run-0"].shape[-1] == 100
-    assert extractor.subject_timeseries["01"]["run-0"].shape[0] == 40
-
-def test_parallel_additional():
+@pytest.mark.parametrize("n_cores", [None,1])
+def test_skip(n_cores):
     extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
-                                    use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01,
-                                    confound_names=confounds, fwhm=2)
-
-    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, n_cores=1)
-
-    assert extractor.subject_timeseries["01"]["run-0"].shape[-1] == 100
-    assert extractor.subject_timeseries["01"]["run-0"].shape[0] == 40
+                                    use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.08,
+                                    confound_names=confounds, n_acompcor_separate=3)
+    # No files have run id
+    extractor.get_bold(bids_dir=bids_dir, task="rest", runs=["001"],pipeline_name=pipeline_name, tr=1.2, n_cores=n_cores)
+    assert extractor.subject_timeseries == {}

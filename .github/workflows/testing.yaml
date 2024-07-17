@@ -39,6 +39,7 @@ jobs:
         if: ${{ matrix.os  == 'ubuntu-latest' || matrix.os == 'macos-latest' }}
         run: |
           mv sub-01_ses-002_task-rest_run-001_desc-confounds_timeseries.tsv sub-01_task-rest_desc-confounds_timeseries.tsv
+          mv sub-01_ses-002_task-rest_run-001_desc-confounds_timeseries.json sub-01_task-rest_desc-confounds_timeseries.json
           mv sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz sub-01_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz
           mv sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz sub-01_task-rest_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz
         shell: bash

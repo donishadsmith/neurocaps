@@ -39,7 +39,6 @@ Extracting Timeseries
         List of confound regressors that will be used during timeseries extraction if available in confound
         dataframe: ['Cosine*', 'aComp*', 'Rot*']
 
-        Bids layout collected.
         BIDS Layout: ...0.4_ses001-022/ds000031_R1.0.4 | Subjects: 1 | Sessions: 1 | Runs: 1
         Running subject: 01; run: run-001; 
         ['/Users/runner/work/neurocaps/neurocaps/tests/ds000031_R1.0.4_ses001-022/ds000031_R1.0.4/derivatives/fmriprep_1.0.0/fmriprep/sub-01/ses-002/func/sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz']

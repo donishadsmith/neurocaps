@@ -52,7 +52,7 @@ Performing CAPs on Groups
 
     .. code-block:: none
 
-        Optimal cluster size using silhouette method for A is 2.
+        [GROUP: A | METHOD: silhouette] - Optimal cluster size is 2.
 
 .. image:: embed/A_silhouette.png
     :width: 600
@@ -61,7 +61,7 @@ Performing CAPs on Groups
 
     .. code-block:: none
 
-        Optimal cluster size using silhouette method for B is 2.
+        [GROUP: B | METHOD: silhouette] - Optimal cluster size is 2.
 
 .. image:: embed/B_silhouette.png
     :width: 600

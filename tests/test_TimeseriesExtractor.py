@@ -1,4 +1,4 @@
-import copy, os, glob, math, pytest, numpy as np, pandas as pd
+import copy, json, os, glob, math, pytest, numpy as np, pandas as pd
 from neurocaps.extraction import TimeseriesExtractor
 from neurocaps.analysis import change_dtype
 
@@ -6,33 +6,60 @@ dir = os.path.dirname(__file__)
 bids_dir = os.path.join(dir, "ds000031_R1.0.4_ses001-022/ds000031_R1.0.4/")
 pipeline_name = "fmriprep_1.0.0/fmriprep"
 confounds=["Cosine*", "aComp*", "Rot*"]
+confounds_file = glob.glob(os.path.join(dir, bids_dir, "derivatives", pipeline_name, "sub-01", "ses-002", "func", "*confounds*.tsv"))[0]
 parcel_approach = {"Custom": {"maps": os.path.join(dir, "HCPex.nii.gz")}}
 
 # Create event data
-df = pd.DataFrame({"onset": list(range(0,39,5)),
+event_df = pd.DataFrame({"onset": list(range(0,39,5)),
                     "duration": [5]*7 + [13], # For rest the scan index will be 40, which doesnt exist, check that should issue warning for this
                     "trial_type": ["active", "rest"]*4})
 
-df.to_csv(os.path.join(dir, bids_dir, "sub-01","ses-002","func","sub-01_ses-002_task-rest_run-001_events.tsv"),
+event_df.to_csv(os.path.join(dir, bids_dir, "sub-01","ses-002","func","sub-01_ses-002_task-rest_run-001_events.tsv"),
           sep="\t", index=None)
+
+# Create json to test n_acompcor_seperate
+# Get confounds; original is 31 columns
+confound_df = pd.read_csv(confounds_file, sep="\t").iloc[:,:31]
+comp_dict = {}
+
+map_comp = (lambda x: {
+    "CumulativeVarianceExplained": None,
+    "Mask": x,
+    "Method": None,
+    "Retained": None,
+    "SingularValue": None,
+    "VarianceExplained": None
+  })
+
+mask_names = ["CSF"]*2 + ["WM"]*3
+
+for i in range(5):
+    colname = f"a_comp_cor_0{i}" if i != 4 else "dropped_1"
+    confound_df[colname] = [x[0] for x in np.random.rand(40,1)]
+    comp_dict.update({colname: map_comp(mask_names[i])})
+
+json_object = json.dumps(comp_dict, indent=1)
+with open(confounds_file.replace("tsv", "json"), "w") as f:
+    f.write(json_object)
+
+confound_df.to_csv(confounds_file, sep="\t", index=None)
 
 # Adds non_steady_state_outlier columns to the confound tsv for test data
 def add_non_steady(n):
-    n_original_columns = 31
-    confounds_file = glob.glob(os.path.join(dir, bids_dir, "derivatives", pipeline_name, "sub-01", "ses-002", "func", "*confounds*"))[0]
-    df = pd.read_csv(confounds_file, sep="\t").iloc[:,:n_original_columns]
+    n_columns = 31 + len(mask_names)
+    confound_df = pd.read_csv(confounds_file, sep="\t").iloc[:,:n_columns]
     if n > 0:
         for i in range(n):
             colname = f"non_steady_state_outlier_0{i}" if i < 10 else f"non_steady_state_outlier_{i}"
             vec = [0]*40
             vec[i] = 1
-            df[colname] = vec
-    df.to_csv(confounds_file, sep="\t", index=None)
+            confound_df[colname] = vec
+    confound_df.to_csv(confounds_file, sep="\t", index=None)
 
 # Gets scan indices in a roughly similar manner as _extract_timeseries; Core logic for calculating onset and duration is similar
 def get_scans(condition, dummy_scans=None, fd=False, tr=1.2):
-    df = pd.read_csv(os.path.join(dir, bids_dir, "sub-01","ses-002","func","sub-01_ses-002_task-rest_run-001_events.tsv"),sep="\t")
-    condition_df = df[df["trial_type"]==condition]
+    event_df = pd.read_csv(os.path.join(dir, bids_dir, "sub-01","ses-002","func","sub-01_ses-002_task-rest_run-001_events.tsv"),sep="\t")
+    condition_df = event_df[event_df["trial_type"]==condition]
     scan_list = []
     for i in condition_df.index:
         onset = int(condition_df.loc[i, "onset"]/tr)
@@ -151,6 +178,14 @@ def test_confounds(detrend,low_pass,high_pass,standardize):
     extractor2.get_bold(bids_dir=bids_dir, task="rest", runs=["001"],pipeline_name=pipeline_name, tr=1.2)
 
     assert not np.array_equal(extractor.subject_timeseries["01"]["run-001"], extractor2.subject_timeseries["01"]["run-001"])
+
+def test_acompcor_seperate():
+    confounds=["Cosine*", "Rot*","a_comp_cor_01","a_comp_cor_02", "a_comp_cor*"]
+    extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
+                                    use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.08,
+                                    confound_names=confounds, n_acompcor_separate=3)
+    extractor.get_bold(bids_dir=bids_dir, task="rest", runs=["001"],pipeline_name=pipeline_name, tr=1.2)
+    assert all("a_comp_cor" not in x for x in extractor.signal_clean_info["confound_names"])
 
 def test_no_session_w_custom():
     # Written like this to test that .get_bold removes the /
@@ -297,7 +332,7 @@ def test_dummy_scans_auto():
                                     use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01,
                                     confound_names=confounds, dummy_scans={"auto": True})
 
-    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, flush_print=True)
 
     assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
     assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 37

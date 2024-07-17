@@ -42,6 +42,38 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.14.7] - 2024-07-17
+### ♻ Changed
+- Improved Warning Messages and Print Statements:
+    - In TimeseriesExtractor.get_bold, the subject-specific information output has been reformatted for better readability:
+        
+        - Previous Format:
+        ```
+        Subject: 1; run:1 - Message
+        ```
+
+        - New Format:
+        ```
+        [SUBJECT: 1 | SESSION: 1 | TASK: rest | RUN: 1]
+        -----------------------------------------------
+        Message
+        ```
+
+    - In `CAP.get_caps`, the output for the optimal cluster size has been restructured for better comprehension
+    when `cluster_selection_method` is not None:
+
+        - Previous Format:
+        ```
+        Optimal cluster size using silhouette method for A is 2.
+        ```
+
+        - New Format:
+        ```
+        [GROUP: A | METHOD: silhouette] - Optimal cluster size is 2.
+        ```
+
+    - These changes should improve clarity when viewing in a terminal or when redirected to an output file by SLURM.
+
 ## [0.14.6] - 2024-07-16
 ### 🐛 Fixes
 - For `CAP.get_caps`, when `cluster_selection_method` was used to find the optimal cluster size, the model would be

@@ -36,7 +36,7 @@ def _check_confound_names(high_pass, specified_confound_names, n_acompcor_separa
 
     print(textwrap.dedent(f"""
           List of confound regressors that will be used during timeseries extraction if available in confound
-          dataframe: {confound_names}
+          dataframe - {confound_names}
           """), flush=True)
 
     return confound_names

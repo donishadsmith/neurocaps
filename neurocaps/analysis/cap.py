@@ -1,5 +1,5 @@
 
-import collections, copy, itertools, os, re, sys, tempfile, textwrap, warnings
+import collections, copy, itertools, os, sys, tempfile, textwrap, warnings
 from typing import Union, Literal, Optional
 import numpy as np, nibabel as nib, matplotlib.pyplot as plt, pandas as pd, seaborn, surfplot
 import plotly.express as px, plotly.graph_objects as go, plotly.offline as pyo
@@ -671,7 +671,7 @@ class CAP(_CAPGetter):
             # Get the optimal kmeans model
             self._kmeans[group] = model_dict[self._optimal_n_clusters[group]]
 
-            print(f"Optimal cluster size using {method} method for {group} is {self._optimal_n_clusters[group]}.", flush=True)
+            print(f"[GROUP: {group} | METHOD: {method}] - Optimal cluster size is {self._optimal_n_clusters[group]}.", flush=True)
 
             # Plot
             if show_figs or output_dir is not None:

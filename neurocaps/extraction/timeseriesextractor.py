@@ -307,9 +307,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         task : :obj:`str`
             Name of task to process.
 
-        session : :obj:`int` or :obj:`None`, default=None
+        session : :obj:`int`, :obj:`str`, or :obj:`None`, default=None
             Session to extract timeseries from. Only a single session can be extracted at a time. An error will be
-            issued if more than one session is detected in the preprocessed NifTI files.
+            issued if more than one session is detected in the preprocessed NifTI files. Session should be in the
+            for of an integer (e.g.  ``session=2``) or a string if the session id cannot be represented
+            as an integer (e.g. ``session="001"``).
 
         runs : :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
             List of run numbers to extract timeseries data from. Extracts all runs if unspecified.
@@ -451,7 +453,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         else:
             layout = bids.BIDSLayout(bids_dir, derivatives=True)
 
-        print("Bids layout collected.", flush=True)
         print(layout, flush=True)
         subj_id_list = sorted(layout.get(return_type="id", target="subject", task=task, space=self._space,
                                          suffix="bold"))
@@ -469,13 +470,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         self._setup_extraction(layout=layout, subj_id_list=subj_id_list, exclude_niftis=exclude_niftis)
 
         if n_cores:
-            if n_cores > cpu_count(): raise ValueError(textwrap.dedent(f"""
-                                                       More cores specified than available -
-                                                       Number of cores specified: {n_cores};
-                                                       Max cores available: {cpu_count()}.
-                                                       """))
+            if n_cores > cpu_count():
+                raise ValueError(textwrap.dedent(f"""
+                                                 More cores specified than available - Number of cores specified: {n_cores};
+                                                 Max cores available: {cpu_count()}.
+                                                 """))
             if isinstance(n_cores, int): self._n_cores = n_cores
-            else: raise ValueError("`n_cores` must be an integer.")
+            else: raise TypeError("`n_cores` must be an integer.")
 
             # Generate list of tuples for each subject
             args_list = [(subj_id, self._subject_info[subj_id]["nifti_files"],
@@ -485,7 +486,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                           self._subject_info[subj_id]["confound_metadata_files"],
                           self._subject_info[subj_id]["run_list"],
                           self._subject_info[subj_id]["tr"], condition, self._parcel_approach, self._signal_clean_info,
-                          verbose, flush_print) for subj_id in self._subject_ids]
+                          verbose, flush_print, self._task_info) for subj_id in self._subject_ids]
 
             parallel = Parallel(return_as="generator", n_jobs=self._n_cores)
             outputs = parallel(delayed(_extract_timeseries)(*args) for args in args_list)
@@ -506,7 +507,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                                                        tr=self._subject_info[subj_id]["tr"], condition=condition,
                                                        parcel_approach=self._parcel_approach,
                                                        signal_clean_info=self._signal_clean_info,
-                                                       verbose=verbose, flush_print=flush_print)
+                                                       verbose=verbose, flush_print=flush_print, task_info=self._task_info)
 
                 # Aggregate new timeseries
                 if isinstance(subject_timeseries, dict): self._subject_timeseries.update(subject_timeseries)
@@ -570,32 +571,54 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     check_sessions = [re.search("ses-(\\S+?)[-_]",os.path.basename(x))[0][:-1] for x in nifti_files]
                     if len(list(set(check_sessions))) > 1:
                         raise ValueError(textwrap.dedent(f"""
-                                         `session` not specified but subject {subj_id}
-                                         has more than one session : {sorted(list(set(check_sessions)))}.
-                                         In order to continue timeseries extraction, the specific session to
-                                         extract must be specified.
-                                         """))
+                                                          `session` not specified but subject {subj_id}
+                                                          has more than one session - {sorted(list(set(check_sessions)))}.
+                                                          In order to continue timeseries extraction, the specific session to
+                                                          extract must be specified.
+                                                          """))
+            
+            base_message = f'[SUBJECT: {subj_id} | SESSION: {self._task_info["session"]} | TASK: {self.task_info["task"]}]'
+            underline = '-'*len(base_message)
 
             if len(nifti_files) == 0:
-                warnings.warn(f"Skipping subject: {subj_id} due to all NifTI files missing or excluded.")
+                warnings.warn(textwrap.dedent(f"""
+                                              {base_message}
+                                              {underline}
+                                              Skipping due to all NifTI files missing or excluded.
+                                              """))
                 continue
 
             if len(mask_files) == 0:
-                warnings.warn(f"Subject: {subj_id} is missing mask file but timeseries extraction will continue.")
+                warnings.warn(textwrap.dedent(f"""
+                                              {base_message}
+                                              {underline}
+                                              Missing mask file but timeseries extraction will continue."""))
 
             if self._signal_clean_info["use_confounds"]:
                 if len(confound_files) == 0:
-                    warnings.warn(f"Skipping subject: {subj_id} due to missing confound files.")
+                    warnings.warn(textwrap.dedent(f"""
+                                                  {base_message}
+                                                  {underline}
+                                                  Skipping due to having no confound files available when
+                                                  `use_confounds` was requested.
+                                                  """))
                     continue
                 if len(confound_metadata_files) == 0 and self._signal_clean_info["n_acompcor_separate"]:
                     warnings.warn(textwrap.dedent(f"""
-                                  Skipping subject: {subj_id} due to missing confound metadata to locate the
-                                  first six components of the white-matter and cerebrospinal fluid masks separately.
-                                  """))
+                                                  {base_message}
+                                                  {underline}
+                                                  Skipping due to missing confound metadata to locate the
+                                                  first six components of the white-matter and cerebrospinal fluid
+                                                  masks separately.
+                                                  """))
                     continue
 
             if self._task_info["condition"] and len(event_files) == 0:
-                warnings.warn(f"Skipping subject: {subj_id} due to having no event files.")
+                warnings.warn(textwrap.dedent(f"""
+                                              {base_message}
+                                              {underline}
+                                              Skipping due to having no event files available when `condition` specified.
+                                              """))
                 continue
 
             if len(check_runs) != 0:
@@ -619,20 +642,25 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     if len(run_list) == 0:
                         if self._task_info["condition"]:
                             warnings.warn(textwrap.dedent(f"""
-                                          Skipping subject: {subj_id} due to no NifTI file, mask file,
-                                          confound tsv file, confound json file being from the same run.
-                                          """))
+                                                          {base_message}
+                                                          {underline}
+                                                          Skipping due to no NifTI file, mask file,
+                                                          confound tsv file, confound json file being from the same run.
+                                                          """))
                         else:
                             warnings.warn(textwrap.dedent(f"""
-                                          Skipping subject: {subj_id} due to no NifTI file, mask file, event file,
-                                          confound tsv file, confound json file being from the same run.
-                                          """))
+                                                          {base_message}
+                                                          {underline}
+                                                          Skipping due to no NifTI file, mask file, event file,
+                                                          confound tsv file, confound json file being from the same run.
+                                                          """))
                         continue
                     else:
                         warnings.warn(textwrap.dedent(f"""
-                                      Subject: {subj_id} only has the following
-                                      runs available:{', '.join(run_list)}.
-                                      """))
+                                                      {base_message}
+                                                      {underline}
+                                                      Only has the following runs available: {', '.join(run_list)}.
+                                                      """))
             else:
                 # Allows for nifti files that do not have the run- description
                 run_list = [None]
@@ -648,16 +676,21 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             except ValueError:
                 if self._task_info["condition"]:
                     raise ValueError(textwrap.dedent(f"""
-                                    `tr` not specified and `tr` could not be extracted for subject: {subj_id} since BOLD
-                                    metadata file could not be opened. The `tr` must be given when `condition` is
-                                    specified.
-                                    """))
+                                                     {base_message}
+                                                     {underline}
+                                                     `tr` not specified and could not be extracted since BOLD
+                                                     metadata file could not be opened. The `tr` must be given when
+                                                     `condition` is specified.
+                                                     """))
                 else:
                     warnings.warn(textwrap.dedent(f"""
-                                    `tr` not specified and `tr` could not be extracted for subject: {subj_id} since BOLD
-                                    metadata file could not be opened. `tr` has been set to None and extraction will
-                                    continue.
-                                    """))
+                                                  {base_message}
+                                                  {underline}
+                                                  `tr` not specified and could not be extracted since BOLD
+                                                  metadata file could not be opened. `tr` has been set to None and
+                                                  extraction will
+                                                  continue.
+                                                  """))
                     tr=None
 
             # Store subject specific information
