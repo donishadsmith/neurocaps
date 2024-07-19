@@ -60,7 +60,7 @@ parcel_approach = {"AAL": {"version": "SPM12"}}
 If using a "Custom" parcellation approach, ensure each region in your dataset includes both left (lh) and right (rh) hemisphere versions of nodes (bilateral nodes). 
 
 Custom Key Structure:
-- `"maps'`: Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g., .nii for NifTI files). For plotting purposes, this key is not required.
+- `"maps"`: Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g., .nii for NifTI files). For plotting purposes, this key is not required.
 - `"nodes"`: List of all node labels used in your study, arranged in the exact order they correspond to indices in your parcellation files. 
 Each label should match the parcellation index it represents. For example, if the parcellation label "0" corresponds to the left hemisphere 
 visual cortex area 1, then "LH_Vis1" should occupy the 0th index in this list. This ensures that data extraction and analysis accurately reflect the anatomical regions intended. For timeseries extraction, this key is not required.

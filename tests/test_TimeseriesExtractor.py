@@ -128,11 +128,12 @@ def test_check_parallel_and_non_parallel():
     extractor.get_bold(bids_dir=bids_dir, session='002', runs="001",task="rest", pipeline_name=pipeline_name,
                        tr=1.2, n_cores=1)
 
-    parallel_timeseries = extractor.subject_timeseries["01"]["run-001"]
+    parallel_timeseries = copy.deepcopy(extractor.subject_timeseries["01"]["run-001"])
 
     extractor.get_bold(bids_dir=bids_dir, session='002', runs="001",task="rest", pipeline_name=pipeline_name,
                        tr=1.2, n_cores=None)
 
+    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 40
     assert np.array_equal(parallel_timeseries, extractor.subject_timeseries["01"]["run-001"])
 
 @pytest.mark.parametrize("use_confounds", [True, False])

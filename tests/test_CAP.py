@@ -191,9 +191,8 @@ def test_groups_and_cluster_selection():
     assert cap_analysis.caps["A"]["CAP-2"].shape == (100,)
     assert cap_analysis.caps["B"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["B"]["CAP-2"].shape == (100,)
-        # Elbow sometimes does find the elbow with random data, uses kneed to locate elbow
-
-    # Elbow sometimes does find the elbow with random data
+    
+    # Elbow sometimes does find the elbow with random data, uses kneed to locate elbow
     try:
         cap_analysis = CAP(parcel_approach=extractor.parcel_approach, groups={"A": [1,2,3,5], "B": [4,6,7,8,9,10,7]})
         cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
@@ -292,13 +291,13 @@ def test_multiple_methods():
 
     cap_analysis.calculate_metrics(subject_timeseries=new_timeseries, return_df=True)
 
-    # No crashing
-    met1 = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, runs=1)
-    met2 = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, runs=1,
-                                   continuous_runs=True)
-    
-    # If only one run continuous_runs should not differ
-    assert met1["persistence"].equals(met2["persistence"])
+    for i in range(1,4):
+        met1 = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, runs=i)
+        met2 = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, runs=i,
+                                              continuous_runs=True)
+        
+        # If only one run continuous_runs should not differ
+        assert met1["persistence"].equals(met2["persistence"])
 
     met1 = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True)
     met2 = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True,continuous_runs=True)
@@ -308,6 +307,20 @@ def test_multiple_methods():
 
     # Continuous run should have 1/3 the number of rows since each subject in the randomized data has three runs
     assert met1["persistence"].shape[0]/3 == met2["persistence"].shape[0]
+
+    # Counts and Temporal; temporal_fraction is frequency converted to proportion
+    cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
+                          n_clusters=[2,3,4,5], cluster_selection_method="silhouette")
+    counts = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, metrics="counts")["counts"]
+    temp = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, metrics="temporal_fraction")["temporal_fraction"]
+
+    assert counts[["CAP-1", "CAP-2"]].map(lambda x: x/100).equals(temp[["CAP-1", "CAP-2"]])
+
+    # Check for continuous too
+    counts = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, metrics="counts", continuous_runs=True)["counts"]
+    temp = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, metrics="temporal_fraction", continuous_runs=True)["temporal_fraction"]
+
+    assert counts[["CAP-1", "CAP-2"]].map(lambda x: x/300).equals(temp[["CAP-1", "CAP-2"]])
 
     cap_analysis.caps2plot(subplots=True, xlabel_rotation=90, sharey=True, borderwidths=10, show_figs=False)
 
