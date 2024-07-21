@@ -19,13 +19,13 @@ timeseries extraction.
     std_vec_1[std_vec_1 < np.finfo(np.float64).eps] = 1.0
     std_vec_2[std_vec_2 < np.finfo(np.float64).eps] = 1.0
 
-    standardized_subject_timeseries = standardize(subject_timeseries)
-    
+    standardized_subject_timeseries = standardize(subject_timeseries_list=[subject_timeseries])
+
     standardized_1 = (subject_timeseries["1"]["run-1"] - mean_vec_1)/std_vec_1
     standardized_2 = (subject_timeseries["1"]["run-2"] - mean_vec_2)/std_vec_2
 
-    print(np.array_equal(standardized_subject_timeseries["1"]["run-1"], standardized_1))
-    print(np.array_equal(standardized_subject_timeseries["1"]["run-2"], standardized_2))
+    print(np.array_equal(standardized_subject_timeseries["dict_0"]["1"]["run-1"], standardized_1))
+    print(np.array_equal(standardized_subject_timeseries["dict_0"]["1"]["run-2"], standardized_2))
 
 .. rst-class:: sphx-glr-script-out
 

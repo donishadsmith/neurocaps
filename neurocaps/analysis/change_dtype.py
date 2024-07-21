@@ -1,13 +1,13 @@
 import copy, os
 from typing import Union, Optional
-import numpy as np, joblib
-from .._utils import _convert_pickle_to_dict
+import numpy as np
+from .._utils import _convert_pickle_to_dict, _dicts_to_pickles
 
-def change_dtype(subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.PathLike],
+def change_dtype(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarray]]], list[os.PathLike]],
                  dtype: Union[str, np.floating],
-                 return_dict=True,
+                 return_dicts: bool=True,
                  output_dir: Optional[os.PathLike]=None,
-                 file_name: Optional[str]=None) -> dict[str, np.ndarray]:
+                 file_names: Optional[list[str]]=None) -> dict[str, dict[str, dict[str, np.ndarray]]]:
 
     """
     **Change Dtype of Subject Timeseries**
@@ -17,13 +17,11 @@ def change_dtype(subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.
     can halve the memory required, which is especially useful when performing analyses on larger datasets on a
     local machine.
 
-    .. versionadded:: 0.11.0
-
     Parameters
     ----------
-    subject_timeseries : :obj:`dict[str, dict[str, np.ndarray]]` or :obj:`os.PathLike`
-        A pickle file containing the nested subject timeseries dictionary saved by the
-        ``TimeSeriesExtractor`` class or a nested subject timeseries dictionary produced by the
+    subject_timeseries_list : :obj:`list[dict[str, dict[str, np.ndarray]]]` or :obj:`list[os.PathLike]`
+        A list of dictionaries or pickle files containing the nested subject timeseries dictionary saved by the
+        ``TimeSeriesExtractor`` class or a list of nested subject timeseries dictionaries produced by the
         ``TimeSeriesExtractor`` class. The first level of the nested dictionary must consist of the subject ID as a
         string, the second level must consist of the run numbers in the form of "run-#"
         (where # is the corresponding number of the run), and the last level must consist of the timeseries
@@ -42,22 +40,31 @@ def change_dtype(subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.
                     }
                 }
 
+        .. versionchanged:: 0.15 changed from ``subject_timeseries`` to ``subject_timeseries_list``
+
     dtype : :obj:`bool` or :obj:`np.floating`
         Target data type (e.g "float32" or ``np.float32``) to convert each participant's numpy arrays into.
 
-    return_dict : :obj:`bool`, default=True
+    return_dicts : :obj:`bool`, default=True
         If True, returns the converted ``subject_timeseries``.
+
+        .. versionchanged:: 0.15 changed from ``return_dict`` to ``return_dicts``
 
     output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
         Directory to save the converted ``subject_timeseries`` to. Will be saved as a pickle file. The directory will
         be created if it does not exist.
 
-    file_name : :obj:`str` or :obj:`None`, default=None
-        Name to save the converted ``subject_timeseries`` as.
+    file_names : :obj:`list[str]` or :obj:`None`, default=None
+        A list of names to save the  dictionaries with changed dtypes as. The assignment of file names to dictionaries
+        depends on the index position (a file name in the 0th position will be the file name for the dictionary in the
+        0th position of ``subject_timeseries_list``). If no names are provided and ``output_dir`` is specified,
+        default names will be used.
+
+        .. versionchanged:: 0.15.0 from ``file_name`` to ``file_names``
 
     Returns
     -------
-    `dict[str, np.ndarray]`.
+    `dict[str, dict[str, dict[str, np.ndarray]]]`
 
     Warning
     -------
@@ -67,20 +74,20 @@ def change_dtype(subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.
     "float32", since it allows for memory usage reduction while limiting rounding errors that could significantly
     alter calculations.
     """
-    # Deep Copy
-    subject_timeseries = copy.deepcopy(subject_timeseries)
+    assert isinstance(subject_timeseries_list, list), "`subject_timeseries_list` must be a list."
+    changed_dtype_dicts = {}
 
-    if isinstance(subject_timeseries, str) and subject_timeseries.endswith(".pkl"):
-        subject_timeseries = _convert_pickle_to_dict()
-
-    for subj_id in subject_timeseries:
-        for run in subject_timeseries[subj_id]:
-            subject_timeseries[subj_id][run] = subject_timeseries[subj_id][run].astype(dtype)
+    for indx, curr_dict in enumerate(subject_timeseries_list):
+        if isinstance(curr_dict, str) and curr_dict.endswith(".pkl"):
+            curr_dict = _convert_pickle_to_dict(curr_dict)
+        else:
+            curr_dict =  copy.deepcopy(curr_dict)
+        for subj_id in curr_dict:
+            for run in curr_dict[subj_id]:
+                curr_dict[subj_id][run] = curr_dict[subj_id][run].astype(dtype)
+        changed_dtype_dicts[f"dict_{indx}"] = curr_dict
 
     if output_dir:
-        if file_name: save_file_name = f"{os.path.splitext(file_name.rstrip())[0].rstrip()}.pkl"
-        else: save_file_name = file_name if file_name else f"subject_timeseries_desc-{dtype}.pkl"
-        with open(os.path.join(output_dir, save_file_name), "wb") as f:
-            joblib.dump(subject_timeseries,f)
+        _dicts_to_pickles(output_dir=output_dir, dict_list=changed_dtype_dicts, file_names=file_names, call="change_dtype")
 
-    if return_dict: return subject_timeseries
+    if return_dicts: return changed_dtype_dicts

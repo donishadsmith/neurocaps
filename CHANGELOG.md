@@ -42,11 +42,162 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.15.0] - 2024-07-21
+### 🚀 New/Added
+- `save_reduced_dicts` parameter to `merge_dicts` so that the reduced dictionaries can also be saved instead of only
+being returned.
+
+### ♻ Changed
+- Some parameter names, inputs, and outputs for non-class functions - `merge_dicts`, `change_dtypes`, and `standardize`
+have changed to improve consistency across these functions.
+    - `merge_dicts`
+        - `return_combined_dict` has been changed to `return_merged_dict`.
+        - `file_name` has been changed to `file_names` since the reduced dicts can also be saved now.
+        - Key in output dictionary containing the merged dictionary changed from "combined" to "merged".
+    - `standardize` & `change_dtypes`
+        - `subject_timeseries` has been changed to `subject_timeseries_list`, the same as in `merge_dicts`.
+        - `file_name` has been changed to `file_names`.
+        - `return_dict` has been changed to `return_dicts`.
+- The returned dictionary for `merge_dicts`, `change_dtypes`, and `standardize` is only
+`dict[str, dict[str, dict[str, np.ndarray]]]` now.
+
+- In CAP.calculate_metrics, the metrics calculations, except for "temporal_fraction" have been refactored to remove an
+import or use numpy operations to reduce needed to create the same calculation.
+    - "counts"
+        - Previous Code:
+        ```python
+        # Get frequency
+        frequency_dict = dict(collections.Counter(predicted_subject_timeseries[subj_id][curr_run]))
+        # Sort the keys
+        sorted_frequency_dict = {key: frequency_dict[key] for key in sorted(list(frequency_dict))}
+        # Add zero to missing CAPs for participants that exhibit zero instances of a certain CAP
+        if len(sorted_frequency_dict) != len(cap_numbers):
+            sorted_frequency_dict = {cap_number: sorted_frequency_dict[cap_number] if cap_number in
+                                     list(sorted_frequency_dict) else 0 for cap_number in cap_numbers}
+        # Replace zeros with nan for groups with less caps than the group with the max caps
+        if len(cap_numbers) > group_cap_counts[group]:
+            sorted_frequency_dict = {cap_number: sorted_frequency_dict[cap_number] if
+                                     cap_number <= group_cap_counts[group] else float("nan") for cap_number in
+                                     cap_numbers}
+
+        ```
+        - Refactored Code:
+        ```python
+        # Get frequency;
+        frequency_dict = {key: np.where(predicted_subject_timeseries[subj_id][curr_run] == key,1,0).sum()
+                          for key in range(1, group_cap_counts[group] + 1)}
+        # Replace zeros with nan for groups with less caps than the group with the max caps
+        if max(cap_numbers) > group_cap_counts[group]:
+            for i in range(group_cap_counts[group] + 1, max(cap_numbers) + 1): frequency_dict.update({i: float("nan")})
+        ```
+    - "temporal_fraction"
+        - Previous Code:
+        ```python
+        proportion_dict = {key: item/(len(predicted_subject_timeseries[subj_id][curr_run]))
+                                       for key, item in sorted_frequency_dict.items()}
+        ```
+        - "Refactored Code": Nothing other than some parameter names have changed.
+        ```python
+        proportion_dict = {key: value/(len(predicted_subject_timeseries[subj_id][curr_run]))
+                           for key, value in frequency_dict.items()}
+        ```
+    - "persistence"
+        - Previous Code:
+        ```python
+        # Initialize variable
+        persistence_dict = {}
+        uninterrupted_volumes = []
+        count = 0
+        # Iterate through caps
+        for target in cap_numbers:
+            # Iterate through each element and count uninterrupted volumes that equal target
+            for index in range(0,len(predicted_subject_timeseries[subj_id][curr_run])):
+                if predicted_subject_timeseries[subj_id][curr_run][index] == target:
+                    count +=1
+                # Store count in list if interrupted and not zero
+                else:
+                    if count != 0:
+                        uninterrupted_volumes.append(count)
+                    # Reset counter
+                    count = 0
+            # In the event, a participant only occupies one CAP and to ensure final counts are added
+            if count > 0:
+                uninterrupted_volumes.append(count)
+            # If uninterrupted_volumes not zero, multiply elements in the list by repetition time, sum and divide
+            if len(uninterrupted_volumes) > 0:
+                persistence_value = np.array(uninterrupted_volumes).sum()/len(uninterrupted_volumes)
+                if tr:
+                    persistence_dict.update({target: persistence_value*tr})
+                else:
+                    persistence_dict.update({target: persistence_value})
+            else:
+                # Zero indicates that a participant has zero instances of the CAP
+                persistence_dict.update({target: 0})
+            # Reset variables
+            count = 0
+            uninterrupted_volumes = []
+
+        # Replace zeros with nan for groups with less caps than the group with the max caps
+        if len(cap_numbers) > group_cap_counts[group]:
+            persistence_dict = {cap_number: persistence_dict[cap_number] if
+                                cap_number <= group_cap_counts[group] else float("nan") for cap_number in
+                                cap_numbers}
+        ```
+        - Refactored Code:
+        ```python
+        # Initialize variable
+        persistence_dict = {}
+        # Iterate through caps
+        for target in cap_numbers:
+            # Binary representation of array - if [1,2,1,1,1,3] and target is 1, then it is [1,0,1,1,1,0]
+            binary_arr = np.where(predicted_subject_timeseries[subj_id][curr_run] == target,1,0)
+            # Get indices of values that equal 1; [0,2,3,4]
+            target_indices = np.where(binary_arr == 1)[0]
+            # Count the transitions, indices where diff > 1 is a transition; diff of indices = [2,1,1];
+            # binary for diff > 1 = [1,0,0]; thus, segments = transitions + first_sequence(1) = 2
+            segments = np.where(np.diff(target_indices, n=1) > 1, 1,0).sum() + 1
+            # Sum of ones in the binary array divided by segments, then multiplied by 1 or the tr; segment is
+            # always 1 at minimum due to + 1; np.where(np.diff(target_indices, n=1) > 1, 1,0).sum() is 0 when empty or the condition isn't met
+            persistence_dict.update({target: (binary_arr.sum()/segments) * (tr if tr else 1)})
+
+        # Replace zeros with nan for groups with less caps than the group with the max caps
+        if max(cap_numbers) > group_cap_counts[group]:
+            for i in range(group_cap_counts[group] + 1, max(cap_numbers) + 1): persistence_dict.update({i: float("nan")})
+        ```
+    - "transition_frequency"
+        - Previous Code:
+        ```python
+        count = 0
+        # Iterate through predicted values
+        for index in range(0,len(predicted_subject_timeseries[subj_id][curr_run])):
+            if index != 0:
+                # If the subsequent element does not equal the previous element, this is considered a transition
+                if predicted_subject_timeseries[subj_id][curr_run][index-1] != predicted_subject_timeseries[subj_id][curr_run][index]:
+                    count +=1
+        # Populate DataFrame
+        new_row = [subj_id, group_name, curr_run, count]
+        df_dict["transition_frequency"].loc[len(df_dict["transition_frequency"])] = new_row
+        ```
+
+        - Refactored Code:
+        ```python
+        # Sum the differences that are not zero - [1,2,1,1,1,3] becomes [1,-1,0,0,2], binary representation
+        # for values not zero is [1,1,0,0,1] = 3 transitions
+        transition_frequency = np.where(np.diff(predicted_subject_timeseries[subj_id][curr_run]) != 0,1,0).sum()
+        ```
+### 🐛 Fixes
+- When a pickle file was used as input in `standardize` or `change_dtype` an error was produced, this has been fixed
+and these functions accept a list of dictionaries or a list of pickle files now.
+
+### 💻 Metadata
+- In the documentation for `CAP.caps2corr` it is now explicitly stated that the type of correlation being used is
+Pearson correlation.
+
 ## [0.14.7] - 2024-07-17
 ### ♻ Changed
 - Improved Warning Messages and Print Statements:
     - In TimeseriesExtractor.get_bold, the subject-specific information output has been reformatted for better readability:
-        
+
         - Previous Format:
         ```
         Subject: 1; run:1 - Message
@@ -254,9 +405,9 @@ in earlier Python versions (3.9).
 ## [0.12.1] - 2024-06-27
 
 ### ♻ Changed
-- For `merge_dicts` sorts the run keys lexicographically so that subjects that don't have the earliest run-id in the 
+- For `merge_dicts` sorts the run keys lexicographically so that subjects that don't have the earliest run-id in the
 first dictionary due to not having that run or the run being excluded still have ordered run keys in the merged
-dictionary. 
+dictionary.
 
 ### 💻 Metadata
 - Updates `runs` parameters type hints so that it is known that strings can be used to0.
@@ -297,7 +448,7 @@ This doesn't affect functionality but it may be better to respect the original u
 
 ## [0.11.1] - 2024-06-23
 ### 🐛 Fixes
-- Fix for python 3.12 when using `CAP.caps2surf()`. 
+- Fix for python 3.12 when using `CAP.caps2surf()`.
     - Changes in pathlib.py in Python 3.12 results in an error message format change. The error message now includes
       quotes (e.g., "not 'Nifti1Image'") instead of the previous format without quotes ("not Nifti1Image"). This issue
       arises when using ``neuromaps.transforms.mni_to_fslr`` within CAP.caps2surf() as neuromaps captures the error as a
@@ -346,7 +497,7 @@ the docstring header for aesthetics.
 ### 🚀 New/Added
 - Added new function `change_dtype` to make it easier to change the dtypes of each subject's numpy array to assist with
 memory usage, especially if doing the CAPs analysis on a local machine.
-- Added new parameters - `output_dir`, `file_name`, and `return_dict` ` to `standardize` to save dictionary, the 
+- Added new parameters - `output_dir`, `file_name`, and `return_dict` ` to `standardize` to save dictionary, the
 `return_dict` defaults to True.
 - Adds a new version attribute so you can check the current version using `neurocaps.__version__`
 
@@ -363,7 +514,7 @@ it will provide a default file_name now instead of producing a Nonetype error.
 
 ## [0.10.0.post2] - 2024-06-20
 ### 💻 Metadata
-- Minor metadata update to docstrings to remove curly braces from inside the list object of certain parameters to 
+- Minor metadata update to docstrings to remove curly braces from inside the list object of certain parameters to
 not make it seem as if it is supposed to be a strings inside a dictionary which is inside a list as opposed to strings
 in a list.
 
@@ -394,7 +545,7 @@ surface space. - **new to [0.10.0]**
 - Adds nbformat as dependency for plotly. - **new to [0.10.0]**
 - In `TimeseriesExtractor.get_bold()`, several checks are done to ensure that subjects have the necessary files for
 extraction. Subjects that have zero nifti, confound files (if confounds requested), event files (if requested), etc
-are automatically eliminated from being added to the list for timeseries extraction. A final check assesses, the run 
+are automatically eliminated from being added to the list for timeseries extraction. A final check assesses, the run
 ID of the files to see if the subject has at least one run with all necessary files to avoid having subjects with all
 the necessary files needed but all are from different runs. This is most likely a rare occurrence but it is better to be
 safer to ensure that even a rare occurrence doesn't result in a crash. The continue statement that skips the subject
@@ -425,8 +576,8 @@ python 3.12, you may need to use `pip install setuptools` if you receive an erro
 
 ## [0.9.9.post3] - 2024-06-13
 ### 🐛 Fixes
-- Noted an issue with file naming in `CAP.calculate_metrics()` that causes the suffix of the file name to append 
-to subsequent file names when requesting multiple metrics. While it doesn't effect the content inside the file it is an 
+- Noted an issue with file naming in `CAP.calculate_metrics()` that causes the suffix of the file name to append
+to subsequent file names when requesting multiple metrics. While it doesn't effect the content inside the file it is an
 irritating issue. For instance "-temporal_fraction.csv" became "-counts-temporal_fraction.csv" if user requested "counts"
 before "temporal fraction".
 

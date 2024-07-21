@@ -1,6 +1,5 @@
 import copy, json, os, glob, math, pytest, numpy as np, pandas as pd
 from neurocaps.extraction import TimeseriesExtractor
-from neurocaps.analysis import change_dtype
 
 dir = os.path.dirname(__file__)
 bids_dir = os.path.join(dir, "ds000031_R1.0.4_ses001-022/ds000031_R1.0.4/")
@@ -100,11 +99,6 @@ def test_extraction(parcel_approach, use_confounds, n_cores, name):
     assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 40
 
     if name in ["AAL", "Schaefer"]: extractor.visualize_bold(subj_id="01",run="001", region=region[name], show_figs=False)
-
-    converted_timeseries = change_dtype(extractor.subject_timeseries,dtype="float16")
-
-    assert converted_timeseries["01"]["run-001"].dtype == "float16"
-    assert extractor.subject_timeseries["01"]["run-001"].dtype != converted_timeseries["01"]["run-001"].dtype
 
     # Task condition; will issue warning due to max index for condition being 40 when the max index for timeseries is 39
     extractor.get_bold(bids_dir=bids_dir, session='002', runs="001",task="rest", pipeline_name=pipeline_name,

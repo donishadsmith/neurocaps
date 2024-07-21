@@ -28,7 +28,6 @@ jobs:
         run: |
           pip install pytest
           pytest test_CAP.py
-          pytest test_merge_dicts.py
         shell: bash
         working-directory: tests
       - name: Run TimeseriesExtractor tests
@@ -37,5 +36,20 @@ jobs:
           pytest test_TimeseriesExtractor.py
           pytest test_TimeseriesExtractor_config.py
           pytest test_TimeseriesExtractor_modified.py
+        shell: bash
+        working-directory: tests
+      - name: Run merge_dicts test
+        run: |
+          pytest test_merge_dicts.py
+        shell: bash
+        working-directory: tests
+      - name: Run standardize test
+        run: |
+          pytest test_standardize.py
+        shell: bash
+        working-directory: tests
+      - name: Run change_dtype test
+        run: |
+          pytest test_change_dtype.py
         shell: bash
         working-directory: tests
