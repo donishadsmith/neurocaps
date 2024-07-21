@@ -39,7 +39,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
 
         event_file = None if len(event_files) == 0 else [event_file for event_file in event_files
                                                          if run in os.path.basename(event_file)][0]
-        
+
         # Base message
         run_message = run_id.split("-")[-1]
         if task_info["session"] is not None:
@@ -56,7 +56,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
                                   {base_message}
                                   {underline}
                                   Preparing for timeseries extraction using -
-                                  [FILE: {nifti_file}]"""), flush=flush_print)
+                                  [FILE: {nifti_file}]."""), flush=flush_print)
 
         # Initialize variables; fd_threshold and even_file checked first for a "fail fast" approach that avoids
         # extracting timeseries for runs that will be empty or flagged
@@ -75,7 +75,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
                                           {base_message}
                                           {underline}
                                           Number of dummy scans to be removed based on 'non_steady_state_outlier_XX'
-                                          columns is {dummy_scans}"""),flush=flush_print)
+                                          columns is {dummy_scans}."""),flush=flush_print)
             else:
                 dummy_scans = signal_clean_info["dummy_scans"]
 
@@ -164,7 +164,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
                                           {base_message}
                                           {underline}
                                           Processing skipped: Run flagged due to more than {outlier_limit*100}% of the
-                                          volumes exceeding the framewise displacement (FD) threshold limit of {threshold}"""))
+                                          volumes exceeding the framewise displacement (FD) threshold limit of {threshold}."""))
             continue
 
         timeseries = _continue_extraction(nifti_file=nifti_file, mask_file=mask_file, confound_df=confound_df,
@@ -231,7 +231,7 @@ def _continue_extraction(nifti_file, mask_file, confound_df, confound_metadata_f
                 print(textwrap.dedent(f"""
                                       {base_message}
                                       {underline}
-                                      The following confounds were not found - {invalid_confounds}"""),
+                                      The following confounds were not found - {invalid_confounds}."""),
                                       flush=flush_print)
 
         confounds = confound_df[valid_confounds]
@@ -240,7 +240,7 @@ def _continue_extraction(nifti_file, mask_file, confound_df, confound_metadata_f
             print(textwrap.dedent(f"""
                                   {base_message}
                                   {underline}
-                                  The following confounds will be for nuisance regression - {list(confounds.columns)}"""),
+                                  The following confounds will be for nuisance regression - {list(confounds.columns)}."""),
                                   flush=flush_print)
 
     # Create the masker for extracting time series

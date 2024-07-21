@@ -2,7 +2,7 @@ Tutorial 3: Merging Timeseries With ``neurocaps.analysis.merge_dicts``
 ======================================================================
 Combining the timeseries from different tasks is possible with ``merge_dicts``, this permits running analyses to 
 identify similar CAPs across different tasks, assuming these tasks use the same subjects. The ``merge_dicts()``
-function will produce a combined subject timeseries dictionary that contains only the subject IDs present across both
+function will produce a merged subject timeseries dictionary that contains only the subject IDs present across both
 subject dictionaries. Additionally, this function appends similar run-IDs together. For instance, run-1 from one task
 is appended to run-1 of the other task. For this to work, all dictionaries must contain the same number of columns/ROIs.
 
@@ -21,12 +21,12 @@ is appended to run-1 of the other task. For this to work, all dictionaries must 
     subject_timeseries_2 = {str(x) : {f"run-{y}": np.random.rand(20,100) for y in range(1,2)} for x in range(1,3)}
 
     # subject_timeseries_list also takes pickle files and can save the modified dictionaries as pickles too.
-    subject_timeseries_combined = merge_dicts(subject_timeseries_list=[subject_timeseries_1, subject_timeseries_2],
-                                          return_combined_dict=True, return_reduced_dicts=False)
+    subject_timeseries_merged = merge_dicts(subject_timeseries_list=[subject_timeseries_1, subject_timeseries_2],
+                                          return_merged_dict=True, return_reduced_dicts=False)
 
-    for subj_id in subject_timeseries_combined:
-        for run_id in subject_timeseries_combined[subj_id]:
-            timeseries = subject_timeseries_combined[subj_id][run_id]
+    for subj_id in subject_timeseries_merged["merged"]:
+        for run_id in subject_timeseries_merged["merged"][subj_id]:
+            timeseries = subject_timeseries_merged["merged"][subj_id][run_id]
             print(f"sub-{subj_id}; {run_id} shape is {timeseries.shape}")
 
 .. rst-class:: sphx-glr-script-out
@@ -43,13 +43,13 @@ is appended to run-1 of the other task. For this to work, all dictionaries must 
 
     # The original dictionaries can also be returned too. The only modifications done is that the originals will 
     # Only contain the subjects present across all dictionaries in the list
-    combined_dicts = merge_dicts(subject_timeseries_list=[subject_timeseries_1, subject_timeseries_2],
-                                        return_combined_dict=True, return_reduced_dicts=True)
+    merged_dicts = merge_dicts(subject_timeseries_list=[subject_timeseries_1, subject_timeseries_2],
+                                        return_merged_dict=True, return_reduced_dicts=True)
 
-    for dict_id in combined_dicts:
-        for subj_id in combined_dicts[dict_id]:
-            for run_id in combined_dicts[dict_id][subj_id]:
-                timeseries = combined_dicts[dict_id][subj_id][run_id]
+    for dict_id in merged_dicts:
+        for subj_id in merged_dicts[dict_id]:
+            for run_id in merged_dicts[dict_id][subj_id]:
+                timeseries = merged_dicts[dict_id][subj_id][run_id]
                 print(f"For {dict_id} sub-{subj_id}; {run_id} shape is {timeseries.shape}")
 
 .. rst-class:: sphx-glr-script-out
@@ -63,8 +63,8 @@ is appended to run-1 of the other task. For this to work, all dictionaries must 
         For dict_0 sub-2; run-2 shape is (10, 100)
         For dict_1 sub-1; run-1 shape is (20, 100)
         For dict_1 sub-2; run-1 shape is (20, 100)
-        For combined sub-1; run-1 shape is (30, 100)
-        For combined sub-1; run-2 shape is (10, 100)
-        For combined sub-1; run-3 shape is (10, 100)
-        For combined sub-2; run-1 shape is (30, 100)
-        For combined sub-2; run-2 shape is (10, 100)
+        For merged sub-1; run-1 shape is (30, 100)
+        For merged sub-1; run-2 shape is (10, 100)
+        For merged sub-1; run-3 shape is (10, 100)
+        For merged sub-2; run-1 shape is (30, 100)
+        For merged sub-2; run-2 shape is (10, 100)

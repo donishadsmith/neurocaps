@@ -1,30 +1,89 @@
-import numpy as np, pickle, pandas as pytest
+import glob, os, numpy as np, pytest
 
 from neurocaps.analysis import merge_dicts
 
-def test_merge_dicts():
+@pytest.mark.parametrize("return_reduced_dicts,return_merged_dicts",
+                         [(True, True), (False,False), (True, False), (False, True)])
+def test_merge_dicts(return_reduced_dicts,return_merged_dicts):
     subject_timeseries = {str(x) : {f"run-{y}": np.random.rand(100,100) for y in range(1,4)} for x in range(1,11)}
     subject_timeseries_2 = {str(x) : {f"run-{y}": np.random.rand(100,100) for y in range(1,3)} for x in range(1,8)}
-    subject_timeseries_combined = merge_dicts([subject_timeseries,subject_timeseries_2], return_reduced_dicts= False, return_combined_dict=True)
-    assert subject_timeseries_combined["1"]["run-1"].shape == (200,100)
-    assert subject_timeseries_combined["1"]["run-2"].shape == (200,100)
-    assert subject_timeseries_combined["1"]["run-3"].shape == (100,100)
-    assert len(subject_timeseries_combined["1"].keys()) == 3
-    assert list(subject_timeseries_combined["1"].keys()) == ["run-1", "run-2", "run-3"]
-    all_dicts = merge_dicts([subject_timeseries,subject_timeseries_2], return_reduced_dicts= True, return_combined_dict=True)
-    assert all_dicts["dict_0"].keys() == all_dicts["dict_1"].keys() == all_dicts["combined"].keys()
-    all_dicts = merge_dicts([subject_timeseries,subject_timeseries_2], return_reduced_dicts= True, return_combined_dict=False)
-    assert all_dicts["dict_0"].keys() == all_dicts["dict_1"].keys()
-    assert len(all_dicts["dict_0"].keys()) == len(all_dicts["dict_1"].keys())
+    subject_timeseries_merged = merge_dicts([subject_timeseries,subject_timeseries_2],
+                                            return_reduced_dicts=return_reduced_dicts,
+                                            return_merged_dict=return_merged_dicts)
+    if return_merged_dicts:
+        assert subject_timeseries_merged["merged"]["1"]["run-1"].shape == (200,100)
+        assert subject_timeseries_merged["merged"]["1"]["run-2"].shape == (200,100)
+        assert subject_timeseries_merged["merged"]["1"]["run-3"].shape == (100,100)
+        assert len(subject_timeseries_merged["merged"]["1"].keys()) == 3
+        assert list(subject_timeseries_merged["merged"]["1"].keys()) == ["run-1", "run-2", "run-3"]
+    all_dicts = merge_dicts([subject_timeseries,subject_timeseries_2], return_reduced_dicts=return_reduced_dicts,
+                            return_merged_dict=return_merged_dicts)
+    if return_reduced_dicts and return_merged_dicts:
+        assert all_dicts["dict_0"].keys() == all_dicts["dict_1"].keys() == all_dicts["merged"].keys()
+        assert not np.array_equal(all_dicts["dict_0"]["1"]["run-1"],all_dicts["dict_1"]["1"]["run-1"])
+    all_dicts = merge_dicts([subject_timeseries,subject_timeseries_2], return_reduced_dicts=return_reduced_dicts,
+                            return_merged_dict=return_merged_dicts)
+    if return_reduced_dicts:
+        assert all_dicts["dict_0"].keys() == all_dicts["dict_1"].keys()
+        assert len(all_dicts["dict_0"].keys()) == len(all_dicts["dict_1"].keys())
 
-def test_merge_dicts_pkl():
-    with open("sample_timeseries.pkl", "rb") as f:
-        subject_timeseries = pickle.load(f)
-    subject_timeseries_combined = merge_dicts([subject_timeseries,subject_timeseries], return_reduced_dicts= False, return_combined_dict=True)
-    assert subject_timeseries_combined["1"]["run-1"].shape == (100,100)
-    assert subject_timeseries_combined["1"]["run-2"].shape == (100,100)
-    assert subject_timeseries_combined["1"]["run-3"].shape == (100,100)
-    all_dicts = merge_dicts([subject_timeseries,subject_timeseries], return_reduced_dicts= True, return_combined_dict=True)
-    assert all_dicts["dict_0"].keys() == all_dicts["dict_1"].keys() == all_dicts["combined"].keys()
-    all_dicts = merge_dicts([subject_timeseries,subject_timeseries], return_reduced_dicts= True, return_combined_dict=False)
-    assert all_dicts["dict_0"].keys() == all_dicts["dict_1"].keys()
+@pytest.mark.parametrize("return_reduced_dicts,return_merged_dicts",
+                         [(True, True), (False,False), (True, False), (False, True)])
+def test_merge_dicts_pkl(return_reduced_dicts,return_merged_dicts):
+    subject_timeseries_merged = merge_dicts(["sample_timeseries.pkl", "sample_timeseries.pkl"],
+                                            return_reduced_dicts=return_reduced_dicts,
+                                            return_merged_dict=return_merged_dicts)
+    if return_merged_dicts:
+        assert subject_timeseries_merged["merged"]["1"]["run-1"].shape == (100,100)
+        assert subject_timeseries_merged["merged"]["1"]["run-2"].shape == (100,100)
+        assert subject_timeseries_merged["merged"]["1"]["run-3"].shape == (100,100)
+        assert len(subject_timeseries_merged["merged"]["1"].keys()) == 3
+        assert list(subject_timeseries_merged["merged"]["1"].keys()) == ["run-1", "run-2", "run-3"]
+    all_dicts = merge_dicts(["sample_timeseries.pkl","sample_timeseries.pkl"], return_reduced_dicts=return_reduced_dicts,
+                            return_merged_dict=return_merged_dicts)
+    if return_reduced_dicts and return_merged_dicts:
+        assert all_dicts["dict_0"].keys() == all_dicts["dict_1"].keys() == all_dicts["merged"].keys()
+    all_dicts = merge_dicts(["sample_timeseries.pkl","sample_timeseries.pkl"], return_reduced_dicts=return_reduced_dicts,
+                            return_merged_dict=return_merged_dicts)
+    if return_reduced_dicts:
+        assert all_dicts["dict_0"].keys() == all_dicts["dict_1"].keys()
+
+    # Test files
+    if return_reduced_dicts:
+        all_dicts = merge_dicts(["sample_timeseries.pkl","sample_timeseries.pkl"], return_reduced_dicts=True,
+                                return_merged_dict=True, output_dir=os.path.dirname(__file__), save_reduced_dicts=True)
+        files = glob.glob(os.path.join(os.path.dirname(__file__), "*merged*")) + glob.glob(os.path.join(os.path.dirname(__file__),
+                                                                                                        "*reduced*"))
+        assert len(files) == 3
+        files = [os.path.basename(file) for file in files]
+        assert "subject_timeseries_0_reduced.pkl" in files
+        assert "subject_timeseries_1_reduced.pkl" in files
+        assert "merged_subject_timeseries.pkl" in files
+        assert all(os.path.getsize(file) > 0 for file in files)
+        [os.remove(x) for x in files]
+
+        all_dicts = merge_dicts(["sample_timeseries.pkl","sample_timeseries.pkl"], return_reduced_dicts=False,
+                                return_merged_dict=False, file_names=["test_0_reduced.pkl", "test_1_reduced.pkl", "test_merged.pkl"],
+                                output_dir=os.path.dirname(__file__), save_reduced_dicts=True)
+        files = glob.glob(os.path.join(os.path.dirname(__file__), "*merged*")) + glob.glob(os.path.join(os.path.dirname(__file__),
+                                                                                                        "*reduced*"))
+
+        assert len(files) == 3
+        files = [os.path.basename(file) for file in files]
+        assert "test_0_reduced.pkl" in files
+        assert "test_1_reduced.pkl" in files
+        assert "test_merged.pkl" in files
+        assert all(os.path.getsize(file) > 0 for file in files)
+        [os.remove(x) for x in files]
+
+        if return_merged_dicts:
+            all_dicts = merge_dicts(["sample_timeseries.pkl","sample_timeseries.pkl"], return_reduced_dicts=False,
+                                    return_merged_dict=True, file_names=["test_merged.pkl"],
+                                    output_dir=os.path.dirname(__file__), save_reduced_dicts=False)
+            files = glob.glob(os.path.join(os.path.dirname(__file__), "*merged*")) + glob.glob(os.path.join(os.path.dirname(__file__),
+                                                                                                            "*reduced*"))
+            assert len(files) == 1
+            files = [os.path.basename(file) for file in files]
+            assert "test_merged.pkl" in files
+            assert all(os.path.getsize(file) > 0 for file in files)
+            [os.remove(x) for x in files]

@@ -67,7 +67,7 @@ def test_skip(n_cores, pipeline_name):
     extractor.get_bold(bids_dir=bids_dir, task="rest", runs=["001"],pipeline_name=pipeline_name, tr=1.2, n_cores=n_cores, run_subjects=["01"])
     assert extractor.subject_timeseries == {}
 
-@pytest.mark.parametrize("n_cores,pipeline_name", [(None,None),(1, pipeline)])
+@pytest.mark.parametrize("n_cores,pipeline_name", [(None,None),(2, pipeline)])
 def test_append(n_cores, pipeline_name):
     parcel_approach = {"Schaefer": {"yeo_networks": 7}}
     extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",

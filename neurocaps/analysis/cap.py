@@ -1,5 +1,5 @@
 
-import collections, copy, itertools, os, sys, tempfile, textwrap, warnings
+import copy, itertools, os, sys, tempfile, textwrap, warnings
 from typing import Union, Literal, Optional
 import numpy as np, nibabel as nib, matplotlib.pyplot as plt, pandas as pd, seaborn, surfplot
 import plotly.express as px, plotly.graph_objects as go, plotly.offline as pyo
@@ -623,7 +623,7 @@ class CAP(_CAPGetter):
 
         for group in self._groups:
             performance_dict[group] = {}
-            # Don't want to store model dict for all groups; re-initialize for each group 
+            # Don't want to store model dict for all groups; re-initialize for each group
             model_dict = {}
             if self._n_cores is None:
                 for n_cluster in self._n_clusters:
@@ -638,7 +638,7 @@ class CAP(_CAPGetter):
                 output = parallel(delayed(_run_kmeans)(n_cluster, random_state, init, n_init, max_iter, tol,
                                                               algorithm, self._concatenated_timeseries[group],
                                                               method) for n_cluster in self._n_clusters)
-                
+
                 output_scores, models = zip(*output)
                 for output in output_scores: performance_dict[group].update(output)
                 for model in models: model_dict.update(model)
@@ -954,84 +954,55 @@ class CAP(_CAPGetter):
         for subj_id, group, curr_run in distributed_list:
             group_name = group.replace(" ","_")
             if "temporal_fraction" in metrics or "counts" in metrics:
-                # Get frequency
-                frequency_dict = dict(collections.Counter(predicted_subject_timeseries[subj_id][curr_run]))
-                # Sort the keys
-                sorted_frequency_dict = {key: frequency_dict[key] for key in sorted(list(frequency_dict))}
-                # Add zero to missing CAPs for participants that exhibit zero instances of a certain CAP
-                if len(sorted_frequency_dict) != len(cap_numbers):
-                    sorted_frequency_dict = {cap_number: sorted_frequency_dict[cap_number] if cap_number in
-                                             list(sorted_frequency_dict) else 0 for cap_number in cap_numbers}
+                # Get frequency; 
+                frequency_dict = {key: np.where(predicted_subject_timeseries[subj_id][curr_run] == key,1,0).sum()
+                                  for key in range(1, group_cap_counts[group] + 1)}
                 # Replace zeros with nan for groups with less caps than the group with the max caps
-                if len(cap_numbers) > group_cap_counts[group]:
-                    sorted_frequency_dict = {cap_number: sorted_frequency_dict[cap_number] if
-                                             cap_number <= group_cap_counts[group] else float("nan") for cap_number in
-                                             cap_numbers}
+                if max(cap_numbers) > group_cap_counts[group]:
+                    for i in range(group_cap_counts[group] + 1, max(cap_numbers) + 1): frequency_dict.update({i: float("nan")})
 
                 if "temporal_fraction" in metrics:
-                    proportion_dict = {key: item/(len(predicted_subject_timeseries[subj_id][curr_run]))
-                                       for key, item in sorted_frequency_dict.items()}
+                    proportion_dict = {key: value/(len(predicted_subject_timeseries[subj_id][curr_run]))
+                                       for key, value in frequency_dict.items()}
                     # Populate Dataframe
-                    new_row = [subj_id, group_name, curr_run] + [items for _ , items in proportion_dict.items()]
+                    new_row = [subj_id, group_name, curr_run] + [items for items in proportion_dict.values()]
                     df_dict["temporal_fraction"].loc[len(df_dict["temporal_fraction"])] = new_row
+
                 if "counts" in metrics:
                     # Populate Dataframe
-                    new_row = [subj_id, group_name, curr_run] + [items for _ , items in sorted_frequency_dict.items()]
+                    new_row = [subj_id, group_name, curr_run] + [items for items in frequency_dict.values()]
                     df_dict["counts"].loc[len(df_dict["counts"])] = new_row
+
             if "persistence" in metrics:
                 # Initialize variable
                 persistence_dict = {}
-                uninterrupted_volumes = []
-                count = 0
-
                 # Iterate through caps
                 for target in cap_numbers:
-                    # Iterate through each element and count uninterrupted volumes that equal target
-                    for index in range(0,len(predicted_subject_timeseries[subj_id][curr_run])):
-                        if predicted_subject_timeseries[subj_id][curr_run][index] == target:
-                            count +=1
-                        # Store count in list if interrupted and not zero
-                        else:
-                            if count != 0:
-                                uninterrupted_volumes.append(count)
-                            # Reset counter
-                            count = 0
-                    # In the event, a participant only occupies one CAP and to ensure final counts are added
-                    if count > 0:
-                        uninterrupted_volumes.append(count)
-                    # If uninterrupted_volumes not zero, multiply elements in the list by repetition time, sum and divide
-                    if len(uninterrupted_volumes) > 0:
-                        persistence_value = np.array(uninterrupted_volumes).sum()/len(uninterrupted_volumes)
-                        if tr:
-                            persistence_dict.update({target: persistence_value*tr})
-                        else:
-                            persistence_dict.update({target: persistence_value})
-                    else:
-                        # Zero indicates that a participant has zero instances of the CAP
-                        persistence_dict.update({target: 0})
-                    # Reset variables
-                    count = 0
-                    uninterrupted_volumes = []
+                    # Binary representation of numpy array - if [1,2,1,1,1,3] and target is 1, then it is [1,0,1,1,1,0]
+                    binary_arr = np.where(predicted_subject_timeseries[subj_id][curr_run] == target,1,0)
+                    # Get indices of values that equal 1; [0,2,3,4]
+                    target_indices = np.where(binary_arr == 1)[0]
+                    # Count the transitions, indices where diff > 1 is a transition; diff of indices = [2,1,1];
+                    # binary for diff > 1 = [1,0,0]; thus, segments = transitions + first_sequence(1) = 2
+                    segments = np.where(np.diff(target_indices, n=1) > 1, 1,0).sum() + 1
+                    # Sum of ones in the binary array divided by segments, then multiplied by 1 or the tr; segment is
+                    # always 1 at minimum due to + 1; np.where(np.diff(target_indices, n=1) > 1, 1,0).sum() is 0 when empty or the condition isn't met
+                    persistence_dict.update({target: (binary_arr.sum()/segments) * (tr if tr else 1)})
 
                 # Replace zeros with nan for groups with less caps than the group with the max caps
-                if len(cap_numbers) > group_cap_counts[group]:
-                    persistence_dict = {cap_number: persistence_dict[cap_number] if
-                                        cap_number <= group_cap_counts[group] else float("nan") for cap_number in
-                                        cap_numbers}
+                if max(cap_numbers) > group_cap_counts[group]:
+                    for i in range(group_cap_counts[group] + 1, max(cap_numbers) + 1): persistence_dict.update({i: float("nan")})
 
                 # Populate Dataframe
                 new_row = [subj_id, group_name, curr_run] + [items for _ , items in persistence_dict.items()]
                 df_dict["persistence"].loc[len(df_dict["persistence"])] = new_row
+
             if "transition_frequency" in metrics:
-                count = 0
-                # Iterate through predicted values
-                for index in range(0,len(predicted_subject_timeseries[subj_id][curr_run])):
-                    if index != 0:
-                        # If the subsequent element does not equal the previous element, this is considered a transition
-                        if predicted_subject_timeseries[subj_id][curr_run][index-1] != predicted_subject_timeseries[subj_id][curr_run][index]:
-                            count +=1
+                # Sum the differences that are not zero - [1,2,1,1,1,3] becomes [1,-1,0,0,2], binary representation
+                # for values not zero is [1,1,0,0,1] = 3 transitions
+                transition_frequency = np.where(np.diff(predicted_subject_timeseries[subj_id][curr_run]) != 0,1,0).sum()
                 # Populate DataFrame
-                new_row = [subj_id, group_name, curr_run, count]
+                new_row = [subj_id, group_name, curr_run, transition_frequency]
                 df_dict["transition_frequency"].loc[len(df_dict["transition_frequency"])] = new_row
 
         if output_dir:
@@ -1586,7 +1557,7 @@ class CAP(_CAPGetter):
                   show_figs: bool=True, save_plots: bool=True, return_df: bool=False, save_df: bool=False,
                   **kwargs) -> Union[seaborn.heatmap, dict[str, pd.DataFrame]]:
         """
-        **Generate Correlation Matrix for CAPs**
+        **Generate Pearson Correlation Matrix for CAPs**
 
         Produces the correlation matrix of all CAPs and visualizes it as a ``seaborn.heatmap``. If groups were
         given when the CAP class was initialized, a correlation matrix will be generated for each group.

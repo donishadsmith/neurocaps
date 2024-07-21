@@ -32,7 +32,7 @@ for file in confound_files:
     confound_df.to_csv(file, sep="\t", index=None)
 
 # Should be able to retrieve and append data for each run and subject; Demonstrates it can retrieve subject specific file content
-@pytest.mark.parametrize("n_cores", [None,1])
+@pytest.mark.parametrize("n_cores", [None,2])
 def test_append(n_cores):
     parcel_approach = {"Schaefer": {"yeo_networks": 7}}
     extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
@@ -83,7 +83,7 @@ def test_session():
     assert extractor.subject_timeseries["01"]["run-001"].shape == (40,400)
 
     assert ["run-001"] == list(extractor.subject_timeseries["01"])
-    assert ["02"] not in  list(extractor.subject_timeseries)
+    assert ["02"] not in list(extractor.subject_timeseries)
 
 def test_session_error():
     parcel_approach = {"Schaefer": {"yeo_networks": 7}}

@@ -1,4 +1,4 @@
-import copy, numpy as np, pandas as pd, pickle, pytest, warnings
+import copy, math, numpy as np, pandas as pd, pickle, pytest, warnings
 from kneed import KneeLocator
 from neurocaps.extraction import TimeseriesExtractor
 from neurocaps.analysis import CAP, change_dtype
@@ -29,7 +29,7 @@ def concat_data(subject_table,standardize,runs=[1,2,3]):
                 else:
                     concatenated_timeseries[group] = np.vstack([concatenated_timeseries[group],
                                                                 subject_timeseries[sub][run]])
-                    
+
     # Check to check mutability, array are unique but should be the same, another sanity check to ensure no mutability issues
     # since np.vstack would create a new array.
     assert np.array_equal(first_subject_timeseries, subject_timeseries[first_sub][first_run])
@@ -47,13 +47,13 @@ def concat_data(subject_table,standardize,runs=[1,2,3]):
     return concatenated_timeseries
 
 # Similar method to how labels are predicted in CAP.calculate_metrics, same labels are then used to calculate the metrics
-def predict_labels(subject_timeseries, cap_analysis, standardize, group, runs=[1,2,3]):
+def predict_labels(timeseries, cap_analysis, standardize, group, runs=[1,2,3]):
     labels = None
     group_dict = cap_analysis.groups[group]
-    for sub in subject_timeseries:
-        for run in subject_timeseries[sub]:
+    for sub in timeseries:
+        for run in timeseries[sub]:
             if int(run.split("run-")[-1]) in runs and sub in group_dict:
-                new_timeseries = copy.deepcopy(subject_timeseries[sub][run])
+                new_timeseries = copy.deepcopy(timeseries[sub][run])
                 if standardize:
                     # .calculate_methods uses the previously calculated means and stdev conducted in the CAP.get_bold method,
                     # its done this way to avoid the minor numerical differences caused by floating point operations due to
@@ -61,7 +61,6 @@ def predict_labels(subject_timeseries, cap_analysis, standardize, group, runs=[1
                     # kmeans model
                     new_timeseries -= cap_analysis.means[group]
                     new_timeseries /= cap_analysis.stdev[group]
-
                 if labels is None:
                     labels = cap_analysis.kmeans[group].predict(new_timeseries)
                 else:
@@ -84,7 +83,7 @@ def test_no_groups_no_cluster_selection(standardize):
     else:
         # Floating point differences
         assert np.allclose(cap_analysis.concatenated_timeseries["All Subjects"], concatenated_timeseries["All Subjects"])
-    
+
     # Get labels; Validate that predicted labels for individual runs and getting labels will get the same labels in .labels_
     # This validates the way labels are predicted in the CAP.calculate_metrics(), which iterates through the subject_timeseries and predict
     # labels for each run of each subject. This is a way to ensure that even dictionaries merge with the merge_dicts function
@@ -142,7 +141,6 @@ def test_no_groups_cluster_selection():
     try:
         cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
                             n_clusters=list(range(2,41)), cluster_selection_method="elbow")
-        print(cap_analysis.optimal_n_clusters["All Subjects"])
         try:
             assert all(elem >= 0 for elem in cap_analysis.inertia["All Subjects"].values())
             kneedle = KneeLocator(x=list(cap_analysis.inertia["All Subjects"]),
@@ -191,7 +189,7 @@ def test_groups_and_cluster_selection():
     assert cap_analysis.caps["A"]["CAP-2"].shape == (100,)
     assert cap_analysis.caps["B"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["B"]["CAP-2"].shape == (100,)
-    
+
     # Elbow sometimes does find the elbow with random data, uses kneed to locate elbow
     try:
         cap_analysis = CAP(parcel_approach=extractor.parcel_approach, groups={"A": [1,2,3,5], "B": [4,6,7,8,9,10,7]})
@@ -216,7 +214,7 @@ def test_groups_and_cluster_selection():
 
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
                           n_clusters=[2,3,4,5], cluster_selection_method="silhouette")
-    
+
     assert max(cap_analysis.silhouette_scores["A"], key=cap_analysis.silhouette_scores["A"].get) == cap_analysis.optimal_n_clusters["A"]
     assert max(cap_analysis.silhouette_scores["B"], key=cap_analysis.silhouette_scores["B"].get) == cap_analysis.optimal_n_clusters["B"]
 
@@ -276,7 +274,7 @@ def test_groups_and_silhouette_method():
     assert cap_analysis.caps["B"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["B"]["CAP-2"].shape == (100,)
 
-def test_multiple_methods():
+def test_calculate_methods():
     cap_analysis = CAP(parcel_approach=extractor.parcel_approach, groups={"A": [1,2,3,5], "B": [4,6,7,8,9,10,7]})
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
                           n_clusters=[2,3,4,5], cluster_selection_method="silhouette")
@@ -287,21 +285,17 @@ def test_multiple_methods():
     df_dict = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True)
     assert len(df_dict) == 4
 
-    new_timeseries = change_dtype(extractor.subject_timeseries, dtype="float16")
-
-    cap_analysis.calculate_metrics(subject_timeseries=new_timeseries, return_df=True)
-
     for i in range(1,4):
         met1 = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, runs=i)
         met2 = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, runs=i,
                                               continuous_runs=True)
-        
+
         # If only one run continuous_runs should not differ
         assert met1["persistence"].equals(met2["persistence"])
 
     met1 = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True)
     met2 = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True,continuous_runs=True)
-    
+
     # Should differ
     assert not met1["persistence"].equals(met2["persistence"])
 
@@ -321,6 +315,59 @@ def test_multiple_methods():
     temp = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, metrics="temporal_fraction", continuous_runs=True)["temporal_fraction"]
 
     assert counts[["CAP-1", "CAP-2"]].map(lambda x: x/300).equals(temp[["CAP-1", "CAP-2"]])
+
+    # Check values of metrics; new methods
+    counts_df = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, metrics="counts",continuous_runs=False)["counts"]
+    counts_df = counts_df[[x for x in counts_df.columns if x.startswith("CAP")]]
+    temp_df = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, metrics="temporal_fraction",continuous_runs=False)["temporal_fraction"]
+    temp_df = temp_df[[x for x in temp_df.columns if x.startswith("CAP")]]
+    persistence_df = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, metrics="persistence", continuous_runs=False)["persistence"]
+    persistence_df = persistence_df[[x for x in persistence_df.columns if x.startswith("CAP")]]
+    transition_frequency_df = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries,
+                                                             return_df=True, metrics="transition_frequency", continuous_runs=False)["transition_frequency"]
+
+    # Get first subject
+    first_subject_timeseries = {}
+    first_subject_timeseries.update({"1": subject_timeseries["1"]})
+    first_subject_labels = predict_labels(first_subject_timeseries, cap_analysis, standardize=True, group="A", runs=[1]) + 1
+    n_caps = cap_analysis.optimal_n_clusters["A"]
+
+    # Counts and temporal_fraction
+    sorted_frequency_dict = {num: np.where(first_subject_labels == num,1,0).sum() for num in range(1, n_caps + 1)}
+    assert [x for x in list(sorted_frequency_dict.values()) if not math.isnan(x)] == [x for x in counts_df.loc[0,:].values if not math.isnan(x)]
+    assert sum([x for x in counts_df.loc[0,:].values if not math.isnan(x)]) == first_subject_timeseries["1"]["run-1"].shape[0]
+
+    proportion_dict = {num: value/len(first_subject_labels) for num, value in sorted_frequency_dict.items()}
+    assert [x for x in list(proportion_dict.values()) if not math.isnan(x)] == [x for x in temp_df.loc[0,:].values if not math.isnan(x)]
+
+    # Transition Frequency
+    transition_frequency = np.where(np.diff(first_subject_labels, n=1) != 0,1,0).sum()
+    assert transition_frequency_df.iloc[0,3] == transition_frequency
+
+    # Persistence
+    tr = None
+    persistence_dict = {}
+    for target in range(1, n_caps + 1):
+        # Binary representation of array
+        binary = np.where(first_subject_labels == target,1,0)
+        # Get indices of values that equal 1
+        indices = np.where(binary == 1)[0]
+        # Get the difference of the indices and create array where 1 is assigned indices where difference isn't one, this breaks segment; add 1 to account for first segment also avoids division by 1 error
+        segments = np.where(np.diff(indices, n=1) != 1, 1,0).sum() + 1
+        persistence_dict.update({target: (binary.sum()/segments) * (tr if tr else 1)})
+    assert [x for x in list(persistence_dict.values()) if not math.isnan(x)] == [x for x in persistence_df.loc[0,:].values if not math.isnan(x)]
+
+def test_multiple_methods():
+    cap_analysis = CAP(parcel_approach=extractor.parcel_approach, groups={"A": [1,2,3,5], "B": [4,6,7,8,9,10,7]})
+    cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
+                          n_clusters=[2,3,4,5], cluster_selection_method="silhouette")
+
+    assert all(elem > 0  or elem < 0 for elem in cap_analysis.silhouette_scores["A"].values())
+    assert all(elem > 0  or elem < 0 for elem in cap_analysis.silhouette_scores["A"].values())
+
+    new_timeseries = change_dtype([extractor.subject_timeseries], dtype="float16")
+
+    cap_analysis.calculate_metrics(subject_timeseries=new_timeseries["dict_0"], return_df=True)
 
     cap_analysis.caps2plot(subplots=True, xlabel_rotation=90, sharey=True, borderwidths=10, show_figs=False)
 

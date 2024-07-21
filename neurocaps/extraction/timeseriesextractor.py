@@ -92,6 +92,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
           allows the number of dummy scans to be based on the number of "non_steady_state_outlier_XX" columns in the
           fMRIPrep confounds file.
 
+
     Property
     --------
     space : str
@@ -571,7 +572,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                                                           has more than one session - {sorted(list(set(check_sessions)))}.
                                                           In order to continue timeseries extraction, the specific session to
                                                           extract must be specified."""))
-            
+
             base_message = f'[SUBJECT: {subj_id} | SESSION: {self._task_info["session"]} | TASK: {self.task_info["task"]}]'
             underline = '-'*len(base_message)
 

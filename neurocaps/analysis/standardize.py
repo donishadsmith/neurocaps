@@ -1,13 +1,13 @@
 """Function to standardize timeseries within subject runs"""
 import copy, os
 from typing import Union, Optional
-import numpy as np, joblib
-from .._utils import _convert_pickle_to_dict
+import numpy as np
+from .._utils import _convert_pickle_to_dict, _dicts_to_pickles
 
-def standardize(subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.PathLike],
-                return_dict: bool=True,
+def standardize(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarray]]], list[os.PathLike]],
+                return_dicts: bool=True,
                 output_dir: Optional[os.PathLike]=None,
-                file_name: Optional[str]=None) -> dict[str, dict[str, np.ndarray]]:
+                file_names: Optional[list[str]]=None) -> dict[str, dict[str, dict[str, np.ndarray]]]:
 
     """
     **Standardize Subject Timeseries**
@@ -17,9 +17,9 @@ def standardize(subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.P
 
     Parameters
     ----------
-    subject_timeseries: :obj:`dict[str, dict[str, np.ndarray]]` or :obj:`os.PathLike`
-        A pickle file containing the nested subject timeseries dictionary saved by the
-        ``TimeSeriesExtractor`` class or a nested subject timeseries dictionary produced by the
+    subject_timeseries_list : :obj:`list[dict[str, dict[str, np.ndarray]]]` or :obj:`list[os.PathLike]`
+        A list of dictionaries or pickle files containing the nested subject timeseries dictionary saved by the
+        ``TimeSeriesExtractor`` class or a list of nested subject timeseries dictionaries produced by the
         ``TimeSeriesExtractor`` class. The first level of the nested dictionary must consist of the subject ID as a
         string, the second level must consist of the run numbers in the form of "run-#"
         (where # is the corresponding number of the run), and the last level must consist of the timeseries
@@ -38,46 +38,52 @@ def standardize(subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.P
                     }
                 }
 
-    return_dict: :obj:`bool`, default=True
-        If True, returns the standardized ``subject_timeseries``.
+        .. versionchanged:: 0.15 changed from ``subject_timeseries`` to ``subject_timeseries_list``
+
+    return_dicts : :obj:`bool`, default=True
+        If True, returns the standardized dictionaries in the order they were inputted in ``subject_timeseries_list``.
 
         .. versionadded:: 0.11.0
+        .. versionchanged:: 0.15 changed from ``return_dict`` to ``return_dicts``
 
-    output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
-        Directory to save the standardized ``subject_timeseries`` to. Will be saved as a pickle file. The directory will
+    output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
+        Directory to save the standardized dictionaries to. Will be saved as a pickle file. The directory will
         be created if it does not exist.
 
         .. versionadded:: 0.11.0
 
-    file_name: :obj:`str` or :obj:`None`, default=None
-        Name to save the standardized ``subject_timeseries`` as.
+    file_names : :obj:`list[str]` or :obj:`None`, default=None
+        A list of names to save the standardized dictionaries as. The assignment of file names to dictionaries depends
+        on the index position (a file name in the 0th position will be the file name for the dictionary in the
+        0th position of ``subject_timeseries_list``). If no names are provided and ``output_dir`` is specified,
+        default names will be used.
 
         .. versionadded:: 0.11.0
+        .. versionchanged:: 0.15.0 from ``file_name`` to ``file_names``
 
     Returns
     -------
-    `dict[str, dict[str, np.ndarray]]`.
+    `dict[str, dict[str, dict[str, np.ndarray]]]`
     """
-    # Deep Copy
-    subject_timeseries = copy.deepcopy(subject_timeseries)
+    assert isinstance(subject_timeseries_list, list) and len(subject_timeseries_list) > 0, "`subject_timeseries_list` must be a list greater than length 0."
+    # Initialize  dict
+    standardized_dicts = {}
 
-    if isinstance(subject_timeseries, str) and subject_timeseries.endswith(".pkl"):
-        subject_timeseries = _convert_pickle_to_dict()
-
-    for subj_id in subject_timeseries:
-        for run in subject_timeseries[subj_id]:
-            std = np.std(subject_timeseries[subj_id][run], axis=0, ddof=1)
-            # Taken from nilearn pipeline, used for numerical stability purposes to avoid numpy division error
-            std[std < np.finfo(np.float64).eps] = 1.0
-            mean = np.mean(subject_timeseries[subj_id][run], axis=0)
-            subject_timeseries[subj_id][run] = (subject_timeseries[subj_id][run] - mean)/std
+    for indx, curr_dict in enumerate(subject_timeseries_list):
+        if isinstance(curr_dict, str) and curr_dict.endswith(".pkl"):
+            curr_dict = _convert_pickle_to_dict(curr_dict)
+        else:
+            curr_dict =  copy.deepcopy(curr_dict)
+        for subj_id in curr_dict:
+            for run in curr_dict[subj_id]:
+                std = np.std(curr_dict[subj_id][run], axis=0, ddof=1)
+                # Taken from nilearn pipeline, used for numerical stability purposes to avoid numpy division error
+                std[std < np.finfo(np.float64).eps] = 1.0
+                mean = np.mean(curr_dict[subj_id][run], axis=0)
+                curr_dict[subj_id][run] = (curr_dict[subj_id][run] - mean)/std
+        standardized_dicts[f"dict_{indx}"] = curr_dict
 
     if output_dir:
+        _dicts_to_pickles(output_dir=output_dir, dict_list=standardized_dicts, file_names=file_names, call="standardize")
 
-        if file_name: save_file_name = f"{os.path.splitext(file_name.rstrip())[0].rstrip()}.pkl"
-        else: save_file_name = "standardized_subject_timeseries.pkl"
-
-        with open(os.path.join(output_dir,save_file_name), "wb") as f:
-            joblib.dump(subject_timeseries,f)
-
-    if return_dict: return subject_timeseries
+    if return_dicts: return standardized_dicts
