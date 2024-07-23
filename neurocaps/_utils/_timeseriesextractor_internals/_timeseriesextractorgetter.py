@@ -24,8 +24,6 @@ class _TimeseriesExtractorGetter:
 
     @parcel_approach.setter
     def parcel_approach(self, parcel_dict):
-        if isinstance(parcel_dict, str) and parcel_dict.endswith(".pkl"):
-            parcel_dict = _convert_pickle_to_dict(parcel_dict)
         self._parcel_approach = _check_parcel_approach(parcel_approach=parcel_dict, call="setter")
 
     ### Does not exists upon initialization of Timeseries Extractor
@@ -64,6 +62,9 @@ class _TimeseriesExtractorGetter:
                 run = list(subject_dict[first_level_indx])[0]
                 if isinstance(subject_dict[first_level_indx][run],np.ndarray):
                     self._subject_timeseries = copy.deepcopy(subject_dict)
-                else: raise TypeError(error_message)
-            else: raise TypeError(error_message)
-        else: raise TypeError(error_message)
+                else:
+                    raise TypeError(error_message)
+            else:
+                raise TypeError(error_message)
+        else:
+            raise TypeError(error_message)

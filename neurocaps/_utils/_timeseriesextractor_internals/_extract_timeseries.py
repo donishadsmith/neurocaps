@@ -76,11 +76,18 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
                 if dummy_scans == 0: dummy_scans = None
                 if verbose:
                     if dummy_flag == "auto":
-                        print(textwrap.dedent(f"""
-                                            {base_message}
-                                            {underline}
-                                            Number of dummy scans to be removed based on 'non_steady_state_outlier_XX'
-                                            columns is {dummy_scans}."""),flush=flush_print)
+                        if dummy_scans is not None:
+                            print(textwrap.dedent(f"""
+                                                {base_message}
+                                                {underline}
+                                                Number of dummy scans to be removed based on "non_steady_state_outlier_XX"
+                                                columns is {dummy_scans}."""),flush=flush_print)
+                        else:
+                            print(textwrap.dedent(f"""
+                                                {base_message}
+                                                {underline}
+                                                No "non_steady_state_outlier_XX" columns were found so 0 dummy scans
+                                                will be removed."""),flush=flush_print)
                     else:
                         print(textwrap.dedent(f"""
                                             {base_message}

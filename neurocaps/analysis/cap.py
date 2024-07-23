@@ -21,7 +21,7 @@ class CAP(_CAPGetter):
 
     Parameters
     ----------
-    parcel_approach : :obj:`dict[str, dict[str, os.PathLike | list[str]]]` or :obj:`dict[str, dict[str, str | int]]`, default=None
+    parcel_approach : :obj:`dict[str, dict[str, os.PathLike | list[str]]]`, :obj:`dict[str, dict[str, str | int]]`, or :obj:`os.PathLike`, default=None
         The approach used to parcellate BOLD images. Similar to ``TimeseriesExtractor``, "Schaefer" and "AAL"
         can be initialized here to create the appropriate ``parcel_approach`` that includes the sub-keys
         "maps", "nodes", and "regions", which are needed for plotting.
@@ -343,7 +343,8 @@ class CAP(_CAPGetter):
         }
     """
     def __init__(self, parcel_approach: Union[dict[str, dict[str, Union[os.PathLike, list[str]]]],
-                                              dict[str, dict[str, Union[str,int]]]]=None,
+                                              dict[str, dict[str, Union[str,int]]],
+                                              os.PathLike]=None,
                  groups: dict[str, list[str]]=None) -> None:
         self._groups = groups
         # Raise error if self groups is not a dictionary
@@ -984,7 +985,7 @@ class CAP(_CAPGetter):
                     target_indices = np.where(binary_arr == 1)[0]
                     # Count the transitions, indices where diff > 1 is a transition; diff of indices = [2,1,1];
                     # binary for diff > 1 = [1,0,0]; thus, segments = transitions + first_sequence(1) = 2
-                    segments = np.where(np.diff(target_indices, n=1) > 1, 1,0).sum() + 1
+                    segments = np.where(np.diff(target_indices, n=1) > 1,1,0).sum() + 1
                     # Sum of ones in the binary array divided by segments, then multiplied by 1 or the tr; segment is
                     # always 1 at minimum due to + 1; np.where(np.diff(target_indices, n=1) > 1, 1,0).sum() is 0 when empty or the condition isn't met
                     persistence_dict.update({target: (binary_arr.sum()/segments) * (tr if tr else 1)})
@@ -998,9 +999,8 @@ class CAP(_CAPGetter):
                 df_dict["persistence"].loc[len(df_dict["persistence"])] = new_row
 
             if "transition_frequency" in metrics:
-                # Sum the differences that are not zero - [1,2,1,1,1,3] becomes [1,-1,0,0,2], binary representation
-                # for values not zero is [1,1,0,0,1] = 3 transitions
-                transition_frequency = np.where(np.diff(predicted_subject_timeseries[subj_id][curr_run]) != 0,1,0).sum()
+                # Sum the differences that are not zero - [1,2,1,1,1,3] becomes [1,-1,0,0,2], binary representation for values not zero is [1,1,0,0,1] = 3 transitions
+                transition_frequency = np.where(np.diff(predicted_subject_timeseries[subj_id][curr_run], n=1) != 0,1,0).sum()
                 # Populate DataFrame
                 new_row = [subj_id, group_name, curr_run, transition_frequency]
                 df_dict["transition_frequency"].loc[len(df_dict["transition_frequency"])] = new_row
@@ -2470,7 +2470,8 @@ class CAP(_CAPGetter):
                     if not os.path.exists(output_dir): os.makedirs(output_dir)
                     if suffix_title:
                         file_name = f"{group.replace(' ', '_')}_{cap}_radar_{suffix_title}.png"
-                    else: file_name = f"{group.replace(' ', '_')}_{cap}_radar.png"
+                    else:
+                        file_name = f"{group.replace(' ', '_')}_{cap}_radar.png"
                     if not as_html:
                         fig.write_image(os.path.join(output_dir,file_name), scale=plot_dict["scale"],
                                         engine=plot_dict["engine"])

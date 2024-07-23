@@ -1,7 +1,6 @@
 """A class which is responsible for accessing all CAP metadata and to keep track of all attributes in CAP"""
 import copy
 from .._check_parcel_approach import _check_parcel_approach
-from .._pickle_to_dict import _convert_pickle_to_dict
 
 class _CAPGetter:
     def __init__(self):
@@ -18,8 +17,6 @@ class _CAPGetter:
 
     @parcel_approach.setter
     def parcel_approach(self, parcel_dict):
-        if isinstance(parcel_dict, str) and parcel_dict.endswith(".pkl"):
-            parcel_dict = _convert_pickle_to_dict(parcel_dict)
         self._parcel_approach = _check_parcel_approach(parcel_approach=parcel_dict, call="setter")
 
     ### Attributes exist when CAP.get_caps() used

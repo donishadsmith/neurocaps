@@ -42,6 +42,15 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.15.2] - 2024-07-23
+### ♻ Changed
+- Created a specific message when dummy_scans = {"auto": True} and zero "non_steady_state_outlier_XX" are found
+when `verbose=True`.
+- Regardless if `parcel_approach`, whether used as a setter or input, accepts pickles.
+### 🐛 Fixes
+Fixed a reference before assignment issue in `merge_dicts`. This occurred when only the merged dictionary was requested
+to be saved without saving the reduced dictionaries, and no user-provided file_names were given. In this scenario,
+the default name for the merged dictionary is now correctly used.
 ## [0.15.1] - 2024-07-23
 ### 🚀 New/Added
 - In `TimeseriesExtractor`, "min" and "max" sub-keys can now be used when `dummy_scans` is a dictionary and the

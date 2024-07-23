@@ -7,11 +7,13 @@ def _dicts_to_pickles(output_dir, dict_list, call, file_names=None, message=None
         if call == "merge":
             if save_reduced_dicts:
                 save_file_names = [f"subject_timeseries_{key.split('_')[-1]}_reduced.pkl"
-                                if "dict" in key else "merged_subject_timeseries.pkl"
-                                for key in list(dict_list)]
-            else: ["merged_subject_timeseries.pkl"]
+                                   if "dict" in key else "merged_subject_timeseries.pkl"
+                                   for key in list(dict_list)]
+            else:
+                save_file_names = ["merged_subject_timeseries.pkl"]
         else:
-            if call == "standardize": suffix= "standardized"
+            if call == "standardize":
+                suffix = "standardized"
             else:
                 dict_name = list(dict_list)[0]
                 sub_name = list(dict_list[dict_name])[0]

@@ -87,3 +87,14 @@ def test_merge_dicts_pkl(return_reduced_dicts,return_merged_dicts):
             assert "test_merged.pkl" in files
             assert all(os.path.getsize(file) > 0 for file in files)
             [os.remove(x) for x in files]
+            # Use no name
+            all_dicts = merge_dicts(["sample_timeseries.pkl","sample_timeseries.pkl"], return_reduced_dicts=False,
+                                    return_merged_dict=True,
+                                    output_dir=os.path.dirname(__file__), save_reduced_dicts=False)
+            files = glob.glob(os.path.join(os.path.dirname(__file__), "*merged*")) + glob.glob(os.path.join(os.path.dirname(__file__),
+                                                                                                            "*reduced*"))
+            assert len(files) == 1
+            files = [os.path.basename(file) for file in files]
+            assert "merged_subject_timeseries.pkl" in files
+            assert all(os.path.getsize(file) > 0 for file in files)
+            [os.remove(x) for x in files]

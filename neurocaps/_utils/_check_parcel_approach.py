@@ -1,9 +1,13 @@
 """Internal function for checking the validity of parcel_approach."""
 import copy, os, re, textwrap, warnings
 from nilearn import datasets
+from ._pickle_to_dict import _convert_pickle_to_dict
 
 def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
-    parcel_approach = copy.deepcopy(parcel_approach)
+    if isinstance(parcel_approach, str) and parcel_approach.endswith(".pkl"):
+        parcel_approach = _convert_pickle_to_dict(parcel_approach)
+    else:
+        parcel_approach = copy.deepcopy(parcel_approach)
     valid_parcel_dict = {"Schaefer": {"n_rois" : 400, "yeo_networks": 7, "resolution_mm": 1},
                          "AAL": {"version": "SPM12"},
                          "Custom": {"maps": "/location/to/parcellation.nii.gz",
