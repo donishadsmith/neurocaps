@@ -29,7 +29,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     high_pass : :obj:`float`, :obj:`int`, or :obj:`None``, default=None
         Filters out signals below the specified cutoff frequency.
 
-    parcel_approach : :obj:`dict[str, dict[str, str | int]]`, default={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
+    parcel_approach : :obj:`dict[str, dict[str, str | int]]` or :obj:`os.PathLike`, default={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
         The approach to parcellate BOLD images. This should be a nested dictionary with the first key being the
         atlas name. Currently, only "Schaefer", "AAL", and "Custom" are supported.
 
@@ -250,7 +250,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     def __init__(self, space: str = "MNI152NLin2009cAsym",
                  standardize: Union[bool, Literal["zscore_sample", "zscore", "psc"]]="zscore_sample",
                  detrend: bool=True, low_pass: Optional[Union[float, int]]=None, high_pass: Optional[Union[float, int]]=None,
-                 parcel_approach: dict[str, dict[str, Union[str, int]]]={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}},
+                 parcel_approach: Union[dict[str, dict[str, Union[str, int]]], os.PathLike]={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}},
                  use_confounds: bool=True, confound_names: Optional[list[str]]=None, fwhm: Optional[Union[float, int]]=None,
                  fd_threshold: Optional[Union[float, dict[str, float]]]=None, n_acompcor_separate: Optional[int]=None,
                  dummy_scans: Optional[Union[int, dict[str, Union[bool, int]]]]=None) -> None:
@@ -665,7 +665,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             # Get repetition time for the subject
             try:
-                if self._task_info["tr"]: tr = self._task_info["tr"]
+                if self._task_info["tr"]:
+                    tr = self._task_info["tr"]
                 else:
                     with open(bold_metadata_files[0], "r") as json_file:
                         tr = json.load(json_file)["RepetitionTime"]
