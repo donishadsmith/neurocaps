@@ -68,14 +68,25 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
         # Check for non-steady_state if requested
         if signal_clean_info["dummy_scans"]:
             if isinstance(signal_clean_info["dummy_scans"], dict) and ("auto" in signal_clean_info["dummy_scans"] and signal_clean_info["dummy_scans"]["auto"] is True):
-                dummy_scans = len([col for col in confound_df.columns if "non_steady_state" in col])
+                dummy_scans, dummy_flag = len([col for col in confound_df.columns if "non_steady_state" in col]), "auto"
+                if "min" in signal_clean_info["dummy_scans"] and dummy_scans < signal_clean_info["dummy_scans"]["min"]:
+                    dummy_scans, dummy_flag = signal_clean_info["dummy_scans"]["min"], "min"
+                if "max" in signal_clean_info["dummy_scans"] and dummy_scans > signal_clean_info["dummy_scans"]["max"]:
+                    dummy_scans, dummy_flag = signal_clean_info["dummy_scans"]["max"], "max"
                 if dummy_scans == 0: dummy_scans = None
                 if verbose:
-                    print(textwrap.dedent(f"""
-                                          {base_message}
-                                          {underline}
-                                          Number of dummy scans to be removed based on 'non_steady_state_outlier_XX'
-                                          columns is {dummy_scans}."""),flush=flush_print)
+                    if dummy_flag == "auto":
+                        print(textwrap.dedent(f"""
+                                            {base_message}
+                                            {underline}
+                                            Number of dummy scans to be removed based on 'non_steady_state_outlier_XX'
+                                            columns is {dummy_scans}."""),flush=flush_print)
+                    else:
+                        print(textwrap.dedent(f"""
+                                            {base_message}
+                                            {underline}
+                                            Default dummy scans set by {dummy_flag} will be used: {dummy_scans}."""),
+                                            flush=flush_print)
             else:
                 dummy_scans = signal_clean_info["dummy_scans"]
 

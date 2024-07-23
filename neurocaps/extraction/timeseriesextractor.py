@@ -77,7 +77,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         components derived from combined masks (WM & CSF), leave this parameter as None and list the specific
         acompcors of interest in ``confound_names``.
 
-    dummy_scans : :obj:`int`, :obj:`dict[str, bool]`, or :obj:`None`, default=None
+    dummy_scans : :obj:`int`, :obj:`dict[str, bool | int]`, or :obj:`None`, default=None
         Removes the first n volumes before extracting the timeseries. As of verision 0.14.5, ``dummy_scans`` can now
         be a dictionary contains the following keys:
 
@@ -87,10 +87,18 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
           there is one "non_steady_state_outlier_XX" per outlier volume for fMRIPrep. This is assessed for each run of
           all participants so ``dummy_scans`` depends on the number number of "non_steady_state_outlier_XX" in the
           confound file associated with the specific participant, task, and run number.
+        - "min" : An integer value indicating the minimum dummy scans to discard. The "auto" sub-key must be True
+          for this to work. If, for instance, only two "non_steady_state_outlier_XX" columns are detected but the
+          "min" is set to three, then three dummy volumes will be discarded.
+        - "max" : An integer value indicating the maximum dummy scans to discard. The "auto" sub-key must be True
+          for this to work. If, for instance, six "non_steady_state_outlier_XX" columns are detected but the
+          "max" is set to five, then five dummy volumes will be discarded.
 
         .. versionchanged:: 0.14.5 ``dummy_scans`` can now be a dictionary that includes the sub-key "auto", which
           allows the number of dummy scans to be based on the number of "non_steady_state_outlier_XX" columns in the
           fMRIPrep confounds file.
+
+        .. versionadded:: 0.15.1 "min" and "max" sub-keys added.
 
 
     Property
@@ -245,7 +253,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                  parcel_approach: dict[str, dict[str, Union[str, int]]]={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}},
                  use_confounds: bool=True, confound_names: Optional[list[str]]=None, fwhm: Optional[Union[float, int]]=None,
                  fd_threshold: Optional[Union[float, dict[str, float]]]=None, n_acompcor_separate: Optional[int]=None,
-                 dummy_scans: Optional[Union[int, dict[str, bool]]]=None) -> None:
+                 dummy_scans: Optional[Union[int, dict[str, Union[bool, int]]]]=None) -> None:
 
         self._space = space
 

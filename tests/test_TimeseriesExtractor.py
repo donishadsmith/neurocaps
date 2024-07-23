@@ -343,7 +343,56 @@ def test_dummy_scans_auto():
     assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
     assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 27
 
+    # Clear
     add_non_steady(n=0)
+
+    # Check min
+    add_non_steady(n=1)
+    extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
+                                    use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01,
+                                    confound_names=confounds, dummy_scans={"auto": True, "min":4, "max":6})
+
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, flush_print=True)
+
+    assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
+    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 36
+
+    # Clear
+    add_non_steady(n=0)
+
+    extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
+                                    use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01,
+                                    confound_names=confounds, dummy_scans={"auto": True, "min":4, "max":6})
+
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, flush_print=True)
+
+    assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
+    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 36
+
+    # Clear
+    add_non_steady(n=0)
+
+    # Check max
+    add_non_steady(n=10)
+    extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
+                                    use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01,
+                                    confound_names=confounds, dummy_scans={"auto": True, "min":4, "max":6})
+
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, flush_print=True)
+
+    assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
+    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 34
+
+    # Clear
+    add_non_steady(n=0)
+    extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
+                                    use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01,
+                                    confound_names=confounds, dummy_scans={"auto": True})
+
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, flush_print=True)
+
+    assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
+    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 40
 
 def test_dummy_scans_and_fd():
     extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",

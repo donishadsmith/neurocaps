@@ -42,6 +42,14 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.15.1] - 2024-07-23
+### 🚀 New/Added
+- In `TimeseriesExtractor`, "min" and "max" sub-keys can now be used when `dummy_scans` is a dictionary and the
+"auto" sub-key is True. The "min" sub-key is used to set the minimum dummy scans to remove if the number of
+"non_steady_state_outlier_XX" columns detected is less than this value and the "max" sub-key is used to set the
+maximum number of dummy scans to remove if the number of "non_steady_state_outlier_XX" columns detected exceeds this
+value.
+
 ## [0.15.0] - 2024-07-21
 ### 🚀 New/Added
 - `save_reduced_dicts` parameter to `merge_dicts` so that the reduced dictionaries can also be saved instead of only

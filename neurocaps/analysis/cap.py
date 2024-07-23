@@ -954,7 +954,7 @@ class CAP(_CAPGetter):
         for subj_id, group, curr_run in distributed_list:
             group_name = group.replace(" ","_")
             if "temporal_fraction" in metrics or "counts" in metrics:
-                # Get frequency; 
+                # Get frequency;
                 frequency_dict = {key: np.where(predicted_subject_timeseries[subj_id][curr_run] == key,1,0).sum()
                                   for key in range(1, group_cap_counts[group] + 1)}
                 # Replace zeros with nan for groups with less caps than the group with the max caps
