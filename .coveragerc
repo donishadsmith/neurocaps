@@ -1,0 +1,9 @@
+[run]
+branch = True
+source = neurocaps
+
+[report]
+show_missing = True
+exclude_also =
+    raise .*
+    warnings\.

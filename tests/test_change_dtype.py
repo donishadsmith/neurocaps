@@ -19,8 +19,8 @@ def test_change_dtype_w_pickle():
                                                   output_dir=os.path.dirname(__file__), file_names=["test_dtype"], dtype="float16", return_dicts=True)
     files = glob.glob(os.path.join(os.path.dirname(__file__), "*dtype*.pkl"))
     assert len(files) == 2
-    files = [os.path.basename(file) for file in files]
-    assert "subject_timeseries_0_dtype-float16.pkl" in files
-    assert "test_dtype.pkl" in files
+    files_basename = [os.path.basename(file) for file in files]
+    assert "subject_timeseries_0_dtype-float16.pkl" in files_basename
+    assert "test_dtype.pkl" in files_basename
     assert all(os.path.getsize(file) > 0 for file in files)
     [os.remove(x) for x in files]

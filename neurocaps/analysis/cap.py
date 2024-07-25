@@ -1,4 +1,3 @@
-
 import copy, itertools, os, sys, tempfile, textwrap, warnings
 from typing import Union, Literal, Optional
 import numpy as np, nibabel as nib, matplotlib.pyplot as plt, pandas as pd, seaborn, surfplot
@@ -629,16 +628,16 @@ class CAP(_CAPGetter):
             if self._n_cores is None:
                 for n_cluster in self._n_clusters:
                     output_score, model = _run_kmeans(n_cluster=n_cluster, random_state=random_state, init=init,
-                                               n_init=n_init, max_iter=max_iter, tol=tol, algorithm=algorithm,
-                                               concatenated_timeseries=self._concatenated_timeseries[group],
-                                               method=method)
+                                                      n_init=n_init, max_iter=max_iter, tol=tol, algorithm=algorithm,
+                                                      concatenated_timeseries=self._concatenated_timeseries[group],
+                                                      method=method)
                     performance_dict[group].update(output_score)
                     model_dict.update(model)
             else:
                 parallel = Parallel(return_as="generator", n_jobs=self._n_cores)
                 output = parallel(delayed(_run_kmeans)(n_cluster, random_state, init, n_init, max_iter, tol,
-                                                              algorithm, self._concatenated_timeseries[group],
-                                                              method) for n_cluster in self._n_clusters)
+                                                       algorithm, self._concatenated_timeseries[group],
+                                                       method) for n_cluster in self._n_clusters)
 
                 output_scores, models = zip(*output)
                 for output in output_scores: performance_dict[group].update(output)
@@ -648,8 +647,8 @@ class CAP(_CAPGetter):
             if method == "elbow":
                 knee_dict = {"S": kwargs["S"] if "S" in kwargs else 1}
                 kneedle = KneeLocator(x=list(performance_dict[group]),
-                                    y=list(performance_dict[group].values()),
-                                    curve="convex", direction="decreasing", S=knee_dict["S"])
+                                      y=list(performance_dict[group].values()),
+                                      curve="convex", direction="decreasing", S=knee_dict["S"])
                 self._optimal_n_clusters[group] = kneedle.elbow
                 if self._optimal_n_clusters[group] is None:
                     raise ValueError(textwrap.dedent(f"""
@@ -710,7 +709,7 @@ class CAP(_CAPGetter):
             cluster_centroids = zip([num for num in range(1,len(self._kmeans[group].cluster_centers_)+1)],
                                     self._kmeans[group].cluster_centers_)
             self._caps[group].update({f"CAP-{state_number}": state_vector
-                                        for state_number, state_vector in cluster_centroids})
+                                      for state_number, state_vector in cluster_centroids})
 
     def calculate_metrics(self, subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.PathLike],
                           tr: Optional[float]=None,
@@ -1298,25 +1297,25 @@ class CAP(_CAPGetter):
                 # Modify tick labels based on scope
                 if scope == "regions":
                     display = seaborn.heatmap(ax=ax, data=self._outer_products[group][cap], cmap=plot_dict["cmap"],
-                                      linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"],
-                                      xticklabels=columns, yticklabels=columns,
-                                      cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"],
-                                      annot_kws=plot_dict["annot_kws"], fmt=plot_dict["fmt"],
-                                      edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"],
-                                      vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
+                                              linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"],
+                                              xticklabels=columns, yticklabels=columns,
+                                              cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"],
+                                              annot_kws=plot_dict["annot_kws"], fmt=plot_dict["fmt"],
+                                              edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"],
+                                              vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
                 else:
                     if plot_dict["hemisphere_labels"] is False:
                         display = seaborn.heatmap(ax=ax, data=self._outer_products[group][cap], cmap=plot_dict["cmap"],
-                                          linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"],
-                                          cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"],
-                                          annot_kws=plot_dict["annot_kws"], fmt=plot_dict["fmt"],
-                                          edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"],
-                                          vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
+                                                  linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"],
+                                                  cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"],
+                                                  annot_kws=plot_dict["annot_kws"], fmt=plot_dict["fmt"],
+                                                  edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"],
+                                                  vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
                     else:
                         display = seaborn.heatmap(ax=ax, data=self._outer_products[group][cap], cmap=plot_dict["cmap"],
-                                          cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"],
-                                          annot_kws=plot_dict["annot_kws"], fmt=plot_dict["fmt"],
-                                          alpha=plot_dict["alpha"], vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
+                                                  cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"],
+                                                  annot_kws=plot_dict["annot_kws"], fmt=plot_dict["fmt"],
+                                                  alpha=plot_dict["alpha"], vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
 
                     if plot_dict["hemisphere_labels"] is False:
                         ticks = [i for i, label in enumerate(labels) if label]
@@ -1822,7 +1821,7 @@ class CAP(_CAPGetter):
                   show_figs: bool=True, fwhm: Optional[float]=None,
                   fslr_density: Literal["4k", "8k", "32k", "164k"]="32k", method: Literal["linear", "nearest"]="linear",
                   save_stat_map: bool=False, fslr_giftis_dict: Optional[dict]=None,
-                  knn_dict: dict[str, Union[int, list[int], np.array]]=None, **kwargs) -> surfplot.Plot:
+                  knn_dict: dict[str, Union[int, list[int], np.array]]=None, **kwargs) -> surfplot.Plot: # pragma: no cover
         """
         **Project CAPs onto Surface Plots**
 
@@ -2043,7 +2042,7 @@ class CAP(_CAPGetter):
                 sulc_lh = str(sulc_lh) if not isinstance(sulc_lh, str) else sulc_lh
                 sulc_rh = str(sulc_rh) if not isinstance(sulc_rh, str) else sulc_rh
                 p = surfplot.Plot(lh, rh, size=plot_dict["size"], layout=plot_dict["layout"], zoom=plot_dict["zoom"],
-                         views=plot_dict["views"], brightness=plot_dict["brightness"])
+                                  views=plot_dict["views"], brightness=plot_dict["brightness"])
 
                 # Add base layer
                 p.add_layer({"left": sulc_lh, "right": sulc_rh}, cmap="binary_r", cbar=False)

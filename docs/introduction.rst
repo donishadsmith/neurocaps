@@ -4,6 +4,10 @@
    :target: https://pypi.python.org/pypi/neurocaps/
    :alt: Latest Version
 
+.. image:: https://img.shields.io/pypi/pyversions/neurocaps.svg
+   :target: https://pypi.python.org/pypi/neurocaps/
+   :alt: Python Versions
+
 .. image:: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-blue
    :target: https://doi.org/10.5281/zenodo.12803058
    :alt: DOI
@@ -11,6 +15,10 @@
 .. image:: https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg
    :target: https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml
    :alt: Test Status
+
+.. image:: https://codecov.io/github/donishadsmith/neurocaps/graph/badge.svg?token=WS2V7I16WF 
+   :target: https://codecov.io/github/donishadsmith/neurocaps
+   :alt: codecov
 
 .. image:: https://img.shields.io/badge/License-MIT-blue.svg
    :target: https://opensource.org/licenses/MIT
@@ -50,9 +58,9 @@ If using a "Custom" parcellation approach, ensure each node in your dataset incl
 
 Custom Key Structure:
 ---------------------
-- ``maps``: Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g., .nii for NifTI files). For plotting purposes, this key is not required.
-- ``nodes``:  List of all node labels used in your study, arranged in the exact order they correspond to indices in your parcellation files. Each label should match the parcellation index it represents. For example, if the parcellation label "0" corresponds to the left hemisphere visual cortex area 1, then "LH_Vis1" should occupy the 0th index in this list. This ensures that data extraction and analysis accurately reflect the anatomical regions intended. For timeseries extraction, this key is not required.
-- ``regions``: Dictionary defining major brain regions. Each region should list node indices under "lh" and "rh" to specify left and right hemisphere nodes. For timeseries extraction, this key is not required.
+- "maps": Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g., .nii for NifTI files). For plotting purposes, this key is not required.
+- "nodes":  List of all node labels used in your study, arranged in the exact order they correspond to indices in your parcellation files. Each label should match the parcellation index it represents. For example, if the parcellation label "0" corresponds to the left hemisphere visual cortex area 1, then "LH_Vis1" should occupy the 0th index in this list. This ensures that data extraction and analysis accurately reflect the anatomical regions intended. For timeseries extraction, this key is not required.
+- "regions": Dictionary defining major brain regions. Each region should list node indices under "lh" and "rh" to specify left and right hemisphere nodes. For timeseries extraction, this key is not required.
         
 Example:
 --------
@@ -98,7 +106,7 @@ Main features for ``CAP`` includes:
 -----------------------------------
 
 - **Optimal Cluster Size Identification:** Perform the Davies Bouldin, Silhouette, Elbow, or Variance Ratio criterions to identify the optimal cluster size, saving the optimal model as an attribute.
-- **Parallel Processing:** Use parallel processing, when using the Davies Bouldin, Silhouette, Elbow, or Variance Ratio criterions by specifying the number of CPU cores in the ``n_cores`` parameter in the ```get_caps()`` method. 
+- **Parallel Processing:** Use parallel processing, when using the Davies Bouldin, Silhouette, Elbow, or Variance Ratio criterions by specifying the number of CPU cores in the ``n_cores`` parameter in the ``get_caps()`` method. 
   *Note:* If you are using an HPC, remember to allocate the appropriate amount of CPU cores with your workload manager. For instance in slurm use ``#SBATCH --cpus-per-task=10`` if you intend to use 10 cores.
 - **Grouping:** Perform CAPs analysis for entire sample or groups of subject IDs (using the ``groups`` parameter when initializing the ``CAP`` class). K-means clustering, all cluster selection methods (Davies Bouldin, Silhouette, Elbow, or Variance Ratio criterions), and plotting are done for each group when specified.
 - **CAP Visualization:** Visualize the CAPs as outer products or heatmaps, with options to use subplots to reduce the number of individual plots, as well as save. 
@@ -170,7 +178,7 @@ Main features for ``CAP`` includes:
       # Cosine similarity between CAP 1 and the visual network
       cosine_similarity = dot_product/(norm_cap_1_cluster_centroid * norm_binary_vector)
 
-**Additionally, the `neurocaps.analysis` submodule contains two additional functions:**
+**Additionally, the neurocaps.analysis submodule contains two additional functions:**
 
 - ``merge_dicts``: Merge the subject_timeseries dictionaries for overlapping subjects across tasks to identify similar CAPs across different tasks. The merged dictionary can be saved as a pickle file.
 - ``standardize``: Standardizes each run independently for all subjects in the subject timeseries.
@@ -181,7 +189,7 @@ Please refer to `demo.ipynb <https://github.com/donishadsmith/neurocaps/blob/mai
 Dependencies
 ============
 
-``neurocaps`` relies on several packages:
+neurocaps relies on several packages:
 
 :: 
 

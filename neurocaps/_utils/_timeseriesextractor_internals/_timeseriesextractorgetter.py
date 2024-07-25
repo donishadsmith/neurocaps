@@ -51,9 +51,10 @@ class _TimeseriesExtractorGetter:
     @subject_timeseries.setter
     def subject_timeseries(self, subject_dict):
         error_message = textwrap.dedent("""
-                        A valid pickle file/be a nested dictionary where the first level is the subject id, second level
-                        is the run number in the form of 'run-#', and the final level is the timeseries as a numpy
-                        array.""")
+                                        Must be a valid pickle file/subject timeseries should contain a nested
+                                        dictionary where the first level is the subject id, second level
+                                        is the run number in the form of 'run-#', and the final level is the timeseries
+                                        as a numpy array.""")
         if isinstance(subject_dict, str) and subject_dict.endswith(".pkl"):
             self._subject_timeseries = _convert_pickle_to_dict(subject_dict)
         elif isinstance(subject_dict, dict):

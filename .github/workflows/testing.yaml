@@ -1,8 +1,8 @@
-name: testing
+name: Run Tests
 
 on:
   push:
-    branches: [main, master, test]
+    branches: [main, experimental]
   # Run weekly on Monday
   schedule:
     - cron: 0 0 * * 1
@@ -20,36 +20,30 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-ver }}
-      - name: Install package
+      - name: Install package & pytest
         run: |
           pip install -e .
+          pip install pytest pytest-cov
         shell: bash
-      - name: Run CAP tests
+      - name: Run tests with coverage for Ubuntu
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
-          pip install pytest
-          pytest test_CAP.py
+          pytest --cov=neurocaps
+        shell: bash
+      - name: Run tests without coverage for Mac
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          pytest .
         shell: bash
         working-directory: tests
-      - name: Run TimeseriesExtractor tests
-        if: ${{ matrix.os  == 'ubuntu-latest' || matrix.os == 'macos-latest' }}
+      - name: Run tests without coverage for Windows
+        if: ${{ matrix.os == 'windows-latest' }}
         run: |
-          pytest test_TimeseriesExtractor.py
-          pytest test_TimeseriesExtractor_config.py
-          pytest test_TimeseriesExtractor_modified.py
+          pytest test_CAP.py test_change_dtype.py test_standardize.py test_merge_dicts.py
         shell: bash
         working-directory: tests
-      - name: Run merge_dicts test
-        run: |
-          pytest test_merge_dicts.py
-        shell: bash
-        working-directory: tests
-      - name: Run standardize test
-        run: |
-          pytest test_standardize.py
-        shell: bash
-        working-directory: tests
-      - name: Run change_dtype test
-        run: |
-          pytest test_change_dtype.py
-        shell: bash
-        working-directory: tests
+      - name: Upload coverage reports to Codecov for Ubuntu
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

@@ -19,7 +19,7 @@ def test_standardize():
     assert "10" in standardized_subject_timeseries["dict_0"] and "10" not in standardized_subject_timeseries["dict_1"]
 
 def test_standardize_w_pickle():
-    with open("sample_timeseries.pkl", "rb") as f:
+    with open(os.path.join(os.path.dirname(__file__), "sample_timeseries.pkl"), "rb") as f:
         subject_timeseries = pickle.load(f)
     standardized_subject_timeseries = standardize(subject_timeseries_list=[os.path.join(os.path.dirname(__file__), "sample_timeseries.pkl")],
                                                   output_dir=os.path.dirname(__file__), return_dicts=True)
@@ -30,8 +30,8 @@ def test_standardize_w_pickle():
                                                   output_dir=os.path.dirname(__file__), file_names=["test_standardized"])
     files = glob.glob(os.path.join(os.path.dirname(__file__), "*standardized*"))
     assert len(files) == 2
-    files = [os.path.basename(file) for file in files]
-    assert "subject_timeseries_0_standardized.pkl" in files
-    assert "test_standardized.pkl" in files
+    files_basename = [os.path.basename(file) for file in files]
+    assert "subject_timeseries_0_standardized.pkl" in files_basename
+    assert "test_standardized.pkl" in files_basename
     assert all(os.path.getsize(file) > 0 for file in files)
     [os.remove(x) for x in files]

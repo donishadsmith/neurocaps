@@ -1,10 +1,14 @@
-import copy, math, numpy as np, pandas as pd, pickle, pytest, warnings
+import copy, math, os, numpy as np, pandas as pd, pickle, pytest, warnings
 from kneed import KneeLocator
 from neurocaps.extraction import TimeseriesExtractor
 from neurocaps.analysis import CAP, change_dtype
 
 warnings.simplefilter('ignore')
 parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
+with open(os.path.join(os.path.dirname(__file__), "HCPex_parcel_approach.pkl"), "rb") as f:
+    custom_parcel_approach = pickle.load(f)
+    custom_parcel_approach["Custom"]["maps"] = os.path.join(os.path.dirname(__file__), "HCPex.nii.gz")
+    custom_subject_timeseries = {str(x) : {f"run-{y}": np.random.rand(100,426) for y in range(1,4)} for x in range(1,11)}
 extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
 subject_timeseries = {str(x) : {f"run-{y}": np.random.rand(100,100) for y in range(1,4)} for x in range(1,11)}
 extractor.subject_timeseries = subject_timeseries
@@ -66,6 +70,20 @@ def predict_labels(timeseries, cap_analysis, standardize, group, runs=[1,2,3]):
                 else:
                     labels = np.hstack([labels, cap_analysis.kmeans[group].predict(new_timeseries)])
     return labels
+
+@pytest.fixture(autouse=False, scope="module")
+def remove_files():
+    yield
+    import glob, os
+    png_files = glob.glob((os.path.join(os.path.dirname(__file__,),"*.png")))
+    csv_files = glob.glob((os.path.join(os.path.dirname(__file__),"*.csv")))
+    html_files = glob.glob((os.path.join(os.path.dirname(__file__),"*.html")))
+    nii_files = glob.glob((os.path.join(os.path.dirname(__file__),"*.nii.gz")))
+
+    [os.remove(x) for x in png_files]
+    [os.remove(x) for x in csv_files]
+    [os.remove(x) for x in html_files]
+    [os.remove(x) for x in nii_files if "HCPex.nii.gz" not in x]
 
 @pytest.mark.parametrize("standardize", [True, False])
 def test_no_groups_no_cluster_selection(standardize):
@@ -134,13 +152,15 @@ def test_groups_no_cluster_selection(standardize):
     labels = predict_labels(subject_timeseries, cap_analysis, standardize, "B", runs=[1,2])
     assert np.array_equal(labels, cap_analysis.kmeans["B"].labels_)
 
-def test_no_groups_cluster_selection():
+@pytest.mark.parametrize("standardize,n_cores", [(False,2), (True,None)])
+def test_no_groups_cluster_selection(standardize,n_cores):
     cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
 
     # Elbow sometimes does find the elbow with random data
     try:
         cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
-                            n_clusters=list(range(2,41)), cluster_selection_method="elbow")
+                            n_clusters=list(range(2,41)), cluster_selection_method="elbow",
+                            standardize=standardize)
         try:
             assert all(elem >= 0 for elem in cap_analysis.inertia["All Subjects"].values())
             kneedle = KneeLocator(x=list(cap_analysis.inertia["All Subjects"]),
@@ -155,7 +175,8 @@ def test_no_groups_cluster_selection():
         pass
 
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
-                          n_clusters=[2,3,4,5], cluster_selection_method="silhouette")
+                          n_clusters=[2,3,4,5], cluster_selection_method="silhouette", standardize=standardize,
+                          n_cores=n_cores)
     # Maximum silhouette is the most optimal
     assert max(cap_analysis.silhouette_scores["All Subjects"], key=cap_analysis.silhouette_scores["All Subjects"].get) == cap_analysis.optimal_n_clusters["All Subjects"]
 
@@ -164,7 +185,8 @@ def test_no_groups_cluster_selection():
     assert all(elem > 0  or elem < 0 for elem in cap_analysis.silhouette_scores["All Subjects"].values())
     assert all(-1 <= elem <= 1 for elem in cap_analysis.silhouette_scores["All Subjects"].values())
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
-                          n_clusters=[2,3,4,5], cluster_selection_method="variance_ratio")
+                          n_clusters=[2,3,4,5], cluster_selection_method="variance_ratio",
+                          standardize=standardize)
 
     # Maximum variance ratio is the most optimal
     assert max(cap_analysis.variance_ratio["All Subjects"], key=cap_analysis.variance_ratio["All Subjects"].get) == cap_analysis.optimal_n_clusters["All Subjects"]
@@ -173,7 +195,8 @@ def test_no_groups_cluster_selection():
     assert all(elem >= 0 for elem in cap_analysis.variance_ratio["All Subjects"].values())
 
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
-                          n_clusters=[2,3,4,5], cluster_selection_method="davies_bouldin")
+                          n_clusters=[2,3,4,5], cluster_selection_method="davies_bouldin",
+                          standardize=standardize)
 
     # Mininimum davies_bouldin is the most optimal
     assert min(cap_analysis.davies_bouldin["All Subjects"], key=cap_analysis.davies_bouldin["All Subjects"].get) == cap_analysis.optimal_n_clusters["All Subjects"]
@@ -181,10 +204,12 @@ def test_no_groups_cluster_selection():
     # All values not negative
     assert all(elem >= 0 for elem in cap_analysis.davies_bouldin["All Subjects"].values())
 
-def test_groups_and_cluster_selection():
+@pytest.mark.parametrize("standardize", [False, True])
+def test_groups_and_cluster_selection(standardize):
     cap_analysis = CAP(parcel_approach=extractor.parcel_approach, groups={"A": [1,2,3,5], "B": [4,6,7,8,9,10,7]})
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
-                          n_clusters=[2,3,4,5], cluster_selection_method="silhouette")
+                          n_clusters=[2,3,4,5], cluster_selection_method="silhouette",
+                          standardize=standardize)
     assert cap_analysis.caps["A"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["A"]["CAP-2"].shape == (100,)
     assert cap_analysis.caps["B"]["CAP-1"].shape == (100,)
@@ -194,7 +219,8 @@ def test_groups_and_cluster_selection():
     try:
         cap_analysis = CAP(parcel_approach=extractor.parcel_approach, groups={"A": [1,2,3,5], "B": [4,6,7,8,9,10,7]})
         cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
-                            n_clusters=list(range(2,41)), cluster_selection_method="elbow")
+                            n_clusters=list(range(2,41)), cluster_selection_method="elbow",
+                            standardize=standardize)
         try:
             assert all(elem >= 0 for elem in cap_analysis.inertia["A"].values())
             assert all(elem >= 0 for elem in cap_analysis.inertia["B"].values())
@@ -213,39 +239,36 @@ def test_groups_and_cluster_selection():
         pass
 
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
-                          n_clusters=[2,3,4,5], cluster_selection_method="silhouette")
+                          n_clusters=[2,3,4,5], cluster_selection_method="silhouette",
+                          standardize=standardize)
 
     assert max(cap_analysis.silhouette_scores["A"], key=cap_analysis.silhouette_scores["A"].get) == cap_analysis.optimal_n_clusters["A"]
     assert max(cap_analysis.silhouette_scores["B"], key=cap_analysis.silhouette_scores["B"].get) == cap_analysis.optimal_n_clusters["B"]
 
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
-                          n_clusters=[2,3,4,5], cluster_selection_method="davies_bouldin")
+                          n_clusters=[2,3,4,5], cluster_selection_method="davies_bouldin",
+                          standardize=standardize)
 
     assert min(cap_analysis.davies_bouldin["A"], key=cap_analysis.davies_bouldin["A"].get) == cap_analysis.optimal_n_clusters["A"]
     assert min(cap_analysis.davies_bouldin["B"], key=cap_analysis.davies_bouldin["B"].get) == cap_analysis.optimal_n_clusters["B"]
 
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
-                          n_clusters=[2,3,4,5], cluster_selection_method="variance_ratio")
+                          n_clusters=[2,3,4,5], cluster_selection_method="variance_ratio",
+                          standardize=standardize)
 
     assert max(cap_analysis.variance_ratio["A"], key=cap_analysis.variance_ratio["A"].get) == cap_analysis.optimal_n_clusters["A"]
     assert max(cap_analysis.variance_ratio["B"], key=cap_analysis.variance_ratio["B"].get) == cap_analysis.optimal_n_clusters["B"]
 
 def test_no_groups_pkl():
-    with open("sample_timeseries.pkl", "rb") as f:
-        subject_timeseries = pickle.load(f)
-    extractor.subject_timeseries = subject_timeseries
     cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
-    cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
+    cap_analysis.get_caps(subject_timeseries=os.path.join(os.path.dirname(__file__),"sample_timeseries.pkl"),
                           n_clusters=2)
     assert cap_analysis.caps["All Subjects"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["All Subjects"]["CAP-2"].shape == (100,)
 
 def test_groups_pkl():
-    with open("sample_timeseries.pkl", "rb") as f:
-        subject_timeseries = pickle.load(f)
-    extractor.subject_timeseries = subject_timeseries
     cap_analysis = CAP(parcel_approach=extractor.parcel_approach, groups={"A": [1,2,3,5], "B": [4,6,7,8,9,10,7]})
-    cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, n_clusters=2)
+    cap_analysis.get_caps(subject_timeseries=os.path.join(os.path.dirname(__file__),"sample_timeseries.pkl"), n_clusters=2)
     assert cap_analysis.caps["A"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["A"]["CAP-2"].shape == (100,)
     assert cap_analysis.caps["B"]["CAP-1"].shape == (100,)
@@ -255,7 +278,7 @@ def test_no_groups_and_silhouette_method():
     extractor.subject_timeseries = subject_timeseries
     cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
-                          n_clusters=[2,3,4,5], cluster_selection_method="silhouette", n_cores=1)
+                          n_clusters=[2,3,4,5], cluster_selection_method="silhouette")
     assert cap_analysis.caps["All Subjects"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["All Subjects"]["CAP-2"].shape == (100,)
     assert all(elem > 0  or elem < 0 for elem in cap_analysis.silhouette_scores["All Subjects"].values())
@@ -357,24 +380,49 @@ def test_calculate_methods():
         persistence_dict.update({target: (binary.sum()/segments) * (tr if tr else 1)})
     assert [x for x in list(persistence_dict.values()) if not math.isnan(x)] == [x for x in persistence_df.loc[0,:].values if not math.isnan(x)]
 
-def test_multiple_methods():
-    cap_analysis = CAP(parcel_approach=extractor.parcel_approach, groups={"A": [1,2,3,5], "B": [4,6,7,8,9,10,7]})
-    cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
-                          n_clusters=[2,3,4,5], cluster_selection_method="silhouette")
+@pytest.mark.parametrize("current_timeseries,parcel_approach,name", [(extractor.subject_timeseries,extractor.parcel_approach,"Schaefer"),
+                                                                (custom_subject_timeseries,custom_parcel_approach,"Custom")])
+def test_multiple_methods(current_timeseries,parcel_approach,name,remove_files):
+    cap_analysis = CAP(parcel_approach=parcel_approach, groups={"A": [1,2,3,5], "B": [4,6,7,8,9,10,7]})
+    cap_analysis.get_caps(subject_timeseries=current_timeseries,
+                          n_clusters=[2,3,4,5], cluster_selection_method="silhouette",
+                          output_dir=os.path.dirname(__file__),step=2, show_figs=False)
 
     assert all(elem > 0  or elem < 0 for elem in cap_analysis.silhouette_scores["A"].values())
-    assert all(elem > 0  or elem < 0 for elem in cap_analysis.silhouette_scores["A"].values())
+    assert all(elem > 0  or elem < 0 for elem in cap_analysis.silhouette_scores["B"].values())
 
-    new_timeseries = change_dtype([extractor.subject_timeseries], dtype="float16")
+    new_timeseries = change_dtype([current_timeseries], dtype="float16")
 
     cap_analysis.calculate_metrics(subject_timeseries=new_timeseries["dict_0"], return_df=True)
+    if name == "Schaefer":
+        cap_analysis.calculate_metrics(subject_timeseries=os.path.join(os.path.dirname(__file__),"sample_timeseries.pkl"),
+                                    return_df=True, output_dir=os.path.dirname(__file__))
 
-    cap_analysis.caps2plot(subplots=True, xlabel_rotation=90, sharey=True, borderwidths=10, show_figs=False)
+    # caps2plot
+    cap_analysis.caps2plot(subplots=True, xlabel_rotation=90, sharey=True, borderwidths=10, show_figs=False,
+                           output_dir=os.path.dirname(__file__))
 
-    cap_analysis.caps2plot(subplots=False, yticklabels_size=5, wspace = 0.1, visual_scope="nodes", xlabel_rotation=90,
-                        xticklabels_size = 5, hspace = 0.6, tight_layout = False, show_figs=False)
+    cap_analysis.caps2plot(subplots=False, yticklabels_size=5, wspace = 0.1, visual_scope=["regions", "nodes"], xlabel_rotation=90,
+                           xticklabels_size = 5, hspace = 0.6, tight_layout = False, show_figs=False, plot_options=["heatmap", "outer_product"],
+                           hemisphere_labels=False,
+                           output_dir=os.path.dirname(__file__))
+    
+    cap_analysis.caps2plot(subplots=False, yticklabels_size=5, wspace = 0.1, visual_scope=["regions", "nodes"], xlabel_rotation=90,
+                           xticklabels_size = 5, hspace = 0.6, tight_layout = False, show_figs=False, plot_options=["heatmap", "outer_product"],
+                           hemisphere_labels=True, invalid_kwarg=0,
+                           output_dir=os.path.dirname(__file__))
+    
+    cap_analysis.caps2plot(subplots=True, xlabel_rotation=90, sharey=True, borderwidths=10, show_figs=False, visual_scope=["regions", "nodes"],
+                           plot_options=["outer_product", "heatmap"],output_dir=os.path.dirname(__file__))
+    
+    cap_analysis.caps2plot(subplots=True, xlabel_rotation=90, sharey=True, borderwidths=10, show_figs=False, visual_scope=["regions", "nodes"],
+                           plot_options=["outer_product", "heatmap"],hemisphere_labels=True,output_dir=os.path.dirname(__file__))
 
-    df = cap_analysis.caps2corr(annot=True, show_figs=False, return_df=True)
+    cap_analysis.caps2niftis(output_dir=os.path.dirname(__file__), fwhm=1)
+    cap_analysis.caps2niftis(output_dir=os.path.dirname(__file__), knn_dict={"k":1, "resolution_mm":1, "remove_subcortical": [50]})
+
+    df = cap_analysis.caps2corr(annot=True, show_figs=False, return_df=True, output_dir=os.path.dirname(__file__),
+                                save_df=True)
     assert isinstance(df, dict)
     assert isinstance(df["A"], pd.DataFrame)
     assert len(list(df)) == 2
@@ -382,4 +430,10 @@ def test_multiple_methods():
     radialaxis={"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)",
             "ticks": "outside" , "tickfont": {"size": 14, "color": "black"}, "range": [0,0.3],
             "tickvals": [0.1,0.2,0.3]}
-    cap_analysis.caps2radar(radialaxis=radialaxis, fill="toself", scattersize=10, show_figs=False, as_html=True)
+    cap_analysis.caps2radar(method="traditional",radialaxis=radialaxis, fill="toself", show_figs=False, as_html=True,
+                            output_dir=os.path.dirname(__file__))
+    cap_analysis.caps2radar(method="selective",radialaxis=radialaxis, fill="toself", show_figs=False, as_html=False,
+                            output_dir=os.path.dirname(__file__))
+    cap_analysis.caps2radar(method="combined",radialaxis=radialaxis, fill="toself", use_scatterpolar=True,
+                            scattersize=10, show_figs=False, as_html=True,
+                            output_dir=os.path.dirname(__file__))
