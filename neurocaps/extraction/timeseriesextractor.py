@@ -14,7 +14,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     Parameters
     ----------
     space : :obj:`str`, default="MNI152NLin2009cAsym"
-        The standard template space that the preprocessed bold data is registered to.
+        The standard template space that the preprocessed bold data is registered to. Used for querying with pybids
+        to locate preprocessed BOLD-related files.
 
     standardize : {"zscore_sample", "zscore", "psc", True, False}, default="zscore_sample"
         Determines whether to standardize the timeseries. Refer to ``nilearn.maskers.NiftiLabelsMasker`` for available
@@ -304,7 +305,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         Collects files needed to extract timeseries data from NIfTI files for BIDS-compliant datasets containing a
         derivatives folder. This function assumes that your BOLD data was preprocessed using a standard
-        preprocessing pipeline such as **fMRIPrep**.
+        preprocessing pipeline, specifically **fMRIPrep**.
 
         Parameters
         ----------
@@ -333,8 +334,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Specific condition in the task to extract from. Only a single condition can be extracted at a time.
 
         tr : :obj:`int`, :obj:`float`, or :obj:`None`, default=None
-            Repetition time for task. If the ``tr`` is not specified, it will be extracted from the BOLD metadata
-            files that should be located in the derivatives folder with the preprocessed BOLD images.
+            Repetition time for the task. If the ``tr`` is not specified, for each subject, the tr will be extracted from
+            the first BOLD metadata file, for the specified task, in the pipeline directory or the `bids_dir` if not
+            in the pipeline directory.
 
         run_subjects : :obj:`list[str]` or :obj:`None`, default=None
             List of subject IDs to process. Processes all subjects if None.
@@ -345,7 +347,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         pipeline_name : :obj:`str` or :obj:`None`, default=None
             The name of the pipeline folder in the derivatives folder containing the preprocessed data. If None,
             ``BIDSLayout`` will use the name of ``bids_dir`` with ``derivatives=True``. This parameter should be
-            used if there are multiple pipelines or pipelines are nested in folders in the derivatives folder.
+            used if there are multiple pipelines or pipelines are nested in folders in the derivatives folder. If
+            soecified, the first level of the folder should contain the "dataset_description.json" file or an
+            error will occur. For instance, if the json file in "path/to/bids/derivatives/fmriprep/fmriprep-20.0.0",
+            then ``pipeline_name = "fmriprep/fmriprep-20.0.0"``.
 
         n_cores : :obj:`int` or :obj:`None`, default=None
             The number of CPU cores to use for multiprocessing with joblib.
@@ -356,6 +361,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         flush_print : :obj:`bool`, default=False
             Flush the printed subject-specific information produced during the timeseries extraction process.
+            Used to immediately print out information such as the current subject being processed, there confounds
+            etc.
 
         exclude_niftis : :obj:`list[str]` or :obj:`None`, default=None
             List of specific preprocessed NIfTI files to exclude, preventing their timeseries from being extracted.
@@ -424,7 +431,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 before_censor = len(scan_list)
                 scan_list = [volume for volume in scan_list if volume not in censor_volumes]
                 if outlier_limit:
-                    flagged = True if 1 - (len(scan_list)/before_censor) > outlier_limit else False
+                    percentage = 1 - (len(scan_list)/before_censor)
+                    flagged = True if percentage > outlier_limit else False
 
             timeseries = timeseries[scan_list,:]
 
@@ -516,49 +524,34 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
                 # Aggregate new timeseries
                 if isinstance(subject_timeseries, dict): self._subject_timeseries.update(subject_timeseries)
-    # Inspired by 62442katieb from IDConn at https://github.com/62442katieb/IDConn/blob/master/idconn/pipeline.py
-    def _get_files(self, layout, extension, subj_id, suffix=None, desc=None, event=False):
-        if self._task_info["session"]:
-            if event:
-                files = sorted(layout.get(return_type="filename", suffix=suffix, task=self._task_info["task"],
-                                          session=self._task_info["session"], extension=extension, subject = subj_id))
-            elif desc:
-                files = sorted(layout.get(scope="derivatives", return_type="file", desc=desc,
-                                          task=self._task_info["task"],
-                                          session=self._task_info["session"], extension=extension, subject=subj_id))
-            else:
-                files = sorted(layout.get(scope="derivatives", return_type="file", suffix=suffix,
-                                          task=self._task_info["task"], space=self._space,
-                                          session=self._task_info["session"], extension=extension, subject=subj_id))
 
-        else:
-            if event:
-                files = sorted(layout.get(return_type="filename", suffix=suffix, task=self._task_info["task"],
-                                          extension=extension, subject=subj_id))
-            elif desc:
-                files = sorted(layout.get(scope="derivatives", return_type="file", desc=desc,
-                                          task=self._task_info["task"], extension=extension,
-                                          subject=subj_id))
-            else:
-                files = sorted(layout.get(scope="derivatives", return_type="file", suffix=suffix,
-                                          task=self._task_info["task"], space=self._space, extension=extension,
-                                          subject=subj_id))
-        return files
+    def _get_files(self, layout, extension, subj_id, scope="derivatives", suffix=None, desc=None, event=False, space="attr"):
+        query_dict = {"scope": scope, "return_type": "file", "task": self._task_info["task"], "extension": extension,
+                      "subject": subj_id}
+        if desc: query_dict.update({"desc": desc})
+        if suffix: query_dict.update({"suffix": suffix})
+        if self._task_info["session"]: query_dict.update({"session": self._task_info["session"]})
+        if not event and not desc: query_dict.update({"space": self._space if space == "attr" else space})
+
+        return sorted(layout.get(**query_dict))
+
     # Get valid subjects to iterate through
     def _setup_extraction(self, layout, subj_id_list, exclude_niftis):
         for subj_id in subj_id_list:
             nifti_files = self._get_files(layout=layout, suffix="bold", extension="nii.gz", subj_id=subj_id)
             mask_files = self._get_files(layout=layout, suffix="mask", extension="nii.gz", subj_id=subj_id)
             bold_metadata_files = self._get_files(layout=layout, suffix="bold", extension="json", subj_id=subj_id)
+            if not bold_metadata_files:
+                bold_metadata_files = self._get_files(layout=layout, scope="raw", suffix="bold", extension="json",
+                                                      subj_id=subj_id, space=None)
             if self._task_info["condition"]:
-                event_files = self._get_files(layout=layout, suffix="events",
-                                              extension="tsv", subj_id=subj_id, event=True)
+                event_files = self._get_files(layout=layout, scope="raw", suffix="events", extension="tsv",
+                                              subj_id=subj_id, event=True)
             else: event_files = []
             confound_files = self._get_files(layout=layout, desc="confounds", extension="tsv", subj_id=subj_id)
-            confound_metadata_files = self._get_files(layout=layout, extension="json",
-                                                      desc="confounds", subj_id=subj_id)
+            confound_metadata_files = self._get_files(layout=layout, extension="json", desc="confounds", subj_id=subj_id)
             # Remove excluded file from the nifti_files list, which will prevent it from being processed
-            if exclude_niftis and len(nifti_files) != 0:
+            if exclude_niftis and nifti_files:
                 nifti_files = [nifti_file for nifti_file in nifti_files
                                if os.path.basename(nifti_file) not in exclude_niftis]
 
@@ -567,11 +560,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             if self._task_info["runs"]:
                 check_runs.extend([f"run-{run}" for run in self._task_info["runs"]])
             else:
-                if len(nifti_files) != 0 and "run-" in os.path.basename(nifti_files[0]):
+                if nifti_files and "run-" in os.path.basename(nifti_files[0]):
                     check_runs.extend([re.search("run-(\\S+?)[-_]",os.path.basename(x))[0][:-1] for x in nifti_files])
 
             # Generate a list of runs to iterate through based on runs in nifti_files
-            if not self._task_info["session"] and len(nifti_files) != 0:
+            if not self._task_info["session"] and nifti_files:
                 if "ses-" in os.path.basename(nifti_files[0]):
                     check_sessions = [re.search("ses-(\\S+?)[-_]",os.path.basename(x))[0][:-1] for x in nifti_files]
                     if len(list(set(check_sessions))) > 1:
@@ -584,27 +577,27 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             base_message = f'[SUBJECT: {subj_id} | SESSION: {self._task_info["session"]} | TASK: {self.task_info["task"]}]'
             underline = '-'*len(base_message)
 
-            if len(nifti_files) == 0:
+            if not nifti_files:
                 warnings.warn(textwrap.dedent(f"""
                                               {base_message}
                                               {underline}
                                               Processing skipped: No NifTI files were found or all NifTI files were excluded."""))
                 continue
 
-            if len(mask_files) == 0:
+            if not mask_files:
                 warnings.warn(textwrap.dedent(f"""
                                               {base_message}
                                               {underline}
                                               Missing mask file but timeseries extraction will continue."""))
 
             if self._signal_clean_info["use_confounds"]:
-                if len(confound_files) == 0:
+                if not confound_files:
                     warnings.warn(textwrap.dedent(f"""
                                                   {base_message}
                                                   {underline}
                                                   Processing skipped: No confound files available when `use_confounds` is requested."""))
                     continue
-                if len(confound_metadata_files) == 0 and self._signal_clean_info["n_acompcor_separate"]:
+                if not confound_metadata_files and self._signal_clean_info["n_acompcor_separate"]:
                     warnings.warn(textwrap.dedent(f"""
                                                   {base_message}
                                                   {underline}
@@ -613,14 +606,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                                                   cerebrospinal fluid masks separately."""))
                     continue
 
-            if self._task_info["condition"] and len(event_files) == 0:
+            if self._task_info["condition"] and not event_files:
                 warnings.warn(textwrap.dedent(f"""
                                               {base_message}
                                               {underline}
                                               Processing skipped: No event files available when `condition` is specified."""))
                 continue
 
-            if len(check_runs) != 0:
+            if check_runs:
                 run_list = []
                 # Check if at least one run has all files present
                 for run in check_runs:
@@ -632,13 +625,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                         curr_list.append(any([run in file for file in confound_files]))
                         if self._signal_clean_info["n_acompcor_separate"]:
                             curr_list.append(any([run in file for file in confound_metadata_files]))
-                    if len(mask_files) != 0: curr_list.append(any([run in file for file in mask_files]))
+                    if mask_files: curr_list.append(any([run in file for file in mask_files]))
                     # Append runs that contain all needed files
                     if all(curr_list): run_list.append(run)
 
                 # Skip subject if no run has all needed files present
-                if len(run_list) != len(check_runs) or len(run_list) == 0:
-                    if len(run_list) == 0:
+                if len(run_list) != len(check_runs) or not run_list:
+                    if not run_list:
                         if self._task_info["condition"]:
                             warnings.warn(textwrap.dedent(f"""
                                                           {base_message}
@@ -670,7 +663,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 else:
                     with open(bold_metadata_files[0], "r") as json_file:
                         tr = json.load(json_file)["RepetitionTime"]
-            except ValueError:
+            except (IndexError, KeyError, json.JSONDecodeError) as e:
+                error_id =  type(e).__name__
+                error_message = f"no BOLD metadata files for [TASK: {self._task_info['task']}]" if str(error_id) == "IndexError" else f"{error_id} - {str(e)}"
                 if self._task_info["condition"]:
                     raise ValueError(textwrap.dedent(f"""
                                                      {base_message}
@@ -678,6 +673,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                                                      `tr` not specified and could not be extracted since BOLD
                                                      metadata file could not be opened. The `tr` must be given when
                                                      `condition` is specified."""))
+                elif any([self.signal_clean_info["high_pass"], self.signal_clean_info["low_pass"]]):
+                    raise ValueError(textwrap.dedent(f"""
+                                                     {base_message}
+                                                     {underline}
+                                                     `tr` not specified and could not be extracted since BOLD
+                                                     metadata file could not be opened due to {error_message}.
+                                                     The `tr` must be given whenn`high_pass` or `low_pass` is specified."""))
                 else:
                     warnings.warn(textwrap.dedent(f"""
                                                   {base_message}
@@ -846,7 +848,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         subject_timeseries = self._subject_timeseries[subj_id][f"run-{run}"]
         if roi_indx or roi_indx == 0:
             plt.plot(range(1, subject_timeseries.shape[0] + 1), subject_timeseries[:,plot_indxs])
-            if isinstance(roi_indx, int) or isinstance(roi_indx, str) or (isinstance(roi_indx, list) and len(roi_indx) == 1):
+            if isinstance(roi_indx, (int,str)) or (isinstance(roi_indx, list) and len(roi_indx) == 1):
                 if isinstance(roi_indx, int): roi_title = self._parcel_approach[parcellation_name]["nodes"][roi_indx]
                 elif isinstance(roi_indx, str): roi_title = roi_indx
                 else: roi_title = roi_indx[0]

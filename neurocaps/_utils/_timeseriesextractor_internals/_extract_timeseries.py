@@ -23,7 +23,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
 
         # Get files from specific run
         nifti_file = [nifti_file for nifti_file in nifti_files if run in os.path.basename(nifti_file)][0]
-        if len(mask_files) != 0:
+        if mask_files:
             mask_file = [mask_file for mask_file in mask_files if run in os.path.basename(mask_file)][0]
         else:
             mask_file = None
@@ -37,8 +37,8 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
 
         confound_df = pd.read_csv(confound_file, sep="\t") if signal_clean_info["use_confounds"] else None
 
-        event_file = None if len(event_files) == 0 else [event_file for event_file in event_files
-                                                         if run in os.path.basename(event_file)][0]
+        event_file = None if not event_files else [event_file for event_file in event_files
+                                                   if run in os.path.basename(event_file)][0]
 
         # Base message
         run_message = run_id.split("-")[-1]
@@ -124,7 +124,8 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
 
                 if outlier_limit and condition is None:
                     # Determine if run is flagged; when condition is not specified
-                    flagged = True if len(censor_volumes)/len(fd_array) > outlier_limit else False
+                    percentage = len(censor_volumes)/len(fd_array)
+                    flagged = True if percentage > outlier_limit else False
             else:
                 warnings.warn(textwrap.dedent(f"""
                                               {base_message}
@@ -138,7 +139,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
             # Get specific timing information for specific condition
             condition_df = event_df[event_df["trial_type"] == condition]
 
-            if len(condition_df.index) == 0:
+            if condition_df.empty:
                 warnings.warn(textwrap.dedent(f"""
                                               {base_message}
                                               {underline}
@@ -161,13 +162,17 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
             if dummy_scans: scan_list = [scan - dummy_scans for scan in scan_list if scan not in range(0, dummy_scans)]
 
             if censor:
+                # Assess if any condition indices greater than fd array to not dilute outlier calculation
+                if max(scan_list) > fd_array.shape[0] - 1:
+                    scan_list = _check_indices(scan_list,fd_array.shape[0],condition,base_message,underline)
                 # Get length of scan list prior to assess outliers if requested
                 before_censor = len(scan_list)
                 scan_list = [volume for volume in scan_list if volume not in censor_volumes]
                 if outlier_limit:
-                    flagged = True if 1 - (len(scan_list)/before_censor) > outlier_limit else False
+                    percentage = 1 - (len(scan_list)/before_censor)
+                    flagged = True if percentage > outlier_limit else False
 
-            if len(scan_list) == 0:
+            if not scan_list:
                 warnings.warn(textwrap.dedent(f"""
                                               {base_message}
                                               {underline}
@@ -178,11 +183,14 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
                 continue
 
         if flagged is True:
+            percentage_message = f"Percentage of volumes exceeding the threshold limit is {percentage*100}%"
+            if condition: percentage_message = f"{percentage_message} for [CONDITION: {condition}]"
             warnings.warn(textwrap.dedent(f"""
                                           {base_message}
                                           {underline}
                                           Processing skipped: Run flagged due to more than {outlier_limit*100}% of the
-                                          volumes exceeding the framewise displacement (FD) threshold limit of {threshold}."""))
+                                          volumes exceeding the framewise displacement (FD) threshold limit of {threshold}.
+                                          {percentage_message}."""))
             continue
 
         timeseries = _continue_extraction(nifti_file=nifti_file, mask_file=mask_file, confound_df=confound_df,
@@ -201,7 +209,7 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
         else:
             subject_timeseries[subj_id].update({run_id: timeseries})
 
-    if len(subject_timeseries[subj_id]) == 0:
+    if not subject_timeseries[subj_id]:
         warnings.warn(textwrap.dedent(f"""
                                       {base_message.split(' | RUN:')[0]}]
                                       {'-'*len(base_message.split(' | RUN:')[0])}
@@ -241,10 +249,10 @@ def _continue_extraction(nifti_file, mask_file, confound_df, confound_metadata_f
             else:
                 confounds_list = [col for col in confound_df.columns if col == confound_name]
 
-            if len(confounds_list) > 0: valid_confounds.extend(confounds_list)
+            if confounds_list: valid_confounds.extend(confounds_list)
             else: invalid_confounds.extend([confound_name])
 
-        if len(invalid_confounds) > 0:
+        if invalid_confounds:
             if verbose:
                 print(textwrap.dedent(f"""
                                       {base_message}
@@ -285,25 +293,25 @@ def _continue_extraction(nifti_file, mask_file, confound_df, confound_metadata_f
     if signal_clean_info["use_confounds"]: timeseries = masker.fit_transform(nifti_img, confounds=confounds)
     else: timeseries = masker.fit_transform(nifti_img)
 
-    if len(censor_volumes) > 0 and condition is None:
+    if censor_volumes and condition is None:
         timeseries = np.delete(timeseries, censor_volumes, axis=0)
 
     if condition:
-        # Quick check to ensure that max index in scan list is in timeseries in event there is an issue with timing info
-        # truncation issue with the bold file, or incorrect tr. Remove the out of bound indices instead of failing.
+        # If any out of bound indices, remove them instead of getting indexing error.
         if max(scan_list) > timeseries.shape[0] - 1:
-            warnings.warn(textwrap.dedent(f"""
-                                          {base_message}
-                                          {underline}
-                                          Max scan index corresponding to [CONDITION: {condition}] exceeds the max
-                                          index in the timeseries. Max index for the condition is {max(scan_list)}
-                                          while the max index for the timeseries is {timeseries.shape[0] - 1}. Timing
-                                          information may be misaligned or repetition time may be incorrect. If this is
-                                          intended, ignore warning. Only extracting indices corresponding to condition
-                                          for indices that exist in the timeseries."""))
-            scan_list = [scan for scan in scan_list if scan in range(0,timeseries.shape[0])]
-        # Extract specific condition from timeseries while removing any overlapping indices; scan list will have
-        # censored indices already removed
+            scan_list = _check_indices(scan_list,timeseries.shape[0],condition,base_message,underline)
+        # Extract condition
         timeseries = timeseries[scan_list,:]
 
     return timeseries
+
+def _check_indices(scan_list, arr_shape, condition, base_message, underline):
+    warnings.warn(textwrap.dedent(f"""
+                                {base_message}
+                                {underline}
+                                Max scan index for [CONDITION: {condition}] exceeds timeseries max index. Max condition
+                                index is {max(scan_list)}, while timeseries max index is {arr_shape - 1}. Timing may be
+                                misaligned or repetition time incorrect. If intentional, ignore warning. Extracting
+                                indices for condition only within timeseries range."""))
+    return [scan for scan in scan_list if scan in range(0,arr_shape)]
+        

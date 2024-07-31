@@ -18,7 +18,7 @@ def _check_confound_names(high_pass, specified_confound_names, n_acompcor_separa
                 "a_comp_cor_01", "a_comp_cor_02", "a_comp_cor_03", "a_comp_cor_04", "a_comp_cor_05"
             ]
     else:
-        assert isinstance(specified_confound_names, list) and len(specified_confound_names) > 0 , "confound_names must be a non-empty list."
+        assert isinstance(specified_confound_names, list) and specified_confound_names, "confound_names must be a non-empty list."
         confound_names = specified_confound_names
 
     if n_acompcor_separate:

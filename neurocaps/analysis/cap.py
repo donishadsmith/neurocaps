@@ -355,7 +355,7 @@ class CAP(_CAPGetter):
                                 """))
 
             for group_name in self._groups:
-                assert len(self._groups[group_name]) > 0, f"{group_name} has zero subject ids."
+                assert self._groups[group_name], f"{group_name} has zero subject ids."
 
             # Convert ids to strings
             for group in set(self._groups):
@@ -579,7 +579,7 @@ class CAP(_CAPGetter):
             requested_runs = [f"run-{run}" for run in runs] if runs else list(subject_timeseries[subj_id])
             subject_runs = [subject_run for subject_run in subject_timeseries[subj_id]
                             if subject_run in requested_runs]
-            if len(subject_runs) == 0:
+            if not subject_runs:
                 warnings.warn(textwrap.dedent(f"""
                               [SUBJECT: {subj_id}] - Does not have the requested run numbers: {','.join(requested_runs)}."""))
                 continue
@@ -878,7 +878,7 @@ class CAP(_CAPGetter):
 
         if any(boolean_list):
             invalid_metrics = [metrics[indx] for indx,boolean in enumerate(boolean_list) if boolean is False]
-            if len(invalid_metrics) > 0:
+            if invalid_metrics:
                 formatted_string = ', '.join(["'{a}'".format(a=x) for x in invalid_metrics])
                 warnings.warn(f"Invalid metrics will be ignored: {formatted_string}.")
         else:
@@ -910,7 +910,7 @@ class CAP(_CAPGetter):
             predicted_subject_timeseries[subj_id] = {}
             requested_runs = [f"run-{run}" for run in runs] if runs else list(subject_timeseries[subj_id])
             subject_runs = [subject_run for subject_run in subject_timeseries[subj_id] if subject_run in requested_runs]
-            if len(subject_runs) == 0:
+            if not subject_runs:
                 warnings.warn(textwrap.dedent(f"""
                             [SUBJECT: {subj_id}] - Does not have the requested run numbers: {','.join(requested_runs)}."""))
                 continue
@@ -1234,13 +1234,13 @@ class CAP(_CAPGetter):
         self._region_caps = {group: {} for group in self._groups}
         for group in self._groups:
             for cap in self._caps[group]:
-                region_caps = {}
+                region_caps = None
                 if parcellation_name != "Custom":
                     for region in self._parcel_approach[parcellation_name]["regions"]:
                         region_indxs = np.array([index for index, node in
                                                  enumerate(self._parcel_approach[parcellation_name]["nodes"])
                                                  if region in node])
-                        if len(region_caps) == 0:
+                        if region_caps is None:
                             region_caps = np.array([np.average(self._caps[group][cap][region_indxs])])
                         else:
                             region_caps = np.hstack([region_caps, np.average(self._caps[group][cap][region_indxs])])
@@ -1249,7 +1249,7 @@ class CAP(_CAPGetter):
                     region_keys = list(region_dict)
                     for region in region_keys:
                         roi_indxs = np.array(region_dict[region]["lh"] + region_dict[region]["rh"])
-                        if len(region_caps) == 0:
+                        if region_caps is None:
                             region_caps= np.array([np.average(self._caps[group][cap][roi_indxs])])
                         else:
                             region_caps= np.hstack([region_caps, np.average(self._caps[group][cap][roi_indxs])])
@@ -1820,7 +1820,7 @@ class CAP(_CAPGetter):
     def caps2surf(self, output_dir: Optional[os.PathLike]=None, suffix_title: Optional[str]=None,
                   show_figs: bool=True, fwhm: Optional[float]=None,
                   fslr_density: Literal["4k", "8k", "32k", "164k"]="32k", method: Literal["linear", "nearest"]="linear",
-                  save_stat_map: bool=False, fslr_giftis_dict: Optional[dict]=None,
+                  save_stat_maps: bool=False, fslr_giftis_dict: Optional[dict]=None,
                   knn_dict: dict[str, Union[int, list[int], np.array]]=None, **kwargs) -> surfplot.Plot: # pragma: no cover
         """
         **Project CAPs onto Surface Plots**
@@ -1870,9 +1870,11 @@ class CAP(_CAPGetter):
             Interpolation method to use when converting from MNI152 space to fsLR surface or from fsLR to fsLR. Options
             are "linear" or "nearest".
 
-        save_stat_map : :obj:`bool`, default=False
+        save_stat_maps : :obj:`bool`, default=False
             If True, saves the statistical map for each CAP for all groups as a Nifti1Image if ``output_dir`` is
             provided.
+
+             .. versionchanged:: 0.16.0 changed from ``save_stat_map`` to ``save_stat_maps``.
 
         fslr_giftis_dict : :obj:`dict` or :obj:`None`, default=None
             Dictionary specifying precomputed GifTI files in fsLR space for plotting stat maps. This parameter
@@ -2012,7 +2014,7 @@ class CAP(_CAPGetter):
                         # Create temp
                         temp_nifti = tempfile.NamedTemporaryFile(delete=False, suffix=".nii.gz")
                         warnings.warn(textwrap.dedent(f"""
-                                      Potential error due to changes in pathlib.py in Python 3.12 causing the error
+                                      TypeError raised due to changes in pathlib.py in Python 3.12 causing the error
                                       message to output as "not 'Nifti1Image'" instead of "not Nifti1Image", which
                                       neuromaps uses to determine if the input is a Nifti1Image object.
                                       Converting stat_map into a temporary nii.gz file (which will be automatically
@@ -2072,7 +2074,7 @@ class CAP(_CAPGetter):
                     fig.savefig(os.path.join(output_dir, save_name), dpi=plot_dict["dpi"],
                                 bbox_inches=plot_dict["bbox_inches"])
                     # Save stat map
-                    if save_stat_map:
+                    if save_stat_maps:
                         stat_map_name = save_name.replace(".png", ".nii.gz")
                         nib.save(stat_map, stat_map_name)
 

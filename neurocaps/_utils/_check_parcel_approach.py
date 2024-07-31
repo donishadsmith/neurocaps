@@ -18,20 +18,17 @@ def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
                                                  "Hippocampus": {"lh": [2],
                                                                  "rh": [5]}}}}
 
-    if not isinstance(parcel_approach,dict) or isinstance(parcel_approach,dict) and len(parcel_approach) > 0 and not isinstance(parcel_approach[list(parcel_approach)[0]],dict):
-        raise ValueError(textwrap.dedent(f"""
-                         Please include a valid `parcel_approach` in one of the following dictionary
-                         formats for 'Schaefer' or 'AAL' {valid_parcel_dict}"""))
+    if not isinstance(parcel_approach,dict) or not list(parcel_approach)[0] in list(valid_parcel_dict):
+        error_message = textwrap.dedent(f"""
+                         Please include a valid `parcel_approach` in one of the following dictionary formats for
+                         "Schaefer", "AAL", or "Custom": {valid_parcel_dict}""")
+        if not isinstance(parcel_approach,dict): raise TypeError(error_message)
+        else: raise KeyError(error_message)
 
     if len(parcel_approach) > 1:
         raise ValueError(textwrap.dedent(f"""
                          Only one parcellation approach can be selected.
                          Example format of `parcel_approach`: {valid_parcel_dict}"""))
-
-    if "Schaefer" not in parcel_approach and "AAL" not in parcel_approach and "Custom" not in parcel_approach:
-        raise KeyError(textwrap.dedent(f"""
-                         Please include a valid `parcel_approach` in one of the following formats for
-                         'Schaefer', 'AAL', or 'Custom': {valid_parcel_dict}"""))
 
     if "Schaefer" in parcel_approach:
         if "n_rois" not in parcel_approach["Schaefer"]:
@@ -58,7 +55,7 @@ def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
         parcel_approach["Schaefer"].update({"regions": list(dict.fromkeys([re.split("LH_|RH_", node)[-1].split("_")[0]
                                                                            for node in parcel_approach["Schaefer"]["nodes"]]))})
 
-    if "AAL" in parcel_approach:
+    elif "AAL" in parcel_approach:
         if "version" not in parcel_approach["AAL"]:
             warnings.warn("'version' not specified in `parcel_approach`. Defaulting to 'SPM12'.")
             parcel_approach["AAL"].update({"version": "SPM12"})
@@ -71,12 +68,13 @@ def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
         parcel_approach["AAL"].update({"regions": list(dict.fromkeys([node.split("_")[0]
                                                                       for node in parcel_approach["AAL"]["nodes"]]))})
 
-    if "Custom" in parcel_approach:
+    else:
+        custom_example = {"Custom": valid_parcel_dict["Custom"]}
         if call  == "TimeseriesExtractor" and "maps" not in parcel_approach["Custom"]:
             raise ValueError(textwrap.dedent(f"""
                              For `Custom` parcel_approach, a nested key-value pair containing the key 'maps' with the
                              value being a string specifying the location of the parcellation is needed.
-                             Example: {valid_parcel_dict['Custom']}"""))
+                             Example: {custom_example}"""))
         check_subkeys = ["nodes" in parcel_approach["Custom"], "regions" in parcel_approach["Custom"]]
         if not all(check_subkeys):
             missing_subkeys = [["nodes", "regions"][x] for x,y in enumerate(check_subkeys) if y is False]
@@ -87,16 +85,12 @@ def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
                               These labels are not needed for timeseries extraction but are needed for future
                               timeseries or CAPs plotting."""))
             else:
-                custom_example = {"Custom": {"nodes": ["LH_Vis1", "LH_Vis2", "LH_Hippocampus",
-                                                       "RH_Vis1", "RH_Vis2", "RH_Hippocampus"],
-                                             "regions": {"Vis" : {"lh": [0,1],
-                                                                   "rh": [3,4]}},
-                                                                   "Hippocampus": {"lh": [2],"rh": [5]}}}
                 raise ValueError(textwrap.dedent(f"""
                                  {error_message}.
-                                 These subkeys are needed for plotting. Please reassign `parcel_approach` using
-                                 `self.parcel_approach` amd refer to the example structure: {custom_example}"""))
-        if call  == "TimeseriesExtractor" and not os.path.isfile(parcel_approach["Custom"]["maps"]):
-            raise ValueError("Please specify the location to the custom parcellation to be used.")
+                                 Certain sub-keys are needed for plotting. Please check the function docstring for the
+                                 required sub-keys and reassign `parcel_approach` using `self.parcel_approach`.
+                                 Please refer to the example structure: {custom_example}"""))
+        if call == "TimeseriesExtractor" and not os.path.isfile(parcel_approach["Custom"]["maps"]):
+            raise FileNotFoundError("Please specify the location to the custom parcellation to be used.")
 
     return parcel_approach

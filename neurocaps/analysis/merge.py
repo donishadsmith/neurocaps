@@ -90,7 +90,7 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
     for curr_dict in subject_timeseries_list:
         if isinstance(curr_dict, str) and curr_dict.endswith(".pkl"):
             curr_dict = _convert_pickle_to_dict(pickle_file=curr_dict)
-        if len(subject_set) == 0: subject_set = set(curr_dict)
+        if not subject_set: subject_set = set(curr_dict)
         subject_set = subject_set.intersection(list(curr_dict))
 
     # Order subjects

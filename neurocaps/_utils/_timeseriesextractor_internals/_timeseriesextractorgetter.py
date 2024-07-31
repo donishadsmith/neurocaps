@@ -59,7 +59,7 @@ class _TimeseriesExtractorGetter:
             self._subject_timeseries = _convert_pickle_to_dict(subject_dict)
         elif isinstance(subject_dict, dict):
             first_level_indx = list(subject_dict)[0]
-            if isinstance(subject_dict[first_level_indx], dict) and len(subject_dict[first_level_indx]) != 0 and "run" in list(subject_dict[first_level_indx])[0]:
+            if isinstance(subject_dict[first_level_indx], dict) and subject_dict[first_level_indx] and "run" in list(subject_dict[first_level_indx])[0]:
                 run = list(subject_dict[first_level_indx])[0]
                 if isinstance(subject_dict[first_level_indx][run],np.ndarray):
                     self._subject_timeseries = copy.deepcopy(subject_dict)

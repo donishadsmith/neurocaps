@@ -257,6 +257,13 @@ def test_confounds(detrend,low_pass,high_pass,standardize):
     assert os.path.getsize(file) > 0
     os.remove(file)
 
+def test_wrong_condition():
+    extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
+
+    extractor.get_bold(bids_dir=bids_dir, task="rest",condition="placeholder")
+
+    assert extractor.subject_timeseries == {}
+
 def test_acompcor_seperate():
     confounds=["Cosine*", "Rot*","a_comp_cor_01","a_comp_cor_02", "a_comp_cor*"]
     extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
@@ -641,3 +648,18 @@ def test_append_2(n_cores, pipeline_name):
 
     assert extractor.subject_timeseries["01"]["run-0"].shape == (40,400)
     assert extractor.subject_timeseries["02"]["run-001"].shape == (40,400)
+
+@pytest.mark.parametrize("high_pass,low_pass", [(None,None),(0.08,None),(None,0.1),(0.08,0.1)])
+def test_tr(high_pass,low_pass):
+    extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
+                                    use_confounds=True, detrend=True, low_pass=low_pass, high_pass=high_pass,
+                                    confound_names=confounds, n_acompcor_separate=3)
+
+    extractor.get_bold(bids_dir=bids_dir, task="rest", run_subjects=["01"])
+
+    assert extractor.subject_timeseries["01"]["run-0"].shape == (40,426)
+
+    if any([high_pass,low_pass]):
+        with pytest.raises(ValueError):
+            extractor.get_bold(bids_dir=bids_dir, task="rest")
+

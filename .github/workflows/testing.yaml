@@ -2,7 +2,7 @@ name: Run Tests
 
 on:
   push:
-    branches: [main, experimental]
+    branches: [main, development]
   # Run weekly on Monday
   schedule:
     - cron: 0 0 * * 1
@@ -40,10 +40,10 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
           pytest test_CAP.py test_change_dtype.py test_standardize.py test_merge_dicts.py
-        shell: bash
+        shell: cmd
         working-directory: tests
       - name: Upload coverage reports to Codecov for Ubuntu
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-ver == '3.12' }}
         uses: codecov/codecov-action@v4.0.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

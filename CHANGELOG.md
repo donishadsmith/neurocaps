@@ -42,6 +42,24 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.16.0] - 2024-07-31
+### ♻ Changed
+- In `CAP.caps2surf`, the `save_stat_map` parameter has been changed to `save_stat_maps`.
+- Slight improvements in a few errors/exceptions to improve their informativeness.
+- Now, when a subject's run is excluded due to exceeding the fd threshold, the percentage of their volumes
+exceeding the threshold is given as opposed to simply stating that they have been excluded.
+### 🐛 Fixes
+- Fix a specific instance when `tr` is not specified for `TimseriesExtractor.get_bold`. When the `tr` is not specified,
+the code attempts to check the the bold metadata/json file in the derivatives directory to extract the
+repetition time. Now, it will check for this file in both the derivatives and root bids dir. The code will also
+raise an error earlier if the tr isn't specified, cannot be extracted from the bold metadata file, and bandpass filtering
+is requested.
+- A warning check that is done to assess if indices for a certain condition is outside a possible range due to
+duration mismatch, incorrect tr, etc is now also done before calculating the percentage of volumes exceeding the threshold
+to not dilute calculations. Before this check was only done before extracting the condition from the timeseries array.
+### 💻 Metadata
+- Very minor documentation updates for `TimseriesExtractor.get_bold`.
+
 ## [0.15.2] - 2024-07-23
 ### ♻ Changed
 - Created a specific message when dummy_scans = {"auto": True} and zero "non_steady_state_outlier_XX" are found
