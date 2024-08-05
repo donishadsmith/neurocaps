@@ -1,5 +1,5 @@
 """Internal function for checking the validity of parcel_approach."""
-import copy, os, re, textwrap, warnings
+import copy, os, re, warnings
 from nilearn import datasets
 from ._pickle_to_dict import _convert_pickle_to_dict
 
@@ -19,16 +19,14 @@ def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
                                                                  "rh": [5]}}}}
 
     if not isinstance(parcel_approach,dict) or not list(parcel_approach)[0] in list(valid_parcel_dict):
-        error_message = textwrap.dedent(f"""
-                         Please include a valid `parcel_approach` in one of the following dictionary formats for
-                         "Schaefer", "AAL", or "Custom": {valid_parcel_dict}""")
+        error_message = ("Please include a valid `parcel_approach` in one of the following dictionary formats for "
+                         f"'Schaefer', 'AAL', or 'Custom':\n{valid_parcel_dict}")
         if not isinstance(parcel_approach,dict): raise TypeError(error_message)
         else: raise KeyError(error_message)
 
     if len(parcel_approach) > 1:
-        raise ValueError(textwrap.dedent(f"""
-                         Only one parcellation approach can be selected.
-                         Example format of `parcel_approach`: {valid_parcel_dict}"""))
+        raise ValueError("Only one parcellation approach can be selected. Example format of `parcel_approach`:\n"
+                         f"{valid_parcel_dict}")
 
     if "Schaefer" in parcel_approach:
         if "n_rois" not in parcel_approach["Schaefer"]:
@@ -71,25 +69,20 @@ def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
     else:
         custom_example = {"Custom": valid_parcel_dict["Custom"]}
         if call  == "TimeseriesExtractor" and "maps" not in parcel_approach["Custom"]:
-            raise ValueError(textwrap.dedent(f"""
-                             For `Custom` parcel_approach, a nested key-value pair containing the key 'maps' with the
-                             value being a string specifying the location of the parcellation is needed.
-                             Example: {custom_example}"""))
+            raise ValueError("For `Custom` parcel_approach, a nested key-value pair containing the key 'maps' with the "
+                             "value being a string specifying the location of the parcellation is needed. Example:\n"
+                             f"{custom_example}")
         check_subkeys = ["nodes" in parcel_approach["Custom"], "regions" in parcel_approach["Custom"]]
         if not all(check_subkeys):
             missing_subkeys = [["nodes", "regions"][x] for x,y in enumerate(check_subkeys) if y is False]
             error_message = f"The following sub-keys haven't been detected {missing_subkeys}"
             if call == "TimeseriesExtractor":
-                warnings.warn(textwrap.dedent(f"""
-                              {error_message}.
-                              These labels are not needed for timeseries extraction but are needed for future
-                              timeseries or CAPs plotting."""))
+                warnings.warn(f"{error_message}. These labels are not needed for timeseries extraction but are needed "
+                              "for future timeseries or CAPs plotting.")
             else:
-                raise ValueError(textwrap.dedent(f"""
-                                 {error_message}.
-                                 Certain sub-keys are needed for plotting. Please check the function docstring for the
-                                 required sub-keys and reassign `parcel_approach` using `self.parcel_approach`.
-                                 Please refer to the example structure: {custom_example}"""))
+                raise ValueError(f"{error_message}. Certain sub-keys are needed for plotting. Please check the function "
+                                 "docstring for the required sub-keys and reassign `parcel_approach` using "
+                                 f"`self.parcel_approach`. Please refer to the example structure:\n{custom_example}")
         if call == "TimeseriesExtractor" and not os.path.isfile(parcel_approach["Custom"]["maps"]):
             raise FileNotFoundError("Please specify the location to the custom parcellation to be used.")
 

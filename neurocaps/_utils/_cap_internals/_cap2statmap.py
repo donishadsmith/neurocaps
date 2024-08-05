@@ -1,8 +1,8 @@
 """Internal function for turning CAPs into NifTI Statistical Maps"""
-import textwrap, warnings
+import warnings
 import nibabel as nib, numpy as np
 from nilearn import datasets, image
-from scipy.spatial import cKDTree
+from scipy.spatial import KDTree
 
 def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
     atlas = nib.load(atlas_file)
@@ -37,7 +37,7 @@ def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
         else: k = knn_dict["k"]
 
         # Build kdtree for nearest neighbors
-        kdtree = cKDTree(non_zero_indices)
+        kdtree = KDTree(non_zero_indices)
 
         for target_indx in target_indices:
             # Get the nearest non-zero index
@@ -66,9 +66,8 @@ def _get_target_indices(atlas_file, knn_dict, subcortical_indices=None):
     atlas = nib.load(atlas_file)
     # Get schaefer atlas, which projects well onto cortical surface plots
     if "resolution_mm" not in knn_dict:
-        warnings.warn(textwrap.dedent("""
-                                      Defaulting to 1mm resolution for the Schaefer atlas since 'resolution_mm' was
-                                      not specified in `knn_dict`."""))
+        warnings.warn("Defaulting to 1mm resolution for the Schaefer atlas since 'resolution_mm' was not specified in "
+                      "`knn_dict`.")
         resolution_mm = 1
     else:
         resolution_mm = knn_dict["resolution_mm"]

@@ -1,9 +1,14 @@
-import copy, pickle, json, os, glob, math, pytest, numpy as np, pandas as pd
+import copy, pickle, json, os, glob, shutil, sys, math, pytest, numpy as np, pandas as pd
 from neurocaps.extraction import TimeseriesExtractor
 
 dir = os.path.dirname(__file__)
-bids_dir = os.path.join(dir, "ds000031_R1.0.4_ses001-022/ds000031_R1.0.4/")
-pipeline_name = "fmriprep_1.0.0/fmriprep"
+if sys.platform == "win32":
+    bids_dir = os.path.join(dir, "ds000031_R1.0.4_ses001-022","ds000031_R1.0.4\\")
+    pipeline_name = "fmriprep_1.0.0\\fmriprep\\"
+else:
+    bids_dir = os.path.join(dir, "ds000031_R1.0.4_ses001-022","ds000031_R1.0.4/")
+    pipeline_name = "fmriprep_1.0.0/fmriprep/"
+
 confounds=["Cosine*", "aComp*", "Rot*"]
 confounds_file = glob.glob(os.path.join(dir, bids_dir, "derivatives", pipeline_name, "sub-01", "ses-002", "func", "*confounds*.tsv"))[0]
 with open(os.path.join(dir, "HCPex_parcel_approach.pkl"), "rb") as f:
@@ -78,76 +83,74 @@ def get_scans(condition, dummy_scans=None, fd=False, tr=1.2):
         if censored_index in scan_list: scan_list.remove(censored_index)
     return scan_list
 
-
 @pytest.fixture(autouse=False, scope="module")
 def setup_environment_2():
-    import shutil
-
-    work_dir = os.path.join(bids_dir,"derivatives",pipeline_name)
-    # Duplicate data to create a subject 02 folder
-    cmd = f"mkdir -p {work_dir}/sub-02 && cp -r {work_dir}/sub-01/* {work_dir}/sub-02/"
-    os.system(cmd)
-    files = glob.glob(os.path.join(work_dir, "sub-02/ses-002/func", "*"))
-    [os.rename(x,x.replace("sub-01_","sub-02_" )) for x in files]
-
-    # Add another session for sub 01
-    cmd = f"mkdir -p {work_dir}/sub-01/ses-003 && cp -r {work_dir}/sub-01/ses-002/* {work_dir}/sub-01/ses-003"
-    os.system(cmd)
-    files = glob.glob(os.path.join(work_dir, "sub-01/ses-003/func", "*"))
-    [os.rename(x,x.replace("ses-002_","ses-003_" )) for x in files]
-
-    # Add second run to sub_01
-    files = glob.glob(os.path.join(work_dir, "sub-01/ses-002/func","*"))
-    [shutil.copyfile(x,x.replace("run-001","run-002")) for x in files]
-
-    # Modify confound data for run 002 of subject 01 and subject 02
-    confound_files = glob.glob(os.path.join(work_dir, "sub-01/ses-002/func","*run-002*confounds_timeseries.tsv")) + glob.glob(os.path.join(work_dir, "sub-02/ses-002/func","*run-001*confounds_timeseries.tsv"))
+    work_dir = os.path.join(bids_dir, "derivatives", pipeline_name)
+    # Create subject 02 folder and copy data
+    os.makedirs(os.path.join(work_dir, "sub-02"), exist_ok=True)
+    shutil.copytree(os.path.join(work_dir, "sub-01"), os.path.join(work_dir, "sub-02"), dirs_exist_ok=True)
+    # Rename files for sub-02
+    for file in glob.glob(os.path.join(work_dir, "sub-02", "ses-002", "func", "*")):
+        os.rename(file, file.replace("sub-01_", "sub-02_"))
+    # Add another session for sub-01
+    os.makedirs(os.path.join(work_dir, "sub-01", "ses-003"), exist_ok=True)
+    shutil.copytree(os.path.join(work_dir, "sub-01", "ses-002"), os.path.join(work_dir, "sub-01", "ses-003"), dirs_exist_ok=True)
+    # Rename files for ses-003
+    for file in glob.glob(os.path.join(work_dir, "sub-01", "ses-003", "func", "*")):
+        os.rename(file, file.replace("ses-002_", "ses-003_"))
+    # Add second run to sub-01
+    for file in glob.glob(os.path.join(work_dir, "sub-01", "ses-002", "func", "*")):
+        shutil.copyfile(file, file.replace("run-001", "run-002"))
+    # Modify confound data
+    confound_files = (
+        glob.glob(os.path.join(work_dir, "sub-01", "ses-002", "func", "*run-002*confounds_timeseries.tsv")) +
+        glob.glob(os.path.join(work_dir, "sub-02", "ses-002", "func", "*run-001*confounds_timeseries.tsv"))
+    )
     for file in confound_files:
         confound_df = pd.read_csv(file, sep="\t")
-        confound_df["Cosine00"] = [x[0] for x in np.random.rand(40,1)]
+        confound_df["Cosine00"] = np.random.rand(40)
         confound_df.to_csv(file, sep="\t", index=None)
 
 @pytest.fixture(autouse=False, scope="module")
 def setup_environment_3():
-    # Rename files to remove the run id and ses id also remove mask for subject 1
-    cmd = f"""
-        # Rename files
-        for i in 01 02; do
-            work_dir={bids_dir}/derivatives/fmriprep_1.0.0/fmriprep/sub-$i/ses-002/func
-            if [ "$i" = "01" ]; then
-                # Remove run 2 files and brain mask files
-                rm $work_dir/*run-002* $work_dir/*brain_mask*
-                # Remove ses-2
-                rm -rf {bids_dir}/derivatives/fmriprep_1.0.0/fmriprep/sub-$i/ses-003
-                mv $work_dir/sub-${{i}}_ses-002_task-rest_run-001_desc-confounds_timeseries.tsv $work_dir/sub-${{i}}_task-rest_desc-confounds_timeseries.tsv
-                mv $work_dir/sub-${{i}}_ses-002_task-rest_run-001_desc-confounds_timeseries.json $work_dir/sub-${{i}}_task-rest_desc-confounds_timeseries.json
-                mv $work_dir/sub-${{i}}_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz $work_dir/sub-${{i}}_task-rest_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz
-            else
-                # Remove brain mask files
-                rm $work_dir/*brain_mask*
-                mv $work_dir/sub-${{i}}_ses-002_task-rest_run-001_desc-confounds_timeseries.tsv $work_dir/sub-${{i}}_task-rest_run-001_desc-confounds_timeseries.tsv
-                mv $work_dir/sub-${{i}}_ses-002_task-rest_run-001_desc-confounds_timeseries.json $work_dir/sub-${{i}}_task-rest_run-001_desc-confounds_timeseries.json
-                mv $work_dir/sub-${{i}}_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz $work_dir/sub-${{i}}_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz
-            fi
-        done
-        """
-    # Execute using os.system
-    os.system(cmd)
+    work_dir = os.path.join(bids_dir, "derivatives", "fmriprep_1.0.0", "fmriprep")
+    for i in ["01", "02"]:
+        sub_dir = os.path.join(work_dir, f"sub-{i}")
+        func_dir = os.path.join(sub_dir, "ses-002", "func")
+        if i == "01":
+            # Remove run 2 files and brain mask files
+            for file in glob.glob(os.path.join(func_dir, "*run-002*")): os.remove(file)
 
-        # Remove ses folders and change directory structure of fMRIPrep to bring folder up one level
-    work_dir = os.path.join(dir, "ds000031_R1.0.4_ses001-022/ds000031_R1.0.4/derivatives")
-    cmd = f"""
-    for i in 01 02; do
-        mv {work_dir}/fmriprep_1.0.0/fmriprep/sub-$i/ses-002/* {work_dir}/fmriprep_1.0.0/fmriprep/sub-$i/
-        rm -rf {work_dir}/fmriprep_1.0.0/fmriprep/sub-$i/ses-002
-    done
+            try: [os.remove(x) for x in glob.glob(os.path.join(func_dir, "*brain_mask*"))]
+            except: pass
+            # Remove ses-003
+            shutil.rmtree(os.path.join(sub_dir, "ses-003"), ignore_errors=True)
+            # Rename files
+            os.rename(os.path.join(func_dir, f"sub-{i}_ses-002_task-rest_run-001_desc-confounds_timeseries.tsv"),
+                      os.path.join(func_dir, f"sub-{i}_task-rest_desc-confounds_timeseries.tsv"))
+            os.rename(os.path.join(func_dir, f"sub-{i}_ses-002_task-rest_run-001_desc-confounds_timeseries.json"),
+                      os.path.join(func_dir, f"sub-{i}_task-rest_desc-confounds_timeseries.json"))
+            os.rename(os.path.join(func_dir, f"sub-{i}_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"),
+                      os.path.join(func_dir, f"sub-{i}_task-rest_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"))
+        else:
+            # Remove brain mask files
+            for file in glob.glob(os.path.join(func_dir, "*brain_mask*")):
+                os.remove(file)
+            # Rename files
+            for file in glob.glob(os.path.join(func_dir, f"sub-{i}_ses-002_task-rest_run-001_*")):
+                new_name = file.replace("ses-002_", "")
+                os.rename(file, new_name)
     # Move up a level
-    mkdir -p {work_dir}/fmriprep-1.0.0
-    mv {work_dir}/fmriprep_1.0.0/fmriprep/* {work_dir}/fmriprep-1.0.0
-    rm -rf {work_dir}/fmriprep_1.0.0/fmriprep
-    """
-        # Execute using subprocess
-    os.system(cmd)
+    derivatives_dir = os.path.join(dir, "ds000031_R1.0.4_ses001-022", "ds000031_R1.0.4", "derivatives")
+    fmriprep_old_dir = os.path.join(derivatives_dir, "fmriprep_1.0.0", "fmriprep")
+    fmriprep_new_dir = os.path.join(derivatives_dir, "fmriprep_1.0.0")
+    # Move contents up one level
+    for item in os.listdir(fmriprep_old_dir):
+        source_path = os.path.join(fmriprep_old_dir, item)
+        destination_path = os.path.join(fmriprep_new_dir, item)
+        shutil.move(source_path, destination_path)
+
+    os.rmdir(fmriprep_old_dir)
 
 # Check if dictionary updating works when parallel isn't used; Use setup_environment 1
 @pytest.mark.parametrize("parcel_approach,use_confounds,name", [({"Schaefer": {"n_rois": 100, "yeo_networks": 7}},True,"Schaefer"),
@@ -192,12 +195,14 @@ def test_extraction(parcel_approach, use_confounds, name):
     assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 24
 
 def test_check_parallel_and_non_parallel():
+    if sys.platform == "win32": pipeline_name = "derivatives\\fmriprep_1.0.0\\fmriprep"
+    else: pipeline_name = "derivatives/fmriprep_1.0.0/fmriprep"
     extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
                                     use_confounds=True, detrend=False, low_pass=0.15, high_pass=None,
                                     confound_names=confounds)
 
     extractor.get_bold(bids_dir=bids_dir, session='002', runs="001",task="rest", pipeline_name=pipeline_name,
-                       tr=1.2, n_cores=1)
+                        tr=1.2, n_cores=1)
 
     parallel_timeseries = copy.deepcopy(extractor.subject_timeseries["01"]["run-001"])
 
@@ -274,7 +279,8 @@ def test_acompcor_seperate():
 
 def test_no_session_w_custom():
     # Written like this to test that .get_bold removes the /
-    pipeline_name = "/fmriprep_1.0.0/fmriprep"
+    if sys.platform == "win32": pipeline_name = "\\fmriprep_1.0.0\\fmriprep"
+    else: pipeline_name = "/fmriprep_1.0.0/fmriprep"
 
     extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
                                     use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01,
@@ -597,7 +603,7 @@ def test_session_error():
 
 # Use setup_environment 3
 def test_exclude_sub(setup_environment_3):
-    pipeline_name="fmriprep-1.0.0"
+    pipeline_name="fmriprep_1.0.0"
     parcel_approach = {"Schaefer": {"yeo_networks": 7}}
     extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
                                     use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.08,
@@ -613,7 +619,7 @@ def test_exclude_sub(setup_environment_3):
     assert extractor.subject_timeseries["01"]["run-0"].shape == (40,400)
     assert "02" not in list(extractor.subject_timeseries)
 
-@pytest.mark.parametrize("use_confounds,verbose,pipeline_name", [(True,True, "fmriprep-1.0.0"),
+@pytest.mark.parametrize("use_confounds,verbose,pipeline_name", [(True,True, "fmriprep_1.0.0"),
                                                                  (False,False, None),
                                                                  (True,False, None),
                                                                  (False,True, None)])
@@ -637,7 +643,7 @@ def test_skip(pipeline_name):
                        run_subjects=["01"])
     assert extractor.subject_timeseries == {}
 
-@pytest.mark.parametrize("n_cores,pipeline_name", [(None,None),(2, "fmriprep-1.0.0")])
+@pytest.mark.parametrize("n_cores,pipeline_name", [(None,None),(2, "fmriprep_1.0.0")])
 def test_append_2(n_cores, pipeline_name):
     parcel_approach = {"Schaefer": {"yeo_networks": 7}}
     extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",

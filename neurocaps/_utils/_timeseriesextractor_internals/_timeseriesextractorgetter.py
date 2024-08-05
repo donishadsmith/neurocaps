@@ -1,6 +1,5 @@
-"""# A class which is responsible for accessing all TimeseriesExtractorGetter and to keep track of all
-attributes in TimeSeriesExtractor"""
-import copy, textwrap
+"""# A class which is responsible for accessing all TimeseriesExtractorGetter and to keep track of all attributes in TimeSeriesExtractor"""
+import copy
 import numpy as np
 from .._check_parcel_approach import _check_parcel_approach
 from .._pickle_to_dict import _convert_pickle_to_dict
@@ -50,11 +49,9 @@ class _TimeseriesExtractorGetter:
 
     @subject_timeseries.setter
     def subject_timeseries(self, subject_dict):
-        error_message = textwrap.dedent("""
-                                        Must be a valid pickle file/subject timeseries should contain a nested
-                                        dictionary where the first level is the subject id, second level
-                                        is the run number in the form of 'run-#', and the final level is the timeseries
-                                        as a numpy array.""")
+        error_message = ("Must be a valid pickle file/subject timeseries should contain a nested dictionary where the "
+                         "first level is the subject id, second level is the run number in the form of 'run-#', and the "
+                         "final level is the timeseries as a numpy array.")
         if isinstance(subject_dict, str) and subject_dict.endswith(".pkl"):
             self._subject_timeseries = _convert_pickle_to_dict(subject_dict)
         elif isinstance(subject_dict, dict):

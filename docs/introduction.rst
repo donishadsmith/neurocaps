@@ -8,11 +8,11 @@
    :target: https://pypi.python.org/pypi/neurocaps/
    :alt: Python Versions
 
-.. image:: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-blue
-   :target: https://doi.org/10.5281/zenodo.13146265
+.. image:: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal
+   :target: https://doi.org/10.5281/zenodo.13234417
    :alt: DOI
 
-.. image:: https://img.shields.io/badge/Source%20Code-neurocaps-blue
+.. image:: https://img.shields.io/badge/Source%20Code-neurocaps-purple
    :target: https://github.com/donishadsmith/neurocaps
    :alt: GitHub Repository
 
@@ -37,7 +37,7 @@ Citing
 ======
 ::
   
-  Smith, D. (2024). neurocaps. Zenodo. https://doi.org/10.5281/zenodo.13146265
+  Smith, D. (2024). neurocaps. Zenodo. https://doi.org/10.5281/zenodo.13234417
 
 Usage
 =====

@@ -20,18 +20,24 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-ver }}
-      - name: Install package & pytest
+      - name: Install package & pytest for Mac & Ubuntu
+        if: ${{ matrix.os != 'windows-latest' }}
         run: |
-          pip install -e .
-          pip install pytest pytest-cov
+          pip install -e .[test]
         shell: bash
-      - name: Run tests with coverage for Ubuntu
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+      - name: Install package & pytest for Windows
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: |
+          git config --system core.longpaths true
+          pip install -e .[windows,test]
+        shell: cmd
+      - name: Run tests with coverage for Ubuntu on python 3.12
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-ver == '3.12' }}
         run: |
           pytest --cov=neurocaps
         shell: bash
-      - name: Run tests without coverage for Mac
-        if: ${{ matrix.os == 'macos-latest' }}
+      - name: Run tests without coverage for Mac for all version & Ubuntu from 3.9 to 3.11
+        if: ${{ matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest' && matrix.python-ver != '3.12' }}
         run: |
           pytest .
         shell: bash
@@ -39,7 +45,7 @@ jobs:
       - name: Run tests without coverage for Windows
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
-          pytest test_CAP.py test_change_dtype.py test_standardize.py test_merge_dicts.py
+          pytest .
         shell: cmd
         working-directory: tests
       - name: Upload coverage reports to Codecov for Ubuntu

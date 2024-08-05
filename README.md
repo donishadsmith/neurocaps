@@ -1,8 +1,8 @@
 # neurocaps
 [![Latest Version](https://img.shields.io/pypi/v/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-blue)](https://doi.org/10.5281/zenodo.13146265)
-[![Github Repository](https://img.shields.io/badge/Source%20Code-neurocaps-blue)](https://github.com/donishadsmith/neurocaps)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.13234417)
+[![Github Repository](https://img.shields.io/badge/Source%20Code-neurocaps-purple)](https://github.com/donishadsmith/neurocaps)
 [![Test Status](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg)](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml)
 [![codecov](https://codecov.io/github/donishadsmith/neurocaps/graph/badge.svg?token=WS2V7I16WF)](https://codecov.io/github/donishadsmith/neurocaps)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
@@ -12,8 +12,6 @@ This is a Python package designed to perform Co-activation Patterns (CAPs) analy
 This package was initially inspired by a co-activation patterns implementation in mtorabi59's [pydfc](https://github.com/neurodatascience/dFC) package.
 
 # Installation
-
-**Note**: The `get_bold()` method in the `TimeseriesExtractor` class relies on pybids, which is only functional on POSIX operating systems and macOS. If you have a pickled timeseries dictionary in the correct nested form, you can use this package on Windows to visualize the BOLD timeseries, the `CAP` class, as well as the `merge_dicts()` and `standardize()` functions in the in the `neurcaps.analysis` submodule.
 
 To install, use your preferred terminal:
 
@@ -25,10 +23,29 @@ pip install neurocaps
 
 ```
 
+For Windows, pybids will not install by default to avoid installation error if long path is not enabled, to install it
+you can use the following command:
+
+```bash
+
+pip install neurocaps[windows]
+
+```
+
+Or you can install it seperately
+
+```bash
+
+pip install pybids
+
+```
+
 **From source (Development version):**
 
 ```bash
+
 pip install git+https://github.com/donishadsmith/neurocaps.git
+
 ```
 
 or
@@ -39,6 +56,15 @@ git clone https://github.com/donishadsmith/neurocaps/
 cd neurocaps
 pip install -e .
 
+```
+
+For Windows, if you want to install pybids you can use the following command:
+
+```bash
+
+git clone https://github.com/donishadsmith/neurocaps/
+cd neurocaps
+pip install -e .[windows]
 ```
 
 # Usage

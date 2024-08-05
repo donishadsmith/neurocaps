@@ -1,4 +1,4 @@
-import copy, textwrap, os
+import copy, os
 from typing import Union, Optional
 import numpy as np
 from .._utils import _convert_pickle_to_dict, _dicts_to_pickles
@@ -132,9 +132,8 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
 
 
     if output_dir:
-        message = textwrap.dedent("""
-                                Length of `file_names` must be equal to 1 if `save_reduced_dicts`is False or the
-                                length of `subject_timeseries_list` + 1 if `save_reduced_dicts` is True.""")
+        message = ("Length of `file_names` must be equal to 1 if `save_reduced_dicts`is False or the length of "
+                   "`subject_timeseries_list` + 1 if `save_reduced_dicts` is True.")
 
         _dicts_to_pickles(output_dir=output_dir, dict_list=modified_dicts, call="merge", file_names=file_names,
                           message=message,save_reduced_dicts=save_reduced_dicts)

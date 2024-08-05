@@ -1,8 +1,5 @@
 Installation
 ============
-**Note**: The ``get_bold()`` method in the ``TimeseriesExtractor`` class relies on pybids, which is only functional on POSIX operating systems and macOS. If you have a pickled timeseries dictionary in the correct nested form, 
-you can use this package on Windows to visualize the BOLD timeseries, the ``CAP`` class, as well as the ``merge_dicts()`` and ``standardize()`` functions in the in the ``neurcaps.analysis`` submodule.
-
 To install, use your preferred terminal:
 
 Installation using pip:
@@ -10,6 +7,18 @@ Installation using pip:
 .. code-block:: bash
 
     pip install neurocaps
+
+For Windows, pybids will not install by default to avoid installation error if long path is not enabled, to install it you can use the following command:
+
+.. code-block:: bash
+
+    pip install neurocaps[windows]
+
+Or you can install it seperately
+
+.. code-block:: bash
+
+    pip install pybids
 
 Install development version:
 
@@ -24,3 +33,11 @@ or
     git clone https://github.com/donishadsmith/neurocaps/
     cd neurocaps
     pip install -e .
+
+For Windows, if you want to install pybids you can use the following command:
+
+.. code-block:: bash
+
+    git clone https://github.com/donishadsmith/neurocaps/
+    cd neurocaps
+    pip install -e .[windows]

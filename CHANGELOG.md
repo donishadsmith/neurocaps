@@ -42,6 +42,15 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.16.1] - 2024-08-06
+### ♻ Changed
+- For `knn_dict`, cKdtree is replaced with Kdtree and scipy is restricted to 1.6.0 or later since that is the version
+were Kdtree used the C implementation.
+- `TimeseriesExtractor.get_bold()` can now be used on Windows, pybids still does not install by default to prevent
+long path error but `pip install neurocaps[windows]` can be used for installation.
+- All instances of textwrap replaced with normal strings, printed warnings or messages will be longer in length now
+and occupies less vertical screen space.
+
 ## [0.16.0] - 2024-07-31
 ### ♻ Changed
 - In `CAP.caps2surf`, the `save_stat_map` parameter has been changed to `save_stat_maps`.

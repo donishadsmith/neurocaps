@@ -1,9 +1,9 @@
-import copy, itertools, os, sys, tempfile, textwrap, warnings
+import copy, itertools, os, sys, tempfile, warnings
 from typing import Union, Literal, Optional
 import numpy as np, nibabel as nib, matplotlib.pyplot as plt, pandas as pd, seaborn, surfplot
 import plotly.express as px, plotly.graph_objects as go, plotly.offline as pyo
 from kneed import KneeLocator
-from joblib import cpu_count, delayed, Parallel
+from joblib import Parallel, delayed
 from nilearn.plotting.cm import _cmap_d
 from neuromaps.transforms import mni152_to_fslr, fslr_to_fslr
 from neuromaps.datasets import fetch_fslr
@@ -349,10 +349,8 @@ class CAP(_CAPGetter):
         # Raise error if self groups is not a dictionary
         if self._groups:
             if not isinstance(self._groups, dict):
-                raise TypeError(textwrap.dedent("""
-                                `groups` must be a dictionary where the keys are the group names and the items
-                                correspond to subject ids in the groups.
-                                """))
+                raise TypeError("`groups` must be a dictionary where the keys are the group names and the items "
+                                "correspond to subject ids in the groups.")
 
             for group_name in self._groups:
                 assert self._groups[group_name], f"{group_name} has zero subject ids."
@@ -486,6 +484,7 @@ class CAP(_CAPGetter):
         `matplotlib.Figure`
             An instance of `matplotlib.Figure`.
         """
+        self._n_cores = n_cores
         # Ensure all unique values if n_clusters is a list
         self._n_clusters = n_clusters if isinstance(n_clusters, int) else sorted(list(set(n_clusters)))
         self._cluster_selection_method = cluster_selection_method
@@ -501,20 +500,9 @@ class CAP(_CAPGetter):
         if all([self._cluster_selection_method is not None, isinstance(self._n_clusters, int)]):
             raise ValueError("`cluster_selection_method` only valid if n_clusters is a range of unique integers.")
 
-        if n_cores and self._cluster_selection_method is not None:
-            if n_cores > cpu_count():
-                raise ValueError(textwrap.dedent(f"""
-                                 More cores specified than available -
-                                 Number of cores specified: {n_cores};
-                                 Max cores available: {cpu_count()}.
-                                 """))
-            if isinstance(n_cores, int): self._n_cores = n_cores
-            else: raise ValueError("`n_cores` must be an integer.")
-        else:
-            if n_cores and self._cluster_selection_method is None:
-                warnings.warn("Multiprocessing will not run since `cluster_selection_method` is None.")
-            self._n_cores = None
-
+        if self._n_cores and self._cluster_selection_method is None:
+            raise ValueError("Multiprocessing will not run since `cluster_selection_method` is None.")
+        
         if runs:
             if not isinstance(runs,list): runs = [runs]
 
@@ -557,9 +545,8 @@ class CAP(_CAPGetter):
         for group in self._groups:
             for subj_id in self._groups[group]:
                 if subj_id in self._subject_table:
-                    warnings.warn(textwrap.dedent(f"""
-                                  [SUBJECT: {subj_id}] - appears more than once. Only the first instance of this subject
-                                  will be included in the analysis."""))
+                    warnings.warn(f"[SUBJECT: {subj_id}] - appears more than once. Only the first instance of this "
+                                  "subject will be included in the analysis.")
                 else:
                     self._subject_table.update({subj_id : group})
 
@@ -580,8 +567,8 @@ class CAP(_CAPGetter):
             subject_runs = [subject_run for subject_run in subject_timeseries[subj_id]
                             if subject_run in requested_runs]
             if not subject_runs:
-                warnings.warn(textwrap.dedent(f"""
-                              [SUBJECT: {subj_id}] - Does not have the requested run numbers: {','.join(requested_runs)}."""))
+                warnings.warn(f"[SUBJECT: {subj_id}] - Does not have the requested run numbers: "
+                              f"{','.join(requested_runs)}.")
                 continue
             for curr_run in subject_runs:
                 if concatenated_timeseries[group] is None:
@@ -651,11 +638,10 @@ class CAP(_CAPGetter):
                                       curve="convex", direction="decreasing", S=knee_dict["S"])
                 self._optimal_n_clusters[group] = kneedle.elbow
                 if self._optimal_n_clusters[group] is None:
-                    raise ValueError(textwrap.dedent(f"""
-                                [GROUP: {group}] - No elbow detected. Try adjusting the sensitivity parameter, `S`, to
-                                increase or decrease sensitivity (higher values are less sensitive), expanding the list
-                                of clusters to test, or using another `cluster_selection_method`.
-                                """))
+                    raise ValueError(f"[GROUP: {group}] - No elbow detected. Try adjusting the sensitivity parameter, "
+                                     "`S`, to increase or decrease sensitivity (higher values are less sensitive), "
+                                     "expanding the list of clusters to test, or using another "
+                                     "`cluster_selection_method`.")
             elif method == "davies_bouldin":
                 # Get minimum for davies bouldin
                 self._optimal_n_clusters[group] = min(performance_dict[group],
@@ -693,8 +679,7 @@ class CAP(_CAPGetter):
                     plt.savefig(os.path.join(output_dir,save_name), dpi=plot_dict["dpi"],
                                 bbox_inches=plot_dict["bbox_inches"])
 
-                if show_figs is False: plt.close()
-                else: plt.show()
+                plt.show() if show_figs else plt.close()
 
         if method == "elbow": self._inertia = performance_dict
         elif method == "davies_bouldin": self._davies_bouldin = performance_dict
@@ -860,9 +845,8 @@ class CAP(_CAPGetter):
 
         """
         if not hasattr(self,"_kmeans"):
-            raise AttributeError(textwrap.dedent("""
-                                 Cannot calculate metrics since `self._kmeans` attribute does not exist.
-                                 Run `self.get_caps()` first."""))
+            raise AttributeError("Cannot calculate metrics since `self._kmeans` attribute does not exist. Run "
+                                 "`self.get_caps()` first.")
 
         if prefix_file_name is not None and output_dir is None:
             warnings.warn("`prefix_name` supplied but no `output_dir` specified. Files will not be saved.")
@@ -883,9 +867,7 @@ class CAP(_CAPGetter):
                 warnings.warn(f"Invalid metrics will be ignored: {formatted_string}.")
         else:
             formatted_string = ', '.join(["'{a}'".format(a=x) for x in valid_metrics])
-            raise ValueError(textwrap.dedent(f"""
-                                             No valid metrics in `metrics` list.
-                                             Valid metrics are {formatted_string}."""))
+            raise ValueError(f"No valid metrics in `metrics` list. Valid metrics are {formatted_string}.")
 
         if isinstance(subject_timeseries, str) and subject_timeseries.endswith(".pkl"):
             subject_timeseries = _convert_pickle_to_dict(pickle_file=subject_timeseries)
@@ -911,8 +893,7 @@ class CAP(_CAPGetter):
             requested_runs = [f"run-{run}" for run in runs] if runs else list(subject_timeseries[subj_id])
             subject_runs = [subject_run for subject_run in subject_timeseries[subj_id] if subject_run in requested_runs]
             if not subject_runs:
-                warnings.warn(textwrap.dedent(f"""
-                            [SUBJECT: {subj_id}] - Does not have the requested run numbers: {','.join(requested_runs)}."""))
+                warnings.warn(f"[SUBJECT: {subj_id}] - Does not have the requested run numbers: {','.join(requested_runs)}.")
                 continue
             for curr_run in subject_runs:
                 # Standardize or not
@@ -1139,15 +1120,12 @@ class CAP(_CAPGetter):
 
         """
         if not self._parcel_approach:
-            raise AttributeError(textwrap.dedent("""
-                                 `self.parcel_approach` is None. Add parcel_approach
-                                 using `self.parcel_approach=parcel_approach` to use this
-                                 method."""))
+            raise AttributeError("`self.parcel_approach` is None. Add parcel_approach using "
+                                 "`self.parcel_approach=parcel_approach` to use this method.")
 
         if not hasattr(self,"_caps"):
-            raise AttributeError(textwrap.dedent("""
-                                 Cannot plot caps since `self._caps` attribute does not exist.
-                                 Run `self.get_caps()` first."""))
+            raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` "
+                                 "first.")
 
         # Check if parcellation_approach is custom
         if "Custom" in self._parcel_approach and any(key not in self._parcel_approach["Custom"] for key in ["nodes", "regions"]):
@@ -1160,9 +1138,8 @@ class CAP(_CAPGetter):
         check_caps = self._caps[list(self._caps)[0]]
         check_caps = check_caps[list(check_caps)[0]]
         if check_caps.shape[0] != len(self._parcel_approach[parcellation_name]["nodes"]):
-            raise ValueError(textwrap.dedent("""
-                            Number of rois/nodes used for CAPs does not equal the
-                            number of rois/nodes specified in `parcel_approach`."""))
+            raise ValueError("Number of nodes used for CAPs does not equal the number of nodes specified in "
+                             "`parcel_approach`.")
 
         if output_dir:
             if not os.path.exists(output_dir): os.makedirs(output_dir)
@@ -1471,7 +1448,7 @@ class CAP(_CAPGetter):
                                          bbox_inches=plot_dict["bbox_inches"])
 
         # Display figures
-        if not show_figs: plt.close()
+        plt.show() if show_figs else plt.close()
 
     def _generate_heatmap_plots(self, group, plot_dict, cap_dict, columns, output_dir, suffix_title, show_figs,
                                 scope, parcellation_name):
@@ -1550,7 +1527,7 @@ class CAP(_CAPGetter):
                                          bbox_inches=plot_dict["bbox_inches"])
 
         # Display figures
-        if not show_figs: plt.close()
+        plt.show() if show_figs else plt.close()
 
     def caps2corr(self, output_dir: Optional[os.PathLike]=None, suffix_title: Optional[str]=None,
                   show_figs: bool=True, save_plots: bool=True, return_df: bool=False, save_df: bool=False,
@@ -1657,9 +1634,7 @@ class CAP(_CAPGetter):
         corr_dict = {group: None for group in self._groups} if return_df or save_df else None
 
         if not hasattr(self,"_caps"):
-            raise AttributeError(textwrap.dedent("""
-                                 Cannot plot caps since `self._caps` attribute does not exist.
-                                 Run `self.get_caps()` first."""))
+            raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` first.")
 
         # Create plot dictionary
         defaults = {"dpi": 300, "figsize": (8, 6), "fontsize": 14, "xticklabels_size": 8, "yticklabels_size": 8,
@@ -1704,7 +1679,7 @@ class CAP(_CAPGetter):
             display.set_title(plot_title, fontdict= {"fontsize": plot_dict["fontsize"]})
 
             # Display figures
-            if not show_figs: plt.close()
+            plt.show() if show_figs else plt.close()
 
             if corr_dict:
                 # Get p-values; use np.eye to make main diagonals equal zero; implementation of tozCSS from https://stackoverflow.com/questions/25571882/pandas-columns-correlation-with-statistical-significance
@@ -1792,15 +1767,11 @@ class CAP(_CAPGetter):
             `NifTI` statistical map.
         """
         if not self._parcel_approach:
-            raise AttributeError(textwrap.dedent("""
-                                 `self.parcel_approach` is None. Add parcel_approach
-                                 using `self.parcel_approach=parcel_approach` to use this
-                                 method."""))
+            raise AttributeError("`self.parcel_approach` is None. Add parcel_approach using "
+                                 "`self.parcel_approach=parcel_approach` to use this method.")
 
         if not hasattr(self,"_caps"):
-            raise AttributeError(textwrap.dedent("""
-                                 Cannot plot caps since `self._caps` attribute does not exist.
-                                 Run `self.get_caps()` first."""))
+            raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` first.")
 
         if not os.path.exists(output_dir): os.makedirs(output_dir)
 
@@ -1976,15 +1947,12 @@ class CAP(_CAPGetter):
         ``sorted(np.unique(atlas_fdata))``.
         """
         if not self._parcel_approach and fslr_giftis_dict is None:
-            raise AttributeError(textwrap.dedent("""
-                                 `self.parcel_approach` is None. Add parcel_approach
-                                 using `self.parcel_approach=parcel_approach` to use this
-                                 method."""))
+            raise AttributeError("`self.parcel_approach` is None. Add parcel_approach using "
+                                 "`self.parcel_approach=parcel_approach` to use this method.")
 
         if not hasattr(self,"_caps") and fslr_giftis_dict is None:
-            raise AttributeError(textwrap.dedent("""
-                                 Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()`
-                                 first."""))
+            raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` "
+                                 "first.")
 
         if output_dir and not os.path.exists(output_dir): os.makedirs(output_dir)
 
@@ -2013,12 +1981,9 @@ class CAP(_CAPGetter):
                     except TypeError:
                         # Create temp
                         temp_nifti = tempfile.NamedTemporaryFile(delete=False, suffix=".nii.gz")
-                        warnings.warn(textwrap.dedent(f"""
-                                      TypeError raised due to changes in pathlib.py in Python 3.12 causing the error
-                                      message to output as "not 'Nifti1Image'" instead of "not Nifti1Image", which
-                                      neuromaps uses to determine if the input is a Nifti1Image object.
-                                      Converting stat_map into a temporary nii.gz file (which will be automatically
-                                      deleted afterwards) [TEMP FILE: {temp_nifti.name}]"""))
+                        warnings.warn("TypeError raised by neuromaps due to changes in pathlib.py in Python 3.12 "
+                                      "Converting `stat_map` into a temporary nii.gz file (which will be automatically "
+                                      f" deleted afterwards) [TEMP FILE: {temp_nifti.name}]")
                         # Ensure file is closed
                         temp_nifti.close()
                         # Save temporary nifti to temp file
@@ -2033,9 +1998,8 @@ class CAP(_CAPGetter):
                 # Code slightly adapted from surfplot example 2
                 surfaces = fetch_fslr()
                 if plot_dict["surface"] not in ["inflated", "veryinflated"]:
-                    warnings.warn(textwrap.dedent(f"""
-                                  {plot_dict["surface"]} is an invalid option for `surface`. Available options
-                                  include 'inflated' or 'verinflated'. Defaulting to 'inflated'"""))
+                    warnings.warn(f"{plot_dict['surface']} is an invalid option for `surface`. Available options "
+                                  "include 'inflated' or 'verinflated'. Defaulting to 'inflated'")
                     plot_dict["surface"] = "inflated"
                 lh, rh = surfaces[plot_dict["surface"]]
                 lh = str(lh) if not isinstance(lh, str) else lh
@@ -2078,7 +2042,7 @@ class CAP(_CAPGetter):
                         stat_map_name = save_name.replace(".png", ".nii.gz")
                         nib.save(stat_map, stat_map_name)
 
-                if not show_figs: plt.close(fig)
+                plt.show(fig) if show_figs else plt.close(fig)
 
     def caps2radar(self, method: Literal["traditional", "selective", "combined"]="traditional", alpha: float=0.5,
                    output_dir: Optional[os.PathLike]=None, suffix_title: Optional[str]=None,
@@ -2286,15 +2250,12 @@ class CAP(_CAPGetter):
         876–884. https://doi.org/10.1038/s41386-023-01750-w
         """
         if not self._parcel_approach:
-            raise AttributeError(textwrap.dedent("""
-                                 `self.parcel_approach` is None. Add parcel_approach
-                                 using `self.parcel_approach=parcel_approach` to use this
-                                 method."""))
+            raise AttributeError("self.parcel_approach` is None. Add parcel_approach using "
+                                 "`self.parcel_approach=parcel_approach` to use this method.")
 
         if not hasattr(self,"_caps"):
-            raise AttributeError(textwrap.dedent("""
-                                 Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()`
-                                 first."""))
+            raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` "
+                                 "first.")
 
         if method == "combined" and (alpha <= 0 or alpha >= 1):
             raise ValueError("`alpha` must be a float between 0 and 1.")
@@ -2352,16 +2313,17 @@ class CAP(_CAPGetter):
                     # Calculate norm_binary_vector
                     norm_binary_vector = np.linalg.norm(binary_vector)
 
+                    warning_msg = (f"[GROUP: {group} | REGION: {region} | CAP: {cap} | METHOD: {method}] - "
+                                   "Division by zero error when calculating {0} cosine similarity. Setting cosine "
+                                   "similarity to zero.")
+
                     if method in ["traditional", "selective"]:
                         # Use all nodes if traditional or use region specific nodes if selective
                         norm_cap_vector = np.linalg.norm(cap_vector) if method == "traditional" else np.linalg.norm(cap_vector[binary_vector == 1])
                         try:
                             cosine_similarity = dot_product/(norm_cap_vector * norm_binary_vector)
                         except ZeroDivisionError:
-                            warnings.warn(textwrap.dedent(f"""
-                                          [GROUP: {group} | REGION: {region} | CAP: {cap} | METHOD: {method}] -
-                                          Division by zero error when calculating cosine similarity. Setting cosine
-                                          similarity to zero."""))
+                            warnings.warn(warning_msg.format(method))
                             cosine_similarity = 0
                     else:
                         # Calculate traditional norm
@@ -2371,18 +2333,12 @@ class CAP(_CAPGetter):
                         try:
                             cosine_similarity_traditional = dot_product/(norm_cap_vector_traditional * norm_binary_vector)
                         except ZeroDivisionError:
-                            warnings.warn(textwrap.dedent(f"""
-                                          [GROUP: {group} | REGION: {region} | CAP: {cap} | METHOD: traditional] -
-                                          Division by zero error when calculating cosine similarity. Setting cosine
-                                          similarity to zero."""))
+                            warnings.warn(warning_msg.format("traditional"))
                             cosine_similarity_traditional = 0
                         try:
                             cosine_similarity_selective = dot_product/(norm_cap_vector_selective * norm_binary_vector)
                         except ZeroDivisionError:
-                            warnings.warn(textwrap.dedent(f"""
-                                          [GROUP: {group} | REGION: {region} | CAP: {cap} | METHOD: selective] -
-                                          Division by zero error when calculating cosine similarity. Setting cosine
-                                          similarity to zero."""))
+                            warnings.warn(warning_msg.format("selective"))
                             cosine_similarity_selective = 0
                         # Use alpha to determine contributions of traditional and selective method to cosine similarity
                         cosine_similarity = (cosine_similarity_traditional * alpha) + (cosine_similarity_selective * (1-alpha))
