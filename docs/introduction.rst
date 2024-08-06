@@ -206,7 +206,7 @@ neurocaps relies on several packages:
                     "nibabel>=3.2.0",
                     "nilearn>=0.10.1, !=0.10.3",
                     "scikit-learn>=1.4.0",
-                    "scipy",
+                    "scipy>=1.6.0",
                     "surfplot>=0.2.0",
                     "neuromaps>=0.0.5",
                     "pybids>=0.16.2; platform_system != 'Windows'",

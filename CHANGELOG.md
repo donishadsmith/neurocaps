@@ -43,6 +43,10 @@ improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
 ## [0.16.1] - 2024-08-06
+### 💻 Metadata
+- Update outdated example in readme.
+
+## [0.16.1] - 2024-08-06
 ### ♻ Changed
 - For `knn_dict`, cKdtree is replaced with Kdtree and scipy is restricted to 1.6.0 or later since that is the version
 were Kdtree used the C implementation.
