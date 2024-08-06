@@ -233,7 +233,7 @@ extractor.get_bold(bids_dir=bids_dir, task="rest", session='002',pipeline_name=p
 ```
 **Output:**
 ```
-List of confound regressors that will be used during timeseries extraction if available in confound dataframe: Cosine*, aComp*, Rot*.
+List of confound regressors that will be used during timeseries extraction if available in confound dataframe: Cosine*, Rot*.
 
 BIDS Layout: ...0.4_ses001-022/ds000031_R1.0.4 | Subjects: 1 | Sessions: 1 | Runs: 1
 
@@ -243,7 +243,7 @@ Preparing for timeseries extraction using - [FILE: '/Users/runner/work/neurocaps
 
 [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001]
 ----------------------------------------------------
-The following confounds will be for nuisance regression: Cosine00, Cosine01, Cosine02, Cosine03, Cosine04, Cosine05, Cosine06, aCompCor00, aCompCor01, aCompCor02, aCompCor03, aCompCor04, aCompCor05, RotX, RotY, RotZ.
+The following confounds will be for nuisance regression: Cosine00, Cosine01, Cosine02, Cosine03, Cosine04, Cosine05, Cosine06, RotX, RotY, RotZ, aCompCor02, aCompCor03, aCompCor04, aCompCor05.
 ```
 
 ```python

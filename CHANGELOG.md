@@ -44,6 +44,10 @@ improvements/enhancements. Fixes and modifications will be backwards compatible.
 
 ## [0.16.1] - 2024-08-06
 ### 💻 Metadata
+- Correct output for example in readme.
+
+## [0.16.1] - 2024-08-06
+### 💻 Metadata
 - Update outdated example in readme.
 
 ## [0.16.1] - 2024-08-06
