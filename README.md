@@ -12,19 +12,19 @@ This is a Python package designed to perform Co-activation Patterns (CAPs) analy
 This package was initially inspired by a co-activation patterns implementation in mtorabi59's [pydfc](https://github.com/neurodatascience/dFC) package.
 
 # Installation
+To install neurocaps, follow the instructions below using your preferred terminal.
 
-To install, use your preferred terminal:
-
-**Installation using pip:**
-
+### For a standard installation from PyPi:
 ```bash
 
 pip install neurocaps
 
 ```
 
-For Windows, pybids will not install by default to avoid installation error if long path is not enabled, to install it
-you can use the following command:
+**Windows Users**
+
+To avoid installation errors related to long paths not being enabled, pybids will not be installed by default.
+To include pybids in your installation, use:
 
 ```bash
 
@@ -32,23 +32,24 @@ pip install neurocaps[windows]
 
 ```
 
-Or you can install it seperately
+Alternatively, you can install pybids separately:
 
 ```bash
 
 pip install pybids
 
 ```
+### Installation from Source (Development Version)
+To install the latest development version from the source, there are two options:
 
-**From source (Development version):**
-
+1. Install directly via pip:
 ```bash
 
 pip install git+https://github.com/donishadsmith/neurocaps.git
 
 ```
 
-or
+2. Clone the repository and install locally:
 
 ```bash
 
@@ -57,8 +58,9 @@ cd neurocaps
 pip install -e .
 
 ```
+**Windows Users**
 
-For Windows, if you want to install pybids you can use the following command:
+To include pybids when installing the development version on Windows, use:
 
 ```bash
 
@@ -72,7 +74,7 @@ pip install -e .[windows]
 
 **This package contains two main classes: `TimeseriesExtractor` for extracting the timeseries, and `CAP` for performing the CAPs analysis.**
 
-**Note:** When extracting the timeseries, this package uses either the Schaefer atlas, the Automated Anatomical Labeling (AAL) atlas, or a custom parcellation where all nodes have a left and right version (bilateral nodes). The number of ROIs and networks for the Schaefer atlas can be adjusted with the parcel_approach parameter when initializing the `TimeseriesExtractor` class.
+**Note:** When extracting the timeseries, this package uses either the Schaefer atlas, the Automated Anatomical Labeling (AAL) atlas, or a custom parcellation that is lateralized (where each region/network has nodes in the left and right hemispheres). The number of ROIs and networks for the Schaefer atlas can be adjusted with the parcel_approach parameter when initializing the `TimeseriesExtractor` class.
 
 To modify it, you must use a nested dictionary, where the primary key is "Schaefer" and the sub-keys are "n_rois" and "yeo_networks". For example:
 
