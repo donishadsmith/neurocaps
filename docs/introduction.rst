@@ -43,7 +43,7 @@ Usage
 =====
 This package contains two main classes: ``TimeseriesExtractor`` for extracting the timeseries, and ``CAP`` for performing the CAPs analysis.
 
-**Note:** When extracting the timeseries, this package uses either the Schaefer atlas, the Automated Anatomical Labeling (AAL) atlas, or a custom parcellation where all regions have a left and right version of nodes (bilateral nodes). 
+**Note:** When extracting the timeseries, this package uses either the Schaefer atlas, the Automated Anatomical Labeling (AAL) atlas, or a custom parcellation that is lateralized (where each region/network has nodes in the left and right hemispheres). 
 The number of ROIs and networks for the Schaefer atlas can be adjusted with the parcel_approach parameter when initializing the ``TimeseriesExtractor`` class.
 
 To modify it, you must use a nested dictionary, where the primary key is "Schaefer" and the sub-keys are "n_rois" and "yeo_networks". For example:

@@ -2,14 +2,14 @@
 
 All notable future changes to neurocaps will be documented in this file.
 
-*Note*: All versions in this file are deployed on pypi.
+*Note*: All versions in this file are deployed on PyPi.
 
 ## [Versioning Notice]
 
 **Affected Versions: 1.0.0 through 1.0.0.post4**
 
 Due to a versioning mistake, versions 1.0.0 through 1.0.0.post4 were released in error. These versions have now been
-removed from pypi. The correct versioning was intended to be incremented from 0.9.9.post3 to 0.10.0.
+removed from PyPi. The correct versioning was intended to be incremented from 0.9.9.post3 to 0.10.0.
 
 All changes and fixes from the erroneous versions have been included in version 0.10.0, along with some additional
 updates.
@@ -42,11 +42,16 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
-## [0.16.1] - 2024-08-06
+## [0.16.1.post3] - 2024-08-07
+### 💻 Metadata
+- Minor change to clarify the language in the docstring referring to the Custom parcellation approach and update readme
+on PyPi for the installation instructions.
+
+## [0.16.1.post2] - 2024-08-06
 ### 💻 Metadata
 - Correct output for example in readme.
 
-## [0.16.1] - 2024-08-06
+## [0.16.1.post1] - 2024-08-06
 ### 💻 Metadata
 - Update outdated example in readme.
 
@@ -635,7 +640,7 @@ irritating issue. For instance "-temporal_fraction.csv" became "-counts-temporal
 before "temporal fraction".
 
 ### 💻 Metadata
-- But Zenodo on Pypi.
+- But Zenodo on PyPi.
 
 ## [0.9.9.post2] - 2024-06-13
 ### 💻 Metadata
@@ -738,7 +743,7 @@ efficient than multiprocessing.
 ## [0.9.4.post1] - 2024-05-28
 
 ### 💻 Metadata
-- Update some metadata on pypi
+- Update some metadata on PyPi
 
 ## [0.9.4] - 2024-05-27
 

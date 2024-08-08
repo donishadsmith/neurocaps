@@ -295,10 +295,9 @@ class CAP(_CAPGetter):
     ----
     **If no groups were specified, the default group name will be "All Subjects".**
 
-    **If using a "Custom" parcellation approach**, ensure each region in your dataset includes both left (lh) and
-    right (rh) hemisphere versions of nodes (bilateral nodes). This function assumes that the background label is "zero".
-    Do not add a background label in the "nodes" or "regions" key; the zero index should correspond to the
-    first ID that is not zero.
+    **If using a "Custom" parcellation approach**, ensure that the atlas is lateralized (where each region/network has
+    nodes in the left and right hemisphere). This function assumes that the background label is "zero". Do not add a
+    background label in the "nodes" or "regions" key; the zero index should correspond to the first ID that is not zero.
 
     - "maps": Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g.,
       .nii for NIfTI files).
