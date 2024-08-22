@@ -42,6 +42,93 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.16.2] - 2024-08-22
+### 🚀 New/Added
+- Transition probabilities has been added to `CAP.calculate_metrics`. Below is a snippet from the codebase
+of how the calculation is done.
+```python
+    if "transition_probability" in metrics:
+        temp_dict[group].loc[len(temp_dict[group])] = [subj_id, group, curr_run] + [0.0]*(temp_dict[group].shape[-1]-3)
+        # Get number of transitions
+        trans_dict = {target: np.sum(np.where(predicted_subject_timeseries[subj_id][curr_run][:-1] == target, 1, 0))
+                        for target in group_caps[group]}
+        indx = temp_dict[group].index[-1]
+        # Iterate through products and calculate all symmetric pairs/off-diagonals
+        for prod in products_unique[group]:
+            target1, target2 = prod[0], prod[1]
+            trans_array = predicted_subject_timeseries[subj_id][curr_run].copy()
+            # Set all values not equal to target1 or target2 to zero
+            trans_array[(trans_array != target1) & (trans_array != target2)] = 0
+            trans_array[np.where(trans_array == target1)] = 1
+            trans_array[np.where(trans_array == target2)] = 3
+            # 2 indicates forward transition target1 -> target2; -2 means reverse/backward transition target2 -> target1
+            diff_array = np.diff(trans_array,n=1)
+            # Avoid division by zero errors and calculate both the forward and reverse transition
+            if trans_dict[target1] != 0:
+                temp_dict[group].loc[indx,f"{target1}.{target2}"] = float(np.sum(np.where(diff_array==2,1,0))/trans_dict[target1])
+            if trans_dict[target2] != 0:
+                temp_dict[group].loc[indx,f"{target2}.{target1}"] = float(np.sum(np.where(diff_array==-2,1,0))/trans_dict[target2])
+
+        # Calculate the probability for the self transitions/diagonals
+        for target in group_caps[group]:
+            if trans_dict[target] == 0: continue
+            # Will include the {target}.{target} column, but the value is initially set to zero
+            columns = temp_dict[group].filter(regex=fr"^{target}\.").columns.tolist()
+            cumulative = temp_dict[group].loc[indx,columns].values.sum()
+            temp_dict[group].loc[indx,f"{target}.{target}"] = 1.0 - cumulative
+```
+Below is a simplified version of the above snippet.
+```python
+    import itertools, math, pandas as pd, numpy as np
+    groups = [["101","A","1"], ["102","B","1"]]
+    timeseries_dict = {
+        "101": np.array([1,1,1,1,2,2,1,4,3,5,3,3,5,5,6,7]),
+        "102": np.array([1,2,1,1,3,3,1,4,3,5,3,3,4,5,6,8,7])
+    }
+    caps = list(range(1,9))
+    # Get all combinations of transitions
+    products = list(itertools.product(caps,caps))
+    df = pd.DataFrame(columns=["Subject_ID", "Group","Run"]+[f"{x}.{y}" for x,y in products])
+    # Filter out all reversed products and products with the self transitions
+    products_unique = []
+    for prod in products:
+        if prod[0] == prod[1]: continue
+        # Include only the first instance of symmetric pairs
+        if (prod[1],prod[0]) not in products_unique: products_unique.append(prod)
+
+    for info in groups:
+        df.loc[len(df)] = info + [0.0]*(df.shape[-1]-3)
+        timeseries = timeseries_dict[info[0]]
+        # Get number of transitions
+        trans_dict = {target: np.sum(np.where(timeseries[:-1] == target, 1, 0)) for target in caps}
+        indx = df.index[-1]
+        # Iterate through products and calculate all symmetric pairs/off-diagonals
+        for prod in products_unique:
+            target1, target2 = prod[0], prod[1]
+            trans_array = timeseries.copy()
+            # Set all values not equal to target1 or target2 to zero
+            trans_array[(trans_array != target1) & (trans_array != target2)] = 0
+            trans_array[np.where(trans_array == target1)] = 1
+            trans_array[np.where(trans_array == target2)] = 3
+            # 2 indicates forward transition target1 -> target2; -2 means reverse/backward transition target2 -> target1
+            diff_array = np.diff(trans_array,n=1)
+            # Avoid division by zero errors and calculate both the forward and reverse transition
+            if trans_dict[target1] != 0:
+                df.loc[indx,f"{target1}.{target2}"] = float(np.sum(np.where(diff_array==2,1,0))/trans_dict[target1])
+            if trans_dict[target2] != 0:
+                df.loc[indx,f"{target2}.{target1}"] = float(np.sum(np.where(diff_array==-2,1,0))/trans_dict[target2])
+        
+        # Calculate the probability for the self transitions/diagonals
+        for target in caps:
+            if trans_dict[target] == 0: continue
+            # Will include the {target}.{target} column, but the value is initially set to zero
+            columns = df.filter(regex=fr"^{target}\.").columns.tolist()
+            cumulative = df.loc[indx,columns].values.sum()
+            df.loc[indx,f"{target}.{target}"] = 1.0 - cumulative
+```
+- Added new external function - ``transition_matrix``, which generates and visualizes the average transition probabilities
+for all groups, using the transition probability dataframe outputted by `CAP.calculate_metrics`
+
 ## [0.16.1.post3] - 2024-08-07
 ### 💻 Metadata
 - Minor change to clarify the language in the docstring referring to the Custom parcellation approach and update readme

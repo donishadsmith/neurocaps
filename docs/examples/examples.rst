@@ -13,6 +13,7 @@ and used in `Laumann et al., 2015 <https://doi.org/10.1016/j.neuron.2015.06.037>
    merge
    standardize
    dtype
+   transition
 
 .. raw:: html
 
@@ -94,6 +95,22 @@ and used in `Laumann et al., 2015 <https://doi.org/10.1016/j.neuron.2015.06.037>
 .. raw:: html
 
       <div class="sphx-glr-thumbnail-title">Tutorial 5: Changing Dtype With <code>change_dtype</code></div>
+      </a>
+      </div>
+
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbcontainer" tooltip="Tutorial for creating transition probability matrixes from CAPs results.">
+      <a href="transition.html">
+   
+.. only:: html
+
+   .. image:: embed/thumbnail/All_Subjects_CAPs_transition_probability_matrix.png
+   
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Tutorial 6: Generating a Transition Probability Matrix <code>transition_matrix</code></div>
       </a>
       </div>
 

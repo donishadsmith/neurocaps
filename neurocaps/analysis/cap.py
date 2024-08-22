@@ -9,8 +9,8 @@ from neuromaps.transforms import mni152_to_fslr, fslr_to_fslr
 from neuromaps.datasets import fetch_fslr
 from scipy.stats import pearsonr
 from sklearn.cluster import KMeans
-from .._utils import (_CAPGetter, _cap2statmap, _check_kwargs, _create_node_labels, _convert_pickle_to_dict,
-                      _check_parcel_approach, _run_kmeans)
+from .._utils import (_CAPGetter, _cap2statmap, _check_kwargs, _create_display, _create_node_labels,
+                      _convert_pickle_to_dict, _check_parcel_approach, _run_kmeans, _save_contents)
 
 class CAP(_CAPGetter):
     """
@@ -501,7 +501,7 @@ class CAP(_CAPGetter):
 
         if self._n_cores and self._cluster_selection_method is None:
             raise ValueError("Multiprocessing will not run since `cluster_selection_method` is None.")
-        
+
         if runs:
             if not isinstance(runs,list): runs = [runs]
 
@@ -700,8 +700,8 @@ class CAP(_CAPGetter):
                           runs: Optional[Union[int, str, list[int], list[str]]]=None,
                           continuous_runs: bool=False,
                           metrics: Union[
-                              Literal["temporal_fraction", "persistence", "counts", "transition_frequency"],
-                              list[Literal["temporal_fraction", "persistence","counts","transition_frequency"]]
+                              Literal["temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"],
+                              list[Literal["temporal_fraction", "persistence","counts","transition_frequency", "transition_probability"]]
                               ]=["temporal_fraction", "persistence","counts","transition_frequency"],
                           return_df: bool=True, output_dir: Optional[os.PathLike]=None,
                           prefix_file_name: Optional[str]=None) -> dict[str, pd.DataFrame]:
@@ -743,6 +743,23 @@ class CAP(_CAPGetter):
                 predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
                 # Transitions between unique CAPs occur at indices 0 -> 1, 1 -> 2, and 4 -> 5
                 transition_frequency = 3
+
+         - ``"transition_probability"`` : The probability of transitioning from one CAP to another CAP (or the same CAP).
+           This is calculated as (Number of transitions from A to B)/ (Total transitions from A). Note that the
+           transition probability from CAP-A -> CAP-B is not the same as CAP-B -> CAP-A.
+           ::
+
+                # Note last two numbers in the predicted timeseries are switched for this example
+                predicted_subject_timeseries = [1, 2, 1, 1, 3, 1]
+                # If three CAPs were identified in the analysis
+                combinations = [(1,1), (1,2), (1,3), (2,1), (2,2), (2,3), (3,1), (3,2), (3,3)]
+                target = (1,2) # Represents transition from CAP-1 -> CAP-2
+                # There are 4 ones in the timeseries but only three transitions from 1; 1 -> 2, 1 -> 1, 1 -> 3
+                n_transitions_from_1 = 3
+                # There is only one 1 -> 2 transition.
+                transition_probability = 1/3
+                # 1 -> 1 has a probability of 1/3 and 1 -> 3 has a probability of 1/3
+
 
         Parameters
         ----------
@@ -793,9 +810,11 @@ class CAP(_CAPGetter):
                 run_2 = [2,3,3]
                 continuous_runs = [0,1,1,2,3,3]
 
-        metrics : {"temporal_fraction", "persistence", "counts", "transition_frequency"} or :obj:`list["temporal_fraction", "persistence", "counts", "transition_frequency"]`, default=["temporal_fraction", "persistence", "counts", "transition_frequency"]
+        metrics : {"temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"} or :obj:`list["temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"]`, default=["temporal_fraction", "persistence", "counts", "transition_frequency"]
             The metrics to calculate. Available options include "temporal_fraction", "persistence",
-            "counts", and "transition_frequency".
+            "counts", "transition_frequency", and "transition_probability".
+
+            . versionadded:: 0.16.2 "transition_probabilities"
 
         return_df : :obj:`str`, default=True
             If True, returns ``pandas.DataFrame`` inside a ``dict``, where the key corresponds to the
@@ -811,8 +830,9 @@ class CAP(_CAPGetter):
 
         Returns
         -------
-        dict[str, pd.DataFrame]
-            Dictionary containing `pandas.DataFrame` - one for each requested metric.
+        dict[str, pd.DataFrame] or dict[str, dict[str, pd.DataFrame]]
+            Dictionary containing `pandas.DataFrame` - one for each requested metric. In the case of "transition_probability",
+            each group has a separate dataframe which is returned in the from of `dict[str, dict[str, pd.DataFrame]]`.
 
         Note
         ----
@@ -820,8 +840,9 @@ class CAP(_CAPGetter):
         subject belongs to, this column exists even when no group is specified, all subjects all listed as being
         in the "All Subjects" group.
 
-        The presence of 0 for specific CAPs in the "temporal_fraction", "persistence", or "counts" DataFrames
-        indicates that the participant had zero instances of a specific CAP. If performing an analysis on groups
+        The presence of 0 for specific CAPs in the "temporal_fraction", "persistence", or "counts" dataFrames
+        indicates that the participant had zero instances of a specific CAP. In the case of "transition_probability",
+        a 0 indicates that a specific transition between two CAPs where not observed. If performing an analysis on groups
         where each group has a different number of CAPs, then for "temporal_fraction", "persistence", and "counts",
         "nan" values will be seen for CAP numbers that exceed the group's number of CAPs.
 
@@ -832,6 +853,10 @@ class CAP(_CAPGetter):
 
         For "transition_frequency", a 0 indicates no transitions due to all participant's frames being assigned to a
         single CAP.
+
+        **For "transition_probability", the cap-to-cap transitions are indicated by the column names. For instance,
+        column "1.2" indicate the probability from transitioning from CAP-1 to CAP-2, while column "2.1" represents
+        the probability of transitioning from CAP-2 to CAP-1.**
 
         References
         ----------
@@ -855,7 +880,7 @@ class CAP(_CAPGetter):
 
         metrics = [metrics] if isinstance(metrics, str) else metrics
 
-        valid_metrics = ["temporal_fraction", "persistence", "counts", "transition_frequency"]
+        valid_metrics = ["temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"]
 
         boolean_list = [element in valid_metrics for element in metrics]
 
@@ -917,14 +942,36 @@ class CAP(_CAPGetter):
             if run_id == "continuous_runs":
                 predicted_subject_timeseries[subj_id].update({run_id: predicted_continuous_timeseries})
 
+        # Get all combinations of transitions
+        if "transition_probability" in metrics:
+            group_caps = {}
+            products,products_unique = {},{}
+            for group in self._groups:
+                group_caps.update({group: [int(name.split("-")[-1]) for name in self._caps[group]]})
+                products.update({group: list(itertools.product(group_caps[group],group_caps[group]))})
+                # Filter out all reversed products and products with the self transitions
+                products_unique[group] = []
+                for prod in products[group]:
+                    if prod[0] == prod[1]: continue
+                    # Include only the first instance of symmetric pairs
+                    if (prod[1],prod[0]) not in products_unique[group]: products_unique[group].append(prod)
+
         df_dict = {}
+
+        base_cols = ["Subject_ID", "Group","Run"]
 
         for metric in metrics:
             if metric in valid_metrics:
-                if metric != "transition_frequency":
-                    df_dict.update({metric: pd.DataFrame(columns=["Subject_ID", "Group","Run"] + list(cap_names))})
+                if metric not in ["transition_frequency", "transition_probability"]:
+                    df_dict.update({metric: pd.DataFrame(columns=base_cols + list(cap_names))})
+                elif metric == "transition_probability":
+                    temp_dict = {}
+                    for group in self._groups:
+                        temp_dict.update(
+                            {group: pd.DataFrame(columns=base_cols + [f"{x}.{y}" for x,y in products[group]])}
+                            )
                 else:
-                    df_dict.update({metric: pd.DataFrame(columns=["Subject_ID", "Group","Run","Transition_Frequency"])})
+                    df_dict.update({metric: pd.DataFrame(columns=base_cols + ["Transition_Frequency"])})
 
         distributed_list = []
         for subj_id, group in self._subject_table.items():
@@ -984,6 +1031,38 @@ class CAP(_CAPGetter):
                 new_row = [subj_id, group_name, curr_run, transition_frequency]
                 df_dict["transition_frequency"].loc[len(df_dict["transition_frequency"])] = new_row
 
+            if "transition_probability" in metrics:
+                temp_dict[group].loc[len(temp_dict[group])] = [subj_id, group, curr_run] + [0.0]*(temp_dict[group].shape[-1]-3)
+                # Get number of transitions
+                trans_dict = {target: np.sum(np.where(predicted_subject_timeseries[subj_id][curr_run][:-1] == target, 1, 0))
+                              for target in group_caps[group]}
+                indx = temp_dict[group].index[-1]
+                # Iterate through products and calculate all symmetric pairs/off-diagonals
+                for prod in products_unique[group]:
+                    target1, target2 = prod[0], prod[1]
+                    trans_array = predicted_subject_timeseries[subj_id][curr_run].copy()
+                    # Set all values not equal to target1 or target2 to zero
+                    trans_array[(trans_array != target1) & (trans_array != target2)] = 0
+                    trans_array[np.where(trans_array == target1)] = 1
+                    trans_array[np.where(trans_array == target2)] = 3
+                    # 2 indicates forward transition target1 -> target2; -2 means reverse/backward transition target2 -> target1
+                    diff_array = np.diff(trans_array,n=1)
+                    # Avoid division by zero errors and calculate both the forward and reverse transition
+                    if trans_dict[target1] != 0:
+                        temp_dict[group].loc[indx,f"{target1}.{target2}"] = float(np.sum(np.where(diff_array==2,1,0))/trans_dict[target1])
+                    if trans_dict[target2] != 0:
+                        temp_dict[group].loc[indx,f"{target2}.{target1}"] = float(np.sum(np.where(diff_array==-2,1,0))/trans_dict[target2])
+
+                # Calculate the probability for the self transitions/diagonals
+                for target in group_caps[group]:
+                    if trans_dict[target] == 0: continue
+                    # Will include the {target}.{target} column, but the value is initially set to zero
+                    columns = temp_dict[group].filter(regex=fr"^{target}\.").columns.tolist()
+                    cumulative = temp_dict[group].loc[indx,columns].values.sum()
+                    temp_dict[group].loc[indx,f"{target}.{target}"] = 1.0 - cumulative
+
+        if "transition_probability" in metrics: df_dict["transition_probability"] = temp_dict
+
         if output_dir:
             if not os.path.exists(output_dir): os.makedirs(output_dir)
             for metric in df_dict:
@@ -991,8 +1070,14 @@ class CAP(_CAPGetter):
                     file_name = os.path.splitext(prefix_file_name.rstrip())[0].rstrip() + f"-{metric}"
                 else:
                     file_name = f"{metric}"
-                df_dict[f"{metric}"].to_csv(path_or_buf=os.path.join(output_dir,f"{file_name}.csv"), sep=",",
-                                            index=False)
+
+                if metric != "transition_probability":
+                    df_dict[f"{metric}"].to_csv(path_or_buf=os.path.join(output_dir,f"{file_name}.csv"),
+                                                sep=",", index=False)
+                else:
+                    for group in self._groups:
+                        df_dict[f"{metric}"][group].to_csv(path_or_buf=os.path.join(output_dir,f"{file_name}-{group.replace(' ','_')}.csv"),
+                                                           sep=",", index=False)
 
         if return_df: return df_dict
 
@@ -1581,7 +1666,7 @@ class CAP(_CAPGetter):
             - figsize : :obj:`tuple`, default=(8, 6)
                 Size of the figure in inches.
             - fontsize : :obj:`int`, default=14
-                Font size for the title of individual plots or subplots.
+                Font size for the title each plot.
             - xticklabels_size : :obj:`int`, default=8
                 Font size for x-axis tick labels.
             - yticklabels_size : :obj:`int`, default=8
@@ -1644,44 +1729,16 @@ class CAP(_CAPGetter):
         plot_dict = _check_kwargs(defaults, **kwargs)
 
         for group in self._caps:
-            # Refresh grid for each iteration
-            plt.figure(figsize=plot_dict["figsize"])
-
             df = pd.DataFrame(self._caps[group])
 
             corr_df = df.corr(method="pearson")
 
-            display = seaborn.heatmap(corr_df, xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"],
-                                      linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"],
-                                      cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"],
-                                      annot_kws=plot_dict["annot_kws"], fmt=plot_dict["fmt"],
-                                      edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"])
-            # Add Border
-            if plot_dict["borderwidths"] != 0:
-                display.axhline(y=0, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
-                display.axhline(y=df.corr().shape[1], color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
-                display.axvline(x=0, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
-                display.axvline(x=df.corr().shape[0], color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
-
-            # Modify label sizes
-            display.set_xticklabels(display.get_xticklabels(),
-                                    size = plot_dict["xticklabels_size"],
-                                    rotation=plot_dict["xlabel_rotation"])
-            display.set_yticklabels(display.get_yticklabels(),
-                                    size = plot_dict["yticklabels_size"],
-                                    rotation=plot_dict["ylabel_rotation"])
-            # Set plot name
-            if suffix_title:
-                plot_title = f"{group} CAPs Correlation Matrix {suffix_title}"
-            else:
-                plot_title = f"{group} CAPs Correlation Matrix"
-            display.set_title(plot_title, fontdict= {"fontsize": plot_dict["fontsize"]})
-
-            # Display figures
-            plt.show() if show_figs else plt.close()
+            display = _create_display(df=corr_df, plot_dict=plot_dict, suffix_title=suffix_title,
+                                      group=group, call="corr")
 
             if corr_dict:
-                # Get p-values; use np.eye to make main diagonals equal zero; implementation of tozCSS from https://stackoverflow.com/questions/25571882/pandas-columns-correlation-with-statistical-significance
+                # Get p-values; use np.eye to make main diagonals equal zero; implementation of tozCSS from
+                # https://stackoverflow.com/questions/25571882/pandas-columns-correlation-with-statistical-significance
                 pval_df = df.corr(method=lambda x, y: pearsonr(x, y)[1]) - np.eye(*corr_df.shape)
                 # Add asterisk to values that meet the threshold
                 pval_df = pval_df.map(
@@ -1692,20 +1749,12 @@ class CAP(_CAPGetter):
 
             # Save figure
             if output_dir:
-                if not os.path.exists(output_dir): os.makedirs(output_dir)
-                if suffix_title:
-                    full_filename = f"{group.replace(' ', '_')}_CAPs_correlation_matrix_{suffix_title}.png"
-                else:
-                    full_filename = f"{group.replace(' ', '_')}_CAPs_correlation_matrix.png"
+                _save_contents(output_dir=output_dir, suffix_title=suffix_title, group=group, curr_dict=corr_dict,
+                               plot_dict=plot_dict, save_plots=save_plots, save_df=save_df, display=display,
+                               call="corr")
 
-                if save_plots:
-                    display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"],
-                                                bbox_inches=plot_dict["bbox_inches"])
-
-                if save_df:
-                    full_filename = full_filename.replace(".png", ".csv")
-                    corr_dict[group].to_csv(path_or_buf=os.path.join(output_dir,full_filename), sep=",",
-                                            index=True)
+            # Display figures
+            plt.show() if show_figs else plt.close()
 
         if return_df: return corr_dict
 
@@ -2415,8 +2464,7 @@ class CAP(_CAPGetter):
                         bgcolor=plot_dict["bgcolor"],
                         radialaxis=plot_dict["radialaxis"],
                         angularaxis=plot_dict["angularaxis"]
-                    )
-                )
+                    ))
 
                 if show_figs:
                     if bool(getattr(sys, "ps1", sys.flags.interactive)): fig.show()

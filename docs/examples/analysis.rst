@@ -71,7 +71,8 @@ Calculate Metrics
 .. code-block:: python
 
     df_dict = cap_analysis.calculate_metrics(subject_timeseries="subject_timeseries.pkl", return_df=True,
-                                             metrics = ["temporal_fraction", "counts"], continuous_runs=True)
+                                             metrics = ["temporal_fraction", "counts", "transition_probability"],
+                                             continuous_runs=True)
 
     print(df_dict["temporal_fraction"])
 

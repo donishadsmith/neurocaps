@@ -348,7 +348,7 @@ def test_calculate_methods():
     persistence_df = persistence_df[[x for x in persistence_df.columns if x.startswith("CAP")]]
     transition_frequency_df = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries,
                                                              return_df=True, metrics="transition_frequency", continuous_runs=False)["transition_frequency"]
-
+    transition_probability_df = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True, metrics="transition_probability", continuous_runs=False)["transition_probability"]
     # Get first subject
     first_subject_timeseries = {}
     first_subject_timeseries.update({"1": subject_timeseries["1"]})
@@ -379,6 +379,15 @@ def test_calculate_methods():
         segments = np.where(np.diff(indices, n=1) != 1, 1,0).sum() + 1
         persistence_dict.update({target: (binary.sum()/segments) * (tr if tr else 1)})
     assert [x for x in list(persistence_dict.values()) if not math.isnan(x)] == [x for x in persistence_df.loc[0,:].values if not math.isnan(x)]
+
+    # Check that all transition probabilities sum to 1
+    for group in cap_analysis.groups:
+        df = transition_probability_df[group]
+        for i in df.index:
+            for cap in cap_analysis.caps[group]:
+                target_cap = cap.split("-")[-1]
+                columns = df.filter(regex=fr"^{target_cap}\.").columns.tolist()
+                assert math.isclose(df.loc[i,columns].values.sum(),1,rel_tol=0.01)
 
 @pytest.mark.parametrize("current_timeseries,parcel_approach,name", [(extractor.subject_timeseries,extractor.parcel_approach,"Schaefer"),
                                                                 (custom_subject_timeseries,custom_parcel_approach,"Custom")])

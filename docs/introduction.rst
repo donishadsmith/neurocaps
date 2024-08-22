@@ -9,7 +9,7 @@
    :alt: Python Versions
 
 .. image:: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal
-   :target: https://doi.org/10.5281/zenodo.13234417
+   :target: https://doi.org/10.5281/zenodo.13363582
    :alt: DOI
 
 .. image:: https://img.shields.io/badge/Source%20Code-neurocaps-purple
@@ -40,7 +40,7 @@ Citing
 ======
 ::
   
-  Smith, D. (2024). neurocaps. Zenodo. https://doi.org/10.5281/zenodo.13234417
+  Smith, D. (2024). neurocaps. Zenodo. https://doi.org/10.5281/zenodo.13363582
 
 Usage
 =====
@@ -160,6 +160,20 @@ Main features for ``CAP`` includes:
           # Transitions between unique CAPs occur at indices 0 -> 1, 1 -> 2, and 4 -> 5
           transition_frequency = 3
 
+    - *Transition Probability* : The probability of transitioning from one CAP to another CAP (or the same CAP). This is calculated as (Number of transitions from A to B)/ (Total transitions from A). Note that the transition probability from CAP-A -> CAP-B is not the same as CAP-B -> CAP-A.
+      ::
+
+          # Note last two numbers in the predicted timeseries are switched for this example
+          predicted_subject_timeseries = [1, 2, 1, 1, 3, 1]
+          # If three CAPs were identified in the analysis
+          combinations = [(1,1), (1,2), (1,3), (2,1), (2,2), (2,3), (3,1), (3,2), (3,3)]
+          target = (1,2) # Represents transition from CAP-1 -> CAP-2
+          # There are 4 ones in the timeseries but only three transitions from 1; 1 -> 2, 1 -> 1, 1 -> 3
+          n_transitions_from_1 = 3
+          # There is only one 1 -> 2 transition.
+          transition_probability = 1/3
+          # 1 -> 1 has a probability of 1/3 and 1 -> 3 has a probability of 1/3
+
 - **Cosine Similarity Radar Plots:** Create radar plots showing the cosine similarity between CAPs and networks/regions. Especially useful as a quantitative method to categorize CAPs by determining the regions containing the most nodes demonstrating 
   increased co-activation or decreased co-deactivation [3]_. Refer to the `documentation <https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2radar>`_ in ``caps2radar`` in the ``CAP`` class for a more 
   detailed explanation as well as available ``**kwargs`` arguments and parameters to modify plots. **Note**, the "Low Amplitude"are negative cosine similarity values. The absolute value of those cosine similarities are taken so that the radar plot starts at 0 and magnitude 
@@ -190,6 +204,7 @@ Main features for ``CAP`` includes:
 - ``merge_dicts``: Merge the subject_timeseries dictionaries for overlapping subjects across tasks to identify similar CAPs across different tasks. The merged dictionary can be saved as a pickle file.
 - ``standardize``: Standardizes each run independently for all subjects in the subject timeseries.
 - ``change_dtype``: Changes the dtype of all subjects in the subject timeseries to help with memory usage.
+- ``transition_matrix``: Uses the "transition_probability" output from ``CAP.calculate_metrics`` to generate and visualize the averaged transition probability matrix for all groups from the analysis.
 
 Please refer to `demo.ipynb <https://github.com/donishadsmith/neurocaps/blob/main/demo.ipynb>`_ for a more extensive demonstration of the features included in this package.
 

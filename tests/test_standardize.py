@@ -1,4 +1,4 @@
-import numpy as np, os, glob, pickle, pandas as pytest
+import numpy as np, os, glob, pickle, pandas as pd, pytest
 
 from neurocaps.analysis import standardize
 

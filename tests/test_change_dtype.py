@@ -1,4 +1,4 @@
-import numpy as np, os, glob, pandas as pytest
+import numpy as np, os, glob, pandas as pd, pytest
 
 from neurocaps.analysis import change_dtype
 

@@ -1,7 +1,7 @@
 # neurocaps
 [![Latest Version](https://img.shields.io/pypi/v/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.13234417)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.13363582)
 [![Github Repository](https://img.shields.io/badge/Source%20Code-neurocaps-purple)](https://github.com/donishadsmith/neurocaps)
 [![Test Status](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg)](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml)
 [![codecov](https://codecov.io/github/donishadsmith/neurocaps/graph/badge.svg?token=WS2V7I16WF)](https://codecov.io/github/donishadsmith/neurocaps)
@@ -171,6 +171,22 @@ The provided example demonstrates setting up a custom parcellation containing no
             # Transitions between unique CAPs occur at indices 0 -> 1, 1 -> 2, and 4 -> 5
             transition_frequency = 3
         ```
+
+    - *Transition Probability:* The probability of transitioning from one CAP to another CAP (or the same CAP).
+    This is calculated as (Number of transitions from A to B)/ (Total transitions from A). Note that the transition
+    probability from CAP-A -> CAP-B is not the same as CAP-B -> CAP-A.
+    ```python
+        # Note last two numbers in the predicted timeseries are switched for this example
+        predicted_subject_timeseries = [1, 2, 1, 1, 3, 1]
+        # If three CAPs were identified in the analysis
+        combinations = [(1,1), (1,2), (1,3), (2,1), (2,2), (2,3), (3,1), (3,2), (3,3)]
+        target = (1,2) # Represents transition from CAP-1 -> CAP-2
+        # There are 4 ones in the timeseries but only three transitions from 1; 1 -> 2, 1 -> 1, 1 -> 3
+        n_transitions_from_1 = 3
+        # There is only one 1 -> 2 transition.
+        transition_probability = 1/3
+        # 1 -> 1 has a probability of 1/3 and 1 -> 3 has a probability of 1/3
+    ```
 - **Cosine Similarity Radar Plots:** Create radar plots showing the cosine similarity between CAPs and regions. Especially useful as a quantitative method to categorize CAPs by determining the regions containing the most nodes demonstrating increased co-activation or decreased co-deactivation [^3]. Refer to the [documentation](https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2radar) in `caps2radar` in the `CAP` class for a more detailed explanation as well as available `**kwargs` arguments and parameters to modify plots. **Note**, the "Low Amplitude"are negative cosine similarity values. The absolute value of those cosine similarities are taken so that the radar plot starts at 0 and magnitude comparisons between the "High Amplitude" and "Low Amplitude" groups are easier to see. Below is an example of how the cosine similarity is calculated for this function.
     ```python
         import numpy as np
@@ -198,6 +214,7 @@ The provided example demonstrates setting up a custom parcellation containing no
 - `merge_dicts`: Merge the subject_timeseries dictionaries for overlapping subjects across tasks to identify similar CAPs across different tasks. The merged dictionary can be saved as a pickle file.
 - `standardize`: Standardizes each run independently for all subjects in the subject timeseries.
 - `change_dtype`: Changes the dtype of all subjects in the subject timeseries to help with memory usage.
+- `transition_matrix`: Uses the "transition_probability" output from ``CAP.calculate_metrics`` to generate and visualize the averaged transition probability matrix for all groups from the analysis.
 
 Please refer to [demo.ipynb](https://github.com/donishadsmith/neurocaps/blob/main/demo.ipynb) or https://neurocaps.readthedocs.io/en/latest/examples/examples.html for a more extensive demonstration of the features included in this package.
 
@@ -347,7 +364,53 @@ radialaxis={"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)"
 "range": [0,0.3], "tickvals": [0.1,0.2,0.3]}
 cap_analysis.caps2radar(radialaxis=radialaxis, fill="toself")
 ```
+**Partial Plot Outputs:** (*Note*: one image will be generated per CAP)
 ![image](https://github.com/donishadsmith/neurocaps/assets/112973674/5ab17b92-bac9-48a9-9f4c-25bb1a69bf1c)
+
+```python
+# Get transition probabilities for all participants in a dataframe, then convert to an averaged matrix
+from neurocaps.analysis import transition_matrix
+
+# Optimal cluster sizes are saved automatically
+cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, 
+                      cluster_selection_method="davies_bouldin,
+                      standardize=True)
+
+outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, 
+                                         return_df=True, output_dir=output_dir,
+                                         metrics=["transition_probability"],
+                                         continuous_runs=True, file_name="All_Subjects_CAPs_metrics")
+
+print(outputs["transition_probability"]["All Subjects"])
+
+trans_outputs = transition_matrix(trans_dict=outputs["transition_probability"],
+                                  show_figs=True, return_df=True, fmt=".3f", annot=True)
+
+print(trans_outputs["All Subjects"])
+```
+**Outputs:**
+| Subject_ID | Group | Run | 1.1 | 1.2 | 1.3 | 2.1 | 2.2 | 2.3 | 3.1 | 3.2 | 3.3 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | All Subjects | continuous_runs | 0.347 | 0.327 | 0.327 | 0.333 | 0.483 | 0.183 | 0.3 | 0.375 | 0.325
+| 2 | All Subjects | continuous_runs | 0.426 | 0.279 | 0.295 | 0.302 | 0.326 | 0.372 | 0.489 | 0.244 | 0.267
+| 3 | All Subjects | continuous_runs | 0.379 | 0.31 | 0.31 | 0.357 | 0.286 | 0.357 | 0.429 | 0.245 | 0.327
+| 4 | All Subjects | continuous_runs | 0.333 | 0.352 | 0.315 | 0.392 | 0.275 | 0.333 | 0.341 | 0.409 | 0.25
+| 5 | All Subjects | continuous_runs | 0.5 | 0.234 | 0.266 | 0.372 | 0.302 | 0.326 | 0.405 | 0.357 | 0.238
+| 6 | All Subjects | continuous_runs | 0.375 | 0.357 | 0.268 | 0.412 | 0.353 | 0.235 | 0.357 | 0.31 | 0.333
+| 7 | All Subjects | continuous_runs | 0.358 | 0.415 | 0.226 | 0.311 | 0.311 | 0.378 | 0.412 | 0.176 | 0.412
+| 8 | All Subjects | continuous_runs | 0.39 | 0.305 | 0.305 | 0.429 | 0.238 | 0.333 | 0.396 | 0.292 | 0.312
+| 9 | All Subjects | continuous_runs | 0.426 | 0.246 | 0.328 | 0.4 | 0.356 | 0.244 | 0.419 | 0.326 | 0.256
+| 10 | All Subjects | continuous_runs | 0.404 | 0.385 | 0.212 | 0.288 | 0.365 | 0.346 | 0.356 | 0.289 | 0.356
+
+
+![All_Subjects_CAPs_transition_probability_matrix](https://github.com/user-attachments/assets/9f741be1-aff6-4944-bfaa-e8230a1755e1)
+
+
+| CAP-1 | CAP-2 | CAP-3 |
+| --- | --- | --- |
+| CAP-1 | 0.394 | 0.321 | 0.285 |
+| CAP-2 | 0.36 | 0.329 | 0.311 |
+| CAP-3 | 0.39 | 0.302 | 0.308 |
 
 # Testing 
 This package was tested using a closed dataset as well as a modified version of a single-subject open dataset to test the `TimeseriesExtractor` function on GitHub Actions. The open dataset provided by [Laumann & Poldrack](https://openfmri.org/dataset/ds000031/) and used in [Laumann et al., 2015](https://doi.org/10.1016/j.neuron.2015.06.037)[^4]. was also utilized. This data was obtained from the OpenfMRI database, accession number ds000031. 

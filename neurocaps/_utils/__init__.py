@@ -3,6 +3,7 @@ from ._check_parcel_approach import _check_parcel_approach
 from ._dicts_to_pickles import _dicts_to_pickles
 from ._pickle_to_dict import _convert_pickle_to_dict
 from ._cap_internals import _cap2statmap
+from ._cap_internals import _create_display, _save_contents
 from ._cap_internals import _create_node_labels
 from ._cap_internals import _CAPGetter
 from ._cap_internals import _run_kmeans

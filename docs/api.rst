@@ -42,3 +42,4 @@ Module containing a class and functions to merge subject timeseries, standardize
    neurocaps.analysis.change_dtype
    neurocaps.analysis.merge_dicts
    neurocaps.analysis.standardize
+   neurocaps.analysis.transition_matrix
