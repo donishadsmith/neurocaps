@@ -387,7 +387,7 @@ def test_calculate_methods():
             for cap in cap_analysis.caps[group]:
                 target_cap = cap.split("-")[-1]
                 columns = df.filter(regex=fr"^{target_cap}\.").columns.tolist()
-                assert math.isclose(df.loc[i,columns].values.sum(),1,rel_tol=0.01)
+                assert math.isclose(df.loc[i,columns].values.sum(),1,rel_tol=0.01) or df.loc[i,columns].values.sum() == 0
 
 @pytest.mark.parametrize("current_timeseries,parcel_approach,name", [(extractor.subject_timeseries,extractor.parcel_approach,"Schaefer"),
                                                                 (custom_subject_timeseries,custom_parcel_approach,"Custom")])

@@ -42,6 +42,10 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.16.2.post1] - 2024-08-23
+### 💻 Metadata
+- Fix truncated table in README, which did not show all values correctly due to missing an additional row header.
+
 ## [0.16.2] - 2024-08-22
 ### 🚀 New/Added
 - Transition probabilities has been added to `CAP.calculate_metrics`. Below is a snippet from the codebase

@@ -406,8 +406,8 @@ print(trans_outputs["All Subjects"])
 ![All_Subjects_CAPs_transition_probability_matrix](https://github.com/user-attachments/assets/9f741be1-aff6-4944-bfaa-e8230a1755e1)
 
 
-| CAP-1 | CAP-2 | CAP-3 |
-| --- | --- | --- |
+| | CAP-1 | CAP-2 | CAP-3 |
+| --- | --- | --- | --- |
 | CAP-1 | 0.394 | 0.321 | 0.285 |
 | CAP-2 | 0.36 | 0.329 | 0.311 |
 | CAP-3 | 0.39 | 0.302 | 0.308 |
