@@ -20,6 +20,7 @@ def test_transition_matrix(group):
     png_files = glob.glob(os.path.join(os.path.dirname(__file__), "*transition_probability*.png"))
     assert len(png_files) == len(groups)
     csv_files = glob.glob(os.path.join(os.path.dirname(__file__), "*transition_probability*.csv"))
+    assert all(os.path.getsize(file) > 0 for file in csv_files)
     assert len(csv_files) == len(groups)
 
     [os.remove(x) for x in png_files + csv_files]
