@@ -7,5 +7,6 @@
    installation
    api
    examples/examples
+   outputs
    contributing
    changelog
