@@ -9,9 +9,8 @@ where files should be saved. The file types includes:
 - Pandas Dataframes: saved as "csv".
 - Pickles: saved as "pkl".
 
-With the exception of `TimeseriesExtractor.timeseries_to_pickle`, all functions have default file names that follow a
-specific format. Many functions also include parameters to add a prefix (before the default file name) or suffix
-(after the default file name and before the extension).
+All functions have default file names that follow a specific format. Many functions also include parameters to add a
+prefix (before the default file name) or suffix (after the default file name and before the extension).
 
 ## General File Naming Format
 
@@ -60,7 +59,7 @@ Low_ADHD_CAP-2_surface_plot.png
 ## Exceptions to the Default Naming Scheme
 
 Certain methods do not follow the default naming convention. This pertains to `TimeseriesExtractor.visualize_bold`,
-`CAP.calculate_metrics`, `merge_dicts`, `standardize`, and `change_dtype`.
+`TimeseriesExtractor.timeseries_to_pickle`. `CAP.calculate_metrics`, `merge_dicts`, `standardize`, and `change_dtype`.
 
 - `TimeseriesExtractor.visualize_bold` - The default name format is as follows (but can be overwritten using the
 `file_name` parameter):
@@ -68,6 +67,14 @@ Certain methods do not follow the default naming convention. This pertains to `T
 ```
 subject-[subj_id]_run-[run_id]_timeseries.png
 ```
+
+- `TimeseriesExtractor.timeseries_to_pickle` - The default name format is as follows (but can be overwritten using the
+`file_name` parameter):
+
+```
+subject_timeseries.pkl
+```
+
 - `CAP.calculate_metrics` - The naming format generally includes only the metric name (e.g. [metric_name].csv).
 However, for the "transition_probability" metric, separate dataframes are saved for each group:
 
