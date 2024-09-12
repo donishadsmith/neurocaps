@@ -249,10 +249,17 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     """
     def __init__(self, space: str = "MNI152NLin2009cAsym",
                  standardize: Union[bool, Literal["zscore_sample", "zscore", "psc"]]="zscore_sample",
-                 detrend: bool=True, low_pass: Optional[Union[float, int]]=None, high_pass: Optional[Union[float, int]]=None,
-                 parcel_approach: Union[dict[str, dict[str, Union[str, int]]], os.PathLike]={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}},
-                 use_confounds: bool=True, confound_names: Optional[list[str]]=None, fwhm: Optional[Union[float, int]]=None,
-                 fd_threshold: Optional[Union[float, dict[str, float]]]=None, n_acompcor_separate: Optional[int]=None,
+                 detrend: bool=True,
+                 low_pass: Optional[Union[float, int]]=None,
+                 high_pass: Optional[Union[float, int]]=None,
+                 parcel_approach: Union[
+                     dict[str, dict[str, Union[str, int]]], os.PathLike
+                     ]={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}},
+                 use_confounds: bool=True,
+                 confound_names: Optional[list[str]]=None,
+                 fwhm: Optional[Union[float, int]]=None,
+                 fd_threshold: Optional[Union[float, dict[str, float]]]=None,
+                 n_acompcor_separate: Optional[int]=None,
                  dummy_scans: Optional[Union[int, dict[str, Union[bool, int]]]]=None) -> None:
 
         self._space = space
@@ -291,11 +298,19 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             self._signal_clean_info["fd_threshold"] = fd_threshold
 
-    def get_bold(self, bids_dir: os.PathLike, task: str, session: Optional[Union[int,str]]=None,
-                 runs: Optional[Union[int, str, list[int], list[str]]]=None, condition: Optional[str]=None,
-                 tr: Optional[Union[int, float]]=None, run_subjects: Optional[list[str]]=None,
-                 exclude_subjects: Optional[list[str]]= None, pipeline_name: Optional[str]=None,
-                 n_cores: Optional[int]=None, verbose: bool=True, flush_print: bool=False,
+    def get_bold(self,
+                 bids_dir: os.PathLike,
+                 task: str,
+                 session: Optional[Union[int,str]]=None,
+                 runs: Optional[Union[int, str, list[int], list[str]]]=None,
+                 condition: Optional[str]=None,
+                 tr: Optional[Union[int, float]]=None,
+                 run_subjects: Optional[list[str]]=None,
+                 exclude_subjects: Optional[list[str]]= None,
+                 pipeline_name: Optional[str]=None,
+                 n_cores: Optional[int]=None,
+                 verbose: bool=True,
+                 flush_print: bool=False,
                  exclude_niftis: Optional[list[str]]=None) -> None:
         """
         **Get BOLD Data**
@@ -467,12 +482,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         subj_id_list = sorted(layout.get(return_type="id", target="subject", task=task, space=self._space, suffix="bold"))
 
         if exclude_subjects:
-            exclude_subjects = [str(subj_id) if not isinstance(subj_id,str) else subj_id for subj_id in exclude_subjects]
-            subj_id_list = sorted([subj_id for subj_id in subj_id_list if subj_id not in exclude_subjects])
+            subj_id_list = sorted([subj_id for subj_id in subj_id_list if subj_id not in map(str, exclude_subjects)])
 
         if run_subjects:
-            run_subjects = [str(subj_id) if not isinstance(subj_id,str) else subj_id for subj_id in run_subjects]
-            subj_id_list = sorted([subj_id for subj_id in subj_id_list if subj_id in run_subjects])
+            subj_id_list = sorted([subj_id for subj_id in subj_id_list if subj_id in map(str, run_subjects)])
 
         # Setup extraction
         self._setup_extraction(layout=layout, subj_id_list=subj_id_list, exclude_niftis=exclude_niftis)
@@ -510,7 +523,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 # Aggregate new timeseries
                 if isinstance(subject_timeseries, dict): self._subject_timeseries.update(subject_timeseries)
 
-    def _get_files(self, layout, extension, subj_id, scope="derivatives", suffix=None, desc=None, event=False, space="attr"):
+    def _get_files(self, layout, extension, subj_id, scope="derivatives", suffix=None, desc=None,
+                   event=False, space="attr"):
         query_dict = {"scope": scope, "return_type": "file", "task": self._task_info["task"], "extension": extension,
                       "subject": subj_id}
         if desc: query_dict.update({"desc": desc})
@@ -678,11 +692,15 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         with open(os.path.join(output_dir,save_file_name), "wb") as f:
             dump(self._subject_timeseries,f)
 
-    def visualize_bold(self, subj_id: Union[int,str], run: Union[int, str],
+    def visualize_bold(self,
+                       subj_id: Union[int,str],
+                       run: Union[int, str],
                        roi_indx: Optional[Union[Union[int,str], Union[list[str],list[int]]]]=None,
-                       region: Optional[str]=None, show_figs: bool=True,
+                       region: Optional[str]=None,
+                       show_figs: bool=True,
                        output_dir: Optional[Union[str, os.PathLike]]=None,
-                       file_name: Optional[str]=None, **kwargs) -> plt.figure:
+                       file_name: Optional[str]=None,
+                       **kwargs) -> plt.figure:
         """
         **Plot BOLD Data**
 
@@ -738,8 +756,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             raise AttributeError("Cannot plot bold data since `self._subject_timeseries` does not exist, either run "
                                  "`self.get_bold()` or assign a valid timeseries structure to self.subject_timeseries.")
 
-        if isinstance(subj_id, int): subj_id = str(subj_id)
-
         if roi_indx is None and region is None:
             raise ValueError("either `roi_indx` or `region` must be specified.")
 
@@ -748,10 +764,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         if file_name is not None and output_dir is None:
             warnings.warn("`file_name` supplied but no `output_dir` specified. Files will not be saved.")
-
-        if output_dir:
-            if not os.path.exists(output_dir):
-                os.makedirs(output_dir)
 
         parcellation_name = list(self._parcel_approach)[0]
         # Defaults
@@ -763,13 +775,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         if roi_indx or roi_indx == 0:
             if isinstance(roi_indx, int):
                 plot_indxs = roi_indx
-
             elif isinstance(roi_indx, str):
                 # Check if parcellation_approach is custom
                 if "Custom" in self._parcel_approach and "nodes" not in self._parcel_approach["Custom"]:
                     _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_bold")
                 plot_indxs = self._parcel_approach[parcellation_name]["nodes"].index(roi_indx)
-
             else:
                 if all([isinstance(indx,int) for indx in roi_indx]):
                     plot_indxs = np.array(roi_indx)
@@ -795,17 +805,19 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         plt.figure(figsize=plot_dict["figsize"])
 
-        subject_timeseries = self._subject_timeseries[subj_id][f"run-{run}"]
+        timeseries = self._subject_timeseries[str(subj_id)][f"run-{run}"]
+
         if roi_indx or roi_indx == 0:
-            plt.plot(range(1, subject_timeseries.shape[0] + 1), subject_timeseries[:,plot_indxs])
+            plt.plot(range(1, timeseries.shape[0] + 1), timeseries[:,plot_indxs])
             if isinstance(roi_indx, (int,str)) or (isinstance(roi_indx, list) and len(roi_indx) == 1):
                 if isinstance(roi_indx, int): roi_title = self._parcel_approach[parcellation_name]["nodes"][roi_indx]
                 elif isinstance(roi_indx, str): roi_title = roi_indx
                 else: roi_title = roi_indx[0]
                 plt.title(roi_title)
         else:
-            plt.plot(range(1, subject_timeseries.shape[0] + 1), np.mean(subject_timeseries[:,plot_indxs], axis=1))
+            plt.plot(range(1, timeseries.shape[0] + 1), np.mean(timeseries[:,plot_indxs], axis=1))
             plt.title(region)
+
         plt.xlabel("TR")
 
         if output_dir:

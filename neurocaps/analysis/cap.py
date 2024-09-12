@@ -340,9 +340,12 @@ class CAP(_CAPGetter):
             }
         }
     """
-    def __init__(self, parcel_approach: Union[dict[str, dict[str, Union[os.PathLike, list[str]]]],
-                                              dict[str, dict[str, Union[str,int]]],
-                                              os.PathLike]=None,
+    def __init__(self,
+                 parcel_approach: Union[
+                     dict[str, dict[str, Union[os.PathLike, list[str]]]],
+                     dict[str, dict[str, Union[str,int]]],
+                     os.PathLike
+                     ]=None,
                  groups: dict[str, list[str]]=None) -> None:
         self._groups = groups
         # Raise error if self groups is not a dictionary
@@ -1613,8 +1616,13 @@ class CAP(_CAPGetter):
         # Display figures
         plt.show() if show_figs else plt.close()
 
-    def caps2corr(self, output_dir: Optional[os.PathLike]=None, suffix_title: Optional[str]=None,
-                  show_figs: bool=True, save_plots: bool=True, return_df: bool=False, save_df: bool=False,
+    def caps2corr(self,
+                  output_dir: Optional[os.PathLike]=None,
+                  suffix_title: Optional[str]=None,
+                  show_figs: bool=True,
+                  save_plots: bool=True,
+                  return_df: bool=False,
+                  save_df: bool=False,
                   **kwargs) -> Union[seaborn.heatmap, dict[str, pd.DataFrame]]:
         """
         **Generate Pearson Correlation Matrix for CAPs**
@@ -2092,9 +2100,14 @@ class CAP(_CAPGetter):
 
                 plt.show(fig) if show_figs else plt.close(fig)
 
-    def caps2radar(self, method: Literal["traditional", "selective", "combined"]="traditional", alpha: float=0.5,
-                   output_dir: Optional[os.PathLike]=None, suffix_title: Optional[str]=None,
-                   show_figs: bool=True, use_scatterpolar: bool=False, as_html: bool=False,
+    def caps2radar(self,
+                   method: Literal["traditional", "selective", "combined"]="traditional",
+                   alpha: float=0.5,
+                   output_dir: Optional[os.PathLike]=None,
+                   suffix_title: Optional[str]=None,
+                   show_figs: bool=True,
+                   use_scatterpolar: bool=False,
+                   as_html: bool=False,
                    **kwargs) -> Union[px.line_polar, go.Scatterpolar]:
         """
         **Generate Radar Plots**
