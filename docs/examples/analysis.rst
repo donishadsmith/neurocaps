@@ -153,10 +153,14 @@ Plotting CAPs to Radar
                 "gridcolor": "rgba(0, 0, 0, 0.25)", "ticks": "outside" ,
                 "tickfont": {"size": 14, "color": "black"}, "range": [0,0.3],
                 "tickvals": [0.1,0.2,0.3]}
+
     legend = {"yanchor": "top", "xanchor": "left", "y": 0.99, "x": 0.01,
               "title_font_family": "Times New Roman", "font": {"size": 16, "color": "black"}}
 
-    cap_analysis.caps2radar(radialaxis=radialaxis, fill="toself", legend=legend)
+    color_discrete_map =  {"High Amplitude": "red", "Low Amplitude": "blue"}
+
+    cap_analysis.caps2radar(radialaxis=radialaxis, fill="toself", legend=legend,
+                            color_discrete_map = color_discrete_map)
 
 .. image:: embed/All_Subjects_CAP-1_radar.png
     :width: 800

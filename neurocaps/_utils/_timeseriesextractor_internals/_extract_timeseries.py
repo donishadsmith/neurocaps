@@ -38,12 +38,9 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
             print(f"{subject_header}" + f"Preparing for timeseries extraction using - [FILE: {files['nifti']}].",
                   flush=flush_print)
 
-        # Initialize variables; fd_threshold and even_file checked first for a "fail fast" approach that avoids
-        # extracting timeseries for runs that will be empty or flagged
-        scan_list, censor_volumes = [], []
-        censor = False
-        threshold, outlier_limit = None, None
-        dummy_scans = None
+        # Initialize variables
+        censor_volumes, scan_list = [], []
+        dummy_scans, outlier_limit = None, None
 
         # Check for non-steady_state if requested
         if signal_clean_info["dummy_scans"]:
@@ -52,21 +49,12 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
 
         if signal_clean_info["use_confounds"] and signal_clean_info["fd_threshold"]:
             if "framewise_displacement" in confound_df.columns:
-                censor = True
                 fd_array = confound_df["framewise_displacement"].fillna(0).values
-                # Truncate fd_array if dummy scans; done to only assess if the truncated array meets
-                # the "outlier_percentage" criteria
+                # Truncate fd_array if dummy scans;
                 if dummy_scans: fd_array = fd_array[dummy_scans:]
 
-                # Check if float or dict
-                if isinstance(signal_clean_info["fd_threshold"], dict):
-                    threshold = signal_clean_info["fd_threshold"]["threshold"]
-                    if "outlier_percentage" in signal_clean_info["fd_threshold"]:
-                        outlier_limit = signal_clean_info["fd_threshold"]["outlier_percentage"]
-                else:
-                    threshold = signal_clean_info["fd_threshold"]
-
-                censor_volumes.extend(list(np.where(fd_array > threshold)[0]))
+                # Get censor volumes vector, outlier_limit, and threshold
+                censor_volumes, outlier_limit, threshold = _censor(signal_clean_info["fd_threshold"], fd_array)
 
                 if len(censor_volumes) == fd_array.shape[0]:
                     warnings.warn(f"{subject_header}" + "Processing skipped: Timeseries will be empty due to the "
@@ -74,12 +62,12 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
                     continue
 
                 if outlier_limit and condition is None:
-                    # Determine if run is flagged; when condition is not specified
-                    percentage = len(censor_volumes)/len(fd_array)
-                    flagged = True if percentage > outlier_limit else False
+                    percentage, flagged = _mark(len(censor_volumes), len(fd_array), outlier_limit)
+
             else:
                 warnings.warn(f"{subject_header}" + "`fd_threshold` specified but 'framewise_displacement' column not "
-                              "in the confound tsv file. Removal of volumes after nuisance regression will not be done.")
+                              "in the confound tsv file. Removal of volumes after nuisance regression will not be done."
+                              )
 
         if files['event']:
             event_df = pd.read_csv(files['event'], sep="\t")
@@ -87,40 +75,25 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
             condition_df = event_df[event_df["trial_type"] == condition]
 
             if condition_df.empty:
-                warnings.warn(f"{subject_header}" + f"[CONDITION: {condition}] - Processing skipped: Condition does not "
-                              "exist in the 'trial_type' column of the event file.")
+                warnings.warn(f"{subject_header}" + f"[CONDITION: {condition}] - Processing skipped: Condition does "
+                              "not exist in the 'trial_type' column of the event file.")
                 continue
 
-            # Convert times into scan numbers to obtain the scans taken when the participant was exposed to the
-            # condition of interest; include partial scans
-            for i in condition_df.index:
-                onset_scan = int(condition_df.loc[i,"onset"]/tr)
-                end_scan = math.ceil((condition_df.loc[i,"onset"] + condition_df.loc[i,"duration"])/tr)
-                # Add one since range is not inclusive
-                scan_list.extend(list(range(onset_scan, end_scan + 1)))
-
-            # Get unique scans to not duplicate information
-            scan_list = sorted(list(set(scan_list)))
+            # Get condition indices
+            scan_list = _get_condition(condition_df, tr, scan_list)
 
             # Adjust for dummy before censoring since censoring is dummy adjusted above
             if dummy_scans: scan_list = [scan - dummy_scans for scan in scan_list if scan not in range(0, dummy_scans)]
 
-            if censor:
-                # Assess if any condition indices greater than fd array to not dilute outlier calculation
-                if max(scan_list) > fd_array.shape[0] - 1:
-                    scan_list = _check_indices(scan_list,fd_array.shape[0],condition,subject_header)
-                # Get length of scan list prior to assess outliers if requested
-                before_censor = len(scan_list)
-                scan_list = [volume for volume in scan_list if volume not in censor_volumes]
-                if outlier_limit:
-                    percentage = 1 - (len(scan_list)/before_censor)
-                    flagged = True if percentage > outlier_limit else False
+            if censor_volumes:
+                scan_list, n = _filter_condition(scan_list, fd_array, condition, subject_header, censor_volumes)
+                if outlier_limit: percentage, flagged = _mark(n - len(scan_list), n, outlier_limit)
 
             if not scan_list:
-                warnings.warn(f"{subject_header}" + f"[CONDITION: {condition}] - Processing skipped: Timeseries will be "
-                              "empty when filtered to only include volumes from this specific condition. Possibly due to "
-                              "TRs corresponding to the condition being removed by `dummy_scans` or filtered due to "
-                              "exceeding threshold for `fd_threshold`.")
+                warnings.warn(f"{subject_header}" + f"[CONDITION: {condition}] - Processing skipped: Timeseries will "
+                              "be empty when filtered to only include volumes from this specific condition. Possibly "
+                              "due to TRs corresponding to the condition being removed by `dummy_scans` or filtered "
+                              "due to exceeding threshold for `fd_threshold`.")
                 continue
 
         if flagged:
@@ -217,11 +190,11 @@ def _header(session, task, run_message, nifti_file, subj_id):
     return f"\n{sub_message}\n{underline}\n", sub_message
 
 # Get dummy scan number
-def _get_dummy(dummy, confound_df, verbose, subject_header, flush):
-    if isinstance(dummy, dict) and dummy["auto"] is True:
+def _get_dummy(info, confound_df, verbose, subject_header, flush):
+    if isinstance(info, dict) and info["auto"] is True:
         n, flag = len([col for col in confound_df.columns if "non_steady_state" in col]), "auto"
-        if "min" in dummy and n < dummy["min"]: n, flag = dummy["min"], "min"
-        if "max" in dummy and n > dummy["max"]: n, flag = dummy["max"], "max"
+        if "min" in info and n < info["min"]: n, flag = info["min"], "min"
+        if "max" in info and n > info["max"]: n, flag = info["max"], "max"
         if n == 0: n = None
 
         if verbose:
@@ -236,7 +209,53 @@ def _get_dummy(dummy, confound_df, verbose, subject_header, flush):
                 print(f"{subject_header}" + f"Default dummy scans set by '{flag}' will be used: {n}",
                         flush=flush)
 
-    return n if isinstance(dummy, dict) else dummy
+    return n if isinstance(info, dict) else info
+
+# Create censor vector
+def _censor(info, fd_array):
+    outlier_limit, threshold = None, None
+
+    if isinstance(info, dict):
+        threshold = info["threshold"]
+        if "outlier_percentage" in info: outlier_limit = info["outlier_percentage"]
+    else:
+        threshold = info
+
+    censor_volumes = list(np.where(fd_array > threshold)[0])
+
+    return censor_volumes, outlier_limit, threshold
+
+# Determine if run is flagged; when condition is not specified
+def _mark(n_censor, n, outlier_limit):
+    percentage = n_censor/n
+    flagged = True if percentage > outlier_limit else False
+
+    return percentage, flagged
+
+# Get event condition
+def _get_condition(condition_df, tr, scan_list):
+    # Convert times into scan numbers to obtain the scans taken when the participant was exposed to the
+    # condition of interest; include partial scans
+    for i in condition_df.index:
+        onset_scan = int(condition_df.loc[i,"onset"]/tr)
+        end_scan = math.ceil((condition_df.loc[i,"onset"] + condition_df.loc[i,"duration"])/tr)
+        # Add one since range is not inclusive
+        scan_list.extend(list(range(onset_scan, end_scan + 1)))
+
+    # Get unique scans to not duplicate information
+    scan_list = sorted(list(set(scan_list)))
+
+    return scan_list
+
+def _filter_condition(scan_list, fd_array, condition, subject_header, censor_volumes):
+    # Assess if any condition indices greater than fd array to not dilute outlier calculation
+    if max(scan_list) > fd_array.shape[0] - 1:
+        scan_list = _check_indices(scan_list, fd_array.shape[0], condition, subject_header)
+    # Get length of scan list prior to assess outliers if requested
+    before_censor = len(scan_list)
+    scan_list = [volume for volume in scan_list if volume not in censor_volumes]
+
+    return scan_list, before_censor
 
 # Extract first "n" numbers of specified WM and CSF components
 def _acompcor(confound_names, confound_metadata_file, n):

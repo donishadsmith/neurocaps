@@ -656,7 +656,8 @@ class CAP(_CAPGetter):
             # Get the optimal kmeans model
             self._kmeans[group] = model_dict[self._optimal_n_clusters[group]]
 
-            print(f"[GROUP: {group} | METHOD: {method}] - Optimal cluster size is {self._optimal_n_clusters[group]}.", flush=True)
+            print(f"[GROUP: {group} | METHOD: {method}] - Optimal cluster size is {self._optimal_n_clusters[group]}.",
+                  flush=True)
 
             # Plot
             if show_figs or output_dir is not None:
@@ -703,9 +704,12 @@ class CAP(_CAPGetter):
                           runs: Optional[Union[int, str, list[int], list[str]]]=None,
                           continuous_runs: bool=False,
                           metrics: Union[
-                              Literal["temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"],
-                              list[Literal["temporal_fraction", "persistence","counts","transition_frequency", "transition_probability"]]
-                              ]=["temporal_fraction", "persistence","counts","transition_frequency"],
+                              Literal[
+                                  "temporal_fraction", "persistence", "counts",
+                                  "transition_frequency", "transition_probability"],
+                              list[Literal["temporal_fraction", "persistence","counts",
+                                           "transition_frequency", "transition_probability"]]
+                              ]=["temporal_fraction", "persistence", "counts", "transition_frequency"],
                           return_df: bool=True, output_dir: Optional[os.PathLike]=None,
                           prefix_file_name: Optional[str]=None) -> dict[str, pd.DataFrame]:
         """
@@ -876,7 +880,7 @@ class CAP(_CAPGetter):
                                  "`self.get_caps()` first.")
 
         if prefix_file_name is not None and output_dir is None:
-            warnings.warn("`prefix_name` supplied but no `output_dir` specified. Files will not be saved.")
+            warnings.warn("`prefix_file_name` supplied but no `output_dir` specified. Files will not be saved.")
 
         if runs:
             if not isinstance(runs,list): runs = [runs]
@@ -1232,8 +1236,7 @@ class CAP(_CAPGetter):
             raise ValueError("Number of nodes used for CAPs does not equal the number of nodes specified in "
                              "`parcel_approach`.")
 
-        if output_dir:
-            if not os.path.exists(output_dir): os.makedirs(output_dir)
+        if output_dir and not os.path.exists(output_dir): os.makedirs(output_dir)
 
         # Convert to list
         if isinstance(plot_options, str): plot_options = [plot_options]
@@ -1324,6 +1327,74 @@ class CAP(_CAPGetter):
 
                 self._region_caps[group].update({cap: region_caps})
 
+    @staticmethod
+    def _base_kwargs(plot_dict, line = True, edge = True):
+        kwargs = {"cmap": plot_dict["cmap"], "cbar_kws": {"shrink": plot_dict["shrink"]}, "annot": plot_dict["annot"],
+                  "annot_kws": plot_dict["annot_kws"], "fmt": plot_dict["fmt"], "alpha": plot_dict["alpha"],
+                  "vmin": plot_dict["vmin"], "vmax": plot_dict["vmax"]}
+
+        if line: kwargs.update({"linewidths": plot_dict["linewidths"], "linecolor": plot_dict["linecolor"]})
+
+        if edge: kwargs.update({"edgecolors": plot_dict["edgecolors"]})
+
+        return kwargs
+
+    def _division_line(self, display, parcellation_name, linewidths, call = "outer"):
+        n_labels = len(self._parcel_approach[parcellation_name]["nodes"])
+        division_line = n_labels//2
+        left_hemisphere_tick = (0 + division_line)//2
+        right_hemisphere_tick = (division_line + n_labels)//2
+
+        if call == "outer":
+            display.set_xticks([left_hemisphere_tick,right_hemisphere_tick])
+            display.set_xticklabels(["LH", "RH"])
+
+        display.set_yticks([left_hemisphere_tick,right_hemisphere_tick])
+        display.set_yticklabels(["LH", "RH"])
+
+        line_widths = linewidths if linewidths != 0 else 1
+
+        return display, division_line, line_widths
+
+    @staticmethod
+    def _set_ticks(display, labels):
+        ticks = [i for i, label in enumerate(labels) if label]
+
+        display.set_xticks(ticks)
+        display.set_xticklabels([label for label in labels if label])
+        display.set_yticks(ticks)
+        display.set_yticklabels([label for label in labels if label])
+
+        return display
+
+    @staticmethod
+    def _border(display, plot_dict, length, axvline = None):
+        display.axhline(y=0, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
+        display.axhline(y=length, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
+        display.axvline(x=0, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
+        if axvline: display.axvline(x=axvline, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
+        else: display.axvline(x=length, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
+
+        return display
+
+    @staticmethod
+    def _label_size(display, plot_dict, set_x = True, set_y = True):
+        if set_x:
+            display.set_xticklabels(display.get_xticklabels(), size = plot_dict["xticklabels_size"],
+                                    rotation=plot_dict["xlabel_rotation"])
+        if set_y:
+            display.set_yticklabels(display.get_yticklabels(), size = plot_dict["yticklabels_size"],
+                                    rotation=plot_dict["ylabel_rotation"])
+
+        return display
+
+    # Function to save plots for outer_product and heatmap called by caps2plot
+    @staticmethod
+    def _save(display, scope, partial, plot_dict, output_dir, call):
+        full_filename = f"{partial.replace(' ','_')}_{call}-{scope}.png"
+        display.get_figure().savefig(os.path.join(output_dir, full_filename), dpi=plot_dict["dpi"],
+                                     bbox_inches=plot_dict["bbox_inches"])
+
     def _generate_outer_product_plots(self, group, plot_dict, cap_dict, columns, subplots, output_dir, suffix_title,
                                       show_figs, scope, parcellation_name):
         # Nested dictionary for group
@@ -1357,53 +1428,28 @@ class CAP(_CAPGetter):
             self._outer_products[group].update({cap: np.outer(cap_dict[group][cap],cap_dict[group][cap])})
             # Create labels if nodes requested for scope
             if scope == "nodes" and plot_dict["hemisphere_labels"] is False:
-                labels, _ = _create_node_labels(parcellation_name=parcellation_name,
-                                                parcel_approach=self._parcel_approach, columns=columns)
+                labels, _ = _create_node_labels(parcellation_name, self._parcel_approach, columns)
 
             if subplots:
-                ax = axes[axes_y] if nrow == 1 else axes[axes_x,axes_y]
+                ax = axes[axes_y] if nrow == 1 else axes[axes_x, axes_y]
                 # Modify tick labels based on scope
                 if scope == "regions":
-                    display = seaborn.heatmap(ax=ax, data=self._outer_products[group][cap], cmap=plot_dict["cmap"],
-                                              linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"],
-                                              xticklabels=columns, yticklabels=columns,
-                                              cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"],
-                                              annot_kws=plot_dict["annot_kws"], fmt=plot_dict["fmt"],
-                                              edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"],
-                                              vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
+                    display = seaborn.heatmap(ax=ax, data=self._outer_products[group][cap], xticklabels=columns,
+                                              yticklabels=columns, **self._base_kwargs(plot_dict))
                 else:
                     if plot_dict["hemisphere_labels"] is False:
-                        display = seaborn.heatmap(ax=ax, data=self._outer_products[group][cap], cmap=plot_dict["cmap"],
-                                                  linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"],
-                                                  cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"],
-                                                  annot_kws=plot_dict["annot_kws"], fmt=plot_dict["fmt"],
-                                                  edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"],
-                                                  vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
+                        display = seaborn.heatmap(ax=ax, data=self._outer_products[group][cap],
+                                                  **self._base_kwargs(plot_dict))
                     else:
-                        display = seaborn.heatmap(ax=ax, data=self._outer_products[group][cap], cmap=plot_dict["cmap"],
-                                                  cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"],
-                                                  annot_kws=plot_dict["annot_kws"], fmt=plot_dict["fmt"],
-                                                  alpha=plot_dict["alpha"], vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
+                        display = seaborn.heatmap(ax=ax, data=self._outer_products[group][cap],
+                                                  **self._base_kwargs(plot_dict, False, False))
 
                     if plot_dict["hemisphere_labels"] is False:
-                        ticks = [i for i, label in enumerate(labels) if label]
-
-                        ax.set_xticks(ticks)
-                        ax.set_xticklabels([label for label in labels if label])
-                        ax.set_yticks(ticks)
-                        ax.set_yticklabels([label for label in labels if label])
+                        ax = self._set_ticks(ax, labels)
                     else:
-                        n_labels = len(self._parcel_approach[parcellation_name]["nodes"])
-                        division_line = n_labels//2
-                        left_hemisphere_tick = (0 + division_line)//2
-                        right_hemisphere_tick = (division_line + n_labels)//2
-
-                        ax.set_xticks([left_hemisphere_tick,right_hemisphere_tick])
-                        ax.set_xticklabels(["LH", "RH"])
-                        ax.set_yticks([left_hemisphere_tick,right_hemisphere_tick])
-                        ax.set_yticklabels(["LH", "RH"])
-
-                        plot_dict["linewidths"] = plot_dict["linewidths"] if plot_dict["linewidths"] != 0 else 1
+                        ax, division_line, plot_dict["linewidths"] = self._division_line(ax,
+                                                                                         parcellation_name,
+                                                                                         plot_dict["linewidths"])
 
                         ax.axhline(division_line, color=plot_dict["linecolor"], linewidth=plot_dict["linewidths"])
                         ax.axvline(division_line, color=plot_dict["linecolor"], linewidth=plot_dict["linewidths"])
@@ -1411,25 +1457,15 @@ class CAP(_CAPGetter):
                 # Add border
                 if plot_dict["borderwidths"] != 0:
                     border_length = self._outer_products[group][cap].shape[0]
+                    display = self._border(display, plot_dict, border_length)
 
-                    display.axhline(y=0, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
-                    display.axhline(y=border_length, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
-                    display.axvline(x=0, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
-                    display.axvline(x=border_length, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
+                display = self._label_size(display, plot_dict, True, False)
 
-                # Modify label sizes
-                display.set_xticklabels(display.get_xticklabels(),
-                                        size = plot_dict["xticklabels_size"],
-                                        rotation=plot_dict["xlabel_rotation"])
-
-                if plot_dict["sharey"] is True:
-                    if axes_y == 0: display.set_yticklabels(display.get_yticklabels(),
-                                                            size = plot_dict["yticklabels_size"],
-                                                            rotation=plot_dict["ylabel_rotation"])
+                # Modify label sizes; if share_y, only set y for plots at axes == 0
+                if plot_dict["sharey"]:
+                    if axes_y == 0: display = self._label_size(display, plot_dict, False, True)
                 else:
-                    display.set_yticklabels(display.get_yticklabels(),
-                                            size = plot_dict["yticklabels_size"],
-                                            rotation=plot_dict["ylabel_rotation"])
+                    display = self._label_size(display, plot_dict, False, True)
 
                 # Set title of subplot
                 ax.set_title(cap, fontsize=plot_dict["fontsize"])
@@ -1445,53 +1481,23 @@ class CAP(_CAPGetter):
                 # Create new plot for each iteration when not subplot
                 plt.figure(figsize=plot_dict["figsize"])
 
-                plot_title = f"{group} {cap} {suffix_title}" if suffix_title else f"{group} {cap}"
-                if scope == "regions": display = seaborn.heatmap(self._outer_products[group][cap],
-                                                                 cmap=plot_dict["cmap"],
-                                                                 linewidths=plot_dict["linewidths"],
-                                                                 linecolor=plot_dict["linecolor"],
-                                                                 xticklabels=columns, yticklabels=columns,
-                                                                 cbar_kws={"shrink": plot_dict["shrink"]},
-                                                                 annot=plot_dict["annot"],
-                                                                 annot_kws=plot_dict["annot_kws"],
-                                                                 fmt=plot_dict["fmt"],
-                                                                 edgecolors=plot_dict["edgecolors"],
-                                                                 alpha=plot_dict["alpha"],
-                                                                 vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
+                if scope == "regions":
+                    display = seaborn.heatmap(self._outer_products[group][cap],  xticklabels=columns,
+                                              yticklabels=columns, **self._base_kwargs(plot_dict))
                 else:
                     if plot_dict["hemisphere_labels"] is False:
-                        display = seaborn.heatmap(self._outer_products[group][cap], cmap=plot_dict["cmap"],
-                                                  linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"],
-                                                  xticklabels=[], yticklabels=[], cbar_kws={"shrink": plot_dict["shrink"]},
-                                                  edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"],
-                                                  vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
+                        display = seaborn.heatmap(self._outer_products[group][cap], xticklabels=[], yticklabels=[],
+                                                  **self._base_kwargs(plot_dict))
                     else:
-                        display = seaborn.heatmap(self._outer_products[group][cap], cmap=plot_dict["cmap"], xticklabels=[],
-                                                  yticklabels=[], cbar_kws={"shrink": plot_dict["shrink"]},
-                                                  annot=plot_dict["annot"], annot_kws=plot_dict["annot_kws"],
-                                                  fmt=plot_dict["fmt"], alpha=plot_dict["alpha"],
-                                                  vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
+                        display = seaborn.heatmap(self._outer_products[group][cap], xticklabels=[], yticklabels=[],
+                                                  **self._base_kwargs(plot_dict, False, False))
 
                     if plot_dict["hemisphere_labels"] is False:
-                        ticks = [i for i, label in enumerate(labels) if label]
-
-                        display.set_xticks(ticks)
-                        display.set_xticklabels([label for label in labels if label])
-                        display.set_yticks(ticks)
-                        display.set_yticklabels([label for label in labels if label])
-
+                        display = self._set_ticks(display, labels)
                     else:
-                        n_labels = len(self._parcel_approach[parcellation_name]["nodes"])
-                        division_line = n_labels//2
-                        left_hemisphere_tick = (0 + division_line)//2
-                        right_hemisphere_tick = (division_line + n_labels)//2
-
-                        display.set_xticks([left_hemisphere_tick,right_hemisphere_tick])
-                        display.set_xticklabels(["LH", "RH"])
-                        display.set_yticks([left_hemisphere_tick,right_hemisphere_tick])
-                        display.set_yticklabels(["LH", "RH"])
-
-                        plot_dict["linewidths"] = plot_dict["linewidths"] if plot_dict["linewidths"] != 0 else 1
+                        display, division_line, plot_dict["linewidths"] = self._division_line(display,
+                                                                                              parcellation_name,
+                                                                                              plot_dict["linewidths"])
 
                         plt.axhline(division_line, color=plot_dict["linecolor"], linewidth=plot_dict["linewidths"])
                         plt.axvline(division_line, color=plot_dict["linecolor"], linewidth=plot_dict["linewidths"])
@@ -1499,31 +1505,17 @@ class CAP(_CAPGetter):
                 # Add border
                 if plot_dict["borderwidths"] != 0:
                     border_length = self._outer_products[group][cap].shape[0]
+                    display = self._border(display, plot_dict, border_length)
 
-                    display.axhline(y=0, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
-                    display.axhline(y=border_length, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
-                    display.axvline(x=0, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
-                    display.axvline(x=border_length, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
-
+                # Modify label sizes
+                plot_title = f"{group} {cap} {suffix_title}" if suffix_title else f"{group} {cap}"
                 display.set_title(plot_title, fontdict= {"fontsize": plot_dict["fontsize"]})
-
-                display.set_xticklabels(display.get_xticklabels(),
-                                        size = plot_dict["xticklabels_size"],
-                                        rotation=plot_dict["xlabel_rotation"])
-                display.set_yticklabels(display.get_yticklabels(),
-                                        size = plot_dict["yticklabels_size"],
-                                        rotation=plot_dict["ylabel_rotation"])
+                display = self._label_size(display, plot_dict)
 
                 # Save individual plots
                 if output_dir:
                     partial_filename = f"{group}_{cap}_{suffix_title}" if suffix_title else f"{group}_{cap}"
-                    if scope == "regions":
-                        full_filename = f"{partial_filename.replace(' ','_')}_outer_product-regions.png"
-                    else:
-                        full_filename = f"{partial_filename.replace(' ','_')}_outer_product-nodes.png"
-
-                    display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"],
-                                                 bbox_inches=plot_dict["bbox_inches"])
+                    self._save(display, scope, partial_filename, plot_dict, output_dir, call="outer_product")
 
         # Remove subplots with no data
         if subplots: [fig.delaxes(ax) for ax in axes.flatten() if not ax.has_data()]
@@ -1531,12 +1523,7 @@ class CAP(_CAPGetter):
         # Save subplot
         if subplots and output_dir:
             partial_filename = f"{group}_CAPs_{suffix_title}" if suffix_title else f"{group}_CAPs"
-            if scope == "regions":
-                full_filename = f"{partial_filename.replace(' ','_')}_outer_product-regions.png"
-            else:
-                full_filename = f"{partial_filename.replace(' ','_')}_outer_product-nodes.png"
-            display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"],
-                                         bbox_inches=plot_dict["bbox_inches"])
+            self._save(display, scope, partial_filename, plot_dict, output_dir, call="outer_product")
 
         # Display figures
         plt.show() if show_figs else plt.close()
@@ -1548,74 +1535,41 @@ class CAP(_CAPGetter):
 
         if scope == "regions":
             display = seaborn.heatmap(pd.DataFrame(cap_dict[group], index=columns), xticklabels=True, yticklabels=True,
-                                      cmap=plot_dict["cmap"], linewidths=plot_dict["linewidths"],
-                                      linecolor=plot_dict["linecolor"], cbar_kws={"shrink": plot_dict["shrink"]},
-                                      fmt=plot_dict["fmt"], edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"],
-                                      vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
+                                      **self._base_kwargs(plot_dict))
         else:
             # Create Labels
             if plot_dict["hemisphere_labels"] is False:
-                labels, names_list = _create_node_labels(parcellation_name=parcellation_name,
-                                                         parcel_approach=self._parcel_approach, columns=columns)
+                labels, names_list = _create_node_labels(parcellation_name, self._parcel_approach, columns)
 
                 display = seaborn.heatmap(pd.DataFrame(cap_dict[group], columns=list(cap_dict[group])),
-                                          xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"],
-                                          linewidths=plot_dict["linewidths"], linecolor=plot_dict["linecolor"],
-                                          cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"],
-                                          annot_kws=plot_dict["annot_kws"], fmt=plot_dict["fmt"],
-                                          edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"],
-                                          vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
+                                          xticklabels=True, yticklabels=True, **self._base_kwargs(plot_dict))
 
                 plt.yticks(ticks=[pos for pos, label in enumerate(labels) if label], labels=names_list)
 
             else:
                 display = seaborn.heatmap(pd.DataFrame(cap_dict[group], columns=list(cap_dict[group])),
-                                          xticklabels=True, yticklabels=True, cmap=plot_dict["cmap"],
-                                          cbar_kws={"shrink": plot_dict["shrink"]}, annot=plot_dict["annot"],
-                                          annot_kws=plot_dict["annot_kws"], fmt=plot_dict["fmt"],
-                                          alpha=plot_dict["alpha"], vmin=plot_dict["vmin"],
-                                          vmax=plot_dict["vmax"])
+                                          xticklabels=True, yticklabels=True,
+                                          **self._base_kwargs(plot_dict, False, False))
 
-                n_labels = len(self._parcel_approach[parcellation_name]["nodes"])
-                division_line = n_labels//2
-                left_hemisphere_tick = (0 + division_line)//2
-                right_hemisphere_tick = (division_line + n_labels)//2
-
-                display.set_yticks([left_hemisphere_tick,right_hemisphere_tick])
-                display.set_yticklabels(["LH", "RH"])
-
-                plot_dict["linewidths"] = plot_dict["linewidths"] if plot_dict["linewidths"] != 0 else 1
+                display, division_line, plot_dict["linewidths"] = self._division_line(display,
+                                                                                      parcellation_name,
+                                                                                      plot_dict["linewidths"],
+                                                                                      call="heatmap")
 
                 plt.axhline(division_line, color=plot_dict["linecolor"], linewidth=plot_dict["linewidths"])
 
         if plot_dict["borderwidths"] != 0:
             y_length = len(cap_dict[group][list(cap_dict[group])[0]])
+            display = self._border(display, plot_dict, y_length, len(self._caps[group]))
 
-            display.axhline(y=0, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
-            display.axhline(y=y_length, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
-            display.axvline(x=0, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
-            display.axvline(x=len(self._caps[group]), color=plot_dict["linecolor"],
-                            linewidth=plot_dict["borderwidths"])
-
-        display.set_xticklabels(display.get_xticklabels(),
-                                size = plot_dict["xticklabels_size"],
-                                rotation=plot_dict["xlabel_rotation"])
-        display.set_yticklabels(display.get_yticklabels(),
-                                size = plot_dict["yticklabels_size"],
-                                rotation=plot_dict["ylabel_rotation"])
-
+        # Modify label sizes
         plot_title = f"{group} CAPs {suffix_title}" if suffix_title else f"{group} CAPs"
         display.set_title(plot_title, fontdict= {"fontsize": plot_dict["fontsize"]})
 
         # Save plots
         if output_dir:
             partial_filename = f"{group}_CAPs_{suffix_title}" if suffix_title else f"{group}_CAPs"
-            if scope == "regions":
-                full_filename = f"{partial_filename.replace(' ','_')}_heatmap-regions.png"
-            else:
-                full_filename = f"{partial_filename.replace(' ','_')}_heatmap-nodes.png"
-            display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"],
-                                         bbox_inches=plot_dict["bbox_inches"])
+            self._save(display, scope, partial_filename, plot_dict, output_dir, call="heatmap")
 
         # Display figures
         plt.show() if show_figs else plt.close()
@@ -1730,7 +1684,9 @@ class CAP(_CAPGetter):
         corr_dict = {group: None for group in self._groups} if return_df or save_df else None
 
         if not hasattr(self,"_caps"):
-            raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` first.")
+            raise AttributeError(
+                "Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` first."
+                )
 
         # Create plot dictionary
         defaults = {"dpi": 300, "figsize": (8, 6), "fontsize": 14, "xticklabels_size": 8, "yticklabels_size": 8,
@@ -1770,8 +1726,11 @@ class CAP(_CAPGetter):
 
         if return_df: return corr_dict
 
-    def caps2niftis(self, output_dir: os.PathLike, suffix_file_name: Optional[str]=None,
-                    fwhm: Optional[float]=None, knn_dict: dict[str, Union[int, list[int], np.array]]=None) -> nib.Nifti1Image:
+    def caps2niftis(self,
+                    output_dir: os.PathLike,
+                    suffix_file_name: Optional[str]=None,
+                    fwhm: Optional[float]=None,
+                    knn_dict: dict[str, Union[int, list[int], np.array]]=None) -> nib.Nifti1Image:
         """
         **Standalone Method to Convert CAPs to NifTI Statistical Maps**
 
@@ -1827,13 +1786,15 @@ class CAP(_CAPGetter):
             `NifTI` statistical map.
         """
         if not self._parcel_approach:
-            raise AttributeError("`self.parcel_approach` is None. Add parcel_approach using "
+            raise AttributeError("`self.parcel_approach` is None. Set "
                                  "`self.parcel_approach=parcel_approach` to use this method.")
 
         if not hasattr(self,"_caps"):
-            raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` first.")
+            raise AttributeError(
+                "Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` first."
+                )
 
-        if not os.path.exists(output_dir): os.makedirs(output_dir)
+        if output_dir and not os.path.exists(output_dir): os.makedirs(output_dir)
 
         parcellation_name = list(self._parcel_approach)[0]
 
@@ -1848,11 +1809,16 @@ class CAP(_CAPGetter):
                     save_name = f"{group.replace(' ', '_')}_{cap.replace('-', '_')}.nii.gz"
                 nib.save(stat_map, os.path.join(output_dir,save_name))
 
-    def caps2surf(self, output_dir: Optional[os.PathLike]=None, suffix_title: Optional[str]=None,
-                  show_figs: bool=True, fwhm: Optional[float]=None,
-                  fslr_density: Literal["4k", "8k", "32k", "164k"]="32k", method: Literal["linear", "nearest"]="linear",
-                  save_stat_maps: bool=False, fslr_giftis_dict: Optional[dict]=None,
-                  knn_dict: dict[str, Union[int, list[int], np.array]]=None, **kwargs) -> surfplot.Plot: # pragma: no cover
+    def caps2surf(self, output_dir: Optional[os.PathLike]=None,
+                  suffix_title: Optional[str]=None,
+                  show_figs: bool=True,
+                  fwhm: Optional[float]=None,
+                  fslr_density: Literal["4k", "8k", "32k", "164k"]="32k",
+                  method: Literal["linear", "nearest"]="linear",
+                  save_stat_maps: bool=False,
+                  fslr_giftis_dict: Optional[dict]=None,
+                  knn_dict: dict[str, Union[int, list[int], np.array]]=None,
+                  **kwargs) -> surfplot.Plot: # pragma: no cover
         """
         **Project CAPs onto Surface Plots**
 
@@ -1937,9 +1903,9 @@ class CAP(_CAPGetter):
             These indices are then iterated over, and the zero values are replaced with the value of the nearest neighbor,
             determined by the sub-key "k". The dictionary contains the following sub-keys:
 
-            - "k": An integer that determines the number of nearest neighbors to consider, with the majority vote determining the new value. If not specified, the default is 1.
-            - "resolution_mm": An integer (1 or 2) that determines the resolution of the Schaefer parcellation. If not specified, the default is 1.
-            - "remove_subcortical": A list or array of label ids as integers of the subcortical regions in the parcellation.
+            - "k" : An integer that determines the number of nearest neighbors to consider, with the majority vote determining the new value. If not specified, the default is 1.
+            - "resolution_mm" : An integer (1 or 2) that determines the resolution of the Schaefer parcellation. If not specified, the default is 1.
+            - "remove_subcortical" : A list or array of label ids as integers of the subcortical regions in the parcellation.
 
             This method is applied before the `fwhm` method.
 

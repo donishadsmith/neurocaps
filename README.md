@@ -360,12 +360,19 @@ cap_analysis.caps2corr(annot=True, figsize=(6,4), cmap=palette)
 
 ```python
 # Create radar plots showing cosine similarity between region/networks and caps
-radialaxis={"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", "ticks": "outside" , "tickfont": {"size": 14, "color": "black"},
-"range": [0,0.3], "tickvals": [0.1,0.2,0.3]}
-cap_analysis.caps2radar(radialaxis=radialaxis, fill="toself")
+radialaxis={"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)",
+            "gridcolor": "rgba(0, 0, 0, 0.25)", "ticks": "outside" ,
+            "tickfont": {"size": 14, "color": "black"}, 
+            "range": [0,0.3], "tickvals": [0.1,0.2,0.3]}
+
+color_discrete_map = {"High Amplitude": "rgb(0,0,0)", "Low Amplitude": "blue"}
+
+cap_analysis.caps2radar(radialaxis=radialaxis, fill="toself", color_discrete_map = color_discrete_map,
+                        output_dir=output_dir)
 ```
 **Partial Plot Outputs:** (*Note*: one image will be generated per CAP)
-![image](https://github.com/donishadsmith/neurocaps/assets/112973674/5ab17b92-bac9-48a9-9f4c-25bb1a69bf1c)
+![All_Subjects_CAP-5_radar](https://github.com/user-attachments/assets/fdf7e45b-da77-4b80-a8e1-6020a0ad4f6c)
+
 
 ```python
 # Get transition probabilities for all participants in a dataframe, then convert to an averaged matrix
@@ -373,44 +380,44 @@ from neurocaps.analysis import transition_matrix
 
 # Optimal cluster sizes are saved automatically
 cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, 
-                      cluster_selection_method="davies_bouldin,
-                      standardize=True)
+                      cluster_selection_method="davies_bouldin",
+                      standardize=True, n_clusters=list(range(2,6)))
 
 outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, 
                                          return_df=True, output_dir=output_dir,
                                          metrics=["transition_probability"],
-                                         continuous_runs=True, file_name="All_Subjects_CAPs_metrics")
+                                         continuous_runs=True,
+                                         prefix_file_name="All_Subjects_CAPs_metrics")
 
 print(outputs["transition_probability"]["All Subjects"])
 
 trans_outputs = transition_matrix(trans_dict=outputs["transition_probability"],
-                                  show_figs=True, return_df=True, fmt=".3f", annot=True)
+                                  show_figs=True, return_df=True, cmap = "viridis",
+                                  fmt=".3f", annot=True, output_dir=output_dir)
 
 print(trans_outputs["All Subjects"])
 ```
 **Outputs:**
 | Subject_ID | Group | Run | 1.1 | 1.2 | 1.3 | 2.1 | 2.2 | 2.3 | 3.1 | 3.2 | 3.3 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | All Subjects | continuous_runs | 0.347 | 0.327 | 0.327 | 0.333 | 0.483 | 0.183 | 0.3 | 0.375 | 0.325
-| 2 | All Subjects | continuous_runs | 0.426 | 0.279 | 0.295 | 0.302 | 0.326 | 0.372 | 0.489 | 0.244 | 0.267
-| 3 | All Subjects | continuous_runs | 0.379 | 0.31 | 0.31 | 0.357 | 0.286 | 0.357 | 0.429 | 0.245 | 0.327
-| 4 | All Subjects | continuous_runs | 0.333 | 0.352 | 0.315 | 0.392 | 0.275 | 0.333 | 0.341 | 0.409 | 0.25
-| 5 | All Subjects | continuous_runs | 0.5 | 0.234 | 0.266 | 0.372 | 0.302 | 0.326 | 0.405 | 0.357 | 0.238
-| 6 | All Subjects | continuous_runs | 0.375 | 0.357 | 0.268 | 0.412 | 0.353 | 0.235 | 0.357 | 0.31 | 0.333
-| 7 | All Subjects | continuous_runs | 0.358 | 0.415 | 0.226 | 0.311 | 0.311 | 0.378 | 0.412 | 0.176 | 0.412
-| 8 | All Subjects | continuous_runs | 0.39 | 0.305 | 0.305 | 0.429 | 0.238 | 0.333 | 0.396 | 0.292 | 0.312
-| 9 | All Subjects | continuous_runs | 0.426 | 0.246 | 0.328 | 0.4 | 0.356 | 0.244 | 0.419 | 0.326 | 0.256
-| 10 | All Subjects | continuous_runs | 0.404 | 0.385 | 0.212 | 0.288 | 0.365 | 0.346 | 0.356 | 0.289 | 0.356
+| 1 | All Subjects | continuous_runs | 0.326 | 0.261 | 0.413 | 0.245 | 0.449 | 0.306 | 0.352 | 0.278 | 0.37 |
+| 2 | All Subjects | continuous_runs | 0.4 | 0.25 | 0.35 | 0.486 | 0.108 | 0.405 | 0.346 | 0.365 | 0.288 |
+| 3 | All Subjects | continuous_runs | 0.354 | 0.229 | 0.417 | 0.383 | 0.362 | 0.255 | 0.241 | 0.352 | 0.407 |
+| 4 | All Subjects | continuous_runs | 0.283 | 0.37 | 0.348 | 0.302 | 0.321 | 0.377 | 0.32 | 0.38 | 0.3 |
+| 5 | All Subjects | continuous_runs | 0.292 | 0.354 | 0.354 | 0.38 | 0.28 | 0.34 | 0.294 | 0.392 | 0.314 |
+| 6 | All Subjects | continuous_runs | 0.339 | 0.304 | 0.357 | 0.333 | 0.231 | 0.436 | 0.444 | 0.222 | 0.333 |
+| 7 | All Subjects | continuous_runs | 0.424 | 0.203 | 0.373 | 0.45 | 0.275 | 0.275 | 0.34 | 0.32 | 0.34 |
+| 8 | All Subjects | continuous_runs | 0.25 | 0.271 | 0.479 | 0.39 | 0.244 | 0.366 | 0.35 | 0.3 | 0.35 |
+| 9 | All Subjects | continuous_runs | 0.429 | 0.265 | 0.306 | 0.319 | 0.298 | 0.383 | 0.245 | 0.377 | 0.377 |
+| 10 | All Subjects | continuous_runs | 0.333 | 0.375 | 0.292 | 0.306 | 0.347 | 0.347 | 0.327 | 0.269 | 0.404 |
 
-
-![All_Subjects_CAPs_transition_probability_matrix](https://github.com/user-attachments/assets/9f741be1-aff6-4944-bfaa-e8230a1755e1)
-
+![image](https://github.com/user-attachments/assets/3ab1d123-0c3e-47e3-b24c-52bfda13d3ef)
 
 | | CAP-1 | CAP-2 | CAP-3 |
 | --- | --- | --- | --- |
-| CAP-1 | 0.394 | 0.321 | 0.285 |
-| CAP-2 | 0.36 | 0.329 | 0.311 |
-| CAP-3 | 0.39 | 0.302 | 0.308 |
+| CAP-1 | 0.343 | 0.288 | 0.369 |
+| CAP-2 | 0.36 | 0.291 | 0.349 |
+| CAP-3 | 0.326 | 0.326 | 0.348 |
 
 # Testing 
 This package was tested using a closed dataset as well as a modified version of a single-subject open dataset to test the `TimeseriesExtractor` function on GitHub Actions. The open dataset provided by [Laumann & Poldrack](https://openfmri.org/dataset/ds000031/) and used in [Laumann et al., 2015](https://doi.org/10.1016/j.neuron.2015.06.037)[^4]. was also utilized. This data was obtained from the OpenfMRI database, accession number ds000031. 
