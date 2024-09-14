@@ -817,7 +817,7 @@ class CAP(_CAPGetter):
             The metrics to calculate. Available options include "temporal_fraction", "persistence",
             "counts", "transition_frequency", and "transition_probability".
 
-            . versionadded:: 0.16.2 "transition_probabilities"
+            .. versionadded:: 0.16.2 "transition_probabilities"
 
         return_df : :obj:`str`, default=True
             If True, returns ``pandas.DataFrame`` inside a ``dict``, where the key corresponds to the
@@ -883,16 +883,19 @@ class CAP(_CAPGetter):
 
         metrics = [metrics] if isinstance(metrics, str) else metrics
 
-        valid_metrics = ["temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"]
+        # Change metrics to set
+        metrics = set(metrics)
 
-        boolean_list = [element in valid_metrics for element in metrics]
+        valid_metrics = {"temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"}
 
-        if any(boolean_list):
-            invalid_metrics = [metrics[indx] for indx,boolean in enumerate(boolean_list) if boolean is False]
-            if invalid_metrics:
-                formatted_string = ', '.join(["'{a}'".format(a=x) for x in invalid_metrics])
-                warnings.warn(f"Invalid metrics will be ignored: {formatted_string}.")
-        else:
+        set_diff = metrics - valid_metrics
+
+        metrics = metrics.intersection(valid_metrics)
+
+        if set_diff:
+            formatted_string = ', '.join(["'{a}'".format(a=x) for x in set_diff])
+            warnings.warn(f"Invalid metrics will be ignored: {formatted_string}.")
+        if not metrics:
             formatted_string = ', '.join(["'{a}'".format(a=x) for x in valid_metrics])
             raise ValueError(f"No valid metrics in `metrics` list. Valid metrics are {formatted_string}.")
 
@@ -964,17 +967,16 @@ class CAP(_CAPGetter):
         base_cols = ["Subject_ID", "Group","Run"]
 
         for metric in metrics:
-            if metric in valid_metrics:
-                if metric not in ["transition_frequency", "transition_probability"]:
-                    df_dict.update({metric: pd.DataFrame(columns=base_cols + list(cap_names))})
-                elif metric == "transition_probability":
-                    temp_dict = {}
-                    for group in self._groups:
-                        temp_dict.update(
-                            {group: pd.DataFrame(columns=base_cols + [f"{x}.{y}" for x,y in products[group]])}
-                            )
-                else:
-                    df_dict.update({metric: pd.DataFrame(columns=base_cols + ["Transition_Frequency"])})
+            if metric not in ["transition_frequency", "transition_probability"]:
+                df_dict.update({metric: pd.DataFrame(columns=base_cols + list(cap_names))})
+            elif metric == "transition_probability":
+                temp_dict = {}
+                for group in self._groups:
+                    temp_dict.update(
+                        {group: pd.DataFrame(columns=base_cols + [f"{x}.{y}" for x,y in products[group]])}
+                        )
+            else:
+                df_dict.update({metric: pd.DataFrame(columns=base_cols + ["Transition_Frequency"])})
 
         distributed_list = []
         for subj_id, group in self._subject_table.items():
@@ -1079,8 +1081,10 @@ class CAP(_CAPGetter):
                                                 sep=",", index=False)
                 else:
                     for group in self._groups:
-                        df_dict[f"{metric}"][group].to_csv(path_or_buf=os.path.join(output_dir,f"{file_name}-{group.replace(' ','_')}.csv"),
-                                                           sep=",", index=False)
+                        df_dict[f"{metric}"][group].to_csv(
+                            path_or_buf=os.path.join(output_dir, f"{file_name}-{group.replace(' ','_')}.csv"),
+                            sep=",", index=False
+                            )
 
         if return_df: return df_dict
 

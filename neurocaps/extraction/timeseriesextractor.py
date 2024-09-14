@@ -267,12 +267,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         if isinstance(dummy_scans, dict):
             if "auto" not in dummy_scans:
                 raise KeyError("'auto' sub-key must be included when `dummy_scans` is a dictionary.")
-            if use_confounds is not True:
+            if not use_confounds:
                 raise ValueError("`use_confounds` must be True to use 'auto' for `dummy_scans` has the "
                                 "fMRIPrep confounds tvs file is needed to detect the number of "
                                 "'non_steady_state_outlier_XX' columns.")
 
-        if use_confounds is not True and fd_threshold:
+        if not use_confounds and fd_threshold:
             warnings.warn("`fd_threshold` specified but `use_confounds` is not True so removal of volumes after "
                           "nuisance regression will not be done.")
 
@@ -283,11 +283,15 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 if fd_threshold["outlier_percentage"] >= 1 or fd_threshold["outlier_percentage"] <= 0:
                     raise ValueError("'outlier_percentage' must be a positive float between 0 and 1.")
 
-        self._signal_clean_info = {"standardize": standardize, "detrend": detrend, "low_pass": low_pass,
-                                   "high_pass": high_pass, "fwhm": fwhm, "dummy_scans": dummy_scans,
-                                   "use_confounds": use_confounds,  "n_acompcor_separate": n_acompcor_separate,
-                                   "fd_threshold": None}
-
+        self._signal_clean_info = {"masker_init": {"standardize": standardize,
+                                                   "detrend": detrend,
+                                                   "low_pass": low_pass,
+                                                   "high_pass": high_pass,
+                                                   "smoothing_fwhm": fwhm},
+                                    "dummy_scans": dummy_scans,
+                                    "n_acompcor_separate": n_acompcor_separate,
+                                    "fd_threshold": None,
+                                    "use_confounds": use_confounds}
         # Check parcel_approach
         self._parcel_approach = _check_parcel_approach(parcel_approach=parcel_approach)
 
@@ -452,9 +456,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         try:
             import bids
         except ModuleNotFoundError:
-            raise ModuleNotFoundError("This function relies on the pybids package to query subject-specific files. "
-                                      "If on Windows, pybids does not install by default to avoid long path error issues "
-                                      "during installation. Try using `pip install pybids` or `pip install neurocaps[windows]`")
+            raise ModuleNotFoundError(
+                "This function relies on the pybids package to query subject-specific files. "
+                "If on Windows, pybids does not install by default to avoid long path error issues "
+                "during installation. Try using `pip install pybids` or `pip install neurocaps[windows]`.")
 
         if runs and not isinstance(runs,list): runs = [runs]
 
@@ -473,22 +478,23 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         if pipeline_name:
             pipeline_name = os.path.normpath(pipeline_name).lstrip(os.path.sep).rstrip(os.path.sep)
-            if pipeline_name.startswith("derivatives"): pipeline_name = pipeline_name[len("derivatives"):].lstrip(os.path.sep)
+            if pipeline_name.startswith("derivatives"):
+                pipeline_name = pipeline_name[len("derivatives"):].lstrip(os.path.sep)
             layout = bids.BIDSLayout(bids_dir, derivatives=os.path.join(bids_dir, "derivatives", pipeline_name))
         else:
             layout = bids.BIDSLayout(bids_dir, derivatives=True)
 
         print(f"\n{layout}", flush=True)
-        subj_id_list = sorted(layout.get(return_type="id", target="subject", task=task, space=self._space, suffix="bold"))
+        subj_ids = sorted(layout.get(return_type="id", target="subject", task=task, space=self._space, suffix="bold"))
 
         if exclude_subjects:
-            subj_id_list = sorted([subj_id for subj_id in subj_id_list if subj_id not in map(str, exclude_subjects)])
+            subj_ids = sorted([subj_id for subj_id in subj_ids if subj_id not in map(str, exclude_subjects)])
 
         if run_subjects:
-            subj_id_list = sorted([subj_id for subj_id in subj_id_list if subj_id in map(str, run_subjects)])
+            subj_ids = sorted([subj_id for subj_id in subj_ids if subj_id in map(str, run_subjects)])
 
         # Setup extraction
-        self._setup_extraction(layout=layout, subj_id_list=subj_id_list, exclude_niftis=exclude_niftis)
+        self._setup_extraction(layout=layout, subj_ids=subj_ids, exclude_niftis=exclude_niftis)
 
         if self._n_cores:
             # Generate list of tuples for each subject
@@ -498,10 +504,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                           self._subject_info[subj_id]["confound_files"],
                           self._subject_info[subj_id]["confound_metadata_files"],
                           self._subject_info[subj_id]["run_list"],
-                          self._subject_info[subj_id]["tr"], condition,
+                          self._subject_info[subj_id]["tr"],
+                          condition,
                           self._parcel_approach,
                           self._signal_clean_info,
-                          verbose, flush_print,
+                          verbose,
+                          flush_print,
                           self._task_info) for subj_id in self._subject_ids]
 
             parallel = Parallel(return_as="generator", n_jobs=self._n_cores)
@@ -523,111 +531,45 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 # Aggregate new timeseries
                 if isinstance(subject_timeseries, dict): self._subject_timeseries.update(subject_timeseries)
 
-    def _get_files(self, layout, extension, subj_id, scope="derivatives", suffix=None, desc=None,
-                   event=False, space="attr"):
-        query_dict = {"scope": scope, "return_type": "file", "task": self._task_info["task"], "extension": extension,
-                      "subject": subj_id}
-        if desc: query_dict.update({"desc": desc})
-        if suffix: query_dict.update({"suffix": suffix})
-        if self._task_info["session"]: query_dict.update({"session": self._task_info["session"]})
-        if not event and not desc: query_dict.update({"space": self._space if space == "attr" else space})
-        return sorted(layout.get(**query_dict))
-
     # Get valid subjects to iterate through
-    def _setup_extraction(self, layout, subj_id_list, exclude_niftis):
+    def _setup_extraction(self, layout, subj_ids, exclude_niftis):
         base_dict = {"layout": layout, "subj_id": None}
-        for subj_id in subj_id_list:
+        for subj_id in subj_ids:
             base_dict["subj_id"] = subj_id
-            nifti_files = self._get_files(**base_dict, suffix="bold", extension="nii.gz")
-            mask_files = self._get_files(**base_dict, suffix="mask", extension="nii.gz")
-            bold_metadata_files = self._get_files(**base_dict, suffix="bold", extension="json")
-            if not bold_metadata_files:
-                bold_metadata_files = self._get_files(**base_dict, scope="raw", suffix="bold", extension="json", space=None)
-            if self._task_info["condition"]:
-                event_files = self._get_files(**base_dict, scope="raw", suffix="events", extension="tsv", event=True)
-            else:
-                event_files = []
-            confound_files = self._get_files(**base_dict, desc="confounds", extension="tsv")
-            confound_metadata_files = self._get_files(**base_dict, extension="json", desc="confounds")
-            # Remove excluded file from the nifti_files list, which will prevent it from being processed
-            if exclude_niftis and nifti_files:
-                nifti_files = [nifti_file for nifti_file in nifti_files if os.path.basename(nifti_file) not in exclude_niftis]
+            files = self._build_dict(base_dict)
 
-            # Generate a list of runs to iterate through based on runs in nifti_files
-            check_runs = []
-            if self._task_info["runs"]:
-                check_runs.extend([f"run-{run}" for run in self._task_info["runs"]])
-            else:
-                if nifti_files and "run-" in os.path.basename(nifti_files[0]):
-                    check_runs.extend([re.search("run-(\\S+?)[-_]",os.path.basename(x))[0][:-1] for x in nifti_files])
+            # Remove excluded file from the niftis list, which will prevent it from being processed
+            if exclude_niftis and files["niftis"]: files["niftis"] = self._exclude(files["niftis"], exclude_niftis)
 
-            # Base subject message
-            sub_message = f'[SUBJECT: {subj_id} | SESSION: {self._task_info["session"]} | TASK: {self.task_info["task"]}]'
-            underline = '-'*len(sub_message)
-            subject_header = f"{sub_message}\n{underline}\n"
+            # Get subject header
+            subject_header = self._header(subj_id)
+        
+            # Check files
+            skip, msg = self._check_files(files)
 
-            # Generate a list of runs to iterate through based on runs in nifti_files
-            if not self._task_info["session"] and nifti_files:
-                if "ses-" in os.path.basename(nifti_files[0]):
-                    check_sessions = [re.search("ses-(\\S+?)[-_]",os.path.basename(x))[0][:-1] for x in nifti_files]
-                    ses_list = sorted(list((check_sessions)))
-                    if len(ses_list) > 1:
-                        raise ValueError(f"{subject_header}"
-                                         "`session` not specified but subject has more than one session: "
-                                         f"{', '.join(ses_list)}\n" + "In order to continue timeseries extraction, the "
-                                         "specific session to extract must be specified.")
+            if msg: warnings.warn(subject_header + msg)
+            if skip: continue
 
-            if not nifti_files:
-                warnings.warn(f"{subject_header}"
-                              "Processing skipped: No NifTI files were found or all NifTI files were excluded.")
-                continue
+            # Ensure only a single session is present if session is None
+            if not self._task_info["session"]: self._check_sess(files["niftis"], subject_header)
 
-            if not mask_files:
-                warnings.warn(f"{subject_header}"
-                              "Missing mask file but timeseries extraction will continue.")
-
-            if self._signal_clean_info["use_confounds"]:
-                if not confound_files:
-                    warnings.warn(f"{subject_header}"
-                                  "Processing skipped: No confound files available when `use_confounds` is requested.")
-                    continue
-                if not confound_metadata_files and self._signal_clean_info["n_acompcor_separate"]:
-                    warnings.warn(f"{subject_header}"
-                                  "Processing skipped: No confound metadata file found, which is needed to locate the "
-                                  "first n components of the white-matter and cerebrospinal fluid masks separately.")
-                    continue
-
-            if self._task_info["condition"] and not event_files:
-                warnings.warn(f"{subject_header}"
-                              "Processing skipped: No event files available when `condition` is specified.")
-                continue
+            # Generate a list of runs to iterate through based on runs in niftis
+            check_runs = self._gen_runs(files["niftis"])
 
             if check_runs:
-                run_list = []
-                # Check if at least one run has all files present
-                for run in check_runs:
-                    curr_list = []
-                    # Assess is any of these returns True
-                    curr_list.append(any([run in file for file in nifti_files]))
-                    if self._task_info["condition"]: curr_list.append(any([run in file for file in event_files]))
-                    if self._signal_clean_info["use_confounds"]:
-                        curr_list.append(any([run in file for file in confound_files]))
-                        if self._signal_clean_info["n_acompcor_separate"]:
-                            curr_list.append(any([run in file for file in confound_metadata_files]))
-                    if mask_files: curr_list.append(any([run in file for file in mask_files]))
-                    # Append runs that contain all needed files
-                    if all(curr_list): run_list.append(run)
+                run_list = self._intersect_runs(check_runs, files)
 
                 # Skip subject if no run has all needed files present
-                if len(run_list) != len(check_runs) or not run_list:
-                    if not run_list:
-                        warnings.warn(f"{subject_header}"
-                                        "Processing skipped: None of the necessary files (i.e NifTI, masks, confound "
-                                        "tsv files, confound json files, event files) are from the same run.")
-                        continue
-                    else:
-                        warnings.warn(f"{subject_header}"
-                                      f"Only the following runs available: {', '.join(run_list)}.")
+                if not run_list:
+                    warnings.warn(f"{subject_header}"
+                                  "Processing skipped: None of the necessary files (i.e NifTIs, masks, confound "
+                                  "tsv files, confound json files, event files) are from the same run.")
+                    continue
+
+                if len(run_list) != len(check_runs):
+                    warnings.warn(f"{subject_header}"
+                                  "Only the following runs available contain all required files: "
+                                  f"{', '.join(run_list)}.")
             else:
             # Allows for nifti files that do not have the run- description
                 run_list = [None]
@@ -636,34 +578,148 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             self._subject_ids.append(subj_id)
 
             # Get repetition time for the subject
-            try:
-                if self._task_info["tr"]:
-                    tr = self._task_info["tr"]
-                else:
-                    with open(bold_metadata_files[0], "r") as json_file:
-                        tr = json.load(json_file)["RepetitionTime"]
-            except (IndexError, KeyError, json.JSONDecodeError) as e:
-                base_msg = "`tr` not specified and could not be extracted since BOLD metadata file could not be opened"
-                base_msg += " due to " + (f"no BOLD metadata files for [TASK: {self._task_info['task']}]"
-                                          if str(type(e).__name__) == "IndexError" else f"{type(e).__name__} - {str(e)}")
-                if self._task_info["condition"]:
-                    raise ValueError(f"{subject_header}"
-                                     f"{base_msg}" + " The `tr` must be given when `condition` is specified.")
-                elif any([self.signal_clean_info["high_pass"], self.signal_clean_info["low_pass"]]):
-                    raise ValueError(f"{subject_header}"
-                                     f"{base_msg}" + " The `tr` must be given when `high_pass` or `low_pass` is specified.")
-                else:
-                    warnings.warn(f"{subject_header}"
-                                  f"{base_msg}" + " `tr` has been set to None and extraction will continue.")
-                    tr=None
+            tr = self._get_tr(files["bold_meta"], subject_header)
 
             # Store subject specific information
-            self._subject_info[subj_id] = {"nifti_files": nifti_files,
-                                           "event_files": event_files,
-                                           "confound_files": confound_files,
-                                           "confound_metadata_files": confound_metadata_files,
-                                           "mask_files": mask_files,
-                                           "tr": tr, "run_list": run_list}
+            self._subject_info[subj_id] = {"nifti_files": files["niftis"],
+                                           "mask_files": files["masks"],
+                                           "event_files": files["events"],
+                                           "confound_files": files["confounds"],
+                                           "confound_metadata_files": files["confounds_meta"],
+                                           "tr": tr,
+                                           "run_list": run_list}
+
+    def _get_files(self, layout, extension, subj_id, scope="derivatives", suffix=None, desc=None,
+                   event=False, space="attr"):
+        query_dict = {"scope": scope, "return_type": "file", "task": self._task_info["task"], "extension": extension,
+                      "subject": subj_id}
+        if desc: query_dict.update({"desc": desc})
+        if suffix: query_dict.update({"suffix": suffix})
+        if self._task_info["session"]: query_dict.update({"session": self._task_info["session"]})
+        if not event and not desc: query_dict.update({"space": self._space if space == "attr" else space})
+
+        return sorted(layout.get(**query_dict))
+
+    def _build_dict(self, base):
+        files = {}
+
+        files["niftis"] = self._get_files(**base, suffix="bold", extension="nii.gz")
+        files["masks"] = self._get_files(**base, suffix="mask", extension="nii.gz")
+        files["bold_meta"] = self._get_files(**base, suffix="bold", extension="json")
+        if not files["bold_meta"]:
+            files["bold_meta"] = self._get_files(**base, scope="raw", suffix="bold", extension="json", space=None)
+        if self._task_info["condition"]:
+            files["events"] = self._get_files(**base, scope="raw", suffix="events", extension="tsv", event=True)
+        else:
+            files["events"] = []
+        files["confounds"] = self._get_files(**base, desc="confounds", extension="tsv")
+        files["confounds_meta"] = self._get_files(**base, extension="json", desc="confounds")
+
+        return files
+
+    @staticmethod
+    def _exclude(niftis, exclude_niftis):
+        return [nifti for nifti in niftis if os.path.basename(nifti) not in exclude_niftis]
+    
+    def _header(self, subj_id):
+        # Base subject message
+        sub_message = f'[SUBJECT: {subj_id} | SESSION: {self._task_info["session"]} | TASK: {self.task_info["task"]}]'
+        underline = '-'*len(sub_message)
+        subject_header = f"{sub_message}\n{underline}\n"
+
+        return subject_header
+
+    def _check_files(self, files):
+        skip, msg = None, None
+
+        if not files["niftis"]:
+                skip, msg = True, "Processing skipped: No NifTI files were found or all NifTI files were excluded."
+
+        if not files["masks"]:
+            skip, msg = False, "Missing mask file but timeseries extraction will continue."
+
+        if self._signal_clean_info["use_confounds"]:
+            if not files["confounds"]:
+                skip, msg = True, "Processing skipped: No confound files available when `use_confounds` is requested."
+
+            if not files["confounds_meta"] and self._signal_clean_info["n_acompcor_separate"]:
+                skip = True
+                msg = ("Processing skipped: No confound metadata file found, which is needed to locate the "
+                       "first n components of the white-matter and cerebrospinal fluid masks separately.")
+
+            if self._task_info["condition"] and not files["events"]:
+                skip, msg = True, "Processing skipped: No event files available when `condition` is specified."
+
+        return skip, msg
+
+    def _check_sess(self, niftis, subject_header):
+        ses_list = []
+        for nifti in niftis:
+            if "ses-" in os.path.basename(nifti):
+                ses_list.append(re.search("ses-(\\S+?)[-_]", os.path.basename(nifti))[0][:-1] )
+
+        ses_list = set(ses_list)
+
+        if len(ses_list) > 1:
+            raise ValueError(f"{subject_header}"
+                            "`session` not specified but subject has more than one session: "
+                            f"{', '.join(ses_list)}\n" + "In order to continue timeseries extraction, the "
+                            "specific session to extract must be specified using `session`.")
+    
+    def _gen_runs(self, niftis):
+        check_runs = []
+
+        for nifti in niftis:
+            if self._task_info["runs"]:
+                check_runs.extend([f"run-{run}" for run in self._task_info["runs"]])
+            else:
+                if "run-" in os.path.basename(niftis[0]):
+                    check_runs.append(re.search("run-(\\S+?)[-_]", os.path.basename(nifti))[0][:-1])
+        
+        return check_runs
+
+    def _intersect_runs(self, check_runs, files):
+        run_list = []
+
+        # Check if at least one run has all files present
+        for run in check_runs:
+            curr_list = []
+            # Assess is any of these returns True
+            curr_list.append(any([run in file for file in files["niftis"]]))
+            if self._task_info["condition"]: curr_list.append(any([run in file for file in files["events"]]))
+            if self._signal_clean_info["use_confounds"]:
+                curr_list.append(any([run in file for file in files["confounds"]]))
+                if self._signal_clean_info["n_acompcor_separate"]:
+                    curr_list.append(any([run in file for file in files["confounds_meta"]]))
+            if files["masks"]: curr_list.append(any([run in file for file in files["masks"]]))
+            # Append runs that contain all needed files
+            if all(curr_list): run_list.append(run)
+        
+        return run_list
+            
+    def _get_tr(self, bold_meta, subject_header):
+        try:
+            if self._task_info["tr"]:
+                tr = self._task_info["tr"]
+            else:
+                with open(bold_meta[0], "r") as json_file:
+                    tr = json.load(json_file)["RepetitionTime"]
+        except (IndexError, KeyError, json.JSONDecodeError) as e:
+            base_msg = "`tr` not specified and could not be extracted since BOLD metadata file could not be opened"
+            base_msg += " due to " + (f"no BOLD metadata files for [TASK: {self._task_info['task']}]"
+                                        if str(type(e).__name__) == "IndexError" else f"{type(e).__name__} - {str(e)}")
+            if self._task_info["condition"]:
+                raise ValueError(f"{subject_header}"
+                                    f"{base_msg}" + " The `tr` must be given when `condition` is specified.")
+            elif any([self.signal_clean_info["masker_init"]["high_pass"], self.signal_clean_info["masker_init"]["low_pass"]]):
+                raise ValueError(f"{subject_header}"
+                                 f"{base_msg}" + " The `tr` must be given when `high_pass` or `low_pass` is specified.")
+            else:
+                warnings.warn(f"{subject_header}"
+                              f"{base_msg}" + " `tr` has been set to None and extraction will continue.")
+                tr=None
+        
+        return tr
 
     def timeseries_to_pickle(self, output_dir: Union[str, os.PathLike], file_name: Optional[str]=None) -> None:
         """
