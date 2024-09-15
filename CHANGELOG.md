@@ -42,6 +42,14 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.16.3] - 2024-09-14
+- Internal refactoring was completed, primarily in `CAPs.caps2plot`, `TimeseriesExtractor.get_bold`, and an
+internal function `_extract_timeseries`.
+- All existing pytest tests passed following the refactoring.
+### 🐛 Fixes
+- Minor improvements were made to error messages for better clarity.
+- Annotations can now be specified for `CAP.caps2plot` regional heatmap.
+
 ## [0.16.2.post1] - 2024-08-23
 ### 💻 Metadata
 - Fix truncated table in README, which did not show all values correctly due to missing an additional row header.
