@@ -12,8 +12,10 @@ timeseries extraction.
     subject_timeseries = {str(x) : {f"run-{y}": np.random.rand(10,100) for y in range(1,4)} for x in range(1,6)}
 
     # Getting mean and standard deviation for run 1 and 2 of subject 1
-    mean_vec_1, std_vec_1 = subject_timeseries["1"]["run-1"].mean(axis=0), subject_timeseries["1"]["run-1"].std(ddof=1, axis=0) 
-    mean_vec_2, std_vec_2 = subject_timeseries["1"]["run-2"].mean(axis=0), subject_timeseries["1"]["run-2"].std(ddof=1, axis=0)
+    mean_vec_1 = subject_timeseries["1"]["run-1"].mean(axis=0)
+    std_vec_1 = subject_timeseries["1"]["run-1"].std(ddof=1, axis=0) 
+    mean_vec_2 = subject_timeseries["1"]["run-2"].mean(axis=0)
+    std_vec_2 = subject_timeseries["1"]["run-2"].std(ddof=1, axis=0)
 
     # Avoid numerical stability issues
     std_vec_1[std_vec_1 < np.finfo(np.float64).eps] = 1.0

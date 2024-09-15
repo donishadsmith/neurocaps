@@ -10,16 +10,17 @@ which can then be converted to matrix form and visualized with ``transition_matr
 
     subject_timeseries = {str(x) : {f"run-{y}": np.random.rand(10,100) for y in range(1,4)} for x in range(1,11)}
 
-    cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, 
-                      cluster_selection_method="davies_bouldin",
-                      standardize=True, n_clusters=list(range(2,6)))
+    cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
+                          cluster_selection_method="davies_bouldin",
+                          standardize=True,
+                          n_clusters=list(range(2,6)))
 
     outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, 
-                                            return_df=True,
-                                            output_dir=output_dir,
-                                            metrics=["transition_probability"],
-                                            continuous_runs=True,
-                                            prefix_file_name="All_Subjects_CAPs_metrics")
+                                             return_df=True,
+                                             metrics=["transition_probability"],
+                                             continuous_runs=True,
+                                             output_dir=output_dir,
+                                             prefix_file_name="All_Subjects_CAPs_metrics")
 
     print(outputs["transition_probability"]["All Subjects"])
 
@@ -28,10 +29,12 @@ which can then be converted to matrix form and visualized with ``transition_matr
    :header-rows: 1                                   
 
 .. code-block:: python
+    kwargs = {"cmap": "viridis", "fmt": ".3f", "annot": True}
 
     trans_outputs = transition_matrix(trans_dict=outputs["transition_probability"],
-                                      show_figs=True, return_df=True, fmt=".3f",
-                                      cmap = "viridis", annot=True)
+                                      show_figs=True,
+                                      return_df=True,
+                                      **kwargs)
 
 .. image:: embed/All_Subjects_CAPs_transition_probability_matrix.png
     :width: 600

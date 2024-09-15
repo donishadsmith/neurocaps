@@ -48,6 +48,7 @@ autodoc_default_options = {'members': True, 'inherited-members': True}
 numpydoc_show_class_members = False
 autoclass_content = "both"
 autodoc_member_order = 'bysource'
+autodoc_typehints = 'none'
 
 napoleon_google_docstring = False
 napoleon_numpy_docstring = True

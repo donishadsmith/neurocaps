@@ -22,15 +22,23 @@ Extracting Timeseries
 
     parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
 
-    extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
-                                    use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01,
+    extractor = TimeseriesExtractor(parcel_approach=parcel_approach,
+                                    standardize="zscore_sample",
+                                    use_confounds=True,
+                                    detrend=True,
+                                    low_pass=0.15,
+                                    high_pass=0.01,
                                     confound_names=confounds)
 
     bids_dir = os.path.join(dir, "ds000031_R1.0.4_ses001-022/ds000031_R1.0.4")
     
     # Can use the `n_cores` parameter for multiprocessing
     pipeline_name = "fmriprep_1.0.0/fmriprep"
-    extractor.get_bold(bids_dir=bids_dir, session='002', task="rest", pipeline_name=pipeline_name, tr=1.2)
+    extractor.get_bold(bids_dir=bids_dir,
+                       session='002',
+                       task="rest",
+                       pipeline_name=pipeline_name,
+                       tr=1.2)
 
 .. rst-class:: sphx-glr-script-out
 
@@ -75,7 +83,8 @@ Saving Timeseries
 -----------------
 .. code-block:: python
 
-    extractor.timeseries_to_pickle(output_dir="path/to/dir", filename="task-positive_Schaefer.pkl")
+    extractor.timeseries_to_pickle(output_dir="path/to/dir",
+                                   file_name="task-positive_Schaefer.pkl")
 
 Visualizing Timeseries
 ----------------------
@@ -90,9 +99,13 @@ Visualizing Timeseries
 .. code-block:: python
 
     # Visualizing a several nodes
-    extractor.visualize_bold(subj_id="1",run=1, roi_indx=[0,1,2])
+    extractor.visualize_bold(subj_id="1",
+                             run=1,
+                             roi_indx=[0,1,2])
     # or
-    extractor.visualize_bold(subj_id="1",run=1, roi_indx=["LH_Vis_1","LH_Vis_2","LH_Vis_3"])
+    extractor.visualize_bold(subj_id="1",
+                             run=1,
+                             roi_indx=["LH_Vis_1","LH_Vis_2","LH_Vis_3"])
 
 .. image:: embed/visualize_timeseries_nodes.png
     :width: 1000

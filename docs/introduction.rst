@@ -102,10 +102,10 @@ The provided example demonstrates setting up a custom parcellation containing no
 Main features for ``TimeseriesExtractor`` includes:
 ---------------------------------------------------
 
-- **Timeseries Extraction:** Extract timeseries for resting-state or task data, creating a nested dictionary containing the subject ID, run number, and associated timeseries. This serves as input for the ``get_caps()`` method in the ``CAP`` class.
+- **Timeseries Extraction:** Extract timeseries for resting-state or task data, creating a nested dictionary containing the subject ID, run number, and associated timeseries. This serves as input for the ``get_caps`` method in the ``CAP`` class.
 - **Saving Timeseries:** Save the nested dictionary containing timeseries as a pickle file.
 - **Visualization:** Visualize the timeseries of a Schaefer, AAL, or Custom parcellation node or region/network in a specific subject's run, with options to save the plots.
-- **Parallel Processing:** Use parallel processing by specifying the number of CPU cores in the ``n_cores`` parameter in the ``get_bold()`` method. Testing on an HPC using a loop with ``TimeseriesExtractor.get_bold()`` to extract session 1 and 2 
+- **Parallel Processing:** Use parallel processing by specifying the number of CPU cores in the ``n_cores`` parameter in the ``get_bold`` method. Testing on an HPC using a loop with ``TimeseriesExtractor.get_bold`` to extract session 1 and 2 
   BOLD timeseries from 105 subjects from resting-state data (single run containing 360 volumes) and two task datasets (three runs containing 200 volumes each and two runs containing 200 volumes) reduced processing time from 5 hours 48 minutes to 1 hour 26 minutes 
   (using 10 cores). *Note:* If you are using an HPC, remember to allocate the appropriate amount of CPU cores with your workload manager. For instance in slurm use ``#SBATCH --cpus-per-task=10`` if you intend to use 10 cores.
 
@@ -113,20 +113,20 @@ Main features for ``CAP`` includes:
 -----------------------------------
 
 - **Optimal Cluster Size Identification:** Perform the Davies Bouldin, Silhouette, Elbow, or Variance Ratio criterions to identify the optimal cluster size, saving the optimal model as an attribute.
-- **Parallel Processing:** Use parallel processing, when using the Davies Bouldin, Silhouette, Elbow, or Variance Ratio criterions by specifying the number of CPU cores in the ``n_cores`` parameter in the ``get_caps()`` method. 
+- **Parallel Processing:** Use parallel processing, when using the Davies Bouldin, Silhouette, Elbow, or Variance Ratio criterions by specifying the number of CPU cores in the ``n_cores`` parameter in the ``get_caps`` method. 
   *Note:* If you are using an HPC, remember to allocate the appropriate amount of CPU cores with your workload manager. For instance in slurm use ``#SBATCH --cpus-per-task=10`` if you intend to use 10 cores.
 - **Grouping:** Perform CAPs analysis for entire sample or groups of subject IDs (using the ``groups`` parameter when initializing the ``CAP`` class). K-means clustering, all cluster selection methods (Davies Bouldin, Silhouette, Elbow, or Variance Ratio criterions), and plotting are done for each group when specified.
 - **CAP Visualization:** Visualize the CAPs as outer products or heatmaps, with options to use subplots to reduce the number of individual plots, as well as save. 
-  Refer to the `documentation <https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2plot>`_ for the ``caps2plot()`` method in the ``CAP`` class for available ``**kwargs`` arguments and parameters to modify plots.
+  Refer to the `documentation <https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2plot>`_ for the ``caps2plot`` method in the ``CAP`` class for available ``**kwargs`` arguments and parameters to modify plots.
 - **Save CAPs as NifTIs:** Convert the atlas used for parcellation to a stat map and saves them (``caps2niftis``). 
 - **Surface Plot Visualization:** Convert the atlas used for parcellation to a stat map projected onto a surface plot with options to customize and save plots. 
-  Refer to the `documentation <https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2surf>`_ for the ``caps2surf()`` method in the ``CAP`` class for available ``**kwargs`` arguments and parameters to modify plots. 
+  Refer to the `documentation <https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2surf>`_ for the ``caps2surf`` method in the ``CAP`` class for available ``**kwargs`` arguments and parameters to modify plots. 
   Also includes the option to save the NifTIs. There is also another a parameter in ``caps2surf``, ``fslr_giftis_dict``, which can be used if the CAPs NifTI files were converted to GifTI files using a tool such as Connectome Workbench, which may work better for 
   converting your atlas to fslr space. This parameter allows plotting without re-running the analysis and only initializing the ``CAP`` class and using the ``caps2surf`` method is needed.
 - **Correlation Matrix Creation:** Create a correlation matrix from CAPs with options to customize and save plots. Additionally can produce dataframes where each element contains its associated uncorrected p-value in parentheses that is accompanied by an asterisk using the following significance
   code ``{"<0.05": "*", "<0.01": "**", "<0.001": "***"}``. Refer to the `documentation <https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2corr>`_
-  for the ``caps2corr()`` method in the ``CAP`` class for available ``**kwargs`` arguments and parameters to modify plots.
-- **CAP Metrics Calculation:** Calculate CAP metrics (``calculate_metrics()``) as described in `Liu et al., 2018 <https://doi.org/10.1016/j.neuroimage.2018.01.041>`_ [1]_ and `Yang et al., 2021 <https://doi.org/10.1016/j.neuroimage.2021.118193>`_ [2]_:
+  for the ``caps2corr`` method in the ``CAP`` class for available ``**kwargs`` arguments and parameters to modify plots.
+- **CAP Metrics Calculation:** Calculate CAP metrics (``calculate_metrics``) as described in `Liu et al., 2018 <https://doi.org/10.1016/j.neuroimage.2018.01.041>`_ [1]_ and `Yang et al., 2021 <https://doi.org/10.1016/j.neuroimage.2021.118193>`_ [2]_:
     - *Temporal Fraction:* The proportion of total volumes spent in a single CAP over all volumes in a run.
       ::
 

@@ -42,6 +42,10 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.16.3.post0] - 2024-09-14
+### 💻 Metadata
+- Uploading fixed readme to Pypi
+
 ## [0.16.3] - 2024-09-14
 - Internal refactoring was completed, primarily in `CAPs.caps2plot`, `TimeseriesExtractor.get_bold`, and an
 internal function `_extract_timeseries`.
@@ -158,7 +162,7 @@ on PyPi for the installation instructions.
 ### ♻ Changed
 - For `knn_dict`, cKdtree is replaced with Kdtree and scipy is restricted to 1.6.0 or later since that is the version
 were Kdtree used the C implementation.
-- `TimeseriesExtractor.get_bold()` can now be used on Windows, pybids still does not install by default to prevent
+- `TimeseriesExtractor.get_bold` can now be used on Windows, pybids still does not install by default to prevent
 long path error but `pip install neurocaps[windows]` can be used for installation.
 - All instances of textwrap replaced with normal strings, printed warnings or messages will be longer in length now
 and occupies less vertical screen space.
@@ -190,6 +194,7 @@ when `verbose=True`.
 Fixed a reference before assignment issue in `merge_dicts`. This occurred when only the merged dictionary was requested
 to be saved without saving the reduced dictionaries, and no user-provided file_names were given. In this scenario,
 the default name for the merged dictionary is now correctly used.
+
 ## [0.15.1] - 2024-07-23
 ### 🚀 New/Added
 - In `TimeseriesExtractor`, "min" and "max" sub-keys can now be used when `dummy_scans` is a dictionary and the
@@ -204,7 +209,7 @@ value.
 being returned.
 
 ### ♻ Changed
-- Some parameter names, inputs, and outputs for non-class functions - `merge_dicts`, `change_dtypes`, and `standardize`
+- Some parameter names, inputs, and outputs for non-class functions - `merge_dicts`, `change_dtype`, and `standardize`
 have changed to improve consistency across these functions.
     - `merge_dicts`
         - `return_combined_dict` has been changed to `return_merged_dict`.
@@ -214,7 +219,7 @@ have changed to improve consistency across these functions.
         - `subject_timeseries` has been changed to `subject_timeseries_list`, the same as in `merge_dicts`.
         - `file_name` has been changed to `file_names`.
         - `return_dict` has been changed to `return_dicts`.
-- The returned dictionary for `merge_dicts`, `change_dtypes`, and `standardize` is only
+- The returned dictionary for `merge_dicts`, `change_dtype`, and `standardize` is only
 `dict[str, dict[str, dict[str, np.ndarray]]]` now.
 
 - In `CAP.calculate_metrics`, the metrics calculations, except for "temporal_fraction" have been refactored to remove an
@@ -417,14 +422,14 @@ This is done in the event this was that are greater than the timeseries shape ar
 ## [0.14.4] - 2024-07-15
 ### ♻ Changed
 - Minor update that prints the optimal cluster size for each group when using `cluster_selection_method` in
-`CAP.get_caps()`. Just for information purposes.
+`CAP.get_caps`. Just for information purposes.
 - When error raised due to kneed not being able to detect the elbow, the group it failed for is now stated.
 - Previously version 0.14.3.post1
 
 ## [0.14.3.post1] - YANKED
 ### ♻ Changed
 - Minor update that prints the optimal cluster size for each group when using `cluster_selection_method` in
-`CAP.get_caps()`. Just for information purposes.
+`CAP.get_caps`. Just for information purposes.
 - When error raised due to kneed not being able to detect the elbow, the group it failed for is now stated.
 - Yanked due to not being a metadata update, this should be a patch update to denote a behavioral change,
 this is now version 0.14.4 to adhere a bit better to versioning practices.
@@ -467,7 +472,7 @@ timeseries or errors. In the warning the condition will be named in the event of
 
 ## [0.14.1] - 2024-07-12
 ### ♻ Changed
-- In `TimeseriesExtractor()`, `fd_threshold` can now be a dictionary, which includes a sub-key called "outlier_percentage",
+- In `TimeseriesExtractor`, `fd_threshold` can now be a dictionary, which includes a sub-key called "outlier_percentage",
 a float value between 0 and 1 representing a percentage. Runs where the proportion of volumes exceeding the "threshold"
 is higher than this percentage are removed. If `condition` is specified in `self.get_bold`, only the runs where the
 proportion of volumes exceeds this value for the specific condition of interest are removed. A warning is issued
@@ -505,7 +510,7 @@ when k is greater than 1. Current method is more appropriate for atlases, which 
 
 ## [0.13.4] - 2024-07-05
 ### 🐛 Fixes
-- For `CAP.caps2surf()` and `CAP.caps2niftis()`, fwhm comes after the knn method, if requested.
+- For `CAP.caps2surf` and `CAP.caps2niftis`, fwhm comes after the knn method, if requested.
 
 ## [0.13.3] - 2024-07-05
 ### 🐛 Fixes
@@ -516,18 +521,18 @@ when k is greater than 1. Current method is more appropriate for atlases, which 
 ## [0.13.2] - 2024-07-05
 ### 🐛 Fixes
 - Certain custom atlases may not project well from volume to surface space. A new parameter, `knn_dict` has been added to
-`CAP.caps2surf()` and `CAP.caps2niftis()` to apply k-nearest neighbors (knn) interpolation while leveraging the
+`CAP.caps2surf()` and `CAP.caps2niftis` to apply k-nearest neighbors (knn) interpolation while leveraging the
 Schaefer atlas, which projects well from volumetric to surface space.
-- No longer need to add `parcel_approach` when using `CAP.caps2surf()` with `fslr_giftis_dict`.
+- No longer need to add `parcel_approach` when using `CAP.caps2surf` with `fslr_giftis_dict`.
 
 ## [0.13.1] - 2024-06-30
 ### ♻ Changed
-- For `CAP.caps2radar()`, the `scattersize` kwarg can be used to control the size of the scatter/markers regardless
+- For `CAP.caps2radar`, the `scattersize` kwarg can be used to control the size of the scatter/markers regardless
 if `use_scatterpolar` is used.
 
 ## [0.13.0.post1] - 2024-06-28
 ### 💻 Metadata
-- Clarifies that the p-values obtained in  `CAP.caps2corr()` are uncorrected.
+- Clarifies that the p-values obtained in  `CAP.caps2corr` are uncorrected.
 
 ## [0.13.0] - 2024-06-28
 ### 🚀 New/Added
@@ -545,7 +550,7 @@ for < 0.001). These dataframes can also be saves as csv files.
 Always ensures it is converted to list if integer or string.
 - Clarifies warning if tr not specified in `TimeseriesExtractor` by stating the `tr` is set to `None` and that extraction
 will continue.
-- For `CAP.get_caps()`, if runs is `None`, the `self.runs` property is just None instead of being set to "all". Only affects what
+- For `CAP.get_caps`, if runs is `None`, the `self.runs` property is just None instead of being set to "all". Only affects what
 is returned by `self.runs` when nothing is specified.
 
 ## [0.12.1.post2] - 2024-06-27
@@ -605,7 +610,7 @@ This doesn't affect functionality but it may be better to respect the original u
 
 ## [0.11.1] - 2024-06-23
 ### 🐛 Fixes
-- Fix for python 3.12 when using `CAP.caps2surf()`.
+- Fix for python 3.12 when using `CAP.caps2surf`.
     - Changes in pathlib.py in Python 3.12 results in an error message format change. The error message now includes
       quotes (e.g., "not 'Nifti1Image'") instead of the previous format without quotes ("not Nifti1Image"). This issue
       arises when using ``neuromaps.transforms.mni_to_fslr`` within CAP.caps2surf() as neuromaps captures the error as a
@@ -642,7 +647,7 @@ new line.
 
 ## [0.11.0.post2] - 2024-06-22
 ### 💻 Metadata
-- Very minor explanation added to `CAP.calculate_metrics()` regarding using individual dictionaries from merged
+- Very minor explanation added to `CAP.calculate_metrics` regarding using individual dictionaries from merged
 dictionaries as inputs.
 
 ## [0.11.0.post1] - 2024-06-22
@@ -659,7 +664,7 @@ memory usage, especially if doing the CAPs analysis on a local machine.
 - Adds a new version attribute so you can check the current version using `neurocaps.__version__`
 
 ### ♻ Changed
-- Adds back python 3.12 classifier. The `CAP.caps2surf()` function may still not work well but if its detected that
+- Adds back python 3.12 classifier. The `CAP.caps2surf` function may still not work well but if its detected that
 neurocaps is being installed using python 3.12, setuptools is installed to prevent the pkgresources error.
 
 ### 🐛 Fixes
@@ -690,8 +695,8 @@ not used to generate the k-means model.
 - Can now plot silhouette score and have some control over the `x-axis` of elbow and silhouette plot with the "step" `**kwarg`.
 
 ### ♻ Changed
-- Default for `CAP.caps2plots()` from "outer product" to "outer_product".
-- Default for `CAP.calculate_metrics()` from "temporal fraction" to "temporal_fraction" and "transition frequency"
+- Default for `CAP.caps2plots` from "outer product" to "outer_product".
+- Default for `CAP.calculate_metrics` from "temporal fraction" to "temporal_fraction" and "transition frequency"
 to "transition_frequency".
 - `n_clusters` and `cluster_selection_method` parameters moved to  `CAP.get_caps` instead of being parameters in
 `CAP`.
@@ -700,7 +705,7 @@ to "transition_frequency".
 - Restriction that numpy must be less than version 2 since this breaks brainspace vtk, which is needed for plotting to
 surface space. - **new to [0.10.0]**
 - Adds nbformat as dependency for plotly. - **new to [0.10.0]**
-- In `TimeseriesExtractor.get_bold()`, several checks are done to ensure that subjects have the necessary files for
+- In `TimeseriesExtractor.get_bold`, several checks are done to ensure that subjects have the necessary files for
 extraction. Subjects that have zero nifti, confound files (if confounds requested), event files (if requested), etc
 are automatically eliminated from being added to the list for timeseries extraction. A final check assesses, the run
 ID of the files to see if the subject has at least one run with all necessary files to avoid having subjects with all
@@ -714,7 +719,7 @@ changes.
     - These fixes includes:
         - Removal of the `epsilon` parameter in `self.get_caps` and replacement with `std[std < np.finfo(np.float64).eps] = 1.0`
           to prevent divide by 0 issues and numerical instability issues.
-        - Deep copy `subject_timeseries` in `standardize()` and `parcel_approach`. In their functions, in-place operations
+        - Deep copy `subject_timeseries` in `standardize` and `parcel_approach`. In their functions, in-place operations
         are performed which could unintentionally change the external versions of these parameters
 - Added try-except block in `TimeseriesExtractor.get_bold` when attempting to obtain the `tr`, to issue a warning
 when `tr` isn't specified and can't be extracted from BOLD metadata. Extraction will be continued.
@@ -728,12 +733,12 @@ python 3.12, you may need to use `pip install setuptools` if you receive an erro
 "ModuleNotFoundError: No module named 'pkg_resources'". - new to [0.10.0]
 - Ensure user knows that all image files are outputted as pngs.
 - Clarifications of some doc strings, stating that Bessel's correction is used for standardizing and that for
-`CAP.calculate_metrics()` can accept subject timeseries not used for generating the k-means model.
+`CAP.calculate_metrics` can accept subject timeseries not used for generating the k-means model.
 - Corrects docstring for `standardize` from parameter being `subject_timeseries_list` to `subject_timeseries`.
 
 ## [0.9.9.post3] - 2024-06-13
 ### 🐛 Fixes
-- Noted an issue with file naming in `CAP.calculate_metrics()` that causes the suffix of the file name to append
+- Noted an issue with file naming in `CAP.calculate_metrics` that causes the suffix of the file name to append
 to subsequent file names when requesting multiple metrics. While it doesn't effect the content inside the file it is an
 irritating issue. For instance "-temporal_fraction.csv" became "-counts-temporal_fraction.csv" if user requested "counts"
 before "temporal fraction".
@@ -778,21 +783,21 @@ argument to False.
 
 ## [0.9.8.post1] - 2024-06-08
 ### 🐛 Fixes
-- Uses plotly.offline to open plots generated by `CAP.caps2radar()` in default browser when Python is non-interactive
+- Uses plotly.offline to open plots generated by `CAP.caps2radar` in default browser when Python is non-interactive
 to prevent hanging issue.
 
 ## [0.9.8] - 2024-06-07
 ### ♻ Changed
-- Changed `vmax` and `vmin` kwargs in `CAP.caps2surf()` to `color_range`
-- In `CAP.caps2surf()` the function no longer rounds max and min values and restricts range to -1 and 1 if the rounded
+- Changed `vmax` and `vmin` kwargs in `CAP.caps2surf` to `color_range`
+- In `CAP.caps2surf` the function no longer rounds max and min values and restricts range to -1 and 1 if the rounded
 value is 0.
 It just uses the max and min values from the data.
 
 ## [0.9.8.rc1] - 2024-06-07
 🚀 New/Added
-- New method in `CAP` class to plot radar plot of cosine similarity (`CAP.caps2radar()`).
-- New method in `CAP` class to save CAPs as niftis without plotting (`CAP.caps2niftis()`).
-- Added new parameter to `CAP.caps2surf()`, `fslr_giftis_dict`, to allow CAPs statistical maps that were
+- New method in `CAP` class to plot radar plot of cosine similarity (`CAP.caps2radar`).
+- New method in `CAP` class to save CAPs as niftis without plotting (`CAP.caps2niftis`).
+- Added new parameter to `CAP.caps2surf`, `fslr_giftis_dict`, to allow CAPs statistical maps that were
 converted to giftis externally, using tools such as Connectome Workbench, to be plotted. This parameter only requires
 the `CAP` class to be initialized.
 
@@ -806,7 +811,7 @@ to represent their original index in the provided list.
 
 ## [0.9.7.post1] - 2024-06-03
 ### 🐛 Fixes
-- Allows user to change the maximum and minimum value displayed for `CAP.caps2plot()` and `CAP.caps2surf()`
+- Allows user to change the maximum and minimum value displayed for `CAP.caps2plot` and `CAP.caps2surf`
 
 ## [0.9.7] - 2024-06-02
 🚀 New/Added
@@ -822,7 +827,7 @@ Recommend this version if intending to use parallel processing since it uses `jo
 efficient than multiprocessing.
 
 🚀 New/Added
-- Added `n_cores` parameter to `CAP.get_caps()` for multiprocessing when using the silhouette or elbow method.
+- Added `n_cores` parameter to `CAP.get_caps` for multiprocessing when using the silhouette or elbow method.
 - More restrictions to the minimum versions allowed for dependencies.
 
 ### ♻ Changed
@@ -830,14 +835,14 @@ efficient than multiprocessing.
 
 ## [0.9.5.post1] - 2024-05-30
 🚀 New/Added
-- Added the `linecolor` **kwargs for `CAP.caps2corr()` and `CAP.caps2plot()` that should have been deployed in 0.9.5.
+- Added the `linecolor` **kwargs for `CAP.caps2corr` and `CAP.caps2plot` that should have been deployed in 0.9.5.
 
 ## [0.9.5] - 2024-05-30
 
 ### 🚀 New/Added
-- Added ability to create custom colormaps with `CAP.caps2surf()` by simply using the cmap parameter with matplotlibs
+- Added ability to create custom colormaps with `CAP.caps2surf` by simply using the cmap parameter with matplotlibs
 `LinearSegmentedColormap` with the `cmap` kwarg. An example of its use can be seen in demo.ipynb and the in the README.
-- Added `surface` **kwargs to `CAP.caps2surf()` to use "inflated" or "veryinflated" for the surface plots.
+- Added `surface` **kwargs to `CAP.caps2surf` to use "inflated" or "veryinflated" for the surface plots.
 
 ## [0.9.4.post1] - 2024-05-28
 
@@ -854,7 +859,7 @@ efficient than multiprocessing.
 is True but no `confound_names` are specified. The new defaults are listed below. The previous default included
 nonlinear motion parameters.
 - Use default of "run-0" instead of "run-1" for the subkey in the `TimeseriesExtractor.subject_timeseries` for files
-processed with `TimeseriesExtractor.get_bold()` that do not have a run ID due to only being a single run in the dataset.
+processed with `TimeseriesExtractor.get_bold` that do not have a run ID due to only being a single run in the dataset.
 
 ```python
 if high_pass:
@@ -877,22 +882,22 @@ else:
 - Supports nilearns versions 0.10.1, 0.10.2, 0.10.4, and above (does not include 0.10.3).
 
 ### ♻ Changed
-- Renamed `CAP.visualize_caps()` to `CAP.caps2plot()` for naming consistency with other methods for visualization in
+- Renamed `CAP.visualize_caps` to `CAP.caps2plot` for naming consistency with other methods for visualization in
 the `CAP` class.
 
 ## [0.9.2] - 2024-05-24
 
 ### 🚀 New/Added
-- Added ability to create correlation matrices of CAPs with `CAP.caps2corr()`.
-- Added more **kwargs to `CAP.caps2surf()`. Refer to the docstring to see optional **kwargs.
+- Added ability to create correlation matrices of CAPs with `CAP.caps2corr`.
+- Added more **kwargs to `CAP.caps2surf`. Refer to the docstring to see optional **kwargs.
 
 ### 🐛 Fixes
-- Use the `KMeans.labels_` attribute for scikit's KMeans instead of using the `KMeans.predict()` on the same dataframe
-used to generate the model. It is unecessary since `KMeans.predict()` will produce the same labels already stored in
+- Use the `KMeans.labels_` attribute for scikit's KMeans instead of using the `KMeans.predict` on the same dataframe
+used to generate the model. It is unecessary since `KMeans.predict` will produce the same labels already stored in
 `KMeans.labels_`. These labels are used for silhouette method.
 
 ### ♻ Changed
-- Minor aesthetic changes to some plots in the `CAP` class such as changing "CAPS" in the title of `CAP.caps2corr()`
+- Minor aesthetic changes to some plots in the `CAP` class such as changing "CAPS" in the title of `CAP.caps2corr`
 to "CAPs".
 
 ## [0.9.1] - 2024-05-22
@@ -901,17 +906,17 @@ to "CAPs".
 - Ability to specify resolution for Schaefer parcellation.
 - Ability to use spatial smoothing during timeseries extraction.
 - Ability to save elbow plots.
-- Add additional parameters - `fslr_density` and `method` to the `CAP.caps2surf()` method to modify interpolation
+- Add additional parameters - `fslr_density` and `method` to the `CAP.caps2surf` method to modify interpolation
 methods from MNI152 to surface space.
-- Increased number of parameters to use with scikit's `KMeans`, which is used in `CAP.get_caps()`.
+- Increased number of parameters to use with scikit's `KMeans`, which is used in `CAP.get_caps`.
 
 ### ♻ Changed
-- In, `CAP.calculate_metrics()` nans where used to signify the abscense of a CAP, this has been replaced with 0. Now
+- In, `CAP.calculate_metrics` nans where used to signify the abscense of a CAP, this has been replaced with 0. Now
 for persistence, counts, and temporal fraction, 0 signifies the absence of a CAP. For transition frequency, 0 means no
 transition between CAPs.
 
 ### 🐛 Fixes
-- Fix for AAL surface plotting for `CAP.caps2surf()`. Changed how CAPs are projected onto surface plotting by
+- Fix for AAL surface plotting for `CAP.caps2surf`. Changed how CAPs are projected onto surface plotting by
 extracting the actual sorted labels from the atlas instead of assuming the parcellation labels goes from 1 to n.
 The function still assumes that 0 is the background label; however, this fixes the issue for parcellations that don't
 go from 0 to 1 and go from 0 with the first parcellation label after zero starting at 2000 for instance.
@@ -927,16 +932,16 @@ go from 0 to 1 and go from 0 with the first parcellation label after zero starti
 - Added "Custom" as a valid keyword for `parcel_approach` in the `TimeseriesExtractor` and `CAP` classes to support
 custom parcellation with bilateral nodes (nodes that have a left and right hemisphere version). Timeseries extraction,
 CAPs extraction, and all visualization methods are available for custom parcellations.
-- Added `exclude_niftis` parameter to `TimeseriesExtractor.get_bold()` to skip over specific files during timeseries
+- Added `exclude_niftis` parameter to `TimeseriesExtractor.get_bold` to skip over specific files during timeseries
 extraction.
 - Added `fd_threshold` parameter to `TimeseriesExtractor` to scrub frames that exceed a specific threshold after
 nuisance regression is done.
 - Added options to flush print statements during timeseries extraction.
-- Added additional **kwargs for `CAP.visualize_caps()`.
+- Added additional **kwargs for `CAP.visualize_caps`.
 
 ### ♻ Changed
-- Changed `network` parameter in `TimeseriesExtractor.visualize_bold()` to `region`.
-- Changed "networks" option in `visual_scope` parameter in `CAP.visualize_caps()` to "regions".
+- Changed `network` parameter in `TimeseriesExtractor.visualize_bold` to `region`.
+- Changed "networks" option in `visual_scope` parameter in `CAP.visualize_caps` to "regions".
 
 ### 🐛 Fixes
 - Fixed reference before assignment when specifying the repetition time (TR) when using the `tr`  parameter in
@@ -946,18 +951,18 @@ parameter was not specified worked.
 error. Prior, only bids datasets that included "ses-#" and "run-#" in the file names worked. Files that do not have
 "run-#" in it's name will include a default run-id in their sub-key to maintain the structure of the
 `TimeseriesExtractor.subject_timeseries` dictionary". This default id is "run-1".
-- Fixed error in `CAP.visualize_caps()` when plotting "outer products" plot without subplots.
+- Fixed error in `CAP.visualize_caps` when plotting "outer products" plot without subplots.
 
 ## [0.8.8] - 2024-03-23
 
 ### 🚀 New/Added
 - Support Windows by only allowing install of pybids if system is not Windows. On Windows machines
-`TimeseriesExtractor()` cannot be used but `CAP()` and all other functions can be used.
+`TimeseriesExtractor` cannot be used but `CAP` and all other functions can be used.
 
 ## [0.8.7] - 2024-03-15
 
 ### 🚀 New/Added
-- Added `merge_dicts()` to be able to combine different subject_timeseries and only return shared subjects.
+- Added `merge_dicts` to be able to combine different subject_timeseries and only return shared subjects.
 - Print names of confounds used for each subject and run when extracting timeseries for transparency.
 - Ability to extract timeseries using the AAL or Schaefer parcellation.
 - Ability to use multiprocessing to speed up timeseries extraction.

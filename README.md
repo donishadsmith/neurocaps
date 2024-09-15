@@ -129,20 +129,20 @@ The provided example demonstrates setting up a custom parcellation containing no
 
 **Main features for `TimeseriesExtractor` includes:**
 
-- **Timeseries Extraction:** Extract timeseries for resting-state or task data, creating a nested dictionary containing the subject ID, run number, and associated timeseries. This serves as input for the `get_caps()` method in the `CAP` class.
+- **Timeseries Extraction:** Extract timeseries for resting-state or task data, creating a nested dictionary containing the subject ID, run number, and associated timeseries. This serves as input for the `get_caps` method in the `CAP` class.
 - **Saving Timeseries:** Save the nested dictionary containing timeseries as a pickle file.
 - **Visualization:** Visualize the timeseries of a Schaefer, AAL, or Custom parcellation node or region/network in a specific subject's run, with options to save the plots.
-- **Parallel Processing:** Use parallel processing by specifying the number of CPU cores in the `n_cores` parameter in the `get_bold()` method. Testing on an HPC using a loop with `TimeseriesExtractor.get_bold()` to extract session 1 and 2 BOLD timeseries from 105 subjects from resting-state data (single run containing 360 volumes) and two task datasets (three runs containing 200 volumes each and two runs containing 200 volumes) reduced processing time from 5 hours 48 minutes to 1 hour 26 minutes (using 10 cores). *Note:* If you are using an HPC, remember to allocate the appropriate amount of CPU cores with your workload manager. For instance in slurm use `#SBATCH --cpus-per-task=10` if you intend to use 10 cores.
+- **Parallel Processing:** Use parallel processing by specifying the number of CPU cores in the `n_cores` parameter in the `get_bold` method. Testing on an HPC using a loop with `TimeseriesExtractor.get_bold` to extract session 1 and 2 BOLD timeseries from 105 subjects from resting-state data (single run containing 360 volumes) and two task datasets (three runs containing 200 volumes each and two runs containing 200 volumes) reduced processing time from 5 hours 48 minutes to 1 hour 26 minutes (using 10 cores). *Note:* If you are using an HPC, remember to allocate the appropriate amount of CPU cores with your workload manager. For instance in slurm use `#SBATCH --cpus-per-task=10` if you intend to use 10 cores.
 
 **Main features for `CAP` includes:**
 - **Optimal Cluster Size Identification:** Perform the Davies Bouldin, Silhouette, Elbow, or Variance Ratio criterions to identify the optimal cluster size, saving the optimal model as an attribute.
-- **Parallel Processing:** Use parallel processing, when using the Davies Bouldin, Silhouette, Elbow, or Variance Ratio criterions , by specifying the number of CPU cores in the `n_cores` parameter in the `get_caps()` method. *Note:* If you are using an HPC, remember to allocate the appropriate amount of CPU cores with your workload manager. For instance in slurm use `#SBATCH --cpus-per-task=10` if you intend to use 10 cores.
+- **Parallel Processing:** Use parallel processing, when using the Davies Bouldin, Silhouette, Elbow, or Variance Ratio criterions , by specifying the number of CPU cores in the `n_cores` parameter in the `get_caps` method. *Note:* If you are using an HPC, remember to allocate the appropriate amount of CPU cores with your workload manager. For instance in slurm use `#SBATCH --cpus-per-task=10` if you intend to use 10 cores.
 - **Grouping:** Perform CAPs analysis for entire sample or groups of subject IDs (using the `groups` parameter when initializing the `CAP` class). K-means clustering, all cluster selection methods (Davies Bouldin, Silhouette, Elbow, or Variance Ratio criterions), and plotting are done for each group when specified.
-- **CAP Visualization:** Visualize the CAPs as outer products or heatmaps, with options to use subplots to reduce the number of individual plots, as well as save. Refer to the [documentation](https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2plot) for the `caps2plot()` method in the `CAP` class for available `**kwargs` arguments and parameters to modify plots.
+- **CAP Visualization:** Visualize the CAPs as outer products or heatmaps, with options to use subplots to reduce the number of individual plots, as well as save. Refer to the [documentation](https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2plot) for the `caps2plot` method in the `CAP` class for available `**kwargs` arguments and parameters to modify plots.
 - **Save CAPs as NifTIs:** Convert the atlas used for parcellation to a stat map and saves them (`caps2niftis`). 
-- **Surface Plot Visualization:** Convert the atlas used for parcellation to a stat map projected onto a surface plot with options to customize and save plots. Refer to the [documentation](https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2surf) for the `caps2surf()` method in the `CAP` class for available `**kwargs` arguments and parameters to modify plots. Also includes the option to save the NifTIs. There is also another a parameter in `caps2surf`, `fslr_giftis_dict`, which can be used if the CAPs NifTI files were converted to GifTI files using a tool such as Connectome Workbench, which may work better for converting your atlas to fslr space. This parameter allows plotting without re-running the analysis and only initializing the `CAP` class and using the `caps2surf` method is needed.
-- **Correlation Matrix Creation:** Create a correlation matrix from CAPs with options to customize and save plots. Additionally can produce dataframes where each element contains its associated uncorrected p-value in parentheses that is accompanied by an asterisk using the following significance code `{"<0.05": "*", "<0.01": "**", "<0.001": "***"}`. Refer to the [documentation](https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2corr) for the `caps2corr()` method in the `CAP` class for available `**kwargs` arguments and parameters to modify plots.
-- **CAP Metrics Calculation:** Calculate CAP metrics (`calculate_metrics()`) as described in [Liu et al., 2018](https://doi.org/10.1016/j.neuroimage.2018.01.041)[^1] and [Yang et al., 2021](https://doi.org/10.1016/j.neuroimage.2021.118193)[^2]:
+- **Surface Plot Visualization:** Convert the atlas used for parcellation to a stat map projected onto a surface plot with options to customize and save plots. Refer to the [documentation](https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2surf) for the `caps2surf` method in the `CAP` class for available `**kwargs` arguments and parameters to modify plots. Also includes the option to save the NifTIs. There is also another a parameter in `caps2surf`, `fslr_giftis_dict`, which can be used if the CAPs NifTI files were converted to GifTI files using a tool such as Connectome Workbench, which may work better for converting your atlas to fslr space. This parameter allows plotting without re-running the analysis and only initializing the `CAP` class and using the `caps2surf` method is needed.
+- **Correlation Matrix Creation:** Create a correlation matrix from CAPs with options to customize and save plots. Additionally can produce dataframes where each element contains its associated uncorrected p-value in parentheses that is accompanied by an asterisk using the following significance code `{"<0.05": "*", "<0.01": "**", "<0.001": "***"}`. Refer to the [documentation](https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2corr) for the `caps2corr` method in the `CAP` class for available `**kwargs` arguments and parameters to modify plots.
+- **CAP Metrics Calculation:** Calculate CAP metrics (`calculate_metrics`) as described in [Liu et al., 2018](https://doi.org/10.1016/j.neuroimage.2018.01.041)[^1] and [Yang et al., 2021](https://doi.org/10.1016/j.neuroimage.2021.118193)[^2]:
     - *Temporal Fraction:* The proportion of total volumes spent in a single CAP over all volumes in a run.
         ```python
             predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
@@ -194,7 +194,7 @@ The provided example demonstrates setting up a custom parcellation containing no
         # but has a label ID of 1, and RH_SomSot2 is in the 7th index but has a label ID
         # of 8 in the parcellation.
         nodes = ["LH_Vis1", "LH_Vis2", "LH_SomSot1", "LH_SomSot2",
-                    "RH_Vis1", "RH_Vis2", "RH_SomSot1", "RH_SomSot2"]
+                 "RH_Vis1", "RH_Vis2", "RH_SomSot1", "RH_SomSot2"]
         # Binary representation of the nodes in Vis, essentially acts as
         # a mask isolating the modes for for Vis
         binary_vector = [1,1,0,0,1,1,0,0]
@@ -228,6 +228,7 @@ from neurocaps.analysis import CAP
 """If an asterisk '*' is after a name, all confounds starting with the 
 term preceding the parameter will be used. in this case, all parameters 
 starting with cosine will be used."""
+
 confounds = ['Cosine*', 'Rot*']
 
 """If use_confounds is True but no confound_names provided, there are hardcoded 
@@ -235,20 +236,31 @@ confound names that will extract the data from the confound files outputted by f
 `n_acompcor_separate` will use the first 'n' components derived from the separate 
 white-matter (WM) and cerebrospinal fluid (CSF). To use the acompcor components from the 
 combined mask, list them in the `confound_names` parameter"""
+
 parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7, "resolution_mm": 2}}
 
-extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
-                                 use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01, 
-                                 confound_names=confounds, n_acompcor_separate=2)
+extractor = TimeseriesExtractor(parcel_approach=parcel_approach,
+                                standardize="zscore_sample",
+                                use_confounds=True,
+                                detrend=True,
+                                low_pass=0.15,
+                                high_pass=0.01,
+                                confound_names=confounds,
+                                n_acompcor_separate=2)
 
 bids_dir = "/path/to/bids/dir"
 
 # If there are multiple pipelines in the derivatives folder, you can specify a specific pipeline
-#pipeline_name = "fmriprep-1.4.0"
+
+# pipeline_name = "fmriprep-1.4.0"
 pipeline_name = fmriprep_1.0.0/fmriprep/
 
 # Resting State
-extractor.get_bold(bids_dir=bids_dir, task="rest", session='002',pipeline_name=pipeline_name, verbose=True,
+extractor.get_bold(bids_dir=bids_dir,
+                   task="rest",
+                   session='002',
+                   pipeline_name=pipeline_name
+                   verbose=True,
                    flush_print=True)
 ```
 **Output:**
@@ -268,8 +280,11 @@ The following confounds will be for nuisance regression: Cosine00, Cosine01, Cos
 
 ```python
 # Task; use parallel processing with `n_cores`
-extractor.get_bold(bids_dir=bids_dir, task="emo", condition="positive", 
-                   pipeline_name=pipeline_name, n_cores=10)
+extractor.get_bold(bids_dir=bids_dir,
+                   task="emo",
+                   condition="positive", 
+                   pipeline_name=pipeline_name,
+                   n_cores=10)
 
 cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
 
@@ -280,19 +295,26 @@ cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
 # Visualize CAPs
 # You can use seaborn's premade palettes as strings or generate your own custom palettes
 # Using seaborn's diverging_palette function, matplotlib's LinearSegmentedColormap, 
-# or other Classes or functions compatable with seaborn
+# or other Classes or functions compatible with seaborn
+kwargs = {"sharey": True, "ncol": 3, "subplots": True, "cmap": "coolwarm"}
 
-cap_analysis.caps2plot(visual_scope="regions", plot_options="outer_product", 
-                       suffix_title="- Positive Valence", ncol=3, sharey=True, 
-                       subplots=True, cmap="coolwarm")
+cap_analysis.caps2plot(visual_scope="regions",
+                       plot_options="outer_product", 
+                       suffix_title="- Positive Valence",
+                       **kwargs)
+
 # Create the colormap
 import seaborn as sns
+
 palette = sns.diverging_palette(260, 10, s=80, l=55, n=256, as_cmap=True)
 
-cap_analysis.caps2plot(visual_scope="nodes", plot_options="outer_product", 
-                       suffix_title="- Positive Valence", ncol=3,sharey=True, 
-                       subplots=True, xlabel_rotation=90, tight_layout=False, 
-                       hspace = 0.4, cmap=palette)
+kwargs["cmap"] = palette
+kwargs.update({"xlabel_rotation": 90, "tight_layout": False, "hspace": 0.4})
+
+cap_analysis.caps2plot(visual_scope="nodes",
+                       plot_options="outer_product", 
+                       suffix_title="- Positive Valence",
+                       **kwargs)
 ```
 **Plot Outputs:**
 ![image](https://github.com/donishadsmith/neurocaps/assets/112973674/e1ab0f55-0c4c-4701-8f3a-838c2470d44d)
@@ -301,10 +323,13 @@ cap_analysis.caps2plot(visual_scope="nodes", plot_options="outer_product",
 ```python
 
 # Get CAP metrics
-outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, tr=2.0, 
-                                         return_df=True, output_dir=output_dir,
+outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries,
+                                         tr=2.0, 
+                                         return_df=True,
+                                         output_dir=output_dir,
                                          metrics=["temporal_fraction", "persistence"],
-                                         continuous_runs=True, file_name="All_Subjects_CAPs_metrics")
+                                         continuous_runs=True,
+                                         prefix_file_name="All_Subjects_CAPs_metrics")
 
 print(outputs["temporal_fraction"])
 ```
@@ -325,16 +350,24 @@ print(outputs["temporal_fraction"])
 ```python
 # Create surface plots of CAPs; there will be as many plots as CAPs
 # If you experience coverage issues, usually smoothing helps to mitigate these issues
-cap_analysis.caps2surf(fwhm=2, cmap="cold_hot", layout="row",  size=(500, 100), zoom=1, cbar_location="bottom")
+kwargs = {"cmap": "cold_hot", "layout": "row", "size": (500, 100), "zoom": 1,
+          "cbar_location":"bottom"}
+
+cap_analysis.caps2surf(fwhm=2, **kwargs)
 
 #You can also generate your own colormaps using matplotlib's LinearSegmentedColormap
 
 # Create the colormap
 from matplotlib.colors import LinearSegmentedColormap
+
 colors = ["#1bfffe", "#00ccff", "#0099ff", "#0066ff", "#0033ff", "#c4c4c4",
           "#ff6666", "#ff3333", "#FF0000","#ffcc00","#FFFF00"]
+
 custom_cmap = LinearSegmentedColormap.from_list("custom_cold_hot", colors, N=256)
-cap_analysis.caps2surf(fwhm=2, cmap=custom_cmap, size=(500, 100), layout="row")
+
+kwargs["cmap"] = custom_cmap
+
+cap_analysis.caps2surf(fwhm=2, **kwargs)
 ```
 **Partial Plot Outputs:** (*Note*: one image will be generated per CAP)
 ![image](https://github.com/donishadsmith/neurocaps/assets/112973674/fadc946a-214b-4fbf-8316-2f32ab0b026e)
@@ -343,7 +376,10 @@ cap_analysis.caps2surf(fwhm=2, cmap=custom_cmap, size=(500, 100), layout="row")
 
 ```python
 # Create correlation matrix
-cap_analysis.caps2corr(annot=True ,figsize=(6,4),cmap="coolwarm")
+
+kwargs = {"annot": True ,"figsize": (6,4), "cmap": "coolwarm"}
+
+cap_analysis.caps2corr(**kwargs)
 
 # You can use seaborn's premade palettes as strings or generate your own custom palettes
 # Using seaborn's diverging_palette function, matplotlib's LinearSegmentedColormap, 
@@ -351,8 +387,12 @@ cap_analysis.caps2corr(annot=True ,figsize=(6,4),cmap="coolwarm")
 
 # Create the colormap
 import seaborn as sns
+
 palette = sns.diverging_palette(260, 10, s=80, l=55, n=256, as_cmap=True)
-cap_analysis.caps2corr(annot=True, figsize=(6,4), cmap=palette)
+
+kwargs["cmap"] = palette
+
+cap_analysis.caps2corr(**kwargs)
 ```
 **Plot Output:**
 ![image](https://github.com/donishadsmith/neurocaps/assets/112973674/57a2ce81-13d3-40d0-93e7-0ca910f7b0be)
@@ -360,15 +400,19 @@ cap_analysis.caps2corr(annot=True, figsize=(6,4), cmap=palette)
 
 ```python
 # Create radar plots showing cosine similarity between region/networks and caps
-radialaxis={"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)",
-            "gridcolor": "rgba(0, 0, 0, 0.25)", "ticks": "outside" ,
-            "tickfont": {"size": 14, "color": "black"}, 
-            "range": [0,0.3], "tickvals": [0.1,0.2,0.3]}
+radial={"showline": True,
+        "linewidth": 2,
+        "linecolor": "rgba(0, 0, 0, 0.25)",
+        "gridcolor": "rgba(0, 0, 0, 0.25)",
+        "ticks": "outside" ,
+        "tickfont": {"size": 14, "color": "black"},
+        "range": [0,0.3],
+        "tickvals": [0.1,0.2,0.3]}
 
-color_discrete_map = {"High Amplitude": "rgb(0,0,0)", "Low Amplitude": "blue"}
+colors = {"High Amplitude": "rgb(0,0,0)", "Low Amplitude": "blue"}
 
-cap_analysis.caps2radar(radialaxis=radialaxis, fill="toself", color_discrete_map = color_discrete_map,
-                        output_dir=output_dir)
+kwargs = {"radialaxis": radial, "color_discrete_map": colors, "fill": "toself"}
+cap_analysis.caps2radar(output_dir=output_dir, **kwargs)
 ```
 **Partial Plot Outputs:** (*Note*: one image will be generated per CAP)
 ![All_Subjects_CAP-5_radar](https://github.com/user-attachments/assets/fdf7e45b-da77-4b80-a8e1-6020a0ad4f6c)
@@ -381,19 +425,25 @@ from neurocaps.analysis import transition_matrix
 # Optimal cluster sizes are saved automatically
 cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, 
                       cluster_selection_method="davies_bouldin",
-                      standardize=True, n_clusters=list(range(2,6)))
+                      standardize=True,
+                      n_clusters=list(range(2,6)))
 
 outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, 
-                                         return_df=True, output_dir=output_dir,
+                                         return_df=True,
                                          metrics=["transition_probability"],
                                          continuous_runs=True,
+                                         output_dir=output_dir,
                                          prefix_file_name="All_Subjects_CAPs_metrics")
 
 print(outputs["transition_probability"]["All Subjects"])
 
+kwargs = {"cmap": "viridis", "fmt": ".3f", "annot": True}
+
 trans_outputs = transition_matrix(trans_dict=outputs["transition_probability"],
-                                  show_figs=True, return_df=True, cmap = "viridis",
-                                  fmt=".3f", annot=True, output_dir=output_dir)
+                                  show_figs=True,
+                                  return_df=True,
+                                  output_dir=output_dir.
+                                  **kwargs)
 
 print(trans_outputs["All Subjects"])
 ```

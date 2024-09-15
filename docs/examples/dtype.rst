@@ -8,7 +8,8 @@ Changes the dtype of all participant's numpy arrays to assist with memory usage.
     from neurocaps.analysis import change_dtype
 
     subject_timeseries = {str(x) : {f"run-{y}": np.random.rand(50,100) for y in range(1,3)} for x in range(1,3)}
-    converted_subject_timeseries = change_dtype(subject_timeseries_list=[subject_timeseries], dtype=np.float32)
+    converted_subject_timeseries = change_dtype(subject_timeseries_list=[subject_timeseries],
+                                                dtype=np.float32)
     for subj_id in subject_timeseries:
         for run in subject_timeseries[subj_id]:
             print(f"""

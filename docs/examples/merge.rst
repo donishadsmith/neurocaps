@@ -21,8 +21,10 @@ is appended to run-1 of the other task. For this to work, all dictionaries must 
     subject_timeseries_2 = {str(x) : {f"run-{y}": np.random.rand(20,100) for y in range(1,2)} for x in range(1,3)}
 
     # subject_timeseries_list also takes pickle files and can save the modified dictionaries as pickles too.
-    subject_timeseries_merged = merge_dicts(subject_timeseries_list=[subject_timeseries_1, subject_timeseries_2],
-                                          return_merged_dict=True, return_reduced_dicts=False)
+    subject_timeseries_merged = merge_dicts(subject_timeseries_list=[subject_timeseries_1,
+                                                                     subject_timeseries_2],
+                                            return_merged_dict=True,
+                                            return_reduced_dicts=False)
 
     for subj_id in subject_timeseries_merged["merged"]:
         for run_id in subject_timeseries_merged["merged"][subj_id]:
@@ -43,8 +45,10 @@ is appended to run-1 of the other task. For this to work, all dictionaries must 
 
     # The original dictionaries can also be returned too. The only modifications done is that the originals will 
     # Only contain the subjects present across all dictionaries in the list
-    merged_dicts = merge_dicts(subject_timeseries_list=[subject_timeseries_1, subject_timeseries_2],
-                                        return_merged_dict=True, return_reduced_dicts=True)
+    merged_dicts = merge_dicts(subject_timeseries_list=[subject_timeseries_1,
+                                                        subject_timeseries_2],
+                               return_merged_dict=True,
+                               return_reduced_dicts=True)
 
     for dict_id in merged_dicts:
         for subj_id in merged_dicts[dict_id]:
