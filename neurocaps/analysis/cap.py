@@ -10,7 +10,9 @@ from neuromaps.datasets import fetch_fslr
 from scipy.stats import pearsonr
 from sklearn.cluster import KMeans
 from .._utils import (_CAPGetter, _cap2statmap, _check_kwargs, _create_display, _create_node_labels,
-                      _convert_pickle_to_dict, _check_parcel_approach, _run_kmeans, _save_contents)
+                      _convert_pickle_to_dict, _check_parcel_approach, _logger, _run_kmeans, _save_contents)
+
+LG  = _logger(__name__)
 
 class CAP(_CAPGetter):
     """
@@ -547,8 +549,8 @@ class CAP(_CAPGetter):
         for group in self._groups:
             for subj_id in self._groups[group]:
                 if subj_id in self._subject_table:
-                    warnings.warn(f"[SUBJECT: {subj_id}] - appears more than once. Only the first instance of this "
-                                  "subject will be included in the analysis.")
+                    LG.warning(f"[SUBJECT: {subj_id}] Appears more than once. Only the first instance of this "
+                               "subject will be included in the analysis.")
                 else:
                     self._subject_table.update({subj_id : group})
 
@@ -569,8 +571,8 @@ class CAP(_CAPGetter):
             subject_runs = [subject_run for subject_run in subject_timeseries[subj_id]
                             if subject_run in requested_runs]
             if not subject_runs:
-                warnings.warn(f"[SUBJECT: {subj_id}] - Does not have the requested run numbers: "
-                              f"{','.join(requested_runs)}.")
+                LG.warning(f"[SUBJECT: {subj_id}] Does not have the requested run numbers: "
+                           f"{','.join(requested_runs)}.")
                 continue
             for curr_run in subject_runs:
                 if concatenated_timeseries[group] is None:
@@ -656,8 +658,7 @@ class CAP(_CAPGetter):
             # Get the optimal kmeans model
             self._kmeans[group] = model_dict[self._optimal_n_clusters[group]]
 
-            print(f"[GROUP: {group} | METHOD: {method}] - Optimal cluster size is {self._optimal_n_clusters[group]}.",
-                  flush=True)
+            LG.info(f"[GROUP: {group} | METHOD: {method}] Optimal cluster size is {self._optimal_n_clusters[group]}.")
 
             # Plot
             if show_figs or output_dir is not None:
@@ -880,7 +881,7 @@ class CAP(_CAPGetter):
                                  "`self.get_caps()` first.")
 
         if prefix_file_name is not None and output_dir is None:
-            warnings.warn("`prefix_file_name` supplied but no `output_dir` specified. Files will not be saved.")
+            LG.warning("`prefix_file_name` supplied but no `output_dir` specified. Files will not be saved.")
 
         if runs:
             if not isinstance(runs,list): runs = [runs]
@@ -898,7 +899,7 @@ class CAP(_CAPGetter):
 
         if set_diff:
             formatted_string = ', '.join(["'{a}'".format(a=x) for x in set_diff])
-            warnings.warn(f"Invalid metrics will be ignored: {formatted_string}.")
+            LG.warning(f"Invalid metrics will be ignored: {formatted_string}.")
         if not metrics:
             formatted_string = ', '.join(["'{a}'".format(a=x) for x in valid_metrics])
             raise ValueError(f"No valid metrics in `metrics` list. Valid metrics are {formatted_string}.")
@@ -927,7 +928,7 @@ class CAP(_CAPGetter):
             requested_runs = [f"run-{run}" for run in runs] if runs else list(subject_timeseries[subj_id])
             subject_runs = [subject_run for subject_run in subject_timeseries[subj_id] if subject_run in requested_runs]
             if not subject_runs:
-                warnings.warn(f"[SUBJECT: {subj_id}] - Does not have the requested run numbers: {','.join(requested_runs)}.")
+                LG.warning(f"[SUBJECT: {subj_id}] Does not have the requested run numbers: {','.join(requested_runs)}.")
                 continue
             for curr_run in subject_runs:
                 # Standardize or not
@@ -2007,9 +2008,9 @@ class CAP(_CAPGetter):
                     except TypeError:
                         # Create temp
                         temp_nifti = tempfile.NamedTemporaryFile(delete=False, suffix=".nii.gz")
-                        warnings.warn("TypeError raised by neuromaps due to changes in pathlib.py in Python 3.12 "
-                                      "Converting `stat_map` into a temporary nii.gz file (which will be automatically "
-                                      f" deleted afterwards) [TEMP FILE: {temp_nifti.name}]")
+                        LG.warning("TypeError raised by neuromaps due to changes in pathlib.py in Python 3.12 "
+                                   "Converting `stat_map` into a temporary nii.gz file (which will be automatically "
+                                   f" deleted afterwards) [TEMP FILE: {temp_nifti.name}]")
                         # Ensure file is closed
                         temp_nifti.close()
                         # Save temporary nifti to temp file
@@ -2024,8 +2025,8 @@ class CAP(_CAPGetter):
                 # Code slightly adapted from surfplot example 2
                 surfaces = fetch_fslr()
                 if plot_dict["surface"] not in ["inflated", "veryinflated"]:
-                    warnings.warn(f"{plot_dict['surface']} is an invalid option for `surface`. Available options "
-                                  "include 'inflated' or 'verinflated'. Defaulting to 'inflated'")
+                    LG.warning(f"{plot_dict['surface']} is an invalid option for `surface`. Available options "
+                               "include 'inflated' or 'verinflated'. Defaulting to 'inflated'")
                     plot_dict["surface"] = "inflated"
                 lh, rh = surfaces[plot_dict["surface"]]
                 lh = str(lh) if not isinstance(lh, str) else lh
@@ -2354,7 +2355,7 @@ class CAP(_CAPGetter):
                         try:
                             cosine_similarity = dot_product/(norm_cap_vector * norm_binary_vector)
                         except ZeroDivisionError:
-                            warnings.warn(warning_msg.format(method))
+                            LG.warning(warning_msg.format(method))
                             cosine_similarity = 0
                     else:
                         # Calculate traditional norm
@@ -2364,12 +2365,12 @@ class CAP(_CAPGetter):
                         try:
                             cosine_similarity_traditional = dot_product/(norm_cap_vector_traditional * norm_binary_vector)
                         except ZeroDivisionError:
-                            warnings.warn(warning_msg.format("traditional"))
+                            LG.warning(warning_msg.format("traditional"))
                             cosine_similarity_traditional = 0
                         try:
                             cosine_similarity_selective = dot_product/(norm_cap_vector_selective * norm_binary_vector)
                         except ZeroDivisionError:
-                            warnings.warn(warning_msg.format("selective"))
+                            LG.warning(warning_msg.format("selective"))
                             cosine_similarity_selective = 0
                         # Use alpha to determine contributions of traditional and selective method to cosine similarity
                         cosine_similarity = (cosine_similarity_traditional * alpha) + (cosine_similarity_selective * (1-alpha))

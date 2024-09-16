@@ -1,9 +1,11 @@
-import json, os, re, warnings
+import json, os, re
 from typing import Union, Optional, Literal
 import matplotlib.pyplot as plt, numpy as np
 from joblib import Parallel, delayed, dump
 from .._utils import (_TimeseriesExtractorGetter, _check_kwargs, _check_confound_names,
-                      _check_parcel_approach, _extract_timeseries)
+                      _check_parcel_approach, _extract_timeseries, _logger)
+
+LG  = _logger(__name__)
 
 class TimeseriesExtractor(_TimeseriesExtractorGetter):
     """
@@ -269,12 +271,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 raise KeyError("'auto' sub-key must be included when `dummy_scans` is a dictionary.")
             if not use_confounds:
                 raise ValueError("`use_confounds` must be True to use 'auto' for `dummy_scans` has the "
-                                "fMRIPrep confounds tvs file is needed to detect the number of "
-                                "'non_steady_state_outlier_XX' columns.")
+                                 "fMRIPrep confounds tvs file is needed to detect the number of "
+                                 "'non_steady_state_outlier_XX' columns.")
 
         if not use_confounds and fd_threshold:
-            warnings.warn("`fd_threshold` specified but `use_confounds` is not True so removal of volumes after "
-                          "nuisance regression will not be done.")
+            LG.warning("`fd_threshold` specified but `use_confounds` is not True so removal of volumes after "
+                       "nuisance regression will not be done.")
 
         if isinstance(fd_threshold, dict):
             if "threshold" not in fd_threshold:
@@ -484,7 +486,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         else:
             layout = bids.BIDSLayout(bids_dir, derivatives=True)
 
-        print(f"\n{layout}", flush=True)
+        LG.info(f"{layout}")
         subj_ids = sorted(layout.get(return_type="id", target="subject", task=task, space=self._space, suffix="bold"))
 
         if exclude_subjects:
@@ -547,7 +549,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             # Check files
             skip, msg = self._check_files(files)
 
-            if msg: warnings.warn(subject_header + msg)
+            if msg: LG.warning(subject_header + msg)
             if skip: continue
 
             # Ensure only a single session is present if session is None
@@ -561,15 +563,15 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
                 # Skip subject if no run has all needed files present
                 if not run_list:
-                    warnings.warn(f"{subject_header}"
-                                  "Processing skipped: None of the necessary files (i.e NifTIs, masks, confound "
-                                  "tsv files, confound json files, event files) are from the same run.")
+                    LG.warning(f"{subject_header}"
+                               "Processing skipped: None of the necessary files (i.e NifTIs, masks, confound "
+                               "tsv files, confound json files, event files) are from the same run.")
                     continue
 
                 if len(run_list) != len(check_runs):
-                    warnings.warn(f"{subject_header}"
-                                  "Only the following runs available contain all required files: "
-                                  f"{', '.join(run_list)}.")
+                    LG.warning(f"{subject_header}"
+                               "Only the following runs available contain all required files: "
+                               f"{', '.join(run_list)}.")
             else:
             # Allows for nifti files that do not have the run- description
                 run_list = [None]
@@ -624,8 +626,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     def _header(self, subj_id):
         # Base subject message
         sub_message = f'[SUBJECT: {subj_id} | SESSION: {self._task_info["session"]} | TASK: {self.task_info["task"]}]'
-        underline = '-'*len(sub_message)
-        subject_header = f"{sub_message}\n{underline}\n"
+        subject_header = f"{sub_message} "
 
         return subject_header
 
@@ -640,7 +641,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         if self._signal_clean_info["use_confounds"]:
             if not files["confounds"]:
-                skip, msg = True, "Processing skipped: No confound files available when `use_confounds` is requested."
+                skip, msg = True, "Processing skipped: `use_confounds` is requested but no confound files found."
 
             if not files["confounds_meta"] and self._signal_clean_info["n_acompcor_separate"]:
                 skip = True
@@ -648,7 +649,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                        "first n components of the white-matter and cerebrospinal fluid masks separately.")
 
             if self._task_info["condition"] and not files["events"]:
-                skip, msg = True, "Processing skipped: No event files available when `condition` is specified."
+                skip, msg = True, "Processing skipped: `condition` is specified but no event files found."
 
         return skip, msg
 
@@ -710,13 +711,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                                         if str(type(e).__name__) == "IndexError" else f"{type(e).__name__} - {str(e)}")
             if self._task_info["condition"]:
                 raise ValueError(f"{subject_header}"
-                                    f"{base_msg}" + " The `tr` must be given when `condition` is specified.")
+                                 f"{base_msg}" + " The `tr` must be given when `condition` is specified.")
             elif any([self.signal_clean_info["masker_init"]["high_pass"], self.signal_clean_info["masker_init"]["low_pass"]]):
                 raise ValueError(f"{subject_header}"
                                  f"{base_msg}" + " The `tr` must be given when `high_pass` or `low_pass` is specified.")
             else:
-                warnings.warn(f"{subject_header}"
-                              f"{base_msg}" + " `tr` has been set to None and extraction will continue.")
+                LG.warning(f"{subject_header}"
+                           f"{base_msg}" + " `tr` has been set to None and extraction will continue.")
                 tr=None
         
         return tr
@@ -819,7 +820,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             raise ValueError("`roi_indx` and `region` can not be used simultaneously.")
 
         if file_name is not None and output_dir is None:
-            warnings.warn("`file_name` supplied but no `output_dir` specified. Files will not be saved.")
+            LG.warning("`file_name` supplied but no `output_dir` specified. Files will not be saved.")
 
         parcellation_name = list(self._parcel_approach)[0]
         # Defaults

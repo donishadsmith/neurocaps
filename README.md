@@ -1,7 +1,7 @@
 # neurocaps
 [![Latest Version](https://img.shields.io/pypi/v/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.13763933)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.13766671)
 [![Github Repository](https://img.shields.io/badge/Source%20Code-neurocaps-purple)](https://github.com/donishadsmith/neurocaps)
 [![Test Status](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg)](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml)
 [![codecov](https://codecov.io/github/donishadsmith/neurocaps/graph/badge.svg?token=WS2V7I16WF)](https://codecov.io/github/donishadsmith/neurocaps)
@@ -265,17 +265,10 @@ extractor.get_bold(bids_dir=bids_dir,
 ```
 **Output:**
 ```
-List of confound regressors that will be used during timeseries extraction if available in confound dataframe: Cosine*, Rot*.
-
-BIDS Layout: ...0.4_ses001-022/ds000031_R1.0.4 | Subjects: 1 | Sessions: 1 | Runs: 1
-
-[SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001]
-----------------------------------------------------
-Preparing for timeseries extraction using - [FILE: '/Users/runner/work/neurocaps/neurocaps/tests/ds000031_R1.0.4_ses001-022/ds000031_R1.0.4/derivatives/fmriprep_1.0.0/fmriprep/sub-01/ses-002/func/sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz']
-
-[SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001]
-----------------------------------------------------
-The following confounds will be for nuisance regression: Cosine00, Cosine01, Cosine02, Cosine03, Cosine04, Cosine05, Cosine06, RotX, RotY, RotZ, aCompCor02, aCompCor03, aCompCor04, aCompCor05.
+2024-09-16 00:17:11,689 [INFO] List of confound regressors that will be used during timeseries extraction if available in confound dataframe: Cosine*, aComp*, Rot*.
+2024-09-16 00:17:12,113 [INFO] BIDS Layout: ...0.4_ses001-022/ds000031_R1.0.4 | Subjects: 1 | Sessions: 1 | Runs: 1
+2024-09-16 00:17:13,914 [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] Preparing for timeseries extraction using [FILE: sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz].
+2024-09-16 00:17:13,917 [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] The following confounds will be for nuisance regression: Cosine00, Cosine01, Cosine02, Cosine03, Cosine04, Cosine05, Cosine06, aCompCor00, aCompCor01, aCompCor02, aCompCor03, aCompCor04, aCompCor05, RotX, RotY, RotZ.
 ```
 
 ```python
@@ -448,6 +441,9 @@ trans_outputs = transition_matrix(trans_dict=outputs["transition_probability"],
 print(trans_outputs["All Subjects"])
 ```
 **Outputs:**
+```
+2024-09-16 00:09:54,273 [INFO] [GROUP: All Subjects | METHOD: davies_bouldin] Optimal cluster size is 3.
+```
 | Subject_ID | Group | Run | 1.1 | 1.2 | 1.3 | 2.1 | 2.2 | 2.3 | 3.1 | 3.2 | 3.3 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | All Subjects | continuous_runs | 0.326 | 0.261 | 0.413 | 0.245 | 0.449 | 0.306 | 0.352 | 0.278 | 0.37 |

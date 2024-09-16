@@ -1,7 +1,10 @@
 """Internal function for checking the validity of parcel_approach."""
-import copy, os, re, warnings
+import copy, os, re
 from nilearn import datasets
 from ._pickle_to_dict import _convert_pickle_to_dict
+from ._logger import _logger
+
+LG = _logger(__name__)
 
 def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
     if isinstance(parcel_approach, str) and parcel_approach.endswith(".pkl"):
@@ -30,15 +33,15 @@ def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
 
     if "Schaefer" in parcel_approach:
         if "n_rois" not in parcel_approach["Schaefer"]:
-            warnings.warn("'n_rois' not specified in `parcel_approach`. Defaulting to 400 ROIs.")
+            LG.warning("'n_rois' not specified in `parcel_approach`. Defaulting to 400 ROIs.")
             parcel_approach["Schaefer"].update({"n_rois": 400})
 
         if "yeo_networks" not in parcel_approach["Schaefer"]:
-            warnings.warn("'yeo_networks' not specified in `parcel_approach`. Defaulting to 7 networks.")
+            LG.warning("'yeo_networks' not specified in `parcel_approach`. Defaulting to 7 networks.")
             parcel_approach["Schaefer"].update({"yeo_networks": 7})
 
         if "resolution_mm" not in parcel_approach["Schaefer"]:
-            warnings.warn("'resolution_mm' not specified in `parcel_approach`. Defaulting to 1mm.")
+            LG.warning("'resolution_mm' not specified in `parcel_approach`. Defaulting to 1mm.")
             parcel_approach["Schaefer"].update({"resolution_mm": 1})
 
         # Get atlas
@@ -55,7 +58,7 @@ def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
 
     elif "AAL" in parcel_approach:
         if "version" not in parcel_approach["AAL"]:
-            warnings.warn("'version' not specified in `parcel_approach`. Defaulting to 'SPM12'.")
+            LG.warning("'version' not specified in `parcel_approach`. Defaulting to 'SPM12'.")
             parcel_approach["AAL"].update({"version": "SPM12"})
 
         # Get atlas
@@ -72,17 +75,20 @@ def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
             raise ValueError("For `Custom` parcel_approach, a nested key-value pair containing the key 'maps' with the "
                              "value being a string specifying the location of the parcellation is needed. Example:\n"
                              f"{custom_example}")
+
         check_subkeys = ["nodes" in parcel_approach["Custom"], "regions" in parcel_approach["Custom"]]
+
         if not all(check_subkeys):
             missing_subkeys = [["nodes", "regions"][x] for x,y in enumerate(check_subkeys) if y is False]
             error_message = f"The following sub-keys haven't been detected {missing_subkeys}"
             if call == "TimeseriesExtractor":
-                warnings.warn(f"{error_message}. These labels are not needed for timeseries extraction but are needed "
-                              "for future timeseries or CAPs plotting.")
+                LG.warning(f"{error_message}. These labels are not needed for timeseries extraction but are needed "
+                           "for future timeseries or CAPs plotting.")
             else:
                 raise ValueError(f"{error_message}. Certain sub-keys are needed for plotting. Please check the function "
                                  "docstring for the required sub-keys and reassign `parcel_approach` using "
                                  f"`self.parcel_approach`. Please refer to the example structure:\n{custom_example}")
+
         if call == "TimeseriesExtractor" and not os.path.isfile(parcel_approach["Custom"]["maps"]):
             raise FileNotFoundError("Please specify the location to the custom parcellation to be used.")
 

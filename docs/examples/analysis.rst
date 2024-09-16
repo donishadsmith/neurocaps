@@ -44,7 +44,7 @@ Performing CAPs on All Subjects
 
     .. code-block:: none
 
-        [GROUP: All Subjects | METHOD: elbow] - Optimal cluster size is 6.
+        2024-09-16 00:09:54,273 [INFO] [GROUP: All Subjects | METHOD: elbow] - Optimal cluster size is 6.
 
 .. image:: embed/All_Subjects_elbow.png
     :width: 600
@@ -65,7 +65,7 @@ Performing CAPs on Groups
 
     .. code-block:: none
 
-        [GROUP: A | METHOD: silhouette] - Optimal cluster size is 2.
+        2024-09-16 00:09:54,273 [INFO] [GROUP: A | METHOD: silhouette] - Optimal cluster size is 2.
 
 .. image:: embed/A_silhouette.png
     :width: 600
@@ -74,7 +74,7 @@ Performing CAPs on Groups
 
     .. code-block:: none
 
-        [GROUP: B | METHOD: silhouette] - Optimal cluster size is 2.
+        2024-09-16 00:09:54,273 [INFO] [GROUP: B | METHOD: silhouette] - Optimal cluster size is 2.
 
 .. image:: embed/B_silhouette.png
     :width: 600

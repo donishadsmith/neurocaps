@@ -15,12 +15,20 @@ which can then be converted to matrix form and visualized with ``transition_matr
                           standardize=True,
                           n_clusters=list(range(2,6)))
 
+.. rst-class:: sphx-glr-script-out
+
+    .. code-block:: none
+
+        2024-09-16 00:09:54,273 [INFO] [GROUP: All Subjects | METHOD: davies_bouldin] Optimal cluster size is 3.
+
+.. code-block:: python
+
     outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, 
-                                             return_df=True,
-                                             metrics=["transition_probability"],
-                                             continuous_runs=True,
-                                             output_dir=output_dir,
-                                             prefix_file_name="All_Subjects_CAPs_metrics")
+                                            return_df=True,
+                                            metrics=["transition_probability"],
+                                            continuous_runs=True,
+                                            output_dir=output_dir,
+                                            prefix_file_name="All_Subjects_CAPs_metrics")
 
     print(outputs["transition_probability"]["All Subjects"])
 
@@ -29,6 +37,7 @@ which can then be converted to matrix form and visualized with ``transition_matr
    :header-rows: 1                                   
 
 .. code-block:: python
+
     kwargs = {"cmap": "viridis", "fmt": ".3f", "annot": True}
 
     trans_outputs = transition_matrix(trans_dict=outputs["transition_probability"],

@@ -42,6 +42,71 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.16.4] - 2024-09-16
+### ♻ Changed
+- All uses of `print` and `warnings.warn` in package replaced with `logging.info` and `logging.warning`. The internal
+function that creates the logger:
+```python
+import logging, sys
+
+class _Flush(logging.StreamHandler):
+    def emit(self, record):
+        super().emit(record)
+        self.flush() 
+
+def _logger(name, level = logging.INFO, flush=False):
+    logger = logging.getLogger(name.split(".")[-1])
+    logger.setLevel(level)
+    # Works to see if root has handler and propagate if it does
+    logger.propagate = logging.getLogger().hasHandlers()
+    # Add or messages will repeat several times due to multiple handlers if same name used
+    if not logger.hasHandlers():
+        if flush: handler = _Flush(sys.stdout)
+        else: handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+        logger.addHandler(handler)
+
+    return logger
+
+```
+
+The logger can be configured by user doing:
+
+```python
+logging.basicConfig(
+    level=logging.INFO
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout),
+              logging.FileHandler('info.out')]
+    )
+```
+- Subject-specific messages are now more compact.
+
+**OLD:**
+```
+List of confound regressors that will be used during timeseries extraction if available in confound dataframe: Cosine*, Rot*.
+
+BIDS Layout: ...0.4_ses001-022/ds000031_R1.0.4 | Subjects: 1 | Sessions: 1 | Runs: 1
+
+[SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001]
+----------------------------------------------------
+Preparing for timeseries extraction using - [FILE: '/Users/runner/work/neurocaps/neurocaps/tests/ds000031_R1.0.4_ses001-022/ds000031_R1.0.4/derivatives/fmriprep_1.0.0/fmriprep/sub-01/ses-002/func/sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz']
+
+[SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001]
+----------------------------------------------------
+The following confounds will be for nuisance regression: Cosine00, Cosine01, Cosine02, Cosine03, Cosine04, Cosine05, Cosine06, RotX, RotY, RotZ, aCompCor02, aCompCor03, aCompCor04, aCompCor05.
+```
+
+**NEW:**
+```
+2024-09-16 00:17:11,689 [INFO] List of confound regressors that will be used during timeseries extraction if available in confound dataframe: Cosine*, aComp*, Rot*.
+2024-09-16 00:17:12,113 [INFO] BIDS Layout: ...0.4_ses001-022/ds000031_R1.0.4 | Subjects: 1 | Sessions: 1 | Runs: 1
+2024-09-16 00:17:13,914 [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] Preparing for timeseries extraction using [FILE: sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz].
+2024-09-16 00:17:13,917 [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] The following confounds will be for nuisance regression: Cosine00, Cosine01, Cosine02, Cosine03, Cosine04, Cosine05, Cosine06, aCompCor00, aCompCor01, aCompCor02, aCompCor03, aCompCor04, aCompCor05, RotX, RotY, RotZ.
+```
+*Note that only the absolute path is no longer outputted, only the file's basename*
+*Jupyter Notebook may show an additional space between the "[" and "INFO" for subject level info*
+
 ## [0.16.3.post0] - 2024-09-14
 ### 💻 Metadata
 - Uploading fixed readme to Pypi

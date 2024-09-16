@@ -7,6 +7,7 @@ from ._cap_internals import _create_display, _save_contents
 from ._cap_internals import _create_node_labels
 from ._cap_internals import _CAPGetter
 from ._cap_internals import _run_kmeans
+from ._logger import _logger
 from ._timeseriesextractor_internals import _check_confound_names
 from ._timeseriesextractor_internals import _extract_timeseries
 from ._timeseriesextractor_internals import _TimeseriesExtractorGetter
