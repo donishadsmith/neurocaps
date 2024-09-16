@@ -20,7 +20,7 @@ def _check_confound_names(high_pass, specified_confound_names, n_acompcor_separa
                 "a_comp_cor_01", "a_comp_cor_02", "a_comp_cor_03", "a_comp_cor_04", "a_comp_cor_05"
             ]
     else:
-        assert isinstance(specified_confound_names, list) and specified_confound_names, "confound_names must be a non-empty list."
+        assert isinstance(specified_confound_names, list) and specified_confound_names, "`confound_names` must be a non-empty list."
         confound_names = specified_confound_names
 
     if n_acompcor_separate:
@@ -28,13 +28,12 @@ def _check_confound_names(high_pass, specified_confound_names, n_acompcor_separa
         if len(confound_names) > len(check_confounds):
             removed_confounds = [element for element in confound_names if element not in check_confounds]
             if specified_confound_names:
-                LG.warning("Since `n_acompcor_separate` has been specified, specified acompcor components in "
+                LG.warning("Since `n_acompcor_separate` has been specified, acompcor components in "
                            f"`confound_names` will be disregarded and replaced with the first {n_acompcor_separate} "
                            "components of the white matter and cerebrospinal fluid masks for each participant. "
                            f"The following components will not be used {removed_confounds}.")
             confound_names = check_confounds
 
-    LG.info("List of confound regressors that will be used during timeseries extraction if available in confound "
-            f"dataframe: {', '.join(confound_names)}.")
+    LG.info(f"Confound regressors to be used if available: {', '.join(confound_names)}")
 
     return confound_names

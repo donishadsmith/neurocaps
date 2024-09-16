@@ -11,7 +11,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     """
     **Timeseries Extractor Class**
 
-    Initializes the TimeseriesExtractor class.
+    Initializes the Timeseries Extractor class.
 
     Parameters
     ----------
@@ -270,13 +270,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             if "auto" not in dummy_scans:
                 raise KeyError("'auto' sub-key must be included when `dummy_scans` is a dictionary.")
             if not use_confounds:
-                raise ValueError("`use_confounds` must be True to use 'auto' for `dummy_scans` has the "
-                                 "fMRIPrep confounds tvs file is needed to detect the number of "
+                raise ValueError("`use_confounds` must be True to use 'auto' for `dummy_scans` because the "
+                                 "fMRIPrep confounds tsv file is needed to detect the number of "
                                  "'non_steady_state_outlier_XX' columns.")
 
         if not use_confounds and fd_threshold:
             LG.warning("`fd_threshold` specified but `use_confounds` is not True so removal of volumes after "
-                       "nuisance regression will not be done.")
+                       "nuisance regression will not be done since the fMRIPrep confounds tsv file is needed.")
 
         if isinstance(fd_threshold, dict):
             if "threshold" not in fd_threshold:
@@ -319,11 +319,23 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                  flush_print: bool=False,
                  exclude_niftis: Optional[list[str]]=None) -> None:
         """
-        **Get BOLD Data**
+        **Retrieve Preprocessed BOLD Data from BIDS Datasets**
 
-        Collects files needed to extract timeseries data from NIfTI files for BIDS-compliant datasets containing a
-        derivatives folder. This function assumes that your BOLD data was preprocessed using a standard
-        preprocessing pipeline, specifically **fMRIPrep**.
+        This function uses pybids for querying and requires the BOLD data directory (specified in ``bids_dir``) to be
+        BIDS-compliant, including a "dataset_description.json" file. It assumes the dataset contains a derivatives
+        folder with BOLD data preprocessed using a standard pipeline, specifically fMRIPrep. The pipeline directory
+        must also include a "dataset_description.json" file for proper querying.
+
+        For timeseries extraction, nuisance regression, and spatial dimensionality reduction using a parcellation,
+        nilearn’s ``NiftiLabelsMasker`` function is used. If requested, dummy scans are removed from the NIfTI images
+        and confound dataset prior to timeseries extraction. Indices exceeding framewise displacement thresholds are
+        removed after timeseries extraction, and the extracted timeseries can be filtered to include only indices
+        corresponding to a specific condition, if requested.
+
+        The timeseries data of all subjects are appended to a single dictionary ``self.subject_timeseries``. Additional
+        information regarding the structure of this dictionary can be found in the "Note" section.
+
+        **This pipeline is most optimized for BOLD data preprocessed by fMRIPrep.**
 
         Parameters
         ----------
@@ -331,7 +343,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Absolute path to a BIDS compliant directory.
 
         task : :obj:`str`
-            Name of task to process.
+            Name of task to process (i.e "rest", "n-back", etc).
 
         session : :obj:`int`, :obj:`str`, or :obj:`None`, default=None
             Session to extract timeseries from. Only a single session can be extracted at a time. An error will be
@@ -379,7 +391,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         flush_print : :obj:`bool`, default=False
             Flush the printed subject-specific information produced during the timeseries extraction process.
-            Used to immediately print out information such as the current subject being processed, there confounds
+            Used to immediately print out information such as the current subject being processed, confounds found,
             etc.
 
         exclude_niftis : :obj:`list[str]` or :obj:`None`, default=None
@@ -409,13 +421,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         Additionally, if your files do not specify a run number due to your subjects only having a single run, the run
         id key for the second level of the nested dictionary defaults to "run-0".
-
-        **This method relies on the pybids package to query subject-specific files.**
-
-        Additionally, with pybids each the directory for ``bids_dir`` and the pipeline folder ``pipeline_folder``
-        must contain a `dataset_description.json` file.
-
-        **This pipeline is most optimized towards BOLD data preprocessed by fMRIPrep.**
 
         When extracting specific conditions, this function uses ``math.ceil`` when calculating the ending scan of a
         condition to round up and ``int`` to round down for the onset. This is to allow for partial scans. Any
@@ -564,8 +569,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 # Skip subject if no run has all needed files present
                 if not run_list:
                     LG.warning(f"{subject_header}"
-                               "Processing skipped: None of the necessary files (i.e NifTIs, masks, confound "
-                               "tsv files, confound json files, event files) are from the same run.")
+                               "Timeseries Extraction Skipped: None of the necessary files (i.e NifTIs, masks, "
+                               "confound tsv files, confound json files, event files) are from the same run.")
                     continue
 
                 if len(run_list) != len(check_runs):
@@ -634,22 +639,22 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         skip, msg = None, None
 
         if not files["niftis"]:
-                skip, msg = True, "Processing skipped: No NifTI files were found or all NifTI files were excluded."
+                skip, msg = True, "Timeseries Extraction Skipped: No NifTI files were found or all NifTI files were excluded."
 
         if not files["masks"]:
             skip, msg = False, "Missing mask file but timeseries extraction will continue."
 
         if self._signal_clean_info["use_confounds"]:
             if not files["confounds"]:
-                skip, msg = True, "Processing skipped: `use_confounds` is requested but no confound files found."
+                skip, msg = True, "Timeseries Extraction Skipped: `use_confounds` is requested but no confound files found."
 
             if not files["confounds_meta"] and self._signal_clean_info["n_acompcor_separate"]:
                 skip = True
-                msg = ("Processing skipped: No confound metadata file found, which is needed to locate the "
+                msg = ("Timeseries Extraction Skipped: No confound metadata file found, which is needed to locate the "
                        "first n components of the white-matter and cerebrospinal fluid masks separately.")
 
             if self._task_info["condition"] and not files["events"]:
-                skip, msg = True, "Processing skipped: `condition` is specified but no event files found."
+                skip, msg = True, "Timeseries Extraction Skipped: `condition` is specified but no event files found."
 
         return skip, msg
 
@@ -706,9 +711,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 with open(bold_meta[0], "r") as json_file:
                     tr = json.load(json_file)["RepetitionTime"]
         except (IndexError, KeyError, json.JSONDecodeError) as e:
-            base_msg = "`tr` not specified and could not be extracted since BOLD metadata file could not be opened"
-            base_msg += " due to " + (f"no BOLD metadata files for [TASK: {self._task_info['task']}]"
-                                        if str(type(e).__name__) == "IndexError" else f"{type(e).__name__} - {str(e)}")
+            base_msg = "`tr` not specified and could not be extracted since using the first BOLD metadata file"
+            base_msg += " due to " + (f"there being no BOLD metadata files for [TASK: {self._task_info['task']}]"
+                                      if str(type(e).__name__) == "IndexError" else f"{type(e).__name__} - {str(e)}")
             if self._task_info["condition"]:
                 raise ValueError(f"{subject_header}"
                                  f"{base_msg}" + " The `tr` must be given when `condition` is specified.")
@@ -717,16 +722,18 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                                  f"{base_msg}" + " The `tr` must be given when `high_pass` or `low_pass` is specified.")
             else:
                 LG.warning(f"{subject_header}"
-                           f"{base_msg}" + " `tr` has been set to None and extraction will continue.")
+                           f"{base_msg}" + " `tr` has been set to None but extraction will continue.")
                 tr=None
         
         return tr
 
     def timeseries_to_pickle(self, output_dir: Union[str, os.PathLike], file_name: Optional[str]=None) -> None:
         """
-        **Save BOLD Data**
+        **Save the Extracted Subject Timeseries**
 
-        Saves the timeseries dictionary obtained from running ``get_bold()`` as a pickle file.
+        Saves the extracted timeseries stored in the ``self.subject_timeseries`` dictionary (obtained from running
+        ``self.get_bold()``) as a pickle file. This allows for data persistence and easy conversion back into
+        dictionary form for later use.
 
         Parameters
         ----------
@@ -759,17 +766,18 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                        file_name: Optional[str]=None,
                        **kwargs) -> plt.figure:
         """
-        **Plot BOLD Data**
+        **Plot the Extracted Subject Timeseries**
 
-        Collects files needed to extract timeseries data from NIfTI files for BIDS-compliant datasets.
+        Uses the ``self.subject_timeseries`` to visualize the extracted BOLD timeseries data of  data Regions of
+        Interest (ROIs) or regions for a specific subject and run.
 
         Parameters
         ----------
         subj_id : :obj:`str` or :obj:`int`
-            The subject ID.
+            The ID of the subject.
 
         run : :obj:`int` or :obj:`str`
-            The run to plot.
+            The run ID of the subject to plot.
 
         roi_indx : :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[int]` or :obj:`None`, default=None
             The indices of the parcellation nodes to plot. See "nodes" in ``self.parcel_approach`` for valid

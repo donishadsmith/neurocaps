@@ -10,10 +10,12 @@ def standardize(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
                 file_names: Optional[list[str]]=None) -> dict[str, dict[str, dict[str, np.ndarray]]]:
 
     """
-    **Standardize Subject Timeseries**
+    **Perform Participant-wise Timeseries Standardization**
 
     Standardizes the columns/ROIs of each run independently for all subjects in the subject timeseries. This function
-    uses sample standard deviation, meaning Bessel's correction, `n-1` is used in the denominator.
+    uses sample standard deviation, meaning Bessel's correction, `n-1` is used in the denominator. Note,
+    this function is intended for use  when standardization was not performed during timeseries extraction using
+    ``TimeseriesExtractor.get_bold``, as requested by the user.
 
     Parameters
     ----------

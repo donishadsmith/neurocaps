@@ -10,12 +10,11 @@ def change_dtype(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndar
                  file_names: Optional[list[str]]=None) -> dict[str, dict[str, dict[str, np.ndarray]]]:
 
     """
-    **Change Dtype of Subject Timeseries**
+    **Perform Participant-wise Dtype Conversion**
 
     Changes the dtypes of each participants numpy array. This function uses the ``.astype()`` method from numpy.
-    This function can assist with memory usage. For instance, converting a numpy array from "float64" to "float32"
-    can halve the memory required, which is especially useful when performing analyses on larger datasets on a
-    local machine.
+    This function can help reduce memory usage. For example, converting a numpy array from "float64" to "float32" can
+    halve the memory required, which is particularly useful when analyzing large datasets on a local machine.
 
     Parameters
     ----------

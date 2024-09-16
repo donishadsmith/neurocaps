@@ -384,12 +384,14 @@ class CAP(_CAPGetter):
                  output_dir: Optional[os.PathLike]=None,
                  **kwargs) -> plt.figure:
         """
-        **Perform K-Means Clustering to Generate CAPs**
+        **Perform K-Means Clustering to Identify CAPs**
 
         Concatenates the timeseries of each subject into a single numpy array with dimensions
         (participants x TRs) x ROI and uses ``sklearn.cluster.KMeans`` on the concatenated data. **Note**,
-        ``KMeans`` uses euclidean distance. Additionally, the elbow method is determined using ``KneeLocator`` from
-        the kneed package and the silhouette scores are calculated with scikit-learn's ``silhouette_score``.
+        ``KMeans`` uses euclidean distance. Additionally, the Elbow method is determined using ``KneeLocator`` from
+        the kneed package and the Davies Bouldin, Silhouette, and Variance Ratio methods are calculated using
+        scikit-learn's ``davies_bouldin_score``, ``silhouette_score``, and ``calinski_harabasz_score`` functions,
+        respectively.
 
         Parameters
         ----------
@@ -498,14 +500,14 @@ class CAP(_CAPGetter):
                                                             len(self._n_clusters) == 1]) else self._n_clusters
             # Raise error if n_clusters is a list and no cluster selection method is specified
             if all([len(n_clusters) > 1, self._cluster_selection_method is None]):
-                raise ValueError("`cluster_selection_method` cannot be None since n_clusters is a list.")
+                raise ValueError("`cluster_selection_method` cannot be None since `n_clusters` is a list.")
 
         # Raise error if silhouette_method is requested when n_clusters is an integer
         if all([self._cluster_selection_method is not None, isinstance(self._n_clusters, int)]):
-            raise ValueError("`cluster_selection_method` only valid if n_clusters is a range of unique integers.")
+            raise ValueError("`cluster_selection_method` only valid if `n_clusters` is a range of unique integers.")
 
         if self._n_cores and self._cluster_selection_method is None:
-            raise ValueError("Multiprocessing will not run since `cluster_selection_method` is None.")
+            raise ValueError("Parallel processing will not run since `cluster_selection_method` is None.")
 
         if runs:
             if not isinstance(runs,list): runs = [runs]
@@ -644,7 +646,7 @@ class CAP(_CAPGetter):
                 if self._optimal_n_clusters[group] is None:
                     raise ValueError(f"[GROUP: {group}] - No elbow detected. Try adjusting the sensitivity parameter, "
                                      "`S`, to increase or decrease sensitivity (higher values are less sensitive), "
-                                     "expanding the list of clusters to test, or using another "
+                                     "expanding the list of `n_clusters` to test, or using another "
                                      "`cluster_selection_method`.")
             elif method == "davies_bouldin":
                 # Get minimum for davies bouldin
@@ -714,9 +716,10 @@ class CAP(_CAPGetter):
                           return_df: bool=True, output_dir: Optional[os.PathLike]=None,
                           prefix_file_name: Optional[str]=None) -> dict[str, pd.DataFrame]:
         """
-        **Get CAPs metrics**
+        **Compute Participant-Wise CAP Metrics**
 
-        Creates a single ``pandas.DataFrame`` per CAP metric for all participants. As described by
+        Creates a single ``pandas.DataFrame`` per CAP metric for all participants (with the exception of 
+        "transition_probability" which creates a single dataframe per group). As described by
         Liu et al., 2018 and Yang et al., 2021. The metrics include:
 
          - ``"temporal_fraction"`` : The proportion of total volumes spent in a single CAP over all volumes in a run.
@@ -745,7 +748,7 @@ class CAP(_CAPGetter):
                 target = 1
                 counts = 4
 
-         - ``"transition_frequency"`` : The total number of switches between different CAPs across the entire run.
+         - ``"transition_frequency"`` : The total number of transitions to different CAPs across the entire run.
            ::
 
                 predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
@@ -1100,7 +1103,7 @@ class CAP(_CAPGetter):
                                       list[Literal["regions", "nodes"]]]="regions",
                   show_figs: bool=True, subplots: bool=False, **kwargs) -> seaborn.heatmap:
         """
-        **Generate heatmaps and outer product plots of CAPs**
+        **Generate Heatmaps and Outer Product Plots for CAPs**
 
         This function produces a ``seaborn.heatmap`` for each CAP. If groups were given when the CAP class was
         initialized, plotting will be done for all CAPs for all groups.
@@ -1216,7 +1219,7 @@ class CAP(_CAPGetter):
 
         """
         if not self._parcel_approach:
-            raise AttributeError("`self.parcel_approach` is None. Add parcel_approach using "
+            raise AttributeError("`self.parcel_approach` is None. Add `parcel_approach` using "
                                  "`self.parcel_approach=parcel_approach` to use this method.")
 
         if not hasattr(self,"_caps"):
@@ -2009,8 +2012,8 @@ class CAP(_CAPGetter):
                         # Create temp
                         temp_nifti = tempfile.NamedTemporaryFile(delete=False, suffix=".nii.gz")
                         LG.warning("TypeError raised by neuromaps due to changes in pathlib.py in Python 3.12 "
-                                   "Converting `stat_map` into a temporary nii.gz file (which will be automatically "
-                                   f" deleted afterwards) [TEMP FILE: {temp_nifti.name}]")
+                                   "Converting `statistical map` into a temporary nii.gz file (which will be "
+                                   f"automatically deleted afterwards) [TEMP FILE: {temp_nifti.name}]")
                         # Ensure file is closed
                         temp_nifti.close()
                         # Save temporary nifti to temp file
@@ -2026,7 +2029,7 @@ class CAP(_CAPGetter):
                 surfaces = fetch_fslr()
                 if plot_dict["surface"] not in ["inflated", "veryinflated"]:
                     LG.warning(f"{plot_dict['surface']} is an invalid option for `surface`. Available options "
-                               "include 'inflated' or 'verinflated'. Defaulting to 'inflated'")
+                               "include 'inflated' or 'verinflated'. Defaulting to 'inflated'.")
                     plot_dict["surface"] = "inflated"
                 lh, rh = surfaces[plot_dict["surface"]]
                 lh = str(lh) if not isinstance(lh, str) else lh
@@ -2081,7 +2084,7 @@ class CAP(_CAPGetter):
                    as_html: bool=False,
                    **kwargs) -> Union[px.line_polar, go.Scatterpolar]:
         """
-        **Generate Radar Plots**
+        **Generate Radar Plots for CAPs using Cosine Similarity**
 
         This method identifies networks/regions (across both hemispheres) in each CAP that show high amplitude (high
         activation relative to the mean zero if z-scored) and low amplitude (high deactivation relative to the mean
@@ -2090,7 +2093,7 @@ class CAP(_CAPGetter):
         indicate the indices/ROIs (Regions of Interest) in a specific region (in the left and right hemispheres).
         For instance, if elements at indices 0, 1, 4, and 5 in the cluster centroid are nodes in the Visual Network,
         then a binary vector is generated where those indices are 1, and all others are 0. This binary vector
-        essentially operates like a 1-dimensional binary mask to capture relevant ROIs in a given region.
+        essentially operates as a 1-dimensional binary mask to capture relevant ROIs in a given region.
         ::
 
             import numpy as np

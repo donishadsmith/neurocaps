@@ -83,10 +83,10 @@ def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
             error_message = f"The following sub-keys haven't been detected {missing_subkeys}"
             if call == "TimeseriesExtractor":
                 LG.warning(f"{error_message}. These labels are not needed for timeseries extraction but are needed "
-                           "for future timeseries or CAPs plotting.")
+                           "for plotting.")
             else:
-                raise ValueError(f"{error_message}. Certain sub-keys are needed for plotting. Please check the function "
-                                 "docstring for the required sub-keys and reassign `parcel_approach` using "
+                raise ValueError(f"{error_message}. Certain sub-keys are needed for plotting. Please check the "
+                                 "documentation for the required sub-keys and reassign `parcel_approach` using "
                                  f"`self.parcel_approach`. Please refer to the example structure:\n{custom_example}")
 
         if call == "TimeseriesExtractor" and not os.path.isfile(parcel_approach["Custom"]["maps"]):

@@ -9,11 +9,36 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
                 file_names: Optional[list[str]]=None,
                 save_reduced_dicts: bool=False) -> dict[str, dict[str, dict[str, np.ndarray]]]:
     """
-    **Merge Subject Timeseries**
+    **Merge Participant Timeseries Across Multiple Tasks**
 
     Merge subject timeseries dictionaries or pickle files into the first dictionary or pickle file in the list.
-    Repetition times/frames from the same subject and run are merged together. The merged dictionary will only
-    include subjects that are present in all dictionaries.
+    For each subject, timeseries (numpy arrays) with the same run ID will be concatenated, while unique run IDs will
+    still be included.
+
+    For example, if three subject timeseries are specified in ``subject_timeseries_list``, and subject 1 has:
+
+        - `run-1` in the first dictionary (representing the extracted timeseries from resting-state),
+        - `run-1` and run-2 in the second dictionary (representing the extracted timeseries from a Stroop task),
+        - `run-3` in the third dictionary (representing the extracted timeseries from a N-back task)
+
+    Then subject 1 in the final merged dictionary will contain:
+
+        - `run-1` (concatenated from the first dictionary and second dictionary 2, resting-state and the Stroop task),
+        - `run-2` (from the second dictionary, the Stroop task),
+        - `run-3` (from the third dictionary, the N-back task).
+
+    This function is intended for use in workflows where the final merged dictionary, returned by setting
+    ``return_merged_dict`` to True, can be input into ``CAP.get_caps`` to identify similar CAPs across different tasks
+    or the same task over time. Additionally, the reduced dictionaries — the input dictionaries that only contain the
+    subjects present in the final merged dictionary — are returned by setting ``return_reduced_dicts`` to True. These
+    reduced dictionaries can then be used in ``CAP.calculate_metrics`` to compute participant-wise CAP metrics for each
+    task.
+
+    This facilitates analysis of the temporal dynamics of similar CAPs across tasks or the same task at different
+    time points.
+
+    **Note**, Only subjects with at least one functional run present in all dictionaries are included in the final
+    merged dictionary.
 
     Parameters
     ----------

@@ -42,6 +42,13 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.16.5] - 2024-09-16
+- This update exclusively relates to improving documentation as well as improving the language in the error and
+information messages for clarity. For instance, when a subject is skipped during timeseries extraction, instead of
+`"[SUBJECT: 01 | SESSION: 002 | TASK: rest] Processing skipped: {message}"` it is now
+`"[SUBJECT: 01 | SESSION: 002 | TASK: rest] Timeseries Extraction Skipped: {message}"`. Language in primarily in some
+function descriptions have also been included.
+
 ## [0.16.4] - 2024-09-16
 ### ♻ Changed
 - All uses of `print` and `warnings.warn` in package replaced with `logging.info` and `logging.warning`. The internal

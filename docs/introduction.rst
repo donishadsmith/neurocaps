@@ -9,7 +9,7 @@
    :alt: Python Versions
 
 .. image:: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal
-   :target: https://doi.org/10.5281/zenodo.13766671
+   :target: https://doi.org/10.5281/zenodo.13770397
    :alt: DOI
 
 .. image:: https://img.shields.io/badge/Source%20Code-neurocaps-purple
@@ -40,7 +40,7 @@ Citing
 ======
 ::
   
-  Smith, D. (2024). neurocaps. Zenodo. https://doi.org/10.5281/zenodo.13766671
+  Smith, D. (2024). neurocaps. Zenodo. https://doi.org/10.5281/zenodo.13770397
 
 Usage
 =====
@@ -153,7 +153,7 @@ Main features for ``CAP`` includes:
           counts = 4
 
 
-    - *Transition Frequency:* The number of switches between different CAPs across the entire run.
+    - *Transition Frequency:* The number of transitions between different CAPs across the entire run.
       ::
 
           predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]

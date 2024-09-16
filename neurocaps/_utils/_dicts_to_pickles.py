@@ -23,7 +23,7 @@ def _dicts_to_pickles(output_dir, dict_list, call, file_names=None, message=None
     else: save_file_names = [f"{os.path.splitext(os.path.basename(name).rstrip())[0].rstrip()}.pkl"
                              for name in file_names]
 
-    if message is None: message = "Length of file names must be the same length as `subject_timeseries_list`."
+    if message is None: message = "Length of `file_names` list  must be the same length as `subject_timeseries_list`."
 
     if call == "merge" and save_reduced_dicts is False: dict_list = {"merged": copy.deepcopy(dict_list["merged"])}
 
