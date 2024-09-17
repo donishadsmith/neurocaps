@@ -76,8 +76,11 @@ def _logger(name, level = logging.INFO, flush=False):
     return logger
 
 ```
+- **Note**: The logger is initialized within the [internal time series extraction function]((https://github.com/donishadsmith/neurocaps/blob/900bf7a89d3ff16a8dd91310c8d177c5b5d6de8a/neurocaps/_utils/_timeseriesextractor_internals/_extract_timeseries.py#L12)) to ensure that each child
+process has its own independent logger. This guarantees that subject-level information and warnings will be properly
+logged, regardless of whether parallel processing is used or not.
 
-The logger can be configured by user doing:
+For non-parallel processing, the logger can be configured by a user with a command like the following:
 
 ```python
 logging.basicConfig(
@@ -87,6 +90,7 @@ logging.basicConfig(
               logging.FileHandler('info.out')]
     )
 ```
+
 - Subject-specific messages are now more compact.
 
 **OLD:**
