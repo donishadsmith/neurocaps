@@ -42,6 +42,22 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.17.0] - 2024-09-21
+### 🚀 New/Added
+- In  `CAP.caps2radar`, "round" (rounds to three decimal points by default) and "linewidth" kwargs added.
+### ♻ Changed
+- In `TimeseriesExtractor`, `parcel_approach` and `fwhm` have changed positions. `parcel_approach` is second in the
+list and `fwhm` is seventh in the list.
+- `flush_print` changed to `flush`.
+- In  `CAP.caps2radar`, both `method` and `alpha` removed. Only the traditional cosine similarity calculation is
+computed.
+- In `CAP.calculate_metrics`, calculation for counts changed to abide by the formula,
+temporal fraction = (persistence * counts)/total volumes which can be found in the supplemental of 
+Yang et al., 2021](https://doi.org/10.1016/j.neuroimage.2021.118193). Counts is now the frequency of initiations
+of a specific CAP.
+### 💻 Metadata
+- Version directives less than 0.16.0 removed.
+
 ## [0.16.5] - 2024-09-16
 - This update exclusively relates to improving documentation as well as improving the language in the error and
 information messages for clarity. For instance, when a subject is skipped during timeseries extraction, instead of

@@ -434,7 +434,7 @@ def test_dummy_scans_auto():
                                     use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01,
                                     confound_names=confounds, dummy_scans={"auto": True})
 
-    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, flush_print=True)
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, flush=True)
     assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
     assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 37
 
@@ -456,7 +456,7 @@ def test_dummy_scans_auto():
                                     use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01,
                                     confound_names=confounds, dummy_scans={"auto": True, "min":4, "max":6})
 
-    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, flush_print=True)
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, flush=True)
     assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
     assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 36
 
@@ -466,7 +466,7 @@ def test_dummy_scans_auto():
                                     use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01,
                                     confound_names=confounds, dummy_scans={"auto": True, "min":4, "max":6})
 
-    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, flush_print=True)
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, flush=True)
     assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
     assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 36
 
@@ -478,7 +478,7 @@ def test_dummy_scans_auto():
                                     use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01,
                                     confound_names=confounds, dummy_scans={"auto": True, "min":4, "max":6})
 
-    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, flush_print=True)
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, flush=True)
     assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
     assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 34
 
@@ -488,7 +488,7 @@ def test_dummy_scans_auto():
                                     use_confounds=True, detrend=True, low_pass=0.15, high_pass=0.01,
                                     confound_names=confounds, dummy_scans={"auto": True})
 
-    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, flush_print=True)
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, flush=True)
     assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
     assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 40
 

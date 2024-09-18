@@ -148,8 +148,6 @@ class CAP(_CAPGetter):
                 }
             }
 
-        .. versionadded:: 0.12.0
-
     inertia : :obj:`dict[str, dict[str, float]]`
         If ``cluster_selection_method`` is "elbow", this property will be a nested dictionary containing the
         group name, cluster number, and inertia values. Is None until ``self.get_caps()`` is used. The structure is as
@@ -178,7 +176,6 @@ class CAP(_CAPGetter):
                 }
             }
 
-
     variance_ratio : :obj:`dict[str, dict[str, float]]`
         If ``cluster_selection_method`` is "variance_ratio", this property will be a nested dictionary containing
         the group name, cluster number, and variance ratio scores. Is None until ``self.get_caps()`` is used. The
@@ -192,8 +189,6 @@ class CAP(_CAPGetter):
                     "4": float,
                 }
             }
-
-        .. versionadded:: 0.12.0
 
     optimal_n_clusters : :obj:`dict[str, dict[int]]`
         If ``cluster_selection_method`` is not None, this property is a nested dictionary containing the group
@@ -427,8 +422,6 @@ class CAP(_CAPGetter):
         cluster_selection_method : {"elbow", "davies_bouldin", "silhouette", "variance_ratio"} or :obj:`None`, default=None
             Method to find the optimal number of clusters. Options are "elbow", "davies_bouldin", "silhouette", and
             "variance_ratio".
-
-            .. versionadded:: 0.12.0 "davies_bouldin" and "variance_ratio"
 
         random_state : :obj:`int` or :obj:`None`, default=None
             The random state to use for ``sklearn.cluster.KMeans``. Ensures reproducible results.
@@ -702,7 +695,8 @@ class CAP(_CAPGetter):
             self._caps[group].update({f"CAP-{state_number}": state_vector
                                       for state_number, state_vector in cluster_centroids})
 
-    def calculate_metrics(self, subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.PathLike],
+    def calculate_metrics(self,
+                          subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.PathLike],
                           tr: Optional[float]=None,
                           runs: Optional[Union[int, str, list[int], list[str]]]=None,
                           continuous_runs: bool=False,
@@ -713,7 +707,8 @@ class CAP(_CAPGetter):
                               list[Literal["temporal_fraction", "persistence","counts",
                                            "transition_frequency", "transition_probability"]]
                               ]=["temporal_fraction", "persistence", "counts", "transition_frequency"],
-                          return_df: bool=True, output_dir: Optional[os.PathLike]=None,
+                          return_df: bool=True,
+                          output_dir: Optional[os.PathLike]=None,
                           prefix_file_name: Optional[str]=None) -> dict[str, pd.DataFrame]:
         """
         **Compute Participant-Wise CAP Metrics**
@@ -723,6 +718,10 @@ class CAP(_CAPGetter):
         Liu et al., 2018 and Yang et al., 2021. The metrics include:
 
          - ``"temporal_fraction"`` : The proportion of total volumes spent in a single CAP over all volumes in a run.
+           Additionally, in the supplementary material of Yang et al., the stated relationship between
+           temporal fraction, counts, and persistence is temporal fraction = (persistence*counts)/total volumes
+           If persistence and temporal fraction is converted into time units,
+           then temporal fraction = (persistence*counts)/(total volumes * TR)
            ::
 
                 predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
@@ -736,17 +735,20 @@ class CAP(_CAPGetter):
                 predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
                 target = 1
                 # Sequences for 1 are [1] and [1,1,1]
-                persistence = (1 + 3)/2 # Average number of frames
+                persistence = (1 + 3)/2 # Average number of frames = 2
                 tr = 2
                 if tr:
-                    persistence = ((1 + 3)/2)*2 # Turns average frames into average time
+                    persistence = ((1 + 3)/2)*2 # Turns average frames into average time = 4
 
-         - ``"counts"`` : The frequency of each CAP observed in a run.
+         - ``"counts"`` : The total number of initiations of a specific CAP across an entire run. An initiation is
+           defined as the first occurrence of a CAP. If the same CAP is maintained in contiguous segment
+           (indicating stability), it is still counted as a single initiation. 
            ::
 
                 predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
                 target = 1
-                counts = 4
+                # Initiations of CAP-1 occur at indices 0 and 2
+                counts = 2
 
          - ``"transition_frequency"`` : The total number of transitions to different CAPs across the entire run.
            ::
@@ -770,7 +772,6 @@ class CAP(_CAPGetter):
                 # There is only one 1 -> 2 transition.
                 transition_probability = 1/3
                 # 1 -> 1 has a probability of 1/3 and 1 -> 3 has a probability of 1/3
-
 
         Parameters
         ----------
@@ -826,6 +827,9 @@ class CAP(_CAPGetter):
             "counts", "transition_frequency", and "transition_probability".
 
             .. versionadded:: 0.16.2 "transition_probabilities"
+            .. versionchanged:: 0.16.6 calculation for "counts" has changed to align with the equation,
+               temporal fraction = (persistence*counts)/total volumes, which can be found in the supplemental
+               material of Yang et al., 2022
 
         return_df : :obj:`str`, default=True
             If True, returns ``pandas.DataFrame`` inside a ``dict``, where the key corresponds to the
@@ -993,7 +997,7 @@ class CAP(_CAPGetter):
 
         for subj_id, group, curr_run in distributed_list:
             group_name = group.replace(" ","_")
-            if "temporal_fraction" in metrics or "counts" in metrics:
+            if "temporal_fraction" in metrics:
                 # Get frequency;
                 frequency_dict = {key: np.where(predicted_subject_timeseries[subj_id][curr_run] == key,1,0).sum()
                                   for key in range(1, group_cap_counts[group] + 1)}
@@ -1008,23 +1012,26 @@ class CAP(_CAPGetter):
                     new_row = [subj_id, group_name, curr_run] + [items for items in proportion_dict.values()]
                     df_dict["temporal_fraction"].loc[len(df_dict["temporal_fraction"])] = new_row
 
-                if "counts" in metrics:
-                    # Populate Dataframe
-                    new_row = [subj_id, group_name, curr_run] + [items for items in frequency_dict.values()]
-                    df_dict["counts"].loc[len(df_dict["counts"])] = new_row
+            if "counts" in metrics:
+                count_dict = {}
+                for target in cap_numbers:
+                    _ , segments = self._segments(target, predicted_subject_timeseries[subj_id][curr_run])
+                    count_dict.update({target: segments})
+
+                # Replace zeros with nan for groups with less caps than the group with the max caps
+                if max(cap_numbers) > group_cap_counts[group]:
+                    for i in range(group_cap_counts[group] + 1, max(cap_numbers) + 1): count_dict.update({i: float("nan")})
+
+                # Populate Dataframe
+                new_row = [subj_id, group_name, curr_run] + [items for items in count_dict.values()]
+                df_dict["counts"].loc[len(df_dict["counts"])] = new_row
 
             if "persistence" in metrics:
                 # Initialize variable
                 persistence_dict = {}
                 # Iterate through caps
                 for target in cap_numbers:
-                    # Binary representation of numpy array - if [1,2,1,1,1,3] and target is 1, then it is [1,0,1,1,1,0]
-                    binary_arr = np.where(predicted_subject_timeseries[subj_id][curr_run] == target,1,0)
-                    # Get indices of values that equal 1; [0,2,3,4]
-                    target_indices = np.where(binary_arr == 1)[0]
-                    # Count the transitions, indices where diff > 1 is a transition; diff of indices = [2,1,1];
-                    # binary for diff > 1 = [1,0,0]; thus, segments = transitions + first_sequence(1) = 2
-                    segments = np.where(np.diff(target_indices, n=1) > 1,1,0).sum() + 1
+                    binary_arr, segments = self._segments(target, predicted_subject_timeseries[subj_id][curr_run])
                     # Sum of ones in the binary array divided by segments, then multiplied by 1 or the tr; segment is
                     # always 1 at minimum due to + 1; np.where(np.diff(target_indices, n=1) > 1, 1,0).sum() is 0 when empty or the condition isn't met
                     persistence_dict.update({target: (binary_arr.sum()/segments) * (tr if tr else 1)})
@@ -1096,12 +1103,28 @@ class CAP(_CAPGetter):
 
         if return_df: return df_dict
 
-    def caps2plot(self, output_dir: Optional[os.PathLike]=None, suffix_title: Optional[str]=None,
+    @staticmethod
+    def _segments(target, timeseries):
+        # Binary representation of numpy array - if [1,2,1,1,1,3] and target is 1, then it is [1,0,1,1,1,0]
+        binary_arr = np.where(timeseries == target,1,0)
+        # Get indices of values that equal 1; [0,2,3,4]
+        target_indices = np.where(binary_arr == 1)[0]
+        # Count the transitions, indices where diff > 1 is a transition; diff of indices = [2,1,1];
+        # binary for diff > 1 = [1,0,0]; thus, segments = transitions + first_sequence(1) = 2
+        segments = np.where(np.diff(target_indices, n=1) > 1,1,0).sum() + 1
+
+        return binary_arr, segments
+
+    def caps2plot(self,
+                  output_dir: Optional[os.PathLike]=None,
+                  suffix_title: Optional[str]=None,
                   plot_options: Union[Literal["outer_product", "heatmap"],
                                       list[Literal["outer_product", "heatmap"]]]="outer_product",
                   visual_scope: Union[Literal["regions", "nodes"],
                                       list[Literal["regions", "nodes"]]]="regions",
-                  show_figs: bool=True, subplots: bool=False, **kwargs) -> seaborn.heatmap:
+                  show_figs: bool=True,
+                  subplots: bool=False,
+                  **kwargs) -> seaborn.heatmap:
         """
         **Generate Heatmaps and Outer Product Plots for CAPs**
 
@@ -1614,18 +1637,12 @@ class CAP(_CAPGetter):
         save_plots : :obj:`bool`, default=True
             If True, plots are saves as png images. For this to be used, ``output_dir`` must be specified.
 
-            .. versionadded:: 0.13.0
-
         return_df : :obj:`bool`, default=False
             If True, returns a dictionary with a correlation matrix for each group.
-
-            .. versionadded:: 0.13.0
 
         save_df : :obj:`bool`, default=False,
             If True, saves the correlation matrix contained in the DataFrames as csv files. For this to be used,
             ``output_dir`` must be specified.
-
-            .. versionadded:: 0.13.0
 
         kwargs : :obj:`dict`
             Keyword arguments used when modifying figures. Valid keywords include:
@@ -1782,8 +1799,6 @@ class CAP(_CAPGetter):
 
             This method is applied before the `fwhm` method.
 
-            .. versionadded:: 0.13.2
-
         Returns
         -------
         `NifTI1Image`
@@ -1813,7 +1828,8 @@ class CAP(_CAPGetter):
                     save_name = f"{group.replace(' ', '_')}_{cap.replace('-', '_')}.nii.gz"
                 nib.save(stat_map, os.path.join(output_dir,save_name))
 
-    def caps2surf(self, output_dir: Optional[os.PathLike]=None,
+    def caps2surf(self,
+                  output_dir: Optional[os.PathLike]=None,
                   suffix_title: Optional[str]=None,
                   show_figs: bool=True,
                   fwhm: Optional[float]=None,
@@ -1912,8 +1928,6 @@ class CAP(_CAPGetter):
             - "remove_subcortical" : A list or array of label ids as integers of the subcortical regions in the parcellation.
 
             This method is applied before the `fwhm` method.
-
-            .. versionadded:: 0.13.2
 
         kwargs : :obj:`dict`
             Additional parameters to pass to modify certain plot parameters. Options include:
@@ -2075,8 +2089,6 @@ class CAP(_CAPGetter):
                 plt.show(fig) if show_figs else plt.close(fig)
 
     def caps2radar(self,
-                   method: Literal["traditional", "selective", "combined"]="traditional",
-                   alpha: float=0.5,
                    output_dir: Optional[os.PathLike]=None,
                    suffix_title: Optional[str]=None,
                    show_figs: bool=True,
@@ -2086,102 +2098,76 @@ class CAP(_CAPGetter):
         """
         **Generate Radar Plots for CAPs using Cosine Similarity**
 
-        This method identifies networks/regions (across both hemispheres) in each CAP that show high amplitude (high
-        activation relative to the mean zero if z-scored) and low amplitude (high deactivation relative to the mean
-        zero if z-scored) by using cosine similarity. This is accomplished by extracting the cluster centroids (CAPs),
-        a 1 x ROI vector, and generating a binary vector (a vector 1 x ROI vector consisting of 0's and 1's) where 1's
-        indicate the indices/ROIs (Regions of Interest) in a specific region (in the left and right hemispheres).
-        For instance, if elements at indices 0, 1, 4, and 5 in the cluster centroid are nodes in the Visual Network,
-        then a binary vector is generated where those indices are 1, and all others are 0. This binary vector
-        essentially operates as a 1-dimensional binary mask to capture relevant ROIs in a given region.
-        ::
+        Identifies networks or regions within each CAP (Co-Activation Pattern) that exhibit high or low amplitude 
+        using cosine similarity. High amplitude indicates strong activation relative to the mean (zero if z-scored), 
+        while low amplitude indicates strong deactivation relative to the mean (zero if z-scored).
 
-            import numpy as np
-            # Nodes in order of their label ID, "LH_Vis1" is the 0th index in the parcellation
-            # but has a label ID of 1, and RH_SomSot2 is in the 7th index but has a label ID
-            # of 8 in the parcellation.
-            nodes = ["LH_Vis1", "LH_Vis2", "LH_SomSot1", "LH_SomSot2",
-                     "RH_Vis1", "RH_Vis2", "RH_SomSot1", "RH_SomSot2"]
-            # Binary representation of the nodes in Vis, essentially acts as
-            # a mask isolating the modes for for Vis
-            binary_vector = [1,1,0,0,1,1,0,0]
-            # Cluster centroid for CAP 1
-            cap_1_cluster_centroid = [-0.3, 1.5, 2, -0.2, 0.7, 1.3, -0.5, 0.4]
-            # Dot product is the sum of all the values here [-0.3, 1.5, 0, 0, 0.7, 1.3, 0, 0]
-            dot_product = np.dot(cap_1_cluster_centroid, binary_vector)
+        The process involves the following steps:
 
-        Once, the dot product of the cluster centroid and binary vector is then calculated it is normalized by the
-        product of the magnitudes (Euclidean norms) of the cluster centroid and the binary vector to restrict the range
-        to -1 and 1, hence cosine similarity.
-        ::
+            1. **Extract Cluster Centroids**:
 
-            norm_cap_1_cluster_centroid = np.linalg.norm(cap_1_cluster_centroid)
-            norm_binary_vector = np.linalg.norm(binary_vector)
-            # Cosine similarity between CAP 1 and the visual network
-            cosine_similarity = dot_product/(norm_cap_1_cluster_centroid * norm_binary_vector)
+              - Each CAP is represented by a cluster centroid, which is a 1 x ROI (Region of Interest) vector.
 
-        Cosine similarities notably above zero suggest that many nodes in that network/region are highly activating
-        together, cosine similarities around zero suggest that nodes in that network/region are co-activating and
-        deactivating together, and cosine similarities notably below zero suggest that many nodes in that
-        network/region are deactivating together.
+            2. **Generate Binary Vectors**:
 
-        This method is a useful quantitative method to characterize CAPs based on nodes in region/networks that
-        display high co-activation or high co-deactivation. For instance, if the dorsal attention network (DAN) has the
-        highest cosine similarity and the ventral attention network (VAN) has a lowest cosine similarity, then that cap
-        can be described as (DAN +/VAN -).
+              - For each region create a binary vector (1 x ROI) where `1` indicates that the ROI is part of the specific
+                region and `0` otherwise.
+              - In this example, the binary vector acts as a 1D mask to isolate ROIs in the Visual Network by setting
+                the corresponding indices to `1`.
 
-        **Note, the radar plots only display positive values. The "Low Amplitude" group are negative cosine similarity
-        (below zero); however, the absolute value was taken to make them positive so that the radar plot starts at 0
-        and direct magnitude comparisons between the "High Amplitude" (positive cosine similarity above zero) and
-        "Low Amplitude" groups are easier to see.**
+                ::
+                
+                    import numpy as np
+                        
+                    # Define nodes with their corresponding label IDs
+                    nodes = ["LH_Vis1", "LH_Vis2", "LH_SomSot1", "LH_SomSot2",
+                            "RH_Vis1", "RH_Vis2", "RH_SomSot1", "RH_SomSot2"]
+                    # Binary mask for the Visual Network (Vis)
+                    binary_vector = [1, 1, 0, 0, 1, 1, 0, 0]
+                    # Example cluster centroid for CAP 1
+                    cap_1_cluster_centroid = [-0.3, 1.5, 2.0, -0.2, 0.7, 1.3, -0.5, 0.4]
+                    # Compute dot product between the cluster centroid and binary vector
+                    dot_product = np.dot(cap_1_cluster_centroid, binary_vector)
+
+
+            3. **Calculate Cosine Similarity**:
+
+              - Normalize the dot product by the product of the Euclidean norms of the cluster centroid and the binary
+                vector to obtain the cosine similarity:
+
+                ::
+
+                    norm_cap_1 = np.linalg.norm(cap_1_cluster_centroid)
+                    norm_binary = np.linalg.norm(binary_vector)
+                    # Cosine similarity between CAP 1 and the Visual Network
+                    cosine_similarity = dot_product / (norm_cap_1 * norm_binary)
+
+
+              - Cosine similarity values range between -1 and 1:
+
+                 - > 0: Indicates that many nodes in the region are highly activating together.
+                 - = 0: Suggests that nodes are co-activating and co-deactivating simultaneously.
+                 - < 0: Implies that many nodes in the region are deactivating together.
+
+
+            4. **Generate Radar Plots of Each CAPs**:
+
+              - Regions with cosine similarity values > 0 are labeled as "High Amplitude", while regions with
+                cosine similarities < 0 are labeled as "Low Amplitude". Regions with a cosine similarity of 0
+                are neither classified or visualized on the radar plots.
+
+        Cosine similarity scores can be used to quantitively describe each CAP based on network activations. For
+        instance, if the Dorsal Attention Network (DAN) has the highest absolute cosine similarity score, this would
+        indicate that the DAN is the region that the CAP us most engaging. Additionally, if the cosine
+        similarity score is negative then the CAP can be describe as DAN -.
+    
+        **Note**: Radar plots visualize only positive cosine similarity values. For the "Low Amplitude" group
+        (negative cosine similarities), the absolute values are used to convert them to positive. This approach ensures
+        that the radar plot starts at 0 and allows for direct magnitude comparisons between the "High Amplitude"
+        (positive cosine similarity) and "Low Amplitude" groups.
 
         Parameters
         ----------
-        method : {"traditional", "selective", "combined"}, default="traditional"
-            Determines the method to use for norming the dot product when calculating the cosine similarity.
-            Options are:
-
-            - "traditional": Calculates cosine similarity by considering the network's/regions's global contribution to
-              the CAP. This method uses the entire cluster centroid vector for normalization, making the cosine
-              similarity reflect the network's/region's dominance relative to all networks/regions in the CAP.
-              For instance, if a network/region, has a high positive cosine similarity, then the nodes within the
-              network/region are highly co-activating relative to the overall activation pattern of all
-              networks/regions in the CAP.
-            - "selective": Focuses on the internal consistency of nodes within a specific network/region. Here, only the
-              nodes within the network are considered for normalization, allowing the cosine similarity to reflect
-              how strongly the nodes within the network co-activate or co-deactivate while ignoring its overall
-              contribution to the CAP.
-            - "combined": Integrates both the "traditional" and "selective" methods by using a weighted approach.
-              The final cosine similarity is a combination of both methods, with the weight determined by the ``alpha``
-              parameter.
-
-            .. versionadded:: 0.14.0
-
-        alpha : :obj:`float`, default=0.5
-            Only used if ``method`` is set to "combined". This value determines the relative contributions of the
-            "traditional" and "selective" methods in the final cosine similarity calculation. It must be between 0
-            and 1. A value closer to 1 gives more weight to the "traditional" method, while a value closer to 0
-            gives more weight to the "selective" method. The calculation is
-            ::
-
-                # Calculate dot product
-                dot_product = np.dot(cap_vector, binary_vector)
-                # Calculate norm binary vector
-                norm_binary_vector = np.linalg.norm(binary_vector)
-
-                # Calculate traditional norm
-                norm_cap_vector_traditional = np.linalg.norm(cap_vector)
-                cosine_similarity_traditional = dot_product/(norm_cap_vector_traditional * norm_binary_vector)
-
-                # Calculate selective norm, by only selecting the values from nodes in a specific network/region
-                norm_cap_vector_selective = np.linalg.norm(cap_vector[binary_vector == 1])
-                cosine_similarity_selective = dot_product/(norm_cap_vector_selective * norm_binary_vector)
-
-                # Use alpha to determine contributions of traditional and selective method to cosine similarity
-                cosine_similarity = (cosine_similarity_traditional * alpha) + (cosine_similarity_selective* (1-alpha))
-
-            .. versionadded:: 0.14.0
-
         output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
             Directory to save plots to. The directory will be created if it does not exist. Outputs as png file.
 
@@ -2211,12 +2197,13 @@ class CAP(_CAPGetter):
                 If ``output_dir`` provided, controls resolution of image when saving. Serves a similar purpose as dpi.
             - savefig_options : :obj:`dict[str]`, default={"width": 3, "height": 3, "scale": 1}
                 If ``output_dir`` provided, controls the width (in inches), height (in inches), and scale of the
-                plot.
-                The height and width are multiplied by the dpi.
+                plot. The height and width are multiplied by the dpi.
             - height : :obj:`int`, default=800
                 Height of the plot. Value is multiplied by the dpi when saving.
             - width : :obj:`int`, defualt=1200
                 Width of the plot. Value is multiplied by the dpi when saving.
+            - round :obj:`int` or None, default=3,
+                The number of decimal points to round the cosine similarity values to prior to plotting.
             - line_close : :obj:`bool`, default=True
                 Whether to close the lines
             - bgcolor : :obj:`str`, default="white"
@@ -2225,6 +2212,8 @@ class CAP(_CAPGetter):
                 Controls size of the dots when markers are used.
             - connectgaps : :obj:`bool`, default=True
                 If ``use_scatterpolar=True``, controls if missing values are connected.
+            - linewidth : :obj:`int`, default = 2
+                The width of the line connecting the values if ``use_scatterpolar=True``.
             - opacity : :obj:`float`, default=0.5,
                 If ``use_scatterpolar=True``, sets the opacity of the trace.
             - fill : :obj:`str`, default="none".
@@ -2291,17 +2280,13 @@ class CAP(_CAPGetter):
         if not hasattr(self,"_caps"):
             raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` "
                                  "first.")
-
-        if method == "combined" and (alpha <= 0 or alpha >= 1):
-            raise ValueError("`alpha` must be a float between 0 and 1.")
-
-        valid_methods = ["traditional", "selective", "combined"]
-        if not isinstance(method, str) or method not in valid_methods:
-            formatted_string = ', '.join(["'{a}'".format(a=x) for x in valid_methods])
-            raise ValueError(f"Valid options for methods are {formatted_string}.")
+        
+        if not self._standardize:
+            LG.warning("For the most accurate interpretation, the matrix subjected to kmeans clustering in "
+                       "`self.get_caps` should be standardized.")
 
         defaults = {"scale": 2, "height": 800, "width": 1200, "line_close": True, "bgcolor": "white", "fill": "none",
-                    "scattersize": 8, "connectgaps": True, "opacity": 0.5,
+                    "round": 3, "scattersize": 8, "connectgaps": True, "opacity": 0.5, "linewidth": 2,
                     "radialaxis": {"showline": False, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)",
                                    "gridcolor": "rgba(0, 0, 0, 0.25)","ticks": "outside",
                                    "tickfont": {"size": 14, "color": "black"}},
@@ -2345,38 +2330,20 @@ class CAP(_CAPGetter):
 
                     # Dot product remains the same regardless of the method used
                     dot_product = np.dot(cap_vector, binary_vector)
-                    # Calculate norm_binary_vector
+                    # Calculate norms
                     norm_binary_vector = np.linalg.norm(binary_vector)
+                    norm_cap_vector = np.linalg.norm(cap_vector)
 
-                    warning_msg = (f"[GROUP: {group} | REGION: {region} | CAP: {cap} | METHOD: {method}] - "
-                                   "Division by zero error when calculating {0} cosine similarity. Setting cosine "
+                    # Should be a very rare instance in this case
+                    warning_msg = (f"[GROUP: {group} | REGION: {region} | CAP: {cap}] - "
+                                   "Division by zero error when calculating cosine similarity. Setting cosine "
                                    "similarity to zero.")
-
-                    if method in ["traditional", "selective"]:
-                        # Use all nodes if traditional or use region specific nodes if selective
-                        norm_cap_vector = np.linalg.norm(cap_vector) if method == "traditional" else np.linalg.norm(cap_vector[binary_vector == 1])
-                        try:
-                            cosine_similarity = dot_product/(norm_cap_vector * norm_binary_vector)
-                        except ZeroDivisionError:
-                            LG.warning(warning_msg.format(method))
-                            cosine_similarity = 0
-                    else:
-                        # Calculate traditional norm
-                        norm_cap_vector_traditional = np.linalg.norm(cap_vector)
-                        # Calculate selective norm, by only selecting the values from nodes in a specific network/region
-                        norm_cap_vector_selective = np.linalg.norm(cap_vector[binary_vector == 1])
-                        try:
-                            cosine_similarity_traditional = dot_product/(norm_cap_vector_traditional * norm_binary_vector)
-                        except ZeroDivisionError:
-                            LG.warning(warning_msg.format("traditional"))
-                            cosine_similarity_traditional = 0
-                        try:
-                            cosine_similarity_selective = dot_product/(norm_cap_vector_selective * norm_binary_vector)
-                        except ZeroDivisionError:
-                            LG.warning(warning_msg.format("selective"))
-                            cosine_similarity_selective = 0
-                        # Use alpha to determine contributions of traditional and selective method to cosine similarity
-                        cosine_similarity = (cosine_similarity_traditional * alpha) + (cosine_similarity_selective * (1-alpha))
+                    
+                    try:
+                        cosine_similarity = dot_product/(norm_cap_vector * norm_binary_vector)
+                    except ZeroDivisionError:
+                        LG.warning(warning_msg)
+                        cosine_similarity = 0
 
                     # Store value in dict
                     radar_dict[cap].append(cosine_similarity)
@@ -2389,38 +2356,27 @@ class CAP(_CAPGetter):
             for cap in df.columns[df.columns != "regions"]:
                 groups = df[cap].apply(lambda x: "High Amplitude" if x > 0 else ("Low Amplitude" if x < 0 else np.nan))
                 df[cap] = df[cap].abs()
+                if plot_dict["round"]: df[cap] = df[cap].apply(lambda x: round(x, plot_dict["round"]))
 
                 if use_scatterpolar:
-                    # Get high amplitude and low amplitude data
-                    regions = df["regions"].values
-                    # Set non high amplitude values as nan and low amplitude values as nan
-                    high_amplitude_values = np.array([np.nan]*len(regions))
-                    low_amplitude_values = np.array([np.nan]*len(regions))
-                    high_amp_indxs = np.where(groups.values == "High Amplitude")
-                    high_amplitude_values[high_amp_indxs] = df[cap].values[high_amp_indxs]
-                    low_amp_indxs = np.where(groups.values == "Low Amplitude")
-                    low_amplitude_values[low_amp_indxs] = df[cap].values[low_amp_indxs]
-
-                    # Add high amplitude and low amplitude data as traces
+                    # Initialize figure
                     fig = go.Figure(layout=go.Layout(width=plot_dict["width"], height=plot_dict["height"]))
-                    fig.add_trace(go.Scatterpolar(
-                    r=list(high_amplitude_values),
-                    theta=regions,
-                    connectgaps=plot_dict["connectgaps"],
-                    name="High Amplitude",
-                    opacity=plot_dict["opacity"],
-                    marker=dict(color=plot_dict["color_discrete_map"]["High Amplitude"],
-                                size=plot_dict["scattersize"])))
+                    regions = df["regions"].values
 
-                    fig.add_trace(go.Scatterpolar(
-                    r=list(low_amplitude_values),
-                    theta=regions,
-                    name="Low Amplitude",
-                    connectgaps=plot_dict["connectgaps"],
-                    opacity=plot_dict["opacity"],
-                    marker=dict(color=plot_dict["color_discrete_map"]["Low Amplitude"],
-                                size=plot_dict["scattersize"])))
+                    for i in ["High Amplitude", "Low Amplitude"]:
+                        # Set other group values to np.nan
+                        values = np.where(groups == i, df[cap].values, np.nan)
 
+                        # Add high amplitude and low amplitude data as traces
+                        fig.add_trace(go.Scatterpolar(
+                        r=list(values),
+                        theta=regions,
+                        connectgaps=plot_dict["connectgaps"],
+                        name=i,
+                        opacity=plot_dict["opacity"],
+                        marker=dict(color=plot_dict["color_discrete_map"][i],
+                                    size=plot_dict["scattersize"]),
+                        line = dict(color=plot_dict["color_discrete_map"][i], width = plot_dict["linewidth"])))
                 else:
                     fig = px.line_polar(df, r=cap, theta="regions", line_close=plot_dict["line_close"], color=groups,
                                         width=plot_dict["width"], height=plot_dict["height"],

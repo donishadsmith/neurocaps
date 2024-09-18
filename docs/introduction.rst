@@ -9,7 +9,7 @@
    :alt: Python Versions
 
 .. image:: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal
-   :target: https://doi.org/10.5281/zenodo.13770397
+   :target: https://doi.org/10.5281/zenodo.13824494
    :alt: DOI
 
 .. image:: https://img.shields.io/badge/Source%20Code-neurocaps-purple
@@ -40,7 +40,7 @@ Citing
 ======
 ::
   
-  Smith, D. (2024). neurocaps. Zenodo. https://doi.org/10.5281/zenodo.13770397
+  Smith, D. (2024). neurocaps. Zenodo. https://doi.org/10.5281/zenodo.13824494
 
 Usage
 =====
@@ -145,13 +145,15 @@ Main features for ``CAP`` includes:
           if tr:
               persistence = ((1 + 3) * 2)/2 # Turns average frames into average time
 
-    - *Counts:* The frequency of each CAP observed in a run.
+    - *Counts:* The total number of initiations of a specific CAP across an entire run. An initiation is
+      defined as the first occurrence of a CAP. If the same CAP is maintained in contiguous segment
+      (indicating stability), it is still counted as a single initiation. 
       ::
 
           predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
           target = 1
-          counts = 4
-
+          # Initiations of CAP-1 occur at indices 0 and 2
+          counts = 2
 
     - *Transition Frequency:* The number of transitions between different CAPs across the entire run.
       ::
@@ -181,23 +183,20 @@ Main features for ``CAP`` includes:
   ::
 
       import numpy as np
-      # Nodes in order of their label ID, "LH_Vis1" is the 0th index in the parcellation
-      # but has a label ID of 1, and RH_SomSot2 is in the 7th index but has a label ID
-      # of 8 in the parcellation.
+      # Define nodes with their corresponding label IDs
       nodes = ["LH_Vis1", "LH_Vis2", "LH_SomSot1", "LH_SomSot2",
-                  "RH_Vis1", "RH_Vis2", "RH_SomSot1", "RH_SomSot2"]
-      # Binary representation of the nodes in Vis, essentially acts as
-      # a mask isolating the modes for for Vis
-      binary_vector = [1,1,0,0,1,1,0,0]
-      # Cluster centroid for CAP 1
-      cap_1_cluster_centroid = [-0.3, 1.5, 2, -0.2, 0.7, 1.3, -0.5, 0.4]
-      # Dot product is the sum of all the values here [-0.3, 1.5, 0, 0, 0.7, 1.3, 0, 0]
+              "RH_Vis1", "RH_Vis2", "RH_SomSot1", "RH_SomSot2"]
+      # Binary mask for the Visual Network (Vis)
+      binary_vector = [1, 1, 0, 0, 1, 1, 0, 0]
+      # Example cluster centroid for CAP 1
+      cap_1_cluster_centroid = [-0.3, 1.5, 2.0, -0.2, 0.7, 1.3, -0.5, 0.4]
+      # Compute dot product between the cluster centroid and binary vector
       dot_product = np.dot(cap_1_cluster_centroid, binary_vector)
 
-      norm_cap_1_cluster_centroid = np.linalg.norm(cap_1_cluster_centroid)
-      norm_binary_vector = np.linalg.norm(binary_vector)
-      # Cosine similarity between CAP 1 and the visual network
-      cosine_similarity = dot_product/(norm_cap_1_cluster_centroid * norm_binary_vector)
+      norm_cap_1 = np.linalg.norm(cap_1_cluster_centroid)
+      norm_binary = np.linalg.norm(binary_vector)
+      # Cosine similarity between CAP 1 and the Visual Network
+      cosine_similarity = dot_product / (norm_cap_1 * norm_binary)
 
 **Additionally, the neurocaps.analysis submodule contains two additional functions:**
 

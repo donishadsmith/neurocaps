@@ -1,7 +1,7 @@
 # neurocaps
 [![Latest Version](https://img.shields.io/pypi/v/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.13770397)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.13824494)
 [![Github Repository](https://img.shields.io/badge/Source%20Code-neurocaps-purple)](https://github.com/donishadsmith/neurocaps)
 [![Test Status](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg)](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml)
 [![codecov](https://codecov.io/github/donishadsmith/neurocaps/graph/badge.svg?token=WS2V7I16WF)](https://codecov.io/github/donishadsmith/neurocaps)
@@ -144,12 +144,16 @@ The provided example demonstrates setting up a custom parcellation containing no
 - **Correlation Matrix Creation:** Create a correlation matrix from CAPs with options to customize and save plots. Additionally can produce dataframes where each element contains its associated uncorrected p-value in parentheses that is accompanied by an asterisk using the following significance code `{"<0.05": "*", "<0.01": "**", "<0.001": "***"}`. Refer to the [documentation](https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2corr) for the `caps2corr` method in the `CAP` class for available `**kwargs` arguments and parameters to modify plots.
 - **CAP Metrics Calculation:** Calculate CAP metrics (`calculate_metrics`) as described in [Liu et al., 2018](https://doi.org/10.1016/j.neuroimage.2018.01.041)[^1] and [Yang et al., 2021](https://doi.org/10.1016/j.neuroimage.2021.118193)[^2]:
     - *Temporal Fraction:* The proportion of total volumes spent in a single CAP over all volumes in a run.
+       Additionally, in the supplementary material of Yang et al., the stated relationship between
+       temporal fraction, counts, and persistence is temporal fraction = (persistence*counts)/total volumes
+       If persistence and temporal fraction is converted into time units, then temporal fraction = (persistence*counts)/(total volumes * TR)
         ```python
             predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
             target = 1
             temporal_fraction = 4/6
         ```
-    - *Persistence:* The average time spent in a single CAP before transitioning to another CAP (average consecutive/uninterrupted time).
+    - *Persistence:* The average time spent in a single CAP before transitioning to another CAP
+      (average consecutive/uninterrupted time).
         ```python
             predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
             target = 1
@@ -159,11 +163,14 @@ The provided example demonstrates setting up a custom parcellation containing no
             if tr:
                 persistence = ((1 + 3) * 2)/2 # Turns average frames into average time
         ```
-    - *Counts:* The frequency of each CAP observed in a run.
+    - *Counts:* The total number of initiations of a specific CAP across an entire run. An initiation is
+           defined as the first occurrence of a CAP. If the same CAP is maintained in contiguous segment
+           (indicating stability), it is still counted as a single initiation. 
         ```python
             predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
             target = 1
-            counts = 4
+            # Initiations of CAP-1 occur at indices 0 and 2
+            counts = 2
         ```
     - *Transition Frequency:* The number of transitions between different CAPs across the entire run.
         ```python
@@ -190,23 +197,21 @@ The provided example demonstrates setting up a custom parcellation containing no
 - **Cosine Similarity Radar Plots:** Create radar plots showing the cosine similarity between CAPs and regions. Especially useful as a quantitative method to categorize CAPs by determining the regions containing the most nodes demonstrating increased co-activation or decreased co-deactivation [^3]. Refer to the [documentation](https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2radar) in `caps2radar` in the `CAP` class for a more detailed explanation as well as available `**kwargs` arguments and parameters to modify plots. **Note**, the "Low Amplitude"are negative cosine similarity values. The absolute value of those cosine similarities are taken so that the radar plot starts at 0 and magnitude comparisons between the "High Amplitude" and "Low Amplitude" groups are easier to see. Below is an example of how the cosine similarity is calculated for this function.
     ```python
         import numpy as np
-        # Nodes in order of their label ID, "LH_Vis1" is the 0th index in the parcellation
-        # but has a label ID of 1, and RH_SomSot2 is in the 7th index but has a label ID
-        # of 8 in the parcellation.
+                        
+        # Define nodes with their corresponding label IDs
         nodes = ["LH_Vis1", "LH_Vis2", "LH_SomSot1", "LH_SomSot2",
-                 "RH_Vis1", "RH_Vis2", "RH_SomSot1", "RH_SomSot2"]
-        # Binary representation of the nodes in Vis, essentially acts as
-        # a mask isolating the modes for for Vis
-        binary_vector = [1,1,0,0,1,1,0,0]
-        # Cluster centroid for CAP 1
-        cap_1_cluster_centroid = [-0.3, 1.5, 2, -0.2, 0.7, 1.3, -0.5, 0.4]
-        # Dot product is the sum of all the values here [-0.3, 1.5, 0, 0, 0.7, 1.3, 0, 0]
+                "RH_Vis1", "RH_Vis2", "RH_SomSot1", "RH_SomSot2"]
+        # Binary mask for the Visual Network (Vis)
+        binary_vector = [1, 1, 0, 0, 1, 1, 0, 0]
+        # Example cluster centroid for CAP 1
+        cap_1_cluster_centroid = [-0.3, 1.5, 2.0, -0.2, 0.7, 1.3, -0.5, 0.4]
+        # Compute dot product between the cluster centroid and binary vector
         dot_product = np.dot(cap_1_cluster_centroid, binary_vector)
 
-        norm_cap_1_cluster_centroid = np.linalg.norm(cap_1_cluster_centroid)
-        norm_binary_vector = np.linalg.norm(binary_vector)
-        # Cosine similarity between CAP 1 and the visual network
-        cosine_similarity = dot_product/(norm_cap_1_cluster_centroid * norm_binary_vector)
+        norm_cap_1 = np.linalg.norm(cap_1_cluster_centroid)
+        norm_binary = np.linalg.norm(binary_vector)
+        # Cosine similarity between CAP 1 and the Visual Network
+        cosine_similarity = dot_product / (norm_cap_1 * norm_binary)
     ```
 
 **Additionally, the `neurocaps.analysis` submodule contains two additional functions:**
@@ -261,7 +266,7 @@ extractor.get_bold(bids_dir=bids_dir,
                    session='002',
                    pipeline_name=pipeline_name
                    verbose=True,
-                   flush_print=True)
+                   flush=True)
 ```
 **Output:**
 ```

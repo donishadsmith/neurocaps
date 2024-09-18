@@ -59,6 +59,19 @@ def predict_labels(timeseries, cap_analysis, standardize, group, runs=[1,2,3]):
 
     return labels
 
+# Get segments
+def segments(target, timeseries):
+    # Binary representation of numpy array - if [1,2,1,1,1,3] and target is 1, then it is [1,0,1,1,1,0]
+    binary_arr = np.where(timeseries == target,1,0)
+    # Get indices of values that equal 1; [0,2,3,4]
+    target_indices = np.where(binary_arr == 1)[0]
+    # Count the transitions, indices where diff > 1 is a transition; diff of indices = [2,1,1];
+    # binary for diff > 1 = [1,0,0]; thus, segments = transitions + first_sequence(1) = 2
+    segments = np.where(np.diff(target_indices, n=1) > 1,1,0).sum() + 1
+
+    return binary_arr, segments
+
+
 @pytest.fixture(autouse=False, scope="module")
 def remove_files():
     yield
@@ -323,21 +336,30 @@ def test_calculate_metrics():
     # Continuous run should have 1/3 the number of rows since each subject in the randomized data has three runs
     assert met1["persistence"].shape[0]/3 == met2["persistence"].shape[0]
 
-    # Counts and Temporal; temporal_fraction is frequency converted to proportion
+    # Based on the equation in the supplementary of Yang et al 2021; temporal fraction = (persistence*counts)/total
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
                           n_clusters=[2,3,4,5], cluster_selection_method="silhouette")
     counts = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True,
                                             metrics="counts")["counts"]
+    persistence = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True,
+                                                metrics="persistence")["persistence"]
     temp = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True,
                                           metrics="temporal_fraction")["temporal_fraction"]
-    assert counts[["CAP-1", "CAP-2"]].map(lambda x: x/100).equals(temp[["CAP-1", "CAP-2"]])
+    
+    for cap in ["CAP-1", "CAP-2"]:
+        for i in temp.index:
+           assert math.isclose((counts.loc[i,cap]*persistence.loc[i,cap])/100, temp.loc[i,cap], abs_tol=0.01)
 
     # Check for continuous too
     counts = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True,
                                             metrics="counts", continuous_runs=True)["counts"]
+    persistence = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True,
+                                                 metrics="persistence", continuous_runs=True)["persistence"]
     temp = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True,
                                           metrics="temporal_fraction", continuous_runs=True)["temporal_fraction"]
-    assert counts[["CAP-1", "CAP-2"]].map(lambda x: x/300).equals(temp[["CAP-1", "CAP-2"]])
+    for cap in ["CAP-1", "CAP-2"]:
+        for i in temp.index:
+           assert math.isclose((counts.loc[i,cap]*persistence.loc[i,cap])/300, temp.loc[i,cap], abs_tol=0.01)
 
     # Check values of metrics; new methods
     counts_df = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True,
@@ -365,11 +387,16 @@ def test_calculate_metrics():
     first_subject_labels = predict_labels(first_subject_timeseries, cap_analysis, standardize=True, group="A", runs=[1]) + 1
     n_caps = cap_analysis.optimal_n_clusters["A"]
 
-    # Counts and temporal_fraction
-    sorted_frequency_dict = {num: np.where(first_subject_labels == num,1,0).sum() for num in range(1, n_caps + 1)}
-    assert [x for x in list(sorted_frequency_dict.values()) if not math.isnan(x)] == [x for x in counts_df.loc[0,:].values if not math.isnan(x)]
-    assert sum([x for x in counts_df.loc[0,:].values if not math.isnan(x)]) == first_subject_timeseries["1"]["run-1"].shape[0]
+    # Counts
+    counts_dict = {}
+    for target in range(1, n_caps + 1):
+        _ , counts = segments(target, first_subject_labels)
+        counts_dict.update({target: counts })
 
+    assert [x for x in list(counts_dict.values()) if not math.isnan(x)] == [x for x in counts_df.loc[0,:].values if not math.isnan(x)]
+
+    # Temporal Fraction
+    sorted_frequency_dict = {num: np.where(first_subject_labels == num,1,0).sum() for num in range(1, n_caps + 1)}
     proportion_dict = {num: value/len(first_subject_labels) for num, value in sorted_frequency_dict.items()}
     assert [x for x in list(proportion_dict.values()) if not math.isnan(x)] == [x for x in temp_df.loc[0,:].values if not math.isnan(x)]
 
@@ -381,10 +408,8 @@ def test_calculate_metrics():
     tr = None
     persistence_dict = {}
     for target in range(1, n_caps + 1):
-        binary = np.where(first_subject_labels == target,1,0)
-        indices = np.where(binary == 1)[0]
-        segments = np.where(np.diff(indices, n=1) != 1, 1,0).sum() + 1
-        persistence_dict.update({target: (binary.sum()/segments) * (tr if tr else 1)})
+        binary, counts = segments(target, first_subject_labels)
+        persistence_dict.update({target: (binary.sum()/counts) * (tr if tr else 1)})
     assert [x for x in list(persistence_dict.values()) if not math.isnan(x)] == [x for x in persistence_df.loc[0,:].values if not math.isnan(x)]
 
     # Check that all transition probabilities sum to 1
@@ -507,18 +532,18 @@ def test_plotting_functions(current_timeseries, parcel_approach):
                 "tickvals": [0.1,0.2,0.3]}
 
     # Radar plotting functions
-    cap_analysis.caps2radar(method="traditional",radialaxis=radialaxis, fill="toself", show_figs=False, as_html=True,
+    cap_analysis.caps2radar(radialaxis=radialaxis, fill="toself", show_figs=False, as_html=True,
                             output_dir=os.path.dirname(__file__))
-    check_imgs(plot_type="radar",values_dict={"html":2})
+    check_imgs(plot_type="radar", values_dict={"html":2})
 
-    cap_analysis.caps2radar(method="selective",radialaxis=radialaxis, fill="toself", show_figs=False, as_html=False,
+    cap_analysis.caps2radar(radialaxis=radialaxis, fill="toself", show_figs=False, as_html=False,
                             output_dir=os.path.dirname(__file__))
-    check_imgs(plot_type="radar",values_dict={"png":2})
+    check_imgs(plot_type="radar", values_dict={"png":2})
 
-    cap_analysis.caps2radar(method="combined",radialaxis=radialaxis, fill="toself", use_scatterpolar=True,
+    cap_analysis.caps2radar(radialaxis=radialaxis, fill="toself", use_scatterpolar=True,
                             scattersize=10, show_figs=False, as_html=True,
                             output_dir=os.path.dirname(__file__))
-    check_imgs(plot_type="radar",values_dict={"html":2})
+    check_imgs(plot_type="radar", values_dict={"html":2})
 
 @pytest.mark.parametrize("current_timeseries, parcel_approach",
                          [(extractor.subject_timeseries,extractor.parcel_approach),

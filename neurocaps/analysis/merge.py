@@ -66,8 +66,6 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
     return_merged_dict : :obj:`bool`, default=True
         If True, returns the merged dictionary.
 
-        ..versionchanged 0.15.0 from ``return_combined_dict`` to ``return_merged_dict``
-
     return_reduced_dicts : :obj:`bool`, default=False
         If True, returns the list of dictionaries provided with only the subjects present in the merged
         dictionary. The dictionaries are returned in the same order as listed in the ``subject_timeseries_list``
@@ -91,12 +89,8 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
         For this parameter, ``os.path.basename`` is used to get the basename of the files (if a full path is supplied)
         and ``os.path.splitext`` is used to ignore extensions. Default names are provided if this variable is None.
 
-        ..versionchanged 0.15.0 from ``file_name`` to ``file_names``
-
     save_reduced_dicts : :obj:`bool` or None, default=False
         If True and the ``output_dir`` is provided, then the reduced dictionaries are saved.
-
-        ..versionadded 0.15.0
 
     Returns
     -------

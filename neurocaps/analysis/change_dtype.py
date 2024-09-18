@@ -39,15 +39,11 @@ def change_dtype(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndar
                     }
                 }
 
-        .. versionchanged:: 0.15 changed from ``subject_timeseries`` to ``subject_timeseries_list``
-
     dtype : :obj:`bool` or :obj:`np.floating`
         Target data type (e.g "float32" or ``np.float32``) to convert each participant's numpy arrays into.
 
     return_dicts : :obj:`bool`, default=True
         If True, returns the converted ``subject_timeseries``.
-
-        .. versionchanged:: 0.15 changed from ``return_dict`` to ``return_dicts``
 
     output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
         Directory to save the converted ``subject_timeseries`` to. Will be saved as a pickle file. The directory will
@@ -58,8 +54,6 @@ def change_dtype(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndar
         depends on the index position (a file name in the 0th position will be the file name for the dictionary in the
         0th position of ``subject_timeseries_list``). If no names are provided and ``output_dir`` is specified,
         default names will be used.
-
-        .. versionchanged:: 0.15.0 from ``file_name`` to ``file_names``
 
     Returns
     -------

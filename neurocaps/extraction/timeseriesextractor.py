@@ -19,6 +19,17 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         The standard template space that the preprocessed bold data is registered to. Used for querying with pybids
         to locate preprocessed BOLD-related files.
 
+    parcel_approach : :obj:`dict[str, dict[str, str | int]]` or :obj:`os.PathLike`, default={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
+        The approach to parcellate BOLD images. This should be a nested dictionary with the first key being the
+        atlas name. Currently, only "Schaefer", "AAL", and "Custom" are supported.
+
+        - For "Schaefer", available sub-keys include "n_rois", "yeo_networks", and "resolution_mm".
+          Refer to documentation for ``nilearn.datasets.fetch_atlas_schaefer_2018`` for valid inputs.
+        - For "AAL", the only sub-key is "version". Refer to documentation for ``nilearn.datasets.fetch_atlas_aal``
+          for valid inputs.
+        - For "Custom", the key must include a sub-key called "maps" specifying the directory location of the
+          parcellation.
+
     standardize : {"zscore_sample", "zscore", "psc", True, False}, default="zscore_sample"
         Determines whether to standardize the timeseries. Refer to ``nilearn.maskers.NiftiLabelsMasker`` for available
         options.
@@ -32,16 +43,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     high_pass : :obj:`float`, :obj:`int`, or :obj:`None``, default=None
         Filters out signals below the specified cutoff frequency.
 
-    parcel_approach : :obj:`dict[str, dict[str, str | int]]` or :obj:`os.PathLike`, default={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
-        The approach to parcellate BOLD images. This should be a nested dictionary with the first key being the
-        atlas name. Currently, only "Schaefer", "AAL", and "Custom" are supported.
-
-        - For "Schaefer", available sub-keys include "n_rois", "yeo_networks", and "resolution_mm".
-          Refer to documentation for ``nilearn.datasets.fetch_atlas_schaefer_2018`` for valid inputs.
-        - For "AAL", the only sub-key is "version". Refer to documentation for ``nilearn.datasets.fetch_atlas_aal``
-          for valid inputs.
-        - For "Custom", the key must include a sub-key called "maps" specifying the directory location of the
-          parcellation NifTI file.
+    fwhm : :obj:`float`, :obj:`int`, or :obj:`None`, default=None
+        Applies spatial smoothing to data (in millimeters). Note that using parcellations already averages voxels
+        within parcel boundaries, which can improve signal-to-noise ratio (SNR) assuming Gaussian noise
+        distribution. However, smoothing may also blur parcel boundaries.
 
     use_confounds : :obj:`bool`, default=True
         Determines whether to perform nuisance regression using confounds when extracting timeseries.
@@ -51,16 +56,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         Note, an asterisk ("*") can be used to find confound names that start with the term preceding the
         asterisk. For instance, "cosine*" will find all confound names in the confound files starting with "cosine".
 
-    fwhm : :obj:`float`, :obj:`int`, or :obj:`None`, default=None
-        Applies spatial smoothing to data (in millimeters). Note that using parcellations already averages voxels
-        within parcel boundaries, which can improve signal-to-noise ratio (SNR) assuming Gaussian noise
-        distribution. However, smoothing may also blur parcel boundaries.
-
     fd_threshold : :obj:`float`, :obj:`dict[str, float]`, or :obj:`None`, default=None
         Sets a threshold to remove volumes after nuisance regression and timeseries extraction. This requires a
         column named `framewise_displacement` in the confounds file and ``use_confounds`` set to True.
         Additionally, `framewise_displacement` should not need be specified in ``confound_names`` if using this
-        parameter. As of version 14.1, ``fd_threshold`` can be a dictionary containing the following keys:
+        parameter. If, ``fd_threshold`` is a dictionary, the following keys can be specified:
 
         - "threshold" : A float value. Volumes with a `framewise_displacement` value exceeding this threshold are removed.
         - "outlier_percentage" : A float value between 0 and 1 representing a percentage. Runs where the proportion of
@@ -68,9 +68,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
           in ``self.get_bold``, only the runs where the proportion of volumes exceeds this value for the specific
           condition of interest are removed. **Note**, this proportion is calculated after dummy scans have been removed.
           A warning is issued whenever a run is flagged.
-
-        .. versionchanged:: 0.14.1 ``fd_threshold`` can now be a dictionary that includes a sub-key, "outlier_percentage",
-          which specifies the percentage of TRs exceeding the "threshold" value that would trigger a discard of the entire run.
 
     n_acompcor_separate : :obj:`int` or :obj:`None`, default=None
         Specifies the number of separate acompcor components derived from white-matter (WM) and cerebrospinal
@@ -81,8 +78,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         acompcors of interest in ``confound_names``.
 
     dummy_scans : :obj:`int`, :obj:`dict[str, bool | int]`, or :obj:`None`, default=None
-        Removes the first n volumes before extracting the timeseries. As of verision 0.14.5, ``dummy_scans`` can now
-        be a dictionary contains the following keys:
+        Removes the first n volumes before extracting the timeseries. If, ``dummy_scans`` is a dictionary,
+        the following keys can be used:
 
         - "auto" : A boolean value. If True, the number of dummy scans removed depend on the number of
           "non_steady_state_outlier_XX" columns in the participants fMRIPrep confounds tsv file. For instance, if
@@ -97,22 +94,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
           for this to work. If, for instance, six "non_steady_state_outlier_XX" columns are detected but the
           "max" is set to five, then five dummy volumes will be discarded.
 
-        .. versionchanged:: 0.14.5 ``dummy_scans`` can now be a dictionary that includes the sub-key "auto", which
-          allows the number of dummy scans to be based on the number of "non_steady_state_outlier_XX" columns in the
-          fMRIPrep confounds file.
-
-        .. versionadded:: 0.15.1 "min" and "max" sub-keys added.
-
 
     Property
     --------
     space : str
-        The standard template space that the preprocessed BOLD data is registered to.
+        The standard template space that the preprocessed BOLD data is registered to. The space can also be set after
+        class initialization using ``self.space = "New Space"`` if the template space needs to be changed.
 
-    signal_clean_info : :obj:`dict[str]`
-        Dictionary containing parameters for signal cleaning specified during initialization of the
-        ``TimeseriesExtractor`` class. This information includes ``standardize``, ``detrend``, ``low_pass``,
-        ``high_pass``, ``fwhm``, ``dummy_scans``, ``use_confounds``, ``n_compcor_separate``, and ``fd_threshold``.
+        .. versionchanged:: space can bow be set after class initialization
 
     parcel_approach : :obj:`dict[str, dict[str, os.PathLike | list[str]]]`
         Nested dictionary containing information about the parcellation. Can also be used as a setter, which accepts a
@@ -145,6 +134,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         "regions" must be a nested dictionary specifying the name of the region as the first level key and the
         indices in the "nodes" list belonging to the "lh" and "rh" for that region. Refer to the structure
         example for "Custom" in the Note section below.
+
+    signal_clean_info : :obj:`dict[str]`
+        Dictionary containing parameters for signal cleaning specified during initialization of the
+        ``TimeseriesExtractor`` class. This information includes ``standardize``, ``detrend``, ``low_pass``,
+        ``high_pass``, ``fwhm``, ``dummy_scans``, ``use_confounds``, ``n_compcor_separate``, and ``fd_threshold``.
 
     task_info : :obj:`dict[str]`
         If ``self.get_bold()`` ran, is a dictionary containing all task-related information such as ``task``,
@@ -192,7 +186,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                           "trans_z", "trans_z_derivative1",  "rot_x", "rot_x_derivative1",
                           "rot_y", "rot_y_derivative1", "rot_z", "rot_z_derivative1"]
 
-    If ``high_pass`` is ``None``, then:
+    If ``high_pass`` is None, then:
     ::
 
         confound_names = ["trans_x", "trans_x_derivative1","trans_y", "trans_y_derivative1",
@@ -249,17 +243,18 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             }
         }
     """
-    def __init__(self, space: str = "MNI152NLin2009cAsym",
+    def __init__(self,
+                 space: str = "MNI152NLin2009cAsym",
+                 parcel_approach: Union[
+                    dict[str, dict[str, Union[str, int]]], os.PathLike
+                    ]={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}},
                  standardize: Union[bool, Literal["zscore_sample", "zscore", "psc"]]="zscore_sample",
                  detrend: bool=True,
                  low_pass: Optional[Union[float, int]]=None,
                  high_pass: Optional[Union[float, int]]=None,
-                 parcel_approach: Union[
-                     dict[str, dict[str, Union[str, int]]], os.PathLike
-                     ]={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}},
+                 fwhm: Optional[Union[float, int]]=None,
                  use_confounds: bool=True,
                  confound_names: Optional[list[str]]=None,
-                 fwhm: Optional[Union[float, int]]=None,
                  fd_threshold: Optional[Union[float, dict[str, float]]]=None,
                  n_acompcor_separate: Optional[int]=None,
                  dummy_scans: Optional[Union[int, dict[str, Union[bool, int]]]]=None) -> None:
@@ -316,7 +311,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                  pipeline_name: Optional[str]=None,
                  n_cores: Optional[int]=None,
                  verbose: bool=True,
-                 flush_print: bool=False,
+                 flush: bool=False,
                  exclude_niftis: Optional[list[str]]=None) -> None:
         """
         **Retrieve Preprocessed BOLD Data from BIDS Datasets**
@@ -389,10 +384,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Print subject-specific information such as confounds being extracted, and id and run of subject being
             processed during timeseries extraction.
 
-        flush_print : :obj:`bool`, default=False
+        flush : :obj:`bool`, default=False
             Flush the printed subject-specific information produced during the timeseries extraction process.
             Used to immediately print out information such as the current subject being processed, confounds found,
             etc.
+
+            .. versionchanged:: 0.17.0 Changed from ``flush_print`` to ``flush``. 
 
         exclude_niftis : :obj:`list[str]` or :obj:`None`, default=None
             List of specific preprocessed NIfTI files to exclude, preventing their timeseries from being extracted.
@@ -516,7 +513,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                           self._parcel_approach,
                           self._signal_clean_info,
                           verbose,
-                          flush_print,
+                          flush,
                           self._task_info) for subj_id in self._subject_ids]
 
             parallel = Parallel(return_as="generator", n_jobs=self._n_cores)
@@ -532,7 +529,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                                                        parcel_approach=self._parcel_approach,
                                                        signal_clean_info=self._signal_clean_info,
                                                        verbose=verbose,
-                                                       flush_print=flush_print,
+                                                       flush=flush,
                                                        task_info=self._task_info)
 
                 # Aggregate new timeseries

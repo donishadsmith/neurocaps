@@ -6,10 +6,10 @@ from nilearn.image import index_img, load_img
 from .._logger import _logger
 
 def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_files, confound_metadata_files,
-                        run_list, tr, condition, parcel_approach, signal_clean_info, verbose, flush_print, task_info):
+                        run_list, tr, condition, parcel_approach, signal_clean_info, verbose, flush, task_info):
 
     # Logger inside function to give logger to each child process if parallel processing is done
-    LG  = _logger(__name__, flush=flush_print)
+    LG  = _logger(__name__, flush=flush)
 
     # Initialize subject dictionary
     subject_timeseries = {subj_id: {}}

@@ -40,28 +40,18 @@ def standardize(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
                     }
                 }
 
-        .. versionchanged:: 0.15 changed from ``subject_timeseries`` to ``subject_timeseries_list``
-
     return_dicts : :obj:`bool`, default=True
         If True, returns the standardized dictionaries in the order they were inputted in ``subject_timeseries_list``.
-
-        .. versionadded:: 0.11.0
-        .. versionchanged:: 0.15 changed from ``return_dict`` to ``return_dicts``
 
     output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
         Directory to save the standardized dictionaries to. Will be saved as a pickle file. The directory will
         be created if it does not exist.
-
-        .. versionadded:: 0.11.0
 
     file_names : :obj:`list[str]` or :obj:`None`, default=None
         A list of names to save the standardized dictionaries as. The assignment of file names to dictionaries depends
         on the index position (a file name in the 0th position will be the file name for the dictionary in the
         0th position of ``subject_timeseries_list``). If no names are provided and ``output_dir`` is specified,
         default names will be used.
-
-        .. versionadded:: 0.11.0
-        .. versionchanged:: 0.15.0 from ``file_name`` to ``file_names``
 
     Returns
     -------
