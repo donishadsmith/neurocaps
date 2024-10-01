@@ -1,4 +1,4 @@
-import copy, itertools, os, sys, tempfile, warnings
+import copy, itertools, os, sys, tempfile
 from typing import Union, Literal, Optional
 import numpy as np, nibabel as nib, matplotlib.pyplot as plt, pandas as pd, seaborn, surfplot
 import plotly.express as px, plotly.graph_objects as go, plotly.offline as pyo
@@ -2098,9 +2098,12 @@ class CAP(_CAPGetter):
         """
         **Generate Radar Plots for CAPs using Cosine Similarity**
 
-        Identifies networks or regions within each CAP (Co-Activation Pattern) that exhibit high or low amplitude 
-        using cosine similarity. High amplitude indicates strong activation relative to the mean (zero if z-scored), 
-        while low amplitude indicates strong deactivation relative to the mean (zero if z-scored).
+        Calculates the cosine similarity between the High Amplitude (positive) and Low Amplitude (negative)
+        activations of the CAP cluster centroid and each a-priori region or network in a parcellation.
+        
+        Cosine similarity is computed separately for high and low amplitudes by comparing them to the binary vector of
+        the a-priori region, representing the region or network of interest. This provides a measure of how closely
+        the CAP's positive and negative activation patterns align with each selected region.
 
         The process involves the following steps:
 
@@ -2121,50 +2124,56 @@ class CAP(_CAPGetter):
                         
                     # Define nodes with their corresponding label IDs
                     nodes = ["LH_Vis1", "LH_Vis2", "LH_SomSot1", "LH_SomSot2",
-                            "RH_Vis1", "RH_Vis2", "RH_SomSot1", "RH_SomSot2"]
+                             "RH_Vis1", "RH_Vis2", "RH_SomSot1", "RH_SomSot2"]
                     # Binary mask for the Visual Network (Vis)
-                    binary_vector = [1, 1, 0, 0, 1, 1, 0, 0]
-                    # Example cluster centroid for CAP 1
-                    cap_1_cluster_centroid = [-0.3, 1.5, 2.0, -0.2, 0.7, 1.3, -0.5, 0.4]
-                    # Compute dot product between the cluster centroid and binary vector
-                    dot_product = np.dot(cap_1_cluster_centroid, binary_vector)
+                    binary_vector = np.array([1, 1, 0, 0, 1, 1, 0, 0])
 
+            3. **Isolate Positive and Negative Activations in CAP Centroid**:
 
-            3. **Calculate Cosine Similarity**:
+              - Positive activations are defined as the values in the CAP centroid that are greater than zero.
+                These values represent the "High Amplitude" activations for that CAP.
+              - Negative activations are defined as the values in the CAP centroid that are less than zero.
+                These values represent the "Low Amplitude" activations for that CAP.
+              - To simplify the comparison between positive and negative activations using cosine similarity,
+                the negative activations are inverted (i.e., multiplied by -1). This inversion converts the negative
+                values into positive ones, allowing the cosine similarity calculation to return a positive value.
+                The positive similarity score represents how closely the a-priori region aligns with both the high and
+                low amplitude aspects of the CAP.
+
+                ::
+
+                  # Example cluster centroid for CAP 1
+                  cap_1_cluster_centroid = np.array([-0.3, 1.5, 2.0, -0.2, 0.7, 1.3, -0.5, 0.4])
+                  # Assign values less than 0 as 0 to isolate the high amplitude activations
+                  high_amp = np.where(cap_1_cluster_centroid > 0, cap_1_cluster_centroid, 0)
+                  # Assign values less than 0 as 0 to isolate the low amplitude activations; Also invert the sign
+                  low_amp = high_amp = np.where(cap_1_cluster_centroid < 0, -cap_1_cluster_centroid, 0)
+
+            4. **Calculate Cosine Similarity**:
 
               - Normalize the dot product by the product of the Euclidean norms of the cluster centroid and the binary
                 vector to obtain the cosine similarity:
 
                 ::
-
-                    norm_cap_1 = np.linalg.norm(cap_1_cluster_centroid)
-                    norm_binary = np.linalg.norm(binary_vector)
-                    # Cosine similarity between CAP 1 and the Visual Network
-                    cosine_similarity = dot_product / (norm_cap_1 * norm_binary)
-
-
-              - Cosine similarity values range between -1 and 1:
-
-                 - > 0: Indicates that many nodes in the region are highly activating together.
-                 - = 0: Suggests that nodes are co-activating and co-deactivating simultaneously.
-                 - < 0: Implies that many nodes in the region are deactivating together.
-
-
-            4. **Generate Radar Plots of Each CAPs**:
-
-              - Regions with cosine similarity values > 0 are labeled as "High Amplitude", while regions with
-                cosine similarities < 0 are labeled as "Low Amplitude". Regions with a cosine similarity of 0
-                are neither classified or visualized on the radar plots.
-
-        Cosine similarity scores can be used to quantitively describe each CAP based on network activations. For
-        instance, if the Dorsal Attention Network (DAN) has the highest absolute cosine similarity score, this would
-        indicate that the DAN is the region that the CAP us most engaging. Additionally, if the cosine
-        similarity score is negative then the CAP can be describe as DAN -.
+                    # Compute dot product between the binary vector with the positive and negative activations
+                    high_dot = np.dot(high_amp, binary_vector)
+                    low_dot = np.dot(low_amp, binary_vector)
     
-        **Note**: Radar plots visualize only positive cosine similarity values. For the "Low Amplitude" group
-        (negative cosine similarities), the absolute values are used to convert them to positive. This approach ensures
-        that the radar plot starts at 0 and allows for direct magnitude comparisons between the "High Amplitude"
-        (positive cosine similarity) and "Low Amplitude" groups.
+                    # Compute the norms
+                    high_norm = np.linalg.norm(high_amp)
+                    low_norm = np.linalg.norm(low_amp)
+                    bin_norm = np.linalg.norm(binary_vector)
+
+                    # Calculate cosine similarity
+                    high_cos = high_dot / (high_norm * bin_norm)
+                    low_cos = low_dot / (low_norm * bin_norm)
+
+            5. **Generate Radar Plots of Each CAPs**:
+
+              - Each radar plot visualizes the cosine similarity for both "High Amplitude" (positive) and
+                "Low Amplitude" (negative) activations of the CAP. The cosine similarity values range from 0 to 1,
+                representing how closely the a-priori region aligns with the positive and negative activations
+                of the CAP centroid.
 
         Parameters
         ----------
@@ -2272,6 +2281,11 @@ class CAP(_CAPGetter):
         D., Giddens, N. T., Wang, G., Diazgranados, N., Momenan, R., & Volkow, N. D. (2023). Disrupted brain state
         dynamics in opioid and alcohol use disorder: attenuation by nicotine use. Neuropsychopharmacology, 49(5),
         876–884. https://doi.org/10.1038/s41386-023-01750-w
+
+        Ingwersen, T., Mayer, C., Petersen, M., Frey, B. M., Fiehler, J., Hanning, U., Kühn, S., Gallinat, J.,
+        Twerenbold, R., Gerloff, C., Cheng, B., Thomalla, G., & Schlemm, E. (2024). Functional MRI brain state
+        occupancy in the presence of cerebral small vessel disease — A pre-registered replication analysis of the
+        Hamburg City Health Study. Imaging Neuroscience, 2, 1–17. https://doi.org/10.1162/imag_a_00122
         """
         if not self._parcel_approach:
             raise AttributeError("self.parcel_approach` is None. Add parcel_approach using "
@@ -2282,8 +2296,9 @@ class CAP(_CAPGetter):
                                  "first.")
         
         if not self._standardize:
-            LG.warning("For the most accurate interpretation, the matrix subjected to kmeans clustering in "
-                       "`self.get_caps` should be standardized.")
+            LG.warning("To better aid interpretation, the matrix subjected to kmeans clustering in "
+                       "`self.get_caps` should be standardized so that each ROI in the CAP cluster centroid. "
+                       "represents activation or de-activation relative to the mean.")
 
         defaults = {"scale": 2, "height": 800, "width": 1200, "line_close": True, "bgcolor": "white", "fill": "none",
                     "round": 3, "scattersize": 8, "connectgaps": True, "opacity": 0.5, "linewidth": 2,
@@ -2310,11 +2325,11 @@ class CAP(_CAPGetter):
 
         # Create radar dict
         for group in self._caps:
-            radar_dict = {"regions": list(self.parcel_approach[parcellation_name]["regions"])}
+            radar_dict = {"Regions": list(self.parcel_approach[parcellation_name]["regions"])}
             for cap in self._caps[group]:
                 cap_vector = self._caps[group][cap]
-                radar_dict[cap] = []
-                for region in radar_dict["regions"]:
+                radar_dict[cap] = {"High Amplitude": [], "Low Amplitude": []}
+                for region in radar_dict["Regions"]:
                     if parcellation_name == "Custom":
                         lh = self._parcel_approach[parcellation_name]["regions"][region]["lh"]
                         rh = self._parcel_approach[parcellation_name]["regions"][region]["rh"]
@@ -2328,46 +2343,46 @@ class CAP(_CAPGetter):
                     binary_vector = np.zeros_like(cap_vector)
                     binary_vector[indxs] = 1
 
-                    # Dot product remains the same regardless of the method used
-                    dot_product = np.dot(cap_vector, binary_vector)
-                    # Calculate norms
+                    # Calculate binary norm
                     norm_binary_vector = np.linalg.norm(binary_vector)
-                    norm_cap_vector = np.linalg.norm(cap_vector)
 
-                    # Should be a very rare instance in this case
+                    # Get high and low amplitudes
+                    high_amp = np.where(cap_vector > 0, cap_vector, 0)
+                    # Invert vector for low_amp so that cosine similarity is positive
+                    low_amp = np.where(cap_vector < 0, -cap_vector, 0)
+                    vecs = {"High Amplitude": high_amp, "Low Amplitude": low_amp}
+
                     warning_msg = (f"[GROUP: {group} | REGION: {region} | CAP: {cap}] - "
-                                   "Division by zero error when calculating cosine similarity. Setting cosine "
-                                   "similarity to zero.")
+                                    "Division by zero error when calculating cosine similarity for the "
+                                    "{0} activations. Setting cosine similarity to zero.")
                     
-                    try:
-                        cosine_similarity = dot_product/(norm_cap_vector * norm_binary_vector)
-                    except ZeroDivisionError:
-                        LG.warning(warning_msg)
-                        cosine_similarity = 0
+                    for vec in vecs:
+                        dot_product = np.dot(vecs[vec], binary_vector)
+                        norm_vec = np.linalg.norm(vecs[vec])
+                        try:
+                            cosine_similarity = dot_product/(norm_vec * norm_binary_vector)
+                        except ZeroDivisionError:
+                            LG.warning(warning_msg.format(vec))
+                            cosine_similarity = 0
 
-                    # Store value in dict
-                    radar_dict[cap].append(cosine_similarity)
+                        # Store value in dict
+                        radar_dict[cap][vec].append(cosine_similarity)
 
             self._cosine_similarity[group] = radar_dict
 
-            # Create dataframe
-            df = pd.DataFrame(radar_dict)
-
-            for cap in df.columns[df.columns != "regions"]:
-                groups = df[cap].apply(lambda x: "High Amplitude" if x > 0 else ("Low Amplitude" if x < 0 else np.nan))
-                df[cap] = df[cap].abs()
-                if plot_dict["round"]: df[cap] = df[cap].apply(lambda x: round(x, plot_dict["round"]))
-
+            for cap in self._caps[group]:
                 if use_scatterpolar:
+                    # Create dataframe
+                    df = pd.DataFrame({"Regions": radar_dict["Regions"]})
+                    df = pd.concat([df, pd.DataFrame(radar_dict[cap])], axis = 1)
                     # Initialize figure
                     fig = go.Figure(layout=go.Layout(width=plot_dict["width"], height=plot_dict["height"]))
-                    regions = df["regions"].values
+                    regions = df["Regions"].values
 
                     for i in ["High Amplitude", "Low Amplitude"]:
-                        # Set other group values to np.nan
-                        values = np.where(groups == i, df[cap].values, np.nan)
-
-                        # Add high amplitude and low amplitude data as traces
+                        values = df[i].values
+        
+                        # Add traces
                         fig.add_trace(go.Scatterpolar(
                         r=list(values),
                         theta=regions,
@@ -2378,9 +2393,15 @@ class CAP(_CAPGetter):
                                     size=plot_dict["scattersize"]),
                         line = dict(color=plot_dict["color_discrete_map"][i], width = plot_dict["linewidth"])))
                 else:
-                    fig = px.line_polar(df, r=cap, theta="regions", line_close=plot_dict["line_close"], color=groups,
-                                        width=plot_dict["width"], height=plot_dict["height"],
-                                        category_orders={"regions": df["regions"]},
+                    # Create dataframe
+                    n = len(radar_dict["Regions"])
+                    df = pd.DataFrame({"Regions": radar_dict["Regions"]*2,
+                                       "Amp": radar_dict[cap]["High Amplitude"] + radar_dict[cap]["Low Amplitude"]})
+                    df["Groups"] = ["High Amplitude"]*n + ["Low Amplitude"]*n
+
+                    fig = px.line_polar(df, r=df["Amp"].values, theta="Regions", line_close=plot_dict["line_close"],
+                                        color=df["Groups"].values, width=plot_dict["width"],
+                                        height=plot_dict["height"], category_orders={"Regions": df["Regions"]},
                                         color_discrete_map = plot_dict["color_discrete_map"])
 
                 if use_scatterpolar:

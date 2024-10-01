@@ -9,7 +9,7 @@
    :alt: Python Versions
 
 .. image:: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal
-   :target: https://doi.org/10.5281/zenodo.13824494
+   :target: https://doi.org/10.5281/zenodo.13871939
    :alt: DOI
 
 .. image:: https://img.shields.io/badge/Source%20Code-neurocaps-purple
@@ -40,7 +40,7 @@ Citing
 ======
 ::
   
-  Smith, D. (2024). neurocaps. Zenodo. https://doi.org/10.5281/zenodo.13824494
+  Smith, D. (2024). neurocaps. Zenodo. https://doi.org/10.5281/zenodo.13871939
 
 Usage
 =====
@@ -176,27 +176,33 @@ Main features for ``CAP`` includes:
           transition_probability = 1/3
           # 1 -> 1 has a probability of 1/3 and 1 -> 3 has a probability of 1/3
 
-- **Cosine Similarity Radar Plots:** Create radar plots showing the cosine similarity between CAPs and networks/regions. Especially useful as a quantitative method to categorize CAPs by determining the regions containing the most nodes demonstrating 
-  increased co-activation or decreased co-deactivation [3]_. Refer to the `documentation <https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2radar>`_ in ``caps2radar`` in the ``CAP`` class for a more 
-  detailed explanation as well as available ``**kwargs`` arguments and parameters to modify plots. **Note**, the "Low Amplitude"are negative cosine similarity values. The absolute value of those cosine similarities are taken so that the radar plot starts at 0 and magnitude 
-  comparisons between the "High Amplitude" and "Low Amplitude" groups are easier to see. Below is an example of how the cosine similarity is calculated for this function.
+- **Cosine Similarity Radar Plots:** Create radar plots showing the cosine similarity between positive and negative activations of each CAP and each a-priori regions in a parcellation [3]_ [4]_. Refer to the `documentation <https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2radar>`_ in ``caps2radar`` in the ``CAP`` class for a more detailed explanation as well as available ``**kwargs`` arguments and parameters to modify plots.
   ::
 
-      import numpy as np
       # Define nodes with their corresponding label IDs
       nodes = ["LH_Vis1", "LH_Vis2", "LH_SomSot1", "LH_SomSot2",
-              "RH_Vis1", "RH_Vis2", "RH_SomSot1", "RH_SomSot2"]
+               "RH_Vis1", "RH_Vis2", "RH_SomSot1", "RH_SomSot2"]
       # Binary mask for the Visual Network (Vis)
-      binary_vector = [1, 1, 0, 0, 1, 1, 0, 0]
+      binary_vector = np.array([1, 1, 0, 0, 1, 1, 0, 0])
       # Example cluster centroid for CAP 1
-      cap_1_cluster_centroid = [-0.3, 1.5, 2.0, -0.2, 0.7, 1.3, -0.5, 0.4]
-      # Compute dot product between the cluster centroid and binary vector
-      dot_product = np.dot(cap_1_cluster_centroid, binary_vector)
+      cap_1_cluster_centroid = np.array([-0.3, 1.5, 2.0, -0.2, 0.7, 1.3, -0.5, 0.4])
+      # Assign values less than 0 as 0 to isolate the high amplitude activations
+      high_amp = np.where(cap_1_cluster_centroid > 0, cap_1_cluster_centroid, 0)
+      # Assign values less than 0 as 0 to isolate the low amplitude activations; Also invert the sign
+      low_amp = high_amp = np.where(cap_1_cluster_centroid < 0, -cap_1_cluster_centroid, 0)
 
-      norm_cap_1 = np.linalg.norm(cap_1_cluster_centroid)
-      norm_binary = np.linalg.norm(binary_vector)
-      # Cosine similarity between CAP 1 and the Visual Network
-      cosine_similarity = dot_product / (norm_cap_1 * norm_binary)
+      # Compute dot product between the binary vector with the positive and negative activations
+      high_dot = np.dot(high_amp, binary_vector)
+      low_dot = np.dot(low_amp, binary_vector)
+
+      # Compute the norms
+      high_norm = np.linalg.norm(high_amp)
+      low_norm = np.linalg.norm(low_amp)
+      bin_norm = np.linalg.norm(binary_vector)
+
+      # Calculate cosine similarity
+      high_cos = high_dot / (high_norm * bin_norm)
+      low_cos = low_dot / (low_norm * bin_norm)
 
 **Additionally, the neurocaps.analysis submodule contains two additional functions:**
 
@@ -242,4 +248,8 @@ References
 .. [2] Yang, H., Zhang, H., Di, X., Wang, S., Meng, C., Tian, L., & Biswal, B. (2021). Reproducible coactivation patterns of functional brain networks reveal the aberrant dynamic state transition in schizophrenia. NeuroImage, 237, 118193. https://doi.org/10.1016/j.neuroimage.2021.118193
 
 .. [3] Zhang, R., Yan, W., Manza, P., Shokri-Kojori, E., Demiral, S. B., Schwandt, M., Vines, L., Sotelo, D., Tomasi, D., Giddens, N. T., Wang, G., Diazgranados, N., Momenan, R., & Volkow, N. D. (2023). 
-       Disrupted brain state dynamics in opioid and alcohol use disorder: attenuation by nicotine use. Neuropsychopharmacology, 49(5), 876–884. https://doi.org/10.1038/s41386-023-01750-w      
+       Disrupted brain state dynamics in opioid and alcohol use disorder: attenuation by nicotine use. Neuropsychopharmacology, 49(5), 876–884. https://doi.org/10.1038/s41386-023-01750-w
+
+.. [4] Ingwersen, T., Mayer, C., Petersen, M., Frey, B. M., Fiehler, J., Hanning, U., Kühn, S., Gallinat, J., Twerenbold, R., Gerloff, C., Cheng, B., Thomalla, G., & Schlemm, E. (2024).
+       Functional MRI brain state occupancy in the presence of cerebral small vessel disease — A pre-registered replication analysis of the Hamburg City Health Study. Imaging Neuroscience, 2, 1–17. https://doi.org/10.1162/imag_a_00122
+  

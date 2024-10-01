@@ -42,6 +42,13 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.17.1] - 2024-10-01
+### ♻ Changed
+- The `CAP.caps2radar` function now calculates the cosine similarity to the positive and negative activations of
+a CAP cluster centroid separately. Each region has two traces (one for cosine similarity with positive activation
+and one for cosine similarity with negative calculations). The plots should be easier to interpret and aligns better
+with visualizations in CAP research.
+
 ## [0.17.0] - 2024-09-21
 ### 🚀 New/Added
 - In  `CAP.caps2radar`, "round" (rounds to three decimal points by default) and "linewidth" kwargs added.

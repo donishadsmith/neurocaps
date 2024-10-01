@@ -180,27 +180,26 @@ Plotting CAPs to Radar
 ----------------------
 .. code-block:: python
 
-    radial = {"showline": True,
-              "linewidth": 2,
-              "linecolor": "rgba(0, 0, 0, 0.25)",
-              "gridcolor": "rgba(0, 0, 0, 0.25)", 
-              "ticks": "outside" ,
-              "tickfont": {"size": 14, "color": "black"}, 
-              "range": [0,0.3],
-              "tickvals": [0.1,0.2,0.3]}
+    radialaxis={"showline": True, 
+            "linewidth": 2, 
+            "linecolor": "rgba(0, 0, 0, 0.25)", 
+            "gridcolor": "rgba(0, 0, 0, 0.25)",
+            "ticks": "outside" , 
+            "tickfont": {"size": 14, "color": "black"}, 
+            "range": [0,0.6],
+            "tickvals": [0.1,"","",0.4, "","", 0.6]}
 
     legend = {"yanchor": "top", 
-              "xanchor": "left", 
-              "y": 0.99, 
-              "x": 0.01,
-              "title_font_family": "Times New Roman", 
-              "font": {"size": 16, "color": "black"}}
+            "y": 0.99, 
+            "x": 0.99,
+            "title_font_family": "Times New Roman", 
+            "font": {"size": 12, "color": "black"}}
 
     colors =  {"High Amplitude": "red", "Low Amplitude": "blue"}
 
 
     kwargs = {"radialaxis": radial, "fill": "toself", "legend": legend,
-              "color_discrete_map": colors}
+              "color_discrete_map": colors, "height": 400, "width": 600}
 
     cap_analysis.caps2radar(**kwargs)
 

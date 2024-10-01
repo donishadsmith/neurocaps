@@ -1,7 +1,7 @@
 # neurocaps
 [![Latest Version](https://img.shields.io/pypi/v/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.13824494)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.13871939)
 [![Github Repository](https://img.shields.io/badge/Source%20Code-neurocaps-purple)](https://github.com/donishadsmith/neurocaps)
 [![Test Status](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg)](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml)
 [![codecov](https://codecov.io/github/donishadsmith/neurocaps/graph/badge.svg?token=WS2V7I16WF)](https://codecov.io/github/donishadsmith/neurocaps)
@@ -194,24 +194,38 @@ The provided example demonstrates setting up a custom parcellation containing no
         transition_probability = 1/3
         # 1 -> 1 has a probability of 1/3 and 1 -> 3 has a probability of 1/3
     ```
-- **Cosine Similarity Radar Plots:** Create radar plots showing the cosine similarity between CAPs and regions. Especially useful as a quantitative method to categorize CAPs by determining the regions containing the most nodes demonstrating increased co-activation or decreased co-deactivation [^3]. Refer to the [documentation](https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2radar) in `caps2radar` in the `CAP` class for a more detailed explanation as well as available `**kwargs` arguments and parameters to modify plots. **Note**, the "Low Amplitude"are negative cosine similarity values. The absolute value of those cosine similarities are taken so that the radar plot starts at 0 and magnitude comparisons between the "High Amplitude" and "Low Amplitude" groups are easier to see. Below is an example of how the cosine similarity is calculated for this function.
-    ```python
-        import numpy as np
-                        
-        # Define nodes with their corresponding label IDs
-        nodes = ["LH_Vis1", "LH_Vis2", "LH_SomSot1", "LH_SomSot2",
-                "RH_Vis1", "RH_Vis2", "RH_SomSot1", "RH_SomSot2"]
-        # Binary mask for the Visual Network (Vis)
-        binary_vector = [1, 1, 0, 0, 1, 1, 0, 0]
-        # Example cluster centroid for CAP 1
-        cap_1_cluster_centroid = [-0.3, 1.5, 2.0, -0.2, 0.7, 1.3, -0.5, 0.4]
-        # Compute dot product between the cluster centroid and binary vector
-        dot_product = np.dot(cap_1_cluster_centroid, binary_vector)
+- **Cosine Similarity Radar Plots:** Create radar plots showing the cosine similarity between positive and negative
+activations of each CAP and each a-priori regions in a parcellation [^3] [^4].
+Refer to the [documentation](https://neurocaps.readthedocs.io/en/latest/generated/neurocaps.analysis.CAP.html#neurocaps.analysis.CAP.caps2radar)
+in `caps2radar` in the `CAP` class for a more detailed explanation as well as available `**kwargs` arguments and parameters to modify plots.
 
-        norm_cap_1 = np.linalg.norm(cap_1_cluster_centroid)
-        norm_binary = np.linalg.norm(binary_vector)
-        # Cosine similarity between CAP 1 and the Visual Network
-        cosine_similarity = dot_product / (norm_cap_1 * norm_binary)
+    ```python
+    import numpy as np
+                            
+    # Define nodes with their corresponding label IDs
+    nodes = ["LH_Vis1", "LH_Vis2", "LH_SomSot1", "LH_SomSot2",
+            "RH_Vis1", "RH_Vis2", "RH_SomSot1", "RH_SomSot2"]
+    # Binary mask for the Visual Network (Vis)
+    binary_vector = np.array([1, 1, 0, 0, 1, 1, 0, 0])
+    # Example cluster centroid for CAP 1
+    cap_1_cluster_centroid = np.array([-0.3, 1.5, 2.0, -0.2, 0.7, 1.3, -0.5, 0.4])
+    # Assign values less than 0 as 0 to isolate the high amplitude activations
+    high_amp = np.where(cap_1_cluster_centroid > 0, cap_1_cluster_centroid, 0)
+    # Assign values less than 0 as 0 to isolate the low amplitude activations; Also invert the sign
+    low_amp = high_amp = np.where(cap_1_cluster_centroid < 0, -cap_1_cluster_centroid, 0)
+
+    # Compute dot product between the binary vector with the positive and negative activations
+    high_dot = np.dot(high_amp, binary_vector)
+    low_dot = np.dot(low_amp, binary_vector)
+
+    # Compute the norms
+    high_norm = np.linalg.norm(high_amp)
+    low_norm = np.linalg.norm(low_amp)
+    bin_norm = np.linalg.norm(binary_vector)
+
+    # Calculate cosine similarity
+    high_cos = high_dot / (high_norm * bin_norm)
+    low_cos = low_dot / (low_norm * bin_norm)
     ```
 
 **Additionally, the `neurocaps.analysis` submodule contains two additional functions:**
@@ -371,7 +385,6 @@ cap_analysis.caps2surf(fwhm=2, **kwargs)
 ![image](https://github.com/donishadsmith/neurocaps/assets/112973674/fadc946a-214b-4fbf-8316-2f32ab0b026e)
 ![image](https://github.com/donishadsmith/neurocaps/assets/112973674/8207914a-6bf0-47a9-8be8-3504d0a56516)
 
-
 ```python
 # Create correlation matrix
 
@@ -398,23 +411,33 @@ cap_analysis.caps2corr(**kwargs)
 
 ```python
 # Create radar plots showing cosine similarity between region/networks and caps
-radial={"showline": True,
-        "linewidth": 2,
-        "linecolor": "rgba(0, 0, 0, 0.25)",
+radialaxis={"showline": True, 
+        "linewidth": 2, 
+        "linecolor": "rgba(0, 0, 0, 0.25)", 
         "gridcolor": "rgba(0, 0, 0, 0.25)",
-        "ticks": "outside" ,
-        "tickfont": {"size": 14, "color": "black"},
-        "range": [0,0.3],
-        "tickvals": [0.1,0.2,0.3]}
+        "ticks": "outside" , 
+        "tickfont": {"size": 14, "color": "black"}, 
+        "range": [0,0.6],
+        "tickvals": [0.1,"","",0.4, "","", 0.6]}
 
-colors = {"High Amplitude": "rgb(0,0,0)", "Low Amplitude": "blue"}
+legend = {"yanchor": "top", 
+        "y": 0.99, 
+        "x": 0.99,
+        "title_font_family": "Times New Roman", 
+        "font": {"size": 12, "color": "black"}}
 
-kwargs = {"radialaxis": radial, "color_discrete_map": colors, "fill": "toself"}
+colors =  {"High Amplitude": "black", "Low Amplitude": "orange"}
+
+
+kwargs = {"radialaxis": radial, "fill": "toself", "legend": legend,
+"color_discrete_map": colors, "height": 400, "width": 600}
+
 cap_analysis.caps2radar(output_dir=output_dir, **kwargs)
 ```
 **Partial Plot Outputs:** (*Note*: one image will be generated per CAP)
-![All_Subjects_CAP-5_radar](https://github.com/user-attachments/assets/fdf7e45b-da77-4b80-a8e1-6020a0ad4f6c)
-
+![All_Subjects_CAP-1_radar](https://github.com/user-attachments/assets/b190b209-a036-46a5-881f-3d40cffda1c0)
+![All_Subjects_CAP-2_radar](https://github.com/user-attachments/assets/8bd56af5-fbe9-4d57-8f58-2c332af986f9)
+![All_Subjects_CAP-3_radar](https://github.com/user-attachments/assets/81b739f4-bd7f-41bf-9b42-14d8376b5239)
 
 ```python
 # Get transition probabilities for all participants in a dataframe, then convert to an averaged matrix
@@ -471,7 +494,7 @@ print(trans_outputs["All Subjects"])
 | CAP-3 | 0.326 | 0.326 | 0.348 |
 
 # Testing 
-This package was tested using a closed dataset as well as a modified version of a single-subject open dataset to test the `TimeseriesExtractor` function on GitHub Actions. The open dataset provided by [Laumann & Poldrack](https://openfmri.org/dataset/ds000031/) and used in [Laumann et al., 2015](https://doi.org/10.1016/j.neuron.2015.06.037)[^4]. was also utilized. This data was obtained from the OpenfMRI database, accession number ds000031. 
+This package was tested using a closed dataset as well as a modified version of a single-subject open dataset to test the `TimeseriesExtractor` function on GitHub Actions. The open dataset provided by [Laumann & Poldrack](https://openfmri.org/dataset/ds000031/) and used in [Laumann et al., 2015](https://doi.org/10.1016/j.neuron.2015.06.037)[^5]. was also utilized. This data was obtained from the OpenfMRI database, accession number ds000031. 
 
 Modifications to the data included:
 
@@ -483,7 +506,7 @@ Modifications to the data included:
 - Slightly changing the naming style of the mask, preprocessed BOLD file, and confounds file in the fmriprep folder to conform with the naming conventions of modern fmriprep outputs.
 - Testing with custom parcellations was done using the HCPex parcellation, an extension of the HCP (Human Connectome Project) parcellation, which adds 66 subcortical areas. This original atlas can be downloaded from.
 
-Testing with custom parcellations was done with the HCPex parcellation, an extension of the HCP (Human Connectome Project) parcellation, which adds 66 subcortical areas [^5], [^6]. This original atlas can be downloaded from https://github.com/wayalan/HCPex.
+Testing with custom parcellations was done with the HCPex parcellation, an extension of the HCP (Human Connectome Project) parcellation, which adds 66 subcortical areas [^6], [^7]. This original atlas can be downloaded from https://github.com/wayalan/HCPex.
 
 # Contributing
 Please refer the [contributing guidelines](https://github.com/donishadsmith/neurocaps/blob/test/CONTRIBUTING.md) on how to contribute to neurocaps.
@@ -496,8 +519,10 @@ Please refer the [contributing guidelines](https://github.com/donishadsmith/neur
 [^3]: Zhang, R., Yan, W., Manza, P., Shokri-Kojori, E., Demiral, S. B., Schwandt, M., Vines, L., Sotelo, D., Tomasi, D., Giddens, N. T., Wang, G., Diazgranados, N., Momenan, R., & Volkow, N. D. (2023). 
 Disrupted brain state dynamics in opioid and alcohol use disorder: attenuation by nicotine use. Neuropsychopharmacology, 49(5), 876–884. https://doi.org/10.1038/s41386-023-01750-w      
 
-[^4]: Laumann, T. O., Gordon, E. M., Adeyemo, B., Snyder, A. Z., Joo, S. J., Chen, M. Y., Gilmore, A. W., McDermott, K. B., Nelson, S. M., Dosenbach, N. U., Schlaggar, B. L., Mumford, J. A., Poldrack, R. A., & Petersen, S. E. (2015). Functional system and areal organization of a highly sampled individual human brain. Neuron, 87(3), 657–670. https://doi.org/10.1016/j.neuron.2015.06.037
+[^4]: Ingwersen, T., Mayer, C., Petersen, M., Frey, B. M., Fiehler, J., Hanning, U., Kühn, S., Gallinat, J., Twerenbold, R., Gerloff, C., Cheng, B., Thomalla, G., & Schlemm, E. (2024). Functional MRI brain state occupancy in the presence of cerebral small vessel disease — A pre-registered replication analysis of the Hamburg City Health Study. Imaging Neuroscience, 2, 1–17. https://doi.org/10.1162/imag_a_00122
 
-[^5]: Huang CC, Rolls ET, Feng J, Lin CP. An extended Human Connectome Project multimodal parcellation atlas of the human cortex and subcortical areas. Brain Struct Funct. 2022 Apr;227(3):763-778. Epub 2021 Nov 17. doi: 10.1007/s00429-021-02421-6
+[^5]: Laumann, T. O., Gordon, E. M., Adeyemo, B., Snyder, A. Z., Joo, S. J., Chen, M. Y., Gilmore, A. W., McDermott, K. B., Nelson, S. M., Dosenbach, N. U., Schlaggar, B. L., Mumford, J. A., Poldrack, R. A., & Petersen, S. E. (2015). Functional system and areal organization of a highly sampled individual human brain. Neuron, 87(3), 657–670. https://doi.org/10.1016/j.neuron.2015.06.037
 
-[^6]: Huang CC, Rolls ET, Hsu CH, Feng J, Lin CP. Extensive Cortical Connectivity of the Human Hippocampal Memory System: Beyond the "What" and "Where" Dual Stream Model. Cerebral Cortex. 2021 May 19;bhab113. doi: 10.1093/cercor/bhab113.
+[^6]: Huang CC, Rolls ET, Feng J, Lin CP. An extended Human Connectome Project multimodal parcellation atlas of the human cortex and subcortical areas. Brain Struct Funct. 2022 Apr;227(3):763-778. Epub 2021 Nov 17. doi: 10.1007/s00429-021-02421-6
+
+[^7]: Huang CC, Rolls ET, Hsu CH, Feng J, Lin CP. Extensive Cortical Connectivity of the Human Hippocampal Memory System: Beyond the "What" and "Where" Dual Stream Model. Cerebral Cortex. 2021 May 19;bhab113. doi: 10.1093/cercor/bhab113.
