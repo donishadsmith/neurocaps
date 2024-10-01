@@ -2155,6 +2155,7 @@ class CAP(_CAPGetter):
                 vector to obtain the cosine similarity:
 
                 ::
+
                     # Compute dot product between the binary vector with the positive and negative activations
                     high_dot = np.dot(high_amp, binary_vector)
                     low_dot = np.dot(low_amp, binary_vector)
