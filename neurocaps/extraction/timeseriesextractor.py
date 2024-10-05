@@ -5,7 +5,7 @@ from joblib import Parallel, delayed, dump
 from .._utils import (_TimeseriesExtractorGetter, _check_kwargs, _check_confound_names,
                       _check_parcel_approach, _extract_timeseries, _logger)
 
-LG  = _logger(__name__)
+LG = _logger(__name__)
 
 class TimeseriesExtractor(_TimeseriesExtractorGetter):
     """
@@ -293,9 +293,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         self._parcel_approach = _check_parcel_approach(parcel_approach=parcel_approach)
 
         if self._signal_clean_info["use_confounds"]:
-            self._signal_clean_info["confound_names"] = _check_confound_names(high_pass=high_pass,
-                                                                              specified_confound_names=confound_names,
-                                                                              n_acompcor_separate=n_acompcor_separate)
+            self._signal_clean_info["confound_names"] = _check_confound_names(high_pass, confound_names,
+                                                                              n_acompcor_separate)
 
             self._signal_clean_info["fd_threshold"] = fd_threshold
 
@@ -373,7 +372,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             The name of the pipeline folder in the derivatives folder containing the preprocessed data. If None,
             ``BIDSLayout`` will use the name of ``bids_dir`` with ``derivatives=True``. This parameter should be
             used if there are multiple pipelines or pipelines are nested in folders in the derivatives folder. If
-            soecified, the first level of the folder should contain the "dataset_description.json" file or an
+            specified, the first level of the folder should contain the "dataset_description.json" file or an
             error will occur. For instance, if the json file in "path/to/bids/derivatives/fmriprep/fmriprep-20.0.0",
             then ``pipeline_name = "fmriprep/fmriprep-20.0.0"``.
 
@@ -502,19 +501,15 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         if self._n_cores:
             # Generate list of tuples for each subject
-            args_list = [(subj_id, self._subject_info[subj_id]["nifti_files"],
-                          self._subject_info[subj_id]["mask_files"],
-                          self._subject_info[subj_id]["event_files"],
-                          self._subject_info[subj_id]["confound_files"],
-                          self._subject_info[subj_id]["confound_metadata_files"],
+            args_list = [(subj_id,
+                          self._subject_info[subj_id]["prepped_files"],
                           self._subject_info[subj_id]["run_list"],
-                          self._subject_info[subj_id]["tr"],
-                          condition,
                           self._parcel_approach,
                           self._signal_clean_info,
+                          self._task_info,
+                          self._subject_info[subj_id]["tr"],
                           verbose,
-                          flush,
-                          self._task_info) for subj_id in self._subject_ids]
+                          flush) for subj_id in self._subject_ids]
 
             parallel = Parallel(return_as="generator", n_jobs=self._n_cores)
             outputs = parallel(delayed(_extract_timeseries)(*args) for args in args_list)
@@ -525,12 +520,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             for subj_id in self._subject_ids:
                 subject_timeseries=_extract_timeseries(subj_id=subj_id,
                                                        **self._subject_info[subj_id],
-                                                       condition=condition,
                                                        parcel_approach=self._parcel_approach,
                                                        signal_clean_info=self._signal_clean_info,
+                                                       task_info=self._task_info,
                                                        verbose=verbose,
-                                                       flush=flush,
-                                                       task_info=self._task_info)
+                                                       flush=flush)
 
                 # Aggregate new timeseries
                 if isinstance(subject_timeseries, dict): self._subject_timeseries.update(subject_timeseries)
@@ -547,7 +541,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             # Get subject header
             subject_header = self._header(subj_id)
-        
+
             # Check files
             skip, msg = self._check_files(files)
 
@@ -585,11 +579,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             tr = self._get_tr(files["bold_meta"], subject_header)
 
             # Store subject specific information
-            self._subject_info[subj_id] = {"nifti_files": files["niftis"],
-                                           "mask_files": files["masks"],
-                                           "event_files": files["events"],
-                                           "confound_files": files["confounds"],
-                                           "confound_metadata_files": files["confounds_meta"],
+            self._subject_info[subj_id] = {"prepped_files": files,
                                            "tr": tr,
                                            "run_list": run_list}
 
@@ -606,7 +596,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
     def _build_dict(self, base):
         files = {}
-
         files["niftis"] = self._get_files(**base, suffix="bold", extension="nii.gz")
         files["masks"] = self._get_files(**base, suffix="mask", extension="nii.gz")
         files["bold_meta"] = self._get_files(**base, suffix="bold", extension="json")
@@ -617,19 +606,18 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         else:
             files["events"] = []
         files["confounds"] = self._get_files(**base, desc="confounds", extension="tsv")
-        files["confounds_meta"] = self._get_files(**base, extension="json", desc="confounds")
+        files["confounds_metas"] = self._get_files(**base, extension="json", desc="confounds")
 
         return files
 
     @staticmethod
     def _exclude(niftis, exclude_niftis):
         return [nifti for nifti in niftis if os.path.basename(nifti) not in exclude_niftis]
-    
+
     def _header(self, subj_id):
         # Base subject message
         sub_message = f'[SUBJECT: {subj_id} | SESSION: {self._task_info["session"]} | TASK: {self.task_info["task"]}]'
         subject_header = f"{sub_message} "
-
         return subject_header
 
     def _check_files(self, files):
@@ -645,7 +633,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             if not files["confounds"]:
                 skip, msg = True, "Timeseries Extraction Skipped: `use_confounds` is requested but no confound files found."
 
-            if not files["confounds_meta"] and self._signal_clean_info["n_acompcor_separate"]:
+            if not files["confounds_metas"] and self._signal_clean_info["n_acompcor_separate"]:
                 skip = True
                 msg = ("Timeseries Extraction Skipped: No confound metadata file found, which is needed to locate the "
                        "first n components of the white-matter and cerebrospinal fluid masks separately.")
@@ -659,7 +647,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         ses_list = []
         for nifti in niftis:
             if "ses-" in os.path.basename(nifti):
-                ses_list.append(re.search("ses-(\\S+?)[-_]", os.path.basename(nifti))[0][:-1] )
+                ses_list.append(re.search(r"ses-(\S+?)[-_]", os.path.basename(nifti))[0][:-1])
 
         ses_list = set(ses_list)
 
@@ -668,22 +656,20 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                             "`session` not specified but subject has more than one session: "
                             f"{', '.join(ses_list)}\n" + "In order to continue timeseries extraction, the "
                             "specific session to extract must be specified using `session`.")
-    
+
     def _gen_runs(self, niftis):
         check_runs = []
-
         for nifti in niftis:
             if self._task_info["runs"]:
                 check_runs.extend([f"run-{run}" for run in self._task_info["runs"]])
             else:
                 if "run-" in os.path.basename(niftis[0]):
-                    check_runs.append(re.search("run-(\\S+?)[-_]", os.path.basename(nifti))[0][:-1])
-        
+                    check_runs.append(re.search(r"run-(\S+?)[-_]", os.path.basename(nifti))[0][:-1])
+
         return check_runs
 
     def _intersect_runs(self, check_runs, files):
         run_list = []
-
         # Check if at least one run has all files present
         for run in check_runs:
             curr_list = []
@@ -693,13 +679,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             if self._signal_clean_info["use_confounds"]:
                 curr_list.append(any([run in file for file in files["confounds"]]))
                 if self._signal_clean_info["n_acompcor_separate"]:
-                    curr_list.append(any([run in file for file in files["confounds_meta"]]))
+                    curr_list.append(any([run in file for file in files["confounds_metas"]]))
             if files["masks"]: curr_list.append(any([run in file for file in files["masks"]]))
             # Append runs that contain all needed files
             if all(curr_list): run_list.append(run)
-        
+
         return run_list
-            
+
     def _get_tr(self, bold_meta, subject_header):
         try:
             if self._task_info["tr"]:
@@ -721,7 +707,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 LG.warning(f"{subject_header}"
                            f"{base_msg}" + " `tr` has been set to None but extraction will continue.")
                 tr=None
-        
+
         return tr
 
     def timeseries_to_pickle(self, output_dir: Union[str, os.PathLike], file_name: Optional[str]=None) -> None:

@@ -12,7 +12,7 @@ class _TimeseriesExtractorGetter:
     @property
     def space(self):
         return self._space
-    
+
     @space.setter
     def space(self, new_space):
         self._space = new_space
@@ -20,7 +20,7 @@ class _TimeseriesExtractorGetter:
     @property
     def parcel_approach(self):
         return self._parcel_approach
-    
+
     @property
     def signal_clean_info(self):
         return self._signal_clean_info

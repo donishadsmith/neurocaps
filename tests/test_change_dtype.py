@@ -27,7 +27,7 @@ def test_change_dtype_w_pickle():
         file_names=["test_dtype"],
         dtype="float16",
         return_dicts=True)
-    
+
     files = glob.glob(os.path.join(os.path.dirname(__file__), "*dtype*.pkl"))
     assert len(files) == 2
 

@@ -1,5 +1,6 @@
-import copy, itertools, os, sys, tempfile
+import collections, copy, itertools, os, re, sys, tempfile
 from typing import Union, Literal, Optional
+
 import numpy as np, nibabel as nib, matplotlib.pyplot as plt, pandas as pd, seaborn, surfplot
 import plotly.express as px, plotly.graph_objects as go, plotly.offline as pyo
 from kneed import KneeLocator
@@ -9,10 +10,11 @@ from neuromaps.transforms import mni152_to_fslr, fslr_to_fslr
 from neuromaps.datasets import fetch_fslr
 from scipy.stats import pearsonr
 from sklearn.cluster import KMeans
-from .._utils import (_CAPGetter, _cap2statmap, _check_kwargs, _create_display, _create_node_labels,
-                      _convert_pickle_to_dict, _check_parcel_approach, _logger, _run_kmeans, _save_contents)
 
-LG  = _logger(__name__)
+from .._utils import (_CAPGetter, _cap2statmap, _check_kwargs, _create_display, _convert_pickle_to_dict,
+                      _check_parcel_approach, _logger, _run_kmeans, _save_contents)
+
+LG = _logger(__name__)
 
 class CAP(_CAPGetter):
     """
@@ -588,7 +590,6 @@ class CAP(_CAPGetter):
 
     def _select_optimal_clusters(self, random_state, init, n_init, max_iter, tol, algorithm,
                                  show_figs, output_dir, **kwargs):
-
         # Initialize attributes
         self._davies_bouldin = {}
         self._inertia = {}
@@ -601,8 +602,6 @@ class CAP(_CAPGetter):
 
         method = self._cluster_selection_method
 
-        y_titles = {"elbow": "Inertia", "davies_bouldin": "Davies Bouldin Score", "silhouette": "Silhouette Score",
-                    "variance_ratio": "Variance Ratio Score"}
         # Defaults
         defaults = {"dpi": 300, "figsize": (8,6), "step": None, "bbox_inches": "tight"}
         plot_dict = _check_kwargs(defaults, **kwargs)
@@ -657,33 +656,44 @@ class CAP(_CAPGetter):
 
             # Plot
             if show_figs or output_dir is not None:
-                y_title = y_titles[method]
-                plt.figure(figsize=plot_dict["figsize"])
-                y_values = [y for _ , y in  performance_dict[group].items()]
-                plt.plot(self._n_clusters, y_values)
-                if plot_dict["step"]:
-                    x_ticks = range(self._n_clusters[0], self._n_clusters[-1] + 1, plot_dict["step"])
-                    plt.xticks(x_ticks)
-                plt.xlabel("K")
-                plt.ylabel(y_title)
-                plt.title(group)
-                # Add vertical line for elbow method
-                if y_title == "Inertia":
-                    plt.vlines(self._optimal_n_clusters[group], plt.ylim()[0], plt.ylim()[1], linestyles="--",
-                               label="elbow")
-
-                if output_dir:
-                    if not os.path.exists(output_dir): os.makedirs(output_dir)
-                    save_name = f"{group.replace(' ','_')}_{self._cluster_selection_method}.png"
-                    plt.savefig(os.path.join(output_dir,save_name), dpi=plot_dict["dpi"],
-                                bbox_inches=plot_dict["bbox_inches"])
-
-                plt.show() if show_figs else plt.close()
+                self._plot_method(method, performance_dict, group, plot_dict, show_figs, output_dir)
 
         if method == "elbow": self._inertia = performance_dict
         elif method == "davies_bouldin": self._davies_bouldin = performance_dict
         elif method == "silhouette": self._silhouette_scores = performance_dict
         else: self._variance_ratio = performance_dict
+
+    def _plot_method(self, method, performance_dict, group, plot_dict, show_figs, output_dir):
+        y_titles = {"elbow": "Inertia", "davies_bouldin": "Davies Bouldin Score", "silhouette": "Silhouette Score",
+                    "variance_ratio": "Variance Ratio Score"}
+
+        y_title = y_titles[method]
+
+        # Create visualization for method
+        plt.figure(figsize=plot_dict["figsize"])
+        y_values = [y for _ , y in  performance_dict[group].items()]
+        plt.plot(self._n_clusters, y_values)
+
+        if plot_dict["step"]:
+            x_ticks = range(self._n_clusters[0], self._n_clusters[-1] + 1, plot_dict["step"])
+            plt.xticks(x_ticks)
+
+        plt.xlabel("K")
+        plt.ylabel(y_title)
+        plt.title(group)
+
+        # Add vertical line for elbow method
+        if y_title == "Inertia":
+            plt.vlines(self._optimal_n_clusters[group], plt.ylim()[0], plt.ylim()[1], linestyles="--",
+                        label="elbow")
+
+        if output_dir:
+            if not os.path.exists(output_dir): os.makedirs(output_dir)
+            save_name = f"{group.replace(' ','_')}_{self._cluster_selection_method}.png"
+            plt.savefig(os.path.join(output_dir,save_name), dpi=plot_dict["dpi"],
+                        bbox_inches=plot_dict["bbox_inches"])
+
+        plt.show() if show_figs else plt.close()
 
     def _create_caps_dict(self):
         # Initialize dictionary
@@ -711,9 +721,9 @@ class CAP(_CAPGetter):
                           output_dir: Optional[os.PathLike]=None,
                           prefix_file_name: Optional[str]=None) -> dict[str, pd.DataFrame]:
         """
-        **Compute Participant-Wise CAP Metrics**
+        **Compute Participant-wise CAP Metrics**
 
-        Creates a single ``pandas.DataFrame`` per CAP metric for all participants (with the exception of 
+        Creates a single ``pandas.DataFrame`` per CAP metric for all participants (with the exception of
         "transition_probability" which creates a single dataframe per group). As described by
         Liu et al., 2018 and Yang et al., 2021. The metrics include:
 
@@ -742,7 +752,7 @@ class CAP(_CAPGetter):
 
          - ``"counts"`` : The total number of initiations of a specific CAP across an entire run. An initiation is
            defined as the first occurrence of a CAP. If the same CAP is maintained in contiguous segment
-           (indicating stability), it is still counted as a single initiation. 
+           (indicating stability), it is still counted as a single initiation.
            ::
 
                 predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
@@ -966,13 +976,13 @@ class CAP(_CAPGetter):
             products,products_unique = {},{}
             for group in self._groups:
                 group_caps.update({group: [int(name.split("-")[-1]) for name in self._caps[group]]})
-                products.update({group: list(itertools.product(group_caps[group],group_caps[group]))})
+                products.update({group: list(itertools.product(group_caps[group], group_caps[group]))})
                 # Filter out all reversed products and products with the self transitions
                 products_unique[group] = []
                 for prod in products[group]:
                     if prod[0] == prod[1]: continue
                     # Include only the first instance of symmetric pairs
-                    if (prod[1],prod[0]) not in products_unique[group]: products_unique[group].append(prod)
+                    if (prod[1], prod[0]) not in products_unique[group]: products_unique[group].append(prod)
 
         df_dict = {}
 
@@ -985,8 +995,7 @@ class CAP(_CAPGetter):
                 temp_dict = {}
                 for group in self._groups:
                     temp_dict.update(
-                        {group: pd.DataFrame(columns=base_cols + [f"{x}.{y}" for x,y in products[group]])}
-                        )
+                        {group: pd.DataFrame(columns=base_cols + [f"{x}.{y}" for x,y in products[group]])} )
             else:
                 df_dict.update({metric: pd.DataFrame(columns=base_cols + ["Transition_Frequency"])})
 
@@ -998,12 +1007,10 @@ class CAP(_CAPGetter):
         for subj_id, group, curr_run in distributed_list:
             group_name = group.replace(" ","_")
             if "temporal_fraction" in metrics:
-                # Get frequency;
+                # Get frequency
                 frequency_dict = {key: np.where(predicted_subject_timeseries[subj_id][curr_run] == key,1,0).sum()
                                   for key in range(1, group_cap_counts[group] + 1)}
-                # Replace zeros with nan for groups with less caps than the group with the max caps
-                if max(cap_numbers) > group_cap_counts[group]:
-                    for i in range(group_cap_counts[group] + 1, max(cap_numbers) + 1): frequency_dict.update({i: float("nan")})
+                self._update_dict(cap_numbers, group_cap_counts[group], frequency_dict)
 
                 if "temporal_fraction" in metrics:
                     proportion_dict = {key: value/(len(predicted_subject_timeseries[subj_id][curr_run]))
@@ -1017,10 +1024,8 @@ class CAP(_CAPGetter):
                 for target in cap_numbers:
                     _ , segments = self._segments(target, predicted_subject_timeseries[subj_id][curr_run])
                     count_dict.update({target: segments})
-
-                # Replace zeros with nan for groups with less caps than the group with the max caps
-                if max(cap_numbers) > group_cap_counts[group]:
-                    for i in range(group_cap_counts[group] + 1, max(cap_numbers) + 1): count_dict.update({i: float("nan")})
+                
+                self._update_dict(cap_numbers, group_cap_counts[group], count_dict)
 
                 # Populate Dataframe
                 new_row = [subj_id, group_name, curr_run] + [items for items in count_dict.values()]
@@ -1033,19 +1038,19 @@ class CAP(_CAPGetter):
                 for target in cap_numbers:
                     binary_arr, segments = self._segments(target, predicted_subject_timeseries[subj_id][curr_run])
                     # Sum of ones in the binary array divided by segments, then multiplied by 1 or the tr; segment is
-                    # always 1 at minimum due to + 1; np.where(np.diff(target_indices, n=1) > 1, 1,0).sum() is 0 when empty or the condition isn't met
+                    # always 1 at minimum due to + 1; np.where(np.diff(target_indices, n=1) > 1, 1,0).sum() is 0
+                    # when empty or the condition isn't met
                     persistence_dict.update({target: (binary_arr.sum()/segments) * (tr if tr else 1)})
-
-                # Replace zeros with nan for groups with less caps than the group with the max caps
-                if max(cap_numbers) > group_cap_counts[group]:
-                    for i in range(group_cap_counts[group] + 1, max(cap_numbers) + 1): persistence_dict.update({i: float("nan")})
+                
+                self._update_dict(cap_numbers, group_cap_counts[group], persistence_dict)
 
                 # Populate Dataframe
                 new_row = [subj_id, group_name, curr_run] + [items for _ , items in persistence_dict.items()]
                 df_dict["persistence"].loc[len(df_dict["persistence"])] = new_row
 
             if "transition_frequency" in metrics:
-                # Sum the differences that are not zero - [1,2,1,1,1,3] becomes [1,-1,0,0,2], binary representation for values not zero is [1,1,0,0,1] = 3 transitions
+                # Sum the differences that are not zero - [1,2,1,1,1,3] becomes [1,-1,0,0,2], binary representation for
+                # values not zero is [1,1,0,0,1] = 3 transitions
                 transition_frequency = np.where(np.diff(predicted_subject_timeseries[subj_id][curr_run], n=1) != 0,1,0).sum()
                 # Populate DataFrame
                 new_row = [subj_id, group_name, curr_run, transition_frequency]
@@ -1102,6 +1107,12 @@ class CAP(_CAPGetter):
                             )
 
         if return_df: return df_dict
+    
+    # Replace zeros with nan for groups with less caps than the group with the max caps
+    @staticmethod
+    def _update_dict(cap_numbers, group_cap_counts, curr_dict):
+        if max(cap_numbers) > group_cap_counts:
+            for i in range(group_cap_counts + 1, max(cap_numbers) + 1): curr_dict.update({i: float("nan")})
 
     @staticmethod
     def _segments(target, timeseries):
@@ -1366,6 +1377,45 @@ class CAP(_CAPGetter):
 
         return kwargs
 
+    @staticmethod
+    def _create_node_labels(parcellation_name, parcel_approach, columns):
+        # Get frequency of each major hemisphere and region in Schaefer, AAL, or Custom atlas
+        if parcellation_name == "Schaefer":
+            nodes = parcel_approach[parcellation_name]["nodes"]
+            # Retain only the hemisphere and primary Schaefer network
+            nodes = [node.split("_")[:2] for node in nodes]
+            frequency_dict = collections.Counter([" ".join(node) for node in nodes])
+        elif parcellation_name == "AAL":
+            nodes = parcel_approach[parcellation_name]["nodes"]
+            frequency_dict = collections.Counter([node.split("_")[0] for node in nodes])
+        else:
+            frequency_dict = {}
+            for names_id in columns:
+                # For custom, columns comes in the form of "Hemisphere Region"
+                hemisphere_id = "LH" if names_id.startswith("LH ") else "RH"
+                region_id = re.split("LH |RH ", names_id)[-1]
+                node_indices = parcel_approach["Custom"]["regions"][region_id][hemisphere_id.lower()]
+                frequency_dict.update({names_id: len(node_indices)})
+
+        # Get the names, which indicate the hemisphere and region
+        # Reverting Counter objects to list retains original ordering of nodes in list as of Python 3.7
+        names_list = list(frequency_dict)
+        labels = ["" for _ in range(0,len(parcel_approach[parcellation_name]["nodes"]))]
+
+        starting_value = 0
+
+        # Iterate through names_list and assign the starting indices corresponding to unique region and hemisphere key
+        for num, name in enumerate(names_list):
+            if num == 0:
+                labels[0] = name
+            else:
+                # Shifting to previous frequency of the preceding network to obtain the new starting value of
+                # the subsequent region and hemisphere pair
+                starting_value += frequency_dict[names_list[num-1]]
+                labels[starting_value] = name
+
+        return labels, names_list
+
     def _division_line(self, display, parcellation_name, linewidths, call = "outer"):
         n_labels = len(self._parcel_approach[parcellation_name]["nodes"])
         division_line = n_labels//2
@@ -1455,7 +1505,7 @@ class CAP(_CAPGetter):
             self._outer_products[group].update({cap: np.outer(cap_dict[group][cap],cap_dict[group][cap])})
             # Create labels if nodes requested for scope
             if scope == "nodes" and plot_dict["hemisphere_labels"] is False:
-                labels, _ = _create_node_labels(parcellation_name, self._parcel_approach, columns)
+                labels, _ = self._create_node_labels(parcellation_name, self._parcel_approach, columns)
 
             if subplots:
                 ax = axes[axes_y] if nrow == 1 else axes[axes_x, axes_y]
@@ -1566,7 +1616,7 @@ class CAP(_CAPGetter):
         else:
             # Create Labels
             if plot_dict["hemisphere_labels"] is False:
-                labels, names_list = _create_node_labels(parcellation_name, self._parcel_approach, columns)
+                labels, names_list = self._create_node_labels(parcellation_name, self._parcel_approach, columns)
 
                 display = seaborn.heatmap(pd.DataFrame(cap_dict[group], columns=list(cap_dict[group])),
                                           xticklabels=True, yticklabels=True, **self._base_kwargs(plot_dict))
@@ -1747,6 +1797,16 @@ class CAP(_CAPGetter):
 
         if return_df: return corr_dict
 
+    # Create basename for certain files
+    @staticmethod
+    def _basename(group, cap, desc=None, suffix=None, ext="png"):
+        base = f"{group.replace(' ', '_')}_{cap}"
+        if desc: base += f"_{desc}"
+
+        if suffix: base += f"_{suffix.rstrip().replace(' ', '_')}"
+
+        return base + f".{ext}"
+
     def caps2niftis(self,
                     output_dir: os.PathLike,
                     suffix_file_name: Optional[str]=None,
@@ -1822,11 +1882,9 @@ class CAP(_CAPGetter):
                 stat_map = _cap2statmap(atlas_file=self._parcel_approach[parcellation_name]["maps"],
                                         cap_vector=self._caps[group][cap], fwhm=fwhm, knn_dict=knn_dict)
 
-                if suffix_file_name:
-                    save_name = f"{group.replace(' ', '_')}_{cap.replace('-', '_')}_{suffix_file_name}.nii.gz"
-                else:
-                    save_name = f"{group.replace(' ', '_')}_{cap.replace('-', '_')}.nii.gz"
-                nib.save(stat_map, os.path.join(output_dir,save_name))
+                file_name = self._basename(group, cap, suffix=suffix_file_name, ext="nii.gz")
+
+                nib.save(stat_map, os.path.join(output_dir, file_name))
 
     def caps2surf(self,
                   output_dir: Optional[os.PathLike]=None,
@@ -2074,17 +2132,14 @@ class CAP(_CAPGetter):
                 fig.axes[0].set_title(fig_name, pad=plot_dict["title_pad"])
 
                 if output_dir:
-                    if suffix_title:
-                        save_name = f"{group.replace(' ', '_')}_{cap}_{suffix_title}_surface.png"
-                    else:
-                        save_name = f"{group.replace(' ', '_')}_{cap}_surface.png"
+                    file_name = self._basename(group, cap, "surface", suffix_title, "png")
 
-                    fig.savefig(os.path.join(output_dir, save_name), dpi=plot_dict["dpi"],
+                    fig.savefig(os.path.join(output_dir, file_name), dpi=plot_dict["dpi"],
                                 bbox_inches=plot_dict["bbox_inches"])
                     # Save stat map
                     if save_stat_maps:
-                        stat_map_name = save_name.replace(".png", ".nii.gz")
-                        nib.save(stat_map, stat_map_name)
+                        stat_map_name = file_name.replace("_surface.png", ".nii.gz")
+                        nib.save(stat_map, os.path.join(output_dir, stat_map_name))
 
                 plt.show(fig) if show_figs else plt.close(fig)
 
@@ -2100,7 +2155,7 @@ class CAP(_CAPGetter):
 
         Calculates the cosine similarity between the High Amplitude (positive) and Low Amplitude (negative)
         activations of the CAP cluster centroid and each a-priori region or network in a parcellation.
-        
+
         Cosine similarity is computed separately for high and low amplitudes by comparing them to the binary vector of
         the a-priori region, representing the region or network of interest. This provides a measure of how closely
         the CAP's positive and negative activation patterns align with each selected region.
@@ -2119,9 +2174,9 @@ class CAP(_CAPGetter):
                 the corresponding indices to `1`.
 
                 ::
-                
+
                     import numpy as np
-                        
+
                     # Define nodes with their corresponding label IDs
                     nodes = ["LH_Vis1", "LH_Vis2", "LH_SomSot1", "LH_SomSot2",
                              "RH_Vis1", "RH_Vis2", "RH_SomSot1", "RH_SomSot2"]
@@ -2159,7 +2214,7 @@ class CAP(_CAPGetter):
                     # Compute dot product between the binary vector with the positive and negative activations
                     high_dot = np.dot(high_amp, binary_vector)
                     low_dot = np.dot(low_amp, binary_vector)
-    
+
                     # Compute the norms
                     high_norm = np.linalg.norm(high_amp)
                     low_norm = np.linalg.norm(low_amp)
@@ -2295,7 +2350,7 @@ class CAP(_CAPGetter):
         if not hasattr(self,"_caps"):
             raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` "
                                  "first.")
-        
+
         if not self._standardize:
             LG.warning("To better aid interpretation, the matrix subjected to kmeans clustering in "
                        "`self.get_caps` should be standardized so that each ROI in the CAP cluster centroid. "
@@ -2356,7 +2411,7 @@ class CAP(_CAPGetter):
                     warning_msg = (f"[GROUP: {group} | REGION: {region} | CAP: {cap}] - "
                                     "Division by zero error when calculating cosine similarity for the "
                                     "{0} activations. Setting cosine similarity to zero.")
-                    
+
                     for vec in vecs:
                         dot_product = np.dot(vecs[vec], binary_vector)
                         norm_vec = np.linalg.norm(vecs[vec])
@@ -2382,7 +2437,7 @@ class CAP(_CAPGetter):
 
                     for i in ["High Amplitude", "Low Amplitude"]:
                         values = df[i].values
-        
+
                         # Add traces
                         fig.add_trace(go.Scatterpolar(
                         r=list(values),
@@ -2437,10 +2492,9 @@ class CAP(_CAPGetter):
 
                 if output_dir:
                     if not os.path.exists(output_dir): os.makedirs(output_dir)
-                    if suffix_title:
-                        file_name = f"{group.replace(' ', '_')}_{cap}_radar_{suffix_title}.png"
-                    else:
-                        file_name = f"{group.replace(' ', '_')}_{cap}_radar.png"
+
+                    file_name = self._basename(group, cap, "radar", suffix_title, "png")
+
                     if not as_html:
                         fig.write_image(os.path.join(output_dir,file_name), scale=plot_dict["scale"],
                                         engine=plot_dict["engine"])

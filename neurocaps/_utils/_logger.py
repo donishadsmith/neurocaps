@@ -5,11 +5,13 @@ import logging, sys
 class _Flush(logging.StreamHandler):
     def emit(self, record):
         super().emit(record)
-        self.flush() 
+        self.flush()
 
-def _logger(name, level = logging.INFO, flush=False):
+def _logger(name, flush=False):
     logger = logging.getLogger(name.split(".")[-1])
-    logger.setLevel(level)
+
+    if not logger.level: logger.setLevel(logging.INFO)
+
     # Works to see if root has handler and propagate if it does
     logger.propagate = logging.getLogger().hasHandlers()
     # Add or messages will repeat several times due to multiple handlers if same name used
