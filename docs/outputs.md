@@ -50,10 +50,10 @@ whitespace in the names:
 ```
 High_ADHD_davies_bouldin.png
 Low_ADHD_variance_ratio.png
-High_ADHD_CAP-2_surface.nii.gz
-Low_ADHD_CAP-2_surface.nii.gz
-High_ADHD_CAP-2_surface_plot.png
-Low_ADHD_CAP-2_surface_plot.png
+High_ADHD_CAP-2.nii.gz
+Low_ADHD_CAP-2.nii.gz
+High_ADHD_CAP-2_surface.png
+Low_ADHD_CAP-2_surface.png
 ```
 
 ## Exceptions to the Default Naming Scheme
@@ -100,7 +100,7 @@ overwritten using the `file_names` parameter):
     ```
     subject_timeseries_0_standardized.pkl
     ```
-    - `change_stype`
+    - `change_dtype`
 
     ```
     # Format: subject_timeseries_0_dtype-[dtype].pkl

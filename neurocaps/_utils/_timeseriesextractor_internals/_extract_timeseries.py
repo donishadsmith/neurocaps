@@ -1,23 +1,85 @@
 """Internal function to extract timeseries with or without multiprocessing"""
 import copy, json, math, os, re
+from dataclasses import dataclass, field
+from functools import cached_property
 import numpy as np, pandas as pd
 from nilearn.maskers import NiftiLabelsMasker
 from nilearn.image import index_img, load_img
 from .._logger import _logger
 
-def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_files, confound_metadata_files,
-                        run_list, tr, condition, parcel_approach, signal_clean_info, verbose, flush, task_info):
+# Data container
+@dataclass
+class _Data:
+    parcel_approach: dict = field(default_factory=dict)
+    signal_clean_info: dict = field(default_factory=dict)
+    task_info: dict = field(default_factory=dict)
+    tr: int = None
+    verbose: bool = False
+
+    # Run-specific attributes
+    files: dict = field(default_factory=dict)
+    fail_fast: bool = False
+    dummy_vols: int = None
+    censor_vols: list = field(default_factory=list)
+    # Event condition scan indices
+    scans: list = field(default_factory=list)
+    # Subject header
+    head: str = None
+    # Percentage of volumes that exceed fd threshold
+    vols_exceed_percent: float = None
+
+    @property
+    def session(self):
+        return self.task_info["session"]
+
+    @property
+    def task(self):
+        return self.task_info["task"]
+
+    @property
+    def condition(self):
+        return self.task_info["condition"]
+
+    @property
+    def use_confounds(self):
+        return self.signal_clean_info["use_confounds"]
+
+    @property
+    def fd(self):
+        if isinstance(self.signal_clean_info["fd_threshold"], dict):
+            return self.signal_clean_info["fd_threshold"]["threshold"]
+        else:
+            return self.signal_clean_info["fd_threshold"]
+
+    @property
+    def scrub_lim(self):
+        if isinstance(self.signal_clean_info["fd_threshold"], dict):
+            if "outlier_percentage" in self.signal_clean_info["fd_threshold"]:
+                return self.signal_clean_info["fd_threshold"]["outlier_percentage"]
+        else:
+            return None
+
+    @property
+    def maps(self):
+        return self.parcel_approach[list(self.parcel_approach)[0]]["maps"]
+
+    @cached_property
+    def confound_df(self):
+        if self.files["confound"]: return pd.read_csv(self.files["confound"], sep="\t")
+        else: return None
+
+def _extract_timeseries(subj_id, prepped_files, run_list, parcel_approach, signal_clean_info, task_info, tr, verbose,
+                        flush):
 
     # Logger inside function to give logger to each child process if parallel processing is done
-    LG  = _logger(__name__, flush=flush)
+    LG = _logger(__name__, flush=flush)
 
     # Initialize subject dictionary
     subject_timeseries = {subj_id: {}}
 
     for run in run_list:
-        # Initialize flag; This is for flagging runs where the percentage of volumes exceeding the "fd_threshold"
-        # is greater than "outlier_percentage"
-        flagged = False
+        # Initialize class; placing inside run loops allows re-initialization of defaults
+        Data = _Data(parcel_approach, signal_clean_info, task_info, tr, verbose)
 
         # Due to prior checking in _setup_extraction within TimeseriesExtractor, run_list = [None] is assumed to be a
         # single file without the run- description
@@ -25,152 +87,136 @@ def _extract_timeseries(subj_id, nifti_files, mask_files, event_files, confound_
         run = run if run is not None else ""
 
         # Get files from specific run
-        files = {}
-        files["nifti"] = _grab(run, nifti_files)
-        files["mask"] = _grab(run, mask_files)
-        files["confound"] = _grab(run, confound_files)
-        files["confound_meta"] = _grab(run, confound_metadata_files)
-        files["event"] = _grab(run, event_files)
-
-        confound_df = pd.read_csv(files["confound"], sep="\t") if signal_clean_info["use_confounds"] else None
+        Data.files = {
+            "nifti": _grab(run, prepped_files["niftis"]),
+            "mask": _grab(run, prepped_files["masks"]),
+            "confound": _grab(run, prepped_files["confounds"]),
+            "confound_meta": _grab(run, prepped_files["confounds_metas"]),
+            "event": _grab(run, prepped_files["events"])
+        }
 
         # Base message
-        subject_header, sub_message = _header(task_info["session"], task_info["task"],
-                                              run_id.split("-")[-1], files["nifti"], subj_id)
+        Data.head = _header(Data, run_id.split("-")[-1], subj_id)
 
-        if verbose:
-            base_file = os.path.basename(files['nifti'])
-            LG.info(f"{subject_header}" + f"Preparing for Timeseries Extraction using [FILE: {base_file}].")
+        if Data.verbose:
+            LG.info(f"{Data.head}" + f"Preparing for Timeseries Extraction using "
+                    f"[FILE: {os.path.basename(Data.files['nifti'])}].")
 
-        # Initialize variables
-        censor_volumes, scan_list = [], []
-        dummy_scans, outlier_limit = None, None
+        # Get dummy volumes
+        Data.dummy_vols = _get_dummy(Data, LG)
 
-        # Check for non-steady_state if requested
-        if signal_clean_info["dummy_scans"]:
-            dummy_scans = _get_dummy(signal_clean_info["dummy_scans"], confound_df, verbose, subject_header,
-                                     LG)
-
-        if signal_clean_info["use_confounds"] and signal_clean_info["fd_threshold"]:
-            if "framewise_displacement" in confound_df.columns:
-                fd_array = confound_df["framewise_displacement"].fillna(0).values
-                # Truncate fd_array if dummy scans;
-                if dummy_scans: fd_array = fd_array[dummy_scans:]
-
+        # Assess framewise displacement
+        if Data.fd and Data.files["confound"] and "framewise_displacement" in Data.confound_df.columns:
                 # Get censor volumes vector, outlier_limit, and threshold
-                censor_volumes, outlier_limit, threshold = _censor(signal_clean_info["fd_threshold"], fd_array)
+                fd_array, Data.censor_vols = _censor(Data)
 
-                if len(censor_volumes) == fd_array.shape[0]:
-                    LG.warning(f"{subject_header}" + "Timeseries Extraction Skipped: Timeseries will be empty due to "
-                               f"all volumes exceeding a framewise displacement of {threshold}.")
+                if len(Data.censor_vols) == fd_array.shape[0]:
+                    LG.warning(f"{Data.head}" + "Timeseries Extraction Skipped: Timeseries will be empty due to "
+                               f"all volumes exceeding a framewise displacement of {Data.fd}.")
                     continue
 
-                if outlier_limit and condition is None:
-                    percentage, flagged = _mark(len(censor_volumes), len(fd_array), outlier_limit)
+                # Check if run fails fast due to percentage volumes exceeding user-specified scrub_lim
+                if Data.scrub_lim and not Data.condition:
+                    Data.vols_exceed_percent, Data.fail_fast = _flag(len(Data.censor_vols), len(fd_array),
+                                                                     Data.scrub_lim)
+        elif Data.fd and Data.files["confound"] and "framewise_displacement" not in Data.confound_df.columns:
+            LG.warning(f"{Data.head}" + "`fd_threshold` specified but 'framewise_displacement' column not "
+                        "found in the confound tsv file. Removal of volumes after nuisance regression will not be "
+                        "but timeseries extraction will continue.")
 
-            else:
-                LG.warning(f"{subject_header}" + "`fd_threshold` specified but 'framewise_displacement' column not "
-                           "found in the confound tsv file. Removal of volumes after nuisance regression will not be "
-                           "but timeseries extraction will continue."
-                           )
-
-        if files['event']:
-            event_df = pd.read_csv(files['event'], sep="\t")
+        # Get events
+        if Data.files['event']:
+            event_df = pd.read_csv(Data.files['event'], sep="\t")
             # Get specific timing information for specific condition
-            condition_df = event_df[event_df["trial_type"] == condition]
+            condition_df = event_df[event_df["trial_type"] == Data.condition]
 
             if condition_df.empty:
-                LG.warning(f"{subject_header}" + f"[CONDITION: {condition}] Timeseries Extraction Skipped: The "
+                LG.warning(f"{Data.head}" + f"[CONDITION: {Data.condition}] Timeseries Extraction Skipped: The "
                            "requested condition does not exist in the 'trial_type' column of the event file.")
                 continue
 
             # Get condition indices
-            scan_list = _get_condition(condition_df, tr, scan_list)
+            Data.scans = _get_condition(Data, condition_df)
 
-            # Adjust for dummy before censoring since censoring is dummy adjusted above
-            if dummy_scans: scan_list = [scan - dummy_scans for scan in scan_list if scan not in range(0, dummy_scans)]
+            if Data.censor_vols:
+                Data.scans, n = _filter_condition(Data, fd_array, LG)
+                if Data.scrub_lim:
+                    Data.vols_exceed_percent, Data.fail_fast = _flag(n - len(Data.scans), n, Data.scrub_lim)
 
-            if censor_volumes:
-                scan_list, n = _filter_condition(scan_list, fd_array, condition, subject_header, censor_volumes, LG)
-                if outlier_limit: percentage, flagged = _mark(n - len(scan_list), n, outlier_limit)
-
-            if not scan_list:
-                LG.warning(f"{subject_header}" + f"[CONDITION: {condition}] Timeseries Extraction Skipped: Timeseries "
+            if not Data.scans:
+                LG.warning(f"{Data.head}" + f"[CONDITION: {Data.condition}] Timeseries Extraction Skipped: Timeseries "
                            "will be empty when filtered to only include volumes from the requested condition. Possibly "
                            "due to the TRs corresponding to the condition being removed by `dummy_scans` or filtered "
                            "due to exceeding threshold for `fd_threshold`.")
                 continue
 
-        if flagged:
-            percentage_message = f"Percentage of volumes exceeding the threshold limit is {percentage*100}%"
-            if condition: percentage_message = f"{percentage_message} for [CONDITION: {condition}]"
-            LG.warning(f"{subject_header}" + f"Timeseries Extraction Skipped: Run flagged due to more than "
-                       f"{outlier_limit*100}% of the volumes exceeding the framewise displacement threshold limit "
-                       f" {threshold}. {percentage_message}")
+        if Data.fail_fast:
+            percent_msg = f"Percentage of volumes exceeding the threshold limit is {Data.vols_exceed_percent*100}%"
+            if Data.condition: percent_msg = f"{percent_msg} for [CONDITION: {Data.condition}]"
+            LG.warning(f"{Data.head}" + f"Timeseries Extraction Skipped: Run flagged due to more than "
+                       f"{Data.scrub_lim*100}% of the volumes exceeding the framewise displacement threshold of "
+                       f"{Data.fd}. {percent_msg}.")
             continue
 
-        timeseries = _continue_extraction(files, confound_df=confound_df, condition=condition,
-                                          signal_clean_info=signal_clean_info, dummy_scans=dummy_scans, tr=tr,
-                                          parcel_approach=parcel_approach, LG=LG, verbose=verbose,
-                                          censor_volumes=censor_volumes, scan_list=scan_list,
-                                          subject_header=subject_header)
+        # Continue extraction if the continue keyword isn't hit when assessing the fd threshold or events
+        timeseries = _continue_extraction(Data, LG)
 
         if timeseries.shape[0] == 0:
-            LG.warning(f"{subject_header}" + f"Timeseries is empty and will not be appended to the "
+            LG.warning(f"{Data.head}" + f"Timeseries is empty and will not be appended to the "
                        "`subject_timeseries` dictionary.")
         else:
             subject_timeseries[subj_id].update({run_id: timeseries})
 
     if not subject_timeseries[subj_id]:
-        LG.warning(f"{sub_message.split(' | RUN:')[0]}] Timeseries Extraction Skipped: No runs were extracted.")
+        LG.warning(f"{Data.head.split(' | RUN:')[0]}] Timeseries Extraction Skipped: No runs were extracted.")
         subject_timeseries = None
 
     return subject_timeseries
 
-def _continue_extraction(files, confound_df, signal_clean_info, dummy_scans, condition, tr, parcel_approach,
-                         LG, verbose, censor_volumes, scan_list, subject_header):
+def _continue_extraction(Data, LG):
     # Extract confound information of interest and ensure confound file does not contain NAs
-    if signal_clean_info["use_confounds"]:
+    if Data.use_confounds:
 
-        confound_names = copy.deepcopy(signal_clean_info["confound_names"])
+        confound_names = copy.deepcopy(Data.signal_clean_info["confound_names"])
 
         # Extract first "n" numbers of specified WM and CSF components
-        if files["confound_meta"]:
+        if Data.files["confound_meta"]:
             confound_names = _acompcor(confound_names,
-                                       files["confound_meta"],
-                                       signal_clean_info["n_acompcor_separate"])
+                                       Data.files["confound_meta"],
+                                       Data.signal_clean_info["n_acompcor_separate"])
 
         # Get confounds
-        confounds = _get_confounds(confound_names, confound_df, verbose, subject_header, LG)
+        confounds = _get_confounds(Data, confound_names, LG)
 
     # Create the masker for extracting time series
     masker = NiftiLabelsMasker(
-        mask_img=files["mask"],
-        labels_img=parcel_approach[list(parcel_approach)[0]]["maps"],
+        mask_img=Data.files["mask"],
+        labels_img=Data.maps,
         resampling_target='data',
-        t_r=tr,
-        **signal_clean_info["masker_init"]
+        t_r=Data.tr,
+        **Data.signal_clean_info["masker_init"]
     )
 
     # Load and discard volumes if needed
-    nifti_img = load_img(files["nifti"])
-    if dummy_scans:
-        nifti_img = index_img(nifti_img, slice(dummy_scans, None))
-        if signal_clean_info["use_confounds"]:
-            confounds.drop(list(range(0, dummy_scans)), axis=0, inplace=True)
+    nifti_img = load_img(Data.files["nifti"])
+
+    if Data.dummy_vols:
+        nifti_img = index_img(nifti_img, slice(Data.dummy_vols, None))
+        if Data.use_confounds:
+            confounds.drop(list(range(0, Data.dummy_vols)), axis=0, inplace=True)
 
     # Extract timeseries
-    if signal_clean_info["use_confounds"]: timeseries = masker.fit_transform(nifti_img, confounds=confounds)
+    if Data.use_confounds: timeseries = masker.fit_transform(nifti_img, confounds=confounds)
     else: timeseries = masker.fit_transform(nifti_img)
 
-    if censor_volumes and not condition: timeseries = np.delete(timeseries, censor_volumes, axis=0)
+    if Data.censor_vols and not Data.condition: timeseries = np.delete(timeseries, Data.censor_vols, axis=0)
 
-    if condition:
+    if Data.condition:
         # If any out of bound indices, remove them instead of getting indexing error.
-        if max(scan_list) > timeseries.shape[0] - 1:
-            scan_list = _check_indices(scan_list, timeseries.shape[0], condition, subject_header, LG)
+        if max(Data.scans) > timeseries.shape[0] - 1:
+            Data.scans = _check_indices(Data, timeseries.shape[0], LG)
         # Extract condition
-        timeseries = timeseries[scan_list,:]
+        timeseries = timeseries[Data.scans,:]
 
     return timeseries
 
@@ -179,84 +225,89 @@ def _grab(run, files):
     if files: return [file for file in files if run in os.path.basename(file)][0]
     else: return None
 
-# Create message header
-def _header(session, task, run_message, nifti_file, subj_id):
-    if session:
-        session_message = session
+# Create subject header
+def _header(Data, run_id, subj_id):
+    if Data.session:
+        sess_id = Data.session
     else:
-        base_filename = os.path.basename(nifti_file)
-        session_id = re.search("ses-(\\S+?)[-_]", base_filename)[0][:-1] if "ses-" in base_filename else None
-        session_message = session_id.split("-")[-1] if session_id else None
-    sub_message = f'[SUBJECT: {subj_id} | SESSION: {session_message} | TASK: {task} | RUN: {run_message}]'
+        base_filename = os.path.basename(Data.files["nifti"])
+        sess = re.search("ses-(\\S+?)[-_]", base_filename)[0][:-1] if "ses-" in base_filename else None
+        sess_id = sess.split("-")[-1] if sess else None
 
-    return f"{sub_message} ", sub_message
+    sub_head = f'[SUBJECT: {subj_id} | SESSION: {sess_id} | TASK: {Data.task} | RUN: {run_id}]'
+
+    return f"{sub_head} "
 
 # Get dummy scan number
-def _get_dummy(info, confound_df, verbose, subject_header, LG):
+def _get_dummy(Data, LG):
+    info = Data.signal_clean_info["dummy_scans"]
     if isinstance(info, dict) and info["auto"] is True:
-        n, flag = len([col for col in confound_df.columns if "non_steady_state" in col]), "auto"
+        n, flag = len([col for col in Data.confound_df.columns if "non_steady_state" in col]), "auto"
         if "min" in info and n < info["min"]: n, flag = info["min"], "min"
         if "max" in info and n > info["max"]: n, flag = info["max"], "max"
         if n == 0: n = None
 
-        if verbose:
+        if Data.verbose:
             if flag == "auto":
                 if n:
-                    LG.info(f"{subject_header}" + "Number of dummy scans to be removed based on "
+                    LG.info(f"{Data.head}" + "Number of dummy scans to be removed based on "
                             f"'non_steady_state_outlier_XX' columns: {n}.")
                 else:
-                    LG.info(f"{subject_header}" + "No 'non_steady_state_outlier_XX' columns were found so 0 "
+                    LG.info(f"{Data.head}" + "No 'non_steady_state_outlier_XX' columns were found so 0 "
                             "dummy scans will be removed.")
             else:
-                LG.info(f"{subject_header}" + f"Default dummy scans set by '{flag}' will be used: {n}")
+                LG.info(f"{Data.head}" + f"Default dummy scans set by '{flag}' will be used: {n}.")
 
     return n if isinstance(info, dict) else info
 
 # Create censor vector
-def _censor(info, fd_array):
-    outlier_limit, threshold = None, None
+def _censor(Data):
+    fd_array = Data.confound_df["framewise_displacement"].fillna(0).values
+    # Truncate fd_array if dummy scans
+    if Data.dummy_vols: fd_array = fd_array[Data.dummy_vols:]
 
-    if isinstance(info, dict):
-        threshold = info["threshold"]
-        if "outlier_percentage" in info: outlier_limit = info["outlier_percentage"]
-    else:
-        threshold = info
+    censor_volumes = list(np.where(fd_array > Data.fd)[0])
 
-    censor_volumes = list(np.where(fd_array > threshold)[0])
+    return fd_array, censor_volumes
 
-    return censor_volumes, outlier_limit, threshold
+# Determine if run fails fast; when condition is not specified
+def _flag(n_censor, n, scrub_lim):
+    vols_exceed_percent = n_censor/n
+    fail_fast = True if vols_exceed_percent > scrub_lim else False
 
-# Determine if run is flagged; when condition is not specified
-def _mark(n_censor, n, outlier_limit):
-    percentage = n_censor/n
-    flagged = True if percentage > outlier_limit else False
-
-    return percentage, flagged
+    return vols_exceed_percent, fail_fast
 
 # Get event condition
-def _get_condition(condition_df, tr, scan_list):
+def _get_condition(Data, condition_df):
+    scans = []
     # Convert times into scan numbers to obtain the scans taken when the participant was exposed to the
     # condition of interest; include partial scans
     for i in condition_df.index:
-        onset_scan = int(condition_df.loc[i,"onset"]/tr)
-        end_scan = math.ceil((condition_df.loc[i,"onset"] + condition_df.loc[i,"duration"])/tr)
+        onset_scan = int(condition_df.loc[i,"onset"]/Data.tr)
+        end_scan = math.ceil((condition_df.loc[i,"onset"] + condition_df.loc[i,"duration"])/Data.tr)
         # Add one since range is not inclusive
-        scan_list.extend(list(range(onset_scan, end_scan + 1)))
+        scans.extend(list(range(onset_scan, end_scan + 1)))
 
     # Get unique scans to not duplicate information
-    scan_list = sorted(list(set(scan_list)))
+    scans = sorted(list(set(scans)))
 
-    return scan_list
+    # Adjust for dummy
+    if Data.dummy_vols:
+        scans = [scan - Data.dummy_vols for scan in scans if scan not in range(0, Data.dummy_vols)]
 
-def _filter_condition(scan_list, fd_array, condition, subject_header, censor_volumes, LG):
+    return scans
+
+def _filter_condition(Data, fd_array, LG):
+    # New `scans` list created if conditions met
+    scans = Data.scans
     # Assess if any condition indices greater than fd array to not dilute outlier calculation
-    if max(scan_list) > fd_array.shape[0] - 1:
-        scan_list = _check_indices(scan_list, fd_array.shape[0], condition, subject_header, LG)
+    if max(scans) > fd_array.shape[0] - 1:
+        scans = _check_indices(Data, fd_array.shape[0], LG)
     # Get length of scan list prior to assess outliers if requested
-    before_censor = len(scan_list)
-    scan_list = [volume for volume in scan_list if volume not in censor_volumes]
+    n_before_censor = len(scans)
+    scans = [volume for volume in scans if volume not in Data.censor_vols]
 
-    return scan_list, before_censor
+    return scans, n_before_censor
 
 # Extract first "n" numbers of specified WM and CSF components
 def _acompcor(confound_names, confound_metadata_file, n):
@@ -273,36 +324,37 @@ def _acompcor(confound_names, confound_metadata_file, n):
     return confound_names
 
 # Get confounds
-def _get_confounds(confound_names, confound_df, verbose, subject_header, LG):
+def _get_confounds(Data, confound_names, LG):
     valid_confounds = []
     invalid_confounds = []
     for confound_name in confound_names:
         if "*" in confound_name:
             prefix = confound_name.split("*")[0]
-            confounds_list = [col for col in confound_df.columns if col.startswith(prefix)]
+            confounds_list = [col for col in Data.confound_df.columns if col.startswith(prefix)]
         else:
-            confounds_list = [col for col in confound_df.columns if col == confound_name]
+            confounds_list = [col for col in Data.confound_df.columns if col == confound_name]
 
         if confounds_list: valid_confounds.extend(confounds_list)
         else: invalid_confounds.extend([confound_name])
 
-    if valid_confounds: confounds = confound_df[valid_confounds].fillna(0)
+    # First index of some variables is na
+    if valid_confounds: confounds = Data.confound_df[valid_confounds].fillna(0)
     else: confounds = None
 
-    if invalid_confounds and verbose:
-        LG.info(f"{subject_header}" + f"The following confounds were not found: {', '.join(invalid_confounds)}.")
+    if invalid_confounds and Data.verbose:
+        LG.info(f"{Data.head}" + f"The following confounds were not found: {', '.join(invalid_confounds)}.")
 
-    if not confounds.empty and verbose:
-        LG.info(f"{subject_header}" + "The following confounds will be used for nuisance regression: "
+    if not confounds.empty and Data.verbose:
+        LG.info(f"{Data.head}" + "The following confounds will be used for nuisance regression: "
                 f"{', '.join(list(confounds.columns))}.")
 
     return confounds
 
 # Check if indices valid
-def _check_indices(scan_list, arr_shape, condition, subject_header, LG):
-    LG.warning(f"{subject_header}" + f"[CONDITION: {condition}] Max scan index for exceeds timeseries max index. "
-               f"Max condition index is {max(scan_list)}, while max timeseries index is {arr_shape - 1}. Timing may "
+def _check_indices(Data, arr_shape, LG):
+    LG.warning(f"{Data.head}" + f"[CONDITION: {Data.condition}] Max scan index for exceeds timeseries max index. "
+               f"Max condition index is {max(Data.scans)}, while max timeseries index is {arr_shape - 1}. Timing may "
                "be misaligned or specified repetition time incorrect. If intentional, ignore warning. Extracting "
                "indices for condition only within timeseries range.")
 
-    return [scan for scan in scan_list if scan in range(0,arr_shape)]
+    return [scan for scan in Data.scans if scan in range(0, arr_shape)]

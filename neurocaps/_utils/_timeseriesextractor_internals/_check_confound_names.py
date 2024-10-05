@@ -3,8 +3,8 @@ from .._logger import _logger
 
 LG = _logger(__name__)
 
-def _check_confound_names(high_pass, specified_confound_names, n_acompcor_separate):
-    if specified_confound_names is None:
+def _check_confound_names(high_pass, user_confounds, n_acompcor_separate):
+    if user_confounds is None:
         if high_pass:
             # Do not use cosine or acompcor regressor if high-pass filtering is not None.
             # Acompcor regressors are estimated on high pass filtered version of data form fmriprep
@@ -20,14 +20,14 @@ def _check_confound_names(high_pass, specified_confound_names, n_acompcor_separa
                 "a_comp_cor_01", "a_comp_cor_02", "a_comp_cor_03", "a_comp_cor_04", "a_comp_cor_05"
             ]
     else:
-        assert isinstance(specified_confound_names, list) and specified_confound_names, "`confound_names` must be a non-empty list."
-        confound_names = specified_confound_names
+        assert isinstance(user_confounds, list) and user_confounds, "`confound_names` must be a non-empty list."
+        confound_names = user_confounds
 
     if n_acompcor_separate:
         check_confounds = [confound for confound in confound_names if "a_comp_cor" not in confound]
         if len(confound_names) > len(check_confounds):
             removed_confounds = [element for element in confound_names if element not in check_confounds]
-            if specified_confound_names:
+            if user_confounds:
                 LG.warning("Since `n_acompcor_separate` has been specified, acompcor components in "
                            f"`confound_names` will be disregarded and replaced with the first {n_acompcor_separate} "
                            "components of the white matter and cerebrospinal fluid masks for each participant. "

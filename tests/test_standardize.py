@@ -34,7 +34,7 @@ def test_standardize_w_pickle():
     standardized_subject_timeseries = standardize(
         subject_timeseries_list=[os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl")],
         output_dir=os.path.dirname(__file__), file_names=["test_standardized"])
-    
+
     files = glob.glob(os.path.join(os.path.dirname(__file__), "*standardized*"))
     assert len(files) == 2
 

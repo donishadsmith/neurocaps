@@ -42,6 +42,14 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.17.2.post0] - 2024-10-06
+### 💻 Metadata
+- Minor clarification in `CAP.caps2radar` function
+
+## [0.17.2] - 2024-10-06
+### ♻ Changed
+- Internal refactoring and minor change to saved filenames for some functions for consistency.
+
 ## [0.17.1] - 2024-10-01
 ### ♻ Changed
 - The `CAP.caps2radar` function now calculates the cosine similarity to the positive and negative activations of

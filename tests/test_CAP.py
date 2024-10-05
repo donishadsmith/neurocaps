@@ -345,7 +345,7 @@ def test_calculate_metrics():
                                                 metrics="persistence")["persistence"]
     temp = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True,
                                           metrics="temporal_fraction")["temporal_fraction"]
-    
+
     for cap in ["CAP-1", "CAP-2"]:
         for i in temp.index:
            assert math.isclose((counts.loc[i,cap]*persistence.loc[i,cap])/100, temp.loc[i,cap], abs_tol=0.01)
@@ -481,11 +481,11 @@ def test_plotting_functions(current_timeseries, parcel_approach):
     cap_analysis = CAP(parcel_approach=parcel_approach)
     cap_analysis.get_caps(subject_timeseries=current_timeseries,
                           n_clusters=2)
-    
+
     # Plotting Functions with different configurations
     cap_analysis.caps2plot(subplots=True, xlabel_rotation=90, sharey=True, borderwidths=10, show_figs=False,
                            output_dir=os.path.dirname(__file__))
-    
+
     files = glob.glob(os.path.join(os.path.dirname(__file__), "*.png"))
     assert len(files) == 1
     [os.remove(file) for file in files]
@@ -505,7 +505,7 @@ def test_plotting_functions(current_timeseries, parcel_approach):
 
     cap_analysis.caps2plot(subplots=True, xlabel_rotation=90, sharey=True, borderwidths=10, show_figs=False,
                            visual_scope=["regions", "nodes"], plot_options=["outer_product", "heatmap"],
-                           output_dir=os.path.dirname(__file__))  
+                           output_dir=os.path.dirname(__file__))
     check_imgs(values_dict={"heatmap":2, "outer":2})
 
     cap_analysis.caps2plot(subplots=True, xlabel_rotation=90, sharey=True, borderwidths=10, show_figs=False,
