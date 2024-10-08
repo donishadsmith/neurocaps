@@ -295,8 +295,9 @@ class CAP(_CAPGetter):
     **If no groups were specified, the default group name will be "All Subjects".**
 
     **If using a "Custom" parcellation approach**, ensure that the atlas is lateralized (where each region/network has
-    nodes in the left and right hemisphere). This function assumes that the background label is "zero". Do not add a
-    background label in the "nodes" or "regions" key; the zero index should correspond to the first ID that is not zero.
+    nodes in the left and right hemisphere). Certain visualization functions in this class assume that the background
+    label is "0". Do not add a background label in the "nodes" or "regions" key; the zero index should correspond to
+    the first ID that is not "0".
 
     - "maps": Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g.,
       .nii for NIfTI files).
@@ -1024,7 +1025,7 @@ class CAP(_CAPGetter):
                 for target in cap_numbers:
                     _ , segments = self._segments(target, predicted_subject_timeseries[subj_id][curr_run])
                     count_dict.update({target: segments})
-                
+
                 self._update_dict(cap_numbers, group_cap_counts[group], count_dict)
 
                 # Populate Dataframe
@@ -1041,7 +1042,7 @@ class CAP(_CAPGetter):
                     # always 1 at minimum due to + 1; np.where(np.diff(target_indices, n=1) > 1, 1,0).sum() is 0
                     # when empty or the condition isn't met
                     persistence_dict.update({target: (binary_arr.sum()/segments) * (tr if tr else 1)})
-                
+
                 self._update_dict(cap_numbers, group_cap_counts[group], persistence_dict)
 
                 # Populate Dataframe
@@ -1107,7 +1108,7 @@ class CAP(_CAPGetter):
                             )
 
         if return_df: return df_dict
-    
+
     # Replace zeros with nan for groups with less caps than the group with the max caps
     @staticmethod
     def _update_dict(cap_numbers, group_cap_counts, curr_dict):
@@ -2138,7 +2139,7 @@ class CAP(_CAPGetter):
                                 bbox_inches=plot_dict["bbox_inches"])
                     # Save stat map
                     if save_stat_maps:
-                        stat_map_name = file_name.replace("_surface.png", ".nii.gz")
+                        stat_map_name = file_name.split("_surface")[0] + ".nii.gz"
                         nib.save(stat_map, os.path.join(output_dir, stat_map_name))
 
                 plt.show(fig) if show_figs else plt.close(fig)

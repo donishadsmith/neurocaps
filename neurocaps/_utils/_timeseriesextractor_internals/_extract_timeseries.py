@@ -107,18 +107,19 @@ def _extract_timeseries(subj_id, prepped_files, run_list, parcel_approach, signa
 
         # Assess framewise displacement
         if Data.fd and Data.files["confound"] and "framewise_displacement" in Data.confound_df.columns:
-                # Get censor volumes vector, outlier_limit, and threshold
-                fd_array, Data.censor_vols = _censor(Data)
+            # Get censor volumes vector, outlier_limit, and threshold
+            fd_array, Data.censor_vols = _censor(Data)
 
-                if len(Data.censor_vols) == fd_array.shape[0]:
-                    LG.warning(f"{Data.head}" + "Timeseries Extraction Skipped: Timeseries will be empty due to "
-                               f"all volumes exceeding a framewise displacement of {Data.fd}.")
-                    continue
+            if len(Data.censor_vols) == fd_array.shape[0]:
+                LG.warning(f"{Data.head}" + "Timeseries Extraction Skipped: Timeseries will be empty due to "
+                            f"all volumes exceeding a framewise displacement of {Data.fd}.")
+                continue
 
-                # Check if run fails fast due to percentage volumes exceeding user-specified scrub_lim
-                if Data.scrub_lim and not Data.condition:
-                    Data.vols_exceed_percent, Data.fail_fast = _flag(len(Data.censor_vols), len(fd_array),
-                                                                     Data.scrub_lim)
+            # Check if run fails fast due to percentage volumes exceeding user-specified scrub_lim
+            if Data.scrub_lim and not Data.condition:
+                Data.vols_exceed_percent, Data.fail_fast = _flag(len(Data.censor_vols), len(fd_array),
+                                                                    Data.scrub_lim)
+
         elif Data.fd and Data.files["confound"] and "framewise_displacement" not in Data.confound_df.columns:
             LG.warning(f"{Data.head}" + "`fd_threshold` specified but 'framewise_displacement' column not "
                         "found in the confound tsv file. Removal of volumes after nuisance regression will not be "
