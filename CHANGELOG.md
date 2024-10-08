@@ -42,6 +42,10 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.17.3] - 2024-10-08
+### 🐛 Fixes
+- Fixes specific error that occurs when using a suffix name and saving nifti in `CAP.caps2surf`.
+
 ## [0.17.2.post0] - 2024-10-06
 ### 💻 Metadata
 - Minor clarification in `CAP.caps2radar` function

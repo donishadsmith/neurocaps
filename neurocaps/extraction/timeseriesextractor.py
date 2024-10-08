@@ -201,9 +201,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                           "rot_y", "rot_y_derivative1", "rot_z", "rot_z_derivative1", "a_comp_cor_00",
                           "a_comp_cor_01", "a_comp_cor_02", "a_comp_cor_03", "a_comp_cor_04", "a_comp_cor_05"]
 
+
     **If using a "Custom" parcellation approach**, ensure that the atlas is lateralized (where each region/network has
-    nodes in the left and right hemisphere). This function assumes that the background label is "zero". Do not add a
-    background label in the "nodes" or "regions" key; the zero index should correspond to the first ID that is not zero.
+    nodes in the left and right hemisphere). The visualization function in this class assume that the background
+    label is "0". Do not add a background label in the "nodes" or "regions" key; the zero index should correspond to
+    the first ID that is not "0".
 
     - "maps": Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g.,
       .nii for NIfTI files). **This key is required for timeseries extraction**.
