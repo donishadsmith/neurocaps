@@ -494,24 +494,24 @@ def test_plotting_functions(current_timeseries, parcel_approach):
                            xlabel_rotation=90, xticklabels_size = 5, hspace = 0.6, tight_layout = False,
                            show_figs=False, plot_options=["heatmap", "outer_product"], hemisphere_labels=False,
                            output_dir=os.path.dirname(__file__))
-    check_imgs(values_dict={"heatmap":2, "outer":4})
+    check_imgs(values_dict={"heatmap": 2, "outer": 4})
 
     cap_analysis.caps2plot(subplots=False, yticklabels_size=5, wspace = 0.1, visual_scope=["regions", "nodes"],
                            xlabel_rotation=90, xticklabels_size = 5, hspace = 0.6, tight_layout=False,
                            show_figs=False, plot_options=["heatmap", "outer_product"],
                            hemisphere_labels=True, invalid_kwarg=0,
                            output_dir=os.path.dirname(__file__))
-    check_imgs(values_dict={"heatmap":2, "outer":4})
+    check_imgs(values_dict={"heatmap": 2, "outer": 4})
 
     cap_analysis.caps2plot(subplots=True, xlabel_rotation=90, sharey=True, borderwidths=10, show_figs=False,
                            visual_scope=["regions", "nodes"], plot_options=["outer_product", "heatmap"],
                            output_dir=os.path.dirname(__file__))
-    check_imgs(values_dict={"heatmap":2, "outer":2})
+    check_imgs(values_dict={"heatmap": 2, "outer": 2})
 
     cap_analysis.caps2plot(subplots=True, xlabel_rotation=90, sharey=True, borderwidths=10, show_figs=False,
                            visual_scope=["regions", "nodes"], plot_options=["outer_product", "heatmap"],
                            hemisphere_labels=True, output_dir=os.path.dirname(__file__))
-    check_imgs(values_dict={"heatmap":2, "outer":2})
+    check_imgs(values_dict={"heatmap": 2, "outer": 2})
 
     df = cap_analysis.caps2corr(annot=True, show_figs=False, return_df=True,
                                 output_dir=os.path.dirname(__file__), save_df=True)
@@ -534,16 +534,16 @@ def test_plotting_functions(current_timeseries, parcel_approach):
     # Radar plotting functions
     cap_analysis.caps2radar(radialaxis=radialaxis, fill="toself", show_figs=False, as_html=True,
                             output_dir=os.path.dirname(__file__))
-    check_imgs(plot_type="radar", values_dict={"html":2})
+    check_imgs(plot_type="radar", values_dict={"html": 2})
 
     cap_analysis.caps2radar(radialaxis=radialaxis, fill="toself", show_figs=False, as_html=False,
                             output_dir=os.path.dirname(__file__))
-    check_imgs(plot_type="radar", values_dict={"png":2})
+    check_imgs(plot_type="radar", values_dict={"png": 2})
 
     cap_analysis.caps2radar(radialaxis=radialaxis, fill="toself", use_scatterpolar=True,
                             scattersize=10, show_figs=False, as_html=True,
                             output_dir=os.path.dirname(__file__))
-    check_imgs(plot_type="radar", values_dict={"html":2})
+    check_imgs(plot_type="radar", values_dict={"html": 2})
 
 @pytest.mark.parametrize("current_timeseries, parcel_approach",
                          [(extractor.subject_timeseries,extractor.parcel_approach),
@@ -551,7 +551,7 @@ def test_plotting_functions(current_timeseries, parcel_approach):
 def test_niftis(current_timeseries, parcel_approach, remove_files):
     cap_analysis = CAP(parcel_approach=parcel_approach)
     cap_analysis.get_caps(subject_timeseries=current_timeseries,
-                          n_clusters=2,show_figs=False)
+                          n_clusters=2)
 
     atlas_data = nib.load(parcel_approach[list(parcel_approach)[0]]["maps"]).get_fdata()
     labels = sorted(np.unique(atlas_data))[1:]
@@ -569,4 +569,4 @@ def test_niftis(current_timeseries, parcel_approach, remove_files):
         np.array_equal(cap_analysis.caps["All Subjects"][f"CAP-{indx + 1}"], np.array(act_values))
 
     cap_analysis.caps2niftis(output_dir=os.path.dirname(__file__), fwhm=1,
-                             knn_dict={"k":1, "resolution_mm":1, "remove_subcortical": [50]})
+                             knn_dict={"k": 1, "resolution_mm": 1, "remove_subcortical": [50]})

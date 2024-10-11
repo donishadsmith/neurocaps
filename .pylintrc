@@ -17,7 +17,9 @@ disable=too-many-branches,
          possibly-used-before-assignment,
          unnecessary-comprehension,
          consider-using-dict-items,
-         use-dict-literal
+         use-dict-literal,
+         logging-not-lazy,
+         logging-fstring-interpolation
 
 [FORMAT]
 max-line-length=150

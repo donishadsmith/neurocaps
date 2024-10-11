@@ -101,7 +101,7 @@ def transition_matrix(trans_dict: dict[str, pd.DataFrame], output_dir: Optional[
     Indices represent "from" and columns represent "to". For instance, the probability at ``df.loc["CAP-1", "CAP-2"]``
     represents the probability from transitioning from CAP-1 to CAP-2.
     """
-    assert isinstance(trans_dict,dict), "transition_dict must be in the form dict[str, pd.DataFrame]."
+    assert isinstance(trans_dict, dict), "transition_dict must be in the form dict[str, pd.DataFrame]."
 
     # Create plot dictionary
     defaults = {"dpi": 300, "figsize": (8, 6), "fontsize": 14, "xticklabels_size": 8, "yticklabels_size": 8,
@@ -116,30 +116,27 @@ def transition_matrix(trans_dict: dict[str, pd.DataFrame], output_dir: Optional[
     for group in trans_dict:
         df = trans_dict[group]
         # Get indices and averaged probabilities
-        indices, averaged_probabilities = df.iloc[:,3:].mean().index, df.iloc[:,3:].mean().values
+        indices, averaged_probabilities = df.iloc[:, 3:].mean().index, df.iloc[:, 3:].mean().values
         # Get the maximum CAP
         max_cap = str(max([float(i) for i in indices])).split(".")[0]
-        cap_names = [f"CAP-{num}" for num in range(1,int(max_cap) + 1)]
+        cap_names = [f"CAP-{num}" for num in range(1, int(max_cap) + 1)]
         trans_mat = pd.DataFrame(index=cap_names, columns=cap_names, dtype="float64")
 
         # Create matrix
         for location, name in enumerate(indices):
             trans_mat.loc[f"CAP-{name.split('.')[0]}", f"CAP-{name.split('.')[1]}"] = averaged_probabilities[location]
 
-        display = _create_display(df=trans_mat, plot_dict=plot_dict, suffix_title=suffix_title, group=group,
-                                  call="trans")
+        display = _create_display(trans_mat, plot_dict, suffix_title, group, "trans")
 
         # Store df in dict
         trans_mat_dict[group] = trans_mat
 
         # Save figure & dataframe
         if output_dir:
-            _save_contents(output_dir=output_dir, suffix_title=suffix_title, group=group,
-                           curr_dict=trans_mat_dict, plot_dict=plot_dict, save_plots=save_plots,
-                           save_df=save_df, display=display, call="trans")
+            _save_contents(output_dir, suffix_title, group, trans_mat_dict, plot_dict, save_plots, save_df, display,
+                           "trans")
 
         # Display figures
         plt.show() if show_figs else plt.close()
 
     if return_df: return trans_mat_dict
-

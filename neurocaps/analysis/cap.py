@@ -505,21 +505,14 @@ class CAP(_CAPGetter):
         if self._n_cores and self._cluster_selection_method is None:
             raise ValueError("Parallel processing will not run since `cluster_selection_method` is None.")
 
-        if runs:
-            if not isinstance(runs,list): runs = [runs]
+        if runs and not isinstance(runs, list): runs = [runs]
 
         self._runs = runs
         self._standardize = standardize
 
-        if isinstance(subject_timeseries, str) and subject_timeseries.endswith(".pkl"):
-            subject_timeseries = _convert_pickle_to_dict(pickle_file=subject_timeseries)
-        elif isinstance(subject_timeseries, dict) and len(list(subject_timeseries)) == 1:
-            # Potential mutability issue if only a single subject in dictionary potentially due to the variable
-            # for the concatenated data being set to the subject timeseries if concatenated data is empty.
-            subject_timeseries = copy.deepcopy(subject_timeseries)
+        subject_timeseries = self._process_subject_timeseries(subject_timeseries)
 
-        self._concatenated_timeseries = self._get_concatenated_timeseries(subject_timeseries=subject_timeseries,
-                                                                          runs=runs)
+        self._concatenated_timeseries = self._concatenate_timeseries(subject_timeseries, runs)
 
         valid_methods = ["elbow", "davies_bouldin", "silhouette", "variance_ratio"]
 
@@ -542,8 +535,20 @@ class CAP(_CAPGetter):
         # Create states dict
         self._create_caps_dict()
 
+    @staticmethod
+    def _process_subject_timeseries(subject_timeseries):
+        if isinstance(subject_timeseries, str) and subject_timeseries.endswith(".pkl"):
+            subject_timeseries = _convert_pickle_to_dict(pickle_file=subject_timeseries)
+        elif isinstance(subject_timeseries, dict) and len(list(subject_timeseries)) == 1:
+            # Potential mutability issue if only a single subject in dictionary potentially due to the variable
+            # for the concatenated data being set to the subject timeseries if concatenated data is empty.
+            subject_timeseries = copy.deepcopy(subject_timeseries)
+
+        return subject_timeseries
+
     def _generate_lookup_table(self):
         self._subject_table = {}
+
         for group in self._groups:
             for subj_id in self._groups[group]:
                 if subj_id in self._subject_table:
@@ -552,7 +557,7 @@ class CAP(_CAPGetter):
                 else:
                     self._subject_table.update({subj_id : group})
 
-    def _get_concatenated_timeseries(self, subject_timeseries, runs):
+    def _concatenate_timeseries(self, subject_timeseries, runs):
         # Create dictionary for "All Subjects" if no groups are specified to reuse the same loop instead of having to
         # create logic for grouped and non-grouped version of the same code
         if not self._groups: self._groups = {"All Subjects": [subject for subject in subject_timeseries]}
@@ -579,13 +584,18 @@ class CAP(_CAPGetter):
                     concatenated_timeseries[group] = np.vstack([concatenated_timeseries[group],
                                                                 subject_timeseries[subj_id][curr_run]])
         # Standardize
-        if self._standardize:
-            for group in self._groups:
-                self._mean_vec[group] = np.mean(concatenated_timeseries[group], axis=0)
-                self._stdev_vec[group] = np.std(concatenated_timeseries[group], ddof=1, axis=0)
-                # Taken from nilearn pipeline, used for numerical stability purposes to avoid numpy division error
-                self._stdev_vec[group][self._stdev_vec[group] < np.finfo(np.float64).eps] = 1.0
-                concatenated_timeseries[group] = (concatenated_timeseries[group] - self._mean_vec[group])/self._stdev_vec[group]
+        if self._standardize: concatenated_timeseries = self._scale(concatenated_timeseries)
+
+        return concatenated_timeseries
+
+    def _scale(self, concatenated_timeseries):
+        for group in self._groups:
+            self._mean_vec[group] = np.mean(concatenated_timeseries[group], axis=0)
+            self._stdev_vec[group] = np.std(concatenated_timeseries[group], ddof=1, axis=0)
+            # Taken from nilearn pipeline, used for numerical stability purposes to avoid numpy division error
+            self._stdev_vec[group][self._stdev_vec[group] < np.finfo(np.float64).eps] = 1.0
+            diff = concatenated_timeseries[group] - self._mean_vec[group]
+            concatenated_timeseries[group] = diff/self._stdev_vec[group]
 
         return concatenated_timeseries
 
@@ -699,6 +709,7 @@ class CAP(_CAPGetter):
     def _create_caps_dict(self):
         # Initialize dictionary
         self._caps = {}
+
         for group in self._groups:
             self._caps[group] = {}
             cluster_centroids = zip([num for num in range(1,len(self._kmeans[group].cluster_centers_)+1)],
@@ -894,119 +905,38 @@ class CAP(_CAPGetter):
         NeuroImage, 237, 118193. https://doi.org/10.1016/j.neuroimage.2021.118193
 
         """
-        if not hasattr(self,"_kmeans"):
+        if not hasattr(self, "_kmeans"):
             raise AttributeError("Cannot calculate metrics since `self._kmeans` attribute does not exist. Run "
                                  "`self.get_caps()` first.")
 
         if prefix_file_name is not None and output_dir is None:
             LG.warning("`prefix_file_name` supplied but no `output_dir` specified. Files will not be saved.")
 
-        if runs:
-            if not isinstance(runs,list): runs = [runs]
+        if runs and not isinstance(runs, list): runs = [runs]
 
-        metrics = [metrics] if isinstance(metrics, str) else metrics
+        metrics = self._filter_metrics(metrics)
 
-        # Change metrics to set
-        metrics = set(metrics)
+        subject_timeseries = self._process_subject_timeseries(subject_timeseries)
 
-        valid_metrics = {"temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"}
+        # Assign each subject's frame to a CAP
+        predicted_subject_timeseries = self._build_prediction_dict(subject_timeseries, runs, continuous_runs)
 
-        set_diff = metrics - valid_metrics
+        # Get CAP information
+        cap_names, cap_numbers, group_cap_counts = self._cap_info()
 
-        metrics = metrics.intersection(valid_metrics)
-
-        if set_diff:
-            formatted_string = ', '.join(["'{a}'".format(a=x) for x in set_diff])
-            LG.warning(f"Invalid metrics will be ignored: {formatted_string}.")
-        if not metrics:
-            formatted_string = ', '.join(["'{a}'".format(a=x) for x in valid_metrics])
-            raise ValueError(f"No valid metrics in `metrics` list. Valid metrics are {formatted_string}.")
-
-        if isinstance(subject_timeseries, str) and subject_timeseries.endswith(".pkl"):
-            subject_timeseries = _convert_pickle_to_dict(pickle_file=subject_timeseries)
-        elif isinstance(subject_timeseries, dict) and len(list(subject_timeseries)) == 1:
-            # Potential mutability issue if only a single subject in dictionary potentially due to the variable
-            # for the concatenated data being set to the subject timeseries if concatenated data is empty.
-            subject_timeseries = copy.deepcopy(subject_timeseries)
-
-        group_cap_counts = {}
-        # Get group with most CAPs
-        for group in self._groups:
-            # Store the length of caps in each group
-            group_cap_counts.update({group: len(self._caps[group])})
-
-        cap_names = list(self._caps[max(group_cap_counts, key=group_cap_counts.get)])
-        cap_numbers = [int(name.split("-")[-1]) for name in cap_names]
-
-        # Assign each subject TRs to CAP
-        predicted_subject_timeseries = {}
-
-        for subj_id, group in self._subject_table.items():
-            predicted_subject_timeseries[subj_id] = {}
-            requested_runs = [f"run-{run}" for run in runs] if runs else list(subject_timeseries[subj_id])
-            subject_runs = [subject_run for subject_run in subject_timeseries[subj_id] if subject_run in requested_runs]
-            if not subject_runs:
-                LG.warning(f"[SUBJECT: {subj_id}] Does not have the requested run numbers: {','.join(requested_runs)}.")
-                continue
-            for curr_run in subject_runs:
-                # Standardize or not
-                if self._standardize:
-                    timeseries = (subject_timeseries[subj_id][curr_run] - self._mean_vec[group])/self._stdev_vec[group]
-                else:
-                    timeseries = subject_timeseries[subj_id][curr_run]
-
-                # Set run_id
-                run_id = curr_run if not continuous_runs or len(subject_runs) == 1 else "continuous_runs"
-
-                # Add 1 to the prediction vector since labels start at 0, needed to ensure that the labels map onto the cap_numbers
-                prediction_vector = self._kmeans[group].predict(timeseries) + 1
-
-                if run_id != "continuous_runs":
-                    predicted_subject_timeseries[subj_id].update({run_id: prediction_vector})
-                else:
-                    # Horizontally stack predicted runs
-                    if curr_run == subject_runs[0]: predicted_continuous_timeseries = prediction_vector
-                    else: predicted_continuous_timeseries = np.hstack([predicted_continuous_timeseries,
-                                                                       prediction_vector])
-            if run_id == "continuous_runs":
-                predicted_subject_timeseries[subj_id].update({run_id: predicted_continuous_timeseries})
-
-        # Get all combinations of transitions
+        # Get combination of transitions in addition to building the base dataframe dictionary
         if "transition_probability" in metrics:
-            group_caps = {}
-            products,products_unique = {},{}
-            for group in self._groups:
-                group_caps.update({group: [int(name.split("-")[-1]) for name in self._caps[group]]})
-                products.update({group: list(itertools.product(group_caps[group], group_caps[group]))})
-                # Filter out all reversed products and products with the self transitions
-                products_unique[group] = []
-                for prod in products[group]:
-                    if prod[0] == prod[1]: continue
-                    # Include only the first instance of symmetric pairs
-                    if (prod[1], prod[0]) not in products_unique[group]: products_unique[group].append(prod)
+            group_caps, products, products_unique = self._combinations()
+            df_dict, temp_dict = self._build_df(metrics, cap_names, products)
+        else:
+            df_dict = self._build_df(metrics, cap_names)
 
-        df_dict = {}
-
-        base_cols = ["Subject_ID", "Group","Run"]
-
-        for metric in metrics:
-            if metric not in ["transition_frequency", "transition_probability"]:
-                df_dict.update({metric: pd.DataFrame(columns=base_cols + list(cap_names))})
-            elif metric == "transition_probability":
-                temp_dict = {}
-                for group in self._groups:
-                    temp_dict.update(
-                        {group: pd.DataFrame(columns=base_cols + [f"{x}.{y}" for x,y in products[group]])} )
-            else:
-                df_dict.update({metric: pd.DataFrame(columns=base_cols + ["Transition_Frequency"])})
-
-        distributed_list = []
-        for subj_id, group in self._subject_table.items():
-            for curr_run in predicted_subject_timeseries[subj_id]:
-                distributed_list.append([subj_id,group,curr_run])
+        # Generate list for iteration
+        distributed_list = self._distribute(predicted_subject_timeseries)
 
         for subj_id, group, curr_run in distributed_list:
-            group_name = group.replace(" ","_")
+            group_name = group.replace(" ", "_")
+
             if "temporal_fraction" in metrics:
                 # Get frequency
                 frequency_dict = {key: np.where(predicted_subject_timeseries[subj_id][curr_run] == key,1,0).sum()
@@ -1052,17 +982,21 @@ class CAP(_CAPGetter):
             if "transition_frequency" in metrics:
                 # Sum the differences that are not zero - [1,2,1,1,1,3] becomes [1,-1,0,0,2], binary representation for
                 # values not zero is [1,1,0,0,1] = 3 transitions
-                transition_frequency = np.where(np.diff(predicted_subject_timeseries[subj_id][curr_run], n=1) != 0,1,0).sum()
+                transition_frequency = np.where(
+                    np.diff(predicted_subject_timeseries[subj_id][curr_run], n=1) != 0, 1, 0).sum()
                 # Populate DataFrame
                 new_row = [subj_id, group_name, curr_run, transition_frequency]
                 df_dict["transition_frequency"].loc[len(df_dict["transition_frequency"])] = new_row
 
             if "transition_probability" in metrics:
-                temp_dict[group].loc[len(temp_dict[group])] = [subj_id, group, curr_run] + [0.0]*(temp_dict[group].shape[-1]-3)
+                base_row = [subj_id, group, curr_run] + [0.0] * (temp_dict[group].shape[-1] - 3)
+                temp_dict[group].loc[len(temp_dict[group])] = base_row
+
                 # Get number of transitions
-                trans_dict = {target: np.sum(np.where(predicted_subject_timeseries[subj_id][curr_run][:-1] == target, 1, 0))
+                trans_dict = {target: np.sum(np.where(predicted_subject_timeseries[subj_id][curr_run][:-1] == target,1,0))
                               for target in group_caps[group]}
                 indx = temp_dict[group].index[-1]
+
                 # Iterate through products and calculate all symmetric pairs/off-diagonals
                 for prod in products_unique[group]:
                     target1, target2 = prod[0], prod[1]
@@ -1071,13 +1005,18 @@ class CAP(_CAPGetter):
                     trans_array[(trans_array != target1) & (trans_array != target2)] = 0
                     trans_array[np.where(trans_array == target1)] = 1
                     trans_array[np.where(trans_array == target2)] = 3
-                    # 2 indicates forward transition target1 -> target2; -2 means reverse/backward transition target2 -> target1
-                    diff_array = np.diff(trans_array,n=1)
+                    # 2 indicates forward transition target1 -> target2; -2 means reverse/backward transition
+                    # target2 -> target1
+                    diff_array = np.diff(trans_array, n=1)
+
                     # Avoid division by zero errors and calculate both the forward and reverse transition
                     if trans_dict[target1] != 0:
-                        temp_dict[group].loc[indx,f"{target1}.{target2}"] = float(np.sum(np.where(diff_array==2,1,0))/trans_dict[target1])
+                        temp_dict[group].loc[indx,f"{target1}.{target2}"] = float(
+                            np.sum(np.where(diff_array == 2,1,0))/trans_dict[target1])
+
                     if trans_dict[target2] != 0:
-                        temp_dict[group].loc[indx,f"{target2}.{target1}"] = float(np.sum(np.where(diff_array==-2,1,0))/trans_dict[target2])
+                        temp_dict[group].loc[indx,f"{target2}.{target1}"] = float(
+                            np.sum(np.where(diff_array == -2,1,0))/trans_dict[target2])
 
                 # Calculate the probability for the self transitions/diagonals
                 for target in group_caps[group]:
@@ -1085,29 +1024,132 @@ class CAP(_CAPGetter):
                     # Will include the {target}.{target} column, but the value is initially set to zero
                     columns = temp_dict[group].filter(regex=fr"^{target}\.").columns.tolist()
                     cumulative = temp_dict[group].loc[indx,columns].values.sum()
-                    temp_dict[group].loc[indx,f"{target}.{target}"] = 1.0 - cumulative
+                    temp_dict[group].loc[indx, f"{target}.{target}"] = 1.0 - cumulative
 
         if "transition_probability" in metrics: df_dict["transition_probability"] = temp_dict
 
-        if output_dir:
-            if not os.path.exists(output_dir): os.makedirs(output_dir)
-            for metric in df_dict:
-                if prefix_file_name:
-                    file_name = os.path.splitext(prefix_file_name.rstrip())[0].rstrip() + f"-{metric}"
-                else:
-                    file_name = f"{metric}"
-
-                if metric != "transition_probability":
-                    df_dict[f"{metric}"].to_csv(path_or_buf=os.path.join(output_dir,f"{file_name}.csv"),
-                                                sep=",", index=False)
-                else:
-                    for group in self._groups:
-                        df_dict[f"{metric}"][group].to_csv(
-                            path_or_buf=os.path.join(output_dir, f"{file_name}-{group.replace(' ','_')}.csv"),
-                            sep=",", index=False
-                            )
+        if output_dir: self._save_metrics(output_dir, df_dict, prefix_file_name)
 
         if return_df: return df_dict
+
+    @staticmethod
+    def _filter_metrics(metrics):
+        metrics = [metrics] if isinstance(metrics, str) else metrics
+
+        # Change metrics to set
+        metrics = set(metrics)
+
+        valid_metrics = {"temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"}
+
+        set_diff = metrics - valid_metrics
+
+        metrics = metrics.intersection(valid_metrics)
+
+        if set_diff:
+            formatted_string = ', '.join(["'{a}'".format(a=x) for x in set_diff])
+            LG.warning(f"Invalid metrics will be ignored: {formatted_string}.")
+        if not metrics:
+            formatted_string = ', '.join(["'{a}'".format(a=x) for x in valid_metrics])
+            raise ValueError(f"No valid metrics in `metrics` list. Valid metrics are {formatted_string}.")
+
+        return metrics
+
+    def _cap_info(self):
+        group_cap_counts = {}
+
+        for group in self._groups:
+            # Store the length of caps in each group
+            group_cap_counts.update({group: len(self._caps[group])})
+
+        # CAP names based on groups with the most CAPs
+        cap_names = list(self._caps[max(group_cap_counts, key=group_cap_counts.get)])
+        cap_numbers = [int(name.split("-")[-1]) for name in cap_names]
+
+        return cap_names, cap_numbers, group_cap_counts
+
+    def _build_prediction_dict(self, subject_timeseries, runs, continuous_runs):
+        for subj_id, group in self._subject_table.items():
+            # Initialize predicted timeseries dict if first subject in table
+            if subj_id == list(self._subject_table)[0]: predicted_subject_timeseries = {}
+
+            predicted_subject_timeseries[subj_id] = {}
+            requested_runs = [f"run-{run}" for run in runs] if runs else list(subject_timeseries[subj_id])
+            subject_runs = [subject_run for subject_run in subject_timeseries[subj_id] if subject_run in requested_runs]
+
+            if not subject_runs:
+                LG.warning(f"[SUBJECT: {subj_id}] Does not have the requested run numbers: {','.join(requested_runs)}.")
+                continue
+
+            for curr_run in subject_runs:
+                # Standardize or not
+                if self._standardize:
+                    timeseries = (subject_timeseries[subj_id][curr_run] - self._mean_vec[group])/self._stdev_vec[group]
+                else:
+                    timeseries = subject_timeseries[subj_id][curr_run]
+
+                # Set run_id
+                run_id = curr_run if not continuous_runs or len(subject_runs) == 1 else "continuous_runs"
+
+                # Add 1 to the prediction vector since labels start at 0, needed to ensure that the labels map onto the
+                # caps
+                prediction_vector = self._kmeans[group].predict(timeseries) + 1
+
+                if run_id != "continuous_runs":
+                    predicted_subject_timeseries[subj_id].update({run_id: prediction_vector})
+                else:
+                    # Horizontally stack predicted runs
+                    if curr_run == subject_runs[0]: predicted_continuous_timeseries = prediction_vector
+                    else: predicted_continuous_timeseries = np.hstack([predicted_continuous_timeseries,
+                                                                       prediction_vector])
+            if run_id == "continuous_runs":
+                predicted_subject_timeseries[subj_id].update({run_id: predicted_continuous_timeseries})
+
+        return predicted_subject_timeseries
+
+    # Get all combinations of transitions
+    def _combinations(self):
+        group_caps = {}
+        products, products_unique = {}, {}
+
+        for group in self._groups:
+            group_caps.update({group: [int(name.split("-")[-1]) for name in self._caps[group]]})
+            products.update({group: list(itertools.product(group_caps[group], group_caps[group]))})
+            # Filter out all reversed products and products with the self transitions
+            products_unique[group] = []
+            for prod in products[group]:
+                if prod[0] == prod[1]: continue
+                # Include only the first instance of symmetric pairs
+                if (prod[1], prod[0]) not in products_unique[group]: products_unique[group].append(prod)
+
+        return group_caps, products, products_unique
+
+    def _build_df(self, metrics, cap_names, products=None):
+        df_dict = {}
+
+        base_cols = ["Subject_ID", "Group","Run"]
+
+        for metric in metrics:
+            if metric not in ["transition_frequency", "transition_probability"]:
+                df_dict.update({metric: pd.DataFrame(columns=base_cols + list(cap_names))})
+            elif metric == "transition_probability":
+                temp_dict = {}
+                for group in self._groups:
+                    temp_dict.update(
+                        {group: pd.DataFrame(columns=base_cols + [f"{x}.{y}" for x, y in products[group]])} )
+            else:
+                df_dict.update({metric: pd.DataFrame(columns=base_cols + ["Transition_Frequency"])})
+
+        if "transition_probability" in metrics: return df_dict, temp_dict
+        else: return df_dict
+
+    def _distribute(self, predicted_subject_timeseries):
+        distributed_list = []
+
+        for subj_id, group in self._subject_table.items():
+            for curr_run in predicted_subject_timeseries[subj_id]:
+                distributed_list.append([subj_id, group, curr_run])
+
+        return distributed_list
 
     # Replace zeros with nan for groups with less caps than the group with the max caps
     @staticmethod
@@ -1126,6 +1168,25 @@ class CAP(_CAPGetter):
         segments = np.where(np.diff(target_indices, n=1) > 1,1,0).sum() + 1
 
         return binary_arr, segments
+
+    def _save_metrics(self, output_dir, df_dict, prefix_file_name):
+        if not os.path.exists(output_dir): os.makedirs(output_dir)
+
+        for metric in df_dict:
+            if prefix_file_name:
+                file_name = os.path.splitext(prefix_file_name.rstrip())[0].rstrip() + f"-{metric}"
+            else:
+                file_name = f"{metric}"
+
+            if metric != "transition_probability":
+                df_dict[f"{metric}"].to_csv(path_or_buf=os.path.join(output_dir, f"{file_name}.csv"),
+                                            sep=",", index=False)
+            else:
+                for group in self._groups:
+                    df_dict[f"{metric}"][group].to_csv(
+                        path_or_buf=os.path.join(output_dir, f"{file_name}-{group.replace(' ', '_')}.csv"),
+                        sep=",", index=False
+                        )
 
     def caps2plot(self,
                   output_dir: Optional[os.PathLike]=None,
@@ -1271,6 +1332,7 @@ class CAP(_CAPGetter):
         # Check labels
         check_caps = self._caps[list(self._caps)[0]]
         check_caps = check_caps[list(check_caps)[0]]
+
         if check_caps.shape[0] != len(self._parcel_approach[parcellation_name]["nodes"]):
             raise ValueError("Number of nodes used for CAPs does not equal the number of nodes specified in "
                              "`parcel_approach`.")
@@ -1312,7 +1374,7 @@ class CAP(_CAPGetter):
         # Initialize outer product attribute
         if "outer_product" in plot_options: self._outer_products = {}
 
-        distributed_list = list(itertools.product(plot_options,visual_scope,self._groups))
+        distributed_list = list(itertools.product(plot_options, visual_scope, self._groups))
 
         for plot_option, scope, group in distributed_list:
             # Get correct labels depending on scope
@@ -1342,6 +1404,7 @@ class CAP(_CAPGetter):
         # Internal function to create an attribute called `region_caps`. Purpose is to average the values of all nodes
         # in a corresponding region to create region heatmaps or outer product plots
         self._region_caps = {group: {} for group in self._groups}
+
         for group in self._groups:
             for cap in self._caps[group]:
                 region_caps = None
@@ -1365,113 +1428,6 @@ class CAP(_CAPGetter):
                             region_caps= np.hstack([region_caps, np.average(self._caps[group][cap][roi_indxs])])
 
                 self._region_caps[group].update({cap: region_caps})
-
-    @staticmethod
-    def _base_kwargs(plot_dict, line = True, edge = True):
-        kwargs = {"cmap": plot_dict["cmap"], "cbar_kws": {"shrink": plot_dict["shrink"]}, "annot": plot_dict["annot"],
-                  "annot_kws": plot_dict["annot_kws"], "fmt": plot_dict["fmt"], "alpha": plot_dict["alpha"],
-                  "vmin": plot_dict["vmin"], "vmax": plot_dict["vmax"]}
-
-        if line: kwargs.update({"linewidths": plot_dict["linewidths"], "linecolor": plot_dict["linecolor"]})
-
-        if edge: kwargs.update({"edgecolors": plot_dict["edgecolors"]})
-
-        return kwargs
-
-    @staticmethod
-    def _create_node_labels(parcellation_name, parcel_approach, columns):
-        # Get frequency of each major hemisphere and region in Schaefer, AAL, or Custom atlas
-        if parcellation_name == "Schaefer":
-            nodes = parcel_approach[parcellation_name]["nodes"]
-            # Retain only the hemisphere and primary Schaefer network
-            nodes = [node.split("_")[:2] for node in nodes]
-            frequency_dict = collections.Counter([" ".join(node) for node in nodes])
-        elif parcellation_name == "AAL":
-            nodes = parcel_approach[parcellation_name]["nodes"]
-            frequency_dict = collections.Counter([node.split("_")[0] for node in nodes])
-        else:
-            frequency_dict = {}
-            for names_id in columns:
-                # For custom, columns comes in the form of "Hemisphere Region"
-                hemisphere_id = "LH" if names_id.startswith("LH ") else "RH"
-                region_id = re.split("LH |RH ", names_id)[-1]
-                node_indices = parcel_approach["Custom"]["regions"][region_id][hemisphere_id.lower()]
-                frequency_dict.update({names_id: len(node_indices)})
-
-        # Get the names, which indicate the hemisphere and region
-        # Reverting Counter objects to list retains original ordering of nodes in list as of Python 3.7
-        names_list = list(frequency_dict)
-        labels = ["" for _ in range(0,len(parcel_approach[parcellation_name]["nodes"]))]
-
-        starting_value = 0
-
-        # Iterate through names_list and assign the starting indices corresponding to unique region and hemisphere key
-        for num, name in enumerate(names_list):
-            if num == 0:
-                labels[0] = name
-            else:
-                # Shifting to previous frequency of the preceding network to obtain the new starting value of
-                # the subsequent region and hemisphere pair
-                starting_value += frequency_dict[names_list[num-1]]
-                labels[starting_value] = name
-
-        return labels, names_list
-
-    def _division_line(self, display, parcellation_name, linewidths, call = "outer"):
-        n_labels = len(self._parcel_approach[parcellation_name]["nodes"])
-        division_line = n_labels//2
-        left_hemisphere_tick = (0 + division_line)//2
-        right_hemisphere_tick = (division_line + n_labels)//2
-
-        if call == "outer":
-            display.set_xticks([left_hemisphere_tick,right_hemisphere_tick])
-            display.set_xticklabels(["LH", "RH"])
-
-        display.set_yticks([left_hemisphere_tick,right_hemisphere_tick])
-        display.set_yticklabels(["LH", "RH"])
-
-        line_widths = linewidths if linewidths != 0 else 1
-
-        return display, division_line, line_widths
-
-    @staticmethod
-    def _set_ticks(display, labels):
-        ticks = [i for i, label in enumerate(labels) if label]
-
-        display.set_xticks(ticks)
-        display.set_xticklabels([label for label in labels if label])
-        display.set_yticks(ticks)
-        display.set_yticklabels([label for label in labels if label])
-
-        return display
-
-    @staticmethod
-    def _border(display, plot_dict, length, axvline = None):
-        display.axhline(y=0, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
-        display.axhline(y=length, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
-        display.axvline(x=0, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
-        if axvline: display.axvline(x=axvline, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
-        else: display.axvline(x=length, color=plot_dict["linecolor"],linewidth=plot_dict["borderwidths"])
-
-        return display
-
-    @staticmethod
-    def _label_size(display, plot_dict, set_x = True, set_y = True):
-        if set_x:
-            display.set_xticklabels(display.get_xticklabels(), size = plot_dict["xticklabels_size"],
-                                    rotation=plot_dict["xlabel_rotation"])
-        if set_y:
-            display.set_yticklabels(display.get_yticklabels(), size = plot_dict["yticklabels_size"],
-                                    rotation=plot_dict["ylabel_rotation"])
-
-        return display
-
-    # Function to save plots for outer_product and heatmap called by caps2plot
-    @staticmethod
-    def _save(display, scope, partial, plot_dict, output_dir, call):
-        full_filename = f"{partial.replace(' ','_')}_{call}-{scope}.png"
-        display.get_figure().savefig(os.path.join(output_dir, full_filename), dpi=plot_dict["dpi"],
-                                     bbox_inches=plot_dict["bbox_inches"])
 
     def _generate_outer_product_plots(self, group, plot_dict, cap_dict, columns, subplots, output_dir, suffix_title,
                                       show_figs, scope, parcellation_name):
@@ -1593,7 +1549,7 @@ class CAP(_CAPGetter):
                 # Save individual plots
                 if output_dir:
                     partial_filename = f"{group}_{cap}_{suffix_title}" if suffix_title else f"{group}_{cap}"
-                    self._save(display, scope, partial_filename, plot_dict, output_dir, call="outer_product")
+                    self._save_heatmap(display, scope, partial_filename, plot_dict, output_dir, call="outer_product")
 
         # Remove subplots with no data
         if subplots: [fig.delaxes(ax) for ax in axes.flatten() if not ax.has_data()]
@@ -1601,7 +1557,7 @@ class CAP(_CAPGetter):
         # Save subplot
         if subplots and output_dir:
             partial_filename = f"{group}_CAPs_{suffix_title}" if suffix_title else f"{group}_CAPs"
-            self._save(display, scope, partial_filename, plot_dict, output_dir, call="outer_product")
+            self._save_heatmap(display, scope, partial_filename, plot_dict, output_dir, call="outer_product")
 
         # Display figures
         plt.show() if show_figs else plt.close()
@@ -1647,10 +1603,117 @@ class CAP(_CAPGetter):
         # Save plots
         if output_dir:
             partial_filename = f"{group}_CAPs_{suffix_title}" if suffix_title else f"{group}_CAPs"
-            self._save(display, scope, partial_filename, plot_dict, output_dir, call="heatmap")
+            self._save_heatmap(display, scope, partial_filename, plot_dict, output_dir, call="heatmap")
 
         # Display figures
         plt.show() if show_figs else plt.close()
+
+    @staticmethod
+    def _base_kwargs(plot_dict, line = True, edge = True):
+        kwargs = {"cmap": plot_dict["cmap"], "cbar_kws": {"shrink": plot_dict["shrink"]}, "annot": plot_dict["annot"],
+                  "annot_kws": plot_dict["annot_kws"], "fmt": plot_dict["fmt"], "alpha": plot_dict["alpha"],
+                  "vmin": plot_dict["vmin"], "vmax": plot_dict["vmax"]}
+
+        if line: kwargs.update({"linewidths": plot_dict["linewidths"], "linecolor": plot_dict["linecolor"]})
+
+        if edge: kwargs.update({"edgecolors": plot_dict["edgecolors"]})
+
+        return kwargs
+
+    @staticmethod
+    def _create_node_labels(parcellation_name, parcel_approach, columns):
+        # Get frequency of each major hemisphere and region in Schaefer, AAL, or Custom atlas
+        if parcellation_name == "Schaefer":
+            nodes = parcel_approach[parcellation_name]["nodes"]
+            # Retain only the hemisphere and primary Schaefer network
+            nodes = [node.split("_")[:2] for node in nodes]
+            frequency_dict = collections.Counter([" ".join(node) for node in nodes])
+        elif parcellation_name == "AAL":
+            nodes = parcel_approach[parcellation_name]["nodes"]
+            frequency_dict = collections.Counter([node.split("_")[0] for node in nodes])
+        else:
+            frequency_dict = {}
+            for names_id in columns:
+                # For custom, columns comes in the form of "Hemisphere Region"
+                hemisphere_id = "LH" if names_id.startswith("LH ") else "RH"
+                region_id = re.split("LH |RH ", names_id)[-1]
+                node_indices = parcel_approach["Custom"]["regions"][region_id][hemisphere_id.lower()]
+                frequency_dict.update({names_id: len(node_indices)})
+
+        # Get the names, which indicate the hemisphere and region
+        # Reverting Counter objects to list retains original ordering of nodes in list as of Python 3.7
+        names_list = list(frequency_dict)
+        labels = ["" for _ in range(0,len(parcel_approach[parcellation_name]["nodes"]))]
+
+        starting_value = 0
+
+        # Iterate through names_list and assign the starting indices corresponding to unique region and hemisphere key
+        for num, name in enumerate(names_list):
+            if num == 0:
+                labels[0] = name
+            else:
+                # Shifting to previous frequency of the preceding network to obtain the new starting value of
+                # the subsequent region and hemisphere pair
+                starting_value += frequency_dict[names_list[num-1]]
+                labels[starting_value] = name
+
+        return labels, names_list
+
+    def _division_line(self, display, parcellation_name, linewidths, call = "outer"):
+        n_labels = len(self._parcel_approach[parcellation_name]["nodes"])
+        division_line = n_labels//2
+        left_hemisphere_tick = (0 + division_line)//2
+        right_hemisphere_tick = (division_line + n_labels)//2
+
+        if call == "outer":
+            display.set_xticks([left_hemisphere_tick,right_hemisphere_tick])
+            display.set_xticklabels(["LH", "RH"])
+
+        display.set_yticks([left_hemisphere_tick,right_hemisphere_tick])
+        display.set_yticklabels(["LH", "RH"])
+
+        line_widths = linewidths if linewidths != 0 else 1
+
+        return display, division_line, line_widths
+
+    @staticmethod
+    def _set_ticks(display, labels):
+        ticks = [i for i, label in enumerate(labels) if label]
+
+        display.set_xticks(ticks)
+        display.set_xticklabels([label for label in labels if label])
+        display.set_yticks(ticks)
+        display.set_yticklabels([label for label in labels if label])
+
+        return display
+
+    @staticmethod
+    def _border(display, plot_dict, length, axvline = None):
+        display.axhline(y=0, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
+        display.axhline(y=length, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
+        display.axvline(x=0, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
+        if axvline: display.axvline(x=axvline, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
+        else: display.axvline(x=length, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
+
+        return display
+
+    @staticmethod
+    def _label_size(display, plot_dict, set_x = True, set_y = True):
+        if set_x:
+            display.set_xticklabels(display.get_xticklabels(), size = plot_dict["xticklabels_size"],
+                                    rotation=plot_dict["xlabel_rotation"])
+        if set_y:
+            display.set_yticklabels(display.get_yticklabels(), size = plot_dict["yticklabels_size"],
+                                    rotation=plot_dict["ylabel_rotation"])
+
+        return display
+
+    # Function to save plots for outer_product and heatmap called by caps2plot
+    @staticmethod
+    def _save_heatmap(display, scope, partial, plot_dict, output_dir, call):
+        full_filename = f"{partial.replace(' ', '_')}_{call}-{scope}.png"
+        display.get_figure().savefig(os.path.join(output_dir, full_filename), dpi=plot_dict["dpi"],
+                                     bbox_inches=plot_dict["bbox_inches"])
 
     def caps2corr(self,
                   output_dir: Optional[os.PathLike]=None,
@@ -1773,8 +1836,7 @@ class CAP(_CAPGetter):
 
             corr_df = df.corr(method="pearson")
 
-            display = _create_display(df=corr_df, plot_dict=plot_dict, suffix_title=suffix_title,
-                                      group=group, call="corr")
+            display = _create_display(corr_df, plot_dict, suffix_title, group, "corr")
 
             if corr_dict:
                 # Get p-values; use np.eye to make main diagonals equal zero; implementation of tozCSS from
@@ -1789,9 +1851,8 @@ class CAP(_CAPGetter):
 
             # Save figure
             if output_dir:
-                _save_contents(output_dir=output_dir, suffix_title=suffix_title, group=group, curr_dict=corr_dict,
-                               plot_dict=plot_dict, save_plots=save_plots, save_df=save_df, display=display,
-                               call="corr")
+                _save_contents(output_dir, suffix_title, group, corr_dict, plot_dict, save_plots, save_df, display,
+                               "corr")
 
             # Display figures
             plt.show() if show_figs else plt.close()
@@ -1802,6 +1863,7 @@ class CAP(_CAPGetter):
     @staticmethod
     def _basename(group, cap, desc=None, suffix=None, ext="png"):
         base = f"{group.replace(' ', '_')}_{cap}"
+
         if desc: base += f"_{desc}"
 
         if suffix: base += f"_{suffix.rstrip().replace(' ', '_')}"
@@ -2100,10 +2162,12 @@ class CAP(_CAPGetter):
                                                    target_density=fslr_density, method=method)
                 # Code slightly adapted from surfplot example 2
                 surfaces = fetch_fslr()
+
                 if plot_dict["surface"] not in ["inflated", "veryinflated"]:
                     LG.warning(f"{plot_dict['surface']} is an invalid option for `surface`. Available options "
                                "include 'inflated' or 'verinflated'. Defaulting to 'inflated'.")
                     plot_dict["surface"] = "inflated"
+
                 lh, rh = surfaces[plot_dict["surface"]]
                 lh = str(lh) if not isinstance(lh, str) else lh
                 rh = str(rh) if not isinstance(rh, str) else rh
@@ -2368,8 +2432,7 @@ class CAP(_CAPGetter):
                     "color_discrete_map": {"High Amplitude": "rgba(255, 0, 0, 1)",
                                            "Low Amplitude": "rgba(0, 0, 255, 1)"},
                     "title_font": {"family": "Times New Roman", "size": 30, "color": "black"},
-                    "title_x": 0.5,
-                    "title_y":None,
+                    "title_x": 0.5, "title_y": None,
                     "legend": {"yanchor": "top", "xanchor": "left", "y": 0.99, "x": 0.01,
                                "title_font_family": "Times New Roman", "font": {"size": 12, "color": "black"}},
                     "mode": "markers+lines", "engine": "kaleido"}
@@ -2384,48 +2447,7 @@ class CAP(_CAPGetter):
         # Create radar dict
         for group in self._caps:
             radar_dict = {"Regions": list(self.parcel_approach[parcellation_name]["regions"])}
-            for cap in self._caps[group]:
-                cap_vector = self._caps[group][cap]
-                radar_dict[cap] = {"High Amplitude": [], "Low Amplitude": []}
-                for region in radar_dict["Regions"]:
-                    if parcellation_name == "Custom":
-                        lh = self._parcel_approach[parcellation_name]["regions"][region]["lh"]
-                        rh = self._parcel_approach[parcellation_name]["regions"][region]["rh"]
-                        indxs = lh + rh
-                    else:
-                        indxs = np.array([value for value, node in
-                                          enumerate(self._parcel_approach[parcellation_name]["nodes"])
-                                          if region in node])
-
-                    # Create mask to set ROIs not in regions to zero and ROIs in regions as 1
-                    binary_vector = np.zeros_like(cap_vector)
-                    binary_vector[indxs] = 1
-
-                    # Calculate binary norm
-                    norm_binary_vector = np.linalg.norm(binary_vector)
-
-                    # Get high and low amplitudes
-                    high_amp = np.where(cap_vector > 0, cap_vector, 0)
-                    # Invert vector for low_amp so that cosine similarity is positive
-                    low_amp = np.where(cap_vector < 0, -cap_vector, 0)
-                    vecs = {"High Amplitude": high_amp, "Low Amplitude": low_amp}
-
-                    warning_msg = (f"[GROUP: {group} | REGION: {region} | CAP: {cap}] - "
-                                    "Division by zero error when calculating cosine similarity for the "
-                                    "{0} activations. Setting cosine similarity to zero.")
-
-                    for vec in vecs:
-                        dot_product = np.dot(vecs[vec], binary_vector)
-                        norm_vec = np.linalg.norm(vecs[vec])
-                        try:
-                            cosine_similarity = dot_product/(norm_vec * norm_binary_vector)
-                        except ZeroDivisionError:
-                            LG.warning(warning_msg.format(vec))
-                            cosine_similarity = 0
-
-                        # Store value in dict
-                        radar_dict[cap][vec].append(cosine_similarity)
-
+            self._update_radar_dict(group, parcellation_name, radar_dict)
             self._cosine_similarity[group] = radar_dict
 
             for cap in self._caps[group]:
@@ -2503,3 +2525,48 @@ class CAP(_CAPGetter):
                     else:
                         file_name = file_name.replace(".png", ".html")
                         fig.write_html(os.path.join(output_dir,file_name))
+
+    def _update_radar_dict(self, group, parcellation_name, radar_dict):
+        for cap in self._caps[group]:
+            cap_vector = self._caps[group][cap]
+            radar_dict[cap] = {"High Amplitude": [], "Low Amplitude": []}
+
+            for region in radar_dict["Regions"]:
+                if parcellation_name == "Custom":
+                    lh = self._parcel_approach[parcellation_name]["regions"][region]["lh"]
+                    rh = self._parcel_approach[parcellation_name]["regions"][region]["rh"]
+                    indxs = lh + rh
+                else:
+                    indxs = np.array([value for value, node in
+                                      enumerate(self._parcel_approach[parcellation_name]["nodes"])
+                                      if region in node])
+
+                # Create mask to set ROIs not in regions to zero and ROIs in regions as 1
+                binary_vector = np.zeros_like(cap_vector)
+                binary_vector[indxs] = 1
+
+                # Calculate binary norm
+                norm_binary_vector = np.linalg.norm(binary_vector)
+
+                # Get high and low amplitudes
+                high_amp = np.where(cap_vector > 0, cap_vector, 0)
+                # Invert vector for low_amp so that cosine similarity is positive
+                low_amp = np.where(cap_vector < 0, -cap_vector, 0)
+                vecs = {"High Amplitude": high_amp, "Low Amplitude": low_amp}
+
+                warning_msg = (f"[GROUP: {group} | REGION: {region} | CAP: {cap}] - "
+                               "Division by zero error when calculating cosine similarity for the "
+                               "{0} activations. Setting cosine similarity to zero.")
+
+                for vec in vecs:
+                    dot_product = np.dot(vecs[vec], binary_vector)
+                    norm_vec = np.linalg.norm(vecs[vec])
+
+                    try:
+                        cosine_similarity = dot_product/(norm_vec * norm_binary_vector)
+                    except ZeroDivisionError:
+                        LG.warning(warning_msg.format(vec))
+                        cosine_similarity = 0
+
+                    # Store value in dict
+                    radar_dict[cap][vec].append(cosine_similarity)
