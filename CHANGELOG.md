@@ -42,6 +42,34 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.17.4] - 2024-10-11
+### 🐛 Fixes
+- When tick values are not specified in the `radialaxis` kwargs in `CAP.caps2radar` function, default tick values
+no longer produces an error and now does the following:
+
+```python
+if "tickvals" not in plot_dict["radialaxis"] and "range" not in plot_dict["radialaxis"]:
+    default_ticks = [max_value/4, max_value/2, 3*max_value/4, max_value]
+    plot_dict["radialaxis"]["tickvals"] = [round(x, 2) for x in default_ticks]
+```
+### ♻ Changed
+- To prevent numerical stability issues when scaling, previous versions did the following when the standard deviation
+for a column was essentially zero:
+
+```python
+std = np.std(arr, axis=0, ddof=1)
+eps = np.finfo(np.float64).eps
+std[std < eps] = 1.0
+```
+
+The same method is employed; however, the smallest positive float representation used now considers the dtype
+instead of being set to the smallest representation for "float64":
+```python
+std = np.std(arr, axis=0, ddof=1)
+eps = np.finfo(std.dtype).eps
+std[std < eps] = 1.0
+```
+
 ## [0.17.3] - 2024-10-08
 ### 🐛 Fixes
 - Fixes specific error that occurs when using a suffix name and saving nifti in `CAP.caps2surf`.

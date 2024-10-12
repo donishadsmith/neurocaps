@@ -359,7 +359,7 @@ class CAP(_CAPGetter):
 
             # Convert ids to strings
             for group in set(self._groups):
-                self._groups[group] = [str(subj_id) if not isinstance(subj_id,str)
+                self._groups[group] = [str(subj_id) if not isinstance(subj_id, str)
                                        else subj_id for subj_id in self._groups[group]]
 
         if parcel_approach is not None:
@@ -592,8 +592,9 @@ class CAP(_CAPGetter):
         for group in self._groups:
             self._mean_vec[group] = np.mean(concatenated_timeseries[group], axis=0)
             self._stdev_vec[group] = np.std(concatenated_timeseries[group], ddof=1, axis=0)
+            eps = np.finfo(self._stdev_vec[group].dtype).eps
             # Taken from nilearn pipeline, used for numerical stability purposes to avoid numpy division error
-            self._stdev_vec[group][self._stdev_vec[group] < np.finfo(np.float64).eps] = 1.0
+            self._stdev_vec[group][self._stdev_vec[group] < eps] = 1.0
             diff = concatenated_timeseries[group] - self._mean_vec[group]
             concatenated_timeseries[group] = diff/self._stdev_vec[group]
 
@@ -2385,6 +2386,7 @@ class CAP(_CAPGetter):
 
         In this code, if the ``tickvals`` or  ``range`` sub-keys in this code are not specified in the ``radialaxis``
         kwarg, then four values are shown - 0.25*(max value), 0.50*(max value), 0.75*(max value), and the max value.
+        These values are also rounded to the second second decimal point.
 
         For valid keys for ``radialaxis`` refer to plotly's documentation at
         https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.radialaxis.html or
@@ -2492,8 +2494,11 @@ class CAP(_CAPGetter):
 
                 # Set max value
                 if "tickvals" not in plot_dict["radialaxis"] and "range" not in plot_dict["radialaxis"]:
-                    max_value = df[cap].max()
-                    plot_dict["radialaxis"]["tickvals"] = [max_value/4, max_value/2, 3*max_value/4, max_value]
+                    if use_scatterpolar: max_value = max(df[["High Amplitude", "Low Amplitude"]].max())
+                    else: max_value = df["Amp"].max()
+
+                    default_ticks = [max_value/4, max_value/2, 3*max_value/4, max_value]
+                    plot_dict["radialaxis"]["tickvals"] = [round(x, 2) for x in default_ticks]
 
                 title_text = f"{group} {cap} {suffix_title}" if suffix_title else f"{group} {cap}"
 

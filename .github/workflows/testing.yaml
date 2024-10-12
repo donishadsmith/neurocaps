@@ -2,7 +2,7 @@ name: Run Tests
 
 on:
   push:
-    branches: [main, development]
+    branches: [main, development, testing]
   # Run weekly on Monday
   schedule:
     - cron: 0 0 * * 1

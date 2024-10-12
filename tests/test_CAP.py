@@ -35,8 +35,9 @@ def concat_data(subject_table,standardize,runs=[1,2,3]):
             # Recalculating means and stdev, will cause minor floating point differences so use np.allclose
             concatenated_timeseries[group] -= np.mean(concatenated_timeseries[group], axis=0)
             std[group] = np.std(concatenated_timeseries[group], ddof=1, axis=0)
+            eps = np.finfo(std[group].dtype).eps
             # Taken from nilearn pipeline, used for numerical stability purposes to avoid numpy division error
-            std[group][std[group] < np.finfo(np.float64).eps] = 1.0
+            std[group][std[group] < eps] = 1.0
             concatenated_timeseries[group] /= std[group]
 
     return concatenated_timeseries
@@ -532,6 +533,8 @@ def test_plotting_functions(current_timeseries, parcel_approach):
                 "tickvals": [0.1,0.2,0.3]}
 
     # Radar plotting functions
+    cap_analysis.caps2radar(output_dir=os.path.dirname(__file__), show_figs=True)
+    check_imgs(plot_type="radar", values_dict={"png": 2})
     cap_analysis.caps2radar(radialaxis=radialaxis, fill="toself", show_figs=False, as_html=True,
                             output_dir=os.path.dirname(__file__))
     check_imgs(plot_type="radar", values_dict={"html": 2})
