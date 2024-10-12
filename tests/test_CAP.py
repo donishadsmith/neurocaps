@@ -455,7 +455,7 @@ def check_imgs(values_dict, plot_type="map"):
 
         assert len(heatmap_files) == values_dict["heatmap"] and len(outer_files) == values_dict["outer"]
         [os.remove(file) for file in heatmap_files + outer_files]
-    else:
+    elif plot_type == "radar":
         if "html" in values_dict:
             radar_html = glob.glob(os.path.join(os.path.dirname(__file__), "*radar*.html"))
             assert len(radar_html) == values_dict["html"]
@@ -464,6 +464,14 @@ def check_imgs(values_dict, plot_type="map"):
             radar_png = glob.glob(os.path.join(os.path.dirname(__file__), "*radar*.png"))
             assert len(radar_png) == values_dict["png"]
             [os.remove(file) for file in radar_png]
+    elif plot_type == "nifti":
+        nii_files = glob.glob(os.path.join(os.path.dirname(__file__), "*.nii.gz"))
+        assert len(nii_files) == values_dict["nii.gz"]
+        [os.remove(file) for file in nii_files]
+    else:
+        surface_png = glob.glob(os.path.join(os.path.dirname(__file__), "*surface*.png"))
+        assert len(surface_png) == values_dict["png"]
+        [os.remove(file) for file in surface_png]
 
 @pytest.mark.parametrize("current_timeseries, parcel_approach",
                          [(extractor.subject_timeseries,extractor.parcel_approach),
@@ -573,3 +581,22 @@ def test_niftis(current_timeseries, parcel_approach, remove_files):
 
     cap_analysis.caps2niftis(output_dir=os.path.dirname(__file__), fwhm=1,
                              knn_dict={"k": 1, "resolution_mm": 1, "remove_subcortical": [50]})
+
+    check_imgs(plot_type="nifti", values_dict={"nii.gz": 2})
+
+import sys
+@pytest.mark.skipif(sys.platform != "linux", reason="VTK action only works for Linux")
+def test_caps2surf(remove_files):
+    cap_analysis = CAP(parcel_approach=parcel_approach)
+    cap_analysis.get_caps(subject_timeseries=subject_timeseries,
+                          n_clusters=2)
+
+    cap_analysis.caps2surf(method="nearest", save_stat_maps=True, output_dir=os.path.dirname(__file__),
+                           suffix_title="placeholder", show_figs=False)
+    check_imgs(plot_type="surface", values_dict={"png": 2})
+    check_imgs(plot_type="nifti", values_dict={"nii.gz": 2})
+
+    cap_analysis.caps2surf(method="linear", save_stat_maps=False, output_dir=os.path.dirname(__file__),
+                           as_outline=True, show_figs=False)
+    check_imgs(plot_type="surface", values_dict={"png": 2})
+    check_imgs(plot_type="nifti", values_dict={"nii.gz": 0})

@@ -42,8 +42,13 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
-## [0.17.4] - 2024-10-11
+## [0.17.4] - 2024-10-12
+- `CAP.caps2radar` test for Github Actions added due to this [action](https://github.com/coactions/setup-xvfb)
+resolving the VTK issue. Test only for Linux. Now all functions are tested on Github Actions.
 ### 🐛 Fixes
+- `CAP.caps2radar` uses try except block to show figures and should be able to display and close figures in a
+Jupyter notebook or python CL.
+- In `CAP.caps2radar` "round" kwarg was never used in code and was removed.
 - When tick values are not specified in the `radialaxis` kwargs in `CAP.caps2radar` function, default tick values
 no longer produces an error and now does the following:
 
@@ -99,7 +104,7 @@ list and `fwhm` is seventh in the list.
 - In  `CAP.caps2radar`, both `method` and `alpha` removed. Only the traditional cosine similarity calculation is
 computed.
 - In `CAP.calculate_metrics`, calculation for counts changed to abide by the formula,
-temporal fraction = (persistence * counts)/total volumes which can be found in the supplemental of 
+temporal fraction = (persistence * counts)/total volumes which can be found in the supplemental of
 Yang et al., 2021](https://doi.org/10.1016/j.neuroimage.2021.118193). Counts is now the frequency of initiations
 of a specific CAP.
 ### 💻 Metadata
@@ -122,7 +127,7 @@ import logging, sys
 class _Flush(logging.StreamHandler):
     def emit(self, record):
         super().emit(record)
-        self.flush() 
+        self.flush()
 
 def _logger(name, level = logging.INFO, flush=False):
     logger = logging.getLogger(name.split(".")[-1])
@@ -272,7 +277,7 @@ Below is a simplified version of the above snippet.
                 df.loc[indx,f"{target1}.{target2}"] = float(np.sum(np.where(diff_array==2,1,0))/trans_dict[target1])
             if trans_dict[target2] != 0:
                 df.loc[indx,f"{target2}.{target1}"] = float(np.sum(np.where(diff_array==-2,1,0))/trans_dict[target2])
-        
+
         # Calculate the probability for the self transitions/diagonals
         for target in caps:
             if trans_dict[target] == 0: continue

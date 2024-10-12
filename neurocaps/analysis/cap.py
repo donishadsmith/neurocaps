@@ -1960,7 +1960,7 @@ class CAP(_CAPGetter):
                   save_stat_maps: bool=False,
                   fslr_giftis_dict: Optional[dict]=None,
                   knn_dict: dict[str, Union[int, list[int], np.array]]=None,
-                  **kwargs) -> surfplot.Plot: # pragma: no cover
+                  **kwargs) -> surfplot.Plot:
         """
         **Project CAPs onto Surface Plots**
 
@@ -2207,7 +2207,8 @@ class CAP(_CAPGetter):
                         stat_map_name = file_name.split("_surface")[0] + ".nii.gz"
                         nib.save(stat_map, os.path.join(output_dir, stat_map_name))
 
-                plt.show(fig) if show_figs else plt.close(fig)
+                try: plt.show(fig) if show_figs else plt.close(fig)
+                except: plt.show() if show_figs else plt.close()
 
     def caps2radar(self,
                    output_dir: Optional[os.PathLike]=None,
@@ -2334,8 +2335,6 @@ class CAP(_CAPGetter):
                 Height of the plot. Value is multiplied by the dpi when saving.
             - width : :obj:`int`, defualt=1200
                 Width of the plot. Value is multiplied by the dpi when saving.
-            - round :obj:`int` or None, default=3,
-                The number of decimal points to round the cosine similarity values to prior to plotting.
             - line_close : :obj:`bool`, default=True
                 Whether to close the lines
             - bgcolor : :obj:`str`, default="white"
@@ -2386,7 +2385,7 @@ class CAP(_CAPGetter):
 
         In this code, if the ``tickvals`` or  ``range`` sub-keys in this code are not specified in the ``radialaxis``
         kwarg, then four values are shown - 0.25*(max value), 0.50*(max value), 0.75*(max value), and the max value.
-        These values are also rounded to the second second decimal point.
+        These values are also rounded to the second decimal place.
 
         For valid keys for ``radialaxis`` refer to plotly's documentation at
         https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.radialaxis.html or
@@ -2425,7 +2424,7 @@ class CAP(_CAPGetter):
                        "represents activation or de-activation relative to the mean.")
 
         defaults = {"scale": 2, "height": 800, "width": 1200, "line_close": True, "bgcolor": "white", "fill": "none",
-                    "round": 3, "scattersize": 8, "connectgaps": True, "opacity": 0.5, "linewidth": 2,
+                    "scattersize": 8, "connectgaps": True, "opacity": 0.5, "linewidth": 2,
                     "radialaxis": {"showline": False, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)",
                                    "gridcolor": "rgba(0, 0, 0, 0.25)","ticks": "outside",
                                    "tickfont": {"size": 14, "color": "black"}},
@@ -2473,7 +2472,7 @@ class CAP(_CAPGetter):
                         opacity=plot_dict["opacity"],
                         marker=dict(color=plot_dict["color_discrete_map"][i],
                                     size=plot_dict["scattersize"]),
-                        line = dict(color=plot_dict["color_discrete_map"][i], width = plot_dict["linewidth"])))
+                        line = dict(color=plot_dict["color_discrete_map"][i], width=plot_dict["linewidth"])))
                 else:
                     # Create dataframe
                     n = len(radar_dict["Regions"])

@@ -101,8 +101,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         The standard template space that the preprocessed BOLD data is registered to. The space can also be set after
         class initialization using ``self.space = "New Space"`` if the template space needs to be changed.
 
-        .. versionchanged:: space can bow be set after class initialization
-
     parcel_approach : :obj:`dict[str, dict[str, os.PathLike | list[str]]]`
         Nested dictionary containing information about the parcellation. Can also be used as a setter, which accepts a
         dictionary or a dictionary saved as pickle file. If "Schaefer" or "AAL" was specified during
