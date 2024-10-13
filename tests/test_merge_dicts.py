@@ -1,5 +1,5 @@
-import glob, os, numpy as np, pytest
-
+import glob, os
+import numpy as np, pytest
 from neurocaps.analysis import merge_dicts
 
 @pytest.mark.parametrize("return_reduced_dicts,return_merged_dicts",

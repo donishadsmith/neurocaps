@@ -1,4 +1,5 @@
-import copy, pickle, json, os, glob, shutil, sys, math, pytest, numpy as np, pandas as pd
+import copy, glob, json, math, pickle, os, shutil, sys
+import pytest, numpy as np, pandas as pd
 from neurocaps.extraction import TimeseriesExtractor
 
 dir = os.path.dirname(__file__)

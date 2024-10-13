@@ -1,5 +1,5 @@
-import numpy as np, os, glob, pickle, pandas as pd, pytest
-
+import numpy as np, os, glob, pickle
+import pytest
 from neurocaps.analysis import standardize
 
 def test_standardize():

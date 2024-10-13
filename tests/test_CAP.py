@@ -1,9 +1,15 @@
-import copy, glob, math, os, nibabel as nib, numpy as np, pandas as pd, pickle, pytest, warnings
+import copy, glob, logging, math, os, pickle, sys
+import nibabel as nib, numpy as np, pandas as pd, pytest
 from kneed import KneeLocator
 from neurocaps.extraction import TimeseriesExtractor
 from neurocaps.analysis import CAP, change_dtype
 
-warnings.simplefilter('ignore')
+LG = logging.getLogger(__name__)
+LG.setLevel(logging.WARNING)
+handler = logging.StreamHandler(sys.stdout)
+handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+LG.addHandler(handler)
+
 parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
 
 with open(os.path.join(os.path.dirname(__file__), "data", "HCPex_parcel_approach.pkl"), "rb") as f:
@@ -175,7 +181,7 @@ def test_no_groups_cluster_selection(standardize,n_cores):
         except:
             raise ValueError("Different results for kneedle and optimal cluster or not all inertia values are positive.")
     except:
-        warnings.warn("Elbow could not be found for random data.")
+        LG.warning("Elbow could not be found for random data.")
         pass
 
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
@@ -246,7 +252,7 @@ def test_groups_and_cluster_selection(standardize):
         except:
             raise ValueError("Different results for kneedle and optimal cluster or not all inertia values are positive.")
     except:
-        warnings.warn("Elbow could not be found for random data.")
+        LG.warning("Elbow could not be found for random data.")
         pass
 
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
@@ -584,7 +590,6 @@ def test_niftis(current_timeseries, parcel_approach, remove_files):
 
     check_imgs(plot_type="nifti", values_dict={"nii.gz": 2})
 
-import sys
 @pytest.mark.skipif(sys.platform != "linux", reason="VTK action only works for Linux")
 def test_caps2surf(remove_files):
     cap_analysis = CAP(parcel_approach=parcel_approach)

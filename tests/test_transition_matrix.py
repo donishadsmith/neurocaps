@@ -1,4 +1,5 @@
-import numpy as np, os, glob, pandas as pd, pytest
+import glob, os
+import numpy as np, pytest
 
 from neurocaps.analysis import CAP, transition_matrix
 
@@ -9,7 +10,7 @@ def test_transition_matrix(group):
     cap_analysis.get_caps(subject_timeseries=subject_timeseries,n_clusters=3)
     output = cap_analysis.calculate_metrics(subject_timeseries=subject_timeseries,metrics="transition_probability")
     trans_output = transition_matrix(output["transition_probability"], output_dir=os.path.dirname(__file__),
-                                     show_figs=False)
+                                     show_figs=False, borderwidths=2)
 
     groups = list(trans_output)
     for group in groups:
