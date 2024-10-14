@@ -11,9 +11,11 @@ else:
     pipeline_name = "fmriprep_1.0.0/fmriprep/"
 
 confounds=["Cosine*", "aComp*", "Rot*"]
+
 confounds_file = glob.glob(
     os.path.join(dir, bids_dir, "derivatives", pipeline_name, "sub-01", "ses-002", "func", "*confounds*.tsv")
     )[0]
+
 with open(os.path.join(dir, "data", "HCPex_parcel_approach.pkl"), "rb") as f:
     parcel_approach = pickle.load(f)
     parcel_approach["Custom"]["maps"] = os.path.join(dir, "data", "HCPex.nii.gz")
@@ -100,6 +102,9 @@ def get_scans(condition, dummy_scans=None, fd=False, tr=1.2):
 
 @pytest.fixture(autouse=False, scope="module")
 def setup_environment_2():
+    # Clear cache
+    TimeseriesExtractor._call_layout.cache_clear()
+
     work_dir = os.path.join(bids_dir, "derivatives", pipeline_name)
     # Create subject 02 folder and copy data
     os.makedirs(os.path.join(work_dir, "sub-02"), exist_ok=True)
@@ -134,6 +139,9 @@ def setup_environment_2():
 
 @pytest.fixture(autouse=False, scope="module")
 def setup_environment_3():
+    # Clear cache
+    TimeseriesExtractor._call_layout.cache_clear()
+
     work_dir = os.path.join(bids_dir, "derivatives", "fmriprep_1.0.0", "fmriprep")
     for i in ["01", "02"]:
         sub_dir = os.path.join(work_dir, f"sub-{i}")
@@ -665,3 +673,8 @@ def test_tr(high_pass,low_pass):
     if any([high_pass,low_pass]):
         with pytest.raises(ValueError):
             extractor.get_bold(bids_dir=bids_dir, task="rest")
+
+def test_dtype():
+    extractor = TimeseriesExtractor(dtype="float64")
+    extractor.get_bold(bids_dir=bids_dir, task="rest", run_subjects=["01"])
+    assert extractor.subject_timeseries["01"]["run-0"].dtype == np.float64
