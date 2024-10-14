@@ -42,6 +42,43 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.17.5] - 2024-10-14
+### 🚀 New/Added
+- Added `dtype` parameter to `TimeseriesExtractor` with default set to None. This parameter is passed to nilearn's
+`load_img` function.
+### ♻ Changed
+- Some speed increase if calling `TimeseriesExtractor.get_bold` multiple times in the same script. New internal function
+uses `functools` `@cache` when calling `BIDSLayout` now. 
+
+```python
+    @staticmethod
+    @cache
+    def _call_layout(bids_dir, pipeline_name):
+        try:
+            import bids
+        except ModuleNotFoundError:
+            raise ModuleNotFoundError(
+                "This function relies on the pybids package to query subject-specific files. "
+                "If on Windows, pybids does not install by default to avoid long path error issues "
+                "during installation. Try using `pip install pybids` or `pip install neurocaps[windows]`.")
+                
+        bids_dir = os.path.normpath(bids_dir).rstrip(os.path.sep)
+
+        if bids_dir.endswith("derivatives"): bids_dir = os.path.dirname(bids_dir)
+
+        if pipeline_name:
+            pipeline_name = os.path.normpath(pipeline_name).lstrip(os.path.sep).rstrip(os.path.sep)
+            if pipeline_name.startswith("derivatives"):
+                pipeline_name = pipeline_name[len("derivatives"):].lstrip(os.path.sep)
+            layout = bids.BIDSLayout(bids_dir, derivatives=os.path.join(bids_dir, "derivatives", pipeline_name))
+        else:
+            layout = bids.BIDSLayout(bids_dir, derivatives=True)
+
+        LG.info(f"{layout}")
+
+        return layout
+```
+
 ## [0.17.4] - 2024-10-12
 - `CAP.caps2radar` test for Github Actions added due to this [action](https://github.com/coactions/setup-xvfb)
 resolving the VTK issue. Test only for Linux. Now all functions are tested on Github Actions.

@@ -34,6 +34,6 @@ def _check_confound_names(high_pass, user_confounds, n_acompcor_separate):
                            f"The following components will not be used {removed_confounds}.")
             confound_names = check_confounds
 
-    LG.info(f"Confound regressors to be used if available: {', '.join(confound_names)}")
+    LG.info(f"Confound regressors to be used if available: {', '.join(confound_names)}.")
 
     return confound_names

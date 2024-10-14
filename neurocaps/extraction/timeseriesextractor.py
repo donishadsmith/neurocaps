@@ -1,4 +1,5 @@
 import json, os, re
+from functools import cache
 from typing import Union, Optional, Literal
 import matplotlib.pyplot as plt, numpy as np
 from joblib import Parallel, delayed, dump
@@ -94,6 +95,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
           for this to work. If, for instance, six "non_steady_state_outlier_XX" columns are detected but the
           "max" is set to five, then five dummy volumes will be discarded.
 
+    dtype : :obj:`str` or "auto", default=None
+        The numpy dtype the NIfTI images are converted to when passed to nilearn's ``load_img`` function.
+
+        .. versionadded:: 0.17.5
+
 
     Property
     --------
@@ -171,7 +177,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     Note
     ----
     ``standardize``, ``detrend``, ``low_pass``, ``high_pass``, ``fwhm``, and nuisance regression uses
-    ``nilearn.maskers.NiftiLabelsMasker``.
+    ``nilearn.maskers.NiftiLabelsMasker``. The ``dtype`` parameter is used by ``nilearn.image.load_img``.
 
     Default ``confound_names`` changes if ``high_pass`` is not None.
 
@@ -257,7 +263,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                  confound_names: Optional[list[str]]=None,
                  fd_threshold: Optional[Union[float, dict[str, float]]]=None,
                  n_acompcor_separate: Optional[int]=None,
-                 dummy_scans: Optional[Union[int, dict[str, Union[bool, int]]]]=None) -> None:
+                 dummy_scans: Optional[Union[int, dict[str, Union[bool, int]]]]=None,
+                 dtype: Union[str, Literal["auto"]]=None) -> None:
 
         self._space = space
 
@@ -288,7 +295,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                                     "dummy_scans": dummy_scans,
                                     "n_acompcor_separate": n_acompcor_separate,
                                     "fd_threshold": None,
-                                    "use_confounds": use_confounds}
+                                    "use_confounds": use_confounds,
+                                    "dtype": dtype}
         # Check parcel_approach
         self._parcel_approach = _check_parcel_approach(parcel_approach=parcel_approach)
 
@@ -388,7 +396,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Used to immediately print out information such as the current subject being processed, confounds found,
             etc.
 
-            .. versionchanged:: 0.17.0 Changed from ``flush_print`` to ``flush``. 
+            .. versionchanged:: 0.17.0 Changed from ``flush_print`` to ``flush``.
 
         exclude_niftis : :obj:`list[str]` or :obj:`None`, default=None
             List of specific preprocessed NIfTI files to exclude, preventing their timeseries from being extracted.
@@ -456,15 +464,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             timeseries = timeseries[scan_list,:]
 
         """
-        try:
-            import bids
-        except ModuleNotFoundError:
-            raise ModuleNotFoundError(
-                "This function relies on the pybids package to query subject-specific files. "
-                "If on Windows, pybids does not install by default to avoid long path error issues "
-                "during installation. Try using `pip install pybids` or `pip install neurocaps[windows]`.")
-
-        if runs and not isinstance(runs,list): runs = [runs]
+        if runs and not isinstance(runs, list): runs = [runs]
 
         # Update attributes
         self._task_info = {"task": task, "condition": condition, "session": session, "runs": runs, "tr": tr}
@@ -475,19 +475,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         self._subject_info = {}
         self._n_cores = n_cores
 
-        bids_dir = os.path.normpath(bids_dir).rstrip(os.path.sep)
-
-        if bids_dir.endswith("derivatives"): bids_dir = os.path.dirname(bids_dir)
-
-        if pipeline_name:
-            pipeline_name = os.path.normpath(pipeline_name).lstrip(os.path.sep).rstrip(os.path.sep)
-            if pipeline_name.startswith("derivatives"):
-                pipeline_name = pipeline_name[len("derivatives"):].lstrip(os.path.sep)
-            layout = bids.BIDSLayout(bids_dir, derivatives=os.path.join(bids_dir, "derivatives", pipeline_name))
-        else:
-            layout = bids.BIDSLayout(bids_dir, derivatives=True)
-
-        LG.info(f"{layout}")
+        layout = self._call_layout(bids_dir, pipeline_name)
         subj_ids = sorted(layout.get(return_type="id", target="subject", task=task, space=self._space, suffix="bold"))
 
         if exclude_subjects:
@@ -528,6 +516,33 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
                 # Aggregate new timeseries
                 if isinstance(subject_timeseries, dict): self._subject_timeseries.update(subject_timeseries)
+
+    @staticmethod
+    @cache
+    def _call_layout(bids_dir, pipeline_name):
+        try:
+            import bids
+        except ModuleNotFoundError:
+            raise ModuleNotFoundError(
+                "This function relies on the pybids package to query subject-specific files. "
+                "If on Windows, pybids does not install by default to avoid long path error issues "
+                "during installation. Try using `pip install pybids` or `pip install neurocaps[windows]`.")
+
+        bids_dir = os.path.normpath(bids_dir).rstrip(os.path.sep)
+
+        if bids_dir.endswith("derivatives"): bids_dir = os.path.dirname(bids_dir)
+
+        if pipeline_name:
+            pipeline_name = os.path.normpath(pipeline_name).lstrip(os.path.sep).rstrip(os.path.sep)
+            if pipeline_name.startswith("derivatives"):
+                pipeline_name = pipeline_name[len("derivatives"):].lstrip(os.path.sep)
+            layout = bids.BIDSLayout(bids_dir, derivatives=os.path.join(bids_dir, "derivatives", pipeline_name))
+        else:
+            layout = bids.BIDSLayout(bids_dir, derivatives=True)
+
+        LG.info(f"{layout}")
+
+        return layout
 
     # Get valid subjects to iterate through
     def _setup_extraction(self, layout, subj_ids, exclude_niftis):

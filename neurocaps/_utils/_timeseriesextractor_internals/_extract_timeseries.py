@@ -112,18 +112,17 @@ def _extract_timeseries(subj_id, prepped_files, run_list, parcel_approach, signa
 
             if len(Data.censor_vols) == fd_array.shape[0]:
                 LG.warning(f"{Data.head}" + "Timeseries Extraction Skipped: Timeseries will be empty due to "
-                            f"all volumes exceeding a framewise displacement of {Data.fd}.")
+                           f"all volumes exceeding a framewise displacement of {Data.fd}.")
                 continue
 
             # Check if run fails fast due to percentage volumes exceeding user-specified scrub_lim
             if Data.scrub_lim and not Data.condition:
-                Data.vols_exceed_percent, Data.fail_fast = _flag(len(Data.censor_vols), len(fd_array),
-                                                                    Data.scrub_lim)
+                Data.vols_exceed_percent, Data.fail_fast = _flag(len(Data.censor_vols), len(fd_array), Data.scrub_lim)
 
         elif Data.fd and Data.files["confound"] and "framewise_displacement" not in Data.confound_df.columns:
             LG.warning(f"{Data.head}" + "`fd_threshold` specified but 'framewise_displacement' column not "
-                        "found in the confound tsv file. Removal of volumes after nuisance regression will not be "
-                        "but timeseries extraction will continue.")
+                       "found in the confound tsv file. Removal of volumes after nuisance regression will not be "
+                       "but timeseries extraction will continue.")
 
         # Get events
         if Data.files['event']:
@@ -177,9 +176,7 @@ def _extract_timeseries(subj_id, prepped_files, run_list, parcel_approach, signa
 def _continue_extraction(Data, LG):
     # Extract confound information of interest and ensure confound file does not contain NAs
     if Data.use_confounds:
-
         confound_names = copy.deepcopy(Data.signal_clean_info["confound_names"])
-
         # Extract first "n" numbers of specified WM and CSF components
         if Data.files["confound_meta"]:
             confound_names = _acompcor(confound_names,
@@ -193,13 +190,13 @@ def _continue_extraction(Data, LG):
     masker = NiftiLabelsMasker(
         mask_img=Data.files["mask"],
         labels_img=Data.maps,
-        resampling_target='data',
+        resampling_target="data",
         t_r=Data.tr,
         **Data.signal_clean_info["masker_init"]
     )
 
     # Load and discard volumes if needed
-    nifti_img = load_img(Data.files["nifti"])
+    nifti_img = load_img(Data.files["nifti"], dtype=Data.signal_clean_info["dtype"])
 
     if Data.dummy_vols:
         nifti_img = index_img(nifti_img, slice(Data.dummy_vols, None))
