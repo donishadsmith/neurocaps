@@ -678,3 +678,29 @@ def test_dtype():
     extractor = TimeseriesExtractor(dtype="float64")
     extractor.get_bold(bids_dir=bids_dir, task="rest", run_subjects=["01"])
     assert extractor.subject_timeseries["01"]["run-0"].dtype == np.float64
+
+@pytest.mark.parametrize("fd_threshold, dummy_scans", [({"threshold": 0.35, "n_before": 2, "n_after": 3}, None),
+                                                       ({"threshold": 0.31, "n_before": 4, "n_after": 2}, None),
+                                                       ({"threshold": 0.31, "n_before": 4, "n_after": 2}, 3)])
+def test_extended_censor(fd_threshold, dummy_scans):
+    extractor = TimeseriesExtractor(fd_threshold=fd_threshold, dummy_scans=dummy_scans)
+    extractor.get_bold(bids_dir=bids_dir, task="rest", run_subjects=["01"])
+
+    extractor2 = TimeseriesExtractor()
+    extractor2.get_bold(bids_dir=bids_dir, task="rest", run_subjects=["01"])
+
+    if fd_threshold["threshold"] == 0.35:
+        expected_shape = 37
+        expected_removal = [37, 38, 39]
+    else:
+        if not dummy_scans:
+            expected_shape = 30
+            expected_removal = [0, 1, 2, 3, 4, 35, 36, 37, 38, 39]
+        else:
+            expected_shape = 32
+            expected_removal = [0, 1, 2, 35, 36, 37, 38, 39]
+
+    assert extractor.subject_timeseries["01"]["run-0"].shape[0] == expected_shape
+    if not dummy_scans:
+        assert np.array_equal(extractor.subject_timeseries["01"]["run-0"],
+                              np.delete(extractor2.subject_timeseries["01"]["run-0"], expected_removal, axis=0))

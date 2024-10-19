@@ -42,13 +42,74 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.17.6] - 2024-10-19
+### 🚀 New/Added
+- Added "n_before" and "n_after" subkeys for when `fd_threshold` is a dictionary. This the frame exceeding the
+fd threshold to be scrubbed including an additional "n" number of frames before or after the exceeding frame to also
+be scrubbed.
+### 🐛 Fixes
+- Log message that specifies certain confounds not found is now set as a warning instead of info. Additionally, there
+is no Nonetype error if zero confounds are found in the data frame.
+- Fix that appears to have only affected Windows where the system defined a default root handler (stderr) after the
+top level loggers were initialized. This caused loggers initialized inside functions, such as `_extract_timeseries`
+to adopt this root handler and timeseries extraction logs had a slightly different formatting. This is now fixed with
+the following internal code.
+
+```python
+"""Internal logging function and class for flushing"""
+
+import logging, sys
+
+# Global variables to determine if a handler is user defined or defined by OS
+_USER_ROOT_HANDLER = None
+_USER_MODULE_HANDLERS = {}
+
+class _Flush(logging.StreamHandler):
+    def emit(self, record):
+        super().emit(record)
+        self.flush()
+
+def _logger(name, flush=False, top_level=True):
+    global _USER_ROOT_HANDLER, _USER_MODULE_HANDLERS
+
+    logger = logging.getLogger(name.split(".")[-1])
+
+    # Windows appears to assign stderr has the root handler after the top level loggers are assigned, which causes
+    # any loggers not assigned at top level to adopt this handler. Global variable used to assess if the base root
+    # handler is user defined or assigned by the system
+    if top_level == True:
+        _USER_ROOT_HANDLER = logging.getLogger().hasHandlers()
+        _USER_MODULE_HANDLERS[logger.name] = logging.getLogger(logger.name).hasHandlers()
+
+    if not logger.level: logger.setLevel(logging.INFO)
+
+    # Check if user defined root handler or assigned a specific handler for module
+    default_handlers = _USER_ROOT_HANDLER or _USER_MODULE_HANDLERS[logger.name]
+
+    # Works to see if root has handler and propagate if it does
+    logger.propagate = True if _USER_ROOT_HANDLER else False
+
+    # Add or messages will repeat several times due to multiple handlers if same name used
+    if not default_handlers and not (logger.name == "_extract_timeseries" and top_level):
+        # If no user specified default handler, any handler is assigned by OS and is cleared
+        if logger.name == "_extract_timeseries": logger.handlers.clear()
+
+        if flush: handler = _Flush(sys.stdout)
+        else: handler = logging.StreamHandler(sys.stdout)
+
+        handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+        logger.addHandler(handler)
+
+    return logger
+```
+
 ## [0.17.5] - 2024-10-14
 ### 🚀 New/Added
 - Added `dtype` parameter to `TimeseriesExtractor` with default set to None. This parameter is passed to nilearn's
 `load_img` function.
 ### ♻ Changed
 - Some speed increase if calling `TimeseriesExtractor.get_bold` multiple times in the same script. New internal function
-uses `functools` `@cache` when calling `BIDSLayout` now. 
+uses `functools` `@cache` when calling `BIDSLayout` now.
 
 ```python
     @staticmethod
@@ -61,7 +122,7 @@ uses `functools` `@cache` when calling `BIDSLayout` now.
                 "This function relies on the pybids package to query subject-specific files. "
                 "If on Windows, pybids does not install by default to avoid long path error issues "
                 "during installation. Try using `pip install pybids` or `pip install neurocaps[windows]`.")
-                
+
         bids_dir = os.path.normpath(bids_dir).rstrip(os.path.sep)
 
         if bids_dir.endswith("derivatives"): bids_dir = os.path.dirname(bids_dir)

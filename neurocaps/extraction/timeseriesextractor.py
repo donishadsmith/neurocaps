@@ -69,6 +69,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
           in ``self.get_bold``, only the runs where the proportion of volumes exceeds this value for the specific
           condition of interest are removed. **Note**, this proportion is calculated after dummy scans have been removed.
           A warning is issued whenever a run is flagged.
+        - "n_before": An integer value indicating the number of volumes to scrub before the flagged volume. Hence,
+          if frame 5 is flagged and "n_before" is 2, then volumes 3, 4, and 5 are scrubbed.
+        - "n_after": An integer indicating the number of volumes to scrub after to the flagged volume. Hence,
+          if frame 5 is flagged and "n_after" is 2, then volumes 5, 6, and 7 are scrubbed.
+
+        .. versionadded:: 0.17.6 "n_before" and "n_after".
 
     n_acompcor_separate : :obj:`int` or :obj:`None`, default=None
         Specifies the number of separate acompcor components derived from white-matter (WM) and cerebrospinal
@@ -286,6 +292,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             if "outlier_percentage" in fd_threshold:
                 if fd_threshold["outlier_percentage"] >= 1 or fd_threshold["outlier_percentage"] <= 0:
                     raise ValueError("'outlier_percentage' must be a positive float between 0 and 1.")
+            if "n_before" in fd_threshold and not isinstance(fd_threshold["n_before"], int):
+                raise ValueError("'n_before' mst be an integer value.")
+            if "n_after" in fd_threshold and not isinstance(fd_threshold["n_after"], int):
+                raise ValueError("'n_after' mst be an integer value.")
 
         self._signal_clean_info = {"masker_init": {"standardize": standardize,
                                                    "detrend": detrend,

@@ -7,6 +7,8 @@ from nilearn.maskers import NiftiLabelsMasker
 from nilearn.image import index_img, load_img
 from .._logger import _logger
 
+LG = _logger(__name__)
+
 # Data container
 @dataclass
 class _Data:
@@ -60,6 +62,22 @@ class _Data:
             return None
 
     @property
+    def n_before(self):
+        if isinstance(self.signal_clean_info["fd_threshold"], dict):
+            if "n_before" in self.signal_clean_info["fd_threshold"]:
+                return self.signal_clean_info["fd_threshold"]["n_before"]
+        else:
+            return None
+
+    @property
+    def n_after(self):
+        if isinstance(self.signal_clean_info["fd_threshold"], dict):
+            if "n_after" in self.signal_clean_info["fd_threshold"]:
+                return self.signal_clean_info["fd_threshold"]["n_after"]
+        else:
+            return None
+
+    @property
     def maps(self):
         return self.parcel_approach[list(self.parcel_approach)[0]]["maps"]
 
@@ -72,7 +90,7 @@ def _extract_timeseries(subj_id, prepped_files, run_list, parcel_approach, signa
                         flush):
 
     # Logger inside function to give logger to each child process if parallel processing is done
-    LG = _logger(__name__, flush=flush)
+    LG = _logger(__name__, flush=flush, top_level=False)
 
     # Initialize subject dictionary
     subject_timeseries = {subj_id: {}}
@@ -109,6 +127,9 @@ def _extract_timeseries(subj_id, prepped_files, run_list, parcel_approach, signa
         if Data.fd and Data.files["confound"] and "framewise_displacement" in Data.confound_df.columns:
             # Get censor volumes vector, outlier_limit, and threshold
             fd_array, Data.censor_vols = _censor(Data)
+
+            if Data.censor_vols and (Data.n_before or Data.n_after):
+                Data.censor_vols = _extended_censor(Data, len(fd_array))
 
             if len(Data.censor_vols) == fd_array.shape[0]:
                 LG.warning(f"{Data.head}" + "Timeseries Extraction Skipped: Timeseries will be empty due to "
@@ -200,11 +221,11 @@ def _continue_extraction(Data, LG):
 
     if Data.dummy_vols:
         nifti_img = index_img(nifti_img, slice(Data.dummy_vols, None))
-        if Data.use_confounds:
+        if Data.use_confounds and confounds is not None:
             confounds.drop(list(range(0, Data.dummy_vols)), axis=0, inplace=True)
 
     # Extract timeseries
-    if Data.use_confounds: timeseries = masker.fit_transform(nifti_img, confounds=confounds)
+    if Data.use_confounds and confounds is not None: timeseries = masker.fit_transform(nifti_img, confounds=confounds)
     else: timeseries = masker.fit_transform(nifti_img)
 
     if Data.censor_vols and not Data.condition: timeseries = np.delete(timeseries, Data.censor_vols, axis=0)
@@ -268,6 +289,20 @@ def _censor(Data):
 
     return fd_array, censor_volumes
 
+# Created an extended censor_vols vector
+def _extended_censor(Data, max_len):
+    ext_arr = []
+
+    for i in Data.censor_vols:
+        if Data.n_before: ext_arr.extend(list(range(i - Data.n_before, i)))
+        if Data.n_after: ext_arr.extend(list(range(i + 1, i + Data.n_after + 1)))
+
+    # Filter; ensure no index is below zero to prevent backwards indexing and not above max to prevent error
+    filtered_ext_arr = [x for x in ext_arr if x >= 0 and x < max_len]
+
+    # Return new list that is sorted and only contains unique indices
+    return sorted(list(set(Data.censor_vols + filtered_ext_arr)))
+
 # Determine if run fails fast; when condition is not specified
 def _flag(n_censor, n, scrub_lim):
     vols_exceed_percent = n_censor/n
@@ -325,6 +360,7 @@ def _acompcor(confound_names, confound_metadata_file, n):
 def _get_confounds(Data, confound_names, LG):
     valid_confounds = []
     invalid_confounds = []
+
     for confound_name in confound_names:
         if "*" in confound_name:
             prefix = confound_name.split("*")[0]
@@ -339,10 +375,10 @@ def _get_confounds(Data, confound_names, LG):
     if valid_confounds: confounds = Data.confound_df[valid_confounds].fillna(0)
     else: confounds = None
 
-    if invalid_confounds and Data.verbose:
-        LG.info(f"{Data.head}" + f"The following confounds were not found: {', '.join(invalid_confounds)}.")
+    if (invalid_confounds or confounds is None) and Data.verbose:
+        LG.warning(f"{Data.head}" + f"The following confounds were not found: {', '.join(invalid_confounds)}.")
 
-    if not confounds.empty and Data.verbose:
+    if confounds is not None and not confounds.empty and Data.verbose:
         LG.info(f"{Data.head}" + "The following confounds will be used for nuisance regression: "
                 f"{', '.join(list(confounds.columns))}.")
 
