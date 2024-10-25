@@ -1,5 +1,4 @@
 """Internal logging function and class for flushing"""
-
 import logging, sys
 
 # Global variables to determine if a handler is user defined or defined by OS

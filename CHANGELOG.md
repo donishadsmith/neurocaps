@@ -42,6 +42,13 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.17.7] - 2024-10-25
+### 🚀 New/Added
+- Added `vmin` and `vmin` kwargs for `transition_matrix` and `CAP.caps2corr`.
+### 🐛 Fixes
+- Fix issue with x and y labels for `CAP.caps2plot` not changing in size when `xticklabels_size` and
+`yticklabels_size` modified.
+
 ## [0.17.6] - 2024-10-19
 ### 🚀 New/Added
 - Added "n_before" and "n_after" subkeys for when `fd_threshold` is a dictionary. This the frame exceeding the

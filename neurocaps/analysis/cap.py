@@ -466,7 +466,7 @@ class CAP(_CAPGetter):
             created if it does not exist. Outputs as png file.
 
         kwargs : :obj:`dict`
-            Dictionary to adjust certain parameters related to ``cluster_selection_method`` when set to "elbow".
+            Dictionary to adjust certain parameters when ``cluster_selection_method`` is not None.
             Additional parameters include:
 
             - S : :obj:`int`, default=1
@@ -1300,9 +1300,9 @@ class CAP(_CAPGetter):
                     - ``matplotlib.colors.LinearSegmentedColormap`` to generate custom palettes.
 
             - vmin : :obj:`float` or :obj:`None`, default=None
-                The minimum value to display in plots.
+                The minimum value to display in colormap.
             - vmax : :obj:`float` or :obj:`None`, default=None
-                The maximum value to display in plots.
+                The maximum value to display in colormap.
 
         Returns
         -------
@@ -1600,6 +1600,7 @@ class CAP(_CAPGetter):
             display = self._border(display, plot_dict, y_length, len(self._caps[group]))
 
         # Modify label sizes
+        display = self._label_size(display, plot_dict)
         plot_title = f"{group} CAPs {suffix_title}" if suffix_title else f"{group} CAPs"
         display.set_title(plot_title, fontdict= {"fontsize": plot_dict["fontsize"]})
 
@@ -1703,10 +1704,10 @@ class CAP(_CAPGetter):
     @staticmethod
     def _label_size(display, plot_dict, set_x = True, set_y = True):
         if set_x:
-            display.set_xticklabels(display.get_xticklabels(), size = plot_dict["xticklabels_size"],
+            display.set_xticklabels(display.get_xticklabels(), size=plot_dict["xticklabels_size"],
                                     rotation=plot_dict["xlabel_rotation"])
         if set_y:
-            display.set_yticklabels(display.get_yticklabels(), size = plot_dict["yticklabels_size"],
+            display.set_yticklabels(display.get_yticklabels(), size=plot_dict["yticklabels_size"],
                                     rotation=plot_dict["ylabel_rotation"])
 
         return display
@@ -1808,6 +1809,11 @@ class CAP(_CAPGetter):
                     - ``seaborn.diverging_palette`` function to generate custom palettes.
                     - ``matplotlib.color.LinearSegmentedColormap`` to generate custom palettes.
 
+            - vmin : :obj:`float` or :obj:`None`, default=None
+                The minimum value to display in colormap.
+            - vmax : :obj:`float` or :obj:`None`, default=None
+                The maximum value to display in colormap.
+
         Returns
         -------
         `seaborn.heatmap`
@@ -1830,7 +1836,7 @@ class CAP(_CAPGetter):
         defaults = {"dpi": 300, "figsize": (8, 6), "fontsize": 14, "xticklabels_size": 8, "yticklabels_size": 8,
                     "shrink": 0.8, "xlabel_rotation": 0, "ylabel_rotation": 0, "annot": False, "linewidths": 0,
                     "linecolor": "black", "cmap": "coolwarm", "fmt": ".2g", "borderwidths": 0, "edgecolors": None,
-                    "alpha": None, "bbox_inches": "tight", "annot_kws": None}
+                    "alpha": None, "bbox_inches": "tight", "annot_kws": None, "vmin": None, "vmax": None}
 
         plot_dict = _check_kwargs(defaults, **kwargs)
 

@@ -1,7 +1,7 @@
 """Internal function for checking the validity of parcel_approach."""
 import copy, os, re
 from nilearn import datasets
-from ._pickle_to_dict import _convert_pickle_to_dict
+from ._pickle_utils import _convert_pickle_to_dict
 from ._logger import _logger
 
 LG = _logger(__name__)
@@ -11,6 +11,7 @@ def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
         parcel_approach = _convert_pickle_to_dict(parcel_approach)
     else:
         parcel_approach = copy.deepcopy(parcel_approach)
+
     valid_parcel_dict = {"Schaefer": {"n_rois" : 400, "yeo_networks": 7, "resolution_mm": 1},
                          "AAL": {"version": "SPM12"},
                          "Custom": {"maps": "/location/to/parcellation.nii.gz",
@@ -48,6 +49,7 @@ def _check_parcel_approach(parcel_approach, call = "TimeseriesExtractor"):
         fetched_schaefer = datasets.fetch_atlas_schaefer_2018(n_rois=parcel_approach["Schaefer"]["n_rois"],
                                                               yeo_networks=parcel_approach["Schaefer"]["yeo_networks"],
                                                               resolution_mm=parcel_approach["Schaefer"]["resolution_mm"])
+
         parcel_approach["Schaefer"].update({"maps": fetched_schaefer.maps})
         network_name = "7Networks_" if parcel_approach["Schaefer"]["yeo_networks"] == 7 else "17Networks_"
         parcel_approach["Schaefer"].update({"nodes": [label.decode().split(network_name)[-1]
