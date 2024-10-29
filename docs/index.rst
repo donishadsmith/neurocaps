@@ -5,6 +5,7 @@
    :maxdepth: 2
 
    installation
+   logging
    api
    examples/examples
    outputs

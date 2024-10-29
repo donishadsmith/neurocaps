@@ -1,7 +1,7 @@
 # neurocaps
 [![Latest Version](https://img.shields.io/pypi/v/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.13991036)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.14010493)
 [![Github Repository](https://img.shields.io/badge/Source%20Code-neurocaps-purple)](https://github.com/donishadsmith/neurocaps)
 [![Test Status](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg)](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml)
 [![codecov](https://codecov.io/github/donishadsmith/neurocaps/graph/badge.svg?token=WS2V7I16WF)](https://codecov.io/github/donishadsmith/neurocaps)
@@ -68,6 +68,83 @@ To include pybids when installing the development version on Windows, use:
 git clone https://github.com/donishadsmith/neurocaps/
 cd neurocaps
 pip install -e .[windows]
+```
+# Logging
+In neurocaps, all informational messages and warnings are managed using Python's logging module. By default, logs are
+output to the console (`sys.stdout`) with a logging level of `INFO`. Before importing the neurocaps package, you can
+configure the root handler or specific module loggers to override these default settings. Additionally, the name of
+each logger is unique to the module and corresponds to the module's name (``__name__.split(".")[-1]``).
+
+### Configuration (Without Parallel Processing)
+This configuration sets the root logger to output to the console and configures a specific module logger to use a
+`FileHandler`.
+
+```python
+
+import logging
+
+# Configure the root logger for all loggers to propagate to
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)]
+    )
+
+# Configuring the logger for the internal function that does timeseries extraction
+extract_timeseries_logger = logging.getLogger('_extract_timeseries')
+extract_timeseries_logger.setLevel(logging.WARNING)
+file_handler = logging.FileHandler('neurocaps.log')
+file_handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
+
+# Import package
+from neurocaps.extraction import TimeseriesExtractor
+
+# ...code...
+```
+### Logging Configuration (With Parallel Processing)
+When using joblib's loky backend for parallel processing, child processes do not inherit global logging configurations.
+Consequently, internal logs are output to the console by default even when parallel processing is enabled. To redirect
+these logs to a specific handler, you can set up a `QueueListener`. This approach allows logs produced by the
+internal `_extract_timeseries` function to be redirected when parallel processing is enabled.
+
+```python
+import logging
+from logging.handlers import QueueListener
+from multiprocessing import Manager
+
+# Configure root with FileHandler
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.INFO)
+file_handler = logging.FileHandler('neurocaps.log')
+file_handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
+root_logger.addHandler(file_handler)
+
+if __name__ == "__main__":
+    # Import the TimeseriesExtractor
+    from neurocaps.extraction import TimeseriesExtractor
+
+    # Setup managed queue
+    manager = Manager()
+    queue = manager.Queue()
+
+    # Set up the queue listener
+    listener = QueueListener(queue, *root_logger.handlers)
+
+    # Start listener
+    listener.start()
+
+    extractor = TimeseriesExtractor()
+    
+    # Use the `parallel_log_config` parameter to pass queue and the logging level 
+    extractor.get_bold(bids_dir="path/to/bids/dir",
+                       task="rest", 
+                       tr=2,
+                       n_cores=5,
+                       parallel_log_config = {"queue": queue, "level": logging.WARNING})
+
+    # Stop listener
+    listener.stop()
+
 ```
 
 # Usage
@@ -237,7 +314,7 @@ in `caps2radar` in the `CAP` class for a more detailed explanation as well as av
 
 Please refer to [demo.ipynb](https://github.com/donishadsmith/neurocaps/blob/main/demo.ipynb) or https://neurocaps.readthedocs.io/en/latest/examples/examples.html for a more extensive demonstration of the features included in this package.
 
-**Quick Code Examples (Examples use randomized data)**:
+**Quick Code Examples (CAP examples use randomized data to simulate multiple subjects)**:
 
 ```python
 

@@ -42,6 +42,11 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.17.8] - 2024-10-29
+### 🚀 New/Added
+- For `TimeseriesExtractor.get_bold()`, a new `parallel_log_config` parameter has been added to pass an instance of
+`multiprocessing.Manager.Queue` to redirect logs if parallel processing is used.
+
 ## [0.17.7] - 2024-10-25
 ### 🚀 New/Added
 - Added `vmin` and `vmin` kwargs for `transition_matrix` and `CAP.caps2corr`.

@@ -8,6 +8,7 @@ from nilearn.maskers import NiftiLabelsMasker
 from nilearn.image import index_img, load_img
 from .._logger import _logger
 
+# Logger initialization to check if any user-defined loggers where created prior to package import
 LG = _logger(__name__)
 
 # Data container
@@ -88,10 +89,10 @@ class _Data:
         else: return None
 
 def _extract_timeseries(subj_id, prepped_files, run_list, parcel_approach, signal_clean_info, task_info, tr, verbose,
-                        flush):
+                        flush, parallel_log_config=None):
 
     # Logger inside function to give logger to each child process if parallel processing is done
-    LG = _logger(__name__, flush=flush, top_level=False)
+    LG = _logger(__name__, flush=flush, top_level=False, parallel_log_config=parallel_log_config)
 
     # Initialize subject dictionary
     subject_timeseries = {subj_id: {}}

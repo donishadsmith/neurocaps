@@ -1,6 +1,8 @@
 import json, os, re
+import multiprocessing
 from functools import cache
-from typing import Union, Optional, Literal
+from typing import Callable, Literal, Optional, Union
+
 import matplotlib.pyplot as plt, numpy as np
 from joblib import Parallel, delayed, dump
 from .._utils import (_TimeseriesExtractorGetter, _check_kwargs, _check_confound_names,
@@ -329,7 +331,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                  n_cores: Optional[int]=None,
                  verbose: bool=True,
                  flush: bool=False,
-                 exclude_niftis: Optional[list[str]]=None) -> None:
+                 exclude_niftis: Optional[list[str]]=None,
+                 parallel_log_config: Optional[dict[str, Union[Callable, int]]]=None) -> None:
         """
         **Retrieve Preprocessed BOLD Data from BIDS Datasets**
 
@@ -398,13 +401,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             The number of CPU cores to use for multiprocessing with joblib.
 
         verbose : :obj:`bool`, default=True
-            Print subject-specific information such as confounds being extracted, and id and run of subject being
-            processed during timeseries extraction.
+            Log subject-specific information such as the specific subjects being skipped due to not having
+            the required files, the current subject being undergoing the extraction process, the specific confounds
+            found in a subject that will be used for nuisance regression, in addition to confounds that are requested
+            but are missing for the subject, and additional warnings encountered during the extraction process.
 
         flush : :obj:`bool`, default=False
-            Flush the printed subject-specific information produced during the timeseries extraction process.
-            Used to immediately print out information such as the current subject being processed, confounds found,
-            etc.
+            Flush the logged subject-specific information produced during the timeseries extraction process.
 
             .. versionchanged:: 0.17.0 Changed from ``flush_print`` to ``flush``.
 
@@ -412,6 +415,58 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             List of specific preprocessed NIfTI files to exclude, preventing their timeseries from being extracted.
             Used if there are specific runs across different participants that need to be
             excluded.
+
+        parallel_log_config : :obj:`dict[str, Union[multiprocessing.Manager.Queue, int]]`
+            Passes a user-defined managed queue and logging level to the internal timeseries extraction function
+            (logger named "_extract_timeseries"). Note, this is distinct from the logger used for the entire class
+            ``TimeseriesExtractor``, which is named "timeseriesextractor". This parameter is utilized when
+            parallel processing (``n_cores``) is enabled. If parallel processing is enabled and
+            ``parallel_log_config`` is None, the default logging behavior applies. This parameter must be a dictionary
+            and the available keys are:
+
+            - "queue": The instance of ``multiprocessing.Manager.Queue`` to pass to ``QueueHandler``. If not specified, all logs will output to ``sys.stdout``.
+            - "level": The logging level (e.g. ``logging.INFO``, ``logging.WARNING``). If not specified, the default level is ``logging.INFO``.
+
+            ::
+
+                import logging
+                from logging.handlers import QueueListener
+                from multiprocessing import Manager
+
+                # Configure root with FileHandler
+                root_logger = logging.getLogger()
+                root_logger.setLevel(logging.INFO)
+                file_handler = logging.FileHandler('neurocaps.log')
+                file_handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
+                root_logger.addHandler(file_handler)
+
+                if __name__ == "__main__":
+                    # Import the TimeseriesExtractor
+                    from neurocaps.extraction import TimeseriesExtractor
+
+                    # Setup managed queue
+                    manager = Manager()
+                    queue = manager.Queue()
+
+                    # Set up the queue listener
+                    listener = QueueListener(queue, *root_logger.handlers)
+
+                    # Start listener
+                    listener.start()
+
+                    extractor = TimeseriesExtractor()
+
+                    # Use the `parallel_log_config` parameter to pass queue and the logging level
+                    extractor.get_bold(bids_dir="path/to/bids/dir",
+                                    task="rest",
+                                    tr=2,
+                                    n_cores=5,
+                                    parallel_log_config = {"queue": queue, "level": logging.WARNING})
+
+                    # Stop listener
+                    listener.stop()
+
+            .. versionadded:: 0.17.8
 
         Note
         ----
@@ -446,6 +501,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         ::
 
             event_df = pd.read_csv(event_file[0], sep="\t")
+
             # Get specific timing information for specific condition
             condition_df = event_df[event_df["trial_type"] == condition]
 
@@ -454,6 +510,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             for i in condition_df.index:
                 onset_scan = int(condition_df.loc[i,"onset"]/tr)
                 end_scan = math.ceil((condition_df.loc[i,"onset"] + condition_df.loc[i,"duration"])/tr)
+
                 # Add one since range is not inclusive
                 scan_list.extend(list(range(onset_scan, end_scan + 1)))
 
@@ -467,6 +524,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 # Get length of scan list prior to assess outliers if requested
                 before_censor = len(scan_list)
                 scan_list = [volume for volume in scan_list if volume not in censor_volumes]
+
                 if outlier_limit:
                     percentage = 1 - (len(scan_list)/before_censor)
                     flagged = True if percentage > outlier_limit else False
@@ -495,7 +553,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             subj_ids = sorted([subj_id for subj_id in subj_ids if subj_id in map(str, run_subjects)])
 
         # Setup extraction
-        self._setup_extraction(layout=layout, subj_ids=subj_ids, exclude_niftis=exclude_niftis)
+        self._setup_extraction(layout, subj_ids, exclude_niftis, verbose)
 
         if self._n_cores:
             # Generate list of tuples for each subject
@@ -507,7 +565,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                           self._task_info,
                           self._subject_info[subj_id]["tr"],
                           verbose,
-                          flush) for subj_id in self._subject_ids]
+                          flush,
+                          parallel_log_config) for subj_id in self._subject_ids]
 
             parallel = Parallel(return_as="generator", n_jobs=self._n_cores)
             outputs = parallel(delayed(_extract_timeseries)(*args) for args in args_list)
@@ -515,6 +574,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             for output in outputs:
                 if isinstance(output, dict): self._subject_timeseries.update(output)
         else:
+            if parallel_log_config:
+                LG.warning("`parallel_log_config` is only used for parallel processing. The default logger can be "
+                           "modified by configuring either the root logger or a logger for a specific module prior to "
+                           "package import.")
+
             for subj_id in self._subject_ids:
                 subject_timeseries=_extract_timeseries(subj_id=subj_id,
                                                        **self._subject_info[subj_id],
@@ -555,7 +619,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         return layout
 
     # Get valid subjects to iterate through
-    def _setup_extraction(self, layout, subj_ids, exclude_niftis):
+    def _setup_extraction(self, layout, subj_ids, exclude_niftis, verbose):
         base_dict = {"layout": layout, "subj_id": None}
         for subj_id in subj_ids:
             base_dict["subj_id"] = subj_id
@@ -570,7 +634,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             # Check files
             skip, msg = self._check_files(files)
 
-            if msg: LG.warning(subject_header + msg)
+            if msg and verbose: LG.warning(subject_header + msg)
             if skip: continue
 
             # Ensure only a single session is present if session is None
@@ -584,15 +648,17 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
                 # Skip subject if no run has all needed files present
                 if not run_list:
-                    LG.warning(f"{subject_header}"
-                               "Timeseries Extraction Skipped: None of the necessary files (i.e NifTIs, masks, "
-                               "confound tsv files, confound json files, event files) are from the same run.")
+                    if verbose:
+                        LG.warning(f"{subject_header}"
+                                   "Timeseries Extraction Skipped: None of the necessary files (i.e NifTIs, masks, "
+                                   "confound tsv files, confound json files, event files) are from the same run.")
                     continue
 
                 if len(run_list) != len(check_runs):
-                    LG.warning(f"{subject_header}"
-                               "Only the following runs available contain all required files: "
-                               f"{', '.join(run_list)}.")
+                    if verbose:
+                        LG.warning(f"{subject_header}"
+                                   "Only the following runs available contain all required files: "
+                                   f"{', '.join(run_list)}.")
             else:
             # Allows for nifti files that do not have the run- description
                 run_list = [None]
@@ -601,7 +667,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             self._subject_ids.append(subj_id)
 
             # Get repetition time for the subject
-            tr = self._get_tr(files["bold_meta"], subject_header)
+            tr = self._get_tr(files["bold_meta"], subject_header, verbose)
 
             # Store subject specific information
             self._subject_info[subj_id] = {"prepped_files": files,
@@ -649,7 +715,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         skip, msg = None, None
 
         if not files["niftis"]:
-                skip, msg = True, "Timeseries Extraction Skipped: No NifTI files were found or all NifTI files were excluded."
+            skip, msg = True, "Timeseries Extraction Skipped: No NifTI files were found or all NifTI files were excluded."
 
         if not files["masks"]:
             skip, msg = False, "Missing mask file but timeseries extraction will continue."
@@ -711,7 +777,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         return run_list
 
-    def _get_tr(self, bold_meta, subject_header):
+    def _get_tr(self, bold_meta, subject_header, verbose):
         try:
             if self._task_info["tr"]:
                 tr = self._task_info["tr"]
@@ -729,8 +795,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 raise ValueError(f"{subject_header}"
                                  f"{base_msg}" + " The `tr` must be given when `high_pass` or `low_pass` is specified.")
             else:
-                LG.warning(f"{subject_header}"
-                           f"{base_msg}" + " `tr` has been set to None but extraction will continue.")
+                if verbose:
+                    LG.warning(f"{subject_header}"
+                               f"{base_msg}" + " `tr` has been set to None but extraction will continue.")
                 tr=None
 
         return tr
