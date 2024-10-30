@@ -46,6 +46,8 @@ improvements/enhancements. Fixes and modifications will be backwards compatible.
 ### 🚀 New/Added
 - For `TimeseriesExtractor.get_bold()`, a new `parallel_log_config` parameter has been added to pass an instance of
 `multiprocessing.Manager.Queue` to redirect logs if parallel processing is used.
+### ♻ Changed
+- For `TimeseriesExtractor.get_bold()`, logging of additional subject-specific messages are also controlled by `verbose`.
 
 ## [0.17.7] - 2024-10-25
 ### 🚀 New/Added

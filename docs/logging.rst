@@ -38,7 +38,8 @@ Logging Configuration (With Parallel Processing)
 ------------------------------------------------
 When using joblib's loky backend for parallel processing, child processes do not inherit global logging configurations.
 Consequently, internal logs are output to the console by default even when parallel processing is enabled. To redirect
-these logs to a specific handler, you can set up a ``QueueListener``. This approach allows logs produced by the
+these logs to a specific handler, you can set up a ``multiprocessing.Manager().Queue()`` (which is passed to
+``QueueHandler`` internally) and ``QueueListener``. This approach allows logs produced by the
 internal ``_extract_timeseries`` function to be redirected when parallel processing is enabled. Additionally, the names
 of each logger are unique to the module and is the name of the file (``__name__.split(".")[-1]``).
 
