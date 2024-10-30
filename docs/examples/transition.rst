@@ -24,11 +24,11 @@ which can then be converted to matrix form and visualized with ``transition_matr
 .. code-block:: python
 
     outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, 
-                                            return_df=True,
-                                            metrics=["transition_probability"],
-                                            continuous_runs=True,
-                                            output_dir=output_dir,
-                                            prefix_file_name="All_Subjects_CAPs_metrics")
+                                             return_df=True,
+                                             metrics=["transition_probability"],
+                                             continuous_runs=True,
+                                             output_dir=output_dir,
+                                             prefix_file_name="All_Subjects_CAPs_metrics")
 
     print(outputs["transition_probability"]["All Subjects"])
 

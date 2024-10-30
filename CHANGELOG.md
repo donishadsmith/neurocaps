@@ -4,35 +4,9 @@ All notable future changes to neurocaps will be documented in this file.
 
 *Note*: All versions in this file are deployed on PyPi.
 
-## [Versioning Notice]
+## [Versioning]
 
-**Affected Versions: 1.0.0 through 1.0.0.post4**
-
-Due to a versioning mistake, versions 1.0.0 through 1.0.0.post4 were released in error. These versions have now been
-removed from PyPi. The correct versioning was intended to be incremented from 0.9.9.post3 to 0.10.0.
-
-All changes and fixes from the erroneous versions have been included in version 0.10.0, along with some additional
-updates.
-
-Please use version 0.10.0 or later:
-
-```python
-
-pip install neurocaps==0.10.0
-
-```
-For local installations, you may need to run:
-
-```python
-
-pip uninstall neurocaps
-pip install -e .
-
-```
-
-**As this package is still in the version 0.x.x series, aspects of the package may change rapidly to improve convenience and ease of use.**
-
-**Additionally, beyond version 0.10.0, versioning for the 0.x.x series for this package will work as:**
+**Beyond version 0.10.0, versioning for the 0.x.x series for this package will work as:**
 
 `0.minor.patch.postN`
 
@@ -41,6 +15,14 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 - *.patch* : Will contain fixes for any identified bugs, may include modifications or an added parameter for
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
+
+## [0.17.8.post1] - 2024-10-30
+### 💻 Metadata
+- Readme revisions on Pypi.
+
+## [0.17.8.post0] - 2024-10-30
+### 💻 Metadata
+- Shortens Readme on Pypi.
 
 ## [0.17.8] - 2024-10-29
 ### 🚀 New/Added

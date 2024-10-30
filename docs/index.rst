@@ -5,9 +5,10 @@
    :maxdepth: 2
 
    installation
-   logging
-   api
    examples/examples
+   api
+   parcellations
    outputs
+   logging
    contributing
    changelog
