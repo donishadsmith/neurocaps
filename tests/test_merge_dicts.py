@@ -1,6 +1,8 @@
-import glob, os
+import glob, os, tempfile
 import numpy as np, pytest
 from neurocaps.analysis import merge_dicts
+
+tmp_dir = tempfile.TemporaryDirectory()
 
 @pytest.mark.parametrize("return_reduced_dicts,return_merged_dicts",
                          [(True, True), (False,False), (True, False), (False, True)])
@@ -69,10 +71,10 @@ def test_merge_dicts_pkl(return_reduced_dicts,return_merged_dicts):
                                  os.path.join(os.path.dirname(__file__),"data","sample_timeseries.pkl")],
                                  return_reduced_dicts=True,
                                  return_merged_dict=True,
-                                 output_dir=os.path.dirname(__file__),
+                                 output_dir=tmp_dir.name,
                                  save_reduced_dicts=True)
 
-        files = glob.glob(os.path.join(os.path.dirname(__file__), "*merged*")) + glob.glob(os.path.join(os.path.dirname(__file__),"*reduced*"))
+        files = glob.glob(os.path.join(tmp_dir.name, "*merged*")) + glob.glob(os.path.join(tmp_dir.name,"*reduced*"))
         assert len(files) == 3
 
         files_basename = [os.path.basename(file) for file in files]
@@ -86,11 +88,11 @@ def test_merge_dicts_pkl(return_reduced_dicts,return_merged_dicts):
                                  os.path.join(os.path.dirname(__file__),"data","sample_timeseries.pkl")],
                                  return_reduced_dicts=False,
                                  return_merged_dict=False,
-                                 output_dir=os.path.dirname(__file__),
+                                 output_dir=tmp_dir.name,
                                  file_names=["test_0_reduced.pkl", "test_1_reduced.pkl", "test_merged.pkl"],
                                  save_reduced_dicts=True)
 
-        files = glob.glob(os.path.join(os.path.dirname(__file__), "*merged*")) + glob.glob(os.path.join(os.path.dirname(__file__),"*reduced*"))
+        files = glob.glob(os.path.join(tmp_dir.name, "*merged*")) + glob.glob(os.path.join(tmp_dir.name,"*reduced*"))
         assert len(files) == 3
 
         files_basename = [os.path.basename(file) for file in files]
@@ -106,10 +108,10 @@ def test_merge_dicts_pkl(return_reduced_dicts,return_merged_dicts):
                                      return_reduced_dicts=False,
                                      return_merged_dict=True,
                                      file_names=["test_merged.pkl"],
-                                     output_dir=os.path.dirname(__file__),
+                                     output_dir=tmp_dir.name,
                                      save_reduced_dicts=False)
 
-            files = glob.glob(os.path.join(os.path.dirname(__file__), "*merged*")) + glob.glob(os.path.join(os.path.dirname(__file__),"*reduced*"))
+            files = glob.glob(os.path.join(tmp_dir.name, "*merged*")) + glob.glob(os.path.join(tmp_dir.name,"*reduced*"))
             assert len(files) == 1
 
             files_basename = [os.path.basename(file) for file in files]
@@ -122,10 +124,10 @@ def test_merge_dicts_pkl(return_reduced_dicts,return_merged_dicts):
                                      os.path.join(os.path.dirname(__file__),"data", "sample_timeseries.pkl")],
                                      return_reduced_dicts=False,
                                      return_merged_dict=True,
-                                     output_dir=os.path.dirname(__file__),
+                                     output_dir=tmp_dir.name,
                                      save_reduced_dicts=False)
 
-            files = glob.glob(os.path.join(os.path.dirname(__file__), "*merged*")) + glob.glob(os.path.join(os.path.dirname(__file__),"*reduced*"))
+            files = glob.glob(os.path.join(tmp_dir.name, "*merged*")) + glob.glob(os.path.join(tmp_dir.name,"*reduced*"))
             assert len(files) == 1
 
             files_basename = [os.path.basename(file) for file in files]

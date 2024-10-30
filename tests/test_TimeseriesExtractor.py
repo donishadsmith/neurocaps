@@ -1,19 +1,23 @@
-import copy, glob, json, math, pickle, os, shutil, sys
+import copy, glob, json, math, pickle, os, shutil, sys, tempfile
 import pytest, numpy as np, pandas as pd
 from neurocaps.extraction import TimeseriesExtractor
 
 dir = os.path.dirname(__file__)
+
+tmp_dir = tempfile.TemporaryDirectory()
+shutil.copytree(os.path.join(dir, "ds000031_R1.0.4_ses001-022"), os.path.join(tmp_dir.name, "ds000031_R1.0.4_ses001-022"))
+
 if sys.platform == "win32":
-    bids_dir = os.path.join(dir, "ds000031_R1.0.4_ses001-022","ds000031_R1.0.4\\")
+    bids_dir = os.path.join(tmp_dir.name, "ds000031_R1.0.4_ses001-022","ds000031_R1.0.4\\")
     pipeline_name = "fmriprep_1.0.0\\fmriprep\\"
 else:
-    bids_dir = os.path.join(dir, "ds000031_R1.0.4_ses001-022","ds000031_R1.0.4/")
+    bids_dir = os.path.join(tmp_dir.name, "ds000031_R1.0.4_ses001-022","ds000031_R1.0.4/")
     pipeline_name = "fmriprep_1.0.0/fmriprep/"
 
 confounds=["Cosine*", "aComp*", "Rot*"]
 
 confounds_file = glob.glob(
-    os.path.join(dir, bids_dir, "derivatives", pipeline_name, "sub-01", "ses-002", "func", "*confounds*.tsv")
+    os.path.join(bids_dir, "derivatives", pipeline_name, "sub-01", "ses-002", "func", "*confounds*.tsv")
     )[0]
 
 with open(os.path.join(dir, "data", "HCPex_parcel_approach.pkl"), "rb") as f:
@@ -27,7 +31,7 @@ event_df = pd.DataFrame({"onset": list(range(0,39,5)),
                          "trial_type": ["active", "rest"]*4})
 
 event_df.to_csv(os.path.join(
-    dir, bids_dir, "sub-01","ses-002","func","sub-01_ses-002_task-rest_run-001_events.tsv"),
+    bids_dir, "sub-01","ses-002","func","sub-01_ses-002_task-rest_run-001_events.tsv"),
     sep="\t", index=None)
 
 # Create json to test n_acompcor_seperate
@@ -75,7 +79,7 @@ def add_non_steady(n):
 # Core logic for calculating onset and duration is similar
 def get_scans(condition, dummy_scans=None, fd=False, tr=1.2):
     event_df = pd.read_csv(
-        os.path.join(dir, bids_dir, "sub-01","ses-002","func","sub-01_ses-002_task-rest_run-001_events.tsv"),
+        os.path.join(bids_dir, "sub-01","ses-002","func","sub-01_ses-002_task-rest_run-001_events.tsv"),
         sep="\t")
     condition_df = event_df[event_df["trial_type"]==condition]
     scan_list = []
@@ -170,7 +174,7 @@ def setup_environment_3():
                 os.rename(file, new_name)
 
     # Move up a level
-    derivatives_dir = os.path.join(dir, "ds000031_R1.0.4_ses001-022", "ds000031_R1.0.4", "derivatives")
+    derivatives_dir = os.path.join(tmp_dir.name, "ds000031_R1.0.4_ses001-022", "ds000031_R1.0.4", "derivatives")
     fmriprep_old_dir = os.path.join(derivatives_dir, "fmriprep_1.0.0", "fmriprep")
     fmriprep_new_dir = os.path.join(derivatives_dir, "fmriprep_1.0.0")
 
@@ -187,7 +191,6 @@ def setup_environment_3():
                          [({"Schaefer": {"n_rois": 100, "yeo_networks": 7}},True,"Schaefer"),
                           ({"AAL": {"version": "SPM8"}},False,"AAL"),
                           (parcel_approach, False,"Custom")])
-
 def test_extraction(parcel_approach, use_confounds, name):
     shape_dict = {"Schaefer": 100, "AAL": 116, "Custom": 426}
     region = {"Schaefer": "Vis", "AAL": "Hippocampus", "Custom": "Subcortical Regions"}
@@ -198,17 +201,22 @@ def test_extraction(parcel_approach, use_confounds, name):
                                     confound_names=confounds)
 
     extractor.get_bold(bids_dir=bids_dir, session='002', runs="001",task="rest", pipeline_name=pipeline_name, tr=1.2)
+
     # Checking expected shape for rest
     assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == shape
     assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 40
 
     extractor.visualize_bold(subj_id="01",run="001", region=region[name], show_figs=False,
-                             output_dir=os.path.dirname(__file__), file_name="testing_save_regions")
+                             output_dir=tmp_dir.name, file_name="testing_save_regions")
     extractor.visualize_bold(subj_id="01",run="001", roi_indx=0, show_figs=False,
-                             output_dir=os.path.dirname(__file__), file_name="testing_save_nodes")
+                             output_dir=tmp_dir.name, file_name="testing_save_nodes")
     extractor.visualize_bold(subj_id="01",run="001", roi_indx=[0,1,2], show_figs=False,
-                             output_dir=os.path.dirname(__file__), file_name="testing_save_nodes")
-    png_files = glob.glob(os.path.join(os.path.dirname(__file__),"*.png"))
+                             output_dir=tmp_dir.name, file_name="testing_save_nodes_2")
+
+    png_files = glob.glob(os.path.join(tmp_dir.name, "*testing_save*.png"))
+
+    assert len(png_files) == 3
+
     [os.remove(x) for x in png_files]
 
     # Task condition; will issue warning due to max index for condition being 40 when the max index for timeseries is 39
@@ -284,8 +292,8 @@ def test_confounds(detrend,low_pass,high_pass,standardize):
                               extractor2.subject_timeseries["01"]["run-001"])
 
     # Test pickle
-    extractor.timeseries_to_pickle(os.path.dirname(__file__), file_name="testing_timeseries_pickling")
-    file = os.path.join(os.path.dirname(__file__),"testing_timeseries_pickling.pkl")
+    extractor.timeseries_to_pickle(tmp_dir.name, file_name="testing_timeseries_pickling")
+    file = os.path.join(tmp_dir.name,"testing_timeseries_pickling.pkl")
     assert os.path.getsize(file) > 0
     os.remove(file)
 
@@ -674,11 +682,6 @@ def test_tr(high_pass,low_pass):
         with pytest.raises(ValueError):
             extractor.get_bold(bids_dir=bids_dir, task="rest")
 
-def test_dtype():
-    extractor = TimeseriesExtractor(dtype="float64")
-    extractor.get_bold(bids_dir=bids_dir, task="rest", run_subjects=["01"])
-    assert extractor.subject_timeseries["01"]["run-0"].dtype == np.float64
-
 @pytest.mark.parametrize("fd_threshold, dummy_scans", [({"threshold": 0.35, "n_before": 2, "n_after": 3}, None),
                                                        ({"threshold": 0.31, "n_before": 4, "n_after": 2}, None),
                                                        ({"threshold": 0.31, "n_before": 4, "n_after": 2}, 3)])
@@ -704,3 +707,8 @@ def test_extended_censor(fd_threshold, dummy_scans):
     if not dummy_scans:
         assert np.array_equal(extractor.subject_timeseries["01"]["run-0"],
                               np.delete(extractor2.subject_timeseries["01"]["run-0"], expected_removal, axis=0))
+
+def test_dtype():
+    extractor = TimeseriesExtractor(dtype="float64")
+    extractor.get_bold(bids_dir=bids_dir, task="rest", run_subjects=["01"])
+    assert extractor.subject_timeseries["01"]["run-0"].dtype == np.float64

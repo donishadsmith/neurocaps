@@ -1,4 +1,4 @@
-import copy, glob, logging, math, os, pickle, sys
+import copy, glob, logging, math, os, pickle, sys, tempfile
 import nibabel as nib, numpy as np, pandas as pd, pytest
 from kneed import KneeLocator
 from neurocaps.extraction import TimeseriesExtractor
@@ -9,6 +9,8 @@ LG.setLevel(logging.WARNING)
 handler = logging.StreamHandler(sys.stdout)
 handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
 LG.addHandler(handler)
+
+tmp_dir = tempfile.TemporaryDirectory()
 
 parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
 
@@ -82,10 +84,10 @@ def segments(target, timeseries):
 @pytest.fixture(autouse=False, scope="module")
 def remove_files():
     yield
-    png_files = glob.glob((os.path.join(os.path.dirname(__file__,),"*.png")))
-    csv_files = glob.glob((os.path.join(os.path.dirname(__file__),"*.csv")))
-    html_files = glob.glob((os.path.join(os.path.dirname(__file__),"*.html")))
-    nii_files = glob.glob((os.path.join(os.path.dirname(__file__),"*.nii.gz")))
+    png_files = glob.glob((os.path.join(tmp_dir.name,"*.png")))
+    csv_files = glob.glob((os.path.join(tmp_dir.name,"*.csv")))
+    html_files = glob.glob((os.path.join(tmp_dir.name,"*.html")))
+    nii_files = glob.glob((os.path.join(tmp_dir.name,"*.nii.gz")))
 
     [os.remove(x) for x in png_files]
     [os.remove(x) for x in csv_files]
@@ -428,12 +430,6 @@ def test_calculate_metrics():
                 columns = df.filter(regex=fr"^{target_cap}\.").columns.tolist()
                 assert math.isclose(df.loc[i,columns].values.sum(),1,rel_tol=0.01) or df.loc[i,columns].values.sum() == 0
 
-def test_calculate_metrics_w_change_dtype():
-    cap_analysis = CAP(parcel_approach=parcel_approach, groups={"A": [1,2,3,5], "B": [4,6,7,8,9,10,7]})
-    cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, n_clusters=2)
-    new_timeseries = change_dtype([extractor.subject_timeseries], dtype="float16")
-    cap_analysis.calculate_metrics(subject_timeseries=new_timeseries["dict_0"], return_df=True)
-
 def test_calculate_metrics_w_pickle():
     cap_analysis = CAP(parcel_approach=parcel_approach, groups={"A": [1,2,3,5], "B": [4,6,7,8,9,10,7]})
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, n_clusters=2)
@@ -441,8 +437,8 @@ def test_calculate_metrics_w_pickle():
     cap_analysis.calculate_metrics(
             subject_timeseries=os.path.join(os.path.dirname(__file__),"data","sample_timeseries.pkl"),
             metrics=metrics,
-            output_dir=os.path.dirname(__file__))
-    csv_files = glob.glob(os.path.join(os.path.dirname(__file__),"*.csv"))
+            output_dir=tmp_dir.name)
+    csv_files = glob.glob(os.path.join(tmp_dir.name,"*.csv"))
     assert len(csv_files) == 6
     expected_files = [f"{metric}.csv" for metric in metrics[:-1]]
     expected_files += ["transition_probability-A.csv", "transition_probability-B.csv"]
@@ -452,10 +448,10 @@ def test_calculate_metrics_w_pickle():
 
 def check_imgs(values_dict, plot_type="map"):
     if plot_type == "map":
-        heatmap_files = glob.glob(os.path.join(os.path.dirname(__file__), "*heatmap*.png"))
+        heatmap_files = glob.glob(os.path.join(tmp_dir.name, "*heatmap*.png"))
         assert any(["nodes" in x for x in heatmap_files])
         assert any(["regions" in x for x in heatmap_files])
-        outer_files = glob.glob(os.path.join(os.path.dirname(__file__), "*outer*.png"))
+        outer_files = glob.glob(os.path.join(tmp_dir.name, "*outer*.png"))
         assert any(["nodes" in x for x in outer_files])
         assert any(["regions" in x for x in outer_files])
 
@@ -463,19 +459,19 @@ def check_imgs(values_dict, plot_type="map"):
         [os.remove(file) for file in heatmap_files + outer_files]
     elif plot_type == "radar":
         if "html" in values_dict:
-            radar_html = glob.glob(os.path.join(os.path.dirname(__file__), "*radar*.html"))
+            radar_html = glob.glob(os.path.join(tmp_dir.name, "*radar*.html"))
             assert len(radar_html) == values_dict["html"]
             [os.remove(file) for file in radar_html]
         else:
-            radar_png = glob.glob(os.path.join(os.path.dirname(__file__), "*radar*.png"))
+            radar_png = glob.glob(os.path.join(tmp_dir.name, "*radar*.png"))
             assert len(radar_png) == values_dict["png"]
             [os.remove(file) for file in radar_png]
     elif plot_type == "nifti":
-        nii_files = glob.glob(os.path.join(os.path.dirname(__file__), "*.nii.gz"))
+        nii_files = glob.glob(os.path.join(tmp_dir.name, "*.nii.gz"))
         assert len(nii_files) == values_dict["nii.gz"]
         [os.remove(file) for file in nii_files]
     else:
-        surface_png = glob.glob(os.path.join(os.path.dirname(__file__), "*surface*.png"))
+        surface_png = glob.glob(os.path.join(tmp_dir.name, "*surface*.png"))
         assert len(surface_png) == values_dict["png"]
         [os.remove(file) for file in surface_png]
 
@@ -486,10 +482,10 @@ def test_plotting_functions(current_timeseries, parcel_approach):
     cap_analysis = CAP(parcel_approach=parcel_approach)
     cap_analysis.get_caps(subject_timeseries=current_timeseries,
                           n_clusters=[2,3,4,5], cluster_selection_method="silhouette",
-                          output_dir=os.path.dirname(__file__), step=2, show_figs=False)
+                          output_dir=tmp_dir.name, step=2, show_figs=False)
     assert all(elem > 0 or elem < 0 for elem in cap_analysis.silhouette_scores["All Subjects"].values())
 
-    files = glob.glob(os.path.join(os.path.dirname(__file__), "*.png"))
+    files = glob.glob(os.path.join(tmp_dir.name, "*.png"))
     assert files
     [os.remove(file) for file in files]
 
@@ -499,43 +495,43 @@ def test_plotting_functions(current_timeseries, parcel_approach):
 
     # Plotting Functions with different configurations
     cap_analysis.caps2plot(subplots=True, xlabel_rotation=90, sharey=True, borderwidths=10, show_figs=False,
-                           output_dir=os.path.dirname(__file__))
+                           output_dir=tmp_dir.name)
 
-    files = glob.glob(os.path.join(os.path.dirname(__file__), "*.png"))
+    files = glob.glob(os.path.join(tmp_dir.name, "*.png"))
     assert len(files) == 1
     [os.remove(file) for file in files]
 
     cap_analysis.caps2plot(subplots=False, yticklabels_size=5, wspace = 0.1, visual_scope=["regions", "nodes"],
                            xlabel_rotation=90, xticklabels_size = 5, hspace = 0.6, tight_layout = False,
                            show_figs=False, plot_options=["heatmap", "outer_product"], hemisphere_labels=False,
-                           output_dir=os.path.dirname(__file__))
+                           output_dir=tmp_dir.name)
     check_imgs(values_dict={"heatmap": 2, "outer": 4})
 
     cap_analysis.caps2plot(subplots=False, yticklabels_size=5, wspace = 0.1, visual_scope=["regions", "nodes"],
                            xlabel_rotation=90, xticklabels_size = 5, hspace = 0.6, tight_layout=False,
                            show_figs=False, plot_options=["heatmap", "outer_product"],
                            hemisphere_labels=True, invalid_kwarg=0,
-                           output_dir=os.path.dirname(__file__))
+                           output_dir=tmp_dir.name)
     check_imgs(values_dict={"heatmap": 2, "outer": 4})
 
     cap_analysis.caps2plot(subplots=True, xlabel_rotation=90, sharey=True, borderwidths=10, show_figs=False,
                            visual_scope=["regions", "nodes"], plot_options=["outer_product", "heatmap"],
-                           output_dir=os.path.dirname(__file__))
+                           output_dir=tmp_dir.name)
     check_imgs(values_dict={"heatmap": 2, "outer": 2})
 
     cap_analysis.caps2plot(subplots=True, xlabel_rotation=90, sharey=True, borderwidths=10, show_figs=False,
                            visual_scope=["regions", "nodes"], plot_options=["outer_product", "heatmap"],
-                           hemisphere_labels=True, output_dir=os.path.dirname(__file__))
+                           hemisphere_labels=True, output_dir=tmp_dir.name)
     check_imgs(values_dict={"heatmap": 2, "outer": 2})
 
     df = cap_analysis.caps2corr(annot=True, show_figs=False, return_df=True,
-                                output_dir=os.path.dirname(__file__), save_df=True)
+                                output_dir=tmp_dir.name, save_df=True)
     assert isinstance(df, dict)
     assert isinstance(df["All Subjects"], pd.DataFrame)
     assert len(list(df)) == 1
 
-    png_file = glob.glob(os.path.join(os.path.dirname(__file__),"*correlation_matrix*.png"))
-    csv_file = glob.glob(os.path.join(os.path.dirname(__file__),"*correlation_matrix*.csv"))
+    png_file = glob.glob(os.path.join(tmp_dir.name,"*correlation_matrix*.png"))
+    csv_file = glob.glob(os.path.join(tmp_dir.name,"*correlation_matrix*.csv"))
     assert png_file
     assert csv_file
     assert os.path.getsize(csv_file[0]) > 0
@@ -547,25 +543,41 @@ def test_plotting_functions(current_timeseries, parcel_approach):
                 "tickvals": [0.1,0.2,0.3]}
 
     # Radar plotting functions
-    cap_analysis.caps2radar(output_dir=os.path.dirname(__file__), show_figs=True)
+    cap_analysis.caps2radar(output_dir=tmp_dir.name, show_figs=True)
     check_imgs(plot_type="radar", values_dict={"png": 2})
     cap_analysis.caps2radar(radialaxis=radialaxis, fill="toself", show_figs=False, as_html=True,
-                            output_dir=os.path.dirname(__file__))
+                            output_dir=tmp_dir.name)
     check_imgs(plot_type="radar", values_dict={"html": 2})
 
     cap_analysis.caps2radar(radialaxis=radialaxis, fill="toself", show_figs=False, as_html=False,
-                            output_dir=os.path.dirname(__file__))
+                            output_dir=tmp_dir.name)
     check_imgs(plot_type="radar", values_dict={"png": 2})
 
     cap_analysis.caps2radar(radialaxis=radialaxis, fill="toself", use_scatterpolar=True,
                             scattersize=10, show_figs=False, as_html=True,
-                            output_dir=os.path.dirname(__file__))
+                            output_dir=tmp_dir.name)
     check_imgs(plot_type="radar", values_dict={"html": 2})
+
+@pytest.mark.skipif(sys.platform != "linux", reason="VTK action only works for Linux")
+def test_caps2surf(remove_files):
+    cap_analysis = CAP(parcel_approach=parcel_approach)
+    cap_analysis.get_caps(subject_timeseries=subject_timeseries,
+                          n_clusters=2)
+
+    cap_analysis.caps2surf(method="nearest", save_stat_maps=True, output_dir=tmp_dir.name,
+                           suffix_title="placeholder", show_figs=False)
+    check_imgs(plot_type="surface", values_dict={"png": 2})
+    check_imgs(plot_type="nifti", values_dict={"nii.gz": 2})
+
+    cap_analysis.caps2surf(method="linear", save_stat_maps=False, output_dir=tmp_dir.name,
+                           as_outline=True, show_figs=False)
+    check_imgs(plot_type="surface", values_dict={"png": 2})
+    check_imgs(plot_type="nifti", values_dict={"nii.gz": 0})
 
 @pytest.mark.parametrize("current_timeseries, parcel_approach",
                          [(extractor.subject_timeseries,extractor.parcel_approach),
                           (custom_subject_timeseries,custom_parcel_approach)])
-def test_niftis(current_timeseries, parcel_approach, remove_files):
+def test_niftis(current_timeseries, parcel_approach):
     cap_analysis = CAP(parcel_approach=parcel_approach)
     cap_analysis.get_caps(subject_timeseries=current_timeseries,
                           n_clusters=2)
@@ -573,8 +585,8 @@ def test_niftis(current_timeseries, parcel_approach, remove_files):
     atlas_data = nib.load(parcel_approach[list(parcel_approach)[0]]["maps"]).get_fdata()
     labels = sorted(np.unique(atlas_data))[1:]
 
-    cap_analysis.caps2niftis(output_dir=os.path.dirname(__file__))
-    nifti_files = glob.glob(os.path.join(os.path.dirname(__file__), "*.nii.gz"))
+    cap_analysis.caps2niftis(output_dir=tmp_dir.name)
+    nifti_files = glob.glob(os.path.join(tmp_dir.name, "*.nii.gz"))
     # Check that elements of the cluster centroid are correctly assigned to their corresponding labels in atlas
     for indx, file in enumerate(nifti_files):
         act_values = []
@@ -585,23 +597,13 @@ def test_niftis(current_timeseries, parcel_approach, remove_files):
             act_values.append(act_value)
         np.array_equal(cap_analysis.caps["All Subjects"][f"CAP-{indx + 1}"], np.array(act_values))
 
-    cap_analysis.caps2niftis(output_dir=os.path.dirname(__file__), fwhm=1,
+    cap_analysis.caps2niftis(output_dir=tmp_dir.name, fwhm=1,
                              knn_dict={"k": 1, "resolution_mm": 1, "remove_subcortical": [50]})
 
     check_imgs(plot_type="nifti", values_dict={"nii.gz": 2})
 
-@pytest.mark.skipif(sys.platform != "linux", reason="VTK action only works for Linux")
-def test_caps2surf(remove_files):
-    cap_analysis = CAP(parcel_approach=parcel_approach)
-    cap_analysis.get_caps(subject_timeseries=subject_timeseries,
-                          n_clusters=2)
-
-    cap_analysis.caps2surf(method="nearest", save_stat_maps=True, output_dir=os.path.dirname(__file__),
-                           suffix_title="placeholder", show_figs=False)
-    check_imgs(plot_type="surface", values_dict={"png": 2})
-    check_imgs(plot_type="nifti", values_dict={"nii.gz": 2})
-
-    cap_analysis.caps2surf(method="linear", save_stat_maps=False, output_dir=os.path.dirname(__file__),
-                           as_outline=True, show_figs=False)
-    check_imgs(plot_type="surface", values_dict={"png": 2})
-    check_imgs(plot_type="nifti", values_dict={"nii.gz": 0})
+def test_calculate_metrics_w_change_dtype():
+    cap_analysis = CAP(parcel_approach=parcel_approach, groups={"A": [1,2,3,5], "B": [4,6,7,8,9,10,7]})
+    cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, n_clusters=2)
+    new_timeseries = change_dtype([extractor.subject_timeseries], dtype="float16")
+    cap_analysis.calculate_metrics(subject_timeseries=new_timeseries["dict_0"], return_df=True)

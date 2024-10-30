@@ -1,6 +1,8 @@
-import numpy as np, os, glob, pickle
+import numpy as np, os, glob, pickle, tempfile
 import pytest
 from neurocaps.analysis import standardize
+
+tmp_dir = tempfile.TemporaryDirectory()
 
 def test_standardize():
     subject_timeseries = {str(x) : {f"run-{y}": np.random.rand(100,100) for y in range(1,4)} for x in range(1,11)}
@@ -25,7 +27,7 @@ def test_standardize_w_pickle():
 
     standardized_subject_timeseries = standardize(
         subject_timeseries_list=[os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl")],
-        output_dir=os.path.dirname(__file__),
+        output_dir=tmp_dir.name,
         return_dicts=True)
     prior_mean, prior_std = subject_timeseries["1"]["run-1"].mean(), subject_timeseries["1"]["run-1"].std()
     assert standardized_subject_timeseries["dict_0"]["1"]["run-1"].mean() != prior_mean
@@ -33,9 +35,9 @@ def test_standardize_w_pickle():
 
     standardized_subject_timeseries = standardize(
         subject_timeseries_list=[os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl")],
-        output_dir=os.path.dirname(__file__), file_names=["test_standardized"])
+        output_dir=tmp_dir.name, file_names=["test_standardized"])
 
-    files = glob.glob(os.path.join(os.path.dirname(__file__), "*standardized*"))
+    files = glob.glob(os.path.join(tmp_dir.name, "*standardized*"))
     assert len(files) == 2
 
     files_basename = [os.path.basename(file) for file in files]

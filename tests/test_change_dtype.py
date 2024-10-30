@@ -1,6 +1,8 @@
 import glob, os
-import numpy as np, pytest
+import numpy as np, pytest, tempfile
 from neurocaps.analysis import change_dtype
+
+tmp_dir = tempfile.TemporaryDirectory()
 
 def test_change_dtype():
     subject_timeseries = {str(x) : {f"run-{y}": np.random.rand(100,100) for y in range(1,4)} for x in range(1,11)}
@@ -16,19 +18,19 @@ def test_change_dtype():
 def test_change_dtype_w_pickle():
     changed_subject_timeseries = change_dtype(
         subject_timeseries_list=[os.path.join(os.path.dirname(__file__),"data", "sample_timeseries.pkl")],
-        output_dir=os.path.dirname(__file__),
+        output_dir=tmp_dir.name,
         dtype=np.float16,
         return_dicts=True)
     assert changed_subject_timeseries["dict_0"]["1"]["run-1"].dtype == "float16"
 
     changed_subject_timeseries = change_dtype(
         subject_timeseries_list=[os.path.join(os.path.dirname(__file__),"data", "sample_timeseries.pkl")],
-        output_dir=os.path.dirname(__file__),
+        output_dir=tmp_dir.name,
         file_names=["test_dtype"],
         dtype="float16",
         return_dicts=True)
 
-    files = glob.glob(os.path.join(os.path.dirname(__file__), "*dtype*.pkl"))
+    files = glob.glob(os.path.join(tmp_dir.name, "*dtype*.pkl"))
     assert len(files) == 2
 
     files_basename = [os.path.basename(file) for file in files]
