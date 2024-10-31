@@ -16,6 +16,13 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.17.9] - 2024-10-31
+### 💻 Metadata
+- Enchanced documentation
+- Documentation renders properly with Pylance in VSCode.
+### ♻ Changed
+- The returned ``parcel_approach`` will only contain the sub-keys: "maps", "nodes", and "regions".
+
 ## [0.17.8.post1] - 2024-10-30
 ### 💻 Metadata
 - Readme revisions on Pypi.

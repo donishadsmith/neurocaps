@@ -19,23 +19,21 @@ def change_dtype(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndar
     Parameters
     ----------
     subject_timeseries_list : :obj:`list[dict[str, dict[str, np.ndarray]]]` or :obj:`list[os.PathLike]`
-        A list of dictionaries or pickle files containing the nested subject timeseries dictionary saved by the
-        ``TimeSeriesExtractor`` class or a list of nested subject timeseries dictionaries produced by the
-        ``TimeSeriesExtractor`` class. The first level of the nested dictionary must consist of the subject ID as a
-        string, the second level must consist of the run numbers in the form of "run-#"
-        (where # is the corresponding number of the run), and the last level must consist of the timeseries
-        (as a numpy array) associated with that run. The structure is as follows:
+        A list where each element consist of a dictionary mapping subject IDs to their run IDs and associated
+        timeseries (TRs x ROI) as a numpy array. Can also be a list consisting of paths to pickle files
+        containing this same structure. The expected structure of each dictionary is as follows:
+
         ::
 
             subject_timeseries = {
                     "101": {
-                        "run-0": np.array([...]), # 2D array
-                        "run-1": np.array([...]), # 2D array
-                        "run-2": np.array([...]), # 2D array
+                        "run-0": np.array([...]), # 2D array; (TRs x ROI)
+                        "run-1": np.array([...]), # 2D array; (TRs x ROI)
+                        "run-2": np.array([...]), # 2D array; (TRs x ROI)
                     },
                     "102": {
-                        "run-0": np.array([...]), # 2D array
-                        "run-1": np.array([...]), # 2D array
+                        "run-0": np.array([...]), # 2D array; (TRs x ROI)
+                        "run-1": np.array([...]), # 2D array; (TRs x ROI)
                     }
                 }
 
@@ -61,11 +59,11 @@ def change_dtype(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndar
 
     Warning
     -------
-    While this function allows conversion to any valid numpy dtype, it is recommended to use floating-point dtypes.
-    Reducing the dtype could introduce rounding errors that may lower the precision of subsequent analyses as decimal
-    digits are reduced when lower dtypes are requested. Thus, the lowest recommended floating-point dtype would be
-    "float32", since it allows for memory usage reduction while limiting rounding errors that could significantly
-    alter calculations.
+    **Floating Point Precision**: While this function allows conversion to any valid numpy dtype, it is recommended to
+    use floating-point dtypes. Reducing the dtype could introduce rounding errors that may lower the precision of
+    subsequent analyses as decimal digits are reduced when lower dtypes are requested. Thus, the lowest recommended
+    floating-point dtype would be "float32", since it allows for memory usage reduction while limiting rounding errors
+    that could significantly  alter calculations.
     """
     assert isinstance(subject_timeseries_list, list), "`subject_timeseries_list` must be a list."
     changed_dtype_dicts = {}
