@@ -200,6 +200,10 @@ def test_extraction(parcel_approach, use_confounds, name):
                                     use_confounds=use_confounds, detrend=False, low_pass=0.15, high_pass=None,
                                     confound_names=confounds)
 
+    if "Schaefer" in parcel_approach or "AAL" in parcel_approach:
+        name = list(extractor.parcel_approach)[0]
+        assert all(key in ["maps", "nodes", "regions"] for key in extractor.parcel_approach[name])
+
     extractor.get_bold(bids_dir=bids_dir, session='002', runs="001",task="rest", pipeline_name=pipeline_name, tr=1.2)
 
     # Checking expected shape for rest

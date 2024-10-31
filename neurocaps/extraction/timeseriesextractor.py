@@ -22,9 +22,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         The standard template space that the preprocessed bold data is registered to. Used for querying with pybids
         to locate preprocessed BOLD-related files.
 
-    parcel_approach : :obj:`dict[str, dict[str, str | int]]` or :obj:`os.PathLike`, default={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
+    parcel_approach : :obj:`dict[str, dict[str, str | int]]` or :obj:`os.PathLike`, \
+                      default={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
         The approach to parcellate BOLD images. This should be a nested dictionary with the first key being the
-        atlas name. Currently, only "Schaefer", "AAL", and "Custom" are supported.
+        parcellation name. Currently, only "Schaefer", "AAL", and "Custom" are supported.
 
         - For "Schaefer", available sub-keys include "n_rois", "yeo_networks", and "resolution_mm".
           Refer to documentation for ``nilearn.datasets.fetch_atlas_schaefer_2018`` for valid inputs.
@@ -55,9 +56,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         Determines whether to perform nuisance regression using confounds when extracting timeseries.
 
     confound_names : :obj:`list[str]` or :obj:`None`, default=None
-        Specifies the names of confounds to use from confound files. If None, default confounds are used.
-        Note, an asterisk ("*") can be used to find confound names that start with the term preceding the
-        asterisk. For instance, "cosine*" will find all confound names in the confound files starting with "cosine".
+        Specifies the names of confounds to use from confound files. If None, default confounds are used, which
+        consists of all cosine-basis parameters, the six-head motion parameters and their first-order derivatives,
+        and the first six combined acompcor components. Note, an asterisk ("*") can be used to find confound names
+        that start with the term preceding the asterisk. For instance, "cosine*" will find all confound names in the
+        confound files starting with "cosine".
 
     fd_threshold : :obj:`float`, :obj:`dict[str, float]`, or :obj:`None`, default=None
         Sets a threshold to remove volumes after nuisance regression and timeseries extraction. This requires a
@@ -109,20 +112,22 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         .. versionadded:: 0.17.5
 
 
-    Property
-    --------
+    Properties
+    ----------
     space : str
         The standard template space that the preprocessed BOLD data is registered to. The space can also be set after
         class initialization using ``self.space = "New Space"`` if the template space needs to be changed.
 
     parcel_approach : :obj:`dict[str, dict[str, os.PathLike | list[str]]]`
-        Nested dictionary containing information about the parcellation. Can also be used as a setter, which accepts a
+        A dictionary containing information about the parcellation. Can also be used as a setter, which accepts a
         dictionary or a dictionary saved as pickle file. If "Schaefer" or "AAL" was specified during
         initialization of the ``TimeseriesExtractor`` class, then ``nilearn.datasets.fetch_atlas_schaefer_2018``
         and ``nilearn.datasets.fetch_atlas_aal`` will be used to obtain the "maps" and the "nodes". Then string
         splitting is used on the "nodes" to obtain the "regions":
+
         ::
 
+            # Structure of Schaefer
             {
                 "Schaefer":
                 {
@@ -132,6 +137,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 }
             }
 
+            # Structure of AAL
             {
                 "AAL":
                 {
@@ -141,11 +147,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 }
             }
 
-        If "Custom" is specified, only checks are done to ensure that the dictionary contains the proper
-        sub-keys such as "maps", "nodes", and "regions". Unlike "Schaefer" and "AAL",
-        "regions" must be a nested dictionary specifying the name of the region as the first level key and the
-        indices in the "nodes" list belonging to the "lh" and "rh" for that region. Refer to the structure
-        example for "Custom" in the Note section below.
+        Refer to the example for "Custom" in the Note section below for the expected structure.
 
     signal_clean_info : :obj:`dict[str]`
         Dictionary containing parameters for signal cleaning specified during initialization of the
@@ -164,73 +166,83 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         Number of cores used for multiprocessing with joblib.
 
     subject_timeseries : :obj:`dict[str, dict[str, np.ndarray]`
-        Nested dictionary containing the subject ID, run ID, and the 2D numpy arrays for timeseries data. Can
-        all be used as a setter, which accepts a dictionary or a dictionary saved as pickle file.
-        If this property needs to be deleted due to space issues, ``delattr(self,"_subject_timeseries")``
-        can be used to delete the array. The structure is as follows:
+        A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROI) as a numpy array.
+        Can also be a path to a pickle file containing this same structure. If this property needs to be deleted due
+        to memory issues, ``delattr(self,"_subject_timeseries")`` can be used. The structure is as follows:
+
         ::
 
             subject_timeseries = {
                     "101": {
-                        "run-0": np.array([...]), # 2D array
-                        "run-1": np.array([...]), # 2D array
-                        "run-2": np.array([...]), # 2D array
+                        "run-0": np.array([...]), # 2D array; (TRs x ROI)
+                        "run-1": np.array([...]), # 2D array; (TRs x ROI)
+                        "run-2": np.array([...]), # 2D array; (TRs x ROI)
                     },
                     "102": {
-                        "run-0": np.array([...]), # 2D array
-                        "run-1": np.array([...]), # 2D array
+                        "run-0": np.array([...]), # 2D array; (TRs x ROI)
+                        "run-1": np.array([...]), # 2D array; (TRs x ROI)
                     }
                 }
 
     Note
     ----
-    ``standardize``, ``detrend``, ``low_pass``, ``high_pass``, ``fwhm``, and nuisance regression uses
-    ``nilearn.maskers.NiftiLabelsMasker``. The ``dtype`` parameter is used by ``nilearn.image.load_img``.
+    **Passed Parameters**: ``standardize``, ``detrend``, ``low_pass``, ``high_pass``, ``fwhm``, and nuisance
+    regression (``confound_names``) uses ``nilearn.maskers.NiftiLabelsMasker``. The ``dtype`` parameter is used by
+    ``nilearn.image.load_img``.
 
-    Default ``confound_names`` changes if ``high_pass`` is not None.
+    **Custom Parcellations**: If using a "Custom" parcellation approach, ensure that the parcellation is
+    lateralized (where each region/network has nodes in the left and right hemisphere). This is due to certain
+    visualization functions assuming that each region consists of left and right hemisphere nodes. Additionally,
+    certain visualization functions in this class also assume that the background label is 0. Therefore, do not add a
+    background label in the "nodes" or "regions" keys.
 
-    If ``high_pass`` is not None, then the cosine parameters and acompcor parameters are not used because the cosine
-    parameters are high-pass filters and the acompcor regressors are estimated on the high-pass filtered version of
-    the data:
-    ::
+    The recognized sub-keys for the "Custom" parcellation approach includes:
 
-        confound_names = ["trans_x", "trans_x_derivative1","trans_y", "trans_y_derivative1",
-                          "trans_z", "trans_z_derivative1",  "rot_x", "rot_x_derivative1",
-                          "rot_y", "rot_y_derivative1", "rot_z", "rot_z_derivative1"]
+    - "maps": Directory path containing the parcellation file in a supported format (e.g., .nii or .nii.gz for NifTI).
+    - "nodes": A list of all node labels. The node labels should be arranged in ascending order based on their
+      numerical IDs from the parcellation files. The node with the lowest numerical label in the parcellation file
+      should occupy the 0th index in the list, regardless of its actual numerical value. For instance, if the numerical
+      IDs are sequential, and the lowest, non-background numerical ID in the parcellation is "1" which corresponds
+      to "left hemisphere visual cortex area" ("LH_Vis1"), then "LH_Vis1" should occupy the 0th element in this list.
+      Even if the numerical IDs are non-sequential and the earliest non-background, numerical ID is "2000"
+      (assuming "0" is the background), then the node label corresponding to "2000" should occupy the 0th element of
+      this list.
 
-    If ``high_pass`` is None, then:
-    ::
+      ::
 
-        confound_names = ["trans_x", "trans_x_derivative1","trans_y", "trans_y_derivative1",
-                          "trans_z", "trans_z_derivative1",  "rot_x", "rot_x_derivative1",
-                          "rot_y", "rot_y_derivative1", "rot_z", "rot_z_derivative1"]
+            # Example of numerical label IDs and their organization in the "nodes" key
+            "nodes": {
+                "LH_Vis1",          # Corresponds to parcellation label 2000; lowest non-background numerical ID
+                "LH_Vis2",          # Corresponds to parcellation label 2100; second lowest non-background numerical ID
+                "LH_Hippocampus",   # Corresponds to parcellation label 2150; third lowest non-background numerical ID
+                "RH_Vis1",          # Corresponds to parcellation label 2200; fourth lowest non-background numerical ID
+                "RH_Vis2",          # Corresponds to parcellation label 2220; fifth lowest non-background numerical ID
+                "RH_Hippocampus"    # Corresponds to parcellation label 2300; sixth lowest non-background numerical ID
+            }
 
-    else:
-    ::
+    - "regions": A dictionary defining major brain regions or networks. Each region should list node indices under
+      "lh" (left hemisphere) and "rh" (right hemisphere) to specify the respective nodes. Both the "lh" and "rh"
+      sub-keys should contain the indices of the nodes belonging to each region/hemisphere pair, as determined
+      by the order/index in the "nodes" list. The naming of the sub-keys defining the major brain regions or networks
+      have zero naming requirements and simply define the nodes belonging to the same name.
 
-        confound_names = ["cosine*","trans_x", "trans_x_derivative1","trans_y", "trans_y_derivative1",
-                          "trans_z", "trans_z_derivative1",  "rot_x", "rot_x_derivative1",
-                          "rot_y", "rot_y_derivative1", "rot_z", "rot_z_derivative1", "a_comp_cor_00",
-                          "a_comp_cor_01", "a_comp_cor_02", "a_comp_cor_03", "a_comp_cor_04", "a_comp_cor_05"]
+      ::
 
-
-    **If using a "Custom" parcellation approach**, ensure that the atlas is lateralized (where each region/network has
-    nodes in the left and right hemisphere). The visualization function in this class assume that the background
-    label is "0". Do not add a background label in the "nodes" or "regions" key; the zero index should correspond to
-    the first ID that is not "0".
-
-    - "maps": Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g.,
-      .nii for NIfTI files). **This key is required for timeseries extraction**.
-    - nodes: List of all node labels used in your study, arranged in the exact order they correspond to indices in
-      your parcellation files. Each label should match the parcellation index it represents. For example, if the
-      parcellation label "1" corresponds to the left hemisphere visual cortex area 1, then "LH_Vis1" should occupy
-      the 0th index in this list. This ensures that data extraction and analysis accurately reflect the anatomical
-      regions intended. For timeseries extraction, this key is not required.
-    - regions: Dictionary defining major brain regions. Each region should list node indices under "lh" and
-      "rh" to specify left and right hemisphere nodes. For timeseries extraction, this key is not required.
+            # Example of the "regions" sub-keys
+            "regions": {
+                "Visual": {
+                    "lh": [0, 1], # Corresponds to "LH_Vis1" and "LH_Vis2"
+                    "rh": [3, 4]  # Corresponds to "RH_Vis1" and "RH_Vis2"
+                },
+                "Hippocampus": {
+                    "lh": [2], # Corresponds to "LH_Hippocampus"
+                    "rh": [5]  # Corresponds to "RH_Hippocampus"
+                }
+            }
 
     The provided example demonstrates setting up a custom parcellation containing nodes for the visual network (Vis)
-    and hippocampus regions:
+    and hippocampus regions in full:
+
     ::
 
         parcel_approach = {
@@ -245,7 +257,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     "RH_Hippocampus"
                 ],
                 "regions": {
-                    "Vis": {
+                    "Visual": {
                         "lh": [0, 1],
                         "rh": [3, 4]
                     },
@@ -256,6 +268,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 }
             }
         }
+
+    **Note**: Different sub-keys are required depending on the function used. Refer to the Note section under each
+    function for information regarding the sub-keys required for that specific function.
     """
     def __init__(self,
                  space: str = "MNI152NLin2009cAsym",
@@ -398,16 +413,16 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             then ``pipeline_name = "fmriprep/fmriprep-20.0.0"``.
 
         n_cores : :obj:`int` or :obj:`None`, default=None
-            The number of CPU cores to use for multiprocessing with joblib.
+            The number of CPU cores to use for multiprocessing with joblib. The default backend for joblib is used.
 
         verbose : :obj:`bool`, default=True
-            Log subject-specific information such as the specific subjects being skipped due to not having
+            If True, logs subject-specific information such as the specific subjects being skipped due to not having
             the required files, the current subject being undergoing the extraction process, the specific confounds
             found in a subject that will be used for nuisance regression, in addition to confounds that are requested
             but are missing for the subject, and additional warnings encountered during the extraction process.
 
         flush : :obj:`bool`, default=False
-            Flush the logged subject-specific information produced during the timeseries extraction process.
+            If True, flushes the logged subject-specific information produced during the timeseries extraction process.
 
             .. versionchanged:: 0.17.0 Changed from ``flush_print`` to ``flush``.
 
@@ -424,8 +439,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             ``parallel_log_config`` is None, the default logging behavior applies. This parameter must be a dictionary
             and the available keys are:
 
-            - "queue": The instance of ``multiprocessing.Manager.Queue`` to pass to ``QueueHandler``. If not specified, all logs will output to ``sys.stdout``.
-            - "level": The logging level (e.g. ``logging.INFO``, ``logging.WARNING``). If not specified, the default level is ``logging.INFO``.
+            - "queue": The instance of ``multiprocessing.Manager.Queue`` to pass to ``QueueHandler``. If not specified,
+              all logs will output to ``sys.stdout``.
+            - "level": The logging level (e.g. ``logging.INFO``, ``logging.WARNING``). If not specified, the default
+              level is ``logging.INFO``.
 
             ::
 
@@ -470,67 +487,29 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         Note
         ----
-        This method stores the extracted timeseries as a nested dictionary and stores it in ``self.subject_timeseries``.
-        The first level of the nested dictionary consists of the subject ID as a string, the second level consists of
-        the run numbers in the form of "run-#" (where # is the corresponding number of the run), and the last level
-        consist of the timeseries (as a numpy array) associated with that run:
+        **Subject Timeseries Dictionary**: This method stores the extracted timeseries of all subjects
+        in ``self.subject_timeseries``. The structure is a dictionary mapping subject IDs to their run IDs and
+        their associated timeseries (TRs x ROI) as a numpy array:
+
         ::
 
             subject_timeseries = {
                     "101": {
-                        "run-0": np.array([timeseries]), # 2D array
-                        "run-1": np.array([timeseries]), # 2D array
-                        "run-2": np.array([timeseries]), # 2D array
+                        "run-0": np.array([timeseries]), # 2D array; (TRs x ROI)
+                        "run-1": np.array([timeseries]), # 2D array; (TRs x ROI)
+                        "run-2": np.array([timeseries]), # 2D array; (TRs x ROI)
                     },
                     "102": {
-                        "run-0": np.array([timeseries]), # 2D array
-                        "run-1": np.array([timeseries]), # 2D array
+                        "run-0": np.array([timeseries]), # 2D array; (TRs x ROI)
+                        "run-1": np.array([timeseries]), # 2D array; (TRs x ROI)
                     }
                 }
 
-        Additionally, if your files do not specify a run number due to your subjects only having a single run, the run
-        id key for the second level of the nested dictionary defaults to "run-0".
+        By default, "run-0", will be used if run IDs are not specified in the NifTI file.
 
-        When extracting specific conditions, this function uses ``math.ceil`` when calculating the ending scan of a
-        condition to round up and ``int`` to round down for the onset. This is to allow for partial scans. Any
-        overlapping/duplicate TRs are removed using set then are sorted. Python uses 0-based indexing so the scan
-        number corresponds to the index in the timeseries (i.e onset of 0 corresponds to the 0th index/row in the
-        timeseries). Below is the general code to extract the condition indices from the timeseries. There are
-        several checks, such as skipping timeseries extraction when an entire run is flagged due to framewise
-        displacement or having zero condition indices, that are not shown below.
-        ::
-
-            event_df = pd.read_csv(event_file[0], sep="\t")
-
-            # Get specific timing information for specific condition
-            condition_df = event_df[event_df["trial_type"] == condition]
-
-            # Convert times into scan numbers to obtain the scans taken when the participant was exposed to the
-            # condition of interest; include partial scans
-            for i in condition_df.index:
-                onset_scan = int(condition_df.loc[i,"onset"]/tr)
-                end_scan = math.ceil((condition_df.loc[i,"onset"] + condition_df.loc[i,"duration"])/tr)
-
-                # Add one since range is not inclusive
-                scan_list.extend(list(range(onset_scan, end_scan + 1)))
-
-            # Get unique scans to not duplicate information
-            scan_list = sorted(list(set(scan_list)))
-
-            # Adjust for dummy before censoring since censoring is dummy adjusted above
-            if dummy_scans: scan_list = [scan - dummy_scans for scan in scan_list if scan not in range(0, dummy_scans)]
-
-            if censor:
-                # Get length of scan list prior to assess outliers if requested
-                before_censor = len(scan_list)
-                scan_list = [volume for volume in scan_list if volume not in censor_volumes]
-
-                if outlier_limit:
-                    percentage = 1 - (len(scan_list)/before_censor)
-                    flagged = True if percentage > outlier_limit else False
-
-            timeseries = timeseries[scan_list,:]
-
+        **Extraction of Task Conditions**: when extracting specific conditions, ``int`` to round down for the
+        beginning scan index ``start_scan = int(onset/tr)`` and ``math.ceil`` is used to round up for the ending scan
+        index ``end_scan = math.ceil((onset + duration)/tr)``.
         """
         if runs and not isinstance(runs, list): runs = [runs]
 
@@ -889,7 +868,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         Note
         ----
-        **If using a "Custom" parcellation approach**, the "nodes" and "regions" sub-keys are required.
+        **Parcellation Approach**: the "nodes" and "regions" sub-keys are required in ``parcel_approach``.
         """
 
         if not hasattr(self, "_subject_timeseries"):

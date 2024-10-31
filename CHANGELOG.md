@@ -16,6 +16,20 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.17.9] - 2024-10-31
+### 💻 Metadata
+- Enhanced documentation
+- Documentation renders properly with Pylance in VSCode.
+### ♻ Changed
+- The ``parcel_approach`` stored as an property will remove the initial configuration sub-keys parameters ("n_rois",
+"resolution_mm", "yeo_networks" for Schaefer and "version" for AAL) after the information from these sub-keys are used
+internally to retrieve the appropriate parcellation. Thus, the dictionary will retain the primary keys:
+"maps", "nodes", and "regions". However, similar to previous behavior, additional sub-keys can still be added, such as
+adding a sub-key consisting of metadata, but they will be ignored and won't affect core operation.
+- When ``parcel_approach`` is included as a setter, or the required keys ("maps", "nodes", and "regions")
+are detected, it will no longer reset the "maps", "nodes", and "regions" for "Schaefer" and "AAL". This allows the
+"maps", "nodes", and "regions" to be modified for "Schaefer" and "AAL" if needed.
+
 ## [0.17.8.post1] - 2024-10-30
 ### 💻 Metadata
 - Readme revisions on Pypi.

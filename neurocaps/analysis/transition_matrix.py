@@ -17,9 +17,9 @@ def transition_matrix(trans_dict: dict[str, pd.DataFrame], output_dir: Optional[
     Parameters
     ----------
     trans_dict: :obj: `dict[str, pd.DataFrame]`
-        A dictionary where the keys are the group names and the values are the pandas DataFrame containing the
-        transition probabilities for each subject. This assumes the output from ``CAP.calculate_metrics`` is being used,
-        specifically ``metrics_output["transition_probability"]``.
+        A dictionary mapping groups to pandas DataFrame containing the transition probabilities for each subject.
+        This assumes the output from ``CAP.calculate_metrics`` is being used, specifically
+        ``metrics_output["transition_probability"]``.
 
     output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
         Directory to save plots and transition probability matrices DataFrames to. The directory will be created if it
@@ -103,8 +103,19 @@ def transition_matrix(trans_dict: dict[str, pd.DataFrame], output_dir: Optional[
 
     Note
     ----
-    Indices represent "from" and columns represent "to". For instance, the probability at ``df.loc["CAP-1", "CAP-2"]``
-    represents the probability from transitioning from CAP-1 to CAP-2.
+    **Dataframe Representation**: Rows represent "from" and columns represent "to". For instance,
+    the probability at ``df.loc["CAP-1", "CAP-2"]`` represents the averaged probability from transitioning from
+    CAP-1 to CAP-2.
+
+        +------------+---------+-------+-------+
+        |            |  CAP-1  | CAP-2 | CAP-3 |
+        +============+=========+=======+=======+
+        | CAP-1      |  0.40   | 0.35  | 0.25  |
+        +------------+---------+-------+-------+
+        | CAP-2      |  0.20   | 0.45  | 0.35  |
+        +------------+---------+-------+-------+
+        | CAP-3      |  0.35   | 0.18  |  0.47 |
+        +------------+---------+-------+-------+
     """
     assert isinstance(trans_dict, dict), "transition_dict must be in the form dict[str, pd.DataFrame]."
 

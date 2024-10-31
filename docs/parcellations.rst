@@ -30,41 +30,80 @@ For AAL, the only available subkey is "version".
 
 Custom Parcellations
 ---------------------
-If using a "Custom" parcellation approach, ensure each node in your dataset includes both left
-(lh) and right (rh) hemisphere versions (bilateral nodes). Additionally, the primary key must be labeled "Custom".
+If using a "Custom" parcellation approach, ensure that the atlas is lateralized (where each region/network has nodes in
+the left and right hemisphere). This is due to certain visualization functions assuming that each region consists of
+left and right hemisphere nodes. Additionally, certain visualization functions in this class also assume that the
+background label is 0. Therefore, do not add a background label in the "nodes" or "regions" keys.
 
-The following are the available subkeys for "Custom" parcellations:
+    The recognized sub-keys for the "Custom" parcellation approach includes:
 
-- "maps": Directory path containing necessary parcellation files. Ensure files are in a supported format (e.g., .nii for NifTI files). For plotting purposes, this key is not required.
-- "nodes":  List of all node labels used in your study, arranged in the exact order they correspond to indices in your parcellation files. Each label should match the parcellation index it represents. For example, if the parcellation label "0" corresponds to the left hemisphere visual cortex area 1, then "LH_Vis1" should occupy the 0th index in this list. This ensures that data extraction and analysis accurately reflect the anatomical regions intended. For timeseries extraction, this key is not required.
-- "regions": Dictionary defining major brain regions. Each region should list node indices under "lh" and "rh" to specify left and right hemisphere nodes. For timeseries extraction, this key is not required.
-        
-Example:
---------
-The provided example demonstrates setting up a custom parcellation containing nodes for the visual network (Vis) and hippocampus regions:
+    - "maps": Directory path containing the parcellation file in a supported format (e.g., .nii or .nii.gz for NifTI).
+    - "nodes": A list of all node labels. The node labels should be arranged in ascending order based on their
+      numerical IDs from the parcellation files. The node with the lowest numerical label in the parcellation file
+      should occupy the 0th index in the list, regardless of its actual numerical value. For instance, if the numerical
+      IDs are sequential, and the lowest, non-background numerical ID in the parcellation is "1" which corresponds
+      to "left hemisphere visual cortex area" ("LH_Vis1"), then "LH_Vis1" should occupy the 0th element in this list.
+      Even if the numerical IDs are non-sequential and the earliest non-background, numerical ID is "2000"
+      (assuming "0" is the background), then the node label corresponding to "2000" should occupy the 0th element of
+      this list.
 
-.. code-block:: python
+      ::
 
-    parcel_approach = {
-        "Custom": {
-            "maps": "/location/to/parcellation.nii.gz",
-            "nodes": [
-                "LH_Vis1",
-                "LH_Vis2",
-                "LH_Hippocampus",
-                "RH_Vis1",
-                "RH_Vis2",
-                "RH_Hippocampus"
-            ],
+            # Example of numerical label IDs and their organization in the "nodes" key
+            "nodes": {
+                "LH_Vis1",          # Corresponds to parcellation label 2000; lowest non-background numerical ID
+                "LH_Vis2",          # Corresponds to parcellation label 2100; second lowest non-background numerical ID
+                "LH_Hippocampus",   # Corresponds to parcellation label 2150; third lowest non-background numerical ID
+                "RH_Vis1",          # Corresponds to parcellation label 2200; fourth lowest non-background numerical ID
+                "RH_Vis2",          # Corresponds to parcellation label 2220; fifth lowest non-background numerical ID
+                "RH_Hippocampus"    # Corresponds to parcellation label 2300; sixth lowest non-background numerical ID
+            }
+
+    - "regions": A dictionary defining major brain regions or networks. Each region should list node indices under
+      "lh" (left hemisphere) and "rh" (right hemisphere) to specify the respective nodes. Both the "lh" and "rh"
+      sub-keys should contain the indices of the nodes belonging to each region/hemisphere pair, as determined
+      by the order/index in the "nodes" list. The naming of the sub-keys defining the major brain regions or networks
+      have zero naming requirements and simply define the nodes belonging to the same name.
+
+      ::
+
+            # Example of the "regions" sub-keys
             "regions": {
-                "Vis": {
-                    "lh": [0, 1],
-                    "rh": [3, 4]
+                "Visual": {
+                    "lh": [0, 1], # Corresponds to "LH_Vis1" and "LH_Vis2"
+                    "rh": [3, 4]  # Corresponds to "RH_Vis1" and "RH_Vis2"
                 },
                 "Hippocampus": {
-                    "lh": [2],
-                    "rh": [5]
+                    "lh": [2], # Corresponds to "LH_Hippocampus"
+                    "rh": [5]  # Corresponds to "RH_Hippocampus"
+                }
+            }
+
+    The provided example demonstrates setting up a custom parcellation containing nodes for the visual network (Vis)
+    and hippocampus regions in full:
+
+    ::
+
+        parcel_approach = {
+            "Custom": {
+                "maps": "/location/to/parcellation.nii.gz",
+                "nodes": [
+                    "LH_Vis1",
+                    "LH_Vis2",
+                    "LH_Hippocampus",
+                    "RH_Vis1",
+                    "RH_Vis2",
+                    "RH_Hippocampus"
+                ],
+                "regions": {
+                    "Visual": {
+                        "lh": [0, 1],
+                        "rh": [3, 4]
+                    },
+                    "Hippocampus": {
+                        "lh": [2],
+                        "rh": [5]
+                    }
                 }
             }
         }
-    }

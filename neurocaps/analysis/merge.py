@@ -17,15 +17,15 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
 
     For example, if three subject timeseries are specified in ``subject_timeseries_list``, and subject 1 has:
 
-        - `run-1` in the first dictionary (representing the extracted timeseries from resting-state),
-        - `run-1` and run-2 in the second dictionary (representing the extracted timeseries from a Stroop task),
-        - `run-3` in the third dictionary (representing the extracted timeseries from a N-back task)
+        - run-1 in the first dictionary (representing the extracted timeseries from resting-state),
+        - run-1 and run-2 in the second dictionary (representing the extracted timeseries from a Stroop task),
+        - run-3 in the third dictionary (representing the extracted timeseries from a N-back task)
 
     Then subject 1 in the final merged dictionary will contain:
 
-        - `run-1` (concatenated from the first dictionary and second dictionary 2, resting-state and the Stroop task),
-        - `run-2` (from the second dictionary, the Stroop task),
-        - `run-3` (from the third dictionary, the N-back task).
+        - run-1 (concatenated from the first dictionary and second dictionary 2, resting-state and the Stroop task),
+        - run-2 (from the second dictionary, the Stroop task),
+        - run-3 (from the third dictionary, the N-back task).
 
     This function is intended for use in workflows where the final merged dictionary, returned by setting
     ``return_merged_dict`` to True, can be input into ``CAP.get_caps`` to identify similar CAPs across different tasks
@@ -43,23 +43,21 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
     Parameters
     ----------
     subject_timeseries_list : :obj:`list[dict[str, dict[str, np.ndarray]]]` or :obj:`list[os.PathLike]`
-        A list of dictionaries or pickle files containing the nested subject timeseries dictionary saved by the
-        ``TimeSeriesExtractor`` class or a list of nested subject timeseries dictionaries produced by the
-        ``TimeSeriesExtractor`` class. The first level of the nested dictionary must consist of the subject ID as a
-        string, the second level must consist of the run numbers in the form of "run-#"
-        (where # is the corresponding number of the run), and the last level must consist of the timeseries
-        (as a numpy array) associated with that run. The structure is as follows:
+        A list where each element consist of a dictionary mapping subject IDs to their run IDs and associated
+        timeseries (TRs x ROI) as a numpy array. Can also be a list consisting of paths to pickle files
+        containing this same structure. The expected structure of each dictionary is as follows:
+
         ::
 
             subject_timeseries = {
                     "101": {
-                        "run-0": np.array([...]), # 2D array
-                        "run-1": np.array([...]), # 2D array
-                        "run-2": np.array([...]), # 2D array
+                        "run-0": np.array([...]), # 2D array; (TRs x ROI)
+                        "run-1": np.array([...]), # 2D array; (TRs x ROI)
+                        "run-2": np.array([...]), # 2D array; (TRs x ROI)
                     },
                     "102": {
-                        "run-0": np.array([...]), # 2D array
-                        "run-1": np.array([...]), # 2D array
+                        "run-0": np.array([...]), # 2D array; (TRs x ROI)
+                        "run-1": np.array([...]), # 2D array; (TRs x ROI)
                     }
                 }
 
