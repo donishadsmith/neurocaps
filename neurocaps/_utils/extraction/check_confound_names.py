@@ -1,5 +1,5 @@
 """Internal Function for checking confound names"""
-from .._logger import _logger
+from ..logger import _logger
 
 LG = _logger(__name__)
 

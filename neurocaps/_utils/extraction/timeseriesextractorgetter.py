@@ -1,8 +1,8 @@
 """A class which is responsible for accessing all TimeseriesExtractorGetter and to keep track of all attributes in TimeSeriesExtractor"""
 import copy
 import numpy as np
-from .._check_parcel_approach import _check_parcel_approach
-from .._pickle_utils import _convert_pickle_to_dict
+from ..check_parcel_approach import _check_parcel_approach
+from ..pickle_utils import _convert_pickle_to_dict
 
 class _TimeseriesExtractorGetter:
     def __init__(self):

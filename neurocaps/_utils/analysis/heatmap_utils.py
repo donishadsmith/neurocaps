@@ -1,5 +1,4 @@
 """Utils for generating heatmaps and saving content for correlation matrix and transition probability matrix."""
-
 import os, seaborn, matplotlib.pyplot as plt
 
 def _create_display(df, plot_dict, suffix_title, group, call):

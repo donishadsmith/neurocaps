@@ -370,7 +370,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         Parameters
         ----------
         bids_dir : :obj:`os.PathLike`
-            Absolute path to a BIDS compliant directory.
+            Path to a BIDS compliant directory.
 
         task : :obj:`str`
             Name of task to process (i.e "rest", "n-back", etc).
@@ -454,7 +454,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 root_logger = logging.getLogger()
                 root_logger.setLevel(logging.INFO)
                 file_handler = logging.FileHandler('neurocaps.log')
-                file_handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
+                file_handler.setFormatter(logging.Formatter('%(asctime)s %(name)s [%(levelname)s] %(message)s'))
                 root_logger.addHandler(file_handler)
 
                 if __name__ == "__main__":
@@ -475,10 +475,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
                     # Use the `parallel_log_config` parameter to pass queue and the logging level
                     extractor.get_bold(bids_dir="path/to/bids/dir",
-                                    task="rest",
-                                    tr=2,
-                                    n_cores=5,
-                                    parallel_log_config = {"queue": queue, "level": logging.WARNING})
+                                       task="rest",
+                                       tr=2,
+                                       n_cores=5,
+                                       parallel_log_config = {"queue": queue, "level": logging.WARNING})
 
                     # Stop listener
                     listener.stop()

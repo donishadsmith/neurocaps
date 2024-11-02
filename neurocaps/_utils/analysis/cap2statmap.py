@@ -2,7 +2,7 @@
 import nibabel as nib, numpy as np
 from nilearn import datasets, image
 from scipy.spatial import KDTree
-from .._logger import _logger
+from ..logger import _logger
 
 LG  = _logger(__name__)
 

@@ -6,7 +6,7 @@ from functools import cached_property
 import numpy as np, pandas as pd
 from nilearn.maskers import NiftiLabelsMasker
 from nilearn.image import index_img, load_img
-from .._logger import _logger
+from ..logger import _logger
 
 # Logger initialization to check if any user-defined loggers where created prior to package import
 LG = _logger(__name__)

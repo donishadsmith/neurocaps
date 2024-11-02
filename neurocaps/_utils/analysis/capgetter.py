@@ -1,6 +1,6 @@
 """A class which is responsible for accessing all CAP metadata and to keep track of all attributes in CAP"""
 import copy
-from .._check_parcel_approach import _check_parcel_approach
+from ..check_parcel_approach import _check_parcel_approach
 
 class _CAPGetter:
     def __init__(self):

@@ -16,6 +16,14 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.17.10] - 2024-11-02
+### ♻ Changed
+- Logger names now use `__name__` instead of `__name__.split(".")[-1]`
+- Module folder and file naming in `neurocaps._utils` changed, only `_utils` has the leading underscore.
+- Default logger now includes logger name in logged message.
+### 🐛 Fixes
+- Prevents logging duplication in certain user-defined logging scenarios when logs redirected.
+
 ## [0.17.9.post0] - 2024-11-02
 ### 📖 Documentation
 - Minor doc changes

@@ -3,8 +3,8 @@ Logging
 
 In neurocaps, all informational messages and warnings are managed using Python's logging module. By default, logs are
 output to the console (``sys.stdout``) with a logging level of ``INFO``. Before importing the neurocaps package, you can
-configure the root handler or specific module loggers to override these default settings. Additionally, the name of
-each logger is unique to the module and corresponds to the module's name (``__name__.split(".")[-1]``).
+configure the root handler or specific module loggers to override these default settings. Additionally, the naming of
+each logger uses ``__name__.split(".")[-1]`` for versions ``<=0.17.9`` and ``__name__`` for versions ``>=0.17.10``.
 
 Configuration (Without Parallel Processing)
 -------------------------------------------
@@ -18,12 +18,12 @@ This configuration sets the root logger to output to the console and configures 
     # Configure the root logger for all loggers to propagate to
     logging.basicConfig(
         level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(message)s",
+        format="%(asctime)s %(name)s [%(levelname)s] %(message)s",
         handlers=[logging.StreamHandler(sys.stdout)]
         )
 
     # Configuring the logger for the internal function that does timeseries extraction
-    extract_timeseries_logger = logging.getLogger("_extract_timeseries")
+    extract_timeseries_logger = logging.getLogger("neurocaps._utils.extraction.extract_timeseries")
     extract_timeseries_logger.setLevel(logging.WARNING)
     file_handler = logging.FileHandler("neurocaps.log")
     file_handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
@@ -41,8 +41,7 @@ When using joblib's loky backend for parallel processing, child processes do not
 Consequently, internal logs are output to the console by default even when parallel processing is enabled. To redirect
 these logs to a specific handler, you can set up a ``multiprocessing.Manager().Queue()`` (which is passed to
 ``QueueHandler`` internally) and ``QueueListener``. This approach allows logs produced by the
-internal ``_extract_timeseries`` function to be redirected when parallel processing is enabled. Additionally, the names
-of each logger are unique to the module and is the name of the file (``__name__.split(".")[-1]``).
+internal ``neurocaps._utils.extraction.extract_timeseries`` module to be redirected when parallel processing is enabled.
 
 .. code-block:: python
 
@@ -54,7 +53,7 @@ of each logger are unique to the module and is the name of the file (``__name__.
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.INFO)
     file_handler = logging.FileHandler("neurocaps.log")
-    file_handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
+    file_handler.setFormatter(logging.Formatter('%(asctime)s %(name)s [%(levelname)s] %(message)s'))
     root_logger.addHandler(file_handler)
 
     if __name__ == "__main__":

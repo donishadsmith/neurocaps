@@ -1,8 +1,8 @@
 """Internal function for checking the validity of parcel_approach."""
 import copy, os, re
 from nilearn import datasets
-from ._pickle_utils import _convert_pickle_to_dict
-from ._logger import _logger
+from .pickle_utils import _convert_pickle_to_dict
+from .logger import _logger
 
 LG = _logger(__name__)
 
