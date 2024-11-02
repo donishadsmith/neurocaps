@@ -283,11 +283,11 @@ class CAP(_CAPGetter):
             {
                 "GroupName": {
                     "Regions": [...],
-                    "CAP-1": {"High Amplitude": [...], Shape: 1 x Regions
-                              "Low Amplitude": [...]   Shape: 1 x Regions
+                    "CAP-1": {"High Amplitude": [...], # Shape: 1 x Regions
+                              "Low Amplitude": [...]   # Shape: 1 x Regions
                               }
-                    "CAP-2": {"High Amplitude": [...], Shape: 1 x Regions
-                              "Low Amplitude": [...]   Shape: 1 x Regions
+                    "CAP-2": {"High Amplitude": [...], # Shape: 1 x Regions
+                              "Low Amplitude": [...]   # Shape: 1 x Regions
                               }
                 }
 
