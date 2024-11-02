@@ -15,6 +15,7 @@ def test_transition_matrix(group):
                                      show_figs=False, borderwidths=2)
 
     groups = list(trans_output)
+
     for group in groups:
         assert output["transition_probability"][group].loc[:,"1.1"].mean() == trans_output[group].loc["CAP-1","CAP-1"]
         assert output["transition_probability"][group].loc[:,"1.2"].mean() == trans_output[group].loc["CAP-1","CAP-2"]

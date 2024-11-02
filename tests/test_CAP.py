@@ -164,8 +164,8 @@ def test_groups_no_cluster_selection(standardize):
     labels = predict_labels(subject_timeseries, cap_analysis, standardize, "B", runs=[1,2])
     assert np.array_equal(labels, cap_analysis.kmeans["B"].labels_)
 
-@pytest.mark.parametrize("standardize,n_cores", [(False,2), (True,None)])
-def test_no_groups_cluster_selection(standardize,n_cores):
+@pytest.mark.parametrize("standardize, n_cores", [(False, 2), (True, None)])
+def test_no_groups_cluster_selection(standardize, n_cores):
     cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
 
     # Elbow sometimes does find the elbow with random data
@@ -476,8 +476,8 @@ def check_imgs(values_dict, plot_type="map"):
         [os.remove(file) for file in surface_png]
 
 @pytest.mark.parametrize("current_timeseries, parcel_approach",
-                         [(extractor.subject_timeseries,extractor.parcel_approach),
-                          (custom_subject_timeseries,custom_parcel_approach)])
+                         [(extractor.subject_timeseries, extractor.parcel_approach),
+                          (custom_subject_timeseries, custom_parcel_approach)])
 def test_plotting_functions(current_timeseries, parcel_approach):
     cap_analysis = CAP(parcel_approach=parcel_approach)
     cap_analysis.get_caps(subject_timeseries=current_timeseries,
@@ -575,8 +575,8 @@ def test_caps2surf(remove_files):
     check_imgs(plot_type="nifti", values_dict={"nii.gz": 0})
 
 @pytest.mark.parametrize("current_timeseries, parcel_approach",
-                         [(extractor.subject_timeseries,extractor.parcel_approach),
-                          (custom_subject_timeseries,custom_parcel_approach)])
+                         [(extractor.subject_timeseries, extractor.parcel_approach),
+                          (custom_subject_timeseries, custom_parcel_approach)])
 def test_niftis(current_timeseries, parcel_approach):
     cap_analysis = CAP(parcel_approach=parcel_approach)
     cap_analysis.get_caps(subject_timeseries=current_timeseries,

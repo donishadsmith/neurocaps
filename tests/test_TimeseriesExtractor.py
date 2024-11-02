@@ -187,10 +187,10 @@ def setup_environment_3():
     os.rmdir(fmriprep_old_dir)
 
 # Check if dictionary updating works when parallel isn't used; Use setup_environment 1
-@pytest.mark.parametrize("parcel_approach,use_confounds,name",
-                         [({"Schaefer": {"n_rois": 100, "yeo_networks": 7}},True,"Schaefer"),
-                          ({"AAL": {"version": "SPM8"}},False,"AAL"),
-                          (parcel_approach, False,"Custom")])
+@pytest.mark.parametrize("parcel_approach, use_confounds, name",
+                         [({"Schaefer": {"n_rois": 100, "yeo_networks": 7}}, True, "Schaefer"),
+                          ({"AAL": {"version": "SPM8"}}, False, "AAL"),
+                          (parcel_approach, False, "Custom")])
 def test_extraction(parcel_approach, use_confounds, name):
     shape_dict = {"Schaefer": 100, "AAL": 116, "Custom": 426}
     region = {"Schaefer": "Vis", "AAL": "Hippocampus", "Custom": "Subcortical Regions"}
@@ -276,10 +276,10 @@ def test_condition(use_confounds):
     scan_list = get_scans("active")
     assert np.array_equal(timeseries[scan_list,:], active_condition)
 
-@pytest.mark.parametrize("detrend,low_pass,high_pass,standardize", [(True, None, None, False),
-                                                                    (None, 0.15, 0.01, False),
-                                                                    (False, None, None, "zscore_sample")])
-def test_confounds(detrend,low_pass,high_pass,standardize):
+@pytest.mark.parametrize("detrend, low_pass, high_pass, standardize", [(True, None, None, False),
+                                                                       (None, 0.15, 0.01, False),
+                                                                       (False, None, None, "zscore_sample")])
+def test_confounds(detrend,low_pass, high_pass, standardize):
     extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize=standardize,
                                     use_confounds=True, detrend=detrend, low_pass=low_pass, high_pass=high_pass,
                                     confound_names=confounds)
@@ -638,10 +638,10 @@ def test_exclude_sub(setup_environment_3):
     assert extractor.subject_timeseries["01"]["run-0"].shape == (40,400)
     assert "02" not in list(extractor.subject_timeseries)
 
-@pytest.mark.parametrize("use_confounds,verbose,pipeline_name", [(True,True, "fmriprep_1.0.0"),
-                                                                 (False,False, None),
-                                                                 (True,False, None),
-                                                                 (False,True, None)])
+@pytest.mark.parametrize("use_confounds, verbose, pipeline_name", [(True,True, "fmriprep_1.0.0"),
+                                                                   (False,False, None),
+                                                                   (True,False, None),
+                                                                   (False,True, None)])
 def test_removal_of_run_desc(use_confounds, verbose, pipeline_name):
     extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
                                     use_confounds=use_confounds, detrend=True, low_pass=0.15, high_pass=0.01,
@@ -661,7 +661,7 @@ def test_skip(pipeline_name):
                        run_subjects=["01"])
     assert extractor.subject_timeseries == {}
 
-@pytest.mark.parametrize("n_cores,pipeline_name", [(None,None),(2, "fmriprep_1.0.0")])
+@pytest.mark.parametrize("n_cores, pipeline_name", [(None,None),(2, "fmriprep_1.0.0")])
 def test_append_2(n_cores, pipeline_name):
     parcel_approach = {"Schaefer": {"yeo_networks": 7}}
     extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
@@ -673,8 +673,8 @@ def test_append_2(n_cores, pipeline_name):
     assert extractor.subject_timeseries["01"]["run-0"].shape == (40,400)
     assert extractor.subject_timeseries["02"]["run-001"].shape == (40,400)
 
-@pytest.mark.parametrize("high_pass,low_pass", [(None,None),(0.08,None),(None,0.1),(0.08,0.1)])
-def test_tr(high_pass,low_pass):
+@pytest.mark.parametrize("high_pass, low_pass", [(None,None),(0.08,None),(None,0.1),(0.08,0.1)])
+def test_tr(high_pass, low_pass):
     extractor = TimeseriesExtractor(parcel_approach=parcel_approach, standardize="zscore_sample",
                                     use_confounds=True, detrend=True, low_pass=low_pass, high_pass=high_pass,
                                     confound_names=confounds, n_acompcor_separate=3)
@@ -711,6 +711,14 @@ def test_extended_censor(fd_threshold, dummy_scans):
     if not dummy_scans:
         assert np.array_equal(extractor.subject_timeseries["01"]["run-0"],
                               np.delete(extractor2.subject_timeseries["01"]["run-0"], expected_removal, axis=0))
+    
+    if not dummy_scans:
+        extractor.get_bold(bids_dir=bids_dir, task="rest", condition="active", run_subjects=["01"])
+        scan_list = get_scans("active")
+        scan_list = [x for x in scan_list if x not in expected_removal]
+
+        assert np.array_equal(extractor.subject_timeseries["01"]["run-0"],
+                            extractor2.subject_timeseries["01"]["run-0"][scan_list, :])
 
 def test_dtype():
     extractor = TimeseriesExtractor(dtype="float64")
