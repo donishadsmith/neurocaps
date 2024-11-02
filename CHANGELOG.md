@@ -16,8 +16,12 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.17.9.post0] - 2024-11-02
+### 📖 Documentation
+- Minor doc changes
+
 ## [0.17.9] - 2024-10-31
-### 💻 Metadata
+### 📖 Documentation
 - Enhanced documentation
 - Documentation renders properly with Pylance in VSCode.
 ### ♻ Changed

@@ -166,7 +166,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         Number of cores used for multiprocessing with joblib.
 
     subject_timeseries : :obj:`dict[str, dict[str, np.ndarray]`
-        A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROI) as a numpy array.
+        A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a numpy array.
         Can also be a path to a pickle file containing this same structure. If this property needs to be deleted due
         to memory issues, ``delattr(self,"_subject_timeseries")`` can be used. The structure is as follows:
 
@@ -174,13 +174,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             subject_timeseries = {
                     "101": {
-                        "run-0": np.array([...]), # 2D array; (TRs x ROI)
-                        "run-1": np.array([...]), # 2D array; (TRs x ROI)
-                        "run-2": np.array([...]), # 2D array; (TRs x ROI)
+                        "run-0": np.array([...]), # Shape: TRs x ROIs
+                        "run-1": np.array([...]), # Shape: TRs x ROIs
+                        "run-2": np.array([...]), # Shape: TRs x ROIs
                     },
                     "102": {
-                        "run-0": np.array([...]), # 2D array; (TRs x ROI)
-                        "run-1": np.array([...]), # 2D array; (TRs x ROI)
+                        "run-0": np.array([...]), # Shape: TRs x ROIs
+                        "run-1": np.array([...]), # Shape: TRs x ROIs
                     }
                 }
 
@@ -489,19 +489,19 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         ----
         **Subject Timeseries Dictionary**: This method stores the extracted timeseries of all subjects
         in ``self.subject_timeseries``. The structure is a dictionary mapping subject IDs to their run IDs and
-        their associated timeseries (TRs x ROI) as a numpy array:
+        their associated timeseries (TRs x ROIs) as a numpy array:
 
         ::
 
             subject_timeseries = {
                     "101": {
-                        "run-0": np.array([timeseries]), # 2D array; (TRs x ROI)
-                        "run-1": np.array([timeseries]), # 2D array; (TRs x ROI)
-                        "run-2": np.array([timeseries]), # 2D array; (TRs x ROI)
+                        "run-0": np.array([timeseries]), # Shape: TRs x ROIs
+                        "run-1": np.array([timeseries]), # Shape: TRs x ROIs
+                        "run-2": np.array([timeseries]), # Shape: TRs x ROIs
                     },
                     "102": {
-                        "run-0": np.array([timeseries]), # 2D array; (TRs x ROI)
-                        "run-1": np.array([timeseries]), # 2D array; (TRs x ROI)
+                        "run-0": np.array([timeseries]), # Shape: TRs x ROIs
+                        "run-1": np.array([timeseries]), # Shape: TRs x ROIs
                     }
                 }
 

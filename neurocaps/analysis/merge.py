@@ -44,20 +44,20 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
     ----------
     subject_timeseries_list : :obj:`list[dict[str, dict[str, np.ndarray]]]` or :obj:`list[os.PathLike]`
         A list where each element consist of a dictionary mapping subject IDs to their run IDs and associated
-        timeseries (TRs x ROI) as a numpy array. Can also be a list consisting of paths to pickle files
+        timeseries (TRs x ROIs) as a numpy array. Can also be a list consisting of paths to pickle files
         containing this same structure. The expected structure of each dictionary is as follows:
 
         ::
 
             subject_timeseries = {
                     "101": {
-                        "run-0": np.array([...]), # 2D array; (TRs x ROI)
-                        "run-1": np.array([...]), # 2D array; (TRs x ROI)
-                        "run-2": np.array([...]), # 2D array; (TRs x ROI)
+                        "run-0": np.array([...]), # Shape: TRs x ROIs
+                        "run-1": np.array([...]), # Shape: TRs x ROIs
+                        "run-2": np.array([...]), # Shape: TRs x ROIs
                     },
                     "102": {
-                        "run-0": np.array([...]), # 2D array; (TRs x ROI)
-                        "run-1": np.array([...]), # 2D array; (TRs x ROI)
+                        "run-0": np.array([...]), # Shape: TRs x ROIs
+                        "run-1": np.array([...]), # Shape: TRs x ROIs
                     }
                 }
 

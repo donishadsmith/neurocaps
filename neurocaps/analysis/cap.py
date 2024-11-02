@@ -113,8 +113,8 @@ class CAP(_CAPGetter):
 
             {
                 "GroupName": {
-                    "CAP-1": np.array([...]), # 1 x ROI array
-                    "CAP-2": np.array([...]), # 1 x ROI array
+                    "CAP-1": np.array([...]), # Shape: 1 x ROIs
+                    "CAP-2": np.array([...]), # Shape: 1 x ROIs
                 }
 
             }
@@ -207,7 +207,7 @@ class CAP(_CAPGetter):
         ::
 
             {
-                "GroupName": np.array([...]), # Dimensions: 1 x ROIs
+                "GroupName": np.array([...]), # Shape: 1 x ROIs
             }
 
     stdev : :obj:`dict[str, np.array]`
@@ -217,45 +217,45 @@ class CAP(_CAPGetter):
         ::
 
             {
-                "GroupName": np.array([...]), # Dimensions: 1 x ROIs
+                "GroupName": np.array([...]), # Shape: 1 x ROIs
             }
 
     concatenated_timeseries : :obj:`dict[str, np.array]`
-        A dictionary mapping each group to their associated concatenated numpy array [(participants x TR) x ROIs] when
+        A dictionary mapping each group to their associated concatenated numpy array [(participants x TRs) x ROIs] when
         ``self.get_caps()`` is used. Note, ``delattr(self, "_concatenated_timeseries")`` to delete this property is
         there are memory issues. The structure is as follows:
 
         ::
 
             {
-                "GroupName": np.array([...]), # Dimensions: (participants x TR) x ROIs
+                "GroupName": np.array([...]), # Shape: (participants x TRs) x ROIs
             }
 
     region_caps : :obj:`dict[str, np.array]`
-        A dictionary mapping group to their CAPs and corresponding numpy array (1 x region) containing the averaged
-        value of each region or network if ``visual_scope`` set to "regions" in ``self.caps2plot()``. The structure is
-        as follows:
+        A dictionary mapping group to their CAPs and corresponding numpy array (1 x regions) containing the averaged
+        value of each region or network if ``visual_scope`` set to "regions" in ``self.caps2plot()``.
+        The position of elements corresponds to "regions" in ``parcel_approach``. The structure is as follows:
 
         ::
 
             {
                 "GroupName": {
-                    "CAP-1": np.array([...]), # 1 x region array
-                    "CAP-2": np.array([...]), # 1 x region array
+                    "CAP-1": np.array([...]), # Shape: 1 x regions
+                    "CAP-2": np.array([...]), # Shape: 1 x regions
                 }
 
             }
 
     outer_products : :obj:`dict[str, dict[str, np.array]]`
-        A dictionary mapping group to their CAPs and corresponding numpy array (ROI x ROI) containing the outer product
-        if ``plot_options`` set to "outer_product" ``self.caps2plot()``. The structure is as follows:
+        A dictionary mapping group to their CAPs and corresponding numpy array (ROIs x ROIs) containing the outer
+        product if ``plot_options`` set to "outer_product" ``self.caps2plot()``. The structure is as follows:
 
         ::
 
             {
                 "GroupName": {
-                    "CAP-1": np.array([...]), # ROI x ROI array
-                    "CAP-2": np.array([...]), # ROI x ROI array
+                    "CAP-1": np.array([...]), # Shape: ROIs x ROIs
+                    "CAP-2": np.array([...]), # Shape: ROIs x ROIs
                 }
 
             }
@@ -283,11 +283,11 @@ class CAP(_CAPGetter):
             {
                 "GroupName": {
                     "Regions": [...],
-                    "CAP-1": {"High Amplitude": [...],
-                              "Low Amplitude": [...]
+                    "CAP-1": {"High Amplitude": [...], Shape: 1 x Regions
+                              "Low Amplitude": [...]   Shape: 1 x Regions
                               }
-                    "CAP-2": {"High Amplitude": [...],
-                              "Low Amplitude": [...]
+                    "CAP-2": {"High Amplitude": [...], Shape: 1 x Regions
+                              "Low Amplitude": [...]   Shape: 1 x Regions
                               }
                 }
 
@@ -437,20 +437,21 @@ class CAP(_CAPGetter):
         Parameters
         ----------
         subject_timeseries : :obj:`dict[str, dict[str, np.ndarray]]` or :obj:`os.PathLike`
-            A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROI) as a numpy array.
-            Can also be a path to a pickle file containing this same structure. The expected structure of is as follows:
+            A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a numpy
+            array. Can also be a path to a pickle file containing this same structure. The expected structure of is as
+            follows:
 
             ::
 
                 subject_timeseries = {
                         "101": {
-                            "run-0": np.array([...]), # 2D array; (TRs x ROI)
-                            "run-1": np.array([...]), # 2D array; (TRs x ROI)
-                            "run-2": np.array([...]), # 2D array; (TRs x ROI)
+                            "run-0": np.array([...]), # Shape: TRs x ROIs
+                            "run-1": np.array([...]), # Shape: TRs x ROIs
+                            "run-2": np.array([...]), # Shape: TRs x ROIs
                         },
                         "102": {
-                            "run-0": np.array([...]), # 2D array; (TRs x ROI)
-                            "run-1": np.array([...]), # 2D array; (TRs x ROI)
+                            "run-0": np.array([...]), # Shape: TRs x ROIs
+                            "run-1": np.array([...]), # Shape: TRs x ROIs
                         }
                     }
 
@@ -845,20 +846,21 @@ class CAP(_CAPGetter):
         Parameters
         ----------
         subject_timeseries : :obj:`dict[str, dict[str, np.ndarray]]` or :obj:`os.PathLike`
-            A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROI) as a numpy array.
-            Can also be a path to a pickle file containing this same structure. The expected structure of is as follows:
+            A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a numpy
+            array. Can also be a path to a pickle file containing this same structure. The expected structure of is as
+            follows:
 
             ::
 
                 subject_timeseries = {
                         "101": {
-                            "run-0": np.array([...]), # 2D array; (TRs x ROI)
-                            "run-1": np.array([...]), # 2D array; (TRs x ROI)
-                            "run-2": np.array([...]), # 2D array; (TRs x ROI)
+                            "run-0": np.array([...]), # Shape: TRs x ROIs
+                            "run-1": np.array([...]), # Shape: TRs x ROIs
+                            "run-2": np.array([...]), # Shape: TRs x ROIs
                         },
                         "102": {
-                            "run-0": np.array([...]), # 2D array; (TRs x ROI)
-                            "run-1": np.array([...]), # 2D array; (TRs x ROI)
+                            "run-0": np.array([...]), # Shape: TRs x ROIs
+                            "run-1": np.array([...]), # Shape: TRs x ROIs
                         }
                     }
 
