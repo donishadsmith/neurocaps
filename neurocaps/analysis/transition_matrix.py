@@ -107,15 +107,17 @@ def transition_matrix(trans_dict: dict[str, pd.DataFrame], output_dir: Optional[
     the probability at ``df.loc["CAP-1", "CAP-2"]`` represents the averaged probability from transitioning from
     CAP-1 to CAP-2.
 
-        +------------+---------+-------+-------+
-        |            |  CAP-1  | CAP-2 | CAP-3 |
-        +============+=========+=======+=======+
-        | CAP-1      |  0.40   | 0.35  | 0.25  |
-        +------------+---------+-------+-------+
-        | CAP-2      |  0.20   | 0.45  | 0.35  |
-        +------------+---------+-------+-------+
-        | CAP-3      |  0.35   | 0.18  |  0.47 |
-        +------------+---------+-------+-------+
+    +------------+---------+-------+-------+
+    | From/To    |  CAP-1  | CAP-2 | CAP-3 |
+    +============+=========+=======+=======+
+    | CAP-1      |  0.40   | 0.35  | 0.25  |
+    +------------+---------+-------+-------+
+    | CAP-2      |  0.20   | 0.45  | 0.35  |
+    +------------+---------+-------+-------+
+    | CAP-3      |  0.35   | 0.18  |  0.47 |
+    +------------+---------+-------+-------+
+
+    *The "From/To" index name appears in versions >=0.17.11.*
     """
     assert isinstance(trans_dict, dict), "transition_dict must be in the form dict[str, pd.DataFrame]."
 
@@ -137,6 +139,8 @@ def transition_matrix(trans_dict: dict[str, pd.DataFrame], output_dir: Optional[
         max_cap = str(max([float(i) for i in indices])).split(".")[0]
         cap_names = [f"CAP-{num}" for num in range(1, int(max_cap) + 1)]
         trans_mat = pd.DataFrame(index=cap_names, columns=cap_names, dtype="float64")
+        # Add name to index
+        trans_mat.index.name = "From/To"
 
         # Create matrix
         for location, name in enumerate(indices):

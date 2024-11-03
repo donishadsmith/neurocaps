@@ -262,8 +262,10 @@ def _header(Data, run_id, subj_id):
 # Get dummy scan number
 def _get_dummy(Data, LG):
     info = Data.signal_clean_info["dummy_scans"]
+
     if isinstance(info, dict) and info["auto"] is True:
         n, flag = len([col for col in Data.confound_df.columns if "non_steady_state" in col]), "auto"
+
         if "min" in info and n < info["min"]: n, flag = info["min"], "min"
         if "max" in info and n > info["max"]: n, flag = info["max"], "max"
         if n == 0: n = None
@@ -284,6 +286,7 @@ def _get_dummy(Data, LG):
 # Create censor vector
 def _censor(Data):
     fd_array = Data.confound_df["framewise_displacement"].fillna(0).values
+
     # Truncate fd_array if dummy scans
     if Data.dummy_vols: fd_array = fd_array[Data.dummy_vols:]
 
@@ -315,11 +318,12 @@ def _flag(n_censor, n, scrub_lim):
 # Get event condition
 def _get_condition(Data, condition_df):
     scans = []
+
     # Convert times into scan numbers to obtain the scans taken when the participant was exposed to the
     # condition of interest; include partial scans
     for i in condition_df.index:
-        onset_scan = int(condition_df.loc[i,"onset"]/Data.tr)
-        end_scan = math.ceil((condition_df.loc[i,"onset"] + condition_df.loc[i,"duration"])/Data.tr)
+        onset_scan = int(condition_df.loc[i, "onset"]/Data.tr)
+        end_scan = math.ceil((condition_df.loc[i, "onset"] + condition_df.loc[i, "duration"])/Data.tr)
         # Add one since range is not inclusive
         scans.extend(list(range(onset_scan, end_scan + 1)))
 
@@ -335,6 +339,7 @@ def _get_condition(Data, condition_df):
 def _filter_condition(Data, fd_array, LG):
     # New `scans` list created if conditions met
     scans = Data.scans
+
     # Assess if any condition indices greater than fd array to not dilute outlier calculation
     if max(scans) > fd_array.shape[0] - 1:
         scans = _check_indices(Data, fd_array.shape[0], LG)

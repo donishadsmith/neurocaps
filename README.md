@@ -1,7 +1,7 @@
 # neurocaps
 [![Latest Version](https://img.shields.io/pypi/v/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.14029482)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.14031867)
 [![Github Repository](https://img.shields.io/badge/Source%20Code-neurocaps-purple)](https://github.com/donishadsmith/neurocaps)
 [![Test Status](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg)](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml)
 [![codecov](https://codecov.io/github/donishadsmith/neurocaps/graph/badge.svg?token=WS2V7I16WF)](https://codecov.io/github/donishadsmith/neurocaps)
@@ -206,16 +206,16 @@ print(outputs["temporal_fraction"])
 **DataFrame Output:**
 | Subject_ID | Group | Run | CAP-1 | CAP-2 | CAP-3 | CAP-4 | CAP-5 | CAP-6 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | All_Subjects | continuous_runs | 0.14 | 0.17 | 0.14 | 0.2 | 0.15 | 0.19 |
-| 2 | All_Subjects | continuous_runs | 0.17 | 0.17 | 0.16 | 0.16 | 0.15 | 0.19 |
-| 3 | All_Subjects | continuous_runs | 0.15 | 0.2 | 0.14 | 0.18 | 0.17 | 0.17 |
-| 4 | All_Subjects | continuous_runs | 0.17 | 0.21 | 0.18 | 0.17 | 0.1 | 0.16 |
-| 5 | All_Subjects | continuous_runs | 0.14 | 0.19 | 0.14 | 0.16 | 0.2 | 0.18 |
-| 6 | All_Subjects | continuous_runs | 0.16 | 0.21 | 0.16 | 0.18 | 0.16 | 0.13 |
-| 7 | All_Subjects | continuous_runs | 0.16 | 0.16 | 0.17 | 0.15 | 0.19 | 0.17 |
-| 8 | All_Subjects | continuous_runs | 0.17 | 0.21 | 0.13 | 0.14 | 0.17 | 0.18 |
-| 9 | All_Subjects | continuous_runs | 0.18 | 0.1 | 0.17 | 0.18 | 0.16 | 0.2 |
-| 10 | All_Subjects | continuous_runs | 0.14 | 0.19 | 0.14 | 0.17 | 0.19 | 0.16 |
+| 1 | All Subjects | run-continuous | 0.14 | 0.17 | 0.14 | 0.2 | 0.15 | 0.19 |
+| 2 | All Subjects | run-continuous | 0.17 | 0.17 | 0.16 | 0.16 | 0.15 | 0.19 |
+| 3 | All Subjects | run-continuous | 0.15 | 0.2 | 0.14 | 0.18 | 0.17 | 0.17 |
+| 4 | All Subjects | run-continuous | 0.17 | 0.21 | 0.18 | 0.17 | 0.1 | 0.16 |
+| 5 | All Subjects | run-continuous | 0.14 | 0.19 | 0.14 | 0.16 | 0.2 | 0.18 |
+| 6 | All Subjects | run-continuous | 0.16 | 0.21 | 0.16 | 0.18 | 0.16 | 0.13 |
+| 7 | All Subjects | run-continuous | 0.16 | 0.16 | 0.17 | 0.15 | 0.19 | 0.17 |
+| 8 | All Subjects | run-continuous | 0.17 | 0.21 | 0.13 | 0.14 | 0.17 | 0.18 |
+| 9 | All Subjects | run-continuous | 0.18 | 0.1 | 0.17 | 0.18 | 0.16 | 0.2 |
+| 10 | All Subjects | run-continuous | 0.14 | 0.19 | 0.14 | 0.17 | 0.19 | 0.16 |
 
 ```python
 # Create surface plots of CAPs; there will be as many plots as CAPs
@@ -234,7 +234,7 @@ custom_cmap = LinearSegmentedColormap.from_list("custom_cold_hot", colors, N=256
 
 kwargs["cmap"] = custom_cmap
 
-cap_analysis.caps2surf(fwhm=2, **kwargs)
+cap_analysis.caps2surf(**kwargs)
 ```
 **Partial Plot Outputs:** (*Note*: one image will be generated per CAP)
 
@@ -242,7 +242,7 @@ cap_analysis.caps2surf(fwhm=2, **kwargs)
 <img src="https://github.com/donishadsmith/neurocaps/assets/112973674/8207914a-6bf0-47a9-8be8-3504d0a56516" width=70% height=70%>
 
 ```python
-# Create correlation matrix
+# Create Pearson correlation matrix
 kwargs = {"annot": True, "cmap": "coolwarm"}
 
 cap_analysis.caps2corr(**kwargs)
@@ -300,7 +300,7 @@ from neurocaps.analysis import transition_matrix
 cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, 
                       cluster_selection_method="davies_bouldin",
                       standardize=True,
-                      n_clusters=list(range(2,6)))
+                      n_clusters=range(2,6))
 
 outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, 
                                          return_df=True,
@@ -327,20 +327,20 @@ print(trans_outputs["All Subjects"])
 ```
 | Subject_ID | Group | Run | 1.1 | 1.2 | 1.3 | 2.1 | 2.2 | 2.3 | 3.1 | 3.2 | 3.3 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | All Subjects | continuous_runs | 0.326 | 0.261 | 0.413 | 0.245 | 0.449 | 0.306 | 0.352 | 0.278 | 0.37 |
-| 2 | All Subjects | continuous_runs | 0.4 | 0.25 | 0.35 | 0.486 | 0.108 | 0.405 | 0.346 | 0.365 | 0.288 |
-| 3 | All Subjects | continuous_runs | 0.354 | 0.229 | 0.417 | 0.383 | 0.362 | 0.255 | 0.241 | 0.352 | 0.407 |
-| 4 | All Subjects | continuous_runs | 0.283 | 0.37 | 0.348 | 0.302 | 0.321 | 0.377 | 0.32 | 0.38 | 0.3 |
-| 5 | All Subjects | continuous_runs | 0.292 | 0.354 | 0.354 | 0.38 | 0.28 | 0.34 | 0.294 | 0.392 | 0.314 |
-| 6 | All Subjects | continuous_runs | 0.339 | 0.304 | 0.357 | 0.333 | 0.231 | 0.436 | 0.444 | 0.222 | 0.333 |
-| 7 | All Subjects | continuous_runs | 0.424 | 0.203 | 0.373 | 0.45 | 0.275 | 0.275 | 0.34 | 0.32 | 0.34 |
-| 8 | All Subjects | continuous_runs | 0.25 | 0.271 | 0.479 | 0.39 | 0.244 | 0.366 | 0.35 | 0.3 | 0.35 |
-| 9 | All Subjects | continuous_runs | 0.429 | 0.265 | 0.306 | 0.319 | 0.298 | 0.383 | 0.245 | 0.377 | 0.377 |
-| 10 | All Subjects | continuous_runs | 0.333 | 0.375 | 0.292 | 0.306 | 0.347 | 0.347 | 0.327 | 0.269 | 0.404 |
+| 1 | All Subjects | run-continuous | 0.326 | 0.261 | 0.413 | 0.245 | 0.449 | 0.306 | 0.352 | 0.278 | 0.37 |
+| 2 | All Subjects | run-continuous | 0.4 | 0.25 | 0.35 | 0.486 | 0.108 | 0.405 | 0.346 | 0.365 | 0.288 |
+| 3 | All Subjects | run-continuous | 0.354 | 0.229 | 0.417 | 0.383 | 0.362 | 0.255 | 0.241 | 0.352 | 0.407 |
+| 4 | All Subjects | run-continuous | 0.283 | 0.37 | 0.348 | 0.302 | 0.321 | 0.377 | 0.32 | 0.38 | 0.3 |
+| 5 | All Subjects | run-continuous | 0.292 | 0.354 | 0.354 | 0.38 | 0.28 | 0.34 | 0.294 | 0.392 | 0.314 |
+| 6 | All Subjects | run-continuous | 0.339 | 0.304 | 0.357 | 0.333 | 0.231 | 0.436 | 0.444 | 0.222 | 0.333 |
+| 7 | All Subjects | run-continuous | 0.424 | 0.203 | 0.373 | 0.45 | 0.275 | 0.275 | 0.34 | 0.32 | 0.34 |
+| 8 | All Subjects | run-continuous | 0.25 | 0.271 | 0.479 | 0.39 | 0.244 | 0.366 | 0.35 | 0.3 | 0.35 |
+| 9 | All Subjects | run-continuous | 0.429 | 0.265 | 0.306 | 0.319 | 0.298 | 0.383 | 0.245 | 0.377 | 0.377 |
+| 10 | All Subjects | run-continuous | 0.333 | 0.375 | 0.292 | 0.306 | 0.347 | 0.347 | 0.327 | 0.269 | 0.404 |
 
 <img src="https://github.com/user-attachments/assets/3ab1d123-0c3e-47e3-b24c-52bfda13d3ef" width=70% height=70%>
 
-| | CAP-1 | CAP-2 | CAP-3 |
+| From/To | CAP-1 | CAP-2 | CAP-3 |
 | --- | --- | --- | --- |
 | CAP-1 | 0.343 | 0.288 | 0.369 |
 | CAP-2 | 0.36 | 0.291 | 0.349 |

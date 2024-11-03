@@ -883,6 +883,9 @@ class CAP(_CAPGetter):
                 # Computation of each CAP metric will be conducted on the combined vector
                 continuous_runs = [0,1,1,2,3,3]
 
+            ..versionchanged:: 0.17.11 to signify the ``continuous_runs``, the label in the "Run" column in the
+            dataframe changed from "continuous_runs" to "run-continuous"
+
         metrics : {"temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"} \
                   or :obj:`list["temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"]`, \
                   default=["temporal_fraction", "persistence", "counts", "transition_frequency"]
@@ -997,6 +1000,8 @@ class CAP(_CAPGetter):
 
         If no groups are specified, then the dataframe is stored in ``df_dict["transition_probability"]["All Subjects"]``.
 
+        *For the "Group" column, whitespace in group names no longer replaced with underscores in versions >=0.17.11.*
+
         References
         ----------
         Liu, X., Zhang, N., Chang, C., & Duyn, J. H. (2018). Co-activation patterns in resting-state fMRI signals.
@@ -1036,8 +1041,6 @@ class CAP(_CAPGetter):
         distributed_list = self._distribute(predicted_subject_timeseries)
 
         for subj_id, group, curr_run in distributed_list:
-            group_name = group.replace(" ", "_")
-
             if "temporal_fraction" in metrics:
                 # Get frequency
                 frequency_dict = {key: np.where(predicted_subject_timeseries[subj_id][curr_run] == key,1,0).sum()
@@ -1048,7 +1051,7 @@ class CAP(_CAPGetter):
                     proportion_dict = {key: value/(len(predicted_subject_timeseries[subj_id][curr_run]))
                                        for key, value in frequency_dict.items()}
                     # Populate Dataframe
-                    new_row = [subj_id, group_name, curr_run] + [items for items in proportion_dict.values()]
+                    new_row = [subj_id, group, curr_run] + [items for items in proportion_dict.values()]
                     df_dict["temporal_fraction"].loc[len(df_dict["temporal_fraction"])] = new_row
 
             if "counts" in metrics:
@@ -1060,7 +1063,7 @@ class CAP(_CAPGetter):
                 self._update_dict(cap_numbers, group_cap_counts[group], count_dict)
 
                 # Populate Dataframe
-                new_row = [subj_id, group_name, curr_run] + [items for items in count_dict.values()]
+                new_row = [subj_id, group, curr_run] + [items for items in count_dict.values()]
                 df_dict["counts"].loc[len(df_dict["counts"])] = new_row
 
             if "persistence" in metrics:
@@ -1077,7 +1080,7 @@ class CAP(_CAPGetter):
                 self._update_dict(cap_numbers, group_cap_counts[group], persistence_dict)
 
                 # Populate Dataframe
-                new_row = [subj_id, group_name, curr_run] + [items for _ , items in persistence_dict.items()]
+                new_row = [subj_id, group, curr_run] + [items for _ , items in persistence_dict.items()]
                 df_dict["persistence"].loc[len(df_dict["persistence"])] = new_row
 
             if "transition_frequency" in metrics:
@@ -1086,7 +1089,7 @@ class CAP(_CAPGetter):
                 transition_frequency = np.where(
                     np.diff(predicted_subject_timeseries[subj_id][curr_run], n=1) != 0, 1, 0).sum()
                 # Populate DataFrame
-                new_row = [subj_id, group_name, curr_run, transition_frequency]
+                new_row = [subj_id, group, curr_run, transition_frequency]
                 df_dict["transition_frequency"].loc[len(df_dict["transition_frequency"])] = new_row
 
             if "transition_probability" in metrics:
@@ -1189,20 +1192,20 @@ class CAP(_CAPGetter):
                     timeseries = subject_timeseries[subj_id][curr_run]
 
                 # Set run_id
-                run_id = curr_run if not continuous_runs or len(subject_runs) == 1 else "continuous_runs"
+                run_id = curr_run if not continuous_runs or len(subject_runs) == 1 else "run-continuous"
 
                 # Add 1 to the prediction vector since labels start at 0, needed to ensure that the labels map onto the
                 # caps
                 prediction_vector = self._kmeans[group].predict(timeseries) + 1
 
-                if run_id != "continuous_runs":
+                if run_id != "run-continuous":
                     predicted_subject_timeseries[subj_id].update({run_id: prediction_vector})
                 else:
                     # Horizontally stack predicted runs
                     if curr_run == subject_runs[0]: predicted_continuous_timeseries = prediction_vector
                     else: predicted_continuous_timeseries = np.hstack([predicted_continuous_timeseries,
                                                                        prediction_vector])
-            if run_id == "continuous_runs":
+            if run_id == "run-continuous":
                 predicted_subject_timeseries[subj_id].update({run_id: predicted_continuous_timeseries})
 
         return predicted_subject_timeseries

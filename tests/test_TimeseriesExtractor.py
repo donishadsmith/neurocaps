@@ -210,11 +210,11 @@ def test_extraction(parcel_approach, use_confounds, name):
     assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == shape
     assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 40
 
-    extractor.visualize_bold(subj_id="01",run="001", region=region[name], show_figs=False,
+    extractor.visualize_bold(subj_id="01", run="001", region=region[name], show_figs=False,
                              output_dir=tmp_dir.name, file_name="testing_save_regions")
-    extractor.visualize_bold(subj_id="01",run="001", roi_indx=0, show_figs=False,
+    extractor.visualize_bold(subj_id="01", run="001", roi_indx=0, show_figs=False,
                              output_dir=tmp_dir.name, file_name="testing_save_nodes")
-    extractor.visualize_bold(subj_id="01",run="001", roi_indx=[0,1,2], show_figs=False,
+    extractor.visualize_bold(subj_id="01", run="001", roi_indx=[0,1,2], show_figs=False,
                              output_dir=tmp_dir.name, file_name="testing_save_nodes_2")
 
     png_files = glob.glob(os.path.join(tmp_dir.name, "*testing_save*.png"))
@@ -724,3 +724,36 @@ def test_dtype():
     extractor = TimeseriesExtractor(dtype="float64")
     extractor.get_bold(bids_dir=bids_dir, task="rest", run_subjects=["01"])
     assert extractor.subject_timeseries["01"]["run-0"].dtype == np.float64
+
+def test_validate_timeseries_setter():
+    import re
+
+    extractor = TimeseriesExtractor()
+
+    correct_format = {str(x) : {f"run-{y}": np.random.rand(100, 100) for y in range(1,4)} for x in range(1,4)}
+
+    # Correct format
+    extractor.subject_timeseries = correct_format
+
+    incorrect_format1 = []
+
+    incorrect_format2 = {str(x) : {f"run-{y}": np.random.rand(100, 100) for y in range(1,4)} for x in range(1,4)}
+    incorrect_format2["4"] = np.random.rand(100, 100)
+
+    incorrect_format3 = {str(x) : {f"x-{y}": np.random.rand(100, 100) for y in range(1,4)} for x in range(1,4)}
+
+    incorrect_format4 = {str(x) : {f"run-{y}": np.random.rand(100, 100) for y in range(1,4)} for x in range(1,4)}
+    incorrect_format4["3"].update({"run-5": {}})
+
+    error_msg = ("A valid pickle file/subject timeseries should contain a nested dictionary where the "
+                 "first level is the subject id, second level is the run number in the form of 'run-#', and "
+                 "the final level is the timeseries as a numpy array. ")
+
+    error_dict = {"1": error_msg,
+                  "2": error_msg + "The error occurred at [SUBJECT: 4]. The subject must be a dictionary with second level 'run-#' keys.",
+                  "3": error_msg + "The error occurred at [SUBJECT: 1]. Not all second level keys follow the form of 'run-#'.",
+                  "4": error_msg + "The error occurred at [SUBJECT: 3 | RUN: run-5]. All 'run-#' keys must contain a numpy array."}
+
+    for key, arr in [("1", incorrect_format1), ("2", incorrect_format2), ("3", incorrect_format3), ("4", incorrect_format4)]:
+        with pytest.raises(TypeError, match=re.escape(error_dict[key])):
+            extractor.subject_timeseries = arr

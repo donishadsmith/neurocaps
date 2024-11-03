@@ -587,8 +587,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         if pipeline_name:
             pipeline_name = os.path.normpath(pipeline_name).lstrip(os.path.sep).rstrip(os.path.sep)
+
             if pipeline_name.startswith("derivatives"):
                 pipeline_name = pipeline_name[len("derivatives"):].lstrip(os.path.sep)
+
             layout = bids.BIDSLayout(bids_dir, derivatives=os.path.join(bids_dir, "derivatives", pipeline_name))
         else:
             layout = bids.BIDSLayout(bids_dir, derivatives=True)
@@ -600,6 +602,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     # Get valid subjects to iterate through
     def _setup_extraction(self, layout, subj_ids, exclude_niftis, verbose):
         base_dict = {"layout": layout, "subj_id": None}
+
         for subj_id in subj_ids:
             base_dict["subj_id"] = subj_id
             files = self._build_dict(base_dict)
@@ -657,6 +660,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                    event=False, space="attr"):
         query_dict = {"scope": scope, "return_type": "file", "task": self._task_info["task"], "extension": extension,
                       "subject": subj_id}
+
         if desc: query_dict.update({"desc": desc})
         if suffix: query_dict.update({"suffix": suffix})
         if self._task_info["session"]: query_dict.update({"session": self._task_info["session"]})
@@ -669,12 +673,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         files["niftis"] = self._get_files(**base, suffix="bold", extension="nii.gz")
         files["masks"] = self._get_files(**base, suffix="mask", extension="nii.gz")
         files["bold_meta"] = self._get_files(**base, suffix="bold", extension="json")
+
         if not files["bold_meta"]:
             files["bold_meta"] = self._get_files(**base, scope="raw", suffix="bold", extension="json", space=None)
         if self._task_info["condition"]:
             files["events"] = self._get_files(**base, scope="raw", suffix="events", extension="tsv", event=True)
         else:
             files["events"] = []
+
         files["confounds"] = self._get_files(**base, desc="confounds", extension="tsv")
         files["confounds_metas"] = self._get_files(**base, extension="json", desc="confounds")
 
@@ -715,6 +721,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
     def _check_sess(self, niftis, subject_header):
         ses_list = []
+
         for nifti in niftis:
             if "ses-" in os.path.basename(nifti):
                 ses_list.append(re.search(r"ses-(\S+?)[-_]", os.path.basename(nifti))[0][:-1])
@@ -729,6 +736,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
     def _gen_runs(self, niftis):
         check_runs = []
+
         for nifti in niftis:
             if self._task_info["runs"]:
                 check_runs.extend([f"run-{run}" for run in self._task_info["runs"]])
@@ -740,9 +748,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
     def _intersect_runs(self, check_runs, files):
         run_list = []
+
         # Check if at least one run has all files present
         for run in check_runs:
             curr_list = []
+
             # Assess is any of these returns True
             curr_list.append(any([run in file for file in files["niftis"]]))
             if self._task_info["condition"]: curr_list.append(any([run in file for file in files["events"]]))
@@ -750,6 +760,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 curr_list.append(any([run in file for file in files["confounds"]]))
                 if self._signal_clean_info["n_acompcor_separate"]:
                     curr_list.append(any([run in file for file in files["confounds_metas"]]))
+
             if files["masks"]: curr_list.append(any([run in file for file in files["masks"]]))
             # Append runs that contain all needed files
             if all(curr_list): run_list.append(run)
@@ -885,56 +896,30 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             LG.warning("`file_name` supplied but no `output_dir` specified. Files will not be saved.")
 
         parcellation_name = list(self._parcel_approach)[0]
+
         # Defaults
         defaults = {"dpi": 300,"figsize": (11,5), "bbox_inches": "tight"}
 
         plot_dict = _check_kwargs(defaults, **kwargs)
 
         # Obtain the column indices associated with the rois
-        if roi_indx or roi_indx == 0:
-            if isinstance(roi_indx, int):
-                plot_indxs = roi_indx
-            elif isinstance(roi_indx, str):
-                # Check if parcellation_approach is custom
-                if "Custom" in self._parcel_approach and "nodes" not in self._parcel_approach["Custom"]:
-                    _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_bold")
-                plot_indxs = self._parcel_approach[parcellation_name]["nodes"].index(roi_indx)
-            else:
-                if all([isinstance(indx,int) for indx in roi_indx]):
-                    plot_indxs = np.array(roi_indx)
-                elif all([isinstance(indx,str) for indx in roi_indx]):
-                    # Check if parcellation_approach is custom
-                    if "Custom" in self._parcel_approach and "nodes" not in self._parcel_approach["Custom"]:
-                        _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_bold")
-                    plot_indxs = np.array([self._parcel_approach[parcellation_name]["nodes"].index(index)
-                                           for index in roi_indx])
-                else:
-                    raise ValueError("All elements in `roi_indx` need to be all strings or all integers.")
-        else:
-            if "Custom" in self._parcel_approach:
-                if "regions" not in self._parcel_approach["Custom"]:
-                    _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_bold")
-                else:
-                    plot_indxs =  np.array(self._parcel_approach["Custom"]["regions"][region]["lh"] +
-                                           self._parcel_approach["Custom"]["regions"][region]["rh"])
-            else:
-                plot_indxs = np.array([index for index, label in
-                                       enumerate(self._parcel_approach[parcellation_name]["nodes"])
-                                       if region in label])
+        if roi_indx or roi_indx == 0: plot_indxs = self._get_roi_indices(roi_indx, parcellation_name)
+        else: plot_indxs = self._get_region_indices(region, parcellation_name)
 
         plt.figure(figsize=plot_dict["figsize"])
 
         timeseries = self._subject_timeseries[str(subj_id)][f"run-{run}"]
 
         if roi_indx or roi_indx == 0:
-            plt.plot(range(1, timeseries.shape[0] + 1), timeseries[:,plot_indxs])
-            if isinstance(roi_indx, (int,str)) or (isinstance(roi_indx, list) and len(roi_indx) == 1):
+            plt.plot(range(1, timeseries.shape[0] + 1), timeseries[:, plot_indxs])
+
+            if isinstance(roi_indx, (int, str)) or (isinstance(roi_indx, list) and len(roi_indx) == 1):
                 if isinstance(roi_indx, int): roi_title = self._parcel_approach[parcellation_name]["nodes"][roi_indx]
                 elif isinstance(roi_indx, str): roi_title = roi_indx
                 else: roi_title = roi_indx[0]
                 plt.title(roi_title)
         else:
-            plt.plot(range(1, timeseries.shape[0] + 1), np.mean(timeseries[:,plot_indxs], axis=1))
+            plt.plot(range(1, timeseries.shape[0] + 1), np.mean(timeseries[:, plot_indxs], axis=1))
             plt.title(region)
 
         plt.xlabel("TR")
@@ -943,7 +928,48 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             if not os.path.exists(output_dir): os.makedirs(output_dir)
             if file_name: save_file_name = f"{os.path.splitext(file_name.rstrip())[0].rstrip()}.png"
             else: save_file_name = f'subject-{subj_id}_run-{run}_timeseries.png'
+
             plt.savefig(os.path.join(output_dir,save_file_name), dpi=plot_dict["dpi"],
                         bbox_inches=plot_dict["bbox_inches"])
 
         plt.show() if show_figs else plt.close()
+
+    def _get_roi_indices(self, roi_indx, parcellation_name):
+        if isinstance(roi_indx, int):
+            plot_indxs = roi_indx
+        elif isinstance(roi_indx, str):
+            # Check if parcellation_approach is custom
+            if "Custom" in self._parcel_approach and "nodes" not in self._parcel_approach["Custom"]:
+                _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_bold")
+
+            plot_indxs = self._parcel_approach[parcellation_name]["nodes"].index(roi_indx)
+        else:
+            if all([isinstance(indx, int) for indx in roi_indx]):
+                plot_indxs = np.array(roi_indx)
+            elif all([isinstance(indx, str) for indx in roi_indx]):
+                # Check if parcellation_approach is custom
+                if "Custom" in self._parcel_approach and "nodes" not in self._parcel_approach["Custom"]:
+                    _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_bold")
+
+                plot_indxs = np.array(
+                    [self._parcel_approach[parcellation_name]["nodes"].index(index) for index in roi_indx]
+                    )
+            else:
+                raise ValueError("All elements in `roi_indx` need to be all strings or all integers.")
+
+        return plot_indxs
+
+    def _get_region_indices(self, region, parcellation_name):
+        if "Custom" in self._parcel_approach:
+            if "regions" not in self._parcel_approach["Custom"]:
+                _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_bold")
+            else:
+                plot_indxs = np.array(self._parcel_approach["Custom"]["regions"][region]["lh"] +
+                                      self._parcel_approach["Custom"]["regions"][region]["rh"])
+        else:
+            plot_indxs = np.array(
+                [index for index, label in enumerate(self._parcel_approach[parcellation_name]["nodes"])
+                 if region in label]
+                )
+
+        return plot_indxs

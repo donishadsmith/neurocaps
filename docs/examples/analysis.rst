@@ -35,7 +35,7 @@ Performing CAPs on All Subjects
 
     # Get CAPs
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
-                          n_clusters=list(range(2,11)),
+                          n_clusters=range(2,11),
                           cluster_selection_method="elbow",
                           show_figs=True,
                           step=2)
@@ -56,7 +56,7 @@ Performing CAPs on Groups
     cap_analysis = CAP(groups={"A": ["1","2","3","5"], "B": ["4","6","7","8","9","10"]})
 
     cap_analysis.get_caps(subject_timeseries="subject_timeseries.pkl",
-                          n_clusters=list(range(2,21)),
+                          n_clusters=range(2,21),
                           cluster_selection_method="silhouette",
                           show_figs=True,
                           step=2)
@@ -134,8 +134,8 @@ Plotting CAPs
 .. image:: embed/All_Subjects_CAPs_heatmap-nodes.png
     :width: 600
 
-Generate Correlation Matrix
----------------------------
+Generate Pearson Correlation Matrix
+-----------------------------------
 .. code-block:: python
 
     cap_analysis.caps2corr(annot=True,

@@ -15,7 +15,7 @@ def _logger(name, flush=False, top_level=True, parallel_log_config=None):
     global _USER_ROOT_HANDLER, _USER_MODULE_HANDLERS
 
     logger = logging.getLogger(name)
-    parallel_module = "neurocaps._utils.extraction.extract_timeseries" 
+    parallel_module = "neurocaps._utils.extraction.extract_timeseries"
 
     # Windows appears to assign stderr has the root handler after the top level loggers are assigned, which causes
     # any loggers not assigned at top level to adopt this handler. Global variable used to assess if the base root

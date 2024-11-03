@@ -1,4 +1,5 @@
-"""A class which is responsible for accessing all TimeseriesExtractorGetter and to keep track of all attributes in TimeSeriesExtractor"""
+"""A class which is responsible for accessing all TimeseriesExtractorGetter and to keep track of all attributes in
+TimeSeriesExtractor"""
 import copy
 import numpy as np
 from ..check_parcel_approach import _check_parcel_approach
@@ -15,6 +16,7 @@ class _TimeseriesExtractorGetter:
 
     @space.setter
     def space(self, new_space):
+        if not isinstance(new_space, str): TypeError("`space` must be a string.")
         self._space = new_space
 
     @property
@@ -53,20 +55,38 @@ class _TimeseriesExtractorGetter:
 
     @subject_timeseries.setter
     def subject_timeseries(self, subject_dict):
-        error_message = ("A valid pickle file/subject timeseries should contain a nested dictionary where the "
-                         "first level is the subject id, second level is the run number in the form of 'run-#', and "
-                         "the final level is the timeseries as a numpy array.")
+        need_deepcopy = True
+
         if isinstance(subject_dict, str) and subject_dict.endswith(".pkl"):
-            self._subject_timeseries = _convert_pickle_to_dict(subject_dict)
-        elif isinstance(subject_dict, dict):
-            first_level_indx = list(subject_dict)[0]
-            if isinstance(subject_dict[first_level_indx], dict) and subject_dict[first_level_indx] and "run" in list(subject_dict[first_level_indx])[0]:
-                run = list(subject_dict[first_level_indx])[0]
-                if isinstance(subject_dict[first_level_indx][run],np.ndarray):
-                    self._subject_timeseries = copy.deepcopy(subject_dict)
-                else:
-                    raise TypeError(error_message)
-            else:
-                raise TypeError(error_message)
-        else:
-            raise TypeError(error_message)
+            subject_dict = _convert_pickle_to_dict(subject_dict)
+            need_deepcopy = False
+
+        self._validate_timeseries(subject_dict)
+
+        if need_deepcopy: self._subject_timeseries = copy.deepcopy(subject_dict)
+        else: self._subject_timeseries = subject_dict
+
+    @staticmethod
+    def _validate_timeseries(subject_dict):
+        error_msg = ("A valid pickle file/subject timeseries should contain a nested dictionary where the "
+                     "first level is the subject id, second level is the run number in the form of 'run-#', and "
+                     "the final level is the timeseries as a numpy array. ")
+
+        error_dict = {"Sub": error_msg + "The error occurred at [SUBJECT: {0}]. ",
+                      "Run": error_msg + "The error occurred at [SUBJECT: {0} | RUN: {1}]. "}
+
+        if not isinstance(subject_dict, dict): raise TypeError(error_msg)
+
+        for sub in subject_dict:
+            if not isinstance(subject_dict[sub], dict):
+                raise TypeError(error_dict["Sub"].format(sub) + "The subject must be a dictionary with second level "
+                                "'run-#' keys.")
+
+            runs = list(subject_dict[sub])
+
+            if not all("run" in x for x in runs):
+                raise TypeError(error_dict["Sub"].format(sub) + "Not all second level keys follow the form of 'run-#'.")
+
+            for run in runs:
+                if not isinstance(subject_dict[sub][run], np.ndarray):
+                    raise TypeError(error_dict["Run"].format(sub, run) + "All 'run-#' keys must contain a numpy array.")

@@ -9,6 +9,7 @@ LG  = _logger(__name__)
 def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
     atlas = nib.load(atlas_file)
     atlas_fdata = atlas.get_fdata()
+
     # Get array containing all labels in atlas to avoid issue if the first non-zero atlas label is not 1
     target_array = sorted(np.unique(atlas_fdata))
 
@@ -20,16 +21,15 @@ def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
 
     # Knn implementation to aid in coverage issues
     if knn_dict:
-
         if "remove_subcortical" in knn_dict:
             # Get original atlas or else the indices won't be obtained due to mutability
             original_atlas = nib.load(atlas_file)
-            subcortical_indices = np.where(np.isin(original_atlas.get_fdata(),knn_dict["remove_subcortical"]))
+            subcortical_indices = np.where(np.isin(original_atlas.get_fdata(), knn_dict["remove_subcortical"]))
             stat_map.get_fdata()[subcortical_indices] = 0
 
             # Get target indices
             target_indices = _get_target_indices(atlas_file=atlas_file, knn_dict=knn_dict,
-                                                subcortical_indices=subcortical_indices)
+                                                 subcortical_indices=subcortical_indices)
         else:
              # Get target indices
             target_indices = _get_target_indices(atlas_file=atlas_file, knn_dict=knn_dict, subcortical_indices=None)
@@ -51,7 +51,10 @@ def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
 
             if k > 1:
                 # Values of nearest neighbors
-                neighbor_values = [stat_map.get_fdata()[tuple(nearest_neighbor)] for nearest_neighbor in nearest_neighbors]
+                neighbor_values = [
+                    stat_map.get_fdata()[tuple(nearest_neighbor)] for nearest_neighbor in nearest_neighbors
+                    ]
+
                 # Majority vote
                 new_value = max(set(neighbor_values), key=neighbor_values.count)
             else:
@@ -62,17 +65,18 @@ def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
             stat_map.get_fdata()[tuple(target_indx)] = new_value
 
     # Add smoothing to stat map to help mitigate potential coverage issues
-    if fwhm is not None:
-        stat_map = image.smooth_img(stat_map, fwhm=fwhm)
+    if fwhm is not None: stat_map = image.smooth_img(stat_map, fwhm=fwhm)
 
     return stat_map
 
 def _get_target_indices(atlas_file, knn_dict, subcortical_indices=None):
     atlas = nib.load(atlas_file)
+
     # Get schaefer atlas, which projects well onto cortical surface plots
     if "resolution_mm" not in knn_dict:
         LG.warning("Defaulting to 1mm resolution for the Schaefer atlas since 'resolution_mm' was not specified in "
                    "`knn_dict`.")
+
         resolution_mm = 1
     else:
         resolution_mm = knn_dict["resolution_mm"]
@@ -81,7 +85,7 @@ def _get_target_indices(atlas_file, knn_dict, subcortical_indices=None):
 
     # Resample schaefer to atlas file using nearest interpolation to retain labels
     resampled_schaefer = image.resample_to_img(schaefer_atlas, atlas, interpolation="nearest")
-    # Get indices that equal zero in schaefer atlas to avoid interpolating background values, will also get the indices for subcortical
+    # Get indices that equal zero in schaefer atlas to avoid interpolating background values
     background_indices_schaefer = set(zip(*np.where(resampled_schaefer.get_fdata() == 0)))
     # Get indices 0 indices for atlas
     background_indices_atlas = set(zip(*np.where(atlas.get_fdata() == 0)))

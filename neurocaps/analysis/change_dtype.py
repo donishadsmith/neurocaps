@@ -66,19 +66,21 @@ def change_dtype(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndar
     that could significantly  alter calculations.
     """
     assert isinstance(subject_timeseries_list, list), "`subject_timeseries_list` must be a list."
+
     changed_dtype_dicts = {}
 
     for indx, curr_dict in enumerate(subject_timeseries_list):
-        if isinstance(curr_dict, str) and curr_dict.endswith(".pkl"):
-            curr_dict = _convert_pickle_to_dict(curr_dict)
-        else:
-            curr_dict =  copy.deepcopy(curr_dict)
+        if isinstance(curr_dict, str) and curr_dict.endswith(".pkl"): curr_dict = _convert_pickle_to_dict(curr_dict)
+        else: curr_dict =  copy.deepcopy(curr_dict)
+
         for subj_id in curr_dict:
             for run in curr_dict[subj_id]:
                 curr_dict[subj_id][run] = curr_dict[subj_id][run].astype(dtype)
+
         changed_dtype_dicts[f"dict_{indx}"] = curr_dict
 
     if output_dir:
-        _dicts_to_pickles(output_dir=output_dir, dict_list=changed_dtype_dicts, file_names=file_names, call="change_dtype")
+        _dicts_to_pickles(output_dir=output_dir, dict_list=changed_dtype_dicts, file_names=file_names,
+                          call="change_dtype")
 
     if return_dicts: return changed_dtype_dicts

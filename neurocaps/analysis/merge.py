@@ -107,7 +107,9 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
     for curr_dict in subject_timeseries_list:
         if isinstance(curr_dict, str) and curr_dict.endswith(".pkl"):
             curr_dict = _convert_pickle_to_dict(pickle_file=curr_dict)
+
         if not subject_set: subject_set = set(curr_dict)
+
         subject_set = subject_set.intersection(list(curr_dict))
 
     # Order subjects
@@ -118,20 +120,22 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
     for curr_dict in subject_timeseries_list:
         if isinstance(curr_dict, str) and curr_dict.endswith(".pkl"):
             curr_dict = _convert_pickle_to_dict(pickle_file=curr_dict)
+
         for subj_id in intersect_subjects:
             if subj_id not in subject_timeseries_merged: subject_timeseries_merged.update({subj_id: {}})
             # Get run names in the current iteration
             for curr_run in curr_dict[subj_id]:
                 # If run is in merged dict, stack. If not, add
                 if curr_run in subject_timeseries_merged[subj_id]:
-                    subject_timeseries_merged[subj_id][curr_run] = np.vstack([subject_timeseries_merged[subj_id][curr_run],
-                                                                                curr_dict[subj_id][curr_run]])
+                    subject_timeseries_merged[subj_id][curr_run] = np.vstack(
+                        [subject_timeseries_merged[subj_id][curr_run], curr_dict[subj_id][curr_run]])
                 else:
                     subject_timeseries_merged[subj_id].update({curr_run: curr_dict[subj_id][curr_run]})
-            # Sort runs lexicographically, keys may be disordered if the first curr_dict does not contain the earliest run_id
+
+            # Sort runs lexicographically
             if list(subject_timeseries_merged[subj_id]) != sorted(subject_timeseries_merged[subj_id].keys()):
                 subject_timeseries_merged[subj_id] = {run_id: subject_timeseries_merged[subj_id][run_id] for run_id
-                                                        in sorted(subject_timeseries_merged[subj_id].keys())}
+                                                      in sorted(subject_timeseries_merged[subj_id].keys())}
 
     modified_dicts = {}
 
@@ -139,14 +143,13 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
         for indx, curr_dict in enumerate(subject_timeseries_list):
             if "pkl" in curr_dict: curr_dict = _convert_pickle_to_dict(pickle_file=curr_dict)
             else: curr_dict = copy.deepcopy(curr_dict)
+
             if any([elem in subject_timeseries_merged for elem in curr_dict]):
                 modified_dicts[f"dict_{indx}"] = {}
                 for subj_id in subject_timeseries_merged:
                     if subj_id in curr_dict: modified_dicts[f"dict_{indx}"].update({subj_id : curr_dict[subj_id]})
 
     if return_merged_dict or output_dir: modified_dicts["merged"] = subject_timeseries_merged
-
-
 
     if output_dir:
         message = ("Length of `file_names` must be equal to 1 if `save_reduced_dicts`is False or the length of "

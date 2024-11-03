@@ -55,15 +55,15 @@ def standardize(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
     -------
     `dict[str, dict[str, dict[str, np.ndarray]]]`
     """
-    assert isinstance(subject_timeseries_list, list) and len(subject_timeseries_list) > 0, "`subject_timeseries_list` must be a list greater than length 0."
+    assert isinstance(subject_timeseries_list, list) and len(subject_timeseries_list) > 0, \
+        "`subject_timeseries_list` must be a list greater than length 0."
     # Initialize  dict
     standardized_dicts = {}
 
     for indx, curr_dict in enumerate(subject_timeseries_list):
-        if isinstance(curr_dict, str) and curr_dict.endswith(".pkl"):
-            curr_dict = _convert_pickle_to_dict(curr_dict)
-        else:
-            curr_dict =  copy.deepcopy(curr_dict)
+        if isinstance(curr_dict, str) and curr_dict.endswith(".pkl"): curr_dict = _convert_pickle_to_dict(curr_dict)
+        else: curr_dict =  copy.deepcopy(curr_dict)
+
         for subj_id in curr_dict:
             for run in curr_dict[subj_id]:
                 std = np.std(curr_dict[subj_id][run], axis=0, ddof=1)
@@ -72,9 +72,11 @@ def standardize(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
                 std[std < eps] = 1.0
                 mean = np.mean(curr_dict[subj_id][run], axis=0)
                 curr_dict[subj_id][run] = (curr_dict[subj_id][run] - mean)/std
+
         standardized_dicts[f"dict_{indx}"] = curr_dict
 
     if output_dir:
-        _dicts_to_pickles(output_dir=output_dir, dict_list=standardized_dicts, file_names=file_names, call="standardize")
+        _dicts_to_pickles(output_dir=output_dir, dict_list=standardized_dicts, file_names=file_names,
+                          call="standardize")
 
     if return_dicts: return standardized_dicts

@@ -16,6 +16,19 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.17.11] - 2024-11-03
+### ♻ Changed
+- In `CAP.calculate_metrics`, if `continuous_runs` used, then in the "Run" column, the labels for these runs will
+now follow the "run-" format and has changed from "continuous_runs" to run-continuous"
+- Also in `CAP.calculate_metrics`, the group labels in the dataframe will no longer replace whitespace with underline.
+Do names such as "High ADHD" wil no longer change to "High_ADHD" in the dataframe.
+- The averaged transition matrix dataframe from `transition_matrix` now contains to index name "From\To" to show that
+the index CAPs are "From" and the column CAPs are "To".
+### 🐛 Fixes
+- More robust error checking to ensure that the ``subject_timeseries`` follows the correct format when the
+``subject_timeseries`` setter property is used in ``TimeseriesExtractor``.
+- For ``space`` setter property is used in ``TimeseriesExtractor``, checks to ensure it is a string.
+
 ## [0.17.10] - 2024-11-02
 ### ♻ Changed
 - Logger names now use `__name__` instead of `__name__.split(".")[-1]`
