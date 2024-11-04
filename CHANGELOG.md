@@ -16,6 +16,10 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.17.11.post0] - 2024-11-03
+### 📖 Documentation
+- Minor fix to a versionchanged directive
+
 ## [0.17.11] - 2024-11-03
 ### ♻ Changed
 - In `CAP.calculate_metrics`, if `continuous_runs` used, then in the "Run" column, the labels for these runs will

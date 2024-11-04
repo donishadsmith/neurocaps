@@ -883,8 +883,8 @@ class CAP(_CAPGetter):
                 # Computation of each CAP metric will be conducted on the combined vector
                 continuous_runs = [0,1,1,2,3,3]
 
-            ..versionchanged:: 0.17.11 to signify the ``continuous_runs``, the label in the "Run" column in the
-            dataframe changed from "continuous_runs" to "run-continuous"
+            .. versionchanged:: 0.17.11 the label in the "Run" column in the dataframe changed from
+               "continuous_runs" to "run-continuous"
 
         metrics : {"temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"} \
                   or :obj:`list["temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"]`, \
