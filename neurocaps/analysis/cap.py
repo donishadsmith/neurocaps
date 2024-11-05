@@ -131,58 +131,58 @@ class CAP(_CAPGetter):
             }
 
     davies_bouldin : :obj:`dict[str, dict[str, float]]`
-        A dictionary mapping groups to the assessed cluster sizes and corresponding score if
+        A dictionary mapping groups to the assessed cluster sizes and corresponding davies bouldin score if
         ``cluster_selection_method`` in ``self.get_caps()`` is set to "variance_ratio". The structure is as follows:
 
         ::
 
             {
                 "GroupName": {
-                    "2": float,
-                    "3": float,
-                    "4": float,
+                    2: float,
+                    3: float,
+                    4: float,
                 }
             }
 
     inertia : :obj:`dict[str, dict[str, float]]`
-        A dictionary mapping groups to the assessed cluster sizes and corresponding score if
+        A dictionary mapping groups to the assessed cluster sizes and corresponding inertia score if
         ``cluster_selection_method`` in ``self.get_caps()`` is set to "variance_ratio". The structure is as follows:
 
         ::
 
             {
                 "GroupName": {
-                    "2": float,
-                    "3": float,
-                    "4": float,
+                    2: float,
+                    3: float,
+                    4: float,
                 }
             }
 
     silhouette_scores : :obj:`dict[str, dict[str, float]]`
-        A dictionary mapping groups to the assessed cluster sizes and corresponding score if
+        A dictionary mapping groups to the assessed cluster sizes and corresponding silhouette score if
         ``cluster_selection_method`` in ``self.get_caps()`` is set to "variance_ratio". The structure is as follows:
 
         ::
 
             {
                 "GroupName": {
-                    "2": float,
-                    "3": float,
-                    "4": float,
+                    2: float,
+                    3: float,
+                    4: float,
                 }
             }
 
     variance_ratio : :obj:`dict[str, dict[str, float]]`
-        A dictionary mapping groups to the assessed cluster sizes and corresponding score if
+        A dictionary mapping groups to the assessed cluster sizes and corresponding variance ratio score if
         ``cluster_selection_method`` in ``self.get_caps()`` is set to "variance_ratio". The structure is as follows:
 
         ::
 
             {
                 "GroupName": {
-                    "2": float,
-                    "3": float,
-                    "4": float,
+                    2: float,
+                    3: float,
+                    4: float,
                 }
             }
 
