@@ -543,7 +543,7 @@ def test_plotting_functions(current_timeseries, parcel_approach):
                 "tickvals": [0.1,0.2,0.3]}
 
     # Radar plotting functions
-    cap_analysis.caps2radar(output_dir=tmp_dir.name, show_figs=True)
+    cap_analysis.caps2radar(output_dir=tmp_dir.name, show_figs=False)
     check_imgs(plot_type="radar", values_dict={"png": 2})
     cap_analysis.caps2radar(radialaxis=radialaxis, fill="toself", show_figs=False, as_html=True,
                             output_dir=tmp_dir.name)
