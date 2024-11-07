@@ -12,7 +12,7 @@ LG = _logger(__name__)
 
 class TimeseriesExtractor(_TimeseriesExtractorGetter):
     """
-    **Timeseries Extractor Class**
+    Timeseries Extractor Class.
 
     Initializes the Timeseries Extractor class.
 
@@ -24,15 +24,21 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
     parcel_approach : :obj:`dict[str, dict[str, str | int]]` or :obj:`os.PathLike`, \
                       default={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
-        The approach to parcellate BOLD images. This should be a nested dictionary with the first key being the
+        The approach to parcellate BOLD images. This must be a nested dictionary with the first key being the
         parcellation name. Currently, only "Schaefer", "AAL", and "Custom" are supported.
 
-        - For "Schaefer", available sub-keys include "n_rois", "yeo_networks", and "resolution_mm".
-          Refer to documentation for ``nilearn.datasets.fetch_atlas_schaefer_2018`` for valid inputs.
-        - For "AAL", the only sub-key is "version". Refer to documentation for ``nilearn.datasets.fetch_atlas_aal``
-          for valid inputs.
-        - For "Custom", the key must include a sub-key called "maps" specifying the directory location of the
-          parcellation.
+        - For "Schaefer", available sub-keys include "n_rois", "yeo_networks", and "resolution_mm". For missing
+          sub-keys, defaults include - 400 for "n_rois", 7 for "yeo_networks", and 1 for "resolution_mm".
+          Refer to documentation for ``nilearn.datasets.fetch_atlas_schaefer_2018`` for valid inputs for each sub-key.
+        - For "AAL", the only sub-key is "version", which defaults to "SPM12" if ``{"AAL": {}}`` is supplied. Refer to
+          documentation for ``nilearn.datasets.fetch_atlas_aal`` for valid inputs for the "version" sub-key.
+        - For "Custom", the following keys are recognized:
+
+            - "maps": Directory path to the location of the parcellation file. Must be included for ``self.get_bold``.
+            - "nodes": A list of node names in the order of the label IDs in the parcellation.
+            - "regions": The regions or networks in the parcellation.
+
+        Also, refer to the "Note" section below for an explanation of the "Custom" ``parcel_approach``.
 
     standardize : {"zscore_sample", "zscore", "psc", True, False}, default="zscore_sample"
         Determines whether to standardize the timeseries. Refer to ``nilearn.maskers.NiftiLabelsMasker`` for available
@@ -342,14 +348,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                  tr: Optional[Union[int, float]]=None,
                  run_subjects: Optional[list[str]]=None,
                  exclude_subjects: Optional[list[str]]= None,
+                 exclude_niftis: Optional[list[str]]=None,
                  pipeline_name: Optional[str]=None,
                  n_cores: Optional[int]=None,
+                 parallel_log_config: Optional[dict[str, Union[Callable, int]]]=None,
                  verbose: bool=True,
-                 flush: bool=False,
-                 exclude_niftis: Optional[list[str]]=None,
-                 parallel_log_config: Optional[dict[str, Union[Callable, int]]]=None) -> None:
+                 flush: bool=False) -> None:
         """
-        **Retrieve Preprocessed BOLD Data from BIDS Datasets**
+        Retrieve Preprocessed BOLD Data from BIDS Datasets.
 
         This function uses pybids for querying and requires the BOLD data directory (specified in ``bids_dir``) to be
         BIDS-compliant, including a "dataset_description.json" file. It assumes the dataset contains a derivatives
@@ -387,6 +393,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             ::
 
                 runs=[0,1]
+
                 # Or if run IDs are not integers
                 runs=["000","001"]
 
@@ -404,6 +411,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         exclude_subjects : :obj:`list[str]` or :obj:`None`, default=None
             List of subject IDs to exclude.
 
+        exclude_niftis : :obj:`list[str]` or :obj:`None`, default=None
+            List of specific preprocessed NIfTI files to exclude, preventing their timeseries from being extracted.
+            Used if there are specific runs across different participants that need to be
+            excluded.
+
+            .. versionchanged:: 0.18.0 moved from being the second to last parameter, to being underneath
+               ``exclude_subjects``
+
         pipeline_name : :obj:`str` or :obj:`None`, default=None
             The name of the pipeline folder in the derivatives folder containing the preprocessed data. If None,
             ``BIDSLayout`` will use the name of ``bids_dir`` with ``derivatives=True``. This parameter should be
@@ -414,22 +429,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         n_cores : :obj:`int` or :obj:`None`, default=None
             The number of CPU cores to use for multiprocessing with joblib. The default backend for joblib is used.
-
-        verbose : :obj:`bool`, default=True
-            If True, logs subject-specific information such as the specific subjects being skipped due to not having
-            the required files, the current subject being undergoing the extraction process, the specific confounds
-            found in a subject that will be used for nuisance regression, in addition to confounds that are requested
-            but are missing for the subject, and additional warnings encountered during the extraction process.
-
-        flush : :obj:`bool`, default=False
-            If True, flushes the logged subject-specific information produced during the timeseries extraction process.
-
-            .. versionchanged:: 0.17.0 Changed from ``flush_print`` to ``flush``.
-
-        exclude_niftis : :obj:`list[str]` or :obj:`None`, default=None
-            List of specific preprocessed NIfTI files to exclude, preventing their timeseries from being extracted.
-            Used if there are specific runs across different participants that need to be
-            excluded.
 
         parallel_log_config : :obj:`dict[str, Union[multiprocessing.Manager.Queue, int]]`
             Passes a user-defined managed queue and logging level to the internal timeseries extraction function
@@ -484,6 +483,18 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     listener.stop()
 
             .. versionadded:: 0.17.8
+            .. versionchanged:: 0.18.0 moved from being the last parameter, to being underneath ``n_cores``
+
+        verbose : :obj:`bool`, default=True
+            If True, logs subject-specific information such as the specific subjects being skipped due to not having
+            the required files, the current subject being undergoing the extraction process, the specific confounds
+            found in a subject that will be used for nuisance regression, in addition to confounds that are requested
+            but are missing for the subject, and additional warnings encountered during the extraction process.
+
+        flush : :obj:`bool`, default=False
+            If True, flushes the logged subject-specific information produced during the timeseries extraction process.
+
+            .. versionchanged:: 0.17.0 Changed from ``flush_print`` to ``flush``.
 
         Note
         ----
@@ -642,7 +653,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                                    "Only the following runs available contain all required files: "
                                    f"{', '.join(run_list)}.")
             else:
-            # Allows for nifti files that do not have the run- description
+                # Allows for nifti files that do not have the run- description
                 run_list = [None]
 
             # Add subject list to subject attribute. These are subjects that will be ran
@@ -778,6 +789,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             base_msg = "`tr` not specified and could not be extracted since using the first BOLD metadata file"
             base_msg += " due to " + (f"there being no BOLD metadata files for [TASK: {self._task_info['task']}]"
                                       if str(type(e).__name__) == "IndexError" else f"{type(e).__name__} - {str(e)}")
+
             if self._task_info["condition"]:
                 raise ValueError(f"{subject_header}"
                                  f"{base_msg}" + " The `tr` must be given when `condition` is specified.")
@@ -785,16 +797,17 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 raise ValueError(f"{subject_header}"
                                  f"{base_msg}" + " The `tr` must be given when `high_pass` or `low_pass` is specified.")
             else:
+                tr = None
+
                 if verbose:
                     LG.warning(f"{subject_header}"
                                f"{base_msg}" + " `tr` has been set to None but extraction will continue.")
-                tr=None
 
         return tr
 
     def timeseries_to_pickle(self, output_dir: Union[str, os.PathLike], file_name: Optional[str]=None) -> None:
         """
-        **Save the Extracted Subject Timeseries**
+        Save the Extracted Subject Timeseries.
 
         Saves the extracted timeseries stored in the ``self.subject_timeseries`` dictionary (obtained from running
         ``self.get_bold()``) as a pickle file. This allows for data persistence and easy conversion back into
@@ -831,7 +844,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                        file_name: Optional[str]=None,
                        **kwargs) -> plt.figure:
         """
-        **Plot the Extracted Subject Timeseries**
+        Plot the Extracted Subject Timeseries.
 
         Uses the ``self.subject_timeseries`` to visualize the extracted BOLD timeseries data of  data Regions of
         Interest (ROIs) or regions for a specific subject and run.

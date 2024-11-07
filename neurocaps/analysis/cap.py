@@ -32,18 +32,20 @@ class CAP(_CAPGetter):
         should be a nested dictionary with the first key being the parcellation name. Currently, only "Schaefer",
         "AAL", and "Custom" are supported.
 
-        - For "Schaefer", available sub-keys include "n_rois", "yeo_networks", and "resolution_mm". \
-          Refer to documentation for ``nilearn.datasets.fetch_atlas_schaefer_2018`` for valid inputs.
-        - For "AAL", the only sub-key is "version". Refer to documentation for ``nilearn.datasets.fetch_atlas_aal`` \
-          for valid inputs.
-        - For "Custom", the sub-keys should include:
+        - For "Schaefer", available sub-keys include "n_rois", "yeo_networks", and "resolution_mm". For missing
+          sub-keys, defaults include - 400 for "n_rois", 7 for "yeo_networks", and 1 for "resolution_mm".
+          Refer to documentation for ``nilearn.datasets.fetch_atlas_schaefer_2018`` for valid inputs for each sub-key.
+        - For "AAL", the only sub-key is "version", which defaults to "SPM12" if ``{"AAL": {}}`` is supplied. Refer to
+          documentation for ``nilearn.datasets.fetch_atlas_aal`` for valid inputs for the "version" sub-key.
+        - For "Custom", the following keys are recognized:
 
-            - "maps" : Directory path to the location of the parcellation file.
-            - "nodes" : A list of node names in the order of the label IDs in the parcellation.
-            - "regions" : The regions or networks in the parcellation.
+            - "maps": Directory path to the location of the parcellation file.
+            - "nodes": A list of node names in the order of the label IDs in the parcellation.
+            - "regions": The regions or networks in the parcellation.
 
         Note, if ``parcel_approach`` was initialized in ``TimeSeriesExtractor`` class, then this parameter can be
-        set to ``self.parcel_approach``.
+        set to ``self.parcel_approach``. Also, refer to the "Note" section below for an explanation of the "Custom"
+        ``parcel_approach``.
 
     groups : :obj:`dict[str, list[str]]` or :obj:`None`, default=None
         A mapping of group names to unique subject IDs. If specified, then separate analyses are performed on groups
@@ -663,12 +665,14 @@ class CAP(_CAPGetter):
             performance_dict[group] = {}
             # Don't want to store model dict for all groups; re-initialize for each group
             model_dict = {}
+
             if self._n_cores is None:
                 for n_cluster in self._n_clusters:
                     output_score, model = _run_kmeans(n_cluster=n_cluster, random_state=random_state, init=init,
                                                       n_init=n_init, max_iter=max_iter, tol=tol, algorithm=algorithm,
                                                       concatenated_timeseries=self._concatenated_timeseries[group],
                                                       method=method)
+
                     performance_dict[group].update(output_score)
                     model_dict.update(model)
             else:
@@ -687,7 +691,9 @@ class CAP(_CAPGetter):
                 kneedle = KneeLocator(x=list(performance_dict[group]),
                                       y=list(performance_dict[group].values()),
                                       curve="convex", direction="decreasing", S=knee_dict["S"])
+
                 self._optimal_n_clusters[group] = kneedle.elbow
+
                 if self._optimal_n_clusters[group] is None:
                     raise ValueError(f"[GROUP: {group}] - No elbow detected. Try adjusting the sensitivity parameter, "
                                      "`S`, to increase or decrease sensitivity (higher values are less sensitive), "
@@ -801,11 +807,13 @@ class CAP(_CAPGetter):
 
                 predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
                 target = 1
-                # Sequences for 1 are [1] and [1,1,1]
-                persistence = (1 + 3)/2 # Average number of frames = 2
+
+                # Sequences for 1 are [1] and [1,1,1]; There are 2 contiguous sequences
+                persistence = (1 + 3)/2
+
+                # Turns average frames into average time = 4
                 tr = 2
-                if tr:
-                    persistence = ((1 + 3)/2)*2 # Turns average frames into average time = 4
+                if tr: persistence = ((1 + 3)/2)*2
 
          - ``"counts"`` : The total number of initiations of a specific CAP across an entire run. An initiation is
            defined as the first occurrence of a CAP. If the same CAP is maintained in contiguous segment
@@ -815,6 +823,7 @@ class CAP(_CAPGetter):
 
                 predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
                 target = 1
+
                 # Initiations of CAP-1 occur at indices 0 and 2
                 counts = 2
 
@@ -823,6 +832,7 @@ class CAP(_CAPGetter):
            ::
 
                 predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
+
                 # Transitions between unique CAPs occur at indices 0 -> 1, 1 -> 2, and 4 -> 5
                 transition_frequency = 3
 
@@ -834,14 +844,18 @@ class CAP(_CAPGetter):
 
                 # Note last two numbers in the predicted timeseries are switched for this example
                 predicted_subject_timeseries = [1, 2, 1, 1, 3, 1]
+
                 # If three CAPs were identified in the analysis
                 combinations = [(1,1), (1,2), (1,3), (2,1), (2,2), (2,3), (3,1), (3,2), (3,3)]
-                target = (1,2) # Represents transition from CAP-1 -> CAP-2
+
+                # Represents transition from CAP-1 -> CAP-2
+                target = (1,2)
+
                 # There are 4 ones in the timeseries but only three transitions from 1; 1 -> 2, 1 -> 1, 1 -> 3
                 n_transitions_from_1 = 3
-                # There is only one 1 -> 2 transition.
+
+                # There is only one 1 -> 2 transition
                 transition_probability = 1/3
-                # 1 -> 1 has a probability of 1/3 and 1 -> 3 has a probability of 1/3
 
         Parameters
         ----------
@@ -880,6 +894,7 @@ class CAP(_CAPGetter):
                 # CAP assignment of frames from for run_1 and run_2
                 run_1 = [0,1,1]
                 run_2 = [2,3,3]
+
                 # Computation of each CAP metric will be conducted on the combined vector
                 continuous_runs = [0,1,1,2,3,3]
 
@@ -1045,11 +1060,13 @@ class CAP(_CAPGetter):
                 # Get frequency
                 frequency_dict = {key: np.where(predicted_subject_timeseries[subj_id][curr_run] == key,1,0).sum()
                                   for key in range(1, group_cap_counts[group] + 1)}
+
                 self._update_dict(cap_numbers, group_cap_counts[group], frequency_dict)
 
                 if "temporal_fraction" in metrics:
                     proportion_dict = {key: value/(len(predicted_subject_timeseries[subj_id][curr_run]))
                                        for key, value in frequency_dict.items()}
+
                     # Populate Dataframe
                     new_row = [subj_id, group, curr_run] + [items for items in proportion_dict.values()]
                     df_dict["temporal_fraction"].loc[len(df_dict["temporal_fraction"])] = new_row
@@ -1069,6 +1086,7 @@ class CAP(_CAPGetter):
             if "persistence" in metrics:
                 # Initialize variable
                 persistence_dict = {}
+
                 # Iterate through caps
                 for target in cap_numbers:
                     binary_arr, segments = self._segments(target, predicted_subject_timeseries[subj_id][curr_run])
@@ -1088,6 +1106,7 @@ class CAP(_CAPGetter):
                 # values not zero is [1,1,0,0,1] = 3 transitions
                 transition_frequency = np.where(
                     np.diff(predicted_subject_timeseries[subj_id][curr_run], n=1) != 0, 1, 0).sum()
+
                 # Populate DataFrame
                 new_row = [subj_id, group, curr_run, transition_frequency]
                 df_dict["transition_frequency"].loc[len(df_dict["transition_frequency"])] = new_row
@@ -1099,6 +1118,7 @@ class CAP(_CAPGetter):
                 # Get number of transitions
                 trans_dict = {target: np.sum(np.where(predicted_subject_timeseries[subj_id][curr_run][:-1] == target,1,0))
                               for target in group_caps[group]}
+
                 indx = temp_dict[group].index[-1]
 
                 # Iterate through products and calculate all symmetric pairs/off-diagonals
@@ -1125,6 +1145,7 @@ class CAP(_CAPGetter):
                 # Calculate the probability for the self transitions/diagonals
                 for target in group_caps[group]:
                     if trans_dict[target] == 0: continue
+
                     # Will include the {target}.{target} column, but the value is initially set to zero
                     columns = temp_dict[group].filter(regex=fr"^{target}\.").columns.tolist()
                     cumulative = temp_dict[group].loc[indx,columns].values.sum()
@@ -1152,6 +1173,7 @@ class CAP(_CAPGetter):
         if set_diff:
             formatted_string = ', '.join(["'{a}'".format(a=x) for x in set_diff])
             LG.warning(f"Invalid metrics will be ignored: {formatted_string}.")
+
         if not metrics:
             formatted_string = ', '.join(["'{a}'".format(a=x) for x in valid_metrics])
             raise ValueError(f"No valid metrics in `metrics` list. Valid metrics are {formatted_string}.")
@@ -1799,6 +1821,7 @@ class CAP(_CAPGetter):
         display.axhline(y=0, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
         display.axhline(y=length, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
         display.axvline(x=0, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
+
         if axvline: display.axvline(x=axvline, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
         else: display.axvline(x=length, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
 
@@ -2017,15 +2040,23 @@ class CAP(_CAPGetter):
             the non-background indices (parcels) that are set to zero in the target parcellation.
 
             These indices are then iterated over, and the zero values are replaced with the value of the nearest neighbor,
-            determined by the sub-key "k". The dictionary contains the following sub-keys:
+            determined by the sub-key "k". The following sub-keys are recognized:
 
             - "k" : An integer that determines the number of nearest neighbors to consider, with the majority vote \
                     determining the new value. If not specified, the default is 1.
+            - "reference_atlas" : A string specifying the atlas to use as a reference to determine the background \
+                                  indices to not interpolate. Options includes "Schaefer" or "AAL". If not specified \
+                                  the default will be "Schaefer".
             - "resolution_mm" : An integer (1 or 2) that determines the resolution of the Schaefer parcellation. \
-                                If not specified, the default is 1.
-            - "remove_subcortical": A list or  array of label ids as integers of the subcortical regions in the parcellation.
+                                If not specified, the default is 1. Only used when "reference_atlas" is "Schaefer".
+            - "remove_labels": A list or array of label IDs as integers of the regions in the parcellation to not \
+                               interpolate.
 
             This method is applied before the ``fwhm``.
+
+            .. versionadded:: 0.18.0 "reference_atlas"
+            .. versionchanged:: 0.18.0 "remove_subcortical" key changed to "remove_labels" and default of "k" changed
+               1 to 3
 
         Returns
         -------
@@ -2057,6 +2088,10 @@ class CAP(_CAPGetter):
                 "Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` first."
                 )
 
+        # Check `knn_dict`
+        if knn_dict:
+            knn_dict = self._validate_knn_dict(knn_dict)
+
         if output_dir and not os.path.exists(output_dir): os.makedirs(output_dir)
 
         parcellation_name = list(self._parcel_approach)[0]
@@ -2069,6 +2104,37 @@ class CAP(_CAPGetter):
                 file_name = self._basename(group, cap, suffix=suffix_file_name, ext="nii.gz")
 
                 nib.save(stat_map, os.path.join(output_dir, file_name))
+
+    @staticmethod
+    def _validate_knn_dict(knn_dict):
+        valid_atlases = ["Schaefer", "AAL"]
+
+        if "reference_atlas" not in knn_dict:
+            knn_dict["reference_atlas"] = "Schaefer"
+            LG.warning("'reference_atlas' not specified in `knn_dict`. The default reference atlas is 'Schaefer'.")
+        else:
+            if not isinstance(knn_dict["reference_atlas"], str):
+                raise TypeError("In `knn_dict`, 'reference_atlas' must be a string.")
+
+            if not any(knn_dict["reference_atlas"] == atlas for atlas in valid_atlases):
+                raise ValueError("Only 'Schaefer' and 'AAL' are valid options for 'reference_atlas'.")
+
+        if "resolution_mm" not in knn_dict and knn_dict["reference_atlas"] == "Schaefer":
+            knn_dict["resolution_mm"] = 1
+            LG.warning("Defaulting to 1mm resolution for the Schaefer atlas since 'resolution_mm' was not specified in "
+                       "`knn_dict`.")
+        else:
+            if "resolution_mm" in knn_dict and not knn_dict["reference_atlas"] == "Schaefer":
+                knn_dict["resolution_mm"] = None
+                LG.warning("'resolution_mm' only used when 'reference_atlas' is set to 'Schaefer'.")
+
+            if "resolution_mm" not in knn_dict: knn_dict["resolution_mm"] = None
+
+        if "k" not in knn_dict:
+            knn_dict["k"] = 3
+            LG.warning("Defaulting to k=3 since 'k' was not specified in `knn_dict`.")
+
+        return knn_dict
 
     def caps2surf(self,
                   output_dir: Optional[os.PathLike]=None,
@@ -2153,15 +2219,22 @@ class CAP(_CAPGetter):
             the non-background indices (parcels) that are set to zero in the target parcellation.
 
             These indices are then iterated over, and the zero values are replaced with the value of the nearest neighbor,
-            determined by the sub-key "k". The dictionary contains the following sub-keys:
+            determined by the sub-key "k". The following sub-keys are recognized:
 
             - "k" : An integer that determines the number of nearest neighbors to consider, with the majority vote \
                     determining the new value. If not specified, the default is 1.
+            - "reference_atlas" : A string specifying the atlas to use as a reference to determine the background \
+                                  indices to not interpolate. Options includes "AAL" or "Schaefer". If not specified \
+                                  the default will be "Schaefer".
             - "resolution_mm" : An integer (1 or 2) that determines the resolution of the Schaefer parcellation. \
-                                If not specified, the default is 1.
-            - "remove_subcortical" : A list or array of label ids as integers of the subcortical regions in the parcellation.
+                                If not specified, the default is 1. Only used when "reference_atlas" is "Schaefer".
+            - "remove_labels": A list or array of label IDs as integers of the regions in the parcellation to not \
+                               interpolate.
 
             This method is applied before the ``fwhm``.
+
+            .. versionadded:: 0.18.0 "reference_atlas" key added
+            .. versionchanged:: 0.18.0 "remove_subcortical" key changed to "remove_labels"
 
         kwargs : :obj:`dict`
             Additional parameters to pass to modify certain plot parameters. Options include:
@@ -2243,6 +2316,10 @@ class CAP(_CAPGetter):
             raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` "
                                  "first.")
 
+        # Check `knn_dict`
+        if knn_dict:
+            knn_dict = self._validate_knn_dict(knn_dict)
+
         if output_dir and not os.path.exists(output_dir): os.makedirs(output_dir)
 
         # Create plot dictionary
@@ -2273,6 +2350,7 @@ class CAP(_CAPGetter):
                         LG.warning("TypeError raised by neuromaps due to changes in pathlib.py in Python 3.12 "
                                    "Converting `statistical map` into a temporary nii.gz file (which will be "
                                    f"automatically deleted afterwards) [TEMP FILE: {temp_nifti.name}]")
+
                         # Ensure file is closed
                         temp_nifti.close()
                         # Save temporary nifti to temp file
@@ -2290,6 +2368,7 @@ class CAP(_CAPGetter):
                 if plot_dict["surface"] not in ["inflated", "veryinflated"]:
                     LG.warning(f"{plot_dict['surface']} is an invalid option for `surface`. Available options "
                                "include 'inflated' or 'verinflated'. Defaulting to 'inflated'.")
+
                     plot_dict["surface"] = "inflated"
 
                 lh, rh = surfaces[plot_dict["surface"]]
@@ -2371,6 +2450,7 @@ class CAP(_CAPGetter):
                     # Define nodes with their corresponding label IDs
                     nodes = ["LH_Vis1", "LH_Vis2", "LH_SomSot1", "LH_SomSot2",
                              "RH_Vis1", "RH_Vis2", "RH_SomSot1", "RH_SomSot2"]
+
                     # Binary mask for the Visual Network (Vis)
                     binary_vector = np.array([1, 1, 0, 0, 1, 1, 0, 0])
 
@@ -2390,8 +2470,10 @@ class CAP(_CAPGetter):
 
                   # Example cluster centroid for CAP 1
                   cap_1_cluster_centroid = np.array([-0.3, 1.5, 2.0, -0.2, 0.7, 1.3, -0.5, 0.4])
+
                   # Assign values less than 0 as 0 to isolate the high amplitude activations
                   high_amp = np.where(cap_1_cluster_centroid > 0, cap_1_cluster_centroid, 0)
+
                   # Assign values less than 0 as 0 to isolate the low amplitude activations; Also invert the sign
                   low_amp = high_amp = np.where(cap_1_cluster_centroid < 0, -cap_1_cluster_centroid, 0)
 

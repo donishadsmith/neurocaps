@@ -9,7 +9,7 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
                 file_names: Optional[list[str]]=None,
                 save_reduced_dicts: bool=False) -> dict[str, dict[str, dict[str, np.ndarray]]]:
     """
-    **Merge Participant Timeseries Across Multiple Tasks**
+    Merge Participant Timeseries Across Multiple Tasks.
 
     Merge subject timeseries dictionaries or pickle files into the first dictionary or pickle file in the list.
     For each subject, timeseries (numpy arrays) with the same run ID will be concatenated, while unique run IDs will

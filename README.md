@@ -1,7 +1,7 @@
 # neurocaps
 [![Latest Version](https://img.shields.io/pypi/v/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.14031867)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.14053367)
 [![Github Repository](https://img.shields.io/badge/Source%20Code-neurocaps-purple)](https://github.com/donishadsmith/neurocaps)
 [![Test Status](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg)](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml)
 [![codecov](https://codecov.io/github/donishadsmith/neurocaps/graph/badge.svg?token=WS2V7I16WF)](https://codecov.io/github/donishadsmith/neurocaps)
@@ -128,12 +128,10 @@ extractor = TimeseriesExtractor(parcel_approach=parcel_approach,
                                 confound_names=confounds,
                                 n_acompcor_separate=2)
 
-bids_dir = "/path/to/bids/dir"
+bids_dir = "tests/ds000031_R1.0.4_ses001-022/ds000031_R1.0.4"
 
 # If there are multiple pipelines in the derivatives folder, you can specify a specific pipeline
-
-# pipeline_name = "fmriprep-1.4.0"
-pipeline_name = fmriprep_1.0.0/fmriprep/
+pipeline_name = fmriprep_1.0.0/fmriprep
 
 # Extract timeseries for subjects in the BIDS directory
 extractor.get_bold(bids_dir=bids_dir,

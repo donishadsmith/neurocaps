@@ -7,7 +7,7 @@ def transition_matrix(trans_dict: dict[str, pd.DataFrame], output_dir: Optional[
                       suffix_title: Optional[str]=None, show_figs: bool = True, save_plots: bool=True,
                       return_df: bool = True,  save_df: bool=True, **kwargs):
     """
-    **Generate and Visualize the Averaged Transition Probabilities**
+    Generate and Visualize the Averaged Transition Probabilities.
 
     Uses the "transition_probability" output from ``CAP.calculate_metrics`` to generate and visualize the averaged
     transition probability matrix for all groups from the analysis.

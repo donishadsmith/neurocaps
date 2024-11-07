@@ -12,6 +12,7 @@ Extracting Timeseries
 .. code-block:: python
 
     from neurocaps.extraction import TimeseriesExtractor
+
     dir = os.path.dirname(__file__)
 
     """If an asterisk '*' is after a name, all confounds starting with the 
@@ -71,12 +72,12 @@ Extracting Timeseries
        [ 0.4901481 ,  0.33806482,  0.48850006, ..., -0.29197463,
         -0.08600576, -0.08736482]], dtype=float32)}}
 
-  
+
 Saving Timeseries
 -----------------
 .. code-block:: python
 
-    extractor.timeseries_to_pickle(output_dir="path/to/dir",
+    extractor.timeseries_to_pickle(output_dir=dir,
                                    file_name="task-positive_Schaefer.pkl")
 
 Visualizing Timeseries

@@ -9,7 +9,7 @@
    :alt: Python Versions
 
 .. image:: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal
-   :target: https://doi.org/10.5281/zenodo.14031867
+   :target: https://doi.org/10.5281/zenodo.14053367
    :alt: DOI
 
 .. image:: https://img.shields.io/badge/Source%20Code-neurocaps-purple
@@ -39,7 +39,7 @@ Citing
 ------
 ::
   
-  Smith, D. (2024). neurocaps. Zenodo. https://doi.org/10.5281/zenodo.14031867
+  Smith, D. (2024). neurocaps. Zenodo. https://doi.org/10.5281/zenodo.14053367
 
 Usage
 -----

@@ -16,6 +16,34 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.18.0] - 2024-11-07
+### ♻ Changed
+- In `TimeseriesExtractor.get_bold`, location of `parallel_log_config` parameter in function signature moved
+from being the last parameter to underneath `n_cores`. Additionally, `exclude_niftis` moved from being the second to last
+parameter to being underneath `exclude_subjects`.
+
+*Changes related to `knn_dict`, which is only relevant for certain atlases that project poorly to surface space or
+has a sparsity issue*
+
+- Added a "reference_atlas" key to allow Schaefer or AAL to be used as the reference atlas.
+- The "remove_subcortical" key changed to "remove_labels".
+- Default "k" from 1 to 3.
+
+### 🐛 Fixes
+*Fixes only related to `knn_dict`*
+
+- "remove_labels" now only removes the labels from being interpolated as opposed to removing the label from being
+interpolated in addition to removing the corresponding indices from the atlas entirely.
+- Certain internal helper functions - `_get_target_indices` and `_build_tree` - from
+`neurocaps._utils.analyis.cap2statmap` now use functool's `lru_cache` decorator so that the indices that the
+non-background coordinated that need interpolation as well as the indices that don't need interpolation, based on
+"remove_labels" are only computed once per session for every unique parameter combination.
+- Logged information related to `knn_dict` appears once per call of `CAP.caps2niftis` or `CAP.caps2surf` instead of
+for every iteration performed within these functions.
+
+### 📖 Documentation
+- Some documentation revisions.
+
 ## [0.17.11.post1] - 2024-11-04
 ### 📖 Documentation
 - Documentation clarification

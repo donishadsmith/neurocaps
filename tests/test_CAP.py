@@ -20,6 +20,9 @@ with open(os.path.join(os.path.dirname(__file__), "data", "HCPex_parcel_approach
     custom_subject_timeseries = {str(x) : {f"run-{y}": np.random.rand(100,426) for y in range(1,4)} for x in range(1,11)}
 
 extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
+extractor2 = TimeseriesExtractor(parcel_approach={"AAL": {}})
+
+aal_subject_timeseries = {str(x) : {f"run-{y}": np.random.rand(100,116) for y in range(1,4)} for x in range(1,11)}
 
 subject_timeseries = {str(x) : {f"run-{y}": np.random.rand(100,100) for y in range(1,4)} for x in range(1,11)}
 extractor.subject_timeseries = subject_timeseries
@@ -576,6 +579,7 @@ def test_caps2surf(remove_files):
 
 @pytest.mark.parametrize("current_timeseries, parcel_approach",
                          [(extractor.subject_timeseries, extractor.parcel_approach),
+                          (aal_subject_timeseries, extractor2.parcel_approach),
                           (custom_subject_timeseries, custom_parcel_approach)])
 def test_niftis(current_timeseries, parcel_approach):
     cap_analysis = CAP(parcel_approach=parcel_approach)
@@ -587,6 +591,7 @@ def test_niftis(current_timeseries, parcel_approach):
 
     cap_analysis.caps2niftis(output_dir=tmp_dir.name)
     nifti_files = glob.glob(os.path.join(tmp_dir.name, "*.nii.gz"))
+
     # Check that elements of the cluster centroid are correctly assigned to their corresponding labels in atlas
     for indx, file in enumerate(nifti_files):
         act_values = []
@@ -595,10 +600,15 @@ def test_niftis(current_timeseries, parcel_approach):
             coords = list(zip(*np.where(atlas_data == label)))[0]
             act_value = nifti_img[coords[0],coords[1],coords[2]]
             act_values.append(act_value)
+
         np.array_equal(cap_analysis.caps["All Subjects"][f"CAP-{indx + 1}"], np.array(act_values))
 
-    cap_analysis.caps2niftis(output_dir=tmp_dir.name, fwhm=1,
-                             knn_dict={"k": 1, "resolution_mm": 1, "remove_subcortical": [50]})
+    if "Custom" in parcel_approach:
+        cap_analysis.caps2niftis(output_dir=tmp_dir.name, fwhm=1,
+                                knn_dict={"k": 1, "resolution_mm": 1, "remove_labels": [50]})
+        
+        cap_analysis.caps2niftis(output_dir=tmp_dir.name, fwhm=1,
+                        knn_dict={"k": 3, "reference_atlas": "AAL", "remove_labels": [50]})
 
     check_imgs(plot_type="nifti", values_dict={"nii.gz": 2})
 

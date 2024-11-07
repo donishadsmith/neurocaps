@@ -1,10 +1,9 @@
 """Internal function for turning CAPs into NifTI Statistical Maps"""
+from functools import lru_cache
+
 import nibabel as nib, numpy as np
 from nilearn import datasets, image
 from scipy.spatial import KDTree
-from ..logger import _logger
-
-LG  = _logger(__name__)
 
 def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
     atlas = nib.load(atlas_file)
@@ -21,28 +20,20 @@ def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
 
     # Knn implementation to aid in coverage issues
     if knn_dict:
-        if "remove_subcortical" in knn_dict:
-            # Get original atlas or else the indices won't be obtained due to mutability
-            original_atlas = nib.load(atlas_file)
-            subcortical_indices = np.where(np.isin(original_atlas.get_fdata(), knn_dict["remove_subcortical"]))
-            stat_map.get_fdata()[subcortical_indices] = 0
-
-            # Get target indices
-            target_indices = _get_target_indices(atlas_file=atlas_file, knn_dict=knn_dict,
-                                                 subcortical_indices=subcortical_indices)
+        if "remove_labels" in knn_dict:
+            remove_labels = tuple(knn_dict["remove_labels"])
         else:
-             # Get target indices
-            target_indices = _get_target_indices(atlas_file=atlas_file, knn_dict=knn_dict, subcortical_indices=None)
+            remove_labels = None
 
-        # Get non-zero indices of the stat map
-        non_zero_indices = np.array(np.where(stat_map.get_fdata() != 0)).T
-        if "k" not in knn_dict:
-            LG.warning("Defaulting to k=1 since 'k' was not specified in `knn_dict`.")
-            k = 1
-        else: k = knn_dict["k"]
+        # Get target indices
+        target_indices = _get_target_indices(atlas_file, knn_dict["reference_atlas"], knn_dict["resolution_mm"],
+                                             remove_labels)
 
-        # Build kdtree for nearest neighbors
-        kdtree = KDTree(non_zero_indices)
+        # Get non-zero indices; Build kdtree for nearest neighbors
+        kdtree, non_zero_indices = _build_tree(atlas_file)
+
+        # Get k
+        k = knn_dict["k"]
 
         for target_indx in target_indices:
             # Get the nearest non-zero index
@@ -69,33 +60,46 @@ def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
 
     return stat_map
 
-def _get_target_indices(atlas_file, knn_dict, subcortical_indices=None):
+@lru_cache(maxsize=128)
+def _build_tree(atlas_file):
+    atlas = nib.load(atlas_file)
+    non_zero_indices = np.array(np.where(atlas.get_fdata() != 0)).T
+
+    kdtree = KDTree(non_zero_indices)
+
+    return kdtree, non_zero_indices
+
+def _get_remove_indices(atlas_file, remove_labels):
+    atlas = nib.load(atlas_file)
+    remove_indxs = np.where(np.isin(atlas.get_fdata(), remove_labels))
+
+    return remove_indxs
+
+@lru_cache(maxsize=256)
+def _get_target_indices(atlas_file, reference_atlas, resolution_mm, remove_labels):
     atlas = nib.load(atlas_file)
 
-    # Get schaefer atlas, which projects well onto cortical surface plots
-    if "resolution_mm" not in knn_dict:
-        LG.warning("Defaulting to 1mm resolution for the Schaefer atlas since 'resolution_mm' was not specified in "
-                   "`knn_dict`.")
-
-        resolution_mm = 1
+    if reference_atlas == "Schaefer":
+        reference_atlas_map = datasets.fetch_atlas_schaefer_2018(resolution_mm=resolution_mm)["maps"]
     else:
-        resolution_mm = knn_dict["resolution_mm"]
-
-    schaefer_atlas = datasets.fetch_atlas_schaefer_2018(resolution_mm=resolution_mm)["maps"]
+        reference_atlas_map = datasets.fetch_atlas_aal()["maps"]
 
     # Resample schaefer to atlas file using nearest interpolation to retain labels
-    resampled_schaefer = image.resample_to_img(schaefer_atlas, atlas, interpolation="nearest")
+    resampled_reference_atlas = image.resample_to_img(reference_atlas_map, atlas, interpolation="nearest",
+                                                      force_resample=True)
     # Get indices that equal zero in schaefer atlas to avoid interpolating background values
-    background_indices_schaefer = set(zip(*np.where(resampled_schaefer.get_fdata() == 0)))
-    # Get indices 0 indices for atlas
-    background_indices_atlas = set(zip(*np.where(atlas.get_fdata() == 0)))
+    reference_background_indices = set(zip(*np.where(resampled_reference_atlas.get_fdata() == 0)))
 
-    # Get the non-background indices through subtraction
-    if subcortical_indices:
-        subcortical_indices = set(zip(*subcortical_indices))
-        target_indices = list(background_indices_atlas - background_indices_schaefer - subcortical_indices)
+    # Get indices 0 indices for atlas
+    zeroed_indices_atlas = set(zip(*np.where(atlas.get_fdata() == 0)))
+
+    # Get the non-background indices through set subtraction
+    if remove_labels:
+        remove_indxs = _get_remove_indices(atlas_file, remove_labels)
+        remove_indxs = set(zip(*remove_indxs))
+        target_indices = list(zeroed_indices_atlas - reference_background_indices - remove_indxs)
     else:
-        target_indices = list(background_indices_atlas - background_indices_schaefer)
+        target_indices = list(zeroed_indices_atlas - reference_background_indices)
 
     target_indices = sorted(target_indices)
 
