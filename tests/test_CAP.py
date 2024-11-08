@@ -513,7 +513,7 @@ def test_plotting_functions(current_timeseries, parcel_approach):
     cap_analysis.caps2plot(subplots=False, yticklabels_size=5, wspace = 0.1, visual_scope=["regions", "nodes"],
                            xlabel_rotation=90, xticklabels_size = 5, hspace = 0.6, tight_layout=False,
                            show_figs=False, plot_options=["heatmap", "outer_product"],
-                           hemisphere_labels=True, invalid_kwarg=0,
+                           hemisphere_labels=True, invalid_kwarg=0, cbarlabels_size=8,
                            output_dir=tmp_dir.name)
     check_imgs(values_dict={"heatmap": 2, "outer": 4})
 
@@ -528,7 +528,7 @@ def test_plotting_functions(current_timeseries, parcel_approach):
     check_imgs(values_dict={"heatmap": 2, "outer": 2})
 
     df = cap_analysis.caps2corr(annot=True, show_figs=False, return_df=True,
-                                output_dir=tmp_dir.name, save_df=True)
+                                output_dir=tmp_dir.name, save_df=True, cbarlabels_size=8)
     assert isinstance(df, dict)
     assert isinstance(df["All Subjects"], pd.DataFrame)
     assert len(list(df)) == 1

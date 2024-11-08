@@ -16,6 +16,12 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.18.1] - 2024-11-08
+### 🚀 New/Added
+- Added "cbarlabels_size" kwarg to several plots to allow the font size of the colorbar labels to increase or decrease.
+### ♻ Changed
+- For `CAP.caps2radar`, when the `legend` kwarg is set to None, the legend will be removed entirely.
+
 ## [0.18.0] - 2024-11-07
 ### ♻ Changed
 - In `TimeseriesExtractor.get_bold`, location of `parallel_log_config` parameter in function signature moved

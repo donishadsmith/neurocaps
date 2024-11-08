@@ -58,6 +58,8 @@ def transition_matrix(trans_dict: dict[str, pd.DataFrame], output_dir: Optional[
             Font size for y-axis tick labels.
         - shrink : :obj:`float`, default=0.8
             Fraction by which to shrink the colorbar.
+        - cbarlabels_size : :obj:`int`, default=8
+            Font size for the colorbar labels.
         - xlabel_rotation : :obj:`int`, default=0
             Rotation angle for x-axis labels.
         - ylabel_rotation : :obj:`int`, default=0
@@ -123,9 +125,10 @@ def transition_matrix(trans_dict: dict[str, pd.DataFrame], output_dir: Optional[
 
     # Create plot dictionary
     defaults = {"dpi": 300, "figsize": (8, 6), "fontsize": 14, "xticklabels_size": 8, "yticklabels_size": 8,
-                "shrink": 0.8, "xlabel_rotation": 0, "ylabel_rotation": 0, "annot": False, "linewidths": 0,
-                "linecolor": "black", "cmap": "coolwarm", "fmt": ".2g", "borderwidths": 0, "edgecolors": None,
-                "alpha": None, "bbox_inches": "tight", "annot_kws": None, "vmin": None, "vmax": None}
+                "shrink": 0.8, "cbarlabels_size": 8, "xlabel_rotation": 0, "ylabel_rotation": 0, "annot": False,
+                "linewidths": 0, "linecolor": "black", "cmap": "coolwarm", "fmt": ".2g", "borderwidths": 0,
+                "edgecolors": None, "alpha": None, "bbox_inches": "tight", "annot_kws": None, "vmin": None,
+                "vmax": None}
 
     plot_dict = _check_kwargs(defaults, **kwargs)
 

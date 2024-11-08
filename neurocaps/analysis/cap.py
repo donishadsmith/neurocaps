@@ -1373,6 +1373,8 @@ class CAP(_CAPGetter):
                 Font size for y-axis tick labels.
             - shrink : :obj:`float`, default=0.8
                 Fraction by which to shrink the colorbar.
+            - cbarlabels_size : :obj:`int`, default=8
+                Font size for the colorbar labels.
             - nrow : :obj:`int`, default=varies (max 5)
                 Number of rows for subplots. Default varies but the maximum is 5.
             - ncol : :obj:`int` or :obj:`None`, default=None
@@ -1482,10 +1484,10 @@ class CAP(_CAPGetter):
 
         # Create plot dictionary
         defaults= {"dpi": 300, "figsize": (8, 6), "fontsize": 14, "hspace": 0.2, "wspace": 0.2, "xticklabels_size": 8,
-                   "yticklabels_size": 8, "shrink": 0.8, "nrow": None, "ncol": None, "suptitle_fontsize": 20,
-                   "tight_layout": True, "rect": [0, 0.03, 1, 0.95], "sharey": True, "xlabel_rotation": 0,
-                   "ylabel_rotation": 0, "annot": False, "annot_kws": None, "fmt": ".2g", "linewidths": 0,
-                   "linecolor": "black", "cmap": "coolwarm", "edgecolors": None, "alpha": None,
+                   "yticklabels_size": 8, "cbarlabels_size": 8, "shrink": 0.8, "nrow": None, "ncol": None,
+                   "suptitle_fontsize": 20, "tight_layout": True, "rect": [0, 0.03, 1, 0.95], "sharey": True,
+                   "xlabel_rotation": 0, "ylabel_rotation": 0, "annot": False, "annot_kws": None, "fmt": ".2g",
+                   "linewidths": 0, "linecolor": "black", "cmap": "coolwarm", "edgecolors": None, "alpha": None,
                    "hemisphere_labels": False, "borderwidths": 0, "vmin": None, "vmax": None, "bbox_inches": "tight"}
 
         plot_dict = _check_kwargs(defaults, **kwargs)
@@ -1835,6 +1837,9 @@ class CAP(_CAPGetter):
         if set_y:
             display.set_yticklabels(display.get_yticklabels(), size=plot_dict["yticklabels_size"],
                                     rotation=plot_dict["ylabel_rotation"])
+        if plot_dict["cbarlabels_size"]:
+            cbar = display.collections[0].colorbar
+            cbar.ax.tick_params(labelsize=plot_dict["cbarlabels_size"])
 
         return display
 
@@ -1904,6 +1909,8 @@ class CAP(_CAPGetter):
                 Font size for y-axis tick labels.
             - shrink : :obj:`float`, default=0.8
                 Fraction by which to shrink the colorbar.
+            - cbarlabels_size : :obj:`int`, default=8
+                Font size for the colorbar labels.
             - xlabel_rotation : :obj:`int`, default=0
                 Rotation angle for x-axis labels.
             - ylabel_rotation : :obj:`int`, default=0
@@ -1961,9 +1968,10 @@ class CAP(_CAPGetter):
 
         # Create plot dictionary
         defaults = {"dpi": 300, "figsize": (8, 6), "fontsize": 14, "xticklabels_size": 8, "yticklabels_size": 8,
-                    "shrink": 0.8, "xlabel_rotation": 0, "ylabel_rotation": 0, "annot": False, "linewidths": 0,
-                    "linecolor": "black", "cmap": "coolwarm", "fmt": ".2g", "borderwidths": 0, "edgecolors": None,
-                    "alpha": None, "bbox_inches": "tight", "annot_kws": None, "vmin": None, "vmax": None}
+                    "shrink": 0.8, "cbarlabels_size": 8, "xlabel_rotation": 0, "ylabel_rotation": 0, "annot": False,
+                    "linewidths": 0, "linecolor": "black", "cmap": "coolwarm", "fmt": ".2g", "borderwidths": 0,
+                    "edgecolors": None, "alpha": None, "bbox_inches": "tight", "annot_kws": None, "vmin": None,
+                    "vmax": None}
 
         plot_dict = _check_kwargs(defaults, **kwargs)
 
@@ -2683,8 +2691,7 @@ class CAP(_CAPGetter):
                         connectgaps=plot_dict["connectgaps"],
                         name=i,
                         opacity=plot_dict["opacity"],
-                        marker=dict(color=plot_dict["color_discrete_map"][i],
-                                    size=plot_dict["scattersize"]),
+                        marker=dict(color=plot_dict["color_discrete_map"][i], size=plot_dict["scattersize"]),
                         line = dict(color=plot_dict["color_discrete_map"][i], width=plot_dict["linewidth"])))
                 else:
                     # Create dataframe
@@ -2719,6 +2726,7 @@ class CAP(_CAPGetter):
                     title=dict(text=title_text, font=plot_dict["title_font"]),
                     title_x=plot_dict["title_x"],
                     title_y=plot_dict["title_y"],
+                    showlegend=True if plot_dict["legend"] else False,
                     legend=plot_dict["legend"],
                     legend_title_text="Cosine Similarity",
                     polar=dict(

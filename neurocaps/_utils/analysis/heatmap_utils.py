@@ -26,6 +26,11 @@ def _create_display(df, plot_dict, suffix_title, group, call):
     display.set_yticklabels(display.get_yticklabels(),
                             size=plot_dict["yticklabels_size"],
                             rotation=plot_dict["ylabel_rotation"])
+    
+    if plot_dict["cbarlabels_size"]:
+        cbar = display.collections[0].colorbar
+        cbar.ax.tick_params(labelsize=plot_dict["cbarlabels_size"])
+
 
     if call == "trans":
         display.set_ylabel("From", fontdict={"fontsize": plot_dict["fontsize"]})
