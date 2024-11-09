@@ -81,8 +81,7 @@ Please refer to `demo.ipynb <https://github.com/donishadsmith/neurocaps/blob/mai
 
 Dependencies
 ------------
-
-neurocaps relies on several packages:
+Neurocaps relies on several packages:
 
 :: 
 

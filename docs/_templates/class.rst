@@ -5,6 +5,17 @@
 
 .. autoclass:: {{ objname }}
 
-.. raw:: html
+   {% block methods %}
+   .. rubric:: Methods
 
-    <div style='clear:both'></div>
+   .. autosummary::
+      :toctree:
+   {% for item in methods %}
+      {% if item != "__init__" %} ~{{ name }}.{{ item }}
+      {%- endif %}
+   {%- endfor %}
+   {% endblock %}
+
+   .. raw:: html
+
+       <div style='clear:both'></div>

@@ -12,13 +12,16 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath(".."))
+sys.path.insert(0, os.path.abspath("sphinxext"))
+
+from github_link import make_linkcode_resolve
 
 # -- Project information -----------------------------------------------------
 
-project = 'neurocaps'
-copyright = '2024, neurocaps developers'
-author = 'Donisha Smith'
+project = "neurocaps"
+copyright = "2024, neurocaps developers"
+author = "Donisha Smith"
 
 import neurocaps
 # The full version, including alpha/beta/rc tags
@@ -27,28 +30,30 @@ release = neurocaps.__version__
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
+# extensions coming with Sphinx (named "sphinx.ext.*") or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.doctest',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.napoleon',
-    'sphinx.ext.viewcode',
-    'sphinx_rtd_theme',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.doctest",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.linkcode",
+    "sphinx_rtd_theme",
     "myst_parser",
-    'sphinx_gallery.load_style'
+    "sphinx_gallery.load_style"
 ]
 
 # Generate the API documentation when building
 autosummary_generate = True
-autodoc_default_options = {'members': True, 'inherited-members': True}
+autodoc_default_options = {"members": True, "inherited-members": True}
 numpydoc_show_class_members = False
 autoclass_content = "both"
-autodoc_member_order = 'bysource'
-autodoc_typehints = 'none'
+autodoc_member_order = "bysource"
+autodoc_typehints = "none"
+# Remove module name in signature
+add_module_names = False
 
 napoleon_google_docstring = False
 napoleon_numpy_docstring = True
@@ -59,33 +64,40 @@ napoleon_use_ivar = True
 napoleon_use_rtype = False
 napoleon_include_private_with_doc = False
 
-pygments_style = 'sphinx'
+pygments_style = "sphinx"
 
 sphinx_gallery_conf = {
-    'thumbnail_size': (350, 250),
+    "thumbnail_size": (350, 250),
 }
 
 # The suffix(es) of source filenames.
-source_suffix = ['.rst', '.md']
+source_suffix = [".rst", ".md"]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '_utils/*']
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "_utils/*"]
 
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'sphinx_rtd_theme'
+html_theme = "sphinx_rtd_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
 
-def setup(title):
-    title.add_css_file('custom.css')
+def setup(app):
+    app.add_css_file("custom.css")
+    app.add_css_file("theme_overrides.css")
+
+# The following is used by sphinx.ext.linkcode to provide links to github
+linkcode_resolve = make_linkcode_resolve(
+    "neurocaps",
+    "https://github.com/donishadsmith/neurocaps/blob/{revision}/{package}/{path}#L{lineno}",
+)

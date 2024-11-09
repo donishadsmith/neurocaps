@@ -1,4 +1,4 @@
-# Outputs of neurocaps
+# Outputs of Neurocaps
 
 In neurocaps, functions that produce NifTI images, plots, or dataframes have an `output_dir` parameter to specify
 where files should be saved. The file types includes:
@@ -10,14 +10,14 @@ where files should be saved. The file types includes:
 - Pickles: saved as "pkl".
 
 All functions have default file names that follow a specific format. Many functions also include parameters to add a
-prefix (before the default file name) or suffix (after the default file name and before the extension).
+prefix (before the default file name) or suffix (after the default file name and before the extension) name.
 
 ## General File Naming Format
 
-The default file naming convention typically includes:
+The default file naming convention for the most files produced by the `neurocaps.analysis` module typically includes:
 
-1. The group name (if specified; defaults to "All Subjects" if not).
-2. The CAP ID (for functions, except `CAP.get_caps`, that produce one output per CAP; else, "CAPs" is used).
+1. The group name (if specified, defaults to "All Subjects" if not specified).
+2. The CAP ID (for functions in the `CAP` class that produce one output per CAP; else, "CAPs" is used).
 3. A descriptor of the file content.
 4. The file extension.
 
@@ -25,8 +25,10 @@ The default file naming convention typically includes:
 
 ```
 [Group_Name]_[CAP-n]_[descriptor].[extension]
-# or
+
+# Or
 [Group_Name]_CAPs_[descriptor].[extension]
+
 # Format for Files Produced by CAP.get_caps
 [Group_Name]_[clustering_evaluation_metric].[extension]
 ```
@@ -35,10 +37,15 @@ The default file naming convention typically includes:
 
 ```
 All_Subjects_CAP-1_radar.png
+
 All_Subjects_CAP-1_radar.html
+
 All_Subjects_CAPs_heatmap-nodes.png
+
 All_Subjects_CAPs_correlation_matrix.png
+
 All_Subjects_CAPs_transition_probability_matrix.png
+
 All_Subjects_CAPs_transition_probability_matrix.csv
 ```
 
@@ -49,10 +56,15 @@ whitespace in the names:
 
 ```
 High_ADHD_davies_bouldin.png
+
 Low_ADHD_variance_ratio.png
+
 High_ADHD_CAP-2.nii.gz
+
 Low_ADHD_CAP-2.nii.gz
+
 High_ADHD_CAP-2_surface.png
+
 Low_ADHD_CAP-2_surface.png
 ```
 
@@ -80,9 +92,13 @@ However, for the "transition_probability" metric, separate dataframes are saved 
 
 ```
 persistence.csv
+
 temporal_fraction.csv
+
 counts.csv
+
 transition_frequency.csv
+
 transition_probability-[Group_Name].csv
 ```
 - `merge_dicts`, `standardize`, and `change_dtype` - The default name format for each is as follows (but can be
@@ -92,7 +108,9 @@ overwritten using the `file_names` parameter):
 
     ```
     subject_timeseries_0_reduced.pkl
+
     subject_timeseries_1_reduced.pkl
+
     merged_subject_timeseries.pkl
     ```
     - `standardize`
