@@ -1,6 +1,6 @@
 Tutorial 4: Standardizing Within Runs Using ``neurocaps.analysis.standardize``
 ==============================================================================
-While standardizing the features/columns within runs can be done with the ``standardize`` parameter within 
+While standardizing the features/columns within runs can be done with the ``standardize`` parameter within
 ``TimeseriesExtractor``, standardizing can also be done using ``neurocaps.analysis.standardize`` if not done during
 timeseries extraction.
 
@@ -13,7 +13,7 @@ timeseries extraction.
 
     # Getting mean and standard deviation for run 1 and 2 of subject 1
     mean_vec_1 = subject_timeseries["1"]["run-1"].mean(axis=0)
-    std_vec_1 = subject_timeseries["1"]["run-1"].std(ddof=1, axis=0) 
+    std_vec_1 = subject_timeseries["1"]["run-1"].std(ddof=1, axis=0)
     mean_vec_2 = subject_timeseries["1"]["run-2"].mean(axis=0)
     std_vec_2 = subject_timeseries["1"]["run-2"].std(ddof=1, axis=0)
 

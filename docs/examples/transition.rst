@@ -4,7 +4,7 @@ Tutorial 6: Generating Transition Probability Matrices ``neurocaps.analysis.tran
 which can then be converted to matrix form and visualized with ``transition_matrix``.
 
 .. code-block:: python
-    
+
     import numpy as np
     from neurocaps.analysis import CAP, transition_matrix
 
@@ -23,7 +23,7 @@ which can then be converted to matrix form and visualized with ``transition_matr
 
 .. code-block:: python
 
-    outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, 
+    outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries,
                                              return_df=True,
                                              metrics=["transition_probability"],
                                              continuous_runs=True,
@@ -34,7 +34,7 @@ which can then be converted to matrix form and visualized with ``transition_matr
 
 .. csv-table::
    :file: embed/transition_probability-All_Subjects.csv
-   :header-rows: 1                                   
+   :header-rows: 1
 
 .. code-block:: python
 

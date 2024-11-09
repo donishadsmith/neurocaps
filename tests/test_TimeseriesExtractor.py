@@ -711,7 +711,7 @@ def test_extended_censor(fd_threshold, dummy_scans):
     if not dummy_scans:
         assert np.array_equal(extractor.subject_timeseries["01"]["run-0"],
                               np.delete(extractor2.subject_timeseries["01"]["run-0"], expected_removal, axis=0))
-    
+
     if not dummy_scans:
         extractor.get_bold(bids_dir=bids_dir, task="rest", condition="active", run_subjects=["01"])
         scan_list = get_scans("active")

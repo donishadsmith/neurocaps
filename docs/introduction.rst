@@ -20,25 +20,25 @@
    :target: https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml
    :alt: Test Status
 
-.. image:: https://codecov.io/github/donishadsmith/neurocaps/graph/badge.svg?token=WS2V7I16WF 
+.. image:: https://codecov.io/github/donishadsmith/neurocaps/graph/badge.svg?token=WS2V7I16WF
    :target: https://codecov.io/github/donishadsmith/neurocaps
    :alt: codecov
 
 .. image:: https://img.shields.io/badge/License-MIT-blue.svg
    :target: https://opensource.org/licenses/MIT
    :alt: License
-  
+
 .. image:: https://img.shields.io/badge/OS-Ubuntu%20|%20macOS%20|%20Windows-blue
   :alt: Platform Support
 
 
-Neurocaps is designed to perform Co-activation Patterns (CAPs) analyses. It utilizes k-means clustering to group timepoints (TRs) into brain states, applicable to both resting-state and task-based fMRI data. 
+Neurocaps is designed to perform Co-activation Patterns (CAPs) analyses. It utilizes k-means clustering to group timepoints (TRs) into brain states, applicable to both resting-state and task-based fMRI data.
 The package is compatible with data preprocessed using **fMRIPrep** and assumes your directory is BIDS-compliant, containing a derivatives folder with a pipeline folder (such as fMRIPrep) that holds the preprocessed BOLD data.
 
 Citing
 ------
 ::
-  
+
   Smith, D. (2024). neurocaps. Zenodo. https://doi.org/10.5281/zenodo.14057720
 
 Usage
@@ -57,9 +57,9 @@ Main features for ``CAP`` includes:
 - **Grouping:** Perform CAPs analysis for entire sample or groups of subject IDs
 - **Optimal Cluster Size Identification:** Perform the Davies Bouldin, Silhouette, Elbow, or Variance Ratio criterions to identify the optimal cluster size and automatically save the optimal model as an attribute (``self.get_caps``).
 - **Parallel Processing:** Use parallel processing to speed up optimal cluster size identification.
-- **CAP Visualization:** Visualize the CAPs as outer products or heatmaps at either the region or node level of the parcellation (``self.caps2plot``). 
+- **CAP Visualization:** Visualize the CAPs as outer products or heatmaps at either the region or node level of the parcellation (``self.caps2plot``).
 - **Save CAPs as NifTIs:** Convert the atlas used for parcellation to a statistical NifTI image (``self.caps2niftis``).
-- **Surface Plot Visualization:** Project CAPs onto a surface plot (``self.caps2surf``). 
+- **Surface Plot Visualization:** Project CAPs onto a surface plot (``self.caps2surf``).
 - **Correlation Matrix Creation:** Create a correlation matrix from CAPs (``self.caps2corr``).
 - **CAP Metrics Calculation:** Calculate several CAP metrics as described in `Liu et al., 2018 <https://doi.org/10.1016/j.neuroimage.2018.01.041>`_ [1]_ and `Yang et al., 2021 <https://doi.org/10.1016/j.neuroimage.2021.118193>`_ [2]_ (``self.calculate_metrics``):
     - *Temporal Fraction:* The proportion of total volumes spent in a single CAP over all volumes in a run.
@@ -83,7 +83,7 @@ Dependencies
 ------------
 Neurocaps relies on several packages:
 
-:: 
+::
 
     dependencies = ["numpy>=1.22.0, <2.0.0",
                     "pandas>=2.0.0",
@@ -115,7 +115,7 @@ References
 
 .. [2] Yang, H., Zhang, H., Di, X., Wang, S., Meng, C., Tian, L., & Biswal, B. (2021). Reproducible coactivation patterns of functional brain networks reveal the aberrant dynamic state transition in schizophrenia. NeuroImage, 237, 118193. https://doi.org/10.1016/j.neuroimage.2021.118193
 
-.. [3] Zhang, R., Yan, W., Manza, P., Shokri-Kojori, E., Demiral, S. B., Schwandt, M., Vines, L., Sotelo, D., Tomasi, D., Giddens, N. T., Wang, G., Diazgranados, N., Momenan, R., & Volkow, N. D. (2023). 
+.. [3] Zhang, R., Yan, W., Manza, P., Shokri-Kojori, E., Demiral, S. B., Schwandt, M., Vines, L., Sotelo, D., Tomasi, D., Giddens, N. T., Wang, G., Diazgranados, N., Momenan, R., & Volkow, N. D. (2023).
        Disrupted brain state dynamics in opioid and alcohol use disorder: attenuation by nicotine use. Neuropsychopharmacology, 49(5), 876–884. https://doi.org/10.1038/s41386-023-01750-w
 
 .. [4] Ingwersen, T., Mayer, C., Petersen, M., Frey, B. M., Fiehler, J., Hanning, U., Kühn, S., Gallinat, J., Twerenbold, R., Gerloff, C., Cheng, B., Thomalla, G., & Schlemm, E. (2024).

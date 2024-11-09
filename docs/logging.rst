@@ -74,10 +74,10 @@ internal ``neurocaps._utils.extraction.extract_timeseries`` module to be redirec
         listener.start()
 
         extractor = TimeseriesExtractor()
-        
-        # Use the `parallel_log_config` parameter to pass queue and the logging level 
+
+        # Use the `parallel_log_config` parameter to pass queue and the logging level
         extractor.get_bold(bids_dir="path/to/bids/dir",
-                        task="rest", 
+                        task="rest",
                         tr=2,
                         n_cores=5,
                         parallel_log_config = {"queue": queue, "level": logging.WARNING})

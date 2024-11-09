@@ -606,7 +606,7 @@ def test_niftis(current_timeseries, parcel_approach):
     if "Custom" in parcel_approach:
         cap_analysis.caps2niftis(output_dir=tmp_dir.name, fwhm=1,
                                 knn_dict={"k": 1, "resolution_mm": 1, "remove_labels": [50]})
-        
+
         cap_analysis.caps2niftis(output_dir=tmp_dir.name, fwhm=1,
                         knn_dict={"k": 3, "reference_atlas": "AAL", "remove_labels": [50]})
 

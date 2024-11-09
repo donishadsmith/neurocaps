@@ -3,7 +3,7 @@ Tutorial 1: Using ``neurocaps.extraction.TimeseriesExtractor``
 The purpose of this module is to perform timeseries extraction, cleaning, and visualization. Additionally, it is used
 to create the necessary dictionary structure needed for CAP. Technically, this dictionary structure can be manually
 created if the BOLD images where not preprocessed using fMRIPrep. Output from the `Extracting Timeseries` section
-is from a test from Github Actions using a truncated version of an open dataset provided by `Laumann & Poldrack <https://openfmri.org/dataset/ds000031/>`_ 
+is from a test from Github Actions using a truncated version of an open dataset provided by `Laumann & Poldrack <https://openfmri.org/dataset/ds000031/>`_
 and used in `Laumann et al., 2015 <https://doi.org/10.1016/j.neuron.2015.06.037>`_ [1]_ was also utilized. This data was obtained from the OpenfMRI database, accession number ds000031.
 
 Extracting Timeseries
@@ -15,8 +15,8 @@ Extracting Timeseries
 
     dir = os.path.dirname(__file__)
 
-    """If an asterisk '*' is after a name, all confounds starting with the 
-    term preceding the parameter will be used. in this case, all parameters 
+    """If an asterisk '*' is after a name, all confounds starting with the
+    term preceding the parameter will be used. in this case, all parameters
     starting with cosine will be used."""
 
     confounds=["Cosine*", "aComp*", "Rot*"]
@@ -32,7 +32,7 @@ Extracting Timeseries
                                     confound_names=confounds)
 
     bids_dir = os.path.join(dir, "ds000031_R1.0.4_ses001-022/ds000031_R1.0.4")
-    
+
     # Can use the `n_cores` parameter for multiprocessing
     pipeline_name = "fmriprep_1.0.0/fmriprep"
     extractor.get_bold(bids_dir=bids_dir,

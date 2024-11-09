@@ -58,7 +58,7 @@ test = ["pytest",
 [project.urls]
 Homepage = "https://neurocaps.readthedocs.io/en/latest/"
 Github = "https://github.com/donishadsmith/neurocaps"
-Issues = "https://github.com/donishadsmith/neurocaps/issues"  
+Issues = "https://github.com/donishadsmith/neurocaps/issues"
 Changelog = "https://neurocaps.readthedocs.io/en/latest/changelog.html"
 
 [tool.black]

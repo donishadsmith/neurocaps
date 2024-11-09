@@ -13,7 +13,7 @@ This is a Python package designed to perform Co-activation Patterns (CAPs) analy
 ## Installation
 To install neurocaps, follow the instructions below using your preferred terminal.
 
-### For a standard installation from PyPi:
+### Standard Installation from PyPi:
 ```bash
 
 pip install neurocaps
@@ -83,7 +83,7 @@ pip install -e .[windows]
 - **Grouping:** Perform CAPs analysis for entire sample or groups of subject IDs.
 - **Optimal Cluster Size Identification:** Perform the Davies Bouldin, Silhouette, Elbow, or Variance Ratio criterions to identify the optimal cluster size and automatically save the optimal model as an attribute.
 - **Parallel Processing:** Use parallel processing to speed up optimal cluster size identification.
-- **CAP Visualization:** Visualize the CAPs as outer products or heatmaps at either the region or node level of the parcellation. 
+- **CAP Visualization:** Visualize the CAPs as outer products or heatmaps at either the region or node level of the parcellation.
 - **Save CAPs as NifTIs:** Convert the atlas used for parcellation to a statistical NifTI image.
 - **Surface Plot Visualization:** Project CAPs onto a surface plot.
 - **Correlation Matrix Creation:** Create a correlation matrix from CAPs.
@@ -153,13 +153,13 @@ extractor.get_bold(bids_dir=bids_dir,
 # Task; use parallel processing with `n_cores` with theoretical dataset containing multiple subjects
 extractor.get_bold(bids_dir=bids_dir,
                    task="emo",
-                   condition="positive", 
+                   condition="positive",
                    pipeline_name=pipeline_name,
                    n_cores=10)
 
 cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
 
-cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, 
+cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
                       n_clusters=6,
                       standardize = True)
 
@@ -167,7 +167,7 @@ cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
 kwargs = {"sharey": True, "ncol": 3, "subplots": True, "cmap": "coolwarm"}
 
 cap_analysis.caps2plot(visual_scope="regions",
-                       plot_options="outer_product", 
+                       plot_options="outer_product",
                        suffix_title="- Positive Valence",
                        **kwargs)
 
@@ -180,7 +180,7 @@ kwargs["cmap"] = palette
 kwargs.update({"xlabel_rotation": 90, "tight_layout": False, "hspace": 0.4})
 
 cap_analysis.caps2plot(visual_scope="nodes",
-                       plot_options="outer_product", 
+                       plot_options="outer_product",
                        suffix_title="- Positive Valence",
                        **kwargs)
 ```
@@ -192,7 +192,7 @@ cap_analysis.caps2plot(visual_scope="nodes",
 
 # Get CAP metrics
 outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries,
-                                         tr=2.0, 
+                                         tr=2.0,
                                          return_df=True,
                                          output_dir=output_dir,
                                          metrics=["temporal_fraction", "persistence"],
@@ -261,19 +261,19 @@ cap_analysis.caps2corr(**kwargs)
 
 ```python
 # Create radar plots showing cosine similarity between region/networks and caps
-radialaxis={"showline": True, 
-            "linewidth": 2, 
-            "linecolor": "rgba(0, 0, 0, 0.25)", 
+radialaxis={"showline": True,
+            "linewidth": 2,
+            "linecolor": "rgba(0, 0, 0, 0.25)",
             "gridcolor": "rgba(0, 0, 0, 0.25)",
-            "ticks": "outside" , 
-            "tickfont": {"size": 14, "color": "black"}, 
+            "ticks": "outside" ,
+            "tickfont": {"size": 14, "color": "black"},
             "range": [0,0.6],
             "tickvals": [0.1,"","",0.4, "","", 0.6]}
 
-legend = {"yanchor": "top", 
-        "y": 0.99, 
+legend = {"yanchor": "top",
+        "y": 0.99,
         "x": 0.99,
-        "title_font_family": "Times New Roman", 
+        "title_font_family": "Times New Roman",
         "font": {"size": 12, "color": "black"}}
 
 colors =  {"High Amplitude": "black", "Low Amplitude": "orange"}
@@ -295,12 +295,12 @@ cap_analysis.caps2radar(output_dir=output_dir, **kwargs)
 from neurocaps.analysis import transition_matrix
 
 # Optimal cluster sizes are saved automatically
-cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, 
+cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
                       cluster_selection_method="davies_bouldin",
                       standardize=True,
                       n_clusters=range(2,6))
 
-outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, 
+outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries,
                                          return_df=True,
                                          metrics=["transition_probability"],
                                          continuous_runs=True,
@@ -344,8 +344,8 @@ print(trans_outputs["All Subjects"])
 | CAP-2 | 0.36 | 0.291 | 0.349 |
 | CAP-3 | 0.326 | 0.326 | 0.348 |
 
-## Testing 
-This package was tested using a closed dataset as well as a modified version of a single-subject open dataset to test the `TimeseriesExtractor` function on GitHub Actions. The open dataset provided by [Laumann & Poldrack](https://openfmri.org/dataset/ds000031/) and used in [Laumann et al., 2015](https://doi.org/10.1016/j.neuron.2015.06.037)[^5]. was also utilized. This data was obtained from the OpenfMRI database, accession number ds000031. 
+## Testing
+This package was tested using a closed dataset as well as a modified version of a single-subject open dataset to test the `TimeseriesExtractor` function on GitHub Actions. The open dataset provided by [Laumann & Poldrack](https://openfmri.org/dataset/ds000031/) and used in [Laumann et al., 2015](https://doi.org/10.1016/j.neuron.2015.06.037)[^5]. was also utilized. This data was obtained from the OpenfMRI database, accession number ds000031.
 
 Modifications to the data included:
 
@@ -370,8 +370,8 @@ This package was initially inspired by a co-activation patterns implementation i
 
 [^2]: Yang, H., Zhang, H., Di, X., Wang, S., Meng, C., Tian, L., & Biswal, B. (2021). Reproducible coactivation patterns of functional brain networks reveal the aberrant dynamic state transition in schizophrenia. NeuroImage, 237, 118193. https://doi.org/10.1016/j.neuroimage.2021.118193
 
-[^3]: Zhang, R., Yan, W., Manza, P., Shokri-Kojori, E., Demiral, S. B., Schwandt, M., Vines, L., Sotelo, D., Tomasi, D., Giddens, N. T., Wang, G., Diazgranados, N., Momenan, R., & Volkow, N. D. (2023). 
-Disrupted brain state dynamics in opioid and alcohol use disorder: attenuation by nicotine use. Neuropsychopharmacology, 49(5), 876–884. https://doi.org/10.1038/s41386-023-01750-w      
+[^3]: Zhang, R., Yan, W., Manza, P., Shokri-Kojori, E., Demiral, S. B., Schwandt, M., Vines, L., Sotelo, D., Tomasi, D., Giddens, N. T., Wang, G., Diazgranados, N., Momenan, R., & Volkow, N. D. (2023).
+Disrupted brain state dynamics in opioid and alcohol use disorder: attenuation by nicotine use. Neuropsychopharmacology, 49(5), 876–884. https://doi.org/10.1038/s41386-023-01750-w
 
 [^4]: Ingwersen, T., Mayer, C., Petersen, M., Frey, B. M., Fiehler, J., Hanning, U., Kühn, S., Gallinat, J., Twerenbold, R., Gerloff, C., Cheng, B., Thomalla, G., & Schlemm, E. (2024). Functional MRI brain state occupancy in the presence of cerebral small vessel disease — A pre-registered replication analysis of the Hamburg City Health Study. Imaging Neuroscience, 2, 1–17. https://doi.org/10.1162/imag_a_00122
 

@@ -23,7 +23,7 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
 
     Then subject 1 in the final merged dictionary will contain:
 
-        - run-1 (concatenated from the first dictionary and second dictionary 2, resting-state and the Stroop task),
+        - run-1 (concatenated from the first dictionary and second dictionary, the resting-state and the Stroop task),
         - run-2 (from the second dictionary, the Stroop task),
         - run-3 (from the third dictionary, the N-back task).
 

@@ -25,19 +25,18 @@ Changes the dtype of all participant's numpy arrays to assist with memory usage.
          subj-1; run-1:
          dtype before conversion float64
          dtype after conversion: float32
-        
+
 
          subj-1; run-2:
          dtype before conversion float64
          dtype after conversion: float32
-        
+
 
          subj-2; run-1:
          dtype before conversion float64
          dtype after conversion: float32
-        
+
 
          subj-2; run-2:
          dtype before conversion float64
          dtype after conversion: float32
-            
