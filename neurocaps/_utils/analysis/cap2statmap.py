@@ -60,7 +60,7 @@ def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
 
     return stat_map
 
-@lru_cache(maxsize=128)
+@lru_cache(maxsize=2)
 def _build_tree(atlas_file):
     atlas = nib.load(atlas_file)
     non_zero_indices = np.array(np.where(atlas.get_fdata() != 0)).T
@@ -75,7 +75,7 @@ def _get_remove_indices(atlas_file, remove_labels):
 
     return remove_indxs
 
-@lru_cache(maxsize=256)
+@lru_cache(maxsize=4)
 def _get_target_indices(atlas_file, reference_atlas, resolution_mm, remove_labels):
     atlas = nib.load(atlas_file)
 

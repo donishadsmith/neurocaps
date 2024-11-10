@@ -1,6 +1,5 @@
 import json, os, re
-import multiprocessing
-from functools import cache
+from functools import lru_cache
 from typing import Callable, Literal, Optional, Union
 
 import matplotlib.pyplot as plt, numpy as np
@@ -582,7 +581,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 if isinstance(subject_timeseries, dict): self._subject_timeseries.update(subject_timeseries)
 
     @staticmethod
-    @cache
+    @lru_cache(maxsize=4)
     def _call_layout(bids_dir, pipeline_name):
         try:
             import bids
