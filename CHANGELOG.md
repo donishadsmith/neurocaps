@@ -16,6 +16,26 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.18.2] - 2024-11-09
+- A simple pre commit hook added to remove a few trailing whitespace, add new lines, etc.
+
+### ♻ Changed
+- Add's `_get_target_indices` and `_build_tree` to the init file for a shorter import path if cache needs to be cleared or
+assessed. essentially allows:
+
+New import:
+```python
+from neurocaps._utils import _build_tree, _get_target_indices
+```
+
+Previous import:
+```python
+from neurocaps._utils.analysis.cap2statmap import _build_tree, _get_target_indices
+```
+
+### 📖 Documentation
+- Very minor doc fix.
+
 ## [0.18.1] - 2024-11-08
 ### 🚀 New/Added
 - Added "cbarlabels_size" kwarg to several plots to allow the font size of the colorbar labels to increase or decrease.
