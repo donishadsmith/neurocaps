@@ -23,25 +23,33 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
     parcel_approach : :obj:`dict[str, dict[str, str | int]]` or :obj:`os.PathLike`, \
                       default={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
-        The approach to parcellate BOLD images. This must be a nested dictionary with the first key being the
-        parcellation name. Currently, only "Schaefer", "AAL", and "Custom" are supported.
+        The approach to parcellate NifTI images. This must be a nested dictionary with the first key being the
+        parcellation name. Currently, only "Schaefer", "AAL", and "Custom" are supported. Recognized second level
+        keys (sub-keys) are listed below:
 
-        - For "Schaefer", available sub-keys include "n_rois", "yeo_networks", and "resolution_mm". For missing
-          sub-keys, defaults include - 400 for "n_rois", 7 for "yeo_networks", and 1 for "resolution_mm".
-          Refer to documentation for ``nilearn.datasets.fetch_atlas_schaefer_2018`` for valid inputs for each sub-key.
-        - For "AAL", the only sub-key is "version", which defaults to "SPM12" if ``{"AAL": {}}`` is supplied. Refer to
-          documentation for ``nilearn.datasets.fetch_atlas_aal`` for valid inputs for the "version" sub-key.
-        - For "Custom", the following keys are recognized:
+        - For "Schaefer":
 
-            - "maps": Directory path to the location of the parcellation file. Must be included for ``self.get_bold``.
+            - "n_rois": The number of ROIs (100, 200, 300, 400, 500, 600, 700, 800, 900, or 1000). Defaults to 400.
+            - "yeo_networks": The number of Yeo networks (7 or 17). Defaults to 7.
+            - "resolution_mm": The spatial resolution of the parcellation in millimeters (1 or 2). Defaults to 1.
+
+        - For "AAL":
+
+            - "version": The version of the AAL atlas used ("SPM5", "SPM8", "SPM12", or "3v2"). Defaults to "SPM12" if ``{"AAL": {}}`` is supplied.
+
+        - For "Custom":
+
+            - "maps": Directory path to the location of the parcellation file.
             - "nodes": A list of node names in the order of the label IDs in the parcellation.
             - "regions": The regions or networks in the parcellation.
 
-        Also, refer to the "Note" section below for an explanation of the "Custom" ``parcel_approach``.
+        Refer to documentation from nilearn's ``datasets.fetch_atlas_schaefer_2018`` and ``datasets.fetch_atlas_aal``
+        functions for more information about the "Schaefer" and "AAL" sub-keys. Also, refer to the "Note" section below
+        for an explanation of the "Custom" sub-keys.
 
     standardize : {"zscore_sample", "zscore", "psc", True, False}, default="zscore_sample"
-        Determines whether to standardize the timeseries. Refer to ``nilearn.maskers.NiftiLabelsMasker`` for available
-        options.
+        Standardizes the timeseries. Refer to ``nilearn.maskers.NiftiLabelsMasker`` for an explanation of each
+        available option.
 
     detrend : :obj:`bool`, default=True
         Detrends the timeseries during extraction.
@@ -58,26 +66,28 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         distribution. However, smoothing may also blur parcel boundaries.
 
     use_confounds : :obj:`bool`, default=True
-        Determines whether to perform nuisance regression using confounds when extracting timeseries.
+        Perform nuisance regression using the default or user-specified confounds in ``confound_names`` when
+        extracting timeseries. Note, the confound tsv files must be located in the same directory as the preprocessed
+        BOLD images.
 
     confound_names : :obj:`list[str]` or :obj:`None`, default=None
-        Specifies the names of confounds to use from confound files. If None, default confounds are used, which
+        The names of the confounds to extract from the confound tsv files. If None, default confounds are used, which
         consists of all cosine-basis parameters, the six-head motion parameters and their first-order derivatives,
         and the first six combined acompcor components. Note, an asterisk ("*") can be used to find confound names
         that start with the term preceding the asterisk. For instance, "cosine*" will find all confound names in the
         confound files starting with "cosine".
 
     fd_threshold : :obj:`float`, :obj:`dict[str, float]`, or :obj:`None`, default=None
-        Sets a threshold to remove volumes after nuisance regression and timeseries extraction. This requires a
-        column named `framewise_displacement` in the confounds file and ``use_confounds`` set to True.
-        Additionally, `framewise_displacement` should not need be specified in ``confound_names`` if using this
-        parameter. If, ``fd_threshold`` is a dictionary, the following keys can be specified:
+        Sets a threshold for removing exceeding volumes after nuisance regression and timeseries extraction are
+        performed. This requires a column named `framewise_displacement` in the confounds file and ``use_confounds``
+        set to True. Additionally, `framewise_displacement` should not need be specified in ``confound_names`` if using
+        this parameter. If, ``fd_threshold`` is a dictionary, the following keys can be specified:
 
-        - "threshold" : A float value. Volumes with a `framewise_displacement` value exceeding this threshold are removed.
-        - "outlier_percentage" : A float value between 0 and 1 representing a percentage. Runs where the proportion of
+        - "threshold": A float value. Volumes with a `framewise_displacement` value exceeding this threshold are removed.
+        - "outlier_percentage": A float value between 0 and 1 representing a percentage. Runs where the proportion of
           volumes exceeding the "threshold" is higher than this percentage are removed. If ``condition`` is specified
           in ``self.get_bold``, only the runs where the proportion of volumes exceeds this value for the specific
-          condition of interest are removed. **Note**, this proportion is calculated after dummy scans have been removed.
+          condition of interest are removed. Note, this proportion is calculated after dummy scans have been removed.
           A warning is issued whenever a run is flagged.
         - "n_before": An integer value indicating the number of volumes to scrub before the flagged volume. Hence,
           if frame 5 is flagged and "n_before" is 2, then volumes 3, 4, and 5 are scrubbed.
@@ -95,19 +105,19 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         acompcors of interest in ``confound_names``.
 
     dummy_scans : :obj:`int`, :obj:`dict[str, bool | int]`, or :obj:`None`, default=None
-        Removes the first n volumes before extracting the timeseries. If, ``dummy_scans`` is a dictionary,
+        Removes the first `n` volumes before extracting the timeseries. If, ``dummy_scans`` is a dictionary,
         the following keys can be used:
 
-        - "auto" : A boolean value. If True, the number of dummy scans removed depend on the number of
+        - "auto": A boolean value. If True, the number of dummy scans removed depend on the number of
           "non_steady_state_outlier_XX" columns in the participants fMRIPrep confounds tsv file. For instance, if
           there are two "non_steady_state_outlier_XX" columns detected, then ``dummy_scans`` is set to two since
           there is one "non_steady_state_outlier_XX" per outlier volume for fMRIPrep. This is assessed for each run of
           all participants so ``dummy_scans`` depends on the number number of "non_steady_state_outlier_XX" in the
           confound file associated with the specific participant, task, and run number.
-        - "min" : An integer value indicating the minimum dummy scans to discard. The "auto" sub-key must be True
+        - "min": An integer value indicating the minimum dummy scans to discard. The "auto" sub-key must be True
           for this to work. If, for instance, only two "non_steady_state_outlier_XX" columns are detected but the
           "min" is set to three, then three dummy volumes will be discarded.
-        - "max" : An integer value indicating the maximum dummy scans to discard. The "auto" sub-key must be True
+        - "max": An integer value indicating the maximum dummy scans to discard. The "auto" sub-key must be True
           for this to work. If, for instance, six "non_steady_state_outlier_XX" columns are detected but the
           "max" is set to five, then five dummy volumes will be discarded.
 
@@ -362,7 +372,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         must also include a "dataset_description.json" file for proper querying.
 
         For timeseries extraction, nuisance regression, and spatial dimensionality reduction using a parcellation,
-        nilearn’s ``NiftiLabelsMasker`` function is used. If requested, dummy scans are removed from the NIfTI images
+        nilearn's ``NiftiLabelsMasker`` function is used. If requested, dummy scans are removed from the NIfTI images
         and confound dataset prior to timeseries extraction. Indices exceeding framewise displacement thresholds are
         removed after timeseries extraction, and the extracted timeseries can be filtered to include only indices
         corresponding to a specific condition, if requested.
@@ -375,66 +385,62 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         Parameters
         ----------
         bids_dir : :obj:`os.PathLike`
-            Path to a BIDS compliant directory.
+            Path to a BIDS compliant directory. A "dataset_description.json" file must be located in this directory
+            or an error will be raised.
 
         task : :obj:`str`
-            Name of task to process (i.e "rest", "n-back", etc).
+            Name of task to extract timeseries data from (i.e "rest", "n-back", etc).
 
         session : :obj:`int`, :obj:`str`, or :obj:`None`, default=None
-            Session to extract timeseries from. Only a single session can be extracted at a time. An error will be
-            issued if more than one session is detected in the preprocessed NifTI files. Session should be in the
-            for of an integer (e.g.  ``session=2``) or a string if the session id cannot be represented
-            as an integer (e.g. ``session="001"``).
+            Session ID to extract timeseries data from. Only a single session can be extracted at a time. While files
+            having session IDs are not mandatory, this parameter must be specified if the dataset has multiple sessions
+            . If ``session`` is None and multiple sessions are detected when the preprocessed NifTI files are queried,
+            an error will be raised. The value can be an integer (e.g. ``session=2``) or a string (e.g.
+            ``session="001"``).
 
         runs : :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
-            List of run numbers to extract timeseries data from. Extracts all runs if unspecified.
-            For instance, if only "run-0" and "run-1" should be extracted, then:
-            ::
-
-                runs=[0,1]
-
-                # Or if run IDs are not integers
-                runs=["000","001"]
+            List of run numbers to extract timeseries data from. Extracts all runs if unspecified. For instance,
+            extract only "run-0" and "run-1", use ``runs=[0, 1]``. For non-integer run IDs, use strings:
+            ``runs=["000", "001"]``.
 
         condition : :obj:`str` or :obj:`None`, default=None
-            Specific condition in the task to extract from. Only a single condition can be extracted at a time.
+            Isolates the timeseries data corresponding to a specific condition, only after the timeseries has been
+            extracted and subjected to nuisance regression. Only a single condition can be extracted at a time.
 
         tr : :obj:`int`, :obj:`float`, or :obj:`None`, default=None
-            Repetition time for the task. If the ``tr`` is not specified, for each subject, the tr will be extracted from
-            the first BOLD metadata file, for the specified task, in the pipeline directory or the `bids_dir` if not
-            in the pipeline directory.
+            Repetition time (TR) for the specified task. If not provided, the TR will be automatically extracted from
+            the first BOLD metadata file found for the task, searching first in the pipeline directory, then in
+            the ``bids_dir`` if not found.
 
         run_subjects : :obj:`list[str]` or :obj:`None`, default=None
-            List of subject IDs to process. Processes all subjects if None.
+            List of subject IDs to process (e.g. ``run_subjects=["01", "02"]``). Processes all subjects if None.
 
         exclude_subjects : :obj:`list[str]` or :obj:`None`, default=None
-            List of subject IDs to exclude.
+            List of subject IDs to exclude (e.g. ``exclude_subjects=["01", "02"]``).
 
         exclude_niftis : :obj:`list[str]` or :obj:`None`, default=None
-            List of specific preprocessed NIfTI files to exclude, preventing their timeseries from being extracted.
-            Used if there are specific runs across different participants that need to be
-            excluded.
+            List of the specific preprocessed NIfTI files to exclude, preventing their timeseries data from being
+            extracted. Used if there are specific runs across different participants that need to be excluded.
 
             .. versionchanged:: 0.18.0 moved from being the second to last parameter, to being underneath
                ``exclude_subjects``
 
         pipeline_name : :obj:`str` or :obj:`None`, default=None
             The name of the pipeline folder in the derivatives folder containing the preprocessed data. If None,
-            ``BIDSLayout`` will use the name of ``bids_dir`` with ``derivatives=True``. This parameter should be
-            used if there are multiple pipelines or pipelines are nested in folders in the derivatives folder. If
-            specified, the first level of the folder should contain the "dataset_description.json" file or an
-            error will occur. For instance, if the json file in "path/to/bids/derivatives/fmriprep/fmriprep-20.0.0",
+            ``BIDSLayout`` will default to using the ``bids_dir`` with ``derivatives=True``. This parameter should be
+            used if multiple pipelines exist or when the pipeline folder containing the "dataset_description.json" file
+            is nested within another folder. The specified folder must contain the "dataset_description.json" file
+            in its root level. For instance, if the json file is in "path/to/bids/derivatives/fmriprep/fmriprep-20.0.0",
             then ``pipeline_name = "fmriprep/fmriprep-20.0.0"``.
 
         n_cores : :obj:`int` or :obj:`None`, default=None
-            The number of CPU cores to use for multiprocessing with joblib. The default backend for joblib is used.
+            The number of cores to use for multiprocessing with joblib. The default backend for joblib is used.
 
         parallel_log_config : :obj:`dict[str, Union[multiprocessing.Manager.Queue, int]]`
             Passes a user-defined managed queue and logging level to the internal timeseries extraction function
-            (logger named "_extract_timeseries"). Note, this is distinct from the logger used for the entire class
-            ``TimeseriesExtractor``, which is named "timeseriesextractor". This parameter is utilized when
-            parallel processing (``n_cores``) is enabled. If parallel processing is enabled and
-            ``parallel_log_config`` is None, the default logging behavior applies. This parameter must be a dictionary
+            when parallel processing (``n_cores``) is used. Note, if parallel processing is used, global logging
+            configurations won't be passed to the child processes. Thus, to prevent the child processes from using the
+            default logging behavior, this parameter must be used. Additionally, this parameter must be a dictionary
             and the available keys are:
 
             - "queue": The instance of ``multiprocessing.Manager.Queue`` to pass to ``QueueHandler``. If not specified,
@@ -485,10 +491,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             .. versionchanged:: 0.18.0 moved from being the last parameter, to being underneath ``n_cores``
 
         verbose : :obj:`bool`, default=True
-            If True, logs subject-specific information such as the specific subjects being skipped due to not having
-            the required files, the current subject being undergoing the extraction process, the specific confounds
-            found in a subject that will be used for nuisance regression, in addition to confounds that are requested
-            but are missing for the subject, and additional warnings encountered during the extraction process.
+            If True, logs detailed subject-specific information including: subjects skipped due to missing required
+            files, current subject being processed for timeseries extraction, confounds identified for nuisance
+            regression in addition to requested confounds that are missing for a subject, and additional warnings
+            encountered during the timeseries extraction process.
 
         flush : :obj:`bool`, default=False
             If True, flushes the logged subject-specific information produced during the timeseries extraction process.
@@ -809,13 +815,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         Save the Extracted Subject Timeseries.
 
         Saves the extracted timeseries stored in the ``self.subject_timeseries`` dictionary (obtained from running
-        ``self.get_bold()``) as a pickle file. This allows for data persistence and easy conversion back into
+        ``self.get_bold``) as a pickle file. This allows for data persistence and easy conversion back into
         dictionary form for later use.
 
         Parameters
         ----------
         output_dir : :obj:`os.PathLike`
-            Directory to save to. The directory will be created if it does not exist.
+            Directory to save ``self.subject_timeseries`` dictionary as a pickle file. The directory will be created if
+            it does not exist.
 
         file_name : :obj:`str` or :obj:`None`, default=None
             Name of the file with or without the "pkl" extension.
@@ -865,10 +872,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             then plotted. See "regions" in ``self.parcel_approach`` for valid region.
 
         show_figs : :obj:`bool`, default=True
-            Whether to show the figures.
+            Display figures.
 
         output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
-            Directory to save to. The directory will be created if it does not exist. Outputs as png file.
+            Directory to save plot as png image. The directory will be created if it does not exist. If None, plot will
+            not be saved.
 
         file_name : :obj:`str` or :obj:`None`, default=None
             Name of the file without the extension.

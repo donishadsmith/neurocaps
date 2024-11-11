@@ -22,15 +22,15 @@ def transition_matrix(trans_dict: dict[str, pd.DataFrame], output_dir: Optional[
         ``metrics_output["transition_probability"]``.
 
     output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
-        Directory to save plots and transition probability matrices DataFrames to. The directory will be created if it
-        does not exist. If None, plots and dataFrame will not be saved.
+        Directory to save plots (if ``save_plots`` is True) and transition probability matrices DataFrames (if
+        ``save_df`` is True) to. The directory will be created if it does not exist. Plots and dataframes will not
+        be saved if None.
 
     suffix_title : :obj:`str` or :obj:`None`, default=None
-        Appended to the title of each plot as well as the name of the saved file if ``output_dir``
-        is provided.
+        Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
 
     show_figs : :obj:`bool`, default=True
-        Whether to display figures.
+        Display figures.
 
     save_plots : :obj:`bool`, default=True
         If True, plots are saves as png images. For this to be used, ``output_dir`` must be specified.
@@ -75,19 +75,18 @@ def transition_matrix(trans_dict: dict[str, pd.DataFrame], output_dir: Optional[
         - borderwidths : :obj:`float`, default=0
             Width of the border around the plot.
         - linecolor : :obj:`str`, default="black"
-            Color of the line that seperates each cell.
+            Color of the line that separates each cell.
         - edgecolors : :obj:`str` or :obj:`None`, default=None
             Color of the edges.
         - alpha : :obj:`float` or :obj:`None`, default=None
-            Controls transparancy and ranges from 0 (transparant) to 1 (opaque).
+            Controls transparency and ranges from 0 (transparent) to 1 (opaque).
         - bbox_inches : :obj:`str` or :obj:`None`, default="tight"
             Alters size of the whitespace in the saved image.
         - cmap : :obj:`str`, :obj:`callable` default="coolwarm"
-            Color map for the cells in the plot. For this parameter, you can use premade color palettes or
-            create custom ones.
+            Color map for the plot cells. For this parameter, you can use pre-made color palettes or create custom ones.
             Below is a list of valid options:
 
-                - Strings to call seaborn's premade palettes.
+                - Strings to call seaborn's pre-made palettes.
                 - ``seaborn.diverging_palette`` function to generate custom palettes.
                 - ``matplotlib.color.LinearSegmentedColormap`` to generate custom palettes.
 

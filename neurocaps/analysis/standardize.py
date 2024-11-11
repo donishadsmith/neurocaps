@@ -39,17 +39,18 @@ def standardize(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
                 }
 
     return_dicts : :obj:`bool`, default=True
-        If True, returns the standardized dictionaries in the order they were inputted in ``subject_timeseries_list``.
+        If True, returns a single dictionary containing the standardized input dictionaries. Keys are named "dict_{0}"
+        where {0} corresponds to the dictionary's position in the input list.
 
     output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
-        Directory to save the standardized dictionaries to. Will be saved as a pickle file. The directory will
-        be created if it does not exist.
+        Directory to save the standardized dictionaries as pickle files. The directory will be created if it does not
+        exist. Dictionaries will not be saved if None.
 
     file_names : :obj:`list[str]` or :obj:`None`, default=None
-        A list of names to save the standardized dictionaries as. The assignment of file names to dictionaries depends
-        on the index position (a file name in the 0th position will be the file name for the dictionary in the
-        0th position of ``subject_timeseries_list``). If no names are provided and ``output_dir`` is specified,
-        default names will be used.
+        A list of names to save the standardized dictionaries as. Names are matched to dictionaries by position (e.g.,
+        a file name in the 0th position will be the file name for the dictionary in the 0th position of
+        ``subject_timeseries_list``). If None and ``output_dir`` is specified, uses default file names -
+        "subject_timeseries_{0}_standardized.pkl" (where {0} indicates the original input order).
 
     Returns
     -------

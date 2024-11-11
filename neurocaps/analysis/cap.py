@@ -26,26 +26,32 @@ class CAP(_CAPGetter):
     ----------
     parcel_approach : :obj:`dict[str, dict[str, os.PathLike | list[str]]]`, :obj:`dict[str, dict[str, str | int]]`, \
                       or :obj:`os.PathLike`, default=None
-        The approach used to parcellate BOLD images. Similar to ``TimeseriesExtractor``, "Schaefer" and "AAL"
+        The approach used to parcellate NifTI images. Similar to ``TimeseriesExtractor``, "Schaefer" and "AAL"
         can be initialized here to create the appropriate ``parcel_approach`` that includes the sub-keys
         ("maps", "nodes", and "regions"), which are needed for several plotting functions in this class. This
         should be a nested dictionary with the first key being the parcellation name. Currently, only "Schaefer",
-        "AAL", and "Custom" are supported.
+        "AAL", and "Custom" are supported. Recognized second level keys (sub-keys) are listed below:
 
-        - For "Schaefer", available sub-keys include "n_rois", "yeo_networks", and "resolution_mm". For missing
-          sub-keys, defaults include - 400 for "n_rois", 7 for "yeo_networks", and 1 for "resolution_mm".
-          Refer to documentation for ``nilearn.datasets.fetch_atlas_schaefer_2018`` for valid inputs for each sub-key.
-        - For "AAL", the only sub-key is "version", which defaults to "SPM12" if ``{"AAL": {}}`` is supplied. Refer to
-          documentation for ``nilearn.datasets.fetch_atlas_aal`` for valid inputs for the "version" sub-key.
-        - For "Custom", the following keys are recognized:
+        - For "Schaefer":
+
+            - "n_rois": The number of ROIs (100, 200, 300, 400, 500, 600, 700, 800, 900, or 1000). Defaults to 400.
+            - "yeo_networks": The number of Yeo networks (7 or 17). Defaults to 7.
+            - "resolution_mm": The spatial resolution of the parcellation in millimeters (1 or 2). Defaults to 1.
+
+        - For "AAL":
+
+            - "version": The version of the AAL atlas used ("SPM5", "SPM8", "SPM12", or "3v2"). Defaults to "SPM12" if ``{"AAL": {}}`` is supplied.
+
+        - For "Custom":
 
             - "maps": Directory path to the location of the parcellation file.
             - "nodes": A list of node names in the order of the label IDs in the parcellation.
             - "regions": The regions or networks in the parcellation.
 
         Note, if ``parcel_approach`` was initialized in ``TimeSeriesExtractor`` class, then this parameter can be
-        set to ``self.parcel_approach``. Also, refer to the "Note" section below for an explanation of the "Custom"
-        ``parcel_approach``.
+        set to ``self.parcel_approach``. Refer to documentation from nilearn's ``datasets.fetch_atlas_schaefer_2018``
+        and ``datasets.fetch_atlas_aal`` functions for more information about the "Schaefer" and "AAL" sub-keys. Also,
+        refer to the "Note" section below for an explanation of the "Custom" sub-keys.
 
     groups : :obj:`dict[str, list[str]]` or :obj:`None`, default=None
         A mapping of group names to unique subject IDs. If specified, then separate analyses are performed on groups
@@ -430,11 +436,12 @@ class CAP(_CAPGetter):
         Perform K-Means Clustering to Identify CAPs.
 
         Concatenates the timeseries of each subject into a single numpy array with dimensions
-        (participants x TRs) x ROI and uses ``sklearn.cluster.KMeans`` on the concatenated data. **Note**,
-        ``KMeans`` uses euclidean distance. Additionally, the Elbow method is determined using ``KneeLocator`` from
+        (participants x TRs) x ROI and uses ``sklearn.cluster.KMeans`` on the concatenated data. Note,
+        ``KMeans`` uses Euclidean distance. Additionally, the Elbow method is determined using ``KneeLocator`` from
         the kneed package and the Davies Bouldin, Silhouette, and Variance Ratio methods are calculated using
         scikit-learn's ``davies_bouldin_score``, ``silhouette_score``, and ``calinski_harabasz_score`` functions,
-        respectively.
+        respectively. Note, if groups were given when the ``CAP`` class was initialized, separate ``KMeans`` models
+        and plots will be generated for all groups.
 
         Parameters
         ----------
@@ -458,8 +465,9 @@ class CAP(_CAPGetter):
                     }
 
         runs : :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
-            The run numbers to perform the CAPs analysis with. If None, all runs in the subject timeseries will be
-            concatenated into a single dataframe and subjected to k-means clustering.
+            The run numbers to perform the CAPs analysis with (e.g. ``runs=[0, 1]`` or ``runs=["01", "02"]``). If None,
+            all runs in the subject timeseries will be concatenated into a single dataframe and subjected to k-means
+            clustering.
 
         n_clusters : :obj:`int | list[int]`, default=5
             The number of clusters to use for ``sklearn.cluster.KMeans``. Can be a single integer or a list of
@@ -474,7 +482,7 @@ class CAP(_CAPGetter):
 
         init : {"k-means++","random"}, or :class:`np.ndarray`, default="k-means++"
             Method for choosing initial cluster centroid for ``sklearn.cluster.KMeans``. Options are "k-means++",
-            "random", or np.array.
+            "random", or np.ndarray.
 
         n_init : {"auto"} or :obj:`int`, default="auto"
             Number of times ``sklearn.cluster.KMeans`` is ran with different initial clusters.
@@ -491,20 +499,20 @@ class CAP(_CAPGetter):
             The type of algorithm to use for ``sklearn.cluster.KMeans``. Options are "lloyd" and "elkan".
 
         standardize : :obj:`bool`, default=True
-            Whether to z-score the columns/ROIs of the concatenated timeseries data. The sample standard deviation will
+            Standardizes the columns (ROIs) of the concatenated timeseries data. The sample standard deviation will
             be used, meaning Bessel's correction, `n-1`, will be used in the denominator.
 
         n_cores : :obj:`int` or :obj:`None`, default=None
-            The number of CPU cores to use for multiprocessing, with joblib, to run multiple ``sklearn.cluster.KMeans``
+            The number of cores to use for multiprocessing, with joblib, to run multiple ``sklearn.cluster.KMeans``
             models if ``cluster_selection_method`` is not None. The default backend for joblib is used.
 
         show_figs : :obj:`bool`, default=False
-            Display the plots of inertia or silhouette scores for all groups if ``cluster_selection_method`` is not
-            None.
+            Displays the plots for the specified ``cluster_selection_method`` for all groups
+            if ``cluster_selection_method`` is not None.
 
         output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
-            Directory to save plot to if ``cluster_selection_method`` is set to "elbow". The directory will be
-            created if it does not exist. Outputs as png file.
+            Directory to save plots as png files if ``cluster_selection_method`` is not None. The directory will be
+            created if it does not exist. If None, plots will not be saved.
 
         kwargs : :obj:`dict`
             Dictionary to adjust certain parameters when ``cluster_selection_method`` is not None.
@@ -512,17 +520,16 @@ class CAP(_CAPGetter):
 
             - S : :obj:`int`, default=1
                 Adjusts the sensitivity of finding the elbow. Larger values are more conservative and less
-                sensitive to small fluctuations. This package uses ``KneeLocator`` from the kneed package to
-                identify the elbow. Default is 1.
+                sensitive to small fluctuations. Passed to ``KneeLocator`` from the kneed package to. Default is 1.
             - dpi : :obj:`int`, default=300
-                Adjusts the dpi of the elbow plot. Default is 300.
+                Adjusts the dpi of the plots. Default is 300.
             - figsize : :obj:`tuple`, default=(8,6)
-                Adjusts the size of the elbow plots.
+                Adjusts the size of the plots.
             - bbox_inches : :obj:`str` or :obj:`None`, default="tight"
                 Alters size of the whitespace in the saved image.
             - step : :obj:`int`, default=None
-                An integer value that controls the progression of the x-axis in plots for the silhouette or elbow
-                method. When set, only integer values will be displayed on the x-axis.
+                An integer value that controls the progression of the x-axis in plots for the specified
+                ``cluster_selection_method``. When set, only integer values will be displayed on the x-axis.
 
         Returns
         -------
@@ -784,7 +791,7 @@ class CAP(_CAPGetter):
         Compute Participant-wise CAP Metrics.
 
         Uses the k-means model (or group-specific k-means models if ``groups`` specified during initialization of the
-        ``CAP`` class) to predict/assign each subject's TRs to a CAP. Also, creates a single ``pandas.DataFrame`` per
+        ``CAP`` class) to assign each subject's TRs to a CAP. Also, creates a single ``pandas.DataFrame`` per
         CAP metric for all participants (with the exception of "transition_probability" which creates a single
         dataframe per group). As described by Liu et al., 2018 and Yang et al., 2021. The metrics include:
 
@@ -884,7 +891,8 @@ class CAP(_CAPGetter):
             (TRs) spent in each state.
 
         runs : :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
-            The run numbers to calculate CAP metrics for. If None, CAP metrics will be calculated for each run.
+            The run numbers to calculate CAP metrics for (e.g. ``runs=[0, 1]`` or ``runs=["01", "02"]``). If None, CAP
+            metrics will be calculated for each run.
 
         continuous_runs : :obj:`bool`, default=False
             If True, all runs will be treated as a single, uninterrupted run.
@@ -914,12 +922,11 @@ class CAP(_CAPGetter):
                material of Yang et al., 2022
 
         return_df : :obj:`str`, default=True
-            If True, returns ``pandas.DataFrame`` inside a ``dict``, where the key corresponds to the
-            metric requested.
+            If True, returns ``pandas.DataFrame`` inside a dictionary`, mapping each dataframe to their metric.
 
         output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
-            Directory to save ``pandas.DataFrame`` as csv file to. The directory will be created if it does not exist.
-            Will not be saved if None.
+            Directory to save ``pandas.DataFrame`` as csv files. The directory will be created if it does not exist.
+            Dataframes will not be saved if None.
 
         prefix_file_name : :obj:`str` or :obj:`None`, default=None
             A prefix to append to the saved file names for each ``pandas.DataFrame``, if ``output_dir`` is provided.
@@ -1327,15 +1334,15 @@ class CAP(_CAPGetter):
         """
         Generate Heatmaps and Outer Product Plots for CAPs.
 
-        Plot CAPs as heatmaps or outer products at the node or region/network levels. If groups were given when the
-        ``CAP`` class was  initialized, plotting will be done for all CAPs for all groups. This function produces a
-        ``seaborn.heatmap`` for each CAP.
+        Plot CAPs as heatmaps or outer products at the node or region/network levels. This function produces a
+        ``seaborn.heatmap`` for each CAP. Note, if groups were given when the ``CAP`` class was initialized, separate
+        plots will be generated for all groups.
 
         Parameters
         ----------
         output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
-            Directory to save plots to. The directory will be created if it does not exist. If None, plots will not
-            be saved. Outputs as png file.
+            Directory for saving plots as png files. The directory will be created if it does not exist. If None,
+            plots will not be saved.
 
         suffix_title : :obj:`str` or :obj:`None`, default=None
             Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
@@ -1344,15 +1351,15 @@ class CAP(_CAPGetter):
             Type of plots to create. Options are "outer_product" or "heatmap".
 
         visual_scope : {"regions", "nodes"} or :obj:`list["regions", "nodes"]`, default="regions"
-            Determines whether plotting is done at the region level or node level.
-            For region level, the value of each nodes in the same regions (both left and right hemisphere nodes in the
-            same region) are averaged together then plotted. Options are "regions" or "nodes".
+            Determines whether plotting is done at the region level or node level. For "regions", the values of all
+            nodes in the same regions (including both hemispheres) are averaged together then plotted. For "nodes",
+            plots individual node values separately.
 
         show_figs : :obj:`bool`, default=True
-            Whether to display figures.
+           Display figures.
 
         subplots : :obj:`bool`, default=True
-            Whether to produce subplots for outer product plots.
+            Produce subplots for outer product plots, combining all plots into a single figure.
 
         kwargs : :obj:`dict`
             Keyword arguments used when saving figures. Valid keywords include:
@@ -1406,22 +1413,21 @@ class CAP(_CAPGetter):
             - edgecolors : :obj:`str` or :obj:`None`, default=None
                 Color of the edges.
             - alpha : :obj:`float` or :obj:`None`, default=None
-                Controls transparancy and ranges from 0 (transparant) to 1 (opaque).
+                Controls transparency and ranges from 0 (transparent) to 1 (opaque).
             - bbox_inches : :obj:`str` or :obj:`None`, default="tight"
                 Alters size of the whitespace in the saved image.
             - hemisphere_labels : :obj:`bool`, default=False
-                This option is only available when ``visual_scope="nodes"``. Instead of listing all individual labels
-                this parameter simplifies the labels to indicate only the left and right hemispheres, with a
-                division line separating the cells belonging to each hemisphere. If set to True, ``edgecolors``
-                will not be used, and both ``linewidths`` and ``linecolor`` will be applied only to the division
+                Only available when ``visual_scope="nodes"``. Simplifies node labels to show only left/right hemisphere
+                divisions with a separation line, rather than listing individual node labels. If set to True,
+                ``edgecolors`` is ignored and ``linewidths`` and ``linecolor`` affect only the hemisphere division
                 line. This option is available exclusively for "Custom" and "Schaefer" parcellations.
-                **Note, for the "Custom" option, the parcellation should be organized such that the first half of the
-                nodes belong to the left hemisphere and the latter half to the right hemisphere.**
+                Note, for the "Custom" parcellations, nodes must be ordered with left hemisphere nodes first,
+                followed by right hemisphere nodes.
             - cmap : :obj:`str` or :obj:`callable` default="coolwarm"
-                Color map for the cells in the plot. For this parameter, you can use premade color palettes or
+                Color map for the plot cells. For this parameter, you can use pre-made color palettes or
                 create custom ones. Below is a list of valid options:
 
-                    - Strings to call seaborn's premade palettes.
+                    - Strings to call seaborn's pre-made palettes.
                     - ``seaborn.diverging_palette`` function to generate custom palettes.
                     - ``matplotlib.colors.LinearSegmentedColormap`` to generate custom palettes.
 
@@ -1440,7 +1446,7 @@ class CAP(_CAPGetter):
         **Parcellation Approach**: the "nodes" and "regions" sub-keys are required in ``parcel_approach`` for this
         function.
 
-        **Color Palettes**: For valid premade palettes for seaborn, refer to
+        **Color Palettes**: For valid pre-made palettes for seaborn, refer to
         https://seaborn.pydata.org/tutorial/color_palettes.html
 
         """
@@ -1861,27 +1867,24 @@ class CAP(_CAPGetter):
         """
         Generate Pearson Correlation Matrix for CAPs.
 
-        Produces the correlation matrix of all CAPs and visualizes it as a ``seaborn.heatmap``. If groups were
-        given when the CAP class was initialized, a correlation matrix will be generated for each group.
-        Additionally, DataFrames of the correlation matrix with thier corresponding uncorrected p-value can be
-        generated too. For correlation matrices, each element in the correlation matrix will contain its
-        associated uncorrected p-value in parenthesis, with a single asterisk if < 0.05, a double asterisk if
-        < 0.01, and a triple asterisk < 0.001 - ``{"<0.05": "*", "<0.01": "**", "<0.001": "***"}``. Additionally,
-        all elements will be rounded using the formatting style provided by the ``fmt`` kwarg. Checking significance is
-        done before formatting.
+        Produces a correlation matrix of all CAPs and visualizes it using ``seaborn.heatmap``. Can also produce
+        a pandas Dataframe of the correlation matrix where each element contains its uncorrected p-value in parenthesis,
+        with a single asterisk if < 0.05, a double asterisk if < 0.01, and a triple asterisk < 0.001. Note, if groups
+        were given when the ``CAP`` class was initialized, separate correlation matrices will be generated for all
+        groups.
 
         Parameters
         ----------
         output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
-            Directory to save plots and correlation matrices DataFrames to. The directory will be created if it does
-            not exist. If None, plots and dataFrame will not be saved.
+            Directory to save plots (if ``save_plots`` is True) and correlation matrices DataFrames (if ``save_df`` is
+            True). The directory will be created if it does not exist. If None, plots and dataFrame will not be saved.
 
         suffix_title : :obj:`str` or :obj:`None`, default=None
             Appended to the title of each plot as well as the name of the saved file if ``output_dir``
             is provided.
 
         show_figs : :obj:`bool`, default=True
-            Whether to display figures.
+            Display figures.
 
         save_plots : :obj:`bool`, default=True
             If True, plots are saves as png images. For this to be used, ``output_dir`` must be specified.
@@ -1930,15 +1933,14 @@ class CAP(_CAPGetter):
             - edgecolors : :obj:`str` or :obj:`None`, default=None
                 Color of the edges.
             - alpha : :obj:`float` or :obj:`None`, default=None
-                Controls transparancy and ranges from 0 (transparant) to 1 (opaque).
+                Controls transparency and ranges from 0 (transparent) to 1 (opaque).
             - bbox_inches : :obj:`str` or :obj:`None`, default="tight"
                 Alters size of the whitespace in the saved image.
             - cmap : :obj:`str`, :obj:`callable` default="coolwarm"
-                Color map for the cells in the plot. For this parameter, you can use premade color palettes or
-                create custom ones.
+                Color map for the plot cells. For this parameter, you can use pre-made color palettes or create custom ones.
                 Below is a list of valid options:
 
-                    - Strings to call seaborn's premade palettes.
+                    - Strings to call seaborn's pre-made palettes.
                     - ``seaborn.diverging_palette`` function to generate custom palettes.
                     - ``matplotlib.color.LinearSegmentedColormap`` to generate custom palettes.
 
@@ -1956,7 +1958,7 @@ class CAP(_CAPGetter):
 
         Note
         ----
-        **Color Palettes**: For valid premade palettes for ``seaborn``, refer to
+        **Color Palettes**: For valid pre-made palettes for ``seaborn``, refer to
         https://seaborn.pydata.org/tutorial/color_palettes.html
         """
         corr_dict = {group: None for group in self._groups} if return_df or save_df else None
@@ -2022,33 +2024,32 @@ class CAP(_CAPGetter):
         """
         Standalone Method to Convert CAPs to NifTI Statistical Maps.
 
-        Converts the parcellation used for spatial dimensionality reduction into a NifTI into a statistical map by
-        replacing each label/node with the corresponding element in the CAP (cluster centroid) then saves them as
-        compressed NifTI (nii.gz) files. One NifTI image is generated per CAP.
+        Projects CAPs onto parcellation to create NifTI statistical maps by replacing parcellation labels with their
+        corresponding CAP (cluster centroid) values. Creates compressed NifTI (.nii.gz) files. One image is generated
+        per CAP. Note, if groups were given when the ``CAP`` class was initialized, separate NifTI images will be
+        generated per CAP for all groups.
 
         Parameters
         ----------
-        output_dir : :obj:`os.PathLike`, default=None
-            Directory to save plots to. The directory will be created if it does not exist.
+        output_dir : :obj:`os.PathLike`
+            Directory to save nii.gz files. The directory will be created if it does not exist.
 
         suffix_title : :obj:`str` or :obj:`None`, default=None
             Appended to the name of the saved file.
 
         fwhm : :obj:`float` or :obj:`None`, default=None
             Strength of spatial smoothing to apply (in millimeters) to the statistical map prior to interpolating
-            from MNI152 space to fslr surface space. Note, this can assist with coverage issues in the plot.
-            Uses ``nilearn.image.smooth_img``.
+            from MNI152 space to fslr surface space. Uses ``nilearn.image.smooth_img``.
 
         knn_dict : :obj:`dict[str, int | bool]`, default=None
-            Use KNN (k-nearest neighbors) interpolation to fill in non-background values that are assigned zero. This is
-            primarily used as a fix for when a custom parcellation does not project well from volumetric to surface
-            space. This method involves resampling the Schaefer parcellation, a volumetric parcellation that projects
-            well onto surface space, to the target parcellation specified in the "maps" sub-key in ``self.parcel_approach``.
-            The background indices are extracted from the Schaefer parcellation, and these indices are used to obtain
-            the non-background indices (parcels) that are set to zero in the target parcellation.
-
-            These indices are then iterated over, and the zero values are replaced with the value of the nearest neighbor,
-            determined by the sub-key "k". The following sub-keys are recognized:
+            Use KNN (k-nearest neighbors) interpolation to fill in non-background coordinates that are assigned zero.
+            This is primarily used as a fix for when a custom parcellation does not project well from volumetric to
+            surface space. This method involves resampling a reference volumetric parcellation that projects
+            well onto surface space (Schaefer or AAL), to the target parcellation specified in the "maps" sub-key in
+            ``self.parcel_approach``. The background coordinates are extracted from the reference parcellation and are
+            used to obtain the non-background coordinates that are set to zero in the target parcellation. These
+            coordinates are then replaced with the value of the nearest neighbor, determined by the sub-key "k".
+            The following sub-keys are recognized:
 
             - "k" : An integer that determines the number of nearest neighbors to consider, with the majority vote \
                     determining the new value. If not specified, the default is 1.
@@ -2158,31 +2159,30 @@ class CAP(_CAPGetter):
         """
         Project CAPs onto Surface Plots.
 
-        If not using precomputed GifTI file, this function converts the parcellation used for spatial dimensionality
-        reduction into a NifTI statistical map by replacing label/node with the corresponding value from the CAP (cluster
-        centroid), converts the NifTI stastical map into fsLR (surface) space (using ``neuromaps.transforms.mni152_to_fslr``),
-        which also turns it into a tuple-of-nib.GiftiImage that can be plotted using ``surfplot.plotting.Plot``.
-        If ``self.caps2niftis()`` was used to convert the parcellation into a NifTI statistical map and an external
-        tool such as Connectome Workbench was used to convert these NifTI files into GifTI files in fsLR (surface)
-        space, then the ``fslr_giftis_dict`` parameter can be used for plotting. Here, ``neuromaps.transforms.fslr_to_fslr``
-        is used to convert the image into a `tuple-of-nib.GiftiImage` form that can be plotted by ``surfplot.plotting.Plot``.
+        Plot CAPs on cortical surface in fsLR space. First, projects CAPs onto parcellation to create
+        NifTI statistical maps by replacing parcellation labels with their corresponding CAP (cluster centroid)
+        values. Then uses neuromap's ``transforms.mni152_to_fslr`` for coordinate system transformation and surfplot's
+        ``Plot`` for plotting. If CAPs where already converted to NifTI (``self.caps2niftis``) and transformed to
+        fsLR GifTI files externally, these can be provided using the ``fslr_giftis_dict`` parameter and will be
+        converted to a suitable format for surfplot's ``Plot`` function by using neuromap's ``transforms.fslr_to_fslr``
+        function. Note, if groups were given when the ``CAP`` class was initialized, surface plots will be generated
+        per CAP for all groups.
 
         Parameters
         ----------
         output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
-            Directory to save plots to. The directory will be created if it does not exist. If None, plots will not
-            be saved. Outputs as png file.
+            Directory to save plots as png files. The directory will be created if it does not exist. If None, plots
+            will not be saved.
 
         suffix_title : :obj:`str` or :obj:`None`, default=None
             Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
 
         show_figs : :obj:`bool`, default=True
-            Whether to display figures.
+            Display figures.
 
         fwhm : :obj:`float` or :obj:`None`, defualt=None
             Strength of spatial smoothing to apply (in millimeters) to the statistical map prior to interpolating
             from MNI152 space to fsLR surface space. Uses nilearn's ``image.smooth``.
-            Note, this can assist with coverage issues in the plot.
 
         fslr_density : {"4k", "8k", "32k", "164k"}, default="32k"
             Density of the fsLR surface when converting from MNI152 space to fsLR surface. Options are "32k" or
@@ -2199,9 +2199,9 @@ class CAP(_CAPGetter):
              .. versionchanged:: 0.16.0 changed from ``save_stat_map`` to ``save_stat_maps``.
 
         fslr_giftis_dict : :obj:`dict` or :obj:`None`, default=None
-            Dictionary specifying precomputed GifTI files in fsLR space for plotting stat maps. This parameter
-            should be used if the statistical CAP NIfTI files (can be obtained using ``self.caps2niftis()``) were
-            converted to GifTI files using a tool such as Connectome Workbench.The dictionary structure is:
+            Dictionary specifying precomputed GifTI files in fsLR space for plotting statistical maps. This parameter
+            should be used if the statistical CAP NIfTI files (can be obtained using ``self.caps2niftis``) were
+            converted to GifTI files using a tool such as Connectome Workbench. The dictionary structure is:
 
             ::
 
@@ -2219,15 +2219,14 @@ class CAP(_CAPGetter):
             if using this parameter.
 
         knn_dict : :obj:`dict[str, int | bool]`, default=None
-            Use KNN (k-nearest neighbors) interpolation to fill in non-background values that are assigned zero. This is
-            primarily used as a fix for when a custom parcellation does not project well from volumetric to surface
-            space. This method involves resampling the Schaefer parcellation, a volumetric parcellation that projects
-            well onto surface space, to the target parcellation specified in the "maps" sub-key in ``self.parcel_approach``.
-            The background indices are extracted from the Schaefer parcellation, and these indices are used to obtain
-            the non-background indices (parcels) that are set to zero in the target parcellation.
-
-            These indices are then iterated over, and the zero values are replaced with the value of the nearest neighbor,
-            determined by the sub-key "k". The following sub-keys are recognized:
+            Use KNN (k-nearest neighbors) interpolation to fill in non-background coordinates that are assigned zero.
+            This is primarily used as a fix for when a custom parcellation does not project well from volumetric to
+            surface space. This method involves resampling a reference volumetric parcellation that projects
+            well onto surface space (Schaefer or AAL), to the target parcellation specified in the "maps" sub-key in
+            ``self.parcel_approach``. The background coordinates are extracted from the reference parcellation and are
+            used to obtain the non-background coordinates that are set to zero in the target parcellation. These
+            coordinates are then replaced with the value of the nearest neighbor, determined by the sub-key "k".
+            The following sub-keys are recognized:
 
             - "k" : An integer that determines the number of nearest neighbors to consider, with the majority vote \
                     determining the new value. If not specified, the default is 1.
@@ -2252,7 +2251,7 @@ class CAP(_CAPGetter):
             - title_pad : int, default=-3
                 Padding for the plot title.
             - cmap : :obj:`str` or :obj:`callable`, default="cold_hot"
-                Colormap to be used for the plot. For this parameter, you can use premade color palettes or create
+                Colormap to be used for the plot. For this parameter, you can use pre-made color palettes or create
                 custom ones. Below is a list of valid options:
 
                 - Strings to call ``nilearn.plotting.cm._cmap_d`` fuction.
@@ -2432,7 +2431,7 @@ class CAP(_CAPGetter):
 
         Calculates the cosine similarity between the "High Amplitude" (positive/above the mean) and "Low Amplitude"
         (negative/below the mean) activations of the CAP cluster centroid and each a-priori region or network in a
-        parcellation. **Note** that this function assumes the mean for each ROI is 0 due to standardization.
+        parcellation. This function assumes the mean for each ROI is 0 due to standardization.
 
         Cosine similarity is computed separately for high and low amplitudes by comparing them to the binary vector of
         the a-priori region, representing the region or network of interest. This provides a measure of how closely
@@ -2512,18 +2511,22 @@ class CAP(_CAPGetter):
                 representing how closely the a-priori region aligns with the positive and negative activations
                 of the CAP centroid.
 
+            Note, if groups were given when the ``CAP`` class was initialized, separate radar plots will be generated
+            per CAP for all groups.
+
         Parameters
         ----------
         output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
-            Directory to save plots to. The directory will be created if it does not exist. Outputs as png file.
+            Directory to save plots as png or html images. The directory will be created if it does not exist.
+            If None, plots will not be saved.
 
         suffix_title : :obj:`str` or :obj:`None`, default=None
             Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
 
         show_figs : :obj:`bool`, default=True
-            Whether to display figures. If this function detects that it is not being ran in an interactive Python
-            environment, then it uses ``plotly.offline``, creates an html file named "temp-plot.html", and opens each
-            plot in the default browser.
+            Display figures. If this function detects that it is not being ran in an interactive Python environment,
+            then it uses ``plotly.offline``, creates an html file named "temp-plot.html", and opens each plot in the
+            default browser.
 
         use_scatterpolar : :obj:`bool`, default=False
             Uses ``plotly.graph_objects.Scatterpolar`` instead of ``plotly.express.line_polar``. The primary difference
@@ -2533,8 +2536,7 @@ class CAP(_CAPGetter):
 
         as_html : :obj:`bool`, default=False
             When ``output_dir`` is specified, plots are saved as html images instead of png images. The advantage is
-            that plotly's radar plots will retain its interactive properties, cna be opened in a browser, and also
-            still be saved as a png in the browser.
+            that plotly's radar plots will retain its interactive properties, can be opened in a browser.
 
         kwargs: :obj:`dict`
             Additional parameters to pass to modify certain plot parameters. Options include:

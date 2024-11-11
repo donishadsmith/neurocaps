@@ -11,34 +11,25 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
     """
     Merge Participant Timeseries Across Multiple Tasks.
 
-    Merge subject timeseries dictionaries or pickle files into the first dictionary or pickle file in the list.
-    For each subject, timeseries (numpy arrays) with the same run ID will be concatenated, while unique run IDs will
-    still be included.
+    Merge subject timeseries data across dictionaries, concatenating matching run IDs. Only subjects present across all
+    input dictionaries are included in the merged output.
 
-    For example, if three subject timeseries are specified in ``subject_timeseries_list``, and subject 1 has:
+    For example, if three dictionaries are provided contain subject 1 with:
 
-        - run-1 in the first dictionary (representing the extracted timeseries from resting-state),
-        - run-1 and run-2 in the second dictionary (representing the extracted timeseries from a Stroop task),
-        - run-3 in the third dictionary (representing the extracted timeseries from a N-back task)
+        - dict 1: run-1 (resting-state)
+        - dict 2: run-1 and run-2 (Stroop)
+        - dict 3: run-3 (N-back)
 
     Then subject 1 in the final merged dictionary will contain:
 
-        - run-1 (concatenated from the first dictionary and second dictionary, the resting-state and the Stroop task),
-        - run-2 (from the second dictionary, the Stroop task),
-        - run-3 (from the third dictionary, the N-back task).
+        - run-1: concatenated timeseries from dict 1 and dict 2 (resting-state + Stroop)
+        - run-2: timeseries from dict 2 (Stroop)
+        - run-3: timeseries from dict 3 (N-back)
 
-    This function is intended for use in workflows where the final merged dictionary, returned by setting
-    ``return_merged_dict`` to True, can be input into ``CAP.get_caps`` to identify similar CAPs across different tasks
-    or the same task over time. Additionally, the reduced dictionaries — the input dictionaries that only contain the
-    subjects present in the final merged dictionary — are returned by setting ``return_reduced_dicts`` to True. These
-    reduced dictionaries can then be used in ``CAP.calculate_metrics`` to compute participant-wise CAP metrics for each
-    task.
-
-    This facilitates analysis of the temporal dynamics of similar CAPs across tasks or the same task at different
-    time points.
-
-    **Note**, Only subjects with at least one functional run present in all dictionaries are included in the final
-    merged dictionary.
+    This function supports workflows for identifying similar CAPs across tasks or sessions. Specifically, using the
+    merged dictionary as input for ``CAP.get_caps`` and the filtered input dictionaries, containing only subjects
+    present in the merged dictionary, as inputs for ``CAP.calculate_metrics`` to compute participant-wise CAP metrics
+    for each task.
 
     Parameters
     ----------
@@ -62,33 +53,30 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
                 }
 
     return_merged_dict : :obj:`bool`, default=True
-        If True, returns the merged dictionary.
+        If True, returns a single dictionary containing the merged dictionary under a key named "merged".
 
     return_reduced_dicts : :obj:`bool`, default=False
-        If True, returns the list of dictionaries provided with only the subjects present in the merged
-        dictionary. The dictionaries are returned in the same order as listed in the ``subject_timeseries_list``
-        parameter. The keys will be names "dict_#", with "#" indicating the index of the dictionary or pickle file
-        in the ``subject_timeseries_list`` parameter.
+        If True, returns a single dictionary containing the input dictionaries filtered to only include subjects present
+        in the merged dictionary. Keys are named "dict_{0}" where {0} corresponds to the dictionary's position in the
+        input list.
 
     output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
-        Directory to save the merged or reduced dictionaries, as pickle files, to. The directory will be created
+        Directory to save the merged or reduced dictionaries as pickle files. The directory will be created
         if it does not exist. For the reduced dictionaries to be saved, ``save_reduced_dicts`` must be set to True.
         If ``save_reduced_dicts`` is False and ``output_dir`` is provided, only the merged dictionary will be saved.
+        Dictionaries will not be saved if None.
 
     file_names : :obj:`list[str]` or :obj:`None`, default=None
-        A list of names to save the dictionaries as if ``output_dir`` is provided. If ``save_reduced_dicts`` is False,
+        A list of file names for saving dictionaries when ``output_dir`` is provided. If ``save_reduced_dicts`` is False,
         only a list with a single name should be supplied, which will be used to save the merged dictionary. If
-        ``save_reduced_dicts`` is True, then the length of the file_name must match the length of
-        ``subject_timeseries_list`` plus an additional name for the merged dictionary. For instance, if for
-        dictionaries or pickle files are provided in ``subject_timeseries_list`` and ``save_reduced_dicts`` is True,
-        five names need to be provided. Additionally, the assignment of file names to dictionaries depends on the
-        index position (file name in 0th index in the list will be assigned to the reduced version of the dictionary in
-        the 0th index of ``subject_timeseries_list``. The last file name is always assigned to the merged dictionary.
-        For this parameter, ``os.path.basename`` is used to get the basename of the files (if a full path is supplied)
-        and ``os.path.splitext`` is used to ignore extensions. Default names are provided if this variable is None.
+        ``save_reduced_dicts`` is True, provide `N+1` names (where `N` is the length of subject_timeseries_list) - `N`
+        names for individual reduced dictionaries followed by one name for the merged dictionary. Names are assigned by
+        input position order. Full paths are handled using basename, and extensions are ignored. If None, uses default
+        names - "subject_timeseries_{0}_reduced.pkl" (where {0} indicates the original input order) and
+        "merged_subject_timeseries.pkl" for the merged dictionary.
 
     save_reduced_dicts : :obj:`bool` or None, default=False
-        If True and the ``output_dir`` is provided, then the reduced dictionaries are saved.
+        If True and the ``output_dir`` is provided, then the reduced dictionaries are saved as pickle files.
 
     Returns
     -------

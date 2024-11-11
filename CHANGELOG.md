@@ -16,6 +16,10 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.18.3.post0] - 2024-11-10
+### 📖 Documentation
+- Significant documentation revisions for clarity and precision.
+
 ## [0.18.3] - 2024-11-10
 ### 🐛 Fixes
 - More conservative maxsizes for `@lru_cache`, change `@cache` in `TimeseriesExtractor` to `@lru_cache`.

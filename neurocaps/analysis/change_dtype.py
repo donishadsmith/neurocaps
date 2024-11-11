@@ -41,17 +41,18 @@ def change_dtype(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndar
         Target data type (e.g "float32" or ``np.float32``) to convert each participant's numpy arrays into.
 
     return_dicts : :obj:`bool`, default=True
-        If True, returns the converted ``subject_timeseries``.
+        If True, returns a single dictionary containing the converted input dictionaries. Keys are named "dict_{0}"
+        where {0} corresponds to the dictionary's position in the input list.
 
     output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
-        Directory to save the converted ``subject_timeseries`` to. Will be saved as a pickle file. The directory will
-        be created if it does not exist.
+        Directory to save the converted ``subject_timeseries`` as pickle files. The directory will be created if it
+        does not exist. Dictionaries will not be saved if None.
 
     file_names : :obj:`list[str]` or :obj:`None`, default=None
-        A list of names to save the  dictionaries with changed dtypes as. The assignment of file names to dictionaries
-        depends on the index position (a file name in the 0th position will be the file name for the dictionary in the
-        0th position of ``subject_timeseries_list``). If no names are provided and ``output_dir`` is specified,
-        default names will be used.
+        A list of names to save the dictionaries with changed dtypes as. Names are matched to dictionaries by position
+        (e.g., a file name in the 0th position will be the file name for the dictionary in the 0th position of
+        ``subject_timeseries_list``). If None and ``output_dir`` is specified, uses default file names -
+        "subject_timeseries_{0}_float{1}.pkl" (where {0} indicates the original input order and {1} is the dtype.
 
     Returns
     -------
