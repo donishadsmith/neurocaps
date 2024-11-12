@@ -19,6 +19,8 @@ improvements/enhancements. Fixes and modifications will be backwards compatible.
 ## [0.18.3.post0] - 2024-11-10
 ### 📖 Documentation
 - Significant documentation revisions for clarity and precision.
+- Also, updates outdated documentation for `CAP.get_caps` to clarify that figure generation and saving parameters can
+be used with any `cluster_selection_method`, not just specific ones as previously implied.
 
 ## [0.18.3] - 2024-11-10
 ### 🐛 Fixes
