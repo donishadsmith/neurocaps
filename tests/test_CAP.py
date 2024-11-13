@@ -103,6 +103,7 @@ def test_no_groups_no_cluster_selection(standardize):
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, n_clusters=2, standardize=standardize)
     assert cap_analysis.caps["All Subjects"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["All Subjects"]["CAP-2"].shape == (100,)
+    assert len(cap_analysis.caps["All Subjects"]) == len(np.unique(cap_analysis.kmeans["All Subjects"].labels_ ))
 
     concatenated_timeseries = concat_data(cap_analysis.subject_table, standardize=standardize)
 
@@ -182,7 +183,11 @@ def test_no_groups_cluster_selection(standardize, n_cores):
                                         y=list(cap_analysis.inertia["All Subjects"].values()),
                                         curve="convex", direction="decreasing")
             assert kneedle.elbow == cap_analysis.optimal_n_clusters["All Subjects"]
-            assert cap_analysis.inertia["All Subjects"][cap_analysis.optimal_n_clusters["All Subjects"]] == cap_analysis.kmeans["All Subjects"].inertia_
+            assert cap_analysis.inertia["All Subjects"][cap_analysis.optimal_n_clusters["All Subjects"]] \
+                == cap_analysis.kmeans["All Subjects"].inertia_
+            # Slightly redundant assertion
+            assert len(cap_analysis.caps["All Subjects"]) == len(np.unique(cap_analysis.kmeans["All Subjects"].labels_ )) \
+                == cap_analysis.optimal_n_clusters["All Subjects"]
         except:
             raise ValueError("Different results for kneedle and optimal cluster or not all inertia values are positive.")
     except:
@@ -194,6 +199,7 @@ def test_no_groups_cluster_selection(standardize, n_cores):
                           cluster_selection_method="silhouette",
                           standardize=standardize,
                           n_cores=n_cores)
+
     # Maximum silhouette is the most optimal
     assert max(cap_analysis.silhouette_scores["All Subjects"],
                key=cap_analysis.silhouette_scores["All Subjects"].get) == cap_analysis.optimal_n_clusters["All Subjects"]
@@ -202,6 +208,8 @@ def test_no_groups_cluster_selection(standardize, n_cores):
     assert cap_analysis.caps["All Subjects"]["CAP-2"].shape == (100,)
     assert all(elem > 0  or elem < 0 for elem in cap_analysis.silhouette_scores["All Subjects"].values())
     assert all(-1 <= elem <= 1 for elem in cap_analysis.silhouette_scores["All Subjects"].values())
+    assert len(cap_analysis.caps["All Subjects"]) == len(np.unique(cap_analysis.kmeans["All Subjects"].labels_ )) \
+        == cap_analysis.optimal_n_clusters["All Subjects"]
 
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
                           n_clusters=[2,3,4,5],
@@ -211,6 +219,8 @@ def test_no_groups_cluster_selection(standardize, n_cores):
     # Maximum variance ratio is the most optimal
     assert max(cap_analysis.variance_ratio["All Subjects"],
                key=cap_analysis.variance_ratio["All Subjects"].get) == cap_analysis.optimal_n_clusters["All Subjects"]
+    assert len(cap_analysis.caps["All Subjects"]) == len(np.unique(cap_analysis.kmeans["All Subjects"].labels_ )) \
+        == cap_analysis.optimal_n_clusters["All Subjects"]
 
     # All values not negative
     assert all(elem >= 0 for elem in cap_analysis.variance_ratio["All Subjects"].values())
@@ -222,6 +232,8 @@ def test_no_groups_cluster_selection(standardize, n_cores):
     # Mininimum davies_bouldin is the most optimal
     assert min(cap_analysis.davies_bouldin["All Subjects"],
                key=cap_analysis.davies_bouldin["All Subjects"].get) == cap_analysis.optimal_n_clusters["All Subjects"]
+    assert len(cap_analysis.caps["All Subjects"]) == len(np.unique(cap_analysis.kmeans["All Subjects"].labels_ )) \
+        == cap_analysis.optimal_n_clusters["All Subjects"]
 
     # All values not negative
     assert all(elem >= 0 for elem in cap_analysis.davies_bouldin["All Subjects"].values())
@@ -567,12 +579,12 @@ def test_caps2surf(remove_files):
     cap_analysis.get_caps(subject_timeseries=subject_timeseries,
                           n_clusters=2)
 
-    cap_analysis.caps2surf(method="nearest", save_stat_maps=True, output_dir=tmp_dir.name,
+    cap_analysis.caps2surf(method="nearest", fwhm=1, save_stat_maps=True, output_dir=tmp_dir.name,
                            suffix_title="placeholder", show_figs=False)
     check_imgs(plot_type="surface", values_dict={"png": 2})
     check_imgs(plot_type="nifti", values_dict={"nii.gz": 2})
 
-    cap_analysis.caps2surf(method="linear", save_stat_maps=False, output_dir=tmp_dir.name,
+    cap_analysis.caps2surf(method="linear", fwhm=1, save_stat_maps=False, output_dir=tmp_dir.name,
                            as_outline=True, show_figs=False)
     check_imgs(plot_type="surface", values_dict={"png": 2})
     check_imgs(plot_type="nifti", values_dict={"nii.gz": 0})
@@ -593,24 +605,55 @@ def test_niftis(current_timeseries, parcel_approach):
     nifti_files = glob.glob(os.path.join(tmp_dir.name, "*.nii.gz"))
 
     # Check that elements of the cluster centroid are correctly assigned to their corresponding labels in atlas
-    for indx, file in enumerate(nifti_files):
+    for indx, file in enumerate(nifti_files, start=1):
         act_values = []
         nifti_img = nib.load(file).get_fdata()
         for label in labels:
+            # Extract first coordinate and append to activation list
             coords = list(zip(*np.where(atlas_data == label)))[0]
-            act_value = nifti_img[coords[0],coords[1],coords[2]]
+            act_value = nifti_img[coords[0], coords[1], coords[2]]
             act_values.append(act_value)
 
-        np.array_equal(cap_analysis.caps["All Subjects"][f"CAP-{indx + 1}"], np.array(act_values))
+        # Assess if reconstructing 1D array from 3D nifti produces the same cluster centroid
+        np.array_equal(cap_analysis.caps["All Subjects"][f"CAP-{indx}"], np.array(act_values))
+
+    # Check files
+    check_imgs(plot_type="nifti", values_dict={"nii.gz": 2})
 
     if "Custom" in parcel_approach:
-        cap_analysis.caps2niftis(output_dir=tmp_dir.name, fwhm=1,
-                                knn_dict={"k": 1, "resolution_mm": 1, "remove_labels": [50]})
+        # Assess that knn interpolation works
+        original_nifti = nib.load(cap_analysis.parcel_approach["Custom"]["maps"]).get_fdata()
 
-        cap_analysis.caps2niftis(output_dir=tmp_dir.name, fwhm=1,
-                        knn_dict={"k": 3, "reference_atlas": "AAL", "remove_labels": [50]})
+        # Replace zeros in CAP 1D vectors to conduct assessment
+        for i in range(1, 3):
+            cap_analysis.caps["All Subjects"][f"CAP-{i}"] = np.where(cap_analysis.caps["All Subjects"][f"CAP-{i}"] == 0, 1,
+                                                                     cap_analysis.caps["All Subjects"][f"CAP-{i}"])
+            # Assert no zeroes
+            assert sum(cap_analysis.caps["All Subjects"][f"CAP-{i}"][
+                cap_analysis.caps["All Subjects"][f"CAP-{i}"] == 0]) == 0
 
-    check_imgs(plot_type="nifti", values_dict={"nii.gz": 2})
+        # Check knn interpolation with schaefer reference
+        cap_analysis.caps2niftis(output_dir=tmp_dir.name, suffix_file_name="Schaefer_ref",
+                                 knn_dict={"k": 1, "resolution_mm": 1, "remove_labels": [50]})
+
+        # Check interpolation using Schaefer reference
+        for i in glob.glob(os.path.join(tmp_dir.name, "*Schaefer_ref*")):
+            interpolated_nifti = nib.load(i).get_fdata()
+            assert not np.array_equal(original_nifti[original_nifti == 0], interpolated_nifti[original_nifti == 0])
+
+        # Check files
+        check_imgs(plot_type="nifti", values_dict={"nii.gz": 2})
+
+        cap_analysis.caps2niftis(output_dir=tmp_dir.name, suffix_file_name="AAL_ref",
+                                 knn_dict={"k": 3, "reference_atlas": "AAL"})
+
+        # Check interpolation using AAL reference
+        for i in glob.glob(os.path.join(tmp_dir.name, "*AAL_ref*")):
+            interpolated_nifti = nib.load(i).get_fdata()
+            assert not np.array_equal(original_nifti[original_nifti == 0], interpolated_nifti[original_nifti == 0])
+
+        # Check files
+        check_imgs(plot_type="nifti", values_dict={"nii.gz": 2})
 
 def test_calculate_metrics_w_change_dtype():
     cap_analysis = CAP(parcel_approach=parcel_approach, groups={"A": [1,2,3,5], "B": [4,6,7,8,9,10,7]})
