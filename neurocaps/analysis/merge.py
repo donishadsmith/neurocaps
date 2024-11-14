@@ -9,7 +9,7 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
                 file_names: Optional[list[str]]=None,
                 save_reduced_dicts: bool=False) -> dict[str, dict[str, dict[str, np.ndarray]]]:
     """
-    Merge Participant Timeseries Across Multiple Tasks.
+    Merge Participant Timeseries Across Multiple Sessions or Tasks.
 
     Merge subject timeseries data across dictionaries, concatenating matching run IDs. Only subjects present across all
     input dictionaries are included in the merged output.
@@ -81,6 +81,10 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
     Returns
     -------
     `dict[str, dict[str, dict[str, np.ndarray]]]`
+
+    References
+    ----------
+    Kupis, L., Romero, C., Dirks, B., Hoang, S., Parladé, M. V., Beaumont, A. L., Cardona, S. M., Alessandri, M., Chang, C., Nomi, J. S., & Uddin, L. Q. (2020). Evoked and intrinsic brain network dynamics in children with autism spectrum disorder. NeuroImage: Clinical, 28, 102396. https://doi.org/10.1016/j.nicl.2020.102396
     """
 
     assert isinstance(subject_timeseries_list, list), "`subject_timeseries_list` must be a list."

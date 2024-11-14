@@ -9,7 +9,7 @@
    :alt: Python Versions
 
 .. image:: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal
-   :target: https://doi.org/10.5281/zenodo.14064627
+   :target: https://doi.org/10.5281/zenodo.14164834
    :alt: DOI
 
 .. image:: https://img.shields.io/badge/Source%20Code-neurocaps-purple
@@ -39,7 +39,7 @@ Citing
 ------
 ::
 
-  Smith, D. (2024). neurocaps. Zenodo. https://doi.org/10.5281/zenodo.14064627
+  Smith, D. (2024). neurocaps. Zenodo. https://doi.org/10.5281/zenodo.14164834
 
 Usage
 -----
@@ -72,7 +72,7 @@ Main features for ``CAP`` includes:
 
 **Additionally, the neurocaps.analysis submodule contains additional functions:**
 
-- ``merge_dicts``: Merge the subject_timeseries dictionaries for overlapping subjects across tasks to identify similar CAPs across different tasks. The merged dictionary can be saved as a pickle file.
+- ``merge_dicts``: Merge the subject_timeseries dictionaries for overlapping subjects across tasks to identify similar CAPs across different tasks [5]_. The merged dictionary can be saved as a pickle file.
 - ``standardize``: Standardizes each run independently for all subjects in the subject timeseries.
 - ``change_dtype``: Changes the dtype of all subjects in the subject timeseries to help with memory usage.
 - ``transition_matrix``: Uses the "transition_probability" output from ``CAP.calculate_metrics`` to generate and visualize the averaged transition probability matrix for all groups from the analysis.
@@ -107,7 +107,11 @@ Neurocaps relies on several packages:
 
 Acknowledgements
 ----------------
-This package was initially inspired by a co-activation patterns implementation in mtorabi59's `pydfc <https://github.com/neurodatascience/dFC>`_ package.
+Some foundational concepts in neurocaps take inspiration from features or design patterns implemented in other
+neuroimaging Python packages, specifically:
+
+- mtorabi59's `pydfc <https://github.com/neurodatascience/dFC>`_, a toolbox that allows comparisons among several popular dynamic functionality methods.
+- 62442katieb's `idconn <https://github.com/62442katieb/IDConn>`_, a pipeline for assessing individual differences in resting-state or task-based functional connectivity.
 
 References
 ----------
@@ -120,3 +124,5 @@ References
 
 .. [4] Ingwersen, T., Mayer, C., Petersen, M., Frey, B. M., Fiehler, J., Hanning, U., Kühn, S., Gallinat, J., Twerenbold, R., Gerloff, C., Cheng, B., Thomalla, G., & Schlemm, E. (2024).
        Functional MRI brain state occupancy in the presence of cerebral small vessel disease — A pre-registered replication analysis of the Hamburg City Health Study. Imaging Neuroscience, 2, 1–17. https://doi.org/10.1162/imag_a_00122
+
+.. [5] Kupis, L., Romero, C., Dirks, B., Hoang, S., Parladé, M. V., Beaumont, A. L., Cardona, S. M., Alessandri, M., Chang, C., Nomi, J. S., & Uddin, L. Q. (2020). Evoked and intrinsic brain network dynamics in children with autism spectrum disorder. NeuroImage: Clinical, 28, 102396. https://doi.org/10.1016/j.nicl.2020.102396
