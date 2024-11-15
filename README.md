@@ -13,7 +13,7 @@ This is a Python package designed to perform Co-activation Patterns (CAPs) analy
 ## Installation
 To install neurocaps, follow the instructions below using your preferred terminal.
 
-### Standard Installation from PyPi:
+### Standard Installation from PyPi
 ```bash
 
 pip install neurocaps

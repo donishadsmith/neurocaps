@@ -1,7 +1,7 @@
 # Installation
 To install neurocaps, follow the instructions below using your preferred terminal.
 
-### Standard Installation from PyPi:
+### Standard Installation from PyPi
 ```bash
 
 pip install neurocaps
