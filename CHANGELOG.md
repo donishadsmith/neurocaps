@@ -16,6 +16,15 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.18.4] - 2024-11-15
+## 🐛 Fixes
+- Corrected region names for version "3v2" of the AAL atlas.
+## ♻ Changed
+- Added a specific logged warning when no confound names are found. If some confound names are missing,
+they will still be listed accordingly.
+- Added a specific logged warnings for methods in `CAP` that use the `runs` parameter. Warnings are issued if a subject
+is missing any requested run, with an additional warning if all runs are missing.
+
 ## [0.18.3.post0] - 2024-11-14
 ### 📖 Documentation
 - Added reference for `merge_dicts`.

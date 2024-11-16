@@ -382,12 +382,15 @@ def _get_confounds(Data, confound_names, LG):
     if valid_confounds: confounds = Data.confound_df[valid_confounds].fillna(0)
     else: confounds = None
 
-    if (invalid_confounds or confounds is None) and Data.verbose:
-        LG.warning(f"{Data.head}" + f"The following confounds were not found: {', '.join(invalid_confounds)}.")
+    if Data.verbose:
+        if confounds is None:
+            LG.warning(f"{Data.head}" + "None of the requested confounds were found so nuisance regression will not be done.")
+        elif invalid_confounds:
+            LG.warning(f"{Data.head}" + f"The following confounds were not found: {', '.join(invalid_confounds)}.")
 
-    if confounds is not None and not confounds.empty and Data.verbose:
-        LG.info(f"{Data.head}" + "The following confounds will be used for nuisance regression: "
-                f"{', '.join(list(confounds.columns))}.")
+        if confounds is not None and not confounds.empty:
+            LG.info(f"{Data.head}" + "The following confounds will be used for nuisance regression: "
+                    f"{', '.join(list(confounds.columns))}.")
 
     return confounds
 

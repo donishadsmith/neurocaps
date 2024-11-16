@@ -121,6 +121,17 @@ def test_no_groups_no_cluster_selection(standardize):
     labels = predict_labels(subject_timeseries, cap_analysis, standardize, "All Subjects")
     assert np.array_equal(labels, cap_analysis.kmeans["All Subjects"].labels_)
 
+def test_skip_subject():
+    subject_timeseries = copy.deepcopy(extractor.subject_timeseries)
+    del subject_timeseries["2"]["run-1"]
+    cap_analysis = CAP(parcel_approach=parcel_approach)
+    cap_analysis.get_caps(subject_timeseries=subject_timeseries, runs=1, n_clusters=2)
+
+    assert cap_analysis.concatenated_timeseries["All Subjects"].shape == (900,100)
+
+    df_dict = cap_analysis.calculate_metrics(subject_timeseries=subject_timeseries, runs=1, metrics="counts")
+    assert "2" not in df_dict["counts"]["Subject_ID"].values
+
 @pytest.mark.parametrize("standardize", [True, False])
 def test_groups_no_cluster_selection(standardize):
     # Should ignore duplicate id

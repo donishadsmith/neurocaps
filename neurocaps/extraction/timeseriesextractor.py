@@ -73,9 +73,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     confound_names : :obj:`list[str]` or :obj:`None`, default=None
         The names of the confounds to extract from the confound tsv files. If None, default confounds are used, which
         consists of all cosine-basis parameters, the six-head motion parameters and their first-order derivatives,
-        and the first six combined acompcor components. Note, an asterisk ("*") can be used to find confound names
-        that start with the term preceding the asterisk. For instance, "cosine*" will find all confound names in the
-        confound files starting with "cosine".
+        and the first six combined acompcor components. Additionally, the names of these confounds follow the
+        naming scheme of confounds in fMRIPrep versions ``>= 1.2.0``. Note, an asterisk ("*") can be used to find
+        confound names that start with the term preceding the asterisk. For instance, "cosine*" will find all confound
+        names in the confound files starting with "cosine".
 
     fd_threshold : :obj:`float`, :obj:`dict[str, float]`, or :obj:`None`, default=None
         Sets a threshold for removing exceeding volumes after nuisance regression and timeseries extraction are

@@ -82,9 +82,8 @@ def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
         parcel_dict["AAL"].update({"nodes": [label for label in fetched_aal.labels]})
 
         # Get node networks
-        parcel_dict["AAL"].update({"regions": list(
-            dict.fromkeys([node.split("_")[0]
-                           for node in parcel_dict["AAL"]["nodes"]]))})
+        regions = _handle_aal(parcel_dict["AAL"]["nodes"])
+        parcel_dict["AAL"].update({"regions": regions})
 
         # Clean keys
         for key in VALID_DICT_STUCTURE["AAL"]:
@@ -122,3 +121,22 @@ def _check_keys(parcel_dict):
     required_keys = ["maps", "nodes", "regions"]
 
     return all(key in parcel_dict[list(parcel_dict)[0]] for key in required_keys)
+
+# Special handling for region names in AAL "3v2"
+def _handle_aal(nodes, unique=True):
+    names = ["N_Acc", "Red_N", "OFC"]
+
+    regions = []
+
+    for node in nodes:
+        bool_vec = [name in node for name in names]
+
+        if not any(bool_vec):
+            regions.append(node.split("_")[0])
+        else:
+            indx = bool_vec.index(True)
+            regions.append(names[indx])
+
+    if unique: regions = list(dict.fromkeys(regions))
+
+    return regions

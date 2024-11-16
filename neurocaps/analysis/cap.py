@@ -12,7 +12,7 @@ from scipy.stats import pearsonr
 from sklearn.cluster import KMeans
 
 from .._utils import (_CAPGetter, _cap2statmap, _check_kwargs, _create_display, _convert_pickle_to_dict,
-                      _check_parcel_approach, _logger, _run_kmeans, _save_contents)
+                      _check_parcel_approach, _handle_aal, _logger, _run_kmeans, _save_contents)
 
 LG = _logger(__name__)
 
@@ -620,13 +620,15 @@ class CAP(_CAPGetter):
         self._stdev_vec = {group: None for group in self._groups}
 
         for subj_id, group in self._subject_table.items():
-            requested_runs = [f"run-{run}" for run in runs] if runs else list(subject_timeseries[subj_id])
-            subject_runs = [subject_run for subject_run in subject_timeseries[subj_id]
-                            if subject_run in requested_runs]
+            subject_runs, miss_runs = self._get_runs(runs, list(subject_timeseries[subj_id]))
+
+            if miss_runs:
+                LG.warning(f"[SUBJECT: {subj_id}] Does not have the requested runs: {', '.join(miss_runs)}.")
+
             if not subject_runs:
-                LG.warning(f"[SUBJECT: {subj_id}] Does not have the requested run numbers: "
-                           f"{','.join(requested_runs)}.")
+                LG.warning(f"[SUBJECT: {subj_id}] Excluded from the concatenated timeseries due to having no runs.")
                 continue
+
             for curr_run in subject_runs:
                 if concatenated_timeseries[group] is None:
                     concatenated_timeseries[group] = subject_timeseries[subj_id][curr_run]
@@ -649,6 +651,16 @@ class CAP(_CAPGetter):
             concatenated_timeseries[group] = diff/self._stdev_vec[group]
 
         return concatenated_timeseries
+
+    @staticmethod
+    def _get_runs(requested_runs, curr_runs):
+        if requested_runs: requested_runs = [f"run-{run}" for run in requested_runs]
+
+        runs = [run for run in requested_runs if run in curr_runs] if requested_runs else curr_runs
+
+        miss_runs = list(set(requested_runs) - set(runs)) if requested_runs else None
+
+        return runs, miss_runs
 
     def _select_optimal_clusters(self, random_state, init, n_init, max_iter, tol, algorithm,
                                  show_figs, output_dir, **kwargs):
@@ -767,7 +779,7 @@ class CAP(_CAPGetter):
 
         for group in self._groups:
             self._caps[group] = {}
-            cluster_centroids = zip([num for num in range(1,len(self._kmeans[group].cluster_centers_)+1)],
+            cluster_centroids = zip([num for num in range(1,len(self._kmeans[group].cluster_centers_) + 1)],
                                     self._kmeans[group].cluster_centers_)
             self._caps[group].update({f"CAP-{state_number}": state_vector
                                       for state_number, state_vector in cluster_centroids})
@@ -1206,11 +1218,13 @@ class CAP(_CAPGetter):
             if subj_id == list(self._subject_table)[0]: predicted_subject_timeseries = {}
 
             predicted_subject_timeseries[subj_id] = {}
-            requested_runs = [f"run-{run}" for run in runs] if runs else list(subject_timeseries[subj_id])
-            subject_runs = [subject_run for subject_run in subject_timeseries[subj_id] if subject_run in requested_runs]
+            subject_runs, miss_runs = self._get_runs(runs, list(subject_timeseries[subj_id]))
+
+            if miss_runs:
+                LG.warning(f"[SUBJECT: {subj_id}] Does not have the requested runs: {', '.join(miss_runs)}.")
 
             if not subject_runs:
-                LG.warning(f"[SUBJECT: {subj_id}] Does not have the requested run numbers: {','.join(requested_runs)}.")
+                LG.warning(f"[SUBJECT: {subj_id}] Excluded from the concatenated timeseries due to having no runs.")
                 continue
 
             for curr_run in subject_runs:
@@ -1249,6 +1263,7 @@ class CAP(_CAPGetter):
             products.update({group: list(itertools.product(group_caps[group], group_caps[group]))})
             # Filter out all reversed products and products with the self transitions
             products_unique[group] = []
+
             for prod in products[group]:
                 if prod[0] == prod[1]: continue
                 # Include only the first instance of symmetric pairs
@@ -1767,7 +1782,8 @@ class CAP(_CAPGetter):
             frequency_dict = collections.Counter([" ".join(node) for node in nodes])
         elif parcellation_name == "AAL":
             nodes = parcel_approach[parcellation_name]["nodes"]
-            frequency_dict = collections.Counter([node.split("_")[0] for node in nodes])
+            regions = _handle_aal(nodes, unique=False)
+            frequency_dict = collections.Counter(regions)
         else:
             frequency_dict = {}
             for names_id in columns:
