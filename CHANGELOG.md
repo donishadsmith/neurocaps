@@ -16,6 +16,12 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.18.5] - 2024-11-16
+## ♻ Changed
+- Updated Dependencies:
+    - NumPy: version 2.0 and above can be installed.
+    - BrainSpace: requires version 0.1.16 and above.
+
 ## [0.18.4] - 2024-11-15
 ## 🐛 Fixes
 - Corrected region names for version "3v2" of the AAL atlas.

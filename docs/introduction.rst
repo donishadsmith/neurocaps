@@ -9,7 +9,7 @@
    :alt: Python Versions
 
 .. image:: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal
-   :target: https://doi.org/10.5281/zenodo.14172239
+   :target: https://doi.org/10.5281/zenodo.14174119
    :alt: DOI
 
 .. image:: https://img.shields.io/badge/Source%20Code-neurocaps-purple
@@ -39,7 +39,7 @@ Citing
 ------
 ::
 
-  Smith, D. (2024). neurocaps. Zenodo. https://doi.org/10.5281/zenodo.14172239
+  Smith, D. (2024). neurocaps. Zenodo. https://doi.org/10.5281/zenodo.14174119
 
 Usage
 -----
@@ -85,25 +85,26 @@ Neurocaps relies on several packages:
 
 ::
 
-    dependencies = ["numpy>=1.22.0, <2.0.0",
-                    "pandas>=2.0.0",
-                    "joblib>=1.3.0",
-                    "matplotlib>=3.6.0",
-                    "seaborn>=0.11.0",
-                    "kneed>=0.8.0",
-                    "nibabel>=3.2.0",
-                    "nilearn>=0.10.1, !=0.10.3",
-                    "scikit-learn>=1.4.0",
-                    "scipy>=1.6.0",
-                    "surfplot>=0.2.0",
-                    "neuromaps>=0.0.5",
-                    "pybids>=0.16.2; platform_system != 'Windows'",
-                    "plotly>=4.9",
-                    "nbformat>=4.2.0", # For plotly
-                    "kaleido==0.1.0.post1; platform_system == 'Windows'", # Plotly saving seems to work best with this version for Windows
-                    "kaleido; platform_system != 'Windows'",
-                    "setuptools; python_version>='3.12'"
-                   ]
+   dependencies = ["numpy>=1.22.0",
+                   "pandas>=2.0.0",
+                   "joblib>=1.3.0",
+                   "matplotlib>=3.6.0",
+                   "seaborn>=0.11.0",
+                   "kneed>=0.8.0",
+                   "nibabel>=3.2.0",
+                   "nilearn>=0.10.1, !=0.10.3",
+                   "scikit-learn>=1.4.0",
+                   "scipy>=1.6.0",
+                   "brainspace>=0.1.16",
+                   "surfplot>=0.2.0",
+                   "neuromaps>=0.0.5",
+                   "pybids>=0.16.2; platform_system != 'Windows'",
+                   "plotly>=4.9",
+                   "nbformat>=4.2.0",
+                   "kaleido==0.1.0.post1; platform_system == 'Windows'",
+                   "kaleido; platform_system != 'Windows'",
+                   "setuptools; python_version>='3.12'"
+                  ]
 
 Acknowledgements
 ----------------

@@ -13,7 +13,16 @@ authors = [{name = "Donisha Smith", email = "donishasmith@outlook.com"}]
 description = "Co-activation Patterns (CAPs) Python package"
 readme = "README.md"
 requires-python = ">=3.9.0"
-keywords = ["python", "Co-Activation Patterns", "CAPs", "neuroimaging", "fmri", "dfc", "dynamic functional connectivity", "fMRIPrep"]
+
+keywords = ["python",
+            "Co-Activation Patterns",
+            "CAPs",
+            "neuroimaging",
+            "fmri",
+            "dfc",
+            "dynamic functional connectivity",
+            "fMRIPrep"]
+
 classifiers = [
     "Intended Audience :: Education",
     "Intended Audience :: Science/Research",
@@ -28,7 +37,8 @@ classifiers = [
     "Operating System :: Microsoft :: Windows :: Windows 11",
     "Development Status :: 4 - Beta"
     ]
-dependencies = ["numpy>=1.22.0, <2.0.0", # Allows brainspace to work
+
+dependencies = ["numpy>=1.22.0",
                 "pandas>=2.0.0",
                 "joblib>=1.3.0",
                 "matplotlib>=3.6.0",
@@ -38,12 +48,13 @@ dependencies = ["numpy>=1.22.0, <2.0.0", # Allows brainspace to work
                 "nilearn>=0.10.1, !=0.10.3",
                 "scikit-learn>=1.4.0",
                 "scipy>=1.6.0",
+                "brainspace>=0.1.16",
                 "surfplot>=0.2.0",
                 "neuromaps>=0.0.5",
                 "pybids>=0.16.2; platform_system != 'Windows'",
                 "plotly>=4.9",
-                "nbformat>=4.2.0", # For plotly
-                "kaleido==0.1.0.post1; platform_system == 'Windows'", # Plotly saving seems to work best with this version for Windows
+                "nbformat>=4.2.0",
+                "kaleido==0.1.0.post1; platform_system == 'Windows'",
                 "kaleido; platform_system != 'Windows'",
                 "setuptools; python_version>='3.12'"
                 ]
@@ -60,10 +71,6 @@ Homepage = "https://neurocaps.readthedocs.io/en/latest/"
 Github = "https://github.com/donishadsmith/neurocaps"
 Issues = "https://github.com/donishadsmith/neurocaps/issues"
 Changelog = "https://neurocaps.readthedocs.io/en/latest/changelog.html"
-
-[tool.black]
-line-length = 150
-skip-string-normalization = true
 
 [tool.distutils.bdist_wheel]
 universal = true
