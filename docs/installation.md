@@ -11,6 +11,9 @@ pip install neurocaps
 **Windows Users**
 
 To avoid installation errors related to long paths not being enabled, pybids will not be installed by default.
+Refer to official [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=powershell)
+to enable long paths.
+
 To include pybids in your installation, use:
 
 ```bash
