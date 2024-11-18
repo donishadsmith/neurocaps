@@ -1,7 +1,7 @@
 # neurocaps
 [![Latest Version](https://img.shields.io/pypi/v/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.14174119)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.14178104)
 [![Github Repository](https://img.shields.io/badge/Source%20Code-neurocaps-purple)](https://github.com/donishadsmith/neurocaps)
 [![Test Status](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg)](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml)
 [![codecov](https://codecov.io/github/donishadsmith/neurocaps/graph/badge.svg?token=WS2V7I16WF)](https://codecov.io/github/donishadsmith/neurocaps)
@@ -119,7 +119,7 @@ from neurocaps.extraction import TimeseriesExtractor
 from neurocaps.analysis import CAP
 
 # Set specific confounds for nuisance regression
-confounds = ['Cosine*', 'Rot*']
+confounds = ["Cosine*", "aComp*", "Rot*"]
 
 # Set parcellation
 parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7, "resolution_mm": 2}}
@@ -131,18 +131,17 @@ extractor = TimeseriesExtractor(parcel_approach=parcel_approach,
                                 detrend=True,
                                 low_pass=0.15,
                                 high_pass=0.01,
-                                confound_names=confounds,
-                                n_acompcor_separate=2)
+                                confound_names=confounds)
 
 bids_dir = "tests/ds000031_R1.0.4_ses001-022/ds000031_R1.0.4"
 
 # If there are multiple pipelines in the derivatives folder, you can specify a specific pipeline
-pipeline_name = fmriprep_1.0.0/fmriprep
+pipeline_name = "fmriprep_1.0.0/fmriprep"
 
 # Extract timeseries for subjects in the BIDS directory
 extractor.get_bold(bids_dir=bids_dir,
                    task="rest",
-                   session='002',
+                   session="002",
                    pipeline_name=pipeline_name
                    verbose=True,
                    flush=True)
@@ -277,16 +276,15 @@ radialaxis={"showline": True,
             "tickvals": [0.1,"","",0.4, "","", 0.6]}
 
 legend = {"yanchor": "top",
-        "y": 0.99,
-        "x": 0.99,
-        "title_font_family": "Times New Roman",
-        "font": {"size": 12, "color": "black"}}
+          "y": 0.99,
+          "x": 0.99,
+          "title_font_family": "Times New Roman",
+          "font": {"size": 12, "color": "black"}}
 
-colors =  {"High Amplitude": "black", "Low Amplitude": "orange"}
+colors =  {"High Amplitude": "black", "Low Amplitude": "orange"}git c
 
-
-kwargs = {"radialaxis": radial, "fill": "toself", "legend": legend,
-"color_discrete_map": colors, "height": 400, "width": 600}
+kwargs = {"radialaxis": radial, "fill": "toself", "legend": legend, "color_discrete_map": colors,
+          "height": 400, "width": 600}
 
 cap_analysis.caps2radar(output_dir=output_dir, **kwargs)
 ```

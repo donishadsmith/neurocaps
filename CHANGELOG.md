@@ -16,6 +16,11 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.18.6] - 2024-11-18
+- Minor code cleaning
+### 📖 Documentation
+- Readme example fix
+
 ## [0.18.5] - 2024-11-16
 ## ♻ Changed
 - Updated Dependencies:

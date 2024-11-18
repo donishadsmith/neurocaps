@@ -181,19 +181,19 @@ Plotting CAPs to Radar
 .. code-block:: python
 
     radialaxis={"showline": True,
-            "linewidth": 2,
-            "linecolor": "rgba(0, 0, 0, 0.25)",
-            "gridcolor": "rgba(0, 0, 0, 0.25)",
-            "ticks": "outside" ,
-            "tickfont": {"size": 14, "color": "black"},
-            "range": [0,0.6],
-            "tickvals": [0.1,"","",0.4, "","", 0.6]}
+                "linewidth": 2,
+                "linecolor": "rgba(0, 0, 0, 0.25)",
+                "gridcolor": "rgba(0, 0, 0, 0.25)",
+                "ticks": "outside" ,
+                "tickfont": {"size": 14, "color": "black"},
+                "range": [0,0.6],
+                "tickvals": [0.1,"","",0.4, "","", 0.6]}
 
     legend = {"yanchor": "top",
-            "y": 0.99,
-            "x": 0.99,
-            "title_font_family": "Times New Roman",
-            "font": {"size": 12, "color": "black"}}
+              "y": 0.99,
+              "x": 0.99,
+              "title_font_family": "Times New Roman",
+              "font": {"size": 12, "color": "black"}}
 
     colors =  {"High Amplitude": "red", "Low Amplitude": "blue"}
 

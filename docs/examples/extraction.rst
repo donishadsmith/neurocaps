@@ -21,7 +21,7 @@ Extracting Timeseries
 
     confounds=["Cosine*", "aComp*", "Rot*"]
 
-    parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
+    parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7, "resolution_mm": 2}}
 
     extractor = TimeseriesExtractor(parcel_approach=parcel_approach,
                                     standardize="zscore_sample",
@@ -35,8 +35,9 @@ Extracting Timeseries
 
     # Can use the `n_cores` parameter for multiprocessing
     pipeline_name = "fmriprep_1.0.0/fmriprep"
+
     extractor.get_bold(bids_dir=bids_dir,
-                       session='002',
+                       session="002",
                        task="rest",
                        pipeline_name=pipeline_name,
                        tr=1.2)
