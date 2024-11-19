@@ -3,9 +3,9 @@ name: Run Tests
 on:
   push:
     branches: [main, development, testing]
-  # Run weekly on Monday
+  # Run first of every month
   schedule:
-    - cron: 0 0 * * 1
+    - cron: 0 0 1 * *
 
 jobs:
   test-build:
