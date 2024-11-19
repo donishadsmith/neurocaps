@@ -11,6 +11,7 @@ def _create_display(df, plot_dict, suffix_title, group, call):
                               annot_kws=plot_dict["annot_kws"], fmt=plot_dict["fmt"],
                               edgecolors=plot_dict["edgecolors"], alpha=plot_dict["alpha"],
                               vmin=plot_dict["vmin"], vmax=plot_dict["vmax"])
+
     # Add Border
     if plot_dict["borderwidths"] != 0:
         display.axhline(y=0, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
@@ -60,5 +61,4 @@ def _save_contents(output_dir, suffix_title, group, curr_dict, plot_dict, save_p
 
         if save_df:
             full_filename = full_filename.replace(".png", ".csv")
-            curr_dict[group].to_csv(path_or_buf=os.path.join(output_dir,full_filename), sep=",",
-                                    index=True)
+            curr_dict[group].to_csv(path_or_buf=os.path.join(output_dir,full_filename), sep=",", index=True)

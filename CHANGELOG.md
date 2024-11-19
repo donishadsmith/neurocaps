@@ -16,21 +16,26 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.18.7] - 2024-11-18
+### 🐛 Fixes
+- Fixes projection of CAPs onto NiFTI atlas by preventing in-place modification. Previously, if a new CAP value matched
+a subsequent atlas label ID, it could cause incorrect coordinate assignments.
+
 ## [0.18.6] - 2024-11-18
 - Minor code cleaning
 ### 📖 Documentation
 - Readme example fix
 
 ## [0.18.5] - 2024-11-16
-## ♻ Changed
+### ♻ Changed
 - Updated Dependencies:
     - NumPy: version 2.0 and above can be installed.
     - BrainSpace: requires version 0.1.16 and above.
 
 ## [0.18.4] - 2024-11-15
-## 🐛 Fixes
+### 🐛 Fixes
 - Corrected region names for version "3v2" of the AAL atlas.
-## ♻ Changed
+### ♻ Changed
 - Added a specific logged warning when no confound names are found. If some confound names are missing,
 they will still be listed accordingly.
 - Added a specific logged warnings for methods in `CAP` that use the `runs` parameter. Warnings are issued if a subject

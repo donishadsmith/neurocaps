@@ -919,7 +919,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         parcellation_name = list(self._parcel_approach)[0]
 
         # Defaults
-        defaults = {"dpi": 300,"figsize": (11,5), "bbox_inches": "tight"}
+        defaults = {"dpi": 300, "figsize": (11, 5), "bbox_inches": "tight"}
 
         plot_dict = _check_kwargs(defaults, **kwargs)
 

@@ -53,10 +53,10 @@ Performing CAPs on Groups
 -------------------------
 .. code-block:: python
 
-    cap_analysis = CAP(groups={"A": ["1","2","3","5"], "B": ["4","6","7","8","9","10"]})
+    cap_analysis = CAP(groups={"A": ["1", "2", "3", "5"], "B": ["4", "6", "7", "8", "9", "10"]})
 
     cap_analysis.get_caps(subject_timeseries="subject_timeseries.pkl",
-                          n_clusters=range(2,21),
+                          n_clusters=range(2, 21),
                           cluster_selection_method="silhouette",
                           show_figs=True,
                           step=2)
@@ -85,7 +85,7 @@ Calculate Metrics
 
     df_dict = cap_analysis.calculate_metrics(subject_timeseries="subject_timeseries.pkl",
                                              return_df=True,
-                                             metrics = ["temporal_fraction", "counts", "transition_probability"],
+                                             metrics=["temporal_fraction", "counts", "transition_probability"],
                                              continuous_runs=True)
 
     print(df_dict["temporal_fraction"])
@@ -116,7 +116,7 @@ Plotting CAPs
 
     cap_analysis.caps2plot(visual_scope="regions",
                            plot_options="outer_product",
-                           show_figs =True,
+                           show_figs=True,
                            **kwargs)
 
 .. image:: embed/All_Subjects_CAPs_outer_product_heatmap-regions.png
@@ -127,8 +127,8 @@ Plotting CAPs
 
     cap_analysis.caps2plot(visual_scope="nodes",
                            plot_options="heatmap",
-                           xticklabels_size = 7,
-                           yticklabels_size = 7,
+                           xticklabels_size=7,
+                           yticklabels_size=7,
                            show_figs=True)
 
 .. image:: embed/All_Subjects_CAPs_heatmap-nodes.png
@@ -186,8 +186,8 @@ Plotting CAPs to Radar
                 "gridcolor": "rgba(0, 0, 0, 0.25)",
                 "ticks": "outside" ,
                 "tickfont": {"size": 14, "color": "black"},
-                "range": [0,0.6],
-                "tickvals": [0.1,"","",0.4, "","", 0.6]}
+                "range": [0, 0.6],
+                "tickvals": [0.1, "", "", 0.4, "", "", 0.6]}
 
     legend = {"yanchor": "top",
               "y": 0.99,

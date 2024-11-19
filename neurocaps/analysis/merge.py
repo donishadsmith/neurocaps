@@ -139,7 +139,7 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
             if any([elem in subject_timeseries_merged for elem in curr_dict]):
                 modified_dicts[f"dict_{indx}"] = {}
                 for subj_id in subject_timeseries_merged:
-                    if subj_id in curr_dict: modified_dicts[f"dict_{indx}"].update({subj_id : curr_dict[subj_id]})
+                    if subj_id in curr_dict: modified_dicts[f"dict_{indx}"].update({subj_id: curr_dict[subj_id]})
 
     if return_merged_dict or output_dir: modified_dicts["merged"] = subject_timeseries_merged
 
@@ -148,6 +148,6 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
                    "`subject_timeseries_list` + 1 if `save_reduced_dicts` is True.")
 
         _dicts_to_pickles(output_dir=output_dir, dict_list=modified_dicts, call="merge", file_names=file_names,
-                          message=message,save_reduced_dicts=save_reduced_dicts)
+                          message=message, save_reduced_dicts=save_reduced_dicts)
 
     if return_merged_dict or return_reduced_dicts: return modified_dicts

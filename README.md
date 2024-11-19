@@ -1,7 +1,7 @@
 # neurocaps
 [![Latest Version](https://img.shields.io/pypi/v/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.14178104)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.14188194)
 [![Github Repository](https://img.shields.io/badge/Source%20Code-neurocaps-purple)](https://github.com/donishadsmith/neurocaps)
 [![Test Status](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg)](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml)
 [![codecov](https://codecov.io/github/donishadsmith/neurocaps/graph/badge.svg?token=WS2V7I16WF)](https://codecov.io/github/donishadsmith/neurocaps)
@@ -166,7 +166,7 @@ cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
 
 cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
                       n_clusters=6,
-                      standardize = True)
+                      standardize=True)
 
 # Visualize CAPs
 kwargs = {"sharey": True, "ncol": 3, "subplots": True, "cmap": "coolwarm"}
@@ -272,8 +272,8 @@ radialaxis={"showline": True,
             "gridcolor": "rgba(0, 0, 0, 0.25)",
             "ticks": "outside" ,
             "tickfont": {"size": 14, "color": "black"},
-            "range": [0,0.6],
-            "tickvals": [0.1,"","",0.4, "","", 0.6]}
+            "range": [0, 0.6],
+            "tickvals": [0.1, "", "", 0.4, "", "", 0.6]}
 
 legend = {"yanchor": "top",
           "y": 0.99,

@@ -9,7 +9,7 @@ timeseries extraction.
     import numpy as np
     from neurocaps.analysis import standardize
 
-    subject_timeseries = {str(x) : {f"run-{y}": np.random.rand(10,100) for y in range(1,4)} for x in range(1,6)}
+    subject_timeseries = {str(x) : {f"run-{y}": np.random.rand(10, 100) for y in range(1, 4)} for x in range(1, 6)}
 
     # Getting mean and standard deviation for run 1 and 2 of subject 1
     mean_vec_1 = subject_timeseries["1"]["run-1"].mean(axis=0)

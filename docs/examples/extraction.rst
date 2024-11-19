@@ -86,7 +86,7 @@ Visualizing Timeseries
 .. code-block:: python
 
     # Visualizing a region
-    extractor.visualize_bold(subj_id="1", region="Vis")
+    extractor.visualize_bold(subj_id="01", region="Vis")
 
 .. image:: embed/visualize_timeseries_regions.png
     :width: 1000
@@ -94,13 +94,13 @@ Visualizing Timeseries
 .. code-block:: python
 
     # Visualizing a several nodes
-    extractor.visualize_bold(subj_id="1",
-                             run=1,
-                             roi_indx=[0,1,2])
+    extractor.visualize_bold(subj_id="01",
+                             run="001",
+                             roi_indx=[0, 1, 2])
     # or
-    extractor.visualize_bold(subj_id="1",
-                             run=1,
-                             roi_indx=["LH_Vis_1","LH_Vis_2","LH_Vis_3"])
+    extractor.visualize_bold(subj_id="01",
+                             run="001",
+                             roi_indx=["LH_Vis_1", "LH_Vis_2", "LH_Vis_3"])
 
 .. image:: embed/visualize_timeseries_nodes.png
     :width: 1000

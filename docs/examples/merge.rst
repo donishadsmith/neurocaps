@@ -14,11 +14,11 @@ is appended to run-1 of the other task. For this to work, all dictionaries must 
     # Using a random dictionary that would be generate by TimeseriesExtractor to demonstrate what merge_dicts does
     # Generating a subject_timeseries dict containing five subjects, each with three runs that have 10 timepoints
     # and 100 rois.
-    subject_timeseries_1 = {str(x) : {f"run-{y}": np.random.rand(10,100) for y in range(1,4)} for x in range(1,6)}
+    subject_timeseries_1 = {str(x) : {f"run-{y}": np.random.rand(10, 100) for y in range(1, 4)} for x in range(1, 6)}
     # Deleting run-2 for subject 2; situation where subject 2 only completed two runs of a task
     del subject_timeseries_1["2"]["run-3"]
     # Second dictionary contains 2 subjects, with a single run, each with 20 timepoints
-    subject_timeseries_2 = {str(x) : {f"run-{y}": np.random.rand(20,100) for y in range(1,2)} for x in range(1,3)}
+    subject_timeseries_2 = {str(x) : {f"run-{y}": np.random.rand(20, 100) for y in range(1, 2)} for x in range(1, 3)}
 
     # subject_timeseries_list also takes pickle files and can save the modified dictionaries as pickles too.
     subject_timeseries_merged = merge_dicts(subject_timeseries_list=[subject_timeseries_1,

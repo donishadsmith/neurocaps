@@ -8,15 +8,17 @@ from scipy.spatial import KDTree
 def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
     atlas = nib.load(atlas_file)
     atlas_fdata = atlas.get_fdata()
+    # Create array of zeroes with same dimensions as atlas
+    atlas_array = np.zeros_like(atlas_fdata)
 
     # Get array containing all labels in atlas to avoid issue if the first non-zero atlas label is not 1
     target_array = sorted(np.unique(atlas_fdata))
 
     # Start at 1 to avoid assigment to the background label
     for indx, value in enumerate(cap_vector, start=1):
-        atlas_fdata[np.where(atlas_fdata == target_array[indx])] = value
+        atlas_array[np.where(atlas_fdata == target_array[indx])] = value
 
-    stat_map = nib.Nifti1Image(atlas_fdata, atlas.affine, atlas.header)
+    stat_map = nib.Nifti1Image(atlas_array, atlas.affine, atlas.header)
 
     # Knn implementation to aid in coverage issues
     if knn_dict:

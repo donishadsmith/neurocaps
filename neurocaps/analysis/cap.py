@@ -523,7 +523,7 @@ class CAP(_CAPGetter):
                 sensitive to small fluctuations. Passed to ``KneeLocator`` from the kneed package to. Default is 1.
             - dpi : :obj:`int`, default=300
                 Adjusts the dpi of the plots. Default is 300.
-            - figsize : :obj:`tuple`, default=(8,6)
+            - figsize : :obj:`tuple`, default=(8, 6)
                 Adjusts the size of the plots.
             - bbox_inches : :obj:`str` or :obj:`None`, default="tight"
                 Alters size of the whitespace in the saved image.
@@ -677,7 +677,7 @@ class CAP(_CAPGetter):
         method = self._cluster_selection_method
 
         # Defaults
-        defaults = {"dpi": 300, "figsize": (8,6), "step": None, "bbox_inches": "tight"}
+        defaults = {"dpi": 300, "figsize": (8, 6), "step": None, "bbox_inches": "tight"}
         plot_dict = _check_kwargs(defaults, **kwargs)
 
         for group in self._groups:
@@ -827,7 +827,7 @@ class CAP(_CAPGetter):
                 predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
                 target = 1
 
-                # Sequences for 1 are [1] and [1,1,1]; There are 2 contiguous sequences
+                # Sequences for 1 are [1] and [1, 1, 1]; There are 2 contiguous sequences
                 persistence = (1 + 3)/2
 
                 # Turns average frames into average time = 4
@@ -865,10 +865,10 @@ class CAP(_CAPGetter):
                 predicted_subject_timeseries = [1, 2, 1, 1, 3, 1]
 
                 # If three CAPs were identified in the analysis
-                combinations = [(1,1), (1,2), (1,3), (2,1), (2,2), (2,3), (3,1), (3,2), (3,3)]
+                combinations = [(1, 1), (1, 2), (1, 3), (2, 1), (2, 2), (2, 3), (3, 1), (3, 2), (3, 3)]
 
                 # Represents transition from CAP-1 -> CAP-2
-                target = (1,2)
+                target = (1, 2)
 
                 # There are 4 ones in the timeseries but only three transitions from 1; 1 -> 2, 1 -> 1, 1 -> 3
                 n_transitions_from_1 = 3
@@ -912,11 +912,11 @@ class CAP(_CAPGetter):
             ::
 
                 # CAP assignment of frames from for run_1 and run_2
-                run_1 = [0,1,1]
-                run_2 = [2,3,3]
+                run_1 = [0, 1, 1]
+                run_2 = [2, 3, 3]
 
                 # Computation of each CAP metric will be conducted on the combined vector
-                continuous_runs = [0,1,1,2,3,3]
+                continuous_runs = [0, 1, 1, 2, 3, 3]
 
             .. versionchanged:: 0.17.11 the label in the "Run" column in the dataframe changed from
                "continuous_runs" to "run-continuous"
@@ -1135,7 +1135,7 @@ class CAP(_CAPGetter):
                 temp_dict[group].loc[len(temp_dict[group])] = base_row
 
                 # Get number of transitions
-                trans_dict = {target: np.sum(np.where(predicted_subject_timeseries[subj_id][curr_run][:-1] == target,1,0))
+                trans_dict = {target: np.sum(np.where(predicted_subject_timeseries[subj_id][curr_run][:-1] == target, 1, 0))
                               for target in group_caps[group]}
 
                 indx = temp_dict[group].index[-1]
@@ -1155,11 +1155,11 @@ class CAP(_CAPGetter):
                     # Avoid division by zero errors and calculate both the forward and reverse transition
                     if trans_dict[target1] != 0:
                         temp_dict[group].loc[indx,f"{target1}.{target2}"] = float(
-                            np.sum(np.where(diff_array == 2,1,0))/trans_dict[target1])
+                            np.sum(np.where(diff_array == 2, 1, 0))/trans_dict[target1])
 
                     if trans_dict[target2] != 0:
                         temp_dict[group].loc[indx,f"{target2}.{target1}"] = float(
-                            np.sum(np.where(diff_array == -2,1,0))/trans_dict[target2])
+                            np.sum(np.where(diff_array == -2, 1, 0))/trans_dict[target2])
 
                 # Calculate the probability for the self transitions/diagonals
                 for target in group_caps[group]:
@@ -1307,13 +1307,13 @@ class CAP(_CAPGetter):
 
     @staticmethod
     def _segments(target, timeseries):
-        # Binary representation of numpy array - if [1,2,1,1,1,3] and target is 1, then it is [1,0,1,1,1,0]
+        # Binary representation of numpy array - if [1, 2, 1, 1, 1, 3] and target is 1, then it is [1, 0, 1, 1, 1, 0]
         binary_arr = np.where(timeseries == target,1,0)
-        # Get indices of values that equal 1; [0,2,3,4]
+        # Get indices of values that equal 1; [0, 2, 3, 4]
         target_indices = np.where(binary_arr == 1)[0]
-        # Count the transitions, indices where diff > 1 is a transition; diff of indices = [2,1,1];
-        # binary for diff > 1 = [1,0,0]; thus, segments = transitions + first_sequence(1) = 2
-        segments = np.where(np.diff(target_indices, n=1) > 1,1,0).sum() + 1
+        # Count the transitions, indices where diff > 1 is a transition; diff of indices = [2, 1, 1];
+        # binary for diff > 1 = [1, 0, 0]; thus, segments = transitions + first_sequence(1) = 2
+        segments = np.where(np.diff(target_indices, n=1) > 1, 1, 0).sum() + 1
 
         return binary_arr, segments
 
@@ -1694,7 +1694,7 @@ class CAP(_CAPGetter):
 
                 # Modify label sizes
                 plot_title = f"{group} {cap} {suffix_title}" if suffix_title else f"{group} {cap}"
-                display.set_title(plot_title, fontdict= {"fontsize": plot_dict["fontsize"]})
+                display.set_title(plot_title, fontdict={"fontsize": plot_dict["fontsize"]})
                 display = self._label_size(display, plot_dict)
 
                 # Save individual plots
@@ -1730,7 +1730,6 @@ class CAP(_CAPGetter):
                                           xticklabels=True, yticklabels=True, **self._base_kwargs(plot_dict))
 
                 plt.yticks(ticks=[pos for pos, label in enumerate(labels) if label], labels=names_list)
-
             else:
                 display = seaborn.heatmap(pd.DataFrame(cap_dict[group], columns=list(cap_dict[group])),
                                           xticklabels=True, yticklabels=True,
@@ -1796,7 +1795,7 @@ class CAP(_CAPGetter):
         # Get the names, which indicate the hemisphere and region
         # Reverting Counter objects to list retains original ordering of nodes in list as of Python 3.7
         names_list = list(frequency_dict)
-        labels = ["" for _ in range(0,len(parcel_approach[parcellation_name]["nodes"]))]
+        labels = ["" for _ in range(0, len(parcel_approach[parcellation_name]["nodes"]))]
 
         starting_value = 0
 
@@ -1807,7 +1806,7 @@ class CAP(_CAPGetter):
             else:
                 # Shifting to previous frequency of the preceding network to obtain the new starting value of
                 # the subsequent region and hemisphere pair
-                starting_value += frequency_dict[names_list[num-1]]
+                starting_value += frequency_dict[names_list[num - 1]]
                 labels[starting_value] = name
 
         return labels, names_list
@@ -2097,12 +2096,15 @@ class CAP(_CAPGetter):
 
             atlas = nib.load(atlas_file)
             atlas_fdata = atlas.get_fdata()
+            # Create array of zeroes with same dimensions as atlas
+            atlas_array = np.zeros_like(atlas_fdata)
+
             # Get array containing all labels in parcellation in order
             target_array = sorted(np.unique(atlas_fdata))
 
             # Start at 1 to avoid assigment to the background label
             for indx, value in enumerate(cap_vector, start=1):
-                atlas_fdata[np.where(atlas_fdata == target_array[indx])] = value
+                atlas_array[np.where(atlas_fdata == target_array[indx])] = value
         """
         if not self._parcel_approach:
             raise AttributeError("`self.parcel_approach` is None. Set "
@@ -2324,12 +2326,15 @@ class CAP(_CAPGetter):
 
             atlas = nib.load(atlas_file)
             atlas_fdata = atlas.get_fdata()
+            # Create array of zeroes with same dimensions as atlas
+            atlas_array = np.zeros_like(atlas_fdata)
+
             # Get array containing all labels in parcellation in order
             target_array = sorted(np.unique(atlas_fdata))
 
             # Start at 1 to avoid assigment to the background label
             for indx, value in enumerate(cap_vector, start=1):
-                atlas_fdata[np.where(atlas_fdata == target_array[indx])] = value
+                atlas_array[np.where(atlas_fdata == target_array[indx])] = value
         """
         if not self._parcel_approach and fslr_giftis_dict is None:
             raise AttributeError("`self.parcel_approach` is None. Add parcel_approach using "
@@ -2358,7 +2363,8 @@ class CAP(_CAPGetter):
         if fslr_giftis_dict is None: parcellation_name = list(self._parcel_approach)[0]
 
         for group in groups:
-            caps = self._caps[group] if hasattr(self,"_caps") and fslr_giftis_dict is None else fslr_giftis_dict[group]
+            caps = self._caps[group] if hasattr(self, "_caps") and fslr_giftis_dict is None else fslr_giftis_dict[group]
+
             for cap in caps:
                 if fslr_giftis_dict is None:
                     stat_map = _cap2statmap(atlas_file=self._parcel_approach[parcellation_name]["maps"],
@@ -2427,6 +2433,7 @@ class CAP(_CAPGetter):
 
                     fig.savefig(os.path.join(output_dir, file_name), dpi=plot_dict["dpi"],
                                 bbox_inches=plot_dict["bbox_inches"])
+
                     # Save stat map
                     if save_stat_maps:
                         stat_map_name = file_name.split("_surface")[0] + ".nii.gz"
@@ -2710,7 +2717,7 @@ class CAP(_CAPGetter):
                         name=i,
                         opacity=plot_dict["opacity"],
                         marker=dict(color=plot_dict["color_discrete_map"][i], size=plot_dict["scattersize"]),
-                        line = dict(color=plot_dict["color_discrete_map"][i], width=plot_dict["linewidth"])))
+                        line=dict(color=plot_dict["color_discrete_map"][i], width=plot_dict["linewidth"])))
                 else:
                     # Create dataframe
                     n = len(radar_dict["Regions"])
@@ -2721,7 +2728,7 @@ class CAP(_CAPGetter):
                     fig = px.line_polar(df, r=df["Amp"].values, theta="Regions", line_close=plot_dict["line_close"],
                                         color=df["Groups"].values, width=plot_dict["width"],
                                         height=plot_dict["height"], category_orders={"Regions": df["Regions"]},
-                                        color_discrete_map = plot_dict["color_discrete_map"])
+                                        color_discrete_map=plot_dict["color_discrete_map"])
 
                 if use_scatterpolar:
                     fig.update_traces(fill=plot_dict["fill"], mode=plot_dict["mode"])
