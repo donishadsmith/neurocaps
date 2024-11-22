@@ -72,5 +72,5 @@ Github = "https://github.com/donishadsmith/neurocaps"
 Issues = "https://github.com/donishadsmith/neurocaps/issues"
 Changelog = "https://neurocaps.readthedocs.io/en/latest/changelog.html"
 
-[tool.distutils.bdist_wheel]
-universal = true
+[bdist_wheel]
+universal = 1

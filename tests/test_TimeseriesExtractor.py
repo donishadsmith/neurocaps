@@ -582,6 +582,68 @@ def test_censoring():
     assert np.array_equal(no_condition_timeseries[scan_list, :], extractor.subject_timeseries["01"]["run-001"])
 
 
+def test_censoring_w_sample_mask():
+    extractor = TimeseriesExtractor(
+        parcel_approach=parcel_approach,
+        standardize="zscore_sample",
+        use_confounds=True,
+        detrend=True,
+        low_pass=0.15,
+        high_pass=0.01,
+        confound_names=confounds,
+        fd_threshold={"threshold": 0.30, "outlier_percentage": 0.30, "use_sample_mask": True},
+    )
+
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+    assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
+    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 37
+
+    extractor2 = TimeseriesExtractor(
+        parcel_approach=parcel_approach,
+        standardize="zscore_sample",
+        use_confounds=True,
+        detrend=True,
+        low_pass=0.15,
+        high_pass=0.01,
+        confound_names=confounds,
+        fd_threshold={"threshold": 0.30, "outlier_percentage": 0.30, "use_sample_mask": False},
+    )
+
+    extractor2.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+    assert extractor2.subject_timeseries["01"]["run-001"].shape[-1] == 426
+    assert extractor2.subject_timeseries["01"]["run-001"].shape[0] == 37
+
+    # Should not be equal due to sample mask being passed to nilearn
+    assert not np.array_equal(
+        extractor.subject_timeseries["01"]["run-001"], extractor2.subject_timeseries["01"]["run-001"]
+    )
+
+    # Assess when key is not used at all
+    extractor3 = TimeseriesExtractor(
+        parcel_approach=parcel_approach,
+        standardize="zscore_sample",
+        use_confounds=True,
+        detrend=True,
+        low_pass=0.15,
+        high_pass=0.01,
+        confound_names=confounds,
+        fd_threshold={"threshold": 0.30, "outlier_percentage": 0.30},
+    )
+
+    extractor3.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+    assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
+    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 37
+
+    assert not np.array_equal(
+        extractor.subject_timeseries["01"]["run-001"], extractor3.subject_timeseries["01"]["run-001"]
+    )
+
+    # Default behavior
+    assert np.array_equal(
+        extractor2.subject_timeseries["01"]["run-001"], extractor3.subject_timeseries["01"]["run-001"]
+    )
+
+
 @pytest.mark.parametrize("use_confounds", [True, False])
 def test_dummy_scans(use_confounds):
     extractor = TimeseriesExtractor(

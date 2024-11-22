@@ -194,6 +194,18 @@ class CAP(_CAPGetter):
                 }
             }
 
+    variance_explained : :obj:`dict[str, dict[float]]`
+        A dictionary mapping groups to a float representing the total variance explained by their respective model
+        stored in ``self.kmeans``. The structure is as follows:
+
+        ::
+
+            {
+                "GroupName": float,
+            }
+
+        .. versionadded:: 0.18.8
+
     optimal_n_clusters : :obj:`dict[str, dict[int]]`
         A dictionary mapping groups to their optimal cluster sizes if ``cluster_selection_method`` is not None in
         ``self.get_caps()``. The structure is as follows:
@@ -582,6 +594,9 @@ class CAP(_CAPGetter):
                                              n_init=n_init, max_iter=max_iter, tol=tol,
                                              algorithm=algorithm).fit(self._concatenated_timeseries[group])
 
+        # Create variance explained dict
+        self._var_explained()
+
         # Create states dict
         self._create_caps_dict()
 
@@ -763,15 +778,24 @@ class CAP(_CAPGetter):
         # Add vertical line for elbow method
         if y_title == "Inertia":
             plt.vlines(self._optimal_n_clusters[group], plt.ylim()[0], plt.ylim()[1], linestyles="--",
-                        label="elbow")
+                       label="elbow")
 
         if output_dir:
             if not os.path.exists(output_dir): os.makedirs(output_dir)
-            save_name = f"{group.replace(' ','_')}_{self._cluster_selection_method}.png"
+            save_name = f"{group.replace(' ', '_')}_{self._cluster_selection_method}.png"
             plt.savefig(os.path.join(output_dir,save_name), dpi=plot_dict["dpi"],
                         bbox_inches=plot_dict["bbox_inches"])
 
         plt.show() if show_figs else plt.close()
+
+    def _var_explained(self):
+        self._variance_explained = {}
+
+        for group in self._groups:
+            mean_vec = np.mean(self._concatenated_timeseries[group], axis=0)
+            total_var = np.sum((self._concatenated_timeseries[group] - mean_vec) ** 2)
+            explained_var = 1 - (self._kmeans[group].inertia_ / total_var)
+            self._variance_explained[group] = explained_var
 
     def _create_caps_dict(self):
         # Initialize dictionary
@@ -779,7 +803,7 @@ class CAP(_CAPGetter):
 
         for group in self._groups:
             self._caps[group] = {}
-            cluster_centroids = zip([num for num in range(1,len(self._kmeans[group].cluster_centers_) + 1)],
+            cluster_centroids = zip([num for num in range(1, len(self._kmeans[group].cluster_centers_) + 1)],
                                     self._kmeans[group].cluster_centers_)
             self._caps[group].update({f"CAP-{state_number}": state_vector
                                       for state_number, state_vector in cluster_centroids})
@@ -2686,14 +2710,14 @@ class CAP(_CAPGetter):
 
         plot_dict = _check_kwargs(defaults, **kwargs)
 
-        parcellation_name = list(self.parcel_approach)[0]
+        parcellation_name = list(self._parcel_approach)[0]
 
         # Initialize cosine_similarity attribute
         self._cosine_similarity = {}
 
         # Create radar dict
         for group in self._caps:
-            radar_dict = {"Regions": list(self.parcel_approach[parcellation_name]["regions"])}
+            radar_dict = {"Regions": list(self._parcel_approach[parcellation_name]["regions"])}
             self._update_radar_dict(group, parcellation_name, radar_dict)
             self._cosine_similarity[group] = radar_dict
 

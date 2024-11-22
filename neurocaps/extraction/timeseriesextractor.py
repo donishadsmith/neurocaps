@@ -79,10 +79,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         names in the confound files starting with "cosine".
 
     fd_threshold : :obj:`float`, :obj:`dict[str, float]`, or :obj:`None`, default=None
-        Sets a threshold for removing exceeding volumes after nuisance regression and timeseries extraction are
-        performed. This requires a column named `framewise_displacement` in the confounds file and ``use_confounds``
-        set to True. Additionally, `framewise_displacement` should not need be specified in ``confound_names`` if using
-        this parameter. If, ``fd_threshold`` is a dictionary, the following keys can be specified:
+        Sets a threshold for removing exceeding volumes. This requires a column named `framewise_displacement` in the
+        confounds file and ``use_confounds`` set to True. Additionally, `framewise_displacement` should be
+        specified in ``confound_names`` if using this parameter. By default, censoring is done after nuisance
+        regression; however, this behavior can be modified with the "use_sample_mask" key to censor prior to
+        nuisance regression. If, ``fd_threshold`` is a dictionary, the following keys can be specified:
 
         - "threshold": A float value. Volumes with a `framewise_displacement` value exceeding this threshold are removed.
         - "outlier_percentage": A float value between 0 and 1 representing a percentage. Runs where the proportion of
@@ -94,8 +95,16 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
           if frame 5 is flagged and "n_before" is 2, then volumes 3, 4, and 5 are scrubbed.
         - "n_after": An integer indicating the number of volumes to scrub after to the flagged volume. Hence,
           if frame 5 is flagged and "n_after" is 2, then volumes 5, 6, and 7 are scrubbed.
+        - "use_sample_mask": A boolean value. If True, a sample mask is generated and passed to the ``sample_mask``
+          parameter in nilearn's ``NiftiLabelsMasker`` to censor prior to nuisance regression. Internally,
+          ``clean__extrapolate`` is set to False and passed to ``NiftiLabelsMasker``, which prevents censored
+          volumes at the end from being interpolated prior to applying the butterworth filter. See
+          documentation from ``nilearn.signal_clean`` and  ``nilearn.maskers.NiftiLabelsMasker`` for how nilearn
+          handles censored volumes when ``sample_mask`` is used.  If this key is set to False, data is only censored
+          after nuisance regression, which is the default behavior.
 
-        .. versionadded:: 0.17.6 "n_before" and "n_after".
+        .. versionadded:: 0.17.6 "n_before" and "n_after"
+        .. versionadded:: 0.18.8 "use_sample_mask"
 
     n_acompcor_separate : :obj:`int` or :obj:`None`, default=None
         Specifies the number of separate acompcor components derived from white-matter (WM) and cerebrospinal
@@ -204,7 +213,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     ----
     **Passed Parameters**: ``standardize``, ``detrend``, ``low_pass``, ``high_pass``, ``fwhm``, and nuisance
     regression (``confound_names``) uses ``nilearn.maskers.NiftiLabelsMasker``. The ``dtype`` parameter is used by
-    ``nilearn.image.load_img``.
+    ``nilearn.image.load_img``. For framewise displacement, if the "use_sample_mask" key is set to True in the
+    ``fd_threshold`` dictionary, then a boolean sample mask is generated (setting indices corresponding to high motion
+    volumes as False) and is passed to the ``sample_mask`` parameter in ``nilearn.maskers.NiftiLabelsMasker``.
 
     **Custom Parcellations**: If using a "Custom" parcellation approach, ensure that the parcellation is
     lateralized (where each region/network has nodes in the left and right hemisphere). This is due to certain
@@ -326,9 +337,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 if fd_threshold["outlier_percentage"] >= 1 or fd_threshold["outlier_percentage"] <= 0:
                     raise ValueError("'outlier_percentage' must be a positive float between 0 and 1.")
             if "n_before" in fd_threshold and not isinstance(fd_threshold["n_before"], int):
-                raise ValueError("'n_before' mst be an integer value.")
+                raise ValueError("'n_before' must be an integer value.")
             if "n_after" in fd_threshold and not isinstance(fd_threshold["n_after"], int):
-                raise ValueError("'n_after' mst be an integer value.")
+                raise ValueError("'n_after' must be an integer value.")
+            if "use_sample_mask" in fd_threshold and not isinstance(fd_threshold["use_sample_mask"], bool):
+                raise ValueError("'use_sample_mask' must be an boolean value.")
 
         self._signal_clean_info = {"masker_init": {"standardize": standardize,
                                                    "detrend": detrend,
@@ -371,12 +384,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         BIDS-compliant, including a "dataset_description.json" file. It assumes the dataset contains a derivatives
         folder with BOLD data preprocessed using a standard pipeline, specifically fMRIPrep. The pipeline directory
         must also include a "dataset_description.json" file for proper querying.
-
-        For timeseries extraction, nuisance regression, and spatial dimensionality reduction using a parcellation,
-        nilearn's ``NiftiLabelsMasker`` function is used. If requested, dummy scans are removed from the NIfTI images
-        and confound dataset prior to timeseries extraction. Indices exceeding framewise displacement thresholds are
-        removed after timeseries extraction, and the extracted timeseries can be filtered to include only indices
-        corresponding to a specific condition, if requested.
 
         The timeseries data of all subjects are appended to a single dictionary ``self.subject_timeseries``. Additional
         information regarding the structure of this dictionary can be found in the "Note" section.
@@ -524,9 +531,21 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         By default, "run-0", will be used if run IDs are not specified in the NifTI file.
 
+        **Parcellation & Nuisance Regression**: For timeseries extraction, nuisance regression, and spatial
+        dimensionality reduction using a parcellation,  nilearn's ``NiftiLabelsMasker`` function is used. If requested,
+        dummy scans are removed from the NIfTI images and confound dataset prior to timeseries extraction. For volumes
+        exceeding a specified framewise displacement (FD) threshold, if the "use_sample_mask" key in the
+        ``fd_threshold`` dictionary is set to True, then a boolean sample mask is generated (where False indicates the
+        high motion volumes) and passed to the ``sample_mask`` parameter in nilearn's ``NiftiLabelsMasker``. If,
+        "use_sample_mask" key is False or not specified in the ``fd_threshold`` dictionary, then censoring is done
+        after nuisance regression, which is the default behavior.
+
         **Extraction of Task Conditions**: when extracting specific conditions, ``int`` to round down for the
         beginning scan index ``start_scan = int(onset/tr)`` and ``math.ceil`` is used to round up for the ending scan
-        index ``end_scan = math.ceil((onset + duration)/tr)``.
+        index ``end_scan = math.ceil((onset + duration)/tr)``. Filtering a specific condition from the
+        timeseries is done after nuisance regression. Additionally,  if the "use_sample_mask" key in the
+        ``fd_threshold`` dictionary is set to True, then the truncated 2D timeseries is temporarily padded to
+        ensure the correct rows corresponding to the condition are obtained.
         """
         if runs and not isinstance(runs, list): runs = [runs]
 
@@ -709,7 +728,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
     def _header(self, subj_id):
         # Base subject message
-        sub_message = f'[SUBJECT: {subj_id} | SESSION: {self._task_info["session"]} | TASK: {self.task_info["task"]}]'
+        sub_message = f'[SUBJECT: {subj_id} | SESSION: {self._task_info["session"]} | TASK: {self._task_info["task"]}]'
         subject_header = f"{sub_message} "
         return subject_header
 
@@ -799,7 +818,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             if self._task_info["condition"]:
                 raise ValueError(f"{subject_header}"
                                  f"{base_msg}" + " The `tr` must be given when `condition` is specified.")
-            elif any([self.signal_clean_info["masker_init"]["high_pass"], self.signal_clean_info["masker_init"]["low_pass"]]):
+            elif any([self._signal_clean_info["masker_init"]["high_pass"], self._signal_clean_info["masker_init"]["low_pass"]]):
                 raise ValueError(f"{subject_header}"
                                  f"{base_msg}" + " The `tr` must be given when `high_pass` or `low_pass` is specified.")
             else:

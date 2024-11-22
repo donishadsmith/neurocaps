@@ -16,6 +16,15 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.18.8] - 2024-11-24
+### 🚀 New/Added
+- Added "use_sample_mask" key for `fd_threshold` parameter, which if set to True, generates a sample mask to pass
+to nilearn's `NiftiLabelsMasker` for censoring prior to nuisance regression.
+Internally, the ``clean__extrapolate`` parameter is used to set extrapolate to False. If condition filtering is
+requested, when "use_sample_mask" key for `fd_threshold` parameter is True, then the truncated timeseries is
+temporarily padded to ensure the correct indices corresponding to the condition are obtained.
+- Added new property.
+
 ## [0.18.7] - 2024-11-18
 ### 🐛 Fixes
 - Fixes projection of CAPs onto NiFTI atlas by preventing in-place modification. Previously, if a new CAP value matched

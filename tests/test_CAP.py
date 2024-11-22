@@ -241,6 +241,8 @@ def test_no_groups_cluster_selection(standardize, n_cores):
         n_cores=n_cores,
     )
 
+    assert cap_analysis.variance_explained["All Subjects"] >= 0 or cap_analysis.variance_explained["All Subjects"] <= 1
+
     # Maximum silhouette is the most optimal
     assert (
         max(cap_analysis.silhouette_scores["All Subjects"], key=cap_analysis.silhouette_scores["All Subjects"].get)
@@ -298,6 +300,8 @@ def test_no_groups_cluster_selection(standardize, n_cores):
 
     # All values not negative
     assert all(elem >= 0 for elem in cap_analysis.davies_bouldin["All Subjects"].values())
+
+    assert cap_analysis.variance_explained["All Subjects"] >= 0 or cap_analysis.variance_explained["All Subjects"] <= 1
 
 
 @pytest.mark.parametrize("standardize", [False, True])
@@ -367,6 +371,9 @@ def test_groups_and_cluster_selection(standardize):
         == cap_analysis.optimal_n_clusters["B"]
     )
 
+    assert cap_analysis.variance_explained["A"] >= 0 or cap_analysis.variance_explained["A"] <= 1
+    assert cap_analysis.variance_explained["B"] >= 0 or cap_analysis.variance_explained["B"] <= 1
+
     cap_analysis.get_caps(
         subject_timeseries=extractor.subject_timeseries,
         n_clusters=[2, 3, 4, 5],
@@ -396,6 +403,13 @@ def test_groups_and_cluster_selection(standardize):
         max(cap_analysis.variance_ratio["B"], key=cap_analysis.variance_ratio["B"].get)
         == cap_analysis.optimal_n_clusters["B"]
     )
+
+
+def test_var_explained():
+    timeseries = {str(x): {f"run-{y}": np.random.rand(10, 116) for y in range(1)} for x in range(1)}
+    cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
+    cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=10)
+    assert cap_analysis.variance_explained["All Subjects"] == 1
 
 
 def test_no_groups_pkl():

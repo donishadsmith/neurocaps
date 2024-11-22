@@ -61,6 +61,10 @@ class _CAPGetter:
         return self._variance_ratio if hasattr(self, "_variance_ratio") else None
 
     @property
+    def variance_explained(self):
+        return self._variance_explained if hasattr(self, "_variance_explained") else None
+
+    @property
     def optimal_n_clusters(self):
         return self._optimal_n_clusters if hasattr(self, "_optimal_n_clusters")else None
 

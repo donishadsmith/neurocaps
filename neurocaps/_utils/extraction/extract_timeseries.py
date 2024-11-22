@@ -25,6 +25,8 @@ class _Data:
     fail_fast: bool = False
     dummy_vols: int = None
     censor_vols: list = field(default_factory=list)
+    sample_mask: list = field(default_factory=list)
+    max_len: int = None
     # Event condition scan indices
     scans: list = field(default_factory=list)
     # Subject header
@@ -83,6 +85,18 @@ class _Data:
     def maps(self):
         return self.parcel_approach[list(self.parcel_approach)[0]]["maps"]
 
+    @property
+    def use_sample_mask(self):
+        if isinstance(self.signal_clean_info["fd_threshold"], dict):
+            if "use_sample_mask" in self.signal_clean_info["fd_threshold"]:
+                return self.signal_clean_info["fd_threshold"]["use_sample_mask"]
+            else:
+                return False
+
+    @property
+    def censor_mask(self):
+        return np.array(self.sample_mask) if len(self.sample_mask) > 0 else None
+
     @cached_property
     def confound_df(self):
         if self.files["confound"]: return pd.read_csv(self.files["confound"], sep="\t")
@@ -128,19 +142,22 @@ def _extract_timeseries(subj_id, prepped_files, run_list, parcel_approach, signa
         # Assess framewise displacement
         if Data.fd and Data.files["confound"] and "framewise_displacement" in Data.confound_df.columns:
             # Get censor volumes vector, outlier_limit, and threshold
-            fd_array, Data.censor_vols = _censor(Data)
+            Data.max_len, Data.censor_vols = _censor(Data)
 
             if Data.censor_vols and (Data.n_before or Data.n_after):
-                Data.censor_vols = _extended_censor(Data, len(fd_array))
+                Data.censor_vols = _extended_censor(Data)
 
-            if len(Data.censor_vols) == fd_array.shape[0]:
+            if len(Data.censor_vols) == Data.max_len:
                 LG.warning(f"{Data.head}" + "Timeseries Extraction Skipped: Timeseries will be empty due to "
                            f"all volumes exceeding a framewise displacement of {Data.fd}.")
                 continue
 
+            # Create sample mask
+            if Data.censor_vols and Data.use_sample_mask: Data.sample_mask = _create_sample_mask(Data)
+
             # Check if run fails fast due to percentage volumes exceeding user-specified scrub_lim
             if Data.scrub_lim and not Data.condition:
-                Data.vols_exceed_percent, Data.fail_fast = _flag(len(Data.censor_vols), len(fd_array), Data.scrub_lim)
+                Data.vols_exceed_percent, Data.fail_fast = _flag(len(Data.censor_vols), Data.max_len, Data.scrub_lim)
 
         elif Data.fd and Data.files["confound"] and "framewise_displacement" not in Data.confound_df.columns:
             LG.warning(f"{Data.head}" + "`fd_threshold` specified but 'framewise_displacement' column not "
@@ -162,7 +179,7 @@ def _extract_timeseries(subj_id, prepped_files, run_list, parcel_approach, signa
             Data.scans = _get_condition(Data, condition_df)
 
             if Data.censor_vols:
-                Data.scans, n = _filter_condition(Data, fd_array, LG)
+                Data.scans, n = _filter_condition(Data, LG)
                 if Data.scrub_lim:
                     Data.vols_exceed_percent, Data.fail_fast = _flag(n - len(Data.scans), n, Data.scrub_lim)
 
@@ -174,10 +191,10 @@ def _extract_timeseries(subj_id, prepped_files, run_list, parcel_approach, signa
                 continue
 
         if Data.fail_fast:
-            percent_msg = f"Percentage of volumes exceeding the threshold limit is {Data.vols_exceed_percent*100}%"
+            percent_msg = f"Percentage of volumes exceeding the threshold limit is {Data.vols_exceed_percent * 100}%"
             if Data.condition: percent_msg = f"{percent_msg} for [CONDITION: {Data.condition}]"
             LG.warning(f"{Data.head}" + f"Timeseries Extraction Skipped: Run flagged due to more than "
-                       f"{Data.scrub_lim*100}% of the volumes exceeding the framewise displacement threshold of "
+                       f"{Data.scrub_lim * 100}% of the volumes exceeding the framewise displacement threshold of "
                        f"{Data.fd}. {percent_msg}.")
             continue
 
@@ -215,7 +232,8 @@ def _continue_extraction(Data, LG):
         labels_img=Data.maps,
         resampling_target="data",
         t_r=Data.tr,
-        **Data.signal_clean_info["masker_init"]
+        **Data.signal_clean_info["masker_init"],
+        clean__extrapolate=False
     )
 
     # Load and discard volumes if needed
@@ -227,15 +245,20 @@ def _continue_extraction(Data, LG):
             confounds.drop(list(range(0, Data.dummy_vols)), axis=0, inplace=True)
 
     # Extract timeseries
-    if Data.use_confounds and confounds is not None: timeseries = masker.fit_transform(nifti_img, confounds=confounds)
-    else: timeseries = masker.fit_transform(nifti_img)
+    if Data.use_confounds and confounds is not None:
+        timeseries = masker.fit_transform(nifti_img, confounds=confounds, sample_mask=Data.censor_mask)
+    else:
+        timeseries = masker.fit_transform(nifti_img, sample_mask=Data.censor_mask)
 
-    if Data.censor_vols and not Data.condition: timeseries = np.delete(timeseries, Data.censor_vols, axis=0)
+    # If sample mask was not used, delete censored volumes
+    if not Data.condition:
+        if Data.censor_vols and not Data.use_sample_mask: timeseries = np.delete(timeseries, Data.censor_vols, axis=0)
 
     if Data.condition:
+        # Temporarily pad to extract the correct indices if sample mask was used
+        if Data.censor_vols and Data.use_sample_mask: timeseries = _pad(timeseries, Data)
         # If any out of bound indices, remove them instead of getting indexing error.
-        if max(Data.scans) > timeseries.shape[0] - 1:
-            Data.scans = _check_indices(Data, timeseries.shape[0], LG)
+        if max(Data.scans) > timeseries.shape[0] - 1: Data.scans = _check_indices(Data, timeseries.shape[0], LG)
         # Extract condition
         timeseries = timeseries[Data.scans,:]
 
@@ -290,12 +313,12 @@ def _censor(Data):
     # Truncate fd_array if dummy scans
     if Data.dummy_vols: fd_array = fd_array[Data.dummy_vols:]
 
-    censor_volumes = list(np.where(fd_array > Data.fd)[0])
+    censor_volumes = sorted(list(np.where(fd_array > Data.fd)[0]))
 
-    return fd_array, censor_volumes
+    return fd_array.shape[0], censor_volumes
 
 # Created an extended censor_vols vector
-def _extended_censor(Data, max_len):
+def _extended_censor(Data):
     ext_arr = []
 
     for i in Data.censor_vols:
@@ -303,7 +326,7 @@ def _extended_censor(Data, max_len):
         if Data.n_after: ext_arr.extend(list(range(i + 1, i + Data.n_after + 1)))
 
     # Filter; ensure no index is below zero to prevent backwards indexing and not above max to prevent error
-    filtered_ext_arr = [x for x in ext_arr if x >= 0 and x < max_len]
+    filtered_ext_arr = [x for x in ext_arr if x >= 0 and x < Data.max_len]
 
     # Return new list that is sorted and only contains unique indices
     return sorted(list(set(Data.censor_vols + filtered_ext_arr)))
@@ -336,13 +359,13 @@ def _get_condition(Data, condition_df):
 
     return scans
 
-def _filter_condition(Data, fd_array, LG):
+def _filter_condition(Data, LG):
     # New `scans` list created if conditions met
     scans = Data.scans
 
     # Assess if any condition indices greater than fd array to not dilute outlier calculation
-    if max(scans) > fd_array.shape[0] - 1:
-        scans = _check_indices(Data, fd_array.shape[0], LG)
+    if max(scans) > Data.max_len - 1:
+        scans = _check_indices(Data, Data.max_len, LG)
     # Get length of scan list prior to assess outliers if requested
     n_before_censor = len(scans)
     scans = [volume for volume in scans if volume not in Data.censor_vols]
@@ -384,7 +407,8 @@ def _get_confounds(Data, confound_names, LG):
 
     if Data.verbose:
         if confounds is None:
-            LG.warning(f"{Data.head}" + "None of the requested confounds were found so nuisance regression will not be done.")
+            LG.warning(f"{Data.head}" + "None of the requested confounds were found so nuisance regression will not "
+                       "be done.")
         elif invalid_confounds:
             LG.warning(f"{Data.head}" + f"The following confounds were not found: {', '.join(invalid_confounds)}.")
 
@@ -393,6 +417,20 @@ def _get_confounds(Data, confound_names, LG):
                     f"{', '.join(list(confounds.columns))}.")
 
     return confounds
+
+# Create sample mask for censoring high motion volumes for nuisance regression
+def _create_sample_mask(Data):
+    sample_mask = np.ones(Data.max_len, dtype="bool")
+    sample_mask[np.array(Data.censor_vols)] = False
+
+    return sample_mask
+
+# Temporarily pad censored rows to correctly filter the condition
+def _pad(timeseries, Data):
+    padded_timeseries = np.zeros((Data.max_len, timeseries.shape[1]))
+    padded_timeseries[Data.censor_mask, :] = timeseries
+
+    return padded_timeseries
 
 # Check if indices valid
 def _check_indices(Data, arr_shape, LG):
