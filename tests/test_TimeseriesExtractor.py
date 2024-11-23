@@ -643,6 +643,22 @@ def test_censoring_w_sample_mask():
         extractor2.subject_timeseries["01"]["run-001"], extractor3.subject_timeseries["01"]["run-001"]
     )
 
+    extractor4 = TimeseriesExtractor(
+        parcel_approach=parcel_approach,
+        standardize="zscore_sample",
+        use_confounds=True,
+        detrend=True,
+        low_pass=0.15,
+        high_pass=0.01,
+        confound_names=confounds,
+        fd_threshold={"threshold": 0.35, "outlier_percentage": 0.30, "use_sample_mask": True},
+    )
+
+    extractor4.get_bold(bids_dir=bids_dir, task="rest", condition="active", pipeline_name=pipeline_name, tr=1.2)
+    assert extractor4.subject_timeseries["01"]["run-001"].shape[0] == 24
+    extractor4.get_bold(bids_dir=bids_dir, task="rest", condition="rest", pipeline_name=pipeline_name, tr=1.2)
+    assert extractor4.subject_timeseries["01"]["run-001"].shape[0] == 28
+
 
 @pytest.mark.parametrize("use_confounds", [True, False])
 def test_dummy_scans(use_confounds):
