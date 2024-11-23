@@ -1,14 +1,61 @@
 # neurocaps
 [![Latest Version](https://img.shields.io/pypi/v/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.14207600)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.14210686)
 [![Github Repository](https://img.shields.io/badge/Source%20Code-neurocaps-purple)](https://github.com/donishadsmith/neurocaps)
 [![Test Status](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg)](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml)
 [![codecov](https://codecov.io/github/donishadsmith/neurocaps/graph/badge.svg?token=WS2V7I16WF)](https://codecov.io/github/donishadsmith/neurocaps)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 ![Platform Support](https://img.shields.io/badge/OS-Ubuntu%20|%20macOS%20|%20Windows-blue)
 
-This is a Python package designed to perform Co-activation Patterns (CAPs) analyses. It utilizes k-means clustering to group timepoints (TRs) into brain states, applicable to both resting-state and task-based fMRI data. The package is compatible with data preprocessed using **fMRIPrep** and assumes your directory is BIDS-compliant, containing a derivatives folder with a pipeline folder (such as fMRIPrep) that holds the preprocessed BOLD data.
+neurocaps is a Python package for performing Co-activation Patterns (CAPs) analyses on resting-state or task-based fMRI
+data (resting-state & task-based). CAPs identifies recurring brain states through k-means clustering of BOLD timeseries
+data.
+
+**neurocaps is most optimized for fMRI data preprocessed with fMRIPrep and assumes a BIDs compliant directory
+such as the example directory structures below:**
+
+BIDS directory with no session folders:
+```
+
+    bids_root/
+    ├── dataset_description.json
+    ├── sub-<subject_label>/
+    │   └── func/
+    │       └── *task-*_events.tsv
+    ├── derivatives/
+    │   └── fmriprep-<version_label>/
+    │       ├── dataset_description.json
+    │       └── sub-<subject_label>/
+    │           └── func/
+    │               ├── *confounds_timeseries.tsv
+    │               ├── *brain_mask.nii.gz
+    │               └── *preproc_bold.nii.gz
+```
+
+BIDS directory with session folders:
+```
+
+    bids_root/
+    ├── dataset_description.json
+    ├── sub-<subject_label>/
+    │   └── ses-<session_label>/
+    │       └── func/
+    │           └── *task-*_events.tsv
+    ├── derivatives/
+    │   └── fmriprep-<version_label>/
+    │       ├── dataset_description.json
+    │       └── sub-<subject_label>/
+    │           └── ses-<session_label>/
+    │               └── func/
+    │                   ├── *confounds_timeseries.tsv
+    │                   ├── *brain_mask.nii.gz
+    │                   └── *preproc_bold.nii.gz
+```
+
+*Note: Only the preprocessed BOLD file is required. Additional files such as the confounds tsv (needed for denoising),
+mask, and task timing tsv file (needed for filtering a specific task condition) depend on the specific analyses.
+The "dataset_description.json" is required in both the bids root and pipeline directories for querying with pybids*
 
 ## Installation
 To install neurocaps, follow the instructions below using your preferred terminal.

@@ -82,10 +82,13 @@ def add_non_steady(n):
 
 # Gets scan indices in a roughly similar manner as _extract_timeseries;
 # Core logic for calculating onset and duration is similar
-def get_scans(condition, dummy_scans=None, fd=False, tr=1.2):
-    event_df = pd.read_csv(
-        os.path.join(bids_dir, "sub-01", "ses-002", "func", "sub-01_ses-002_task-rest_run-001_events.tsv"), sep="\t"
-    )
+def get_scans(condition, dummy_scans=None, fd=False, tr=1.2, remove_ses_id=False):
+    if remove_ses_id:
+        event_df = pd.read_csv(os.path.join(bids_dir, "sub-01", "func", "sub-01_task-rest_events.tsv"), sep="\t")
+    else:
+        event_df = pd.read_csv(
+            os.path.join(bids_dir, "sub-01", "ses-002", "func", "sub-01_ses-002_task-rest_run-001_events.tsv"), sep="\t"
+        )
     condition_df = event_df[event_df["trial_type"] == condition]
     scan_list = []
 
@@ -115,23 +118,22 @@ def get_scans(condition, dummy_scans=None, fd=False, tr=1.2):
     return scan_list
 
 
+# Create second subject
 @pytest.fixture(autouse=False, scope="module")
 def setup_environment_2():
     # Clear cache
     TimeseriesExtractor._call_layout.cache_clear()
 
     work_dir = os.path.join(bids_dir, "derivatives", pipeline_name)
-    # Create subject 02 folder and copy data
-    os.makedirs(os.path.join(work_dir, "sub-02"), exist_ok=True)
-    shutil.copytree(os.path.join(work_dir, "sub-01"), os.path.join(work_dir, "sub-02"), dirs_exist_ok=True)
+    # Create subject 02 folder
+    shutil.copytree(os.path.join(work_dir, "sub-01"), os.path.join(work_dir, "sub-02"))
+
     # Rename files for sub-02
     for file in glob.glob(os.path.join(work_dir, "sub-02", "ses-002", "func", "*")):
         os.rename(file, file.replace("sub-01_", "sub-02_"))
+
     # Add another session for sub-01
-    os.makedirs(os.path.join(work_dir, "sub-01", "ses-003"), exist_ok=True)
-    shutil.copytree(
-        os.path.join(work_dir, "sub-01", "ses-002"), os.path.join(work_dir, "sub-01", "ses-003"), dirs_exist_ok=True
-    )
+    shutil.copytree(os.path.join(work_dir, "sub-01", "ses-002"), os.path.join(work_dir, "sub-01", "ses-003"))
 
     # Rename files for ses-003
     for file in glob.glob(os.path.join(work_dir, "sub-01", "ses-003", "func", "*")):
@@ -152,6 +154,7 @@ def setup_environment_2():
         confound_df.to_csv(file, sep="\t", index=None)
 
 
+# Change directory structure by removing the session ID
 @pytest.fixture(autouse=False, scope="module")
 def setup_environment_3():
     # Clear cache
@@ -159,9 +162,18 @@ def setup_environment_3():
 
     work_dir = os.path.join(bids_dir, "derivatives", "fmriprep_1.0.0", "fmriprep")
     for i in ["01", "02"]:
+
         sub_dir = os.path.join(work_dir, f"sub-{i}")
-        func_dir = os.path.join(sub_dir, "ses-002", "func")
+        # Move directory up to remove session subfolder
+        shutil.move(os.path.join(sub_dir, "ses-002", "func"), os.path.join(sub_dir, "func"))
+        func_dir = os.path.join(sub_dir, "func")
+
         if i == "01":
+            # Remove session folders
+            for folder in glob.glob(os.path.join(sub_dir, "*")):
+                if os.path.basename(folder).startswith("ses-"):
+                    shutil.rmtree(folder, ignore_errors=True)
+
             # Remove run 2 files and brain mask files
             for file in glob.glob(os.path.join(func_dir, "*run-002*")):
                 os.remove(file)
@@ -169,23 +181,21 @@ def setup_environment_3():
                 [os.remove(x) for x in glob.glob(os.path.join(func_dir, "*brain_mask*"))]
             except:
                 pass
-            # Remove ses-003
-            shutil.rmtree(os.path.join(sub_dir, "ses-003"), ignore_errors=True)
-            # Rename files
-            os.rename(
-                os.path.join(func_dir, f"sub-{i}_ses-002_task-rest_run-001_desc-confounds_timeseries.tsv"),
-                os.path.join(func_dir, f"sub-{i}_task-rest_desc-confounds_timeseries.tsv"),
+
+            # Rename files by removing session id
+            for file in glob.glob(os.path.join(func_dir, "*")):
+                new_name = file.replace("ses-002_", "").replace("_run-001", "")
+                os.rename(file, new_name)
+
+            # Remove session from the bids root
+            shutil.move(
+                os.path.join(bids_dir, f"sub-{i}", "ses-002", "func"), os.path.join(bids_dir, f"sub-{i}", "func")
             )
-            os.rename(
-                os.path.join(func_dir, f"sub-{i}_ses-002_task-rest_run-001_desc-confounds_timeseries.json"),
-                os.path.join(func_dir, f"sub-{i}_task-rest_desc-confounds_timeseries.json"),
-            )
-            os.rename(
-                os.path.join(
-                    func_dir, f"sub-{i}_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
-                ),
-                os.path.join(func_dir, f"sub-{i}_task-rest_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"),
-            )
+            shutil.rmtree(os.path.join(bids_dir, f"sub-{i}", "ses-002"), ignore_errors=True)
+            # Rename files in bids root; remove session and remove the run id only for subject 1
+            for file in glob.glob(os.path.join(bids_dir, f"sub-{i}", "func", "*")):
+                new_name = file.replace("ses-002_", "").replace("_run-001", "")
+                os.rename(file, new_name)
         else:
             # Remove brain mask files
             for file in glob.glob(os.path.join(func_dir, "*brain_mask*")):
@@ -194,6 +204,8 @@ def setup_environment_3():
             for file in glob.glob(os.path.join(func_dir, f"sub-{i}_ses-002_task-rest_run-001_*")):
                 new_name = file.replace("ses-002_", "")
                 os.rename(file, new_name)
+            # Remove session 2 folder
+            shutil.rmtree(os.path.join(os.path.dirname(func_dir), "ses-002"), ignore_errors=True)
 
     # Move up a level
     derivatives_dir = os.path.join(tmp_dir.name, "ds000031_R1.0.4_ses001-022", "ds000031_R1.0.4", "derivatives")
@@ -996,11 +1008,22 @@ def test_exclude_sub(setup_environment_3):
     assert "02" not in list(extractor.subject_timeseries)
 
 
+def test_events_without_session_id():
+    pipeline_name = "fmriprep_1.0.0"
+    extractor = TimeseriesExtractor()
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, condition="rest")
+    assert extractor.subject_timeseries["01"]["run-0"].shape[0] == 29
+
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, condition="active")
+    assert extractor.subject_timeseries["01"]["run-0"].shape[0] == 24
+
+
 @pytest.mark.parametrize(
     "use_confounds, verbose, pipeline_name",
     [(True, True, "fmriprep_1.0.0"), (False, False, None), (True, False, None), (False, True, None)],
 )
 def test_removal_of_run_desc(use_confounds, verbose, pipeline_name):
+    pipeline_name = "fmriprep_1.0.0"
     extractor = TimeseriesExtractor(
         parcel_approach=parcel_approach,
         standardize="zscore_sample",
@@ -1019,6 +1042,7 @@ def test_removal_of_run_desc(use_confounds, verbose, pipeline_name):
 
 @pytest.mark.parametrize("pipeline_name", [None, "fmriprep-1.0.0"])
 def test_skip(pipeline_name):
+    pipeline_name = "fmriprep_1.0.0"
     extractor = TimeseriesExtractor(
         parcel_approach=parcel_approach,
         standardize="zscore_sample",
@@ -1038,6 +1062,7 @@ def test_skip(pipeline_name):
 
 @pytest.mark.parametrize("n_cores, pipeline_name", [(None, None), (2, "fmriprep_1.0.0")])
 def test_append_2(n_cores, pipeline_name):
+    pipeline_name = "fmriprep_1.0.0"
     parcel_approach = {"Schaefer": {"yeo_networks": 7}}
     extractor = TimeseriesExtractor(
         parcel_approach=parcel_approach,
@@ -1111,7 +1136,7 @@ def test_extended_censor(fd_threshold, dummy_scans):
 
     if not dummy_scans:
         extractor.get_bold(bids_dir=bids_dir, task="rest", condition="active", run_subjects=["01"])
-        scan_list = get_scans("active")
+        scan_list = get_scans("active", remove_ses_id=True)
         scan_list = [x for x in scan_list if x not in expected_removal]
 
         assert np.array_equal(

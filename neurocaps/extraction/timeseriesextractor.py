@@ -388,6 +388,49 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         The timeseries data of all subjects are appended to a single dictionary ``self.subject_timeseries``. Additional
         information regarding the structure of this dictionary can be found in the "Note" section.
 
+        BIDS directory with no session folders:
+
+        ::
+
+            bids_root/
+            ├── dataset_description.json
+            ├── sub-<subject_label>/
+            │   └── func/
+            │       └── *task-*_events.tsv
+            ├── derivatives/
+            │   └── fmriprep-<version_label>/
+            │       ├── dataset_description.json
+            │       └── sub-<subject_label>/
+            │           └── func/
+            │               ├── *confounds_timeseries.tsv
+            │               ├── *brain_mask.nii.gz
+            │               └── *preproc_bold.nii.gz
+
+        BIDS directory with session folders:
+
+        ::
+
+            bids_root/
+            ├── dataset_description.json
+            ├── sub-<subject_label>/
+            │   └── ses-<session_label>/
+            │       └── func/
+            │           └── *task-*_events.tsv
+            ├── derivatives/
+            │   └── fmriprep-<version_label>/
+            │       ├── dataset_description.json
+            │       └── sub-<subject_label>/
+            │           └── ses-<session_label>/
+            │               └── func/
+            │                   ├── *confounds_timeseries.tsv
+            │                   ├── *brain_mask.nii.gz
+            │                   └── *preproc_bold.nii.gz
+
+        *Note: Only the preprocessed BOLD file is required. Additional files such as the confounds tsv (needed for
+        denoising), mask, and task timing tsv file (needed for filtering a specific task condition) depend on the
+        specific analyses. As mentioned previously, the "dataset_description.json" is required in both the bids root
+        and pipeline directories for querying with pybids.*
+
         **This pipeline is most optimized for BOLD data preprocessed by fMRIPrep.**
 
         Parameters
