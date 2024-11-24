@@ -5,9 +5,9 @@
    :maxdepth: 2
 
    installation
-   examples/examples
    api
    parcellations
+   examples/examples
    outputs
    logging
    contributing
