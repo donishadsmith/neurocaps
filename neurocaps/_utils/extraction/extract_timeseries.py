@@ -260,7 +260,7 @@ def _continue_extraction(Data, LG):
         # If any out of bound indices, remove them instead of getting indexing error.
         if max(Data.scans) > timeseries.shape[0] - 1: Data.scans = _check_indices(Data, timeseries.shape[0], LG)
         # Extract condition
-        timeseries = timeseries[Data.scans,:]
+        timeseries = timeseries[Data.scans, :]
 
     return timeseries
 

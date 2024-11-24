@@ -404,7 +404,7 @@ class CAP(_CAPGetter):
     def __init__(self,
                  parcel_approach: Union[
                      dict[str, dict[str, Union[os.PathLike, list[str]]]],
-                     dict[str, dict[str, Union[str,int]]],
+                     dict[str, dict[str, Union[str, int]]],
                      os.PathLike
                      ]=None,
                  groups: dict[str, list[str]]=None) -> None:
@@ -435,7 +435,7 @@ class CAP(_CAPGetter):
                  cluster_selection_method: Literal["elbow", "davies_bouldin", "silhouette", "variance_ratio"]=None,
                  random_state: Optional[int]=None,
                  init: Union[np.array, Literal["k-means++", "random"]]="k-means++",
-                 n_init: Union[Literal["auto"],int]="auto",
+                 n_init: Union[Literal["auto"], int]="auto",
                  max_iter: int=300,
                  tol: float=0.0001,
                  algorithm: Literal["lloyd", "elkan"]="lloyd",
@@ -492,7 +492,7 @@ class CAP(_CAPGetter):
         random_state : :obj:`int` or :obj:`None`, default=None
             The random state to use for ``sklearn.cluster.KMeans``. Ensures reproducible results.
 
-        init : {"k-means++","random"}, or :class:`np.ndarray`, default="k-means++"
+        init : {"k-means++", "random"}, or :class:`np.ndarray`, default="k-means++"
             Method for choosing initial cluster centroid for ``sklearn.cluster.KMeans``. Options are "k-means++",
             "random", or np.ndarray.
 
@@ -783,7 +783,7 @@ class CAP(_CAPGetter):
         if output_dir:
             if not os.path.exists(output_dir): os.makedirs(output_dir)
             save_name = f"{group.replace(' ', '_')}_{self._cluster_selection_method}.png"
-            plt.savefig(os.path.join(output_dir,save_name), dpi=plot_dict["dpi"],
+            plt.savefig(os.path.join(output_dir, save_name), dpi=plot_dict["dpi"],
                         bbox_inches=plot_dict["bbox_inches"])
 
         plt.show() if show_figs else plt.close()
@@ -817,7 +817,7 @@ class CAP(_CAPGetter):
                               Literal[
                                   "temporal_fraction", "persistence", "counts",
                                   "transition_frequency", "transition_probability"],
-                              list[Literal["temporal_fraction", "persistence","counts",
+                              list[Literal["temporal_fraction", "persistence", "counts",
                                            "transition_frequency", "transition_probability"]]
                               ]=["temporal_fraction", "persistence", "counts", "transition_frequency"],
                           return_df: bool=True,
@@ -1101,7 +1101,7 @@ class CAP(_CAPGetter):
         for subj_id, group, curr_run in distributed_list:
             if "temporal_fraction" in metrics:
                 # Get frequency
-                frequency_dict = {key: np.where(predicted_subject_timeseries[subj_id][curr_run] == key,1,0).sum()
+                frequency_dict = {key: np.where(predicted_subject_timeseries[subj_id][curr_run] == key, 1, 0).sum()
                                   for key in range(1, group_cap_counts[group] + 1)}
 
                 self._update_dict(cap_numbers, group_cap_counts[group], frequency_dict)
@@ -1134,7 +1134,7 @@ class CAP(_CAPGetter):
                 for target in cap_numbers:
                     binary_arr, segments = self._segments(target, predicted_subject_timeseries[subj_id][curr_run])
                     # Sum of ones in the binary array divided by segments, then multiplied by 1 or the tr; segment is
-                    # always 1 at minimum due to + 1; np.where(np.diff(target_indices, n=1) > 1, 1,0).sum() is 0
+                    # always 1 at minimum due to + 1; np.where(np.diff(target_indices, n=1) > 1, 1, 0).sum() is 0
                     # when empty or the condition isn't met
                     persistence_dict.update({target: (binary_arr.sum()/segments) * (tr if tr else 1)})
 
@@ -1145,8 +1145,8 @@ class CAP(_CAPGetter):
                 df_dict["persistence"].loc[len(df_dict["persistence"])] = new_row
 
             if "transition_frequency" in metrics:
-                # Sum the differences that are not zero - [1,2,1,1,1,3] becomes [1,-1,0,0,2], binary representation for
-                # values not zero is [1,1,0,0,1] = 3 transitions
+                # Sum the differences that are not zero - [1, 2, 1, 1, 1, 3] becomes [1, -1, 0, 0, 2]
+                # , binary representation for values not zero is [1, 1, 0, 0, 1] = 3 transitions
                 transition_frequency = np.where(
                     np.diff(predicted_subject_timeseries[subj_id][curr_run], n=1) != 0, 1, 0).sum()
 
@@ -1178,11 +1178,11 @@ class CAP(_CAPGetter):
 
                     # Avoid division by zero errors and calculate both the forward and reverse transition
                     if trans_dict[target1] != 0:
-                        temp_dict[group].loc[indx,f"{target1}.{target2}"] = float(
+                        temp_dict[group].loc[indx, f"{target1}.{target2}"] = float(
                             np.sum(np.where(diff_array == 2, 1, 0))/trans_dict[target1])
 
                     if trans_dict[target2] != 0:
-                        temp_dict[group].loc[indx,f"{target2}.{target1}"] = float(
+                        temp_dict[group].loc[indx, f"{target2}.{target1}"] = float(
                             np.sum(np.where(diff_array == -2, 1, 0))/trans_dict[target2])
 
                 # Calculate the probability for the self transitions/diagonals
@@ -1191,7 +1191,7 @@ class CAP(_CAPGetter):
 
                     # Will include the {target}.{target} column, but the value is initially set to zero
                     columns = temp_dict[group].filter(regex=fr"^{target}\.").columns.tolist()
-                    cumulative = temp_dict[group].loc[indx,columns].values.sum()
+                    cumulative = temp_dict[group].loc[indx, columns].values.sum()
                     temp_dict[group].loc[indx, f"{target}.{target}"] = 1.0 - cumulative
 
         if "transition_probability" in metrics: df_dict["transition_probability"] = temp_dict
@@ -1298,7 +1298,7 @@ class CAP(_CAPGetter):
     def _build_df(self, metrics, cap_names, products=None):
         df_dict = {}
 
-        base_cols = ["Subject_ID", "Group","Run"]
+        base_cols = ["Subject_ID", "Group", "Run"]
 
         for metric in metrics:
             if metric not in ["transition_frequency", "transition_probability"]:
@@ -1332,7 +1332,7 @@ class CAP(_CAPGetter):
     @staticmethod
     def _segments(target, timeseries):
         # Binary representation of numpy array - if [1, 2, 1, 1, 1, 3] and target is 1, then it is [1, 0, 1, 1, 1, 0]
-        binary_arr = np.where(timeseries == target,1,0)
+        binary_arr = np.where(timeseries == target, 1, 0)
         # Get indices of values that equal 1; [0, 2, 3, 4]
         target_indices = np.where(binary_arr == 1)[0]
         # Count the transitions, indices where diff > 1 is a transition; diff of indices = [2, 1, 1];
@@ -1493,7 +1493,7 @@ class CAP(_CAPGetter):
             raise AttributeError("`self.parcel_approach` is None. Add `parcel_approach` using "
                                  "`self.parcel_approach=parcel_approach` to use this method.")
 
-        if not hasattr(self,"_caps"):
+        if not hasattr(self, "_caps"):
             raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` "
                                  "first.")
 
@@ -1568,11 +1568,11 @@ class CAP(_CAPGetter):
 
             #  Generate plot for each group
             input_keys = dict(group=group, plot_dict=plot_dict, cap_dict=cap_dict, columns=columns,
-                              output_dir=output_dir,suffix_title=suffix_title,show_figs=show_figs,scope=scope,
+                              output_dir=output_dir, suffix_title=suffix_title, show_figs=show_figs, scope=scope,
                               parcellation_name=parcellation_name)
 
             #  Generate plot for each group
-            if plot_option == "outer_product": self._generate_outer_product_plots(**input_keys,subplots=subplots)
+            if plot_option == "outer_product": self._generate_outer_product_plots(**input_keys, subplots=subplots)
             elif plot_option == "heatmap": self._generate_heatmap_plots(**input_keys)
 
     def _create_regions(self, parcellation_name):
@@ -1620,7 +1620,7 @@ class CAP(_CAPGetter):
             x_pad = 0 if len(cap_dict[group])/ncol <= 1 else 1
             nrow = plot_dict["nrow"] if plot_dict["nrow"] is not None else x_pad + int(len(cap_dict[group])/ncol)
 
-            subplot_figsize = (8 * ncol, 6 * nrow) if plot_dict["figsize"] == (8,6) else plot_dict["figsize"]
+            subplot_figsize = (8 * ncol, 6 * nrow) if plot_dict["figsize"] == (8, 6) else plot_dict["figsize"]
 
             fig, axes = plt.subplots(nrow, ncol, sharex=False, sharey=plot_dict["sharey"], figsize=subplot_figsize)
             suptitle = f"{group} {suffix_title}" if suffix_title else f"{group}"
@@ -1629,12 +1629,12 @@ class CAP(_CAPGetter):
             if plot_dict["tight_layout"]: fig.tight_layout(rect=plot_dict["rect"])
 
             # Current subplot
-            axes_x, axes_y = [0,0]
+            axes_x, axes_y = [0, 0]
 
         # Iterate over CAPs
         for cap in cap_dict[group]:
             # Calculate outer product
-            self._outer_products[group].update({cap: np.outer(cap_dict[group][cap],cap_dict[group][cap])})
+            self._outer_products[group].update({cap: np.outer(cap_dict[group][cap], cap_dict[group][cap])})
             # Create labels if nodes requested for scope
             if scope == "nodes" and plot_dict["hemisphere_labels"] is False:
                 labels, _ = self._create_node_labels(parcellation_name, self._parcel_approach, columns)
@@ -1685,13 +1685,12 @@ class CAP(_CAPGetter):
                     axes_y = 0
                 else:
                     axes_y += 1
-
             else:
                 # Create new plot for each iteration when not subplot
                 plt.figure(figsize=plot_dict["figsize"])
 
                 if scope == "regions":
-                    display = seaborn.heatmap(self._outer_products[group][cap],  xticklabels=columns,
+                    display = seaborn.heatmap(self._outer_products[group][cap], xticklabels=columns,
                                               yticklabels=columns, **self._base_kwargs(plot_dict))
                 else:
                     if plot_dict["hemisphere_labels"] is False:
@@ -1842,10 +1841,10 @@ class CAP(_CAPGetter):
         right_hemisphere_tick = (division_line + n_labels)//2
 
         if call == "outer":
-            display.set_xticks([left_hemisphere_tick,right_hemisphere_tick])
+            display.set_xticks([left_hemisphere_tick, right_hemisphere_tick])
             display.set_xticklabels(["LH", "RH"])
 
-        display.set_yticks([left_hemisphere_tick,right_hemisphere_tick])
+        display.set_yticks([left_hemisphere_tick, right_hemisphere_tick])
         display.set_yticklabels(["LH", "RH"])
 
         line_widths = linewidths if linewidths != 0 else 1
@@ -2002,7 +2001,7 @@ class CAP(_CAPGetter):
         """
         corr_dict = {group: None for group in self._groups} if return_df or save_df else None
 
-        if not hasattr(self,"_caps"):
+        if not hasattr(self, "_caps"):
             raise AttributeError(
                 "Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` first."
                 )
@@ -2134,7 +2133,7 @@ class CAP(_CAPGetter):
             raise AttributeError("`self.parcel_approach` is None. Set "
                                  "`self.parcel_approach=parcel_approach` to use this method.")
 
-        if not hasattr(self,"_caps"):
+        if not hasattr(self, "_caps"):
             raise AttributeError(
                 "Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` first."
                 )
@@ -2326,7 +2325,7 @@ class CAP(_CAPGetter):
             - surface : {"inflated", "veryinflated"}, default="inflated"
                 The surface atlas that is used for plotting. Options are "inflated" or "veryinflated".
             - color_range : :obj:`tuple` or :obj:`None`, default=None
-                The minimum and maximum value to display in plots. For instance, (-1,1) where minimum
+                The minimum and maximum value to display in plots. For instance, (-1, 1) where minimum
                 value is first. If None, the minimum and maximum values from the image will be used.
             - bbox_inches : :obj:`str` or :obj:`None`, default="tight"
                 Alters size of the whitespace in the saved image.
@@ -2364,7 +2363,7 @@ class CAP(_CAPGetter):
             raise AttributeError("`self.parcel_approach` is None. Add parcel_approach using "
                                  "`self.parcel_approach=parcel_approach` to use this method.")
 
-        if not hasattr(self,"_caps") and fslr_giftis_dict is None:
+        if not hasattr(self, "_caps") and fslr_giftis_dict is None:
             raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` "
                                  "first.")
 
@@ -2377,12 +2376,12 @@ class CAP(_CAPGetter):
         # Create plot dictionary
         defaults = {"dpi": 300, "title_pad": -3, "cmap": "cold_hot", "cbar_kws":  {"location": "bottom", "n_ticks": 3},
                     "size": (500, 400), "layout": "grid", "zoom": 1.5, "views": ["lateral", "medial"], "alpha": 1,
-                    "zero_transparent": True, "as_outline": False,"brightness": 0.5, "figsize": None, "scale": (2, 2),
+                    "zero_transparent": True, "as_outline": False, "brightness": 0.5, "figsize": None, "scale": (2, 2),
                     "surface": "inflated", "color_range": None, "bbox_inches": "tight", "outline_alpha": 1}
 
         plot_dict = _check_kwargs(defaults, **kwargs)
 
-        groups = self._caps if hasattr(self,"_caps") and fslr_giftis_dict is None else fslr_giftis_dict
+        groups = self._caps if hasattr(self, "_caps") and fslr_giftis_dict is None else fslr_giftis_dict
 
         if fslr_giftis_dict is None: parcellation_name = list(self._parcel_approach)[0]
 
@@ -2437,7 +2436,7 @@ class CAP(_CAPGetter):
                 p.add_layer({"left": sulc_lh, "right": sulc_rh}, cmap="binary_r", cbar=False)
 
                 # Check cmap
-                cmap = _cmap_d[plot_dict["cmap"]] if isinstance(plot_dict["cmap"],str) else plot_dict["cmap"]
+                cmap = _cmap_d[plot_dict["cmap"]] if isinstance(plot_dict["cmap"], str) else plot_dict["cmap"]
                 # Add stat map layer
                 p.add_layer({"left": gii_lh, "right": gii_rh}, cmap=cmap,
                             alpha=plot_dict["alpha"], color_range=plot_dict["color_range"],
@@ -2616,7 +2615,7 @@ class CAP(_CAPGetter):
             - radialaxis : :obj:`dict`, default={"showline": False, "linewidth": 2, \
                                                  "linecolor": "rgba(0, 0, 0, 0.25)", \
                                                  "gridcolor": "rgba(0, 0, 0, 0.25)", \
-                                                 "ticks": "outside","tickfont": {"size": 14, "color": "black"}}
+                                                 "ticks": "outside", "tickfont": {"size": 14, "color": "black"}}
                 Customizes the radial axis.
             - angularaxis : :obj:`dict`, default={"showline": True, "linewidth": 2, \
                                                   "linecolor": "rgba(0, 0, 0, 0.25)", \
@@ -2681,10 +2680,10 @@ class CAP(_CAPGetter):
         Hamburg City Health Study. Imaging Neuroscience, 2, 1–17. https://doi.org/10.1162/imag_a_00122
         """
         if not self._parcel_approach:
-            raise AttributeError("self.parcel_approach` is None. Add parcel_approach using "
+            raise AttributeError("`self.parcel_approach` is None. Add parcel_approach using "
                                  "`self.parcel_approach=parcel_approach` to use this method.")
 
-        if not hasattr(self,"_caps"):
+        if not hasattr(self, "_caps"):
             raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` "
                                  "first.")
 
@@ -2696,7 +2695,7 @@ class CAP(_CAPGetter):
         defaults = {"scale": 2, "height": 800, "width": 1200, "line_close": True, "bgcolor": "white", "fill": "none",
                     "scattersize": 8, "connectgaps": True, "opacity": 0.5, "linewidth": 2,
                     "radialaxis": {"showline": False, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)",
-                                   "gridcolor": "rgba(0, 0, 0, 0.25)","ticks": "outside",
+                                   "gridcolor": "rgba(0, 0, 0, 0.25)", "ticks": "outside",
                                    "tickfont": {"size": 14, "color": "black"}},
                     "angularaxis": {"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)",
                                     "gridcolor": "rgba(0, 0, 0, 0.25)", "tickfont": {"size": 16, "color": "black"}},
@@ -2794,11 +2793,11 @@ class CAP(_CAPGetter):
                     file_name = self._basename(group, cap, "radar", suffix_title, "png")
 
                     if not as_html:
-                        fig.write_image(os.path.join(output_dir,file_name), scale=plot_dict["scale"],
+                        fig.write_image(os.path.join(output_dir, file_name), scale=plot_dict["scale"],
                                         engine=plot_dict["engine"])
                     else:
                         file_name = file_name.replace(".png", ".html")
-                        fig.write_html(os.path.join(output_dir,file_name))
+                        fig.write_html(os.path.join(output_dir, file_name))
 
     def _update_radar_dict(self, group, parcellation_name, radar_dict):
         for cap in self._caps[group]:

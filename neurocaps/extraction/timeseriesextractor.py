@@ -300,7 +300,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     function for information regarding the sub-keys required for that specific function.
     """
     def __init__(self,
-                 space: str = "MNI152NLin2009cAsym",
+                 space: str="MNI152NLin2009cAsym",
                  parcel_approach: Union[
                     dict[str, dict[str, Union[str, int]]], os.PathLike
                     ]={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}},
@@ -900,13 +900,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         if file_name is None: save_file_name = "subject_timeseries.pkl"
         else: save_file_name = f"{os.path.splitext(file_name.rstrip())[0].rstrip()}.pkl"
 
-        with open(os.path.join(output_dir,save_file_name), "wb") as f:
-            dump(self._subject_timeseries,f)
+        with open(os.path.join(output_dir, save_file_name), "wb") as f:
+            dump(self._subject_timeseries, f)
 
     def visualize_bold(self,
-                       subj_id: Union[int,str],
+                       subj_id: Union[int, str],
                        run: Union[int, str],
-                       roi_indx: Optional[Union[Union[int,str], Union[list[str],list[int]]]]=None,
+                       roi_indx: Optional[Union[Union[int, str], Union[list[str], list[int]]]]=None,
                        region: Optional[str]=None,
                        show_figs: bool=True,
                        output_dir: Optional[Union[str, os.PathLike]]=None,
@@ -967,7 +967,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         if not hasattr(self, "_subject_timeseries"):
             raise AttributeError("Cannot plot bold data since `self._subject_timeseries` does not exist, either run "
-                                 "`self.get_bold()` or assign a valid timeseries structure to self.subject_timeseries.")
+                                 "`self.get_bold()` or assign a valid timeseries structure to `self.subject_timeseries`.")
 
         if roi_indx is None and region is None:
             raise ValueError("either `roi_indx` or `region` must be specified.")
@@ -1012,7 +1012,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             if file_name: save_file_name = f"{os.path.splitext(file_name.rstrip())[0].rstrip()}.png"
             else: save_file_name = f'subject-{subj_id}_run-{run}_timeseries.png'
 
-            plt.savefig(os.path.join(output_dir,save_file_name), dpi=plot_dict["dpi"],
+            plt.savefig(os.path.join(output_dir, save_file_name), dpi=plot_dict["dpi"],
                         bbox_inches=plot_dict["bbox_inches"])
 
         plt.show() if show_figs else plt.close()

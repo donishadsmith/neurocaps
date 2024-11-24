@@ -56,9 +56,9 @@ def _save_contents(output_dir, suffix_title, group, curr_dict, plot_dict, save_p
         else: full_filename = f"{group.replace(' ', '_')}_CAPs_{base_name}.png"
 
         if save_plots:
-            display.get_figure().savefig(os.path.join(output_dir,full_filename), dpi=plot_dict["dpi"],
+            display.get_figure().savefig(os.path.join(output_dir, full_filename), dpi=plot_dict["dpi"],
                                          bbox_inches=plot_dict["bbox_inches"])
 
         if save_df:
             full_filename = full_filename.replace(".png", ".csv")
-            curr_dict[group].to_csv(path_or_buf=os.path.join(output_dir,full_filename), sep=",", index=True)
+            curr_dict[group].to_csv(path_or_buf=os.path.join(output_dir, full_filename), sep=",", index=True)

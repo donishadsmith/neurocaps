@@ -11,8 +11,8 @@ VALID_DICT_STUCTURE = {"Schaefer": {"n_rois" : 400, "yeo_networks": 7, "resoluti
                        "Custom": {"maps": "/location/to/parcellation.nii.gz",
                                   "nodes": ["LH_Vis1", "LH_Vis2", "LH_Hippocampus",
                                             "RH_Vis1", "RH_Vis2", "RH_Hippocampus"],
-                                  "regions": {"Vis" : {"lh": [0,1],
-                                                       "rh": [3,4]},
+                                  "regions": {"Vis" : {"lh": [0, 1],
+                                                       "rh": [3, 4]},
                                               "Hippocampus": {"lh": [2],
                                                               "rh": [5]}
                                              }
