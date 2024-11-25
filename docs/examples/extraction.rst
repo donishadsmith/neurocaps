@@ -23,23 +23,21 @@ Extracting Timeseries
 
     parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7, "resolution_mm": 2}}
 
-    extractor = TimeseriesExtractor(parcel_approach=parcel_approach,
+    extractor = TimeseriesExtractor(space="MNI152NLin2009cAsym",
+                                    parcel_approach=parcel_approach,
                                     standardize="zscore_sample",
                                     use_confounds=True,
                                     detrend=True,
                                     low_pass=0.15,
-                                    high_pass=0.01,
+                                    high_pass=None,
                                     confound_names=confounds)
 
     bids_dir = os.path.join(dir, "ds000031_R1.0.4_ses001-022/ds000031_R1.0.4")
 
-    # Can use the `n_cores` parameter for multiprocessing
-    pipeline_name = "fmriprep_1.0.0/fmriprep"
-
     extractor.get_bold(bids_dir=bids_dir,
                        session="002",
                        task="rest",
-                       pipeline_name=pipeline_name,
+                       pipeline_name="fmriprep_1.0.0/fmriprep",
                        tr=1.2)
 
 .. rst-class:: sphx-glr-script-out
@@ -79,7 +77,7 @@ Saving Timeseries
 .. code-block:: python
 
     extractor.timeseries_to_pickle(output_dir=dir,
-                                   file_name="task-positive_Schaefer.pkl")
+                                   file_name="rest_Schaefer.pkl")
 
 Visualizing Timeseries
 ----------------------
