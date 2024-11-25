@@ -21,78 +21,78 @@ def transition_matrix(trans_dict: dict[str, pd.DataFrame], output_dir: Optional[
         This assumes the output from ``CAP.calculate_metrics`` is being used, specifically
         ``metrics_output["transition_probability"]``.
 
-    output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
+    output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
         Directory to save plots (if ``save_plots`` is True) and transition probability matrices DataFrames (if
         ``save_df`` is True) to. The directory will be created if it does not exist. Plots and dataframes will not
         be saved if None.
 
-    suffix_title : :obj:`str` or :obj:`None`, default=None
+    suffix_title: :obj:`str` or :obj:`None`, default=None
         Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
 
-    show_figs : :obj:`bool`, default=True
+    show_figs: :obj:`bool`, default=True
         Display figures.
 
-    save_plots : :obj:`bool`, default=True
+    save_plots: :obj:`bool`, default=True
         If True, plots are saves as png images. For this to be used, ``output_dir`` must be specified.
 
-    return_df : :obj:`bool`, default=False
+    return_df: :obj:`bool`, default=False
         If True, returns a dictionary with a transition probability matrix for each group.
 
-    save_df : :obj:`bool`, default=False,
+    save_df: :obj:`bool`, default=False,
         If True, saves the transition probability matrix contained in the DataFrames as csv files. For this to be used,
         ``output_dir`` must be specified.
 
-    kwargs : :obj:`dict`
+    kwargs: :obj:`dict`
         Keyword arguments used when modifying figures. Valid keywords include:
 
-        - dpi : :obj:`int`, default=300
+        - dpi: :obj:`int`, default=300
             Dots per inch for the figure. Default is 300 if ``output_dir`` is provided and ``dpi`` is not
             specified.
-        - figsize : :obj:`tuple`, default=(8, 6)
+        - figsize: :obj:`tuple`, default=(8, 6)
             Size of the figure in inches.
-        - fontsize : :obj:`int`, default=14
+        - fontsize: :obj:`int`, default=14
             Font size for the plot title, x-axis title, and y-axis title of each plot.
-        - xticklabels_size : :obj:`int`, default=8
+        - xticklabels_size: :obj:`int`, default=8
             Font size for x-axis tick labels.
-        - yticklabels_size : :obj:`int`, default=8
+        - yticklabels_size: :obj:`int`, default=8
             Font size for y-axis tick labels.
-        - shrink : :obj:`float`, default=0.8
+        - shrink: :obj:`float`, default=0.8
             Fraction by which to shrink the colorbar.
-        - cbarlabels_size : :obj:`int`, default=8
+        - cbarlabels_size: :obj:`int`, default=8
             Font size for the colorbar labels.
-        - xlabel_rotation : :obj:`int`, default=0
+        - xlabel_rotation: :obj:`int`, default=0
             Rotation angle for x-axis labels.
-        - ylabel_rotation : :obj:`int`, default=0
+        - ylabel_rotation: :obj:`int`, default=0
             Rotation angle for y-axis labels.
-        - annot : :obj:`bool`, default=False
+        - annot: :obj:`bool`, default=False
             Add values to each cell.
-        - annot_kws : :obj:`dict`, default=None,
+        - annot_kws: :obj:`dict`, default=None,
             Customize the annotations.
-        - fmt : :obj:`str`, default=".2g",
+        - fmt: :obj:`str`, default=".2g",
             Modify how the annotated vales are presented.
-        - linewidths : :obj:`float`, default=0
+        - linewidths: :obj:`float`, default=0
             Padding between each cell in the plot.
-        - borderwidths : :obj:`float`, default=0
+        - borderwidths: :obj:`float`, default=0
             Width of the border around the plot.
-        - linecolor : :obj:`str`, default="black"
+        - linecolor: :obj:`str`, default="black"
             Color of the line that separates each cell.
-        - edgecolors : :obj:`str` or :obj:`None`, default=None
+        - edgecolors: :obj:`str` or :obj:`None`, default=None
             Color of the edges.
-        - alpha : :obj:`float` or :obj:`None`, default=None
+        - alpha: :obj:`float` or :obj:`None`, default=None
             Controls transparency and ranges from 0 (transparent) to 1 (opaque).
-        - bbox_inches : :obj:`str` or :obj:`None`, default="tight"
+        - bbox_inches: :obj:`str` or :obj:`None`, default="tight"
             Alters size of the whitespace in the saved image.
-        - cmap : :obj:`str`, :obj:`callable` default="coolwarm"
+        - cmap: :obj:`str`, :obj:`callable` default="coolwarm"
             Color map for the plot cells. For this parameter, you can use pre-made color palettes or create custom ones.
             Below is a list of valid options:
 
-                - Strings to call seaborn's pre-made palettes.
-                - ``seaborn.diverging_palette`` function to generate custom palettes.
-                - ``matplotlib.color.LinearSegmentedColormap`` to generate custom palettes.
+            - Strings to call seaborn's pre-made palettes.
+            - ``seaborn.diverging_palette`` function to generate custom palettes.
+            - ``matplotlib.color.LinearSegmentedColormap`` to generate custom palettes.
 
-        - vmin : :obj:`float` or :obj:`None`, default=None
+        - vmin: :obj:`float` or :obj:`None`, default=None
                 The minimum value to display in colormap.
-        - vmax : :obj:`float` or :obj:`None`, default=None
+        - vmax: :obj:`float` or :obj:`None`, default=None
                 The maximum value to display in colormap.
 
     Returns

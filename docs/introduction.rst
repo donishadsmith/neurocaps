@@ -9,7 +9,7 @@
    :alt: Python Versions
 
 .. image:: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal
-   :target: https://doi.org/10.5281/zenodo.14210686
+   :target: https://doi.org/10.5281/zenodo.14215044
    :alt: DOI
 
 .. image:: https://img.shields.io/badge/Source%20Code-neurocaps-purple
@@ -35,12 +35,12 @@
 
 neurocaps is a Python package for performing Co-activation Patterns (CAPs) analyses on resting-state or task-based fMRI
 data (resting-state & task-based). CAPs identifies recurring brain states through k-means clustering of BOLD timeseries
-data.
+data [1]_.
 
 **neurocaps is most optimized for fMRI data preprocessed with fMRIPrep and assumes a BIDs compliant directory
 such as the example directory structures below:**
 
-BIDS directory with no session folders:
+Basic BIDS directory:
 
 ::
 
@@ -58,7 +58,7 @@ BIDS directory with no session folders:
    │               ├── *brain_mask.nii.gz
    │               └── *preproc_bold.nii.gz
 
-BIDS directory with session folders:
+BIDS directory with session-level organization:
 
 ::
 
@@ -86,7 +86,7 @@ Citing
 ------
 ::
 
-  Smith, D. (2024). neurocaps. Zenodo. https://doi.org/10.5281/zenodo.14210686
+  Smith, D. (2024). neurocaps. Zenodo. https://doi.org/10.5281/zenodo.14215044
 
 Usage
 -----
@@ -124,7 +124,7 @@ Main features for ``CAP`` includes:
 - ``change_dtype``: Changes the dtype of all subjects in the subject timeseries to help with memory usage.
 - ``transition_matrix``: Uses the "transition_probability" output from ``CAP.calculate_metrics`` to generate and visualize the averaged transition probability matrix for all groups from the analysis.
 
-Please refer to `demo.ipynb <https://github.com/donishadsmith/neurocaps/blob/main/demo.ipynb>`_ or `tutorials <https://neurocaps.readthedocs.io/en/latest/examples/examples.html>`_ for a more extensive demonstration of the features included in this package.
+Please refer to the `demos <https://github.com/donishadsmith/neurocaps/tree/main/demos>`_ or `tutorials <https://neurocaps.readthedocs.io/en/latest/examples/examples.html>`_ for a more extensive demonstration of the features included in this package.
 
 Dependencies
 ------------
@@ -150,7 +150,8 @@ Neurocaps relies on several packages:
                    "nbformat>=4.2.0",
                    "kaleido==0.1.0.post1; platform_system == 'Windows'",
                    "kaleido; platform_system != 'Windows'",
-                   "setuptools; python_version>='3.12'"
+                   "setuptools; python_version>='3.12'",
+                   "vtk<9.4.0"
                   ]
 
 Acknowledgements

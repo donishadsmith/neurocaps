@@ -9,6 +9,15 @@ from .._utils import (_TimeseriesExtractorGetter, _check_kwargs, _check_confound
 
 LG = _logger(__name__)
 
+# Custom error class
+class BIDSQueryError(Exception):
+    def __init__(self, message):
+        super().__init__(message)
+        self.message = message
+
+    def __str__(self):
+        return f"{self.message}"
+
 class TimeseriesExtractor(_TimeseriesExtractorGetter):
     """
     Timeseries Extractor Class.
@@ -17,12 +26,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
     Parameters
     ----------
-    space : :obj:`str`, default="MNI152NLin2009cAsym"
+    space: :obj:`str`, default="MNI152NLin2009cAsym"
         The standard template space that the preprocessed bold data is registered to. Used for querying with pybids
         to locate preprocessed BOLD-related files.
 
-    parcel_approach : :obj:`dict[str, dict[str, str | int]]` or :obj:`os.PathLike`, \
-                      default={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
+    parcel_approach: :obj:`dict[str, dict[str, str | int]]` or :obj:`os.PathLike`, \
+                     default={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
         The approach to parcellate NifTI images. This must be a nested dictionary with the first key being the
         parcellation name. Currently, only "Schaefer", "AAL", and "Custom" are supported. Recognized second level
         keys (sub-keys) are listed below:
@@ -47,30 +56,30 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         functions for more information about the "Schaefer" and "AAL" sub-keys. Also, refer to the "Note" section below
         for an explanation of the "Custom" sub-keys.
 
-    standardize : {"zscore_sample", "zscore", "psc", True, False}, default="zscore_sample"
+    standardize: {"zscore_sample", "zscore", "psc", True, False}, default="zscore_sample"
         Standardizes the timeseries. Refer to ``nilearn.maskers.NiftiLabelsMasker`` for an explanation of each
         available option.
 
-    detrend : :obj:`bool`, default=True
+    detrend: :obj:`bool`, default=True
         Detrends the timeseries during extraction.
 
-    low_pass : :obj:`float`, :obj:`int`, or :obj:`None`, default=None
+    low_pass: :obj:`float`, :obj:`int`, or :obj:`None`, default=None
         Filters out signals above the specified cutoff frequency.
 
-    high_pass : :obj:`float`, :obj:`int`, or :obj:`None``, default=None
+    high_pass: :obj:`float`, :obj:`int`, or :obj:`None``, default=None
         Filters out signals below the specified cutoff frequency.
 
-    fwhm : :obj:`float`, :obj:`int`, or :obj:`None`, default=None
+    fwhm: :obj:`float`, :obj:`int`, or :obj:`None`, default=None
         Applies spatial smoothing to data (in millimeters). Note that using parcellations already averages voxels
         within parcel boundaries, which can improve signal-to-noise ratio (SNR) assuming Gaussian noise
         distribution. However, smoothing may also blur parcel boundaries.
 
-    use_confounds : :obj:`bool`, default=True
+    use_confounds: :obj:`bool`, default=True
         Perform nuisance regression using the default or user-specified confounds in ``confound_names`` when
         extracting timeseries. Note, the confound tsv files must be located in the same directory as the preprocessed
         BOLD images.
 
-    confound_names : :obj:`list[str]` or :obj:`None`, default=None
+    confound_names: :obj:`list[str]` or :obj:`None`, default=None
         The names of the confounds to extract from the confound tsv files. If None, default confounds are used, which
         consists of all cosine-basis parameters, the six-head motion parameters and their first-order derivatives,
         and the first six combined acompcor components. Additionally, the names of these confounds follow the
@@ -78,7 +87,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         confound names that start with the term preceding the asterisk. For instance, "cosine*" will find all confound
         names in the confound files starting with "cosine".
 
-    fd_threshold : :obj:`float`, :obj:`dict[str, float]`, or :obj:`None`, default=None
+    fd_threshold: :obj:`float`, :obj:`dict[str, float]`, or :obj:`None`, default=None
         Sets a threshold for removing exceeding volumes. This requires a column named `framewise_displacement` in the
         confounds file and ``use_confounds`` set to True. Additionally, `framewise_displacement` should be
         specified in ``confound_names`` if using this parameter. By default, censoring is done after nuisance
@@ -106,7 +115,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         .. versionadded:: 0.17.6 "n_before" and "n_after"
         .. versionadded:: 0.18.8 "use_sample_mask"
 
-    n_acompcor_separate : :obj:`int` or :obj:`None`, default=None
+    n_acompcor_separate: :obj:`int` or :obj:`None`, default=None
         Specifies the number of separate acompcor components derived from white-matter (WM) and cerebrospinal
         fluid (CSF) masks to use. For example, if set to 5, the first five components from the WM mask
         and the first five from the CSF mask will be used, totaling ten acompcor components. If this parameter is
@@ -114,7 +123,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         components derived from combined masks (WM & CSF), leave this parameter as None and list the specific
         acompcors of interest in ``confound_names``.
 
-    dummy_scans : :obj:`int`, :obj:`dict[str, bool | int]`, or :obj:`None`, default=None
+    dummy_scans: :obj:`int`, :obj:`dict[str, bool | int]`, or :obj:`None`, default=None
         Removes the first `n` volumes before extracting the timeseries. If, ``dummy_scans`` is a dictionary,
         the following keys can be used:
 
@@ -131,7 +140,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
           for this to work. If, for instance, six "non_steady_state_outlier_XX" columns are detected but the
           "max" is set to five, then five dummy volumes will be discarded.
 
-    dtype : :obj:`str` or "auto", default=None
+    dtype: :obj:`str` or "auto", default=None
         The numpy dtype the NIfTI images are converted to when passed to nilearn's ``load_img`` function.
 
         .. versionadded:: 0.17.5
@@ -139,11 +148,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
     Properties
     ----------
-    space : str
+    space: str
         The standard template space that the preprocessed BOLD data is registered to. The space can also be set after
         class initialization using ``self.space = "New Space"`` if the template space needs to be changed.
 
-    parcel_approach : :obj:`dict[str, dict[str, os.PathLike | list[str]]]`
+    parcel_approach: :obj:`dict[str, dict[str, os.PathLike | list[str]]]`
         A dictionary containing information about the parcellation. Can also be used as a setter, which accepts a
         dictionary or a dictionary saved as pickle file. If "Schaefer" or "AAL" was specified during
         initialization of the ``TimeseriesExtractor`` class, then ``nilearn.datasets.fetch_atlas_schaefer_2018``
@@ -174,23 +183,23 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         Refer to the example for "Custom" in the Note section below for the expected structure.
 
-    signal_clean_info : :obj:`dict[str]`
+    signal_clean_info: :obj:`dict[str]`
         Dictionary containing parameters for signal cleaning specified during initialization of the
         ``TimeseriesExtractor`` class. This information includes ``standardize``, ``detrend``, ``low_pass``,
         ``high_pass``, ``fwhm``, ``dummy_scans``, ``use_confounds``, ``n_compcor_separate``, and ``fd_threshold``.
 
-    task_info : :obj:`dict[str]`
+    task_info: :obj:`dict[str]`
         If ``self.get_bold()`` ran, is a dictionary containing all task-related information such as ``task``,
         ``condition``, ``session``, ``runs``, and ``tr`` (if specified) else None.
 
-    subject_ids : :obj:`list[str]`
+    subject_ids: :obj:`list[str]`
         A list containing all subject IDs that have retrieved from pybids and subjected to timeseries
         extraction.
 
-    n_cores : :obj:`int`
+    n_cores: :obj:`int`
         Number of cores used for multiprocessing with joblib.
 
-    subject_timeseries : :obj:`dict[str, dict[str, np.ndarray]`
+    subject_timeseries: :obj:`dict[str, dict[str, np.ndarray]`
         A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a numpy array.
         Can also be a path to a pickle file containing this same structure. If this property needs to be deleted due
         to memory issues, ``delattr(self,"_subject_timeseries")`` can be used. The structure is as follows:
@@ -388,7 +397,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         The timeseries data of all subjects are appended to a single dictionary ``self.subject_timeseries``. Additional
         information regarding the structure of this dictionary can be found in the "Note" section.
 
-        BIDS directory with no session folders:
+        Basic BIDS directory:
 
         ::
 
@@ -406,7 +415,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             │               ├── *brain_mask.nii.gz
             │               └── *preproc_bold.nii.gz
 
-        BIDS directory with session folders:
+        BIDS directory with session-level organization:
 
         ::
 
@@ -435,48 +444,48 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         Parameters
         ----------
-        bids_dir : :obj:`os.PathLike`
+        bids_dir: :obj:`os.PathLike`
             Path to a BIDS compliant directory. A "dataset_description.json" file must be located in this directory
             or an error will be raised.
 
-        task : :obj:`str`
+        task: :obj:`str`
             Name of task to extract timeseries data from (i.e "rest", "n-back", etc).
 
-        session : :obj:`int`, :obj:`str`, or :obj:`None`, default=None
+        session: :obj:`int`, :obj:`str`, or :obj:`None`, default=None
             Session ID to extract timeseries data from. Only a single session can be extracted at a time. While files
             having session IDs are not mandatory, this parameter must be specified if the dataset has multiple sessions
             . If ``session`` is None and multiple sessions are detected when the preprocessed NifTI files are queried,
             an error will be raised. The value can be an integer (e.g. ``session=2``) or a string (e.g.
             ``session="001"``).
 
-        runs : :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
+        runs: :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
             List of run numbers to extract timeseries data from. Extracts all runs if unspecified. For instance,
             extract only "run-0" and "run-1", use ``runs=[0, 1]``. For non-integer run IDs, use strings:
             ``runs=["000", "001"]``.
 
-        condition : :obj:`str` or :obj:`None`, default=None
+        condition: :obj:`str` or :obj:`None`, default=None
             Isolates the timeseries data corresponding to a specific condition, only after the timeseries has been
             extracted and subjected to nuisance regression. Only a single condition can be extracted at a time.
 
-        tr : :obj:`int`, :obj:`float`, or :obj:`None`, default=None
+        tr: :obj:`int`, :obj:`float`, or :obj:`None`, default=None
             Repetition time (TR) for the specified task. If not provided, the TR will be automatically extracted from
             the first BOLD metadata file found for the task, searching first in the pipeline directory, then in
             the ``bids_dir`` if not found.
 
-        run_subjects : :obj:`list[str]` or :obj:`None`, default=None
+        run_subjects: :obj:`list[str]` or :obj:`None`, default=None
             List of subject IDs to process (e.g. ``run_subjects=["01", "02"]``). Processes all subjects if None.
 
-        exclude_subjects : :obj:`list[str]` or :obj:`None`, default=None
+        exclude_subjects: :obj:`list[str]` or :obj:`None`, default=None
             List of subject IDs to exclude (e.g. ``exclude_subjects=["01", "02"]``).
 
-        exclude_niftis : :obj:`list[str]` or :obj:`None`, default=None
+        exclude_niftis: :obj:`list[str]` or :obj:`None`, default=None
             List of the specific preprocessed NIfTI files to exclude, preventing their timeseries data from being
             extracted. Used if there are specific runs across different participants that need to be excluded.
 
             .. versionchanged:: 0.18.0 moved from being the second to last parameter, to being underneath
                ``exclude_subjects``
 
-        pipeline_name : :obj:`str` or :obj:`None`, default=None
+        pipeline_name: :obj:`str` or :obj:`None`, default=None
             The name of the pipeline folder in the derivatives folder containing the preprocessed data. If None,
             ``BIDSLayout`` will default to using the ``bids_dir`` with ``derivatives=True``. This parameter should be
             used if multiple pipelines exist or when the pipeline folder containing the "dataset_description.json" file
@@ -484,10 +493,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             in its root level. For instance, if the json file is in "path/to/bids/derivatives/fmriprep/fmriprep-20.0.0",
             then ``pipeline_name = "fmriprep/fmriprep-20.0.0"``.
 
-        n_cores : :obj:`int` or :obj:`None`, default=None
+        n_cores: :obj:`int` or :obj:`None`, default=None
             The number of cores to use for multiprocessing with joblib. The default backend for joblib is used.
 
-        parallel_log_config : :obj:`dict[str, Union[multiprocessing.Manager.Queue, int]]`
+        parallel_log_config: :obj:`dict[str, Union[multiprocessing.Manager.Queue, int]]`
             Passes a user-defined managed queue and logging level to the internal timeseries extraction function
             when parallel processing (``n_cores``) is used. Note, if parallel processing is used, global logging
             configurations won't be passed to the child processes. Thus, to prevent the child processes from using the
@@ -541,13 +550,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             .. versionadded:: 0.17.8
             .. versionchanged:: 0.18.0 moved from being the last parameter, to being underneath ``n_cores``
 
-        verbose : :obj:`bool`, default=True
+        verbose: :obj:`bool`, default=True
             If True, logs detailed subject-specific information including: subjects skipped due to missing required
             files, current subject being processed for timeseries extraction, confounds identified for nuisance
             regression in addition to requested confounds that are missing for a subject, and additional warnings
             encountered during the timeseries extraction process.
 
-        flush : :obj:`bool`, default=False
+        flush: :obj:`bool`, default=False
             If True, flushes the logged subject-specific information produced during the timeseries extraction process.
 
             .. versionchanged:: 0.17.0 Changed from ``flush_print`` to ``flush``.
@@ -603,6 +612,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         layout = self._call_layout(bids_dir, pipeline_name)
         subj_ids = sorted(layout.get(return_type="id", target="subject", task=task, space=self._space, suffix="bold"))
+
+        if not subj_ids:
+            msg = ("No subject IDs found - potential reasons: "
+                   "1. Incorrect template space (default: 'MNI152NLin2009cAsym'). "
+                   "Fix: Set correct template space using `self.space = 'TEMPLATE_SPACE'` (e.g. 'MNI152NLin6Asym') "
+                   "2. Incorrect task name specified in `task` parameter.")
+            raise BIDSQueryError(msg)
 
         if exclude_subjects:
             subj_ids = sorted([subj_id for subj_id in subj_ids if subj_id not in map(str, exclude_subjects)])
@@ -883,11 +899,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         Parameters
         ----------
-        output_dir : :obj:`os.PathLike`
+        output_dir: :obj:`os.PathLike`
             Directory to save ``self.subject_timeseries`` dictionary as a pickle file. The directory will be created if
             it does not exist.
 
-        file_name : :obj:`str` or :obj:`None`, default=None
+        file_name: :obj:`str` or :obj:`None`, default=None
             Name of the file with or without the "pkl" extension.
         """
         if not hasattr(self, "_subject_timeseries"):
@@ -920,39 +936,39 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         Parameters
         ----------
-        subj_id : :obj:`str` or :obj:`int`
+        subj_id: :obj:`str` or :obj:`int`
             The ID of the subject.
 
-        run : :obj:`int` or :obj:`str`
+        run: :obj:`int` or :obj:`str`
             The run ID of the subject to plot.
 
-        roi_indx : :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[int]` or :obj:`None`, default=None
+        roi_indx: :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[int]` or :obj:`None`, default=None
             The indices of the parcellation nodes to plot. See "nodes" in ``self.parcel_approach`` for valid
             nodes.
 
-        region : :obj:`str` or :obj:`None`, default=None
+        region: :obj:`str` or :obj:`None`, default=None
             The region of the parcellation to plot. If not None, all nodes in the specified region will be averaged
             then plotted. See "regions" in ``self.parcel_approach`` for valid region.
 
-        show_figs : :obj:`bool`, default=True
+        show_figs: :obj:`bool`, default=True
             Display figures.
 
-        output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
+        output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
             Directory to save plot as png image. The directory will be created if it does not exist. If None, plot will
             not be saved.
 
-        file_name : :obj:`str` or :obj:`None`, default=None
+        file_name: :obj:`str` or :obj:`None`, default=None
             Name of the file without the extension.
 
-        kwargs : :obj:`dict`
+        kwargs: :obj:`dict`
             Keyword arguments used when saving figures. Valid keywords include:
 
-            - dpi : :obj:`int`, default=300
+            - dpi: :obj:`int`, default=300
                 Dots per inch for the figure. Default is 300 if ``output_dir`` is provided and ``dpi`` is not
                 specified.
-            - figsize : :obj:`tuple`, default=(11, 5)
+            - figsize: :obj:`tuple`, default=(11, 5)
                 Size of the figure in inches. Default is (11, 5) if ``figsize`` is not specified.
-            - bbox_inches : :obj:`str` or :obj:`None`, default="tight"
+            - bbox_inches: :obj:`str` or :obj:`None`, default="tight"
                 Alters size of the whitespace in the saved image.
 
         Returns

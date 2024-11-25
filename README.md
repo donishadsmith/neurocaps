@@ -1,7 +1,7 @@
 # neurocaps
 [![Latest Version](https://img.shields.io/pypi/v/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.14210686)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.14215044)
 [![Github Repository](https://img.shields.io/badge/Source%20Code-neurocaps-purple)](https://github.com/donishadsmith/neurocaps)
 [![Test Status](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg)](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml)
 [![codecov](https://codecov.io/github/donishadsmith/neurocaps/graph/badge.svg?token=WS2V7I16WF)](https://codecov.io/github/donishadsmith/neurocaps)
@@ -10,12 +10,12 @@
 
 neurocaps is a Python package for performing Co-activation Patterns (CAPs) analyses on resting-state or task-based fMRI
 data (resting-state & task-based). CAPs identifies recurring brain states through k-means clustering of BOLD timeseries
-data.
+data [^1].
 
 **neurocaps is most optimized for fMRI data preprocessed with fMRIPrep and assumes a BIDs compliant directory
 such as the example directory structures below:**
 
-BIDS directory with no session folders:
+Basic BIDS directory:
 ```
 
     bids_root/
@@ -33,7 +33,7 @@ BIDS directory with no session folders:
     │               └── *preproc_bold.nii.gz
 ```
 
-BIDS directory with session folders:
+BIDS directory with session-level organization:
 ```
 
     bids_root/
@@ -154,162 +154,178 @@ activations of each CAP and each a-priori regions in a parcellation [^3] [^4].
 - `change_dtype`: Changes the dtype of all subjects in the subject timeseries to help with memory usage.
 - `transition_matrix`: Uses the "transition_probability" output from ``CAP.calculate_metrics`` to generate and visualize the averaged transition probability matrix for all groups from the analysis.
 
-Please refer to [demo.ipynb](https://github.com/donishadsmith/neurocaps/blob/main/demo.ipynb) or
+Please refer to the [demos](https://github.com/donishadsmith/neurocaps/tree/main/demos) or
 the [tutorials](https://neurocaps.readthedocs.io/en/latest/examples/examples.html) on the documentation website
 for a more extensive demonstration of the features included in this package.
 
-**Quick Code Examples (CAP examples use randomized data to simulate multiple subjects)**:
+**Demonstration**:
+
+Use dataset from OpenNeuro [^6]:
+```python
+# Download Sample Dataset from OpenNeuro, requires the openneuro-py package
+# [Dataset] doi: doi:10.18112/openneuro.ds005381.v1.0.0
+from openneuro import download
+
+demo_dir = "neurocaps_demo"
+os.makedirs(demo_dir)
+
+# Include the run-1 and run-2 data from two tasks for two subjects
+include = [
+    "dataset_description.json",
+    "sub-0004/ses-2/func/*run-[12]*events*",
+    "sub-0006/ses-2/func/*run-[12]*events*",
+    "derivatives/fmriprep/sub-0004/fmriprep/sub-0004/ses-2/func/*run-[12]*confounds_timeseries*",
+    "derivatives/fmriprep/sub-0004/fmriprep/sub-0004/ses-2/func/*run-[12]_space-MNI152NLin*preproc_bold*",
+    "derivatives/fmriprep/sub-0004/fmriprep/sub-0004/ses-2/func/*run-[12]_space-MNI152NLin*brain_mask*",
+    "derivatives/fmriprep/sub-0006/fmriprep/sub-0006/ses-2/func/*run-[12]*confounds_timeseries*",
+    "derivatives/fmriprep/sub-0006/fmriprep/sub-0006/ses-2/func/*run-[12]_space-MNI152NLin*preproc_bold*",
+    "derivatives/fmriprep/sub-0006/fmriprep/sub-0006/ses-2/func/*run-[12]_space-MNI152NLin*brain_mask*",
+    ]
+
+download(dataset="ds005381", include=include, target_dir=demo_dir)
+
+# Create a "dataset_description" file for the pipeline folder if needed
+import json
+
+desc = {
+    "Name": "fMRIPrep - fMRI PREProcessing workflow",
+    "BIDSVersion": "1.0.0",
+    "DatasetType": "derivative",
+    "GeneratedBy": [
+        {
+            "Name": "fMRIPrep",
+            "Version": "20.2.0",
+            "CodeURL": "https://github.com/nipreps/fmriprep"
+        }
+    ]
+}
+
+with open("neurocaps_demo/derivatives/fmriprep/dataset_description.json", 'w', encoding='utf-8') as f:
+    json.dump(desc, f)
+```
 
 ```python
-
 from neurocaps.extraction import TimeseriesExtractor
 from neurocaps.analysis import CAP
 
 # Set specific confounds for nuisance regression
-confounds = ["Cosine*", "aComp*", "Rot*"]
+confounds = [
+    "cosine*",
+    "trans_x",
+    "trans_y",
+    "trans_z",
+    "rot_x",
+    "rot_y",
+    "rot_z"
+]
 
 # Set parcellation
 parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7, "resolution_mm": 2}}
 
 # Initialize TimeseriesExtractor
-extractor = TimeseriesExtractor(parcel_approach=parcel_approach,
+extractor = TimeseriesExtractor(space="MNI152NLin6Asym",
+                                parcel_approach=parcel_approach,
                                 standardize="zscore_sample",
                                 use_confounds=True,
                                 detrend=True,
-                                low_pass=0.15,
-                                high_pass=0.01,
-                                confound_names=confounds)
+                                low_pass=0.1,
+                                n_acompcor_separate=2, # 2 acompcor from WM and CSF masks = 4 total
+                                confound_names=confounds,
+                                fd_threshold={"threshold": 0.35, "outlier_percentage": 0.20, "n_before": 2,
+                                              "n_after": 1, "use_sample_mask": True})
 
-bids_dir = "tests/ds000031_R1.0.4_ses001-022/ds000031_R1.0.4"
-
-# If there are multiple pipelines in the derivatives folder, you can specify a specific pipeline
-pipeline_name = "fmriprep_1.0.0/fmriprep"
-
-# Extract timeseries for subjects in the BIDS directory
-extractor.get_bold(bids_dir=bids_dir,
-                   task="rest",
-                   session="002",
-                   pipeline_name=pipeline_name
-                   verbose=True,
-                   flush=True)
+# Extract timeseries for subjects in the BIDS directory; Subject 0006 run-1 will be flagged and skipped
+extractor.get_bold(bids_dir="neurocaps_demo",
+                   task="DET",
+                   session="2",
+                   n_cores=None,
+                   pipeline_name="fmriprep", # Can specify if multiple pipelines exists in derivatives directory
+                   verbose=True)
 ```
 **Output:**
 ```
-2024-11-02 20:35:47,797 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: Cosine*, aComp*, Rot*.
-2024-11-02 20:35:48,898 neurocaps.extraction.timeseriesextractor [INFO] BIDS Layout: ...0.4_ses001-022\ds000031_R1.0.4 | Subjects: 1 | Sessions: 1 | Runs: 1
-2024-11-02 20:35:48,941 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] Preparing for Timeseries Extraction using [FILE: sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz].
-2024-11-02 20:35:48,946 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] The following confounds will be used for nuisance regression: Cosine00, Cosine01, Cosine02, Cosine03, Cosine04, Cosine05, Cosine06, aCompCor00, aCompCor01, aCompCor02, aCompCor03, aCompCor04, aCompCor05, RotX, RotY, RotZ.
+2024-11-24 23:45:02,378 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: cosine*, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z.
+2024-11-24 23:45:02,513 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-1_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
+2024-11-24 23:45:02,525 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z, a_comp_cor_00, a_comp_cor_01, a_comp_cor_33, a_comp_cor_34.
+2024-11-24 23:45:12,837 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-2_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
+2024-11-24 23:45:12,844 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z, a_comp_cor_00, a_comp_cor_01, a_comp_cor_100, a_comp_cor_101.
+2024-11-24 23:45:23,065 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 1] Preparing for Timeseries Extraction using [FILE: sub-0006_ses-2_task-DET_run-1_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
+2024-11-24 23:45:23,065 neurocaps._utils.extraction.extract_timeseries [WARNING] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 1] Timeseries Extraction Skipped: Run flagged due to more than 20.0% of the volumes exceeding the framewise displacement threshold of 0.35. Percentage of volumes exceeding the threshold limit is 26.785714285714285%.
+2024-11-24 23:45:23,065 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 2] Preparing for Timeseries Extraction using [FILE: sub-0006_ses-2_task-DET_run-2_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
+2024-11-24 23:45:23,081 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 2] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z, a_comp_cor_00, a_comp_cor_01, a_comp_cor_24, a_comp_cor_25.
 ```
 
 ```python
-# Task; use parallel processing with `n_cores` with theoretical dataset containing multiple subjects
-extractor.get_bold(bids_dir=bids_dir,
-                   task="emo",
-                   condition="positive",
-                   pipeline_name=pipeline_name,
-                   n_cores=10)
-
+# Get CAPs
 cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
 
 cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
-                      n_clusters=6,
+                      n_clusters=2,
                       standardize=True)
 
-# Visualize CAPs
-kwargs = {"sharey": True, "ncol": 3, "subplots": True, "cmap": "coolwarm"}
+# `sharey` only applicable to outer product plots
+kwargs = {"sharey": True, "ncol": 3, "subplots": True, "cmap": "coolwarm", "xticklabels_size": 10,
+          "yticklabels_size": 10, "xlabel_rotation": 90, "cbarlabels_size": 10}
 
+# Outer Product
 cap_analysis.caps2plot(visual_scope="regions",
-                       plot_options="outer_product",
-                       suffix_title="- Positive Valence",
+                       plot_options=["outer_product"],
+                       suffix_title="- DET Task",
                        **kwargs)
 
-# Create the colormap
-import seaborn as sns
+# Heatmap
+kwargs["xlabel_rotation"] = 0
 
-palette = sns.diverging_palette(260, 10, s=80, l=55, n=256, as_cmap=True)
-
-kwargs["cmap"] = palette
-kwargs.update({"xlabel_rotation": 90, "tight_layout": False, "hspace": 0.4})
-
-cap_analysis.caps2plot(visual_scope="nodes",
-                       plot_options="outer_product",
-                       suffix_title="- Positive Valence",
+cap_analysis.caps2plot(visual_scope="regions",
+                       plot_options=["heatmap"],
+                       suffix_title="- DET Task",
                        **kwargs)
 ```
 **Plot Outputs:**
-![image](https://github.com/donishadsmith/neurocaps/assets/112973674/e1ab0f55-0c4c-4701-8f3a-838c2470d44d)
-![image](https://github.com/donishadsmith/neurocaps/assets/112973674/43e46a0a-8721-4df9-88fa-04758a34142e)
+
+<img src="assets/outerproduct.png" width=70% height=70%>
+<img src="assets/heatmap.png" width=70% height=70%>
 
 ```python
 
 # Get CAP metrics
 outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries,
-                                         tr=2.0,
+                                         tr=2.0, # TR to convert persistence to time units
                                          return_df=True,
-                                         output_dir=output_dir,
                                          metrics=["temporal_fraction", "persistence"],
-                                         continuous_runs=True,
-                                         prefix_file_name="All_Subjects_CAPs_metrics")
+                                         continuous_runs=True)
 
+# Subject 0006 only has run-2 data since run-1 was flagged during timeseries extraction
 print(outputs["temporal_fraction"])
 ```
 **DataFrame Output:**
-| Subject_ID | Group | Run | CAP-1 | CAP-2 | CAP-3 | CAP-4 | CAP-5 | CAP-6 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | All Subjects | run-continuous | 0.14 | 0.17 | 0.14 | 0.2 | 0.15 | 0.19 |
-| 2 | All Subjects | run-continuous | 0.17 | 0.17 | 0.16 | 0.16 | 0.15 | 0.19 |
-| 3 | All Subjects | run-continuous | 0.15 | 0.2 | 0.14 | 0.18 | 0.17 | 0.17 |
-| 4 | All Subjects | run-continuous | 0.17 | 0.21 | 0.18 | 0.17 | 0.1 | 0.16 |
-| 5 | All Subjects | run-continuous | 0.14 | 0.19 | 0.14 | 0.16 | 0.2 | 0.18 |
-| 6 | All Subjects | run-continuous | 0.16 | 0.21 | 0.16 | 0.18 | 0.16 | 0.13 |
-| 7 | All Subjects | run-continuous | 0.16 | 0.16 | 0.17 | 0.15 | 0.19 | 0.17 |
-| 8 | All Subjects | run-continuous | 0.17 | 0.21 | 0.13 | 0.14 | 0.17 | 0.18 |
-| 9 | All Subjects | run-continuous | 0.18 | 0.1 | 0.17 | 0.18 | 0.16 | 0.2 |
-| 10 | All Subjects | run-continuous | 0.14 | 0.19 | 0.14 | 0.17 | 0.19 | 0.16 |
+| Subject_ID | Group | Run | CAP-1 | CAP-2 |
+| --- | --- | --- | --- | --- |
+| 0004 | All Subjects | run-continuous | 0.501529 | 0.498471 |
+| 0006 | All Subjects | run-2 | 0.520000 | 0.480000 |
 
 ```python
-# Create surface plots of CAPs; there will be as many plots as CAPs
-kwargs = {"cmap": "cold_hot", "layout": "row", "size": (500, 100), "zoom": 1,
-          "cbar_location":"bottom"}
-
-cap_analysis.caps2surf(fwhm=2, **kwargs)
-
-#You can also generate your own colormaps using matplotlib's LinearSegmentedColormap
-from matplotlib.colors import LinearSegmentedColormap
-
-colors = ["#1bfffe", "#00ccff", "#0099ff", "#0066ff", "#0033ff", "#c4c4c4",
-          "#ff6666", "#ff3333", "#FF0000","#ffcc00","#FFFF00"]
-
-custom_cmap = LinearSegmentedColormap.from_list("custom_cold_hot", colors, N=256)
-
-kwargs["cmap"] = custom_cmap
+# Create surface plots
+kwargs = {"cmap": "cold_hot", "layout": "row", "size": (500, 200), "zoom": 1,
+          "cbar_kws": {"location": "bottom"}, "color_range": (-1, 1)}
 
 cap_analysis.caps2surf(**kwargs)
 ```
-**Partial Plot Outputs:** (*Note*: one image will be generated per CAP)
+**Plot Outputs:**
 
-<img src="https://github.com/donishadsmith/neurocaps/assets/112973674/fadc946a-214b-4fbf-8316-2f32ab0b026e" width=70% height=70%>
-<img src="https://github.com/donishadsmith/neurocaps/assets/112973674/8207914a-6bf0-47a9-8be8-3504d0a56516" width=70% height=70%>
+<img src="assets/cap1.png" width=70% height=70%>
+<img src="assets/cap2.png" width=70% height=70%>
 
 ```python
 # Create Pearson correlation matrix
-kwargs = {"annot": True, "cmap": "coolwarm"}
-
-cap_analysis.caps2corr(**kwargs)
-
-# Create the colormap
-import seaborn as sns
-
-palette = sns.diverging_palette(260, 10, s=80, l=55, n=256, as_cmap=True)
-
-kwargs["cmap"] = palette
+kwargs = {"annot": True, "cmap": "viridis", "xticklabels_size": 10,
+          "yticklabels_size": 10, "cbarlabels_size": 10}
 
 cap_analysis.caps2corr(**kwargs)
 ```
 **Plot Output:**
 
-<img src="https://github.com/donishadsmith/neurocaps/assets/112973674/57a2ce81-13d3-40d0-93e7-0ca910f7b0be" width=70% height=70%>
-<img src="https://github.com/donishadsmith/neurocaps/assets/112973674/9a8329df-65c7-4ad0-8b81-edc73f2d960d" width=70% height=70%>
+<img src="assets/correlation.png" width=70% height=70%>
 
 ```python
 # Create radar plots showing cosine similarity between region/networks and caps
@@ -328,18 +344,17 @@ legend = {"yanchor": "top",
           "title_font_family": "Times New Roman",
           "font": {"size": 12, "color": "black"}}
 
-colors =  {"High Amplitude": "black", "Low Amplitude": "orange"}git c
+colors =  {"High Amplitude": "black", "Low Amplitude": "orange"}
 
-kwargs = {"radialaxis": radial, "fill": "toself", "legend": legend, "color_discrete_map": colors,
+kwargs = {"radialaxis": radialaxis, "fill": "toself", "legend": legend, "color_discrete_map": colors,
           "height": 400, "width": 600}
 
-cap_analysis.caps2radar(output_dir=output_dir, **kwargs)
+cap_analysis.caps2radar(**kwargs)
 ```
-**Partial Plot Outputs:** (*Note*: one image will be generated per CAP)
+**Plot Outputs:**
 
-<img src="https://github.com/user-attachments/assets/b190b209-a036-46a5-881f-3d40cffda1c0" width=70% height=70%>
-<img src="https://github.com/user-attachments/assets/8bd56af5-fbe9-4d57-8f58-2c332af986f9" width=70% height=70%>
-<img src="https://github.com/user-attachments/assets/81b739f4-bd7f-41bf-9b42-14d8376b5239" width=70% height=70%>
+<img src="assets/cap1radar.png" width=70% height=70%>
+<img src="assets/cap2radar.png" width=70% height=70%>
 
 ```python
 # Get transition probabilities for all participants in a dataframe, then convert to an averaged matrix
@@ -347,56 +362,47 @@ from neurocaps.analysis import transition_matrix
 
 # Optimal cluster sizes are saved automatically
 cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
-                      cluster_selection_method="davies_bouldin",
+                      cluster_selection_method="silhouette",
                       standardize=True,
-                      n_clusters=range(2,6))
+                      show_figs=True,
+                      n_clusters=range(2, 6))
 
 outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries,
                                          return_df=True,
                                          metrics=["transition_probability"],
-                                         continuous_runs=True,
-                                         output_dir=output_dir,
-                                         prefix_file_name="All_Subjects_CAPs_metrics")
+                                         continuous_runs=True)
 
 print(outputs["transition_probability"]["All Subjects"])
 
-kwargs = {"cmap": "viridis", "fmt": ".3f", "annot": True}
+kwargs = {"cmap": "Blues", "fmt": ".3f", "annot": True, "vmin": 0, "vmax": 1, "xticklabels_size": 10,
+          "yticklabels_size": 10, "cbarlabels_size": 10}
 
 trans_outputs = transition_matrix(trans_dict=outputs["transition_probability"],
                                   show_figs=True,
                                   return_df=True,
-                                  output_dir=output_dir.
                                   **kwargs)
 
 print(trans_outputs["All Subjects"])
 ```
 **Outputs:**
 ```
-2024-11-02 21:04:23,067 neurocaps.analysis.cap [INFO] [GROUP: All Subjects | METHOD: davies_bouldin] Optimal cluster size is 3.
+2024-11-24 23:58:39,470 neurocaps.analysis.cap [INFO] [GROUP: All Subjects | METHOD: silhouette] Optimal cluster size is 2.
 ```
-| Subject_ID | Group | Run | 1.1 | 1.2 | 1.3 | 2.1 | 2.2 | 2.3 | 3.1 | 3.2 | 3.3 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | All Subjects | run-continuous | 0.326 | 0.261 | 0.413 | 0.245 | 0.449 | 0.306 | 0.352 | 0.278 | 0.37 |
-| 2 | All Subjects | run-continuous | 0.4 | 0.25 | 0.35 | 0.486 | 0.108 | 0.405 | 0.346 | 0.365 | 0.288 |
-| 3 | All Subjects | run-continuous | 0.354 | 0.229 | 0.417 | 0.383 | 0.362 | 0.255 | 0.241 | 0.352 | 0.407 |
-| 4 | All Subjects | run-continuous | 0.283 | 0.37 | 0.348 | 0.302 | 0.321 | 0.377 | 0.32 | 0.38 | 0.3 |
-| 5 | All Subjects | run-continuous | 0.292 | 0.354 | 0.354 | 0.38 | 0.28 | 0.34 | 0.294 | 0.392 | 0.314 |
-| 6 | All Subjects | run-continuous | 0.339 | 0.304 | 0.357 | 0.333 | 0.231 | 0.436 | 0.444 | 0.222 | 0.333 |
-| 7 | All Subjects | run-continuous | 0.424 | 0.203 | 0.373 | 0.45 | 0.275 | 0.275 | 0.34 | 0.32 | 0.34 |
-| 8 | All Subjects | run-continuous | 0.25 | 0.271 | 0.479 | 0.39 | 0.244 | 0.366 | 0.35 | 0.3 | 0.35 |
-| 9 | All Subjects | run-continuous | 0.429 | 0.265 | 0.306 | 0.319 | 0.298 | 0.383 | 0.245 | 0.377 | 0.377 |
-| 10 | All Subjects | run-continuous | 0.333 | 0.375 | 0.292 | 0.306 | 0.347 | 0.347 | 0.327 | 0.269 | 0.404 |
+| Subject_ID | Group | Run | 1.1 | 1.2 | 2.1 | 2.2 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 0004 | All Subjects | run-continuous | 0.802395 | 0.197605 | 0.207547 | 0.792453 |
+| 0006 | All Subjects | run-2 | 0.790123 | 0.209877 | 0.235294 | 0.764706 |
 
-<img src="https://github.com/user-attachments/assets/3ab1d123-0c3e-47e3-b24c-52bfda13d3ef" width=70% height=70%>
+<img src="assets/silhouette.png" width=70% height=70%>
+<img src="assets/transprob.png" width=70% height=70%>
 
-| From/To | CAP-1 | CAP-2 | CAP-3 |
-| --- | --- | --- | --- |
-| CAP-1 | 0.343 | 0.288 | 0.369 |
-| CAP-2 | 0.36 | 0.291 | 0.349 |
-| CAP-3 | 0.326 | 0.326 | 0.348 |
+| From/To | CAP-1 | CAP-2 |
+| --- | --- | --- |
+| CAP-1 | 0.796259 | 0.203741 |
+| CAP-2 | 0.221421 | 0.778579 |
 
 ## Testing
-This package was tested using a closed dataset as well as a modified version of a single-subject open dataset to test the `TimeseriesExtractor` function on GitHub Actions. The open dataset provided by [Laumann & Poldrack](https://openfmri.org/dataset/ds000031/) and used in [Laumann et al., 2015](https://doi.org/10.1016/j.neuron.2015.06.037)[^6]. was also utilized. This data was obtained from the OpenfMRI database, accession number ds000031.
+This package was tested using a closed dataset as well as a modified version of a single-subject open dataset to test the `TimeseriesExtractor` function on GitHub Actions. The open dataset provided by [Laumann & Poldrack](https://openfmri.org/dataset/ds000031/) and used in [Laumann et al., 2015](https://doi.org/10.1016/j.neuron.2015.06.037)[^7]. was also utilized. This data was obtained from the OpenfMRI database, accession number ds000031.
 
 Modifications to the data included:
 
@@ -408,7 +414,7 @@ Modifications to the data included:
 - Slightly changing the naming style of the mask, preprocessed BOLD file, and confounds file in the fmriprep folder to conform with the naming conventions of modern fmriprep outputs.
 - Testing with custom parcellations was done using the HCPex parcellation, an extension of the HCP (Human Connectome Project) parcellation, which adds 66 subcortical areas. This original atlas can be downloaded from.
 
-Testing with custom parcellations was done with the HCPex parcellation, an extension of the HCP (Human Connectome Project) parcellation, which adds 66 subcortical areas [^7], [^8]. This original atlas can be downloaded from https://github.com/wayalan/HCPex.
+Testing with custom parcellations was done with the HCPex parcellation, an extension of the HCP (Human Connectome Project) parcellation, which adds 66 subcortical areas [^8], [^9]. This original atlas can be downloaded from https://github.com/wayalan/HCPex.
 
 ## Contributing
 Please refer the [contributing guidelines](https://github.com/donishadsmith/neurocaps/blob/test/CONTRIBUTING.md) on how to contribute to neurocaps.
@@ -437,8 +443,10 @@ Disrupted brain state dynamics in opioid and alcohol use disorder: attenuation b
 
 [^5]: Kupis, L., Romero, C., Dirks, B., Hoang, S., Parladé, M. V., Beaumont, A. L., Cardona, S. M., Alessandri, M., Chang, C., Nomi, J. S., & Uddin, L. Q. (2020). Evoked and intrinsic brain network dynamics in children with autism spectrum disorder. NeuroImage: Clinical, 28, 102396. https://doi.org/10.1016/j.nicl.2020.102396
 
-[^6]: Laumann, T. O., Gordon, E. M., Adeyemo, B., Snyder, A. Z., Joo, S. J., Chen, M. Y., Gilmore, A. W., McDermott, K. B., Nelson, S. M., Dosenbach, N. U., Schlaggar, B. L., Mumford, J. A., Poldrack, R. A., & Petersen, S. E. (2015). Functional system and areal organization of a highly sampled individual human brain. Neuron, 87(3), 657–670. https://doi.org/10.1016/j.neuron.2015.06.037
+[^6]: Hyunwoo Gu and Joonwon Lee and Sungje Kim and Jaeseob Lim and Hyang-Jung Lee and Heeseung Lee and Minjin Choe and Dong-Gyu Yoo and Jun Hwan (Joshua) Ryu and Sukbin Lim and Sang-Hun Lee (2024). Discrimination-Estimation Task. OpenNeuro. [Dataset] doi: https://doi.org/10.18112/openneuro.ds005381.v1.0.0
 
-[^7]: Huang CC, Rolls ET, Feng J, Lin CP. An extended Human Connectome Project multimodal parcellation atlas of the human cortex and subcortical areas. Brain Struct Funct. 2022 Apr;227(3):763-778. Epub 2021 Nov 17. doi: 10.1007/s00429-021-02421-6
+[^7]: Laumann, T. O., Gordon, E. M., Adeyemo, B., Snyder, A. Z., Joo, S. J., Chen, M. Y., Gilmore, A. W., McDermott, K. B., Nelson, S. M., Dosenbach, N. U., Schlaggar, B. L., Mumford, J. A., Poldrack, R. A., & Petersen, S. E. (2015). Functional system and areal organization of a highly sampled individual human brain. Neuron, 87(3), 657–670. https://doi.org/10.1016/j.neuron.2015.06.037
 
-[^8]: Huang CC, Rolls ET, Hsu CH, Feng J, Lin CP. Extensive Cortical Connectivity of the Human Hippocampal Memory System: Beyond the "What" and "Where" Dual Stream Model. Cerebral Cortex. 2021 May 19;bhab113. doi: 10.1093/cercor/bhab113.
+[^8]: Huang, CC., Rolls, E.T., Feng, J. et al. An extended Human Connectome Project multimodal parcellation atlas of the human cortex and subcortical areas. Brain Struct Funct 227, 763–778 (2022). https://doi.org/10.1007/s00429-021-02421-6
+
+[^9]: Huang, C.-C., Rolls, E. T., Hsu, C.-C. H., Feng, J., & Lin, C.-P. (2021). Extensive Cortical Connectivity of the Human Hippocampal Memory System: Beyond the “What” and “Where” Dual Stream Model. Cerebral Cortex, 31(10), 4652–4669. https://doi.org/10.1093/cercor/bhab113

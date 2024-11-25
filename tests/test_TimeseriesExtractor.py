@@ -409,11 +409,20 @@ def test_confounds(detrend, low_pass, high_pass, standardize):
 
 
 def test_wrong_condition():
+    import re
+    from neurocaps.extraction.timeseriesextractor import BIDSQueryError
+
+    msg = (
+        "No subject IDs found - potential reasons: "
+        "1. Incorrect template space (default: 'MNI152NLin2009cAsym'). "
+        "Fix: Set correct template space using `self.space = 'TEMPLATE_SPACE'` (e.g. 'MNI152NLin6Asym') "
+        "2. Incorrect task name specified in `task` parameter."
+    )
+
     extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
 
-    extractor.get_bold(bids_dir=bids_dir, task="rest", condition="placeholder")
-
-    assert extractor.subject_timeseries == {}
+    with pytest.raises(BIDSQueryError, match=re.escape(msg)):
+        extractor.get_bold(bids_dir=bids_dir, task="rest", condition="placeholder")
 
 
 def test_acompcor_seperate():
@@ -1193,3 +1202,19 @@ def test_validate_timeseries_setter():
     ]:
         with pytest.raises(TypeError, match=re.escape(error_dict[key])):
             extractor.subject_timeseries = arr
+
+
+def test_custom_error():
+    import re
+    from neurocaps.extraction.timeseriesextractor import BIDSQueryError
+
+    extractor = TimeseriesExtractor(space="Placeholder")
+    msg = (
+        "No subject IDs found - potential reasons: "
+        "1. Incorrect template space (default: 'MNI152NLin2009cAsym'). "
+        "Fix: Set correct template space using `self.space = 'TEMPLATE_SPACE'` (e.g. 'MNI152NLin6Asym') "
+        "2. Incorrect task name specified in `task` parameter."
+    )
+
+    with pytest.raises(BIDSQueryError, match=re.escape(msg)):
+        extractor.get_bold(bids_dir=bids_dir, task="rest", run_subjects=["01"])

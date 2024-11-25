@@ -19,7 +19,7 @@ def standardize(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
 
     Parameters
     ----------
-    subject_timeseries_list : :obj:`list[dict[str, dict[str, np.ndarray]]]` or :obj:`list[os.PathLike]`
+    subject_timeseries_list: :obj:`list[dict[str, dict[str, np.ndarray]]]` or :obj:`list[os.PathLike]`
         A list where each element consist of a dictionary mapping subject IDs to their run IDs and associated
         timeseries (TRs x ROIs) as a numpy array. Can also be a list consisting of paths to pickle files
         containing this same structure. The expected structure of each dictionary is as follows:
@@ -38,15 +38,15 @@ def standardize(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
                     }
                 }
 
-    return_dicts : :obj:`bool`, default=True
+    return_dicts: :obj:`bool`, default=True
         If True, returns a single dictionary containing the standardized input dictionaries. Keys are named "dict_{0}"
         where {0} corresponds to the dictionary's position in the input list.
 
-    output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
+    output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
         Directory to save the standardized dictionaries as pickle files. The directory will be created if it does not
         exist. Dictionaries will not be saved if None.
 
-    file_names : :obj:`list[str]` or :obj:`None`, default=None
+    file_names: :obj:`list[str]` or :obj:`None`, default=None
         A list of names to save the standardized dictionaries as. Names are matched to dictionaries by position (e.g.,
         a file name in the 0th position will be the file name for the dictionary in the 0th position of
         ``subject_timeseries_list``). If None and ``output_dir`` is specified, uses default file names -

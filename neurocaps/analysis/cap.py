@@ -24,7 +24,7 @@ class CAP(_CAPGetter):
 
     Parameters
     ----------
-    parcel_approach : :obj:`dict[str, dict[str, os.PathLike | list[str]]]`, :obj:`dict[str, dict[str, str | int]]`, \
+    parcel_approach: :obj:`dict[str, dict[str, os.PathLike | list[str]]]`, :obj:`dict[str, dict[str, str | int]]`, \
                       or :obj:`os.PathLike`, default=None
         The approach used to parcellate NifTI images. Similar to ``TimeseriesExtractor``, "Schaefer" and "AAL"
         can be initialized here to create the appropriate ``parcel_approach`` that includes the sub-keys
@@ -53,7 +53,7 @@ class CAP(_CAPGetter):
         and ``datasets.fetch_atlas_aal`` functions for more information about the "Schaefer" and "AAL" sub-keys. Also,
         refer to the "Note" section below for an explanation of the "Custom" sub-keys.
 
-    groups : :obj:`dict[str, list[str]]` or :obj:`None`, default=None
+    groups: :obj:`dict[str, list[str]]` or :obj:`None`, default=None
         A mapping of group names to unique subject IDs. If specified, then separate analyses are performed on groups
         (i.e., group-specific k-means models, group-specific visualization, etc). If None, then the analyses will be
         performed on all subjects and the default group name is "All Subjects". The structure should be as follows:
@@ -68,17 +68,17 @@ class CAP(_CAPGetter):
 
     Properties
     ----------
-    n_clusters : :obj:`int` or :obj:`list[int]`
+    n_clusters: :obj:`int` or :obj:`list[int]`
         An integer or list of integers (if ``cluster_selection_method`` is not None) that was used for
         ``sklearn.cluster.KMeans`` in ``self.get_caps()``.
 
-    groups : :obj:`dict[str, list[str]]` or :obj:`None`:
+    groups: :obj:`dict[str, list[str]]` or :obj:`None`:
         A mapping of groups names to unique subject IDs.
 
-    cluster_selection_method : :obj:`str` or :obj:`None`:
+    cluster_selection_method: :obj:`str` or :obj:`None`:
         The cluster selection method used in ``self.get_caps()`` to identify the optimal number of clusters.
 
-    parcel_approach : :obj:`dict[str, dict[str, os.PathLike | list[str]]]`
+    parcel_approach: :obj:`dict[str, dict[str, os.PathLike | list[str]]]`
         A dictionary containing information about the parcellation. Can also be used as a setter, which accepts a
         dictionary or a dictionary saved as a pickle file. The structure is as follows:
 
@@ -106,14 +106,14 @@ class CAP(_CAPGetter):
 
         Refer to the example for "Custom" in the Note section below for the expected structure.
 
-    n_cores : :obj:`int`
+    n_cores: :obj:`int`
         Number of cores to use for multiprocessing with joblib. Is None until ``self.get_caps()`` is used
         and ``n_cores`` is specified.
 
-    runs : :obj:`int` or :obj:`list[int]`
+    runs: :obj:`int` or :obj:`list[int]`
         The run IDs specified in ``self.get_caps()``.
 
-    caps : :obj:`dict[str, dict[str, np.array]]`
+    caps: :obj:`dict[str, dict[str, np.array]]`
         A dictionary mapping the cluster centroids, extracted from the k-means model, to each group after
         ``self.get_caps`` is used. The structure is as follows:
 
@@ -127,7 +127,7 @@ class CAP(_CAPGetter):
 
             }
 
-    kmeans : :obj:`dict[str, sklearn.cluster.KMeans]`
+    kmeans: :obj:`dict[str, sklearn.cluster.KMeans]`
         A dictionary mapping group-specific ``sklearn.cluster.KMeans`` model to each group when ``self.get_caps()`` is
         used. If ``cluster_selection_method`` is used, the model stored in this property is the optimal k-means model.
         The structure is as follows:
@@ -138,7 +138,7 @@ class CAP(_CAPGetter):
                 "GroupName": sklearn.cluster.KMeans,
             }
 
-    davies_bouldin : :obj:`dict[str, dict[str, float]]`
+    davies_bouldin: :obj:`dict[str, dict[str, float]]`
         A dictionary mapping groups to the assessed cluster sizes and corresponding davies bouldin score if
         ``cluster_selection_method`` in ``self.get_caps()`` is set to "variance_ratio". The structure is as follows:
 
@@ -152,7 +152,7 @@ class CAP(_CAPGetter):
                 }
             }
 
-    inertia : :obj:`dict[str, dict[str, float]]`
+    inertia: :obj:`dict[str, dict[str, float]]`
         A dictionary mapping groups to the assessed cluster sizes and corresponding inertia score if
         ``cluster_selection_method`` in ``self.get_caps()`` is set to "variance_ratio". The structure is as follows:
 
@@ -166,7 +166,7 @@ class CAP(_CAPGetter):
                 }
             }
 
-    silhouette_scores : :obj:`dict[str, dict[str, float]]`
+    silhouette_scores: :obj:`dict[str, dict[str, float]]`
         A dictionary mapping groups to the assessed cluster sizes and corresponding silhouette score if
         ``cluster_selection_method`` in ``self.get_caps()`` is set to "variance_ratio". The structure is as follows:
 
@@ -180,7 +180,7 @@ class CAP(_CAPGetter):
                 }
             }
 
-    variance_ratio : :obj:`dict[str, dict[str, float]]`
+    variance_ratio: :obj:`dict[str, dict[str, float]]`
         A dictionary mapping groups to the assessed cluster sizes and corresponding variance ratio score if
         ``cluster_selection_method`` in ``self.get_caps()`` is set to "variance_ratio". The structure is as follows:
 
@@ -194,7 +194,7 @@ class CAP(_CAPGetter):
                 }
             }
 
-    variance_explained : :obj:`dict[str, dict[float]]`
+    variance_explained: :obj:`dict[str, dict[float]]`
         A dictionary mapping groups to a float representing the total variance explained by their respective model
         stored in ``self.kmeans``. The structure is as follows:
 
@@ -206,7 +206,7 @@ class CAP(_CAPGetter):
 
         .. versionadded:: 0.18.8
 
-    optimal_n_clusters : :obj:`dict[str, dict[int]]`
+    optimal_n_clusters: :obj:`dict[str, dict[int]]`
         A dictionary mapping groups to their optimal cluster sizes if ``cluster_selection_method`` is not None in
         ``self.get_caps()``. The structure is as follows:
 
@@ -216,11 +216,11 @@ class CAP(_CAPGetter):
                 "GroupName": int,
             }
 
-    standardize : :obj:`bool`
+    standardize: :obj:`bool`
         A boolean denoting whether the features of the concatenated timeseries data are standardized if standardization
         was requested in ``self.get_caps()``.
 
-    means : :obj:`dict[str, np.array]`
+    means: :obj:`dict[str, np.array]`
         A dictionary mapping groups to their associated numpy array containing the means of each feature (ROI) if
         ``standardize`` is True in ``self.get_caps()``. The structure is as follows:
 
@@ -230,7 +230,7 @@ class CAP(_CAPGetter):
                 "GroupName": np.array([...]), # Shape: 1 x ROIs
             }
 
-    stdev : :obj:`dict[str, np.array]`
+    stdev: :obj:`dict[str, np.array]`
         A dictionary mapping groups to their associated numpy array containing the sample standard deviation of each
         feature (ROI) if ``standardize`` is True in ``self.get_caps()``. The structure is as follows:
 
@@ -240,7 +240,7 @@ class CAP(_CAPGetter):
                 "GroupName": np.array([...]), # Shape: 1 x ROIs
             }
 
-    concatenated_timeseries : :obj:`dict[str, np.array]`
+    concatenated_timeseries: :obj:`dict[str, np.array]`
         A dictionary mapping each group to their associated concatenated numpy array [(participants x TRs) x ROIs] when
         ``self.get_caps()`` is used. Note, ``delattr(self, "_concatenated_timeseries")`` to delete this property is
         there are memory issues. The structure is as follows:
@@ -251,7 +251,7 @@ class CAP(_CAPGetter):
                 "GroupName": np.array([...]), # Shape: (participants x TRs) x ROIs
             }
 
-    region_caps : :obj:`dict[str, np.array]`
+    region_caps: :obj:`dict[str, np.array]`
         A dictionary mapping group to their CAPs and corresponding numpy array (1 x regions) containing the averaged
         value of each region or network if ``visual_scope`` set to "regions" in ``self.caps2plot()``.
         The position of elements corresponds to "regions" in ``parcel_approach``. The structure is as follows:
@@ -266,7 +266,7 @@ class CAP(_CAPGetter):
 
             }
 
-    outer_products : :obj:`dict[str, dict[str, np.array]]`
+    outer_products: :obj:`dict[str, dict[str, np.array]]`
         A dictionary mapping group to their CAPs and corresponding numpy array (ROIs x ROIs) containing the outer
         product if ``plot_options`` set to "outer_product" ``self.caps2plot()``. The structure is as follows:
 
@@ -280,7 +280,7 @@ class CAP(_CAPGetter):
 
             }
 
-    subject_table : :obj:`dict[str, str]`
+    subject_table: :obj:`dict[str, str]`
         A dictionary generated when ``self.get_caps()`` is used. Operates as a lookup table that pairs each subject ID
         with the associated group. Also can be used as a setter. The structure is as follows.
 
@@ -291,7 +291,7 @@ class CAP(_CAPGetter):
                 "Subject-ID": "GroupName",
             }
 
-    cosine_similarity : :obj: `dict[str, dict[list]]`
+    cosine_similarity: :obj: `dict[str, dict[list]]`
         A dictionary mapping each group to their CAPs and their associated "High Amplitude" and "Low Amplitude"
         list containing the cosine similarities. Each group contains a "Regions" key, consisting of a list of
         regions or networks. The position of the cosine similarities in the "High Amplitude" and "Low Amplitude"
@@ -457,7 +457,7 @@ class CAP(_CAPGetter):
 
         Parameters
         ----------
-        subject_timeseries : :obj:`dict[str, dict[str, np.ndarray]]` or :obj:`os.PathLike`
+        subject_timeseries: :obj:`dict[str, dict[str, np.ndarray]]` or :obj:`os.PathLike`
             A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a numpy
             array. Can also be a path to a pickle file containing this same structure. The expected structure of is as
             follows:
@@ -476,70 +476,70 @@ class CAP(_CAPGetter):
                         }
                     }
 
-        runs : :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
+        runs: :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
             The run numbers to perform the CAPs analysis with (e.g. ``runs=[0, 1]`` or ``runs=["01", "02"]``). If None,
             all runs in the subject timeseries will be concatenated into a single dataframe and subjected to k-means
             clustering.
 
-        n_clusters : :obj:`int | list[int]`, default=5
+        n_clusters: :obj:`int | list[int]`, default=5
             The number of clusters to use for ``sklearn.cluster.KMeans``. Can be a single integer or a list of
             integers (if ``cluster_selection_method`` is not None).
 
-        cluster_selection_method : {"elbow", "davies_bouldin", "silhouette", "variance_ratio"} or :obj:`None`, default=None
+        cluster_selection_method: {"elbow", "davies_bouldin", "silhouette", "variance_ratio"} or :obj:`None`, default=None
             Method to find the optimal number of clusters. Options are "elbow", "davies_bouldin", "silhouette", and
             "variance_ratio".
 
-        random_state : :obj:`int` or :obj:`None`, default=None
+        random_state: :obj:`int` or :obj:`None`, default=None
             The random state to use for ``sklearn.cluster.KMeans``. Ensures reproducible results.
 
-        init : {"k-means++", "random"}, or :class:`np.ndarray`, default="k-means++"
+        init: {"k-means++", "random"}, or :class:`np.ndarray`, default="k-means++"
             Method for choosing initial cluster centroid for ``sklearn.cluster.KMeans``. Options are "k-means++",
             "random", or np.ndarray.
 
-        n_init : {"auto"} or :obj:`int`, default="auto"
+        n_init: {"auto"} or :obj:`int`, default="auto"
             Number of times ``sklearn.cluster.KMeans`` is ran with different initial clusters.
             The model with lowest inertia from these runs will be selected.
 
-        max_iter : :obj:`int`, default=300
+        max_iter: :obj:`int`, default=300
             Maximum number of iterations for a single run of ``sklearn.cluster.KMeans``.
 
-        tol : :obj:`float`, default=1e-4,
+        tol: :obj:`float`, default=1e-4,
             Stopping criterion for ``sklearn.cluster.KMeans``if the change in inertia is below this value, assuming
             ``max_iter`` has not been reached.
 
-        algorithm : {"lloyd", "elkan"}, default="lloyd"
+        algorithm: {"lloyd", "elkan"}, default="lloyd"
             The type of algorithm to use for ``sklearn.cluster.KMeans``. Options are "lloyd" and "elkan".
 
-        standardize : :obj:`bool`, default=True
+        standardize: :obj:`bool`, default=True
             Standardizes the columns (ROIs) of the concatenated timeseries data. The sample standard deviation will
             be used, meaning Bessel's correction, `n-1`, will be used in the denominator.
 
-        n_cores : :obj:`int` or :obj:`None`, default=None
+        n_cores: :obj:`int` or :obj:`None`, default=None
             The number of cores to use for multiprocessing, with joblib, to run multiple ``sklearn.cluster.KMeans``
             models if ``cluster_selection_method`` is not None. The default backend for joblib is used.
 
-        show_figs : :obj:`bool`, default=False
+        show_figs: :obj:`bool`, default=False
             Displays the plots for the specified ``cluster_selection_method`` for all groups
             if ``cluster_selection_method`` is not None.
 
-        output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
+        output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
             Directory to save plots as png files if ``cluster_selection_method`` is not None. The directory will be
             created if it does not exist. If None, plots will not be saved.
 
-        kwargs : :obj:`dict`
+        kwargs: :obj:`dict`
             Dictionary to adjust certain parameters when ``cluster_selection_method`` is not None.
             Additional parameters include:
 
-            - S : :obj:`int`, default=1
+            - S: :obj:`int`, default=1
                 Adjusts the sensitivity of finding the elbow. Larger values are more conservative and less
                 sensitive to small fluctuations. Passed to ``KneeLocator`` from the kneed package to. Default is 1.
-            - dpi : :obj:`int`, default=300
+            - dpi: :obj:`int`, default=300
                 Adjusts the dpi of the plots. Default is 300.
-            - figsize : :obj:`tuple`, default=(8, 6)
+            - figsize: :obj:`tuple`, default=(8, 6)
                 Adjusts the size of the plots.
-            - bbox_inches : :obj:`str` or :obj:`None`, default="tight"
+            - bbox_inches: :obj:`str` or :obj:`None`, default="tight"
                 Alters size of the whitespace in the saved image.
-            - step : :obj:`int`, default=None
+            - step: :obj:`int`, default=None
                 An integer value that controls the progression of the x-axis in plots for the specified
                 ``cluster_selection_method``. When set, only integer values will be displayed on the x-axis.
 
@@ -831,7 +831,7 @@ class CAP(_CAPGetter):
         CAP metric for all participants (with the exception of "transition_probability" which creates a single
         dataframe per group). As described by Liu et al., 2018 and Yang et al., 2021. The metrics include:
 
-         - ``"temporal_fraction"`` : The proportion of total volumes spent in a single CAP over all volumes in a run.
+         - ``"temporal_fraction"``: The proportion of total volumes spent in a single CAP over all volumes in a run.
            Additionally, in the supplementary material of Yang et al., the stated relationship between
            temporal fraction, counts, and persistence is temporal fraction = (persistence*counts)/total volumes
            If persistence and temporal fraction is converted into time units,
@@ -843,7 +843,7 @@ class CAP(_CAPGetter):
                 target = 1
                 temporal_fraction = 4/6
 
-         - ``"persistence"`` : The average time spent in a single CAP before transitioning to another CAP
+         - ``"persistence"``: The average time spent in a single CAP before transitioning to another CAP
            (average consecutive/uninterrupted time).
 
            ::
@@ -858,7 +858,7 @@ class CAP(_CAPGetter):
                 tr = 2
                 if tr: persistence = ((1 + 3)/2)*2
 
-         - ``"counts"`` : The total number of initiations of a specific CAP across an entire run. An initiation is
+         - ``"counts"``: The total number of initiations of a specific CAP across an entire run. An initiation is
            defined as the first occurrence of a CAP. If the same CAP is maintained in contiguous segment
            (indicating stability), it is still counted as a single initiation.
 
@@ -870,7 +870,7 @@ class CAP(_CAPGetter):
                 # Initiations of CAP-1 occur at indices 0 and 2
                 counts = 2
 
-         - ``"transition_frequency"`` : The total number of transitions to different CAPs across the entire run.
+         - ``"transition_frequency"``: The total number of transitions to different CAPs across the entire run.
 
            ::
 
@@ -879,7 +879,7 @@ class CAP(_CAPGetter):
                 # Transitions between unique CAPs occur at indices 0 -> 1, 1 -> 2, and 4 -> 5
                 transition_frequency = 3
 
-         - ``"transition_probability"`` : The probability of transitioning from one CAP to another CAP (or the same CAP).
+         - ``"transition_probability"``: The probability of transitioning from one CAP to another CAP (or the same CAP).
            This is calculated as (Number of transitions from A to B)/ (Total transitions from A). Note that the
            transition probability from CAP-A -> CAP-B is not the same as CAP-B -> CAP-A.
 
@@ -902,7 +902,7 @@ class CAP(_CAPGetter):
 
         Parameters
         ----------
-        subject_timeseries : :obj:`dict[str, dict[str, np.ndarray]]` or :obj:`os.PathLike`
+        subject_timeseries: :obj:`dict[str, dict[str, np.ndarray]]` or :obj:`os.PathLike`
             A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a numpy
             array. Can also be a path to a pickle file containing this same structure. The expected structure of is as
             follows:
@@ -921,16 +921,16 @@ class CAP(_CAPGetter):
                         }
                     }
 
-        tr : :obj:`float` or :obj:`None`, default=None
+        tr: :obj:`float` or :obj:`None`, default=None
             The repetition time (TR). If provided, persistence will be calculated as the average uninterrupted time
             spent in each CAP. If not provided, persistence will be calculated as the average uninterrupted volumes
             (TRs) spent in each state.
 
-        runs : :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
+        runs: :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
             The run numbers to calculate CAP metrics for (e.g. ``runs=[0, 1]`` or ``runs=["01", "02"]``). If None, CAP
             metrics will be calculated for each run.
 
-        continuous_runs : :obj:`bool`, default=False
+        continuous_runs: :obj:`bool`, default=False
             If True, all runs will be treated as a single, uninterrupted run.
 
             ::
@@ -945,9 +945,9 @@ class CAP(_CAPGetter):
             .. versionchanged:: 0.17.11 the label in the "Run" column in the dataframe changed from
                "continuous_runs" to "run-continuous"
 
-        metrics : {"temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"} \
-                  or :obj:`list["temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"]`, \
-                  default=["temporal_fraction", "persistence", "counts", "transition_frequency"]
+        metrics: {"temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"} \
+                 or :obj:`list["temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"]`, \
+                 default=["temporal_fraction", "persistence", "counts", "transition_frequency"]
             The metrics to calculate. Available options include "temporal_fraction", "persistence",
             "counts", "transition_frequency", and "transition_probability".
 
@@ -957,14 +957,14 @@ class CAP(_CAPGetter):
                temporal fraction = (persistence*counts)/total volumes, which can be found in the supplemental
                material of Yang et al., 2022
 
-        return_df : :obj:`str`, default=True
+        return_df: :obj:`str`, default=True
             If True, returns ``pandas.DataFrame`` inside a dictionary`, mapping each dataframe to their metric.
 
-        output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
+        output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
             Directory to save ``pandas.DataFrame`` as csv files. The directory will be created if it does not exist.
             Dataframes will not be saved if None.
 
-        prefix_file_name : :obj:`str` or :obj:`None`, default=None
+        prefix_file_name: :obj:`str` or :obj:`None`, default=None
             A prefix to append to the saved file names for each ``pandas.DataFrame``, if ``output_dir`` is provided.
 
         Returns
@@ -1379,100 +1379,100 @@ class CAP(_CAPGetter):
 
         Parameters
         ----------
-        output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
+        output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
             Directory for saving plots as png files. The directory will be created if it does not exist. If None,
             plots will not be saved.
 
-        suffix_title : :obj:`str` or :obj:`None`, default=None
+        suffix_title: :obj:`str` or :obj:`None`, default=None
             Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
 
-        plot_options : {"outer_product", "heatmap"} or :obj:`list["outer_product", "heatmap"]`, default="outer_product"
+        plot_options: {"outer_product", "heatmap"} or :obj:`list["outer_product", "heatmap"]`, default="outer_product"
             Type of plots to create. Options are "outer_product" or "heatmap".
 
-        visual_scope : {"regions", "nodes"} or :obj:`list["regions", "nodes"]`, default="regions"
+        visual_scope: {"regions", "nodes"} or :obj:`list["regions", "nodes"]`, default="regions"
             Determines whether plotting is done at the region level or node level. For "regions", the values of all
             nodes in the same regions (including both hemispheres) are averaged together then plotted. For "nodes",
             plots individual node values separately.
 
-        show_figs : :obj:`bool`, default=True
+        show_figs: :obj:`bool`, default=True
            Display figures.
 
-        subplots : :obj:`bool`, default=True
+        subplots: :obj:`bool`, default=True
             Produce subplots for outer product plots, combining all plots into a single figure.
 
-        kwargs : :obj:`dict`
+        kwargs: :obj:`dict`
             Keyword arguments used when saving figures. Valid keywords include:
 
-            - dpi : :obj:`int`, default=300
+            - dpi: :obj:`int`, default=300
                 Dots per inch for the figure. Default is 300 if ``output_dir`` is provided and ``dpi`` is not specified.
-            - figsize : :obj:`tuple`, default=(8, 6)
+            - figsize: :obj:`tuple`, default=(8, 6)
                 Size of the figure in inches.
-            - fontsize : :obj:`int`, default=14
+            - fontsize: :obj:`int`, default=14
                 Font size for the title of individual plots or subplots.
-            - hspace : :obj:`float`, default=0.4
+            - hspace: :obj:`float`, default=0.4
                 Height space between subplots.
-            - wspace : :obj:`float`, default=0.4
+            - wspace: :obj:`float`, default=0.4
                 Width space between subplots.
-            - xticklabels_size : :obj:`int`, default=8
+            - xticklabels_size: :obj:`int`, default=8
                 Font size for x-axis tick labels.
-            - yticklabels_size : :obj:`int`, default=8
+            - yticklabels_size: :obj:`int`, default=8
                 Font size for y-axis tick labels.
-            - shrink : :obj:`float`, default=0.8
+            - shrink: :obj:`float`, default=0.8
                 Fraction by which to shrink the colorbar.
-            - cbarlabels_size : :obj:`int`, default=8
+            - cbarlabels_size: :obj:`int`, default=8
                 Font size for the colorbar labels.
-            - nrow : :obj:`int`, default=varies (max 5)
+            - nrow: :obj:`int`, default=varies (max 5)
                 Number of rows for subplots. Default varies but the maximum is 5.
-            - ncol : :obj:`int` or :obj:`None`, default=None
+            - ncol: :obj:`int` or :obj:`None`, default=None
                 Number of columns for subplots. Default varies but the maximum is 5.
-            - suptitle_fontsize : :obj:`float`, default=0.7
+            - suptitle_fontsize: :obj:`float`, default=0.7
                 Font size for the main title when subplot is True.
-            - tight_layout : :obj:`bool`, default=True
+            - tight_layout: :obj:`bool`, default=True
                 Use tight layout for subplots.
-            - rect : :obj:`list[int]`, default=[0, 0.03, 1, 0.95]
+            - rect: :obj:`list[int]`, default=[0, 0.03, 1, 0.95]
                 Rectangle parameter for tight layout when subplots are True to fix whitespace issues.
-            - sharey : :obj:`bool`, default=True
+            - sharey: :obj:`bool`, default=True
                 Share y-axis labels for subplots.
-            - xlabel_rotation : :obj:`int`, default=0
+            - xlabel_rotation: :obj:`int`, default=0
                 Rotation angle for x-axis labels.
-            - ylabel_rotation : :obj:`int`, default=0
+            - ylabel_rotation: :obj:`int`, default=0
                 Rotation angle for y-axis labels.
-            - annot : :obj:`bool`, default=False
+            - annot: :obj:`bool`, default=False
                 Add values to cells.
-            - annot_kws : :obj:`dict`, default=None,
+            - annot_kws: :obj:`dict`, default=None,
                 Customize the annotations.
-            - fmt : :obj:`str`, default=".2g"
+            - fmt: :obj:`str`, default=".2g"
                 Modify how the annotated vales are presented.
-            - linewidths : :obj:`float`, default=0
+            - linewidths: :obj:`float`, default=0
                 Padding between each cell in the plot.
-            - borderwidths : :obj:`float`, default=0
+            - borderwidths: :obj:`float`, default=0
                 Width of the border around the plot.
-            - linecolor : :obj:`str`, default="black"
+            - linecolor: :obj:`str`, default="black"
                 Color of the line that seperates each cell.
-            - edgecolors : :obj:`str` or :obj:`None`, default=None
+            - edgecolors: :obj:`str` or :obj:`None`, default=None
                 Color of the edges.
-            - alpha : :obj:`float` or :obj:`None`, default=None
+            - alpha: :obj:`float` or :obj:`None`, default=None
                 Controls transparency and ranges from 0 (transparent) to 1 (opaque).
-            - bbox_inches : :obj:`str` or :obj:`None`, default="tight"
+            - bbox_inches: :obj:`str` or :obj:`None`, default="tight"
                 Alters size of the whitespace in the saved image.
-            - hemisphere_labels : :obj:`bool`, default=False
+            - hemisphere_labels: :obj:`bool`, default=False
                 Only available when ``visual_scope="nodes"``. Simplifies node labels to show only left/right hemisphere
                 divisions with a separation line, rather than listing individual node labels. If set to True,
                 ``edgecolors`` is ignored and ``linewidths`` and ``linecolor`` affect only the hemisphere division
                 line. This option is available exclusively for "Custom" and "Schaefer" parcellations.
                 Note, for the "Custom" parcellations, nodes must be ordered with left hemisphere nodes first,
                 followed by right hemisphere nodes.
-            - cmap : :obj:`str` or :obj:`callable` default="coolwarm"
+            - cmap: :obj:`str` or :obj:`callable` default="coolwarm"
                 Color map for the plot cells. For this parameter, you can use pre-made color palettes or
                 create custom ones. Below is a list of valid options:
 
-                    - Strings to call seaborn's pre-made palettes.
-                    - ``seaborn.diverging_palette`` function to generate custom palettes.
-                    - ``matplotlib.colors.LinearSegmentedColormap`` to generate custom palettes.
+                - Strings to call seaborn's pre-made palettes.
+                - ``seaborn.diverging_palette`` function to generate custom palettes.
+                - ``matplotlib.colors.LinearSegmentedColormap`` to generate custom palettes.
 
-            - vmin : :obj:`float` or :obj:`None`, default=None
+            - vmin: :obj:`float` or :obj:`None`, default=None
                 The minimum value to display in colormap.
-            - vmax : :obj:`float` or :obj:`None`, default=None
+            - vmax: :obj:`float` or :obj:`None`, default=None
                 The maximum value to display in colormap.
 
         Returns
@@ -1913,78 +1913,78 @@ class CAP(_CAPGetter):
 
         Parameters
         ----------
-        output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
+        output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
             Directory to save plots (if ``save_plots`` is True) and correlation matrices DataFrames (if ``save_df`` is
             True). The directory will be created if it does not exist. If None, plots and dataFrame will not be saved.
 
-        suffix_title : :obj:`str` or :obj:`None`, default=None
+        suffix_title: :obj:`str` or :obj:`None`, default=None
             Appended to the title of each plot as well as the name of the saved file if ``output_dir``
             is provided.
 
-        show_figs : :obj:`bool`, default=True
+        show_figs: :obj:`bool`, default=True
             Display figures.
 
-        save_plots : :obj:`bool`, default=True
+        save_plots: :obj:`bool`, default=True
             If True, plots are saves as png images. For this to be used, ``output_dir`` must be specified.
 
-        return_df : :obj:`bool`, default=False
+        return_df: :obj:`bool`, default=False
             If True, returns a dictionary with a correlation matrix for each group.
 
-        save_df : :obj:`bool`, default=False,
+        save_df: :obj:`bool`, default=False,
             If True, saves the correlation matrix contained in the DataFrames as csv files. For this to be used,
             ``output_dir`` must be specified.
 
-        kwargs : :obj:`dict`
+        kwargs: :obj:`dict`
             Keyword arguments used when modifying figures. Valid keywords include:
 
-            - dpi : :obj:`int`, default=300
+            - dpi: :obj:`int`, default=300
                 Dots per inch for the figure. Default is 300 if ``output_dir`` is provided and ``dpi`` is not
                 specified.
-            - figsize : :obj:`tuple`, default=(8, 6)
+            - figsize: :obj:`tuple`, default=(8, 6)
                 Size of the figure in inches.
-            - fontsize : :obj:`int`, default=14
+            - fontsize: :obj:`int`, default=14
                 Font size for the title each plot.
-            - xticklabels_size : :obj:`int`, default=8
+            - xticklabels_size: :obj:`int`, default=8
                 Font size for x-axis tick labels.
-            - yticklabels_size : :obj:`int`, default=8
+            - yticklabels_size: :obj:`int`, default=8
                 Font size for y-axis tick labels.
-            - shrink : :obj:`float`, default=0.8
+            - shrink: :obj:`float`, default=0.8
                 Fraction by which to shrink the colorbar.
-            - cbarlabels_size : :obj:`int`, default=8
+            - cbarlabels_size: :obj:`int`, default=8
                 Font size for the colorbar labels.
-            - xlabel_rotation : :obj:`int`, default=0
+            - xlabel_rotation: :obj:`int`, default=0
                 Rotation angle for x-axis labels.
-            - ylabel_rotation : :obj:`int`, default=0
+            - ylabel_rotation: :obj:`int`, default=0
                 Rotation angle for y-axis labels.
-            - annot : :obj:`bool`, default=False
+            - annot: :obj:`bool`, default=False
                 Add values to each cell.
-            - annot_kws : :obj:`dict`, default=None,
+            - annot_kws: :obj:`dict`, default=None,
                 Customize the annotations.
-            - fmt : :obj:`str`, default=".2g",
+            - fmt: :obj:`str`, default=".2g",
                 Modify how the annotated vales are presented.
-            - linewidths : :obj:`float`, default=0
+            - linewidths: :obj:`float`, default=0
                 Padding between each cell in the plot.
-            - borderwidths : :obj:`float`, default=0
+            - borderwidths: :obj:`float`, default=0
                 Width of the border around the plot.
-            - linecolor : :obj:`str`, default="black"
+            - linecolor: :obj:`str`, default="black"
                 Color of the line that seperates each cell.
-            - edgecolors : :obj:`str` or :obj:`None`, default=None
+            - edgecolors: :obj:`str` or :obj:`None`, default=None
                 Color of the edges.
-            - alpha : :obj:`float` or :obj:`None`, default=None
+            - alpha: :obj:`float` or :obj:`None`, default=None
                 Controls transparency and ranges from 0 (transparent) to 1 (opaque).
-            - bbox_inches : :obj:`str` or :obj:`None`, default="tight"
+            - bbox_inches: :obj:`str` or :obj:`None`, default="tight"
                 Alters size of the whitespace in the saved image.
-            - cmap : :obj:`str`, :obj:`callable` default="coolwarm"
+            - cmap: :obj:`str`, :obj:`callable` default="coolwarm"
                 Color map for the plot cells. For this parameter, you can use pre-made color palettes or create custom ones.
                 Below is a list of valid options:
 
-                    - Strings to call seaborn's pre-made palettes.
-                    - ``seaborn.diverging_palette`` function to generate custom palettes.
-                    - ``matplotlib.color.LinearSegmentedColormap`` to generate custom palettes.
+                - Strings to call seaborn's pre-made palettes.
+                - ``seaborn.diverging_palette`` function to generate custom palettes.
+                - ``matplotlib.color.LinearSegmentedColormap`` to generate custom palettes.
 
-            - vmin : :obj:`float` or :obj:`None`, default=None
+            - vmin: :obj:`float` or :obj:`None`, default=None
                 The minimum value to display in colormap.
-            - vmax : :obj:`float` or :obj:`None`, default=None
+            - vmax: :obj:`float` or :obj:`None`, default=None
                 The maximum value to display in colormap.
 
         Returns
@@ -2069,17 +2069,17 @@ class CAP(_CAPGetter):
 
         Parameters
         ----------
-        output_dir : :obj:`os.PathLike`
+        output_dir: :obj:`os.PathLike`
             Directory to save nii.gz files. The directory will be created if it does not exist.
 
-        suffix_title : :obj:`str` or :obj:`None`, default=None
+        suffix_title: :obj:`str` or :obj:`None`, default=None
             Appended to the name of the saved file.
 
-        fwhm : :obj:`float` or :obj:`None`, default=None
+        fwhm: :obj:`float` or :obj:`None`, default=None
             Strength of spatial smoothing to apply (in millimeters) to the statistical map prior to interpolating
             from MNI152 space to fslr surface space. Uses ``nilearn.image.smooth_img``.
 
-        knn_dict : :obj:`dict[str, int | bool]`, default=None
+        knn_dict: :obj:`dict[str, int | bool]`, default=None
             Use KNN (k-nearest neighbors) interpolation to fill in non-background coordinates that are assigned zero.
             This is primarily used as a fix for when a custom parcellation does not project well from volumetric to
             surface space. This method involves resampling a reference volumetric parcellation that projects
@@ -2089,13 +2089,13 @@ class CAP(_CAPGetter):
             coordinates are then replaced with the value of the nearest neighbor, determined by the sub-key "k".
             The following sub-keys are recognized:
 
-            - "k" : An integer that determines the number of nearest neighbors to consider, with the majority vote \
-                    determining the new value. If not specified, the default is 1.
-            - "reference_atlas" : A string specifying the atlas to use as a reference to determine the background \
-                                  indices to not interpolate. Options includes "Schaefer" or "AAL". If not specified \
-                                  the default will be "Schaefer".
-            - "resolution_mm" : An integer (1 or 2) that determines the resolution of the Schaefer parcellation. \
-                                If not specified, the default is 1. Only used when "reference_atlas" is "Schaefer".
+            - "k": An integer that determines the number of nearest neighbors to consider, with the majority vote \
+                   determining the new value. If not specified, the default is 1.
+            - "reference_atlas": A string specifying the atlas to use as a reference to determine the background \
+                                 indices to not interpolate. Options includes "Schaefer" or "AAL". If not specified \
+                                 the default will be "Schaefer".
+            - "resolution_mm": An integer (1 or 2) that determines the resolution of the Schaefer parcellation. \
+                               If not specified, the default is 1. Only used when "reference_atlas" is "Schaefer".
             - "remove_labels": A list or array of label IDs as integers of the regions in the parcellation to not \
                                interpolate.
 
@@ -2211,35 +2211,35 @@ class CAP(_CAPGetter):
 
         Parameters
         ----------
-        output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
+        output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
             Directory to save plots as png files. The directory will be created if it does not exist. If None, plots
             will not be saved.
 
-        suffix_title : :obj:`str` or :obj:`None`, default=None
+        suffix_title: :obj:`str` or :obj:`None`, default=None
             Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
 
-        show_figs : :obj:`bool`, default=True
+        show_figs: :obj:`bool`, default=True
             Display figures.
 
-        fwhm : :obj:`float` or :obj:`None`, defualt=None
+        fwhm: :obj:`float` or :obj:`None`, defualt=None
             Strength of spatial smoothing to apply (in millimeters) to the statistical map prior to interpolating
             from MNI152 space to fsLR surface space. Uses nilearn's ``image.smooth``.
 
-        fslr_density : {"4k", "8k", "32k", "164k"}, default="32k"
+        fslr_density: {"4k", "8k", "32k", "164k"}, default="32k"
             Density of the fsLR surface when converting from MNI152 space to fsLR surface. Options are "32k" or
             "164k". If using ``fslr_giftis_dict`` options are "4k", "8k", "32k", and "164k".
 
-        method : {"linear", "nearest"}, default="linear"
+        method: {"linear", "nearest"}, default="linear"
             Interpolation method to use when converting from MNI152 space to fsLR surface or from fsLR to fsLR. Options
             are "linear" or "nearest".
 
-        save_stat_maps : :obj:`bool`, default=False
+        save_stat_maps: :obj:`bool`, default=False
             If True, saves the statistical map for each CAP for all groups as a Nifti1Image if ``output_dir`` is
             provided.
 
              .. versionchanged:: 0.16.0 changed from ``save_stat_map`` to ``save_stat_maps``.
 
-        fslr_giftis_dict : :obj:`dict` or :obj:`None`, default=None
+        fslr_giftis_dict: :obj:`dict` or :obj:`None`, default=None
             Dictionary specifying precomputed GifTI files in fsLR space for plotting statistical maps. This parameter
             should be used if the statistical CAP NIfTI files (can be obtained using ``self.caps2niftis``) were
             converted to GifTI files using a tool such as Connectome Workbench. The dictionary structure is:
@@ -2259,7 +2259,7 @@ class CAP(_CAPGetter):
             parameter allows plotting without re-running the analysis. Initialize the CAP class and use this method
             if using this parameter.
 
-        knn_dict : :obj:`dict[str, int | bool]`, default=None
+        knn_dict: :obj:`dict[str, int | bool]`, default=None
             Use KNN (k-nearest neighbors) interpolation to fill in non-background coordinates that are assigned zero.
             This is primarily used as a fix for when a custom parcellation does not project well from volumetric to
             surface space. This method involves resampling a reference volumetric parcellation that projects
@@ -2269,13 +2269,13 @@ class CAP(_CAPGetter):
             coordinates are then replaced with the value of the nearest neighbor, determined by the sub-key "k".
             The following sub-keys are recognized:
 
-            - "k" : An integer that determines the number of nearest neighbors to consider, with the majority vote \
-                    determining the new value. If not specified, the default is 1.
-            - "reference_atlas" : A string specifying the atlas to use as a reference to determine the background \
-                                  indices to not interpolate. Options includes "AAL" or "Schaefer". If not specified \
-                                  the default will be "Schaefer".
-            - "resolution_mm" : An integer (1 or 2) that determines the resolution of the Schaefer parcellation. \
-                                If not specified, the default is 1. Only used when "reference_atlas" is "Schaefer".
+            - "k": An integer that determines the number of nearest neighbors to consider, with the majority vote \
+                   determining the new value. If not specified, the default is 1.
+            - "reference_atlas": A string specifying the atlas to use as a reference to determine the background \
+                                 indices to not interpolate. Options includes "AAL" or "Schaefer". If not specified \
+                                 the default will be "Schaefer".
+            - "resolution_mm": An integer (1 or 2) that determines the resolution of the Schaefer parcellation. \
+                               If not specified, the default is 1. Only used when "reference_atlas" is "Schaefer".
             - "remove_labels": A list or array of label IDs as integers of the regions in the parcellation to not \
                                interpolate.
 
@@ -2284,50 +2284,50 @@ class CAP(_CAPGetter):
             .. versionadded:: 0.18.0 "reference_atlas" key added
             .. versionchanged:: 0.18.0 "remove_subcortical" key changed to "remove_labels"
 
-        kwargs : :obj:`dict`
+        kwargs: :obj:`dict`
             Additional parameters to pass to modify certain plot parameters. Options include:
 
-            - dpi : :obj:`int`, default=300
+            - dpi: :obj:`int`, default=300
                 Dots per inch for the plot.
-            - title_pad : int, default=-3
+            - title_pad: :obj:`int`, default=-3
                 Padding for the plot title.
-            - cmap : :obj:`str` or :obj:`callable`, default="cold_hot"
+            - cmap: :obj:`str` or :obj:`callable`, default="cold_hot"
                 Colormap to be used for the plot. For this parameter, you can use pre-made color palettes or create
                 custom ones. Below is a list of valid options:
 
                 - Strings to call ``nilearn.plotting.cm._cmap_d`` fuction.
                 - ``matplotlib.colors.LinearSegmentedColormap`` to generate custom colormaps.
-            - cbar_kws : :obj:`dict`, default={"location": "bottom", "n_ticks": 3}
+            - cbar_kws: :obj:`dict`, default={"location": "bottom", "n_ticks": 3}
                 Customize colorbar. Refer to ``_add_colorbars`` at for valid kwargs in ``surfplot.plotting.Plot``
                 documentation listed in the Note section.
-            - alpha : :obj:`float`, default=1
+            - alpha: :obj:`float`, default=1
                 Transparency level of the colorbar.
-            - outline_alpha : :obj:`float`, default=1
+            - outline_alpha: :obj:`float`, default=1
                 Transparency level of the colorbar for outline if ``as_outline`` is True.
-            - zero_transparent : :obj:`bool`, default=True
+            - zero_transparent: :obj:`bool`, default=True
                 Turns vertices with a value of 0 transparent.
-            - as_outline : :obj:`bool`, default=False
+            - as_outline: :obj:`bool`, default=False
                 Plots only an outline of contiguous vertices with the same value.
-            - size : :obj:`tuple`, default=(500, 400)
+            - size: :obj:`tuple`, default=(500, 400)
                 Size of the plot in pixels.
-            - layout : :obj:`str`, default="grid"
+            - layout: :obj:`str`, default="grid"
                 Layout of the plot.
-            - zoom : :obj:`float`, default=1.5
+            - zoom: :obj:`float`, default=1.5
                 Zoom level for the plot.
-            - views : {"lateral", "medial"} or :obj:`list[{"lateral", "medial}]`, default=["lateral", "medial"]
+            - views: {"lateral", "medial"} or :obj:`list[{"lateral", "medial}]`, default=["lateral", "medial"]
                 Views to be displayed in the plot.
-            - brightness : :obj:`float`, default=0.5
+            - brightness: :obj:`float`, default=0.5
                 Brightness level of the plot.
-            - figsize : :obj:`tuple` or :obj:`None`, default=None
+            - figsize: :obj:`tuple` or :obj:`None`, default=None
                 Size of the figure.
-            - scale : :obj:`tuple`, default=(2, 2)
+            - scale: :obj:`tuple`, default=(2, 2)
                 Scale factors for the plot.
-            - surface : {"inflated", "veryinflated"}, default="inflated"
+            - surface: {"inflated", "veryinflated"}, default="inflated"
                 The surface atlas that is used for plotting. Options are "inflated" or "veryinflated".
-            - color_range : :obj:`tuple` or :obj:`None`, default=None
+            - color_range: :obj:`tuple` or :obj:`None`, default=None
                 The minimum and maximum value to display in plots. For instance, (-1, 1) where minimum
                 value is first. If None, the minimum and maximum values from the image will be used.
-            - bbox_inches : :obj:`str` or :obj:`None`, default="tight"
+            - bbox_inches: :obj:`str` or :obj:`None`, default="tight"
                 Alters size of the whitespace in the saved image.
 
         Returns
@@ -2562,80 +2562,80 @@ class CAP(_CAPGetter):
 
         Parameters
         ----------
-        output_dir : :obj:`os.PathLike` or :obj:`None`, default=None
+        output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
             Directory to save plots as png or html images. The directory will be created if it does not exist.
             If None, plots will not be saved.
 
-        suffix_title : :obj:`str` or :obj:`None`, default=None
+        suffix_title: :obj:`str` or :obj:`None`, default=None
             Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
 
-        show_figs : :obj:`bool`, default=True
+        show_figs: :obj:`bool`, default=True
             Display figures. If this function detects that it is not being ran in an interactive Python environment,
             then it uses ``plotly.offline``, creates an html file named "temp-plot.html", and opens each plot in the
             default browser.
 
-        use_scatterpolar : :obj:`bool`, default=False
+        use_scatterpolar: :obj:`bool`, default=False
             Uses ``plotly.graph_objects.Scatterpolar`` instead of ``plotly.express.line_polar``. The primary difference
             is that ``plotly.graph_objects.Scatterpolar`` shows the scatter dots. However, this can be acheived with
             ``plotly.express.line_polar`` by setting ``mode`` to "markers+lines". There also seems to be a difference
             in default opacity behavior.
 
-        as_html : :obj:`bool`, default=False
+        as_html: :obj:`bool`, default=False
             When ``output_dir`` is specified, plots are saved as html images instead of png images. The advantage is
             that plotly's radar plots will retain its interactive properties, can be opened in a browser.
 
         kwargs: :obj:`dict`
             Additional parameters to pass to modify certain plot parameters. Options include:
 
-            - scale : :obj:`int`, default=2
+            - scale: :obj:`int`, default=2
                 If ``output_dir`` provided, controls resolution of image when saving. Serves a similar purpose as dpi.
-            - savefig_options : :obj:`dict[str]`, default={"width": 3, "height": 3, "scale": 1}
+            - savefig_options: :obj:`dict[str]`, default={"width": 3, "height": 3, "scale": 1}
                 If ``output_dir`` provided, controls the width (in inches), height (in inches), and scale of the
                 plot. The height and width are multiplied by the dpi.
-            - height : :obj:`int`, default=800
+            - height: :obj:`int`, default=800
                 Height of the plot. Value is multiplied by the dpi when saving.
-            - width : :obj:`int`, defualt=1200
+            - width: :obj:`int`, defualt=1200
                 Width of the plot. Value is multiplied by the dpi when saving.
-            - line_close : :obj:`bool`, default=True
+            - line_close: :obj:`bool`, default=True
                 Whether to close the lines
-            - bgcolor : :obj:`str`, default="white"
+            - bgcolor: :obj:`str`, default="white"
                 Color of the background
-            - scattersize : :obj:`int`, default=8
+            - scattersize: :obj:`int`, default=8
                 Controls size of the dots when markers are used.
-            - connectgaps : :obj:`bool`, default=True
+            - connectgaps: :obj:`bool`, default=True
                 If ``use_scatterpolar=True``, controls if missing values are connected.
-            - linewidth : :obj:`int`, default = 2
+            - linewidth: :obj:`int`, default = 2
                 The width of the line connecting the values if ``use_scatterpolar=True``.
-            - opacity : :obj:`float`, default=0.5,
+            - opacity: :obj:`float`, default=0.5,
                 If ``use_scatterpolar=True``, sets the opacity of the trace.
-            - fill : :obj:`str`, default="none".
+            - fill: :obj:`str`, default="none".
                 If "toself" the are of the dots and within the boundaries of the line will be filled.
-            - mode : :obj:`str`, default="markers+lines",
+            - mode: :obj:`str`, default="markers+lines",
                 Determines how the trace is drawn. Can include "lines", "markers", "lines+markers", "lines+markers+text".
-            - radialaxis : :obj:`dict`, default={"showline": False, "linewidth": 2, \
+            - radialaxis: :obj:`dict`, default={"showline": False, "linewidth": 2, \
+                                                "linecolor": "rgba(0, 0, 0, 0.25)", \
+                                                "gridcolor": "rgba(0, 0, 0, 0.25)", \
+                                                "ticks": "outside", "tickfont": {"size": 14, "color": "black"}}
+                Customizes the radial axis.
+            - angularaxis: :obj:`dict`, default={"showline": True, "linewidth": 2, \
                                                  "linecolor": "rgba(0, 0, 0, 0.25)", \
                                                  "gridcolor": "rgba(0, 0, 0, 0.25)", \
-                                                 "ticks": "outside", "tickfont": {"size": 14, "color": "black"}}
-                Customizes the radial axis.
-            - angularaxis : :obj:`dict`, default={"showline": True, "linewidth": 2, \
-                                                  "linecolor": "rgba(0, 0, 0, 0.25)", \
-                                                  "gridcolor": "rgba(0, 0, 0, 0.25)", \
-                                                  "tickfont": {"size": 16, "color": "black"}}
+                                                 "tickfont": {"size": 16, "color": "black"}}
                 Customizes the angular axis.
-            - color_discrete_map : :obj:`dict`, default={"High Amplitude": "red", "Low Amplitude": "blue"},
+            - color_discrete_map: :obj:`dict`, default={"High Amplitude": "red", "Low Amplitude": "blue"},
                 Change color of the "High Amplitude" and "Low Amplitude" groups. Must use the keys
                 "High Amplitude" and "Low Amplitude" to work.
-            - title_font : :obj:`dict`, default={"family": "Times New Roman", "size": 30, "color": "black"}
+            - title_font: :obj:`dict`, default={"family": "Times New Roman", "size": 30, "color": "black"}
                 Modifies the font of the title.
-            - title_x : :obj:`float`, default=0.5
+            - title_x: :obj:`float`, default=0.5
                 Modifies x position of title.
-            - title_y : :obj:`float`, default=None
+            - title_y: :obj:`float`, default=None
                 Modifies y position of title.
-            - legend : :obj:`dict`, default={"yanchor": "top", "xanchor": "left", "y": 0.99, "x": 0.01, \
-                                             "title_font_family": "Times New Roman", "font": {"size": 12, \
-                                             "color": "black"}}
+            - legend: :obj:`dict`, default={"yanchor": "top", "xanchor": "left", "y": 0.99, "x": 0.01, \
+                                            "title_font_family": "Times New Roman", "font": {"size": 12, \
+                                            "color": "black"}}
                 Customizes the legend.
-            - engine : {"kaleido", "orca"}, default="kaleido"
+            - engine: {"kaleido", "orca"}, default="kaleido"
                 Engine used for saving plots.
 
         Returns

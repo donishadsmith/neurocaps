@@ -16,6 +16,14 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.18.9] - 2024-11-25
+### 🚀 New/Added
+- Custom error to warn about querying issues
+- Add optional dependency for demo
+### 🐛 Fixes
+- Documentation rendering issues
+- Restrict from downloading the latest vtk 9.4.0 for `caps2surf` to work.
+
 ## [0.18.8.post0] - 2024-11-23
 ### 📖 Documentation
 - Update to documentation to show example directory structure.

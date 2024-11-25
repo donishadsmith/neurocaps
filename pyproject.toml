@@ -56,15 +56,21 @@ dependencies = ["numpy>=1.22.0",
                 "nbformat>=4.2.0",
                 "kaleido==0.1.0.post1; platform_system == 'Windows'",
                 "kaleido; platform_system != 'Windows'",
-                "setuptools; python_version>='3.12'"
+                "setuptools; python_version>='3.12'",
+                "vtk<9.4.0"
                 ]
 
 [project.optional-dependencies]
 windows = ["pybids>=0.16.2"]
 
 test = ["pytest",
-        "pytest-cov"
-        ]
+        "pytest-cov"]
+
+demo = ["openneuro-py"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["neurocaps", "neurocaps.*"]
 
 [project.urls]
 Homepage = "https://neurocaps.readthedocs.io/en/latest/"
