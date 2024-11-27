@@ -16,7 +16,7 @@ class _TimeseriesExtractorGetter:
 
     @space.setter
     def space(self, new_space):
-        if not isinstance(new_space, str): TypeError("`space` must be a string.")
+        if not isinstance(new_space, str): raise TypeError("`space` must be a string.")
         self._space = new_space
 
     @property

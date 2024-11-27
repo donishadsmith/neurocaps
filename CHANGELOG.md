@@ -16,6 +16,10 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.18.11] - 2024-11-27
+### 🐛 Fixes
+- An error in a setter method that did not use `raise`.
+
 ## [0.18.10] - 2024-11-27
 ### 🚀 New/Added
 - Added deleter method for `subject_timeseries` and `concatenated_timeseries` properties
