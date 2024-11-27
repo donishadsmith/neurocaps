@@ -202,7 +202,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     subject_timeseries: :obj:`dict[str, dict[str, np.ndarray]`
         A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a numpy array.
         Can also be a path to a pickle file containing this same structure. If this property needs to be deleted due
-        to memory issues, ``delattr(self,"_subject_timeseries")`` can be used. The structure is as follows:
+        to memory issues,  ``delattr(self, "_subject_timeseries")`` (version < 0.18.10) or
+        ``del self.subject_timeseries`` (version >= 0.18.10) can be used to delete this property and only have it
+        return None. The structure is as follows:
 
         ::
 

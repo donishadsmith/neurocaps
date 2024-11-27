@@ -84,6 +84,10 @@ class _CAPGetter:
     def concatenated_timeseries(self):
         return self._concatenated_timeseries if hasattr(self, "_concatenated_timeseries") else None
 
+    @concatenated_timeseries.deleter
+    def concatenated_timeseries(self):
+        del self._concatenated_timeseries
+
     # Generated in `caps2plot`
     @property
     def region_caps(self):

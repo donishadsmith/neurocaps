@@ -128,6 +128,9 @@ def test_no_groups_no_cluster_selection(standardize):
     # Validate labels
     labels = predict_labels(subject_timeseries, cap_analysis, standardize, "All Subjects")
     assert np.array_equal(labels, cap_analysis.kmeans["All Subjects"].labels_)
+    # Quick check deleter
+    del cap_analysis.concatenated_timeseries
+    assert not cap_analysis.concatenated_timeseries
 
 
 def test_skip_subject():

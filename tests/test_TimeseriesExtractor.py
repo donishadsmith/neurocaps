@@ -1157,6 +1157,9 @@ def test_dtype():
     extractor = TimeseriesExtractor(dtype="float64")
     extractor.get_bold(bids_dir=bids_dir, task="rest", run_subjects=["01"])
     assert extractor.subject_timeseries["01"]["run-0"].dtype == np.float64
+    # Quick check deleter
+    del extractor.subject_timeseries
+    assert not extractor.subject_timeseries
 
 
 def test_validate_timeseries_setter():

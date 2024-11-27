@@ -66,6 +66,10 @@ class _TimeseriesExtractorGetter:
         if need_deepcopy: self._subject_timeseries = copy.deepcopy(subject_dict)
         else: self._subject_timeseries = subject_dict
 
+    @subject_timeseries.deleter
+    def subject_timeseries(self):
+        del self._subject_timeseries
+
     @staticmethod
     def _validate_timeseries(subject_dict):
         error_msg = ("A valid pickle file/subject timeseries should contain a nested dictionary where the "

@@ -242,8 +242,9 @@ class CAP(_CAPGetter):
 
     concatenated_timeseries: :obj:`dict[str, np.array]`
         A dictionary mapping each group to their associated concatenated numpy array [(participants x TRs) x ROIs] when
-        ``self.get_caps()`` is used. Note, ``delattr(self, "_concatenated_timeseries")`` to delete this property is
-        there are memory issues. The structure is as follows:
+        ``self.get_caps()`` is used. Note, if there are memory issues, ``delattr(self, "_concatenated_timeseries")``
+        (version < 0.18.10) or ``del self.concatenated_timeseries`` (version >= 0.18.10) can be used to delete
+        property and have it only return None. The structure is as follows:
 
         ::
 

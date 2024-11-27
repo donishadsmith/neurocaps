@@ -1,7 +1,7 @@
 # neurocaps
 [![Latest Version](https://img.shields.io/pypi/v/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.14215044)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.14231418)
 [![Github Repository](https://img.shields.io/badge/Source%20Code-neurocaps-purple)](https://github.com/donishadsmith/neurocaps)
 [![Test Status](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg)](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml)
 [![codecov](https://codecov.io/github/donishadsmith/neurocaps/graph/badge.svg?token=WS2V7I16WF)](https://codecov.io/github/donishadsmith/neurocaps)
@@ -229,6 +229,7 @@ extractor = TimeseriesExtractor(space="MNI152NLin6Asym",
                                 use_confounds=True,
                                 detrend=True,
                                 low_pass=0.1,
+                                high_pass=None,
                                 n_acompcor_separate=2, # 2 acompcor from WM and CSF masks = 4 total
                                 confound_names=confounds,
                                 fd_threshold={"threshold": 0.35, "outlier_percentage": 0.20, "n_before": 2,
