@@ -13,7 +13,11 @@ def test_transition_matrix(group):
     cap_analysis.get_caps(subject_timeseries=subject_timeseries, n_clusters=3)
     output = cap_analysis.calculate_metrics(subject_timeseries=subject_timeseries, metrics="transition_probability")
     trans_output = transition_matrix(
-        output["transition_probability"], output_dir=tmp_dir.name, show_figs=False, borderwidths=2
+        output["transition_probability"],
+        output_dir=tmp_dir.name,
+        show_figs=False,
+        borderwidths=2,
+        suffix_filename="suffix_name",
     )
 
     groups = list(trans_output)

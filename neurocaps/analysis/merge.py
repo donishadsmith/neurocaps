@@ -1,12 +1,14 @@
 import copy, os
 from typing import Union, Optional
 import numpy as np
-from .._utils import _convert_pickle_to_dict, _dicts_to_pickles
+from .._utils import (_convert_pickle_to_dict, _dicts_to_pickles, _logger)
+
+LG = _logger(__name__)
 
 def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarray]]], list[os.PathLike]],
                 return_merged_dict: bool=True, return_reduced_dicts: bool=False,
                 output_dir: Optional[Union[str, os.PathLike]]=None,
-                file_names: Optional[list[str]]=None,
+                filenames: Optional[list[str]]=None,
                 save_reduced_dicts: bool=False) -> dict[str, dict[str, dict[str, np.ndarray]]]:
     """
     Merge Participant Timeseries Across Multiple Sessions or Tasks.
@@ -66,7 +68,7 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
         If ``save_reduced_dicts`` is False and ``output_dir`` is provided, only the merged dictionary will be saved.
         Dictionaries will not be saved if None.
 
-    file_names: :obj:`list[str]` or :obj:`None`, default=None
+    filenames: :obj:`list[str]` or :obj:`None`, default=None
         A list of file names for saving dictionaries when ``output_dir`` is provided. If ``save_reduced_dicts`` is False,
         only a list with a single name should be supplied, which will be used to save the merged dictionary. If
         ``save_reduced_dicts`` is True, provide `N+1` names (where `N` is the length of subject_timeseries_list) - `N`
@@ -74,6 +76,8 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
         input position order. Full paths are handled using basename, and extensions are ignored. If None, uses default
         names - "subject_timeseries_{0}_reduced.pkl" (where {0} indicates the original input order) and
         "merged_subject_timeseries.pkl" for the merged dictionary.
+
+        .. versionchanged:: 0.19.0  ``file_names`` to ``filenames``
 
     save_reduced_dicts: :obj:`bool` or None, default=False
         If True and the ``output_dir`` is provided, then the reduced dictionaries are saved as pickle files.
@@ -89,6 +93,9 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
 
     assert isinstance(subject_timeseries_list, list), "`subject_timeseries_list` must be a list."
     assert len(subject_timeseries_list) > 1, "Merging cannot be done with less than two dictionaries or files."
+
+    if filenames is not None and output_dir is None:
+        LG.warning("`filenames` supplied but no `output_dir` specified. Files will not be saved.")
 
     if isinstance(subject_timeseries_list[0],dict): subject_timeseries_merged = subject_timeseries_list[0]
     else: subject_timeseries_merged = _convert_pickle_to_dict(subject_timeseries_list[0])
@@ -147,7 +154,7 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
         message = ("Length of `file_names` must be equal to 1 if `save_reduced_dicts`is False or the length of "
                    "`subject_timeseries_list` + 1 if `save_reduced_dicts` is True.")
 
-        _dicts_to_pickles(output_dir=output_dir, dict_list=modified_dicts, call="merge", file_names=file_names,
+        _dicts_to_pickles(output_dir=output_dir, dict_list=modified_dicts, call="merge", filenames=filenames,
                           message=message, save_reduced_dicts=save_reduced_dicts)
 
     if return_merged_dict or return_reduced_dicts: return modified_dicts

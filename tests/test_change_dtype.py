@@ -30,7 +30,7 @@ def test_change_dtype_w_pickle():
     changed_subject_timeseries = change_dtype(
         subject_timeseries_list=[os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl")],
         output_dir=tmp_dir.name,
-        file_names=["test_dtype"],
+        filenames=["test_dtype"],
         dtype="float16",
         return_dicts=True,
     )

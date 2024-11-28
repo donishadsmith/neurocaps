@@ -16,6 +16,46 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.19.0] - 2024-11-28
+- Cleaning some of the API, specifically parameter names and properties, no defaults have been changed in
+this update.
+
+### 🚀 New/Added
+- ``suffix_filename`` added to ``CAP.caps2plot``, ``CAP.caps2surf``, ``CAP.caps2radar``, and ``transition_matrix``.
+This addition was done to allow the ``suffix_title`` parameter in each of the previously listed methods to only be
+responsible for the title of the plots. The suffix filename will also be appended to the end of the default filename.
+
+- ``CAP`` class now has a ``cluster_scores`` property to consolodate the ``inertia``, ``davies_bouldin``, ``silhouette``,
+and "variance_ratio" scores into a property instead of separate properties. Consequently, the ``inertia``,
+``davies_bouldin``, ``silhouette``, and "variance_ratio" have been removed.
+
+The structure of this property is:
+
+```
+{
+    "Cluster_Selection_Method": str,  # e.g., "elbow", "davies_bouldin", "silhouette", or "variance_ratio"
+    "Scores": {
+        "GroupName": {
+            2: float,  # Score for 2 clusters
+            3: float,  # Score for 3 clusters
+            4: float,  # Score for 4 clusters
+        },
+    }
+}
+```
+
+### ♻ Changed
+- Any instance of ``file_name`` in a parameter name has been changed to the more conventional parameter name ``filename``.
+For instance, ``suffix_file_name`` now becomes ``suffix_filename`` and ``file_names`` becomes ``filenames``.  This
+change effects the following functions: ``merge_dicts``, ``standardize``, ``change_dtypes``, ``CAP.calculate_metrics``,
+``CAP.caps2niftis``, ``TimeseriesExtractor.timeseries_to_pickle``, and ``TimeseriesExtractor.visualize_bold``.
+- Warning logged whenever file name parameter is used but ``output_dir`` is not specified.
+
+### 📖 Documentation
+- Fix doc parameter error for ``CAP.caps2niftis`` that used ``suffix_title`` instead of ``suffix_file_name``, which
+is now ``suffix_filename``.
+- In documentation, version labels restricted to changes or additions make from 0.18.0 and above for less clutter.
+
 ## [0.18.11] - 2024-11-27
 ### 🐛 Fixes
 - An error in a setter method that did not use `raise`.

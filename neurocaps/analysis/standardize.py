@@ -2,12 +2,14 @@
 import copy, os
 from typing import Union, Optional
 import numpy as np
-from .._utils import _convert_pickle_to_dict, _dicts_to_pickles
+from .._utils import (_convert_pickle_to_dict, _dicts_to_pickles, _logger)
+
+LG = _logger(__name__)
 
 def standardize(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarray]]], list[os.PathLike]],
                 return_dicts: bool=True,
                 output_dir: Optional[os.PathLike]=None,
-                file_names: Optional[list[str]]=None) -> dict[str, dict[str, dict[str, np.ndarray]]]:
+                filenames: Optional[list[str]]=None) -> dict[str, dict[str, dict[str, np.ndarray]]]:
 
     """
     Perform Participant-wise Timeseries Standardization.
@@ -46,11 +48,13 @@ def standardize(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
         Directory to save the standardized dictionaries as pickle files. The directory will be created if it does not
         exist. Dictionaries will not be saved if None.
 
-    file_names: :obj:`list[str]` or :obj:`None`, default=None
+    filenames: :obj:`list[str]` or :obj:`None`, default=None
         A list of names to save the standardized dictionaries as. Names are matched to dictionaries by position (e.g.,
         a file name in the 0th position will be the file name for the dictionary in the 0th position of
         ``subject_timeseries_list``). If None and ``output_dir`` is specified, uses default file names -
         "subject_timeseries_{0}_standardized.pkl" (where {0} indicates the original input order).
+
+        .. versionchanged:: 0.19.0  ``file_names`` to ``filenames``
 
     Returns
     -------
@@ -58,6 +62,10 @@ def standardize(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
     """
     assert isinstance(subject_timeseries_list, list) and len(subject_timeseries_list) > 0, \
         "`subject_timeseries_list` must be a list greater than length 0."
+
+    if filenames is not None and output_dir is None:
+        LG.warning("`filenames` supplied but no `output_dir` specified. Files will not be saved.")
+
     # Initialize  dict
     standardized_dicts = {}
 
@@ -77,7 +85,7 @@ def standardize(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
         standardized_dicts[f"dict_{indx}"] = curr_dict
 
     if output_dir:
-        _dicts_to_pickles(output_dir=output_dir, dict_list=standardized_dicts, file_names=file_names,
+        _dicts_to_pickles(output_dir=output_dir, dict_list=standardized_dicts, filenames=filenames,
                           call="standardize")
 
     if return_dicts: return standardized_dicts

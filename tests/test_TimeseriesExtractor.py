@@ -261,10 +261,10 @@ def test_extraction(parcel_approach, use_confounds, name):
         region=region[name],
         show_figs=False,
         output_dir=tmp_dir.name,
-        file_name="testing_save_regions",
+        filename="testing_save_regions",
     )
     extractor.visualize_bold(
-        subj_id="01", run="001", roi_indx=0, show_figs=False, output_dir=tmp_dir.name, file_name="testing_save_nodes"
+        subj_id="01", run="001", roi_indx=0, show_figs=False, output_dir=tmp_dir.name, filename="testing_save_nodes"
     )
     extractor.visualize_bold(
         subj_id="01",
@@ -272,7 +272,7 @@ def test_extraction(parcel_approach, use_confounds, name):
         roi_indx=[0, 1, 2],
         show_figs=False,
         output_dir=tmp_dir.name,
-        file_name="testing_save_nodes_2",
+        filename="testing_save_nodes_2",
     )
 
     png_files = glob.glob(os.path.join(tmp_dir.name, "*testing_save*.png"))
@@ -402,7 +402,7 @@ def test_confounds(detrend, low_pass, high_pass, standardize):
     )
 
     # Test pickle
-    extractor.timeseries_to_pickle(tmp_dir.name, file_name="testing_timeseries_pickling")
+    extractor.timeseries_to_pickle(tmp_dir.name, filename="testing_timeseries_pickling")
     file = os.path.join(tmp_dir.name, "testing_timeseries_pickling.pkl")
     assert os.path.getsize(file) > 0
     os.remove(file)

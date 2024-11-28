@@ -74,14 +74,14 @@ Certain methods do not follow the default naming convention. This pertains to `T
 `TimeseriesExtractor.timeseries_to_pickle`. `CAP.calculate_metrics`, `merge_dicts`, `standardize`, and `change_dtype`.
 
 - `TimeseriesExtractor.visualize_bold` - The default name format is as follows (but can be overwritten using the
-`file_name` parameter):
+`filename` parameter):
 
 ```
 subject-[subj_id]_run-[run_id]_timeseries.png
 ```
 
 - `TimeseriesExtractor.timeseries_to_pickle` - The default name format is as follows (but can be overwritten using the
-`file_name` parameter):
+`filename` parameter):
 
 ```
 subject_timeseries.pkl
@@ -102,7 +102,7 @@ transition_frequency.csv
 transition_probability-[Group_Name].csv
 ```
 - `merge_dicts`, `standardize`, and `change_dtype` - The default name format for each is as follows (but can be
-overwritten using the `file_names` parameter):
+overwritten using the `filenames` parameter):
 
     - `merge_dicts`
 

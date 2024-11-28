@@ -226,11 +226,13 @@ def _continue_extraction(Data, LG):
         # Get confounds
         confounds = _get_confounds(Data, confound_names, LG)
 
-    # Create the masker for extracting time series
+    # Create the masker for extracting time series; strategy="mean" is the default for NiftiLabelsMasker,
+    # added to make it clear in codebase that the mean is the default strategy used for reducing regions
     masker = NiftiLabelsMasker(
         mask_img=Data.files["mask"],
         labels_img=Data.maps,
         resampling_target="data",
+        strategy="mean",
         t_r=Data.tr,
         **Data.signal_clean_info["masker_init"],
         clean__extrapolate=False

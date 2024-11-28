@@ -210,16 +210,16 @@ def test_no_groups_cluster_selection(standardize, n_cores):
             standardize=standardize,
         )
         try:
-            assert all(elem >= 0 for elem in cap_analysis.inertia["All Subjects"].values())
+            assert all(elem >= 0 for elem in cap_analysis.cluster_scores["Scores"]["All Subjects"].values())
             kneedle = KneeLocator(
-                x=list(cap_analysis.inertia["All Subjects"]),
-                y=list(cap_analysis.inertia["All Subjects"].values()),
+                x=list(cap_analysis.cluster_scores["Scores"]["All Subjects"]),
+                y=list(cap_analysis.cluster_scores["Scores"]["All Subjects"].values()),
                 curve="convex",
                 direction="decreasing",
             )
             assert kneedle.elbow == cap_analysis.optimal_n_clusters["All Subjects"]
             assert (
-                cap_analysis.inertia["All Subjects"][cap_analysis.optimal_n_clusters["All Subjects"]]
+                cap_analysis.cluster_scores["Scores"]["All Subjects"][cap_analysis.optimal_n_clusters["All Subjects"]]
                 == cap_analysis.kmeans["All Subjects"].inertia_
             )
             # Slightly redundant assertion
@@ -248,14 +248,17 @@ def test_no_groups_cluster_selection(standardize, n_cores):
 
     # Maximum silhouette is the most optimal
     assert (
-        max(cap_analysis.silhouette_scores["All Subjects"], key=cap_analysis.silhouette_scores["All Subjects"].get)
+        max(
+            cap_analysis.cluster_scores["Scores"]["All Subjects"],
+            key=cap_analysis.cluster_scores["Scores"]["All Subjects"].get,
+        )
         == cap_analysis.optimal_n_clusters["All Subjects"]
     )
 
     assert cap_analysis.caps["All Subjects"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["All Subjects"]["CAP-2"].shape == (100,)
-    assert all(elem > 0 or elem < 0 for elem in cap_analysis.silhouette_scores["All Subjects"].values())
-    assert all(-1 <= elem <= 1 for elem in cap_analysis.silhouette_scores["All Subjects"].values())
+    assert all(elem > 0 or elem < 0 for elem in cap_analysis.cluster_scores["Scores"]["All Subjects"].values())
+    assert all(-1 <= elem <= 1 for elem in cap_analysis.cluster_scores["Scores"]["All Subjects"].values())
     assert (
         len(cap_analysis.caps["All Subjects"])
         == len(np.unique(cap_analysis.kmeans["All Subjects"].labels_))
@@ -271,7 +274,10 @@ def test_no_groups_cluster_selection(standardize, n_cores):
 
     # Maximum variance ratio is the most optimal
     assert (
-        max(cap_analysis.variance_ratio["All Subjects"], key=cap_analysis.variance_ratio["All Subjects"].get)
+        max(
+            cap_analysis.cluster_scores["Scores"]["All Subjects"],
+            key=cap_analysis.cluster_scores["Scores"]["All Subjects"].get,
+        )
         == cap_analysis.optimal_n_clusters["All Subjects"]
     )
     assert (
@@ -281,7 +287,7 @@ def test_no_groups_cluster_selection(standardize, n_cores):
     )
 
     # All values not negative
-    assert all(elem >= 0 for elem in cap_analysis.variance_ratio["All Subjects"].values())
+    assert all(elem >= 0 for elem in cap_analysis.cluster_scores["Scores"]["All Subjects"].values())
 
     cap_analysis.get_caps(
         subject_timeseries=extractor.subject_timeseries,
@@ -292,7 +298,10 @@ def test_no_groups_cluster_selection(standardize, n_cores):
 
     # Mininimum davies_bouldin is the most optimal
     assert (
-        min(cap_analysis.davies_bouldin["All Subjects"], key=cap_analysis.davies_bouldin["All Subjects"].get)
+        min(
+            cap_analysis.cluster_scores["Scores"]["All Subjects"],
+            key=cap_analysis.cluster_scores["Scores"]["All Subjects"].get,
+        )
         == cap_analysis.optimal_n_clusters["All Subjects"]
     )
     assert (
@@ -302,7 +311,7 @@ def test_no_groups_cluster_selection(standardize, n_cores):
     )
 
     # All values not negative
-    assert all(elem >= 0 for elem in cap_analysis.davies_bouldin["All Subjects"].values())
+    assert all(elem >= 0 for elem in cap_analysis.cluster_scores["Scores"]["All Subjects"].values())
 
     assert cap_analysis.variance_explained["All Subjects"] >= 0 or cap_analysis.variance_explained["All Subjects"] <= 1
 
@@ -335,18 +344,18 @@ def test_groups_and_cluster_selection(standardize):
             standardize=standardize,
         )
         try:
-            assert all(elem >= 0 for elem in cap_analysis.inertia["A"].values())
-            assert all(elem >= 0 for elem in cap_analysis.inertia["B"].values())
+            assert all(elem >= 0 for elem in cap_analysis.cluster_scores["Scores"]["A"].values())
+            assert all(elem >= 0 for elem in cap_analysis.cluster_scores["Scores"]["B"].values())
             kneedle = KneeLocator(
-                x=list(cap_analysis.inertia["A"]),
-                y=list(cap_analysis.inertia["A"].values()),
+                x=list(cap_analysis.cluster_scores["Scores"]["A"]),
+                y=list(cap_analysis.cluster_scores["Scores"]["A"].values()),
                 curve="convex",
                 direction="decreasing",
             )
             assert kneedle.elbow == cap_analysis.optimal_n_clusters["A"]
             kneedle = KneeLocator(
-                x=list(cap_analysis.inertia["B"]),
-                y=list(cap_analysis.inertia["B"].values()),
+                x=list(cap_analysis.cluster_scores["Scores"]["B"]),
+                y=list(cap_analysis.cluster_scores["Scores"]["B"].values()),
                 curve="convex",
                 direction="decreasing",
             )
@@ -366,11 +375,11 @@ def test_groups_and_cluster_selection(standardize):
         standardize=standardize,
     )
     assert (
-        max(cap_analysis.silhouette_scores["A"], key=cap_analysis.silhouette_scores["A"].get)
+        max(cap_analysis.cluster_scores["Scores"]["A"], key=cap_analysis.cluster_scores["Scores"]["A"].get)
         == cap_analysis.optimal_n_clusters["A"]
     )
     assert (
-        max(cap_analysis.silhouette_scores["B"], key=cap_analysis.silhouette_scores["B"].get)
+        max(cap_analysis.cluster_scores["Scores"]["B"], key=cap_analysis.cluster_scores["Scores"]["B"].get)
         == cap_analysis.optimal_n_clusters["B"]
     )
 
@@ -384,11 +393,11 @@ def test_groups_and_cluster_selection(standardize):
         standardize=standardize,
     )
     assert (
-        min(cap_analysis.davies_bouldin["A"], key=cap_analysis.davies_bouldin["A"].get)
+        min(cap_analysis.cluster_scores["Scores"]["A"], key=cap_analysis.cluster_scores["Scores"]["A"].get)
         == cap_analysis.optimal_n_clusters["A"]
     )
     assert (
-        min(cap_analysis.davies_bouldin["B"], key=cap_analysis.davies_bouldin["B"].get)
+        min(cap_analysis.cluster_scores["Scores"]["B"], key=cap_analysis.cluster_scores["Scores"]["B"].get)
         == cap_analysis.optimal_n_clusters["B"]
     )
 
@@ -399,11 +408,11 @@ def test_groups_and_cluster_selection(standardize):
         standardize=standardize,
     )
     assert (
-        max(cap_analysis.variance_ratio["A"], key=cap_analysis.variance_ratio["A"].get)
+        max(cap_analysis.cluster_scores["Scores"]["A"], key=cap_analysis.cluster_scores["Scores"]["A"].get)
         == cap_analysis.optimal_n_clusters["A"]
     )
     assert (
-        max(cap_analysis.variance_ratio["B"], key=cap_analysis.variance_ratio["B"].get)
+        max(cap_analysis.cluster_scores["Scores"]["B"], key=cap_analysis.cluster_scores["Scores"]["B"].get)
         == cap_analysis.optimal_n_clusters["B"]
     )
 
@@ -445,8 +454,8 @@ def test_no_groups_and_silhouette_method():
     )
     assert cap_analysis.caps["All Subjects"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["All Subjects"]["CAP-2"].shape == (100,)
-    assert all(elem > 0 or elem < 0 for elem in cap_analysis.silhouette_scores["All Subjects"].values())
-    assert all(-1 <= elem <= 1 for elem in cap_analysis.silhouette_scores["All Subjects"].values())
+    assert all(elem > 0 or elem < 0 for elem in cap_analysis.cluster_scores["Scores"]["All Subjects"].values())
+    assert all(-1 <= elem <= 1 for elem in cap_analysis.cluster_scores["Scores"]["All Subjects"].values())
 
 
 def test_groups_and_silhouette_method():
@@ -456,10 +465,10 @@ def test_groups_and_silhouette_method():
     cap_analysis.get_caps(
         subject_timeseries=extractor.subject_timeseries, n_clusters=[2, 3, 4, 5], cluster_selection_method="silhouette"
     )
-    assert all(elem > 0 or elem < 0 for elem in cap_analysis.silhouette_scores["A"].values())
-    assert all(-1 <= elem <= 1 for elem in cap_analysis.silhouette_scores["A"].values())
-    assert all(elem > 0 or elem < 0 for elem in cap_analysis.silhouette_scores["B"].values())
-    assert all(-1 <= elem <= 1 for elem in cap_analysis.silhouette_scores["B"].values())
+    assert all(elem > 0 or elem < 0 for elem in cap_analysis.cluster_scores["Scores"]["A"].values())
+    assert all(-1 <= elem <= 1 for elem in cap_analysis.cluster_scores["Scores"]["A"].values())
+    assert all(elem > 0 or elem < 0 for elem in cap_analysis.cluster_scores["Scores"]["B"].values())
+    assert all(-1 <= elem <= 1 for elem in cap_analysis.cluster_scores["Scores"]["B"].values())
     assert cap_analysis.caps["A"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["A"]["CAP-2"].shape == (100,)
     assert cap_analysis.caps["B"]["CAP-1"].shape == (100,)
@@ -473,8 +482,8 @@ def test_calculate_metrics():
     cap_analysis.get_caps(
         subject_timeseries=extractor.subject_timeseries, n_clusters=[2, 3, 4, 5], cluster_selection_method="silhouette"
     )
-    assert all(elem > 0 or elem < 0 for elem in cap_analysis.silhouette_scores["A"].values())
-    assert all(elem > 0 or elem < 0 for elem in cap_analysis.silhouette_scores["A"].values())
+    assert all(elem > 0 or elem < 0 for elem in cap_analysis.cluster_scores["Scores"]["A"].values())
+    assert all(elem > 0 or elem < 0 for elem in cap_analysis.cluster_scores["Scores"]["A"].values())
 
     df_dict = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries, return_df=True)
     assert len(df_dict) == 4
@@ -677,7 +686,7 @@ def test_plotting_functions(current_timeseries, parcel_approach):
         step=2,
         show_figs=False,
     )
-    assert all(elem > 0 or elem < 0 for elem in cap_analysis.silhouette_scores["All Subjects"].values())
+    assert all(elem > 0 or elem < 0 for elem in cap_analysis.cluster_scores["Scores"]["All Subjects"].values())
 
     files = glob.glob(os.path.join(tmp_dir.name, "*.png"))
     assert files
@@ -704,6 +713,7 @@ def test_plotting_functions(current_timeseries, parcel_approach):
         xticklabels_size=5,
         hspace=0.6,
         tight_layout=False,
+        suffix_filename="suffix_name",
         show_figs=False,
         plot_options=["heatmap", "outer_product"],
         hemisphere_labels=False,
@@ -755,7 +765,13 @@ def test_plotting_functions(current_timeseries, parcel_approach):
     check_imgs(values_dict={"heatmap": 2, "outer": 2})
 
     df = cap_analysis.caps2corr(
-        annot=True, show_figs=False, return_df=True, output_dir=tmp_dir.name, save_df=True, cbarlabels_size=8
+        annot=True,
+        show_figs=False,
+        return_df=True,
+        suffix_filename="suffix_name_corr",
+        output_dir=tmp_dir.name,
+        save_df=True,
+        cbarlabels_size=8,
     )
     assert isinstance(df, dict)
     assert isinstance(df["All Subjects"], pd.DataFrame)
@@ -780,7 +796,7 @@ def test_plotting_functions(current_timeseries, parcel_approach):
     }
 
     # Radar plotting functions
-    cap_analysis.caps2radar(output_dir=tmp_dir.name, show_figs=False)
+    cap_analysis.caps2radar(output_dir=tmp_dir.name, show_figs=False, suffix_filename="suffix_name")
     check_imgs(plot_type="radar", values_dict={"png": 2})
     cap_analysis.caps2radar(
         radialaxis=radialaxis, fill="toself", show_figs=False, as_html=True, output_dir=tmp_dir.name
@@ -813,6 +829,7 @@ def test_caps2surf(remove_files):
         method="nearest",
         fwhm=1,
         save_stat_maps=True,
+        suffix_filename="suffix_name",
         output_dir=tmp_dir.name,
         suffix_title="placeholder",
         show_figs=False,
@@ -842,7 +859,7 @@ def test_niftis(current_timeseries, parcel_approach):
     atlas_data = nib.load(parcel_approach[list(parcel_approach)[0]]["maps"]).get_fdata()
     labels = sorted(np.unique(atlas_data))[1:]
 
-    cap_analysis.caps2niftis(output_dir=tmp_dir.name)
+    cap_analysis.caps2niftis(output_dir=tmp_dir.name, suffix_filename="suffix_name")
     nifti_files = glob.glob(os.path.join(tmp_dir.name, "*.nii.gz"))
 
     # Check that elements of the cluster centroid are correctly assigned to their corresponding labels in atlas
@@ -879,7 +896,7 @@ def test_niftis(current_timeseries, parcel_approach):
         # Check knn interpolation with schaefer reference
         cap_analysis.caps2niftis(
             output_dir=tmp_dir.name,
-            suffix_file_name="Schaefer_ref",
+            suffix_filename="Schaefer_ref",
             knn_dict={"k": 1, "resolution_mm": 1, "remove_labels": [50]},
         )
 
@@ -892,7 +909,7 @@ def test_niftis(current_timeseries, parcel_approach):
         check_imgs(plot_type="nifti", values_dict={"nii.gz": 2})
 
         cap_analysis.caps2niftis(
-            output_dir=tmp_dir.name, suffix_file_name="AAL_ref", knn_dict={"k": 3, "reference_atlas": "AAL"}
+            output_dir=tmp_dir.name, suffix_filename="AAL_ref", knn_dict={"k": 3, "reference_atlas": "AAL"}
         )
 
         # Check interpolation using AAL reference
@@ -908,4 +925,10 @@ def test_calculate_metrics_w_change_dtype():
     cap_analysis = CAP(parcel_approach=parcel_approach, groups={"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]})
     cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, n_clusters=2)
     new_timeseries = change_dtype([extractor.subject_timeseries], dtype="float16")
-    cap_analysis.calculate_metrics(subject_timeseries=new_timeseries["dict_0"], return_df=True)
+    cap_analysis.calculate_metrics(
+        subject_timeseries=new_timeseries["dict_0"],
+        return_df=True,
+        prefix_filename="prefixname",
+        output_dir=tmp_dir.name,
+    )
+    assert glob.glob(os.path.join(tmp_dir.name, "*prefixname*"))

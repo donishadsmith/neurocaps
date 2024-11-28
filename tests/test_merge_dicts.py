@@ -120,7 +120,7 @@ def test_merge_dicts_pkl(return_reduced_dicts, return_merged_dicts):
             return_reduced_dicts=False,
             return_merged_dict=False,
             output_dir=tmp_dir.name,
-            file_names=["test_0_reduced.pkl", "test_1_reduced.pkl", "test_merged.pkl"],
+            filenames=["test_0_reduced.pkl", "test_1_reduced.pkl", "test_merged.pkl"],
             save_reduced_dicts=True,
         )
 
@@ -142,7 +142,7 @@ def test_merge_dicts_pkl(return_reduced_dicts, return_merged_dicts):
                 ],
                 return_reduced_dicts=False,
                 return_merged_dict=True,
-                file_names=["test_merged.pkl"],
+                filenames=["test_merged.pkl"],
                 output_dir=tmp_dir.name,
                 save_reduced_dicts=False,
             )

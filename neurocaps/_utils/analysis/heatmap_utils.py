@@ -46,13 +46,13 @@ def _create_display(df, plot_dict, suffix_title, group, call):
 
     return display
 
-def _save_contents(output_dir, suffix_title, group, curr_dict, plot_dict, save_plots, save_df, display, call):
+def _save_contents(output_dir, suffix_filename, group, curr_dict, plot_dict, save_plots, save_df, display, call):
     base_name = "correlation_matrix" if call == "corr" else "transition_probability_matrix"
     # Save figure
     if output_dir:
         if not os.path.exists(output_dir): os.makedirs(output_dir)
 
-        if suffix_title: full_filename = f"{group.replace(' ', '_')}_CAPs_{base_name}_{suffix_title}.png"
+        if suffix_filename: full_filename = f"{group.replace(' ', '_')}_CAPs_{base_name}_{suffix_filename}.png"
         else: full_filename = f"{group.replace(' ', '_')}_CAPs_{base_name}.png"
 
         if save_plots:

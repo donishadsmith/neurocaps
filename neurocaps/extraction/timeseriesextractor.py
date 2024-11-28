@@ -112,7 +112,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
           handles censored volumes when ``sample_mask`` is used.  If this key is set to False, data is only censored
           after nuisance regression, which is the default behavior.
 
-        .. versionadded:: 0.17.6 "n_before" and "n_after"
         .. versionadded:: 0.18.8 "use_sample_mask"
 
     n_acompcor_separate: :obj:`int` or :obj:`None`, default=None
@@ -142,8 +141,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
     dtype: :obj:`str` or "auto", default=None
         The numpy dtype the NIfTI images are converted to when passed to nilearn's ``load_img`` function.
-
-        .. versionadded:: 0.17.5
 
 
     Properties
@@ -549,7 +546,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     # Stop listener
                     listener.stop()
 
-            .. versionadded:: 0.17.8
             .. versionchanged:: 0.18.0 moved from being the last parameter, to being underneath ``n_cores``
 
         verbose: :obj:`bool`, default=True
@@ -560,8 +556,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         flush: :obj:`bool`, default=False
             If True, flushes the logged subject-specific information produced during the timeseries extraction process.
-
-            .. versionchanged:: 0.17.0 Changed from ``flush_print`` to ``flush``.
 
         Note
         ----
@@ -891,7 +885,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         return tr
 
-    def timeseries_to_pickle(self, output_dir: Union[str, os.PathLike], file_name: Optional[str]=None) -> None:
+    def timeseries_to_pickle(self, output_dir: Union[str, os.PathLike], filename: Optional[str]=None) -> None:
         """
         Save the Extracted Subject Timeseries.
 
@@ -905,8 +899,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Directory to save ``self.subject_timeseries`` dictionary as a pickle file. The directory will be created if
             it does not exist.
 
-        file_name: :obj:`str` or :obj:`None`, default=None
+        filename: :obj:`str` or :obj:`None`, default=None
             Name of the file with or without the "pkl" extension.
+
+            .. versionchanged:: 0.19.0  ``file_name`` to ``filename``
         """
         if not hasattr(self, "_subject_timeseries"):
             raise AttributeError("Cannot save pickle file since `self._subject_timeseries` does not exist, either run "
@@ -915,10 +911,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         if output_dir:
             if not os.path.exists(output_dir): os.makedirs(output_dir)
 
-        if file_name is None: save_file_name = "subject_timeseries.pkl"
-        else: save_file_name = f"{os.path.splitext(file_name.rstrip())[0].rstrip()}.pkl"
+        if filename is None: save_filename = "subject_timeseries.pkl"
+        else: save_filename = f"{os.path.splitext(filename.rstrip())[0].rstrip()}.pkl"
 
-        with open(os.path.join(output_dir, save_file_name), "wb") as f:
+        with open(os.path.join(output_dir, save_filename), "wb") as f:
             dump(self._subject_timeseries, f)
 
     def visualize_bold(self,
@@ -928,7 +924,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                        region: Optional[str]=None,
                        show_figs: bool=True,
                        output_dir: Optional[Union[str, os.PathLike]]=None,
-                       file_name: Optional[str]=None,
+                       filename: Optional[str]=None,
                        **kwargs) -> plt.figure:
         """
         Plot the Extracted Subject Timeseries.
@@ -959,8 +955,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Directory to save plot as png image. The directory will be created if it does not exist. If None, plot will
             not be saved.
 
-        file_name: :obj:`str` or :obj:`None`, default=None
+        filename: :obj:`str` or :obj:`None`, default=None
             Name of the file without the extension.
+
+            .. versionchanged:: 0.19.0  ``file_name`` to ``filename``
 
         kwargs: :obj:`dict`
             Keyword arguments used when saving figures. Valid keywords include:
@@ -993,8 +991,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         if roi_indx is not None and region is not None:
             raise ValueError("`roi_indx` and `region` can not be used simultaneously.")
 
-        if file_name is not None and output_dir is None:
-            LG.warning("`file_name` supplied but no `output_dir` specified. Files will not be saved.")
+        if filename is not None and output_dir is None:
+            LG.warning("`filename` supplied but no `output_dir` specified. Files will not be saved.")
 
         parcellation_name = list(self._parcel_approach)[0]
 
@@ -1027,10 +1025,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         if output_dir:
             if not os.path.exists(output_dir): os.makedirs(output_dir)
-            if file_name: save_file_name = f"{os.path.splitext(file_name.rstrip())[0].rstrip()}.png"
-            else: save_file_name = f'subject-{subj_id}_run-{run}_timeseries.png'
+            if filename: save_filename = f"{os.path.splitext(filename.rstrip())[0].rstrip()}.png"
+            else: save_filename = f'subject-{subj_id}_run-{run}_timeseries.png'
 
-            plt.savefig(os.path.join(output_dir, save_file_name), dpi=plot_dict["dpi"],
+            plt.savefig(os.path.join(output_dir, save_filename), dpi=plot_dict["dpi"],
                         bbox_inches=plot_dict["bbox_inches"])
 
         plt.show() if show_figs else plt.close()

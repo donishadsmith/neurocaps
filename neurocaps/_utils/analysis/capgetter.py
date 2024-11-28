@@ -45,20 +45,8 @@ class _CAPGetter:
         return self._kmeans if hasattr(self, "_kmeans") else None
 
     @property
-    def davies_bouldin(self):
-        return self._davies_bouldin if hasattr(self, "_davies_bouldin") else None
-
-    @property
-    def silhouette_scores(self):
-        return self._silhouette_scores if hasattr(self, "_silhouette_scores") else None
-
-    @property
-    def inertia(self):
-        return self._inertia if hasattr(self, "_inertia") else None
-
-    @property
-    def variance_ratio(self):
-        return self._variance_ratio if hasattr(self, "_variance_ratio") else None
+    def cluster_scores(self):
+        return self._cluster_scores if hasattr(self, "_cluster_scores") else None
 
     @property
     def variance_explained(self):

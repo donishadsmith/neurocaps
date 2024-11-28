@@ -29,7 +29,7 @@ which can then be converted to matrix form and visualized with ``transition_matr
                                              metrics=["transition_probability"],
                                              continuous_runs=True,
                                              output_dir=output_dir,
-                                             prefix_file_name="All_Subjects_CAPs_metrics")
+                                             prefix_filename="All_Subjects_CAPs_metrics")
 
     print(outputs["transition_probability"]["All Subjects"])
 

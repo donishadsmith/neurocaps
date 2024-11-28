@@ -1,18 +1,18 @@
 from typing import Optional
 import os
 import matplotlib.pyplot as plt, pandas as pd
-from .._utils import (_check_kwargs, _create_display, _save_contents)
+from .._utils import (_check_kwargs, _create_display, _logger, _save_contents)
+
+LG = _logger(__name__)
 
 def transition_matrix(trans_dict: dict[str, pd.DataFrame], output_dir: Optional[os.PathLike]=None,
-                      suffix_title: Optional[str]=None, show_figs: bool = True, save_plots: bool=True,
-                      return_df: bool = True,  save_df: bool=True, **kwargs):
+                      suffix_title: Optional[str]=None, suffix_filename: Optional[str]=None, show_figs: bool = True,
+                      save_plots: bool=True, return_df: bool = True,  save_df: bool=True, **kwargs):
     """
     Generate and Visualize the Averaged Transition Probabilities.
 
     Uses the "transition_probability" output from ``CAP.calculate_metrics`` to generate and visualize the averaged
     transition probability matrix for all groups from the analysis.
-
-    .. versionadded:: 0.16.2
 
     Parameters
     ----------
@@ -27,7 +27,12 @@ def transition_matrix(trans_dict: dict[str, pd.DataFrame], output_dir: Optional[
         be saved if None.
 
     suffix_title: :obj:`str` or :obj:`None`, default=None
-        Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
+        Appended to the title of each plot.
+
+    suffix_filename: :obj:`str` or :obj:`None`, default=None
+        Appended to the filename of each saved plot if ``output_dir`` is provided.
+
+        .. versionadded:: 0.19.0
 
     show_figs: :obj:`bool`, default=True
         Display figures.
@@ -122,6 +127,9 @@ def transition_matrix(trans_dict: dict[str, pd.DataFrame], output_dir: Optional[
     """
     assert isinstance(trans_dict, dict), "transition_dict must be in the form dict[str, pd.DataFrame]."
 
+    if suffix_filename is not None and output_dir is None:
+        LG.warning("`suffix_filename` supplied but no `output_dir` specified. Files will not be saved.")
+
     # Create plot dictionary
     defaults = {"dpi": 300, "figsize": (8, 6), "fontsize": 14, "xticklabels_size": 8, "yticklabels_size": 8,
                 "shrink": 0.8, "cbarlabels_size": 8, "xlabel_rotation": 0, "ylabel_rotation": 0, "annot": False,
@@ -155,7 +163,7 @@ def transition_matrix(trans_dict: dict[str, pd.DataFrame], output_dir: Optional[
 
         # Save figure & dataframe
         if output_dir:
-            _save_contents(output_dir, suffix_title, group, trans_mat_dict, plot_dict, save_plots, save_df, display,
+            _save_contents(output_dir, suffix_filename, group, trans_mat_dict, plot_dict, save_plots, save_df, display,
                            "trans")
 
         # Display figures

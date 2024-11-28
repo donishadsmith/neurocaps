@@ -138,61 +138,24 @@ class CAP(_CAPGetter):
                 "GroupName": sklearn.cluster.KMeans,
             }
 
-    davies_bouldin: :obj:`dict[str, dict[str, float]]`
-        A dictionary mapping groups to the assessed cluster sizes and corresponding davies bouldin score if
-        ``cluster_selection_method`` in ``self.get_caps()`` is set to "variance_ratio". The structure is as follows:
+    cluster_scores: :obj:`dict[str, Union[str, dict[str, float]]]`
+        A dictionary mapping groups to the assessed cluster sizes and corresponding score of a specific
+        ``cluster_selection_method`` available in ``self.get_caps()``. The structure is as follows:
 
         ::
 
             {
-                "GroupName": {
-                    2: float,
-                    3: float,
-                    4: float,
+                "Cluster_Selection_Method": str,  # e.g., "elbow", "davies_bouldin", "silhouette", or "variance_ratio"
+                "Scores": {
+                    "GroupName": {
+                        2: float,  # Score for 2 clusters
+                        3: float,  # Score for 3 clusters
+                        4: float,  # Score for 4 clusters
+                    },
                 }
             }
 
-    inertia: :obj:`dict[str, dict[str, float]]`
-        A dictionary mapping groups to the assessed cluster sizes and corresponding inertia score if
-        ``cluster_selection_method`` in ``self.get_caps()`` is set to "variance_ratio". The structure is as follows:
-
-        ::
-
-            {
-                "GroupName": {
-                    2: float,
-                    3: float,
-                    4: float,
-                }
-            }
-
-    silhouette_scores: :obj:`dict[str, dict[str, float]]`
-        A dictionary mapping groups to the assessed cluster sizes and corresponding silhouette score if
-        ``cluster_selection_method`` in ``self.get_caps()`` is set to "variance_ratio". The structure is as follows:
-
-        ::
-
-            {
-                "GroupName": {
-                    2: float,
-                    3: float,
-                    4: float,
-                }
-            }
-
-    variance_ratio: :obj:`dict[str, dict[str, float]]`
-        A dictionary mapping groups to the assessed cluster sizes and corresponding variance ratio score if
-        ``cluster_selection_method`` in ``self.get_caps()`` is set to "variance_ratio". The structure is as follows:
-
-        ::
-
-            {
-                "GroupName": {
-                    2: float,
-                    3: float,
-                    4: float,
-                }
-            }
+        .. versionadded:: 0.19.0 ``inertia``, ``silhouette``, ``davies_bouldin``, and ``variance_ratio`` consolidated into this property
 
     variance_explained: :obj:`dict[str, dict[float]]`
         A dictionary mapping groups to a float representing the total variance explained by their respective model
@@ -679,10 +642,7 @@ class CAP(_CAPGetter):
 
     def _select_optimal_clusters(self, configs, show_figs, output_dir, **kwargs):
         # Initialize attributes
-        self._davies_bouldin = {}
-        self._inertia = {}
-        self._silhouette_scores = {}
-        self._variance_ratio = {}
+        self._cluster_scores = {}
         self._optimal_n_clusters = {}
         self._kmeans = {}
         self._cluster_metric = {}
@@ -746,10 +706,8 @@ class CAP(_CAPGetter):
             if show_figs or output_dir is not None:
                 self._plot_method(method, performance_dict, group, plot_dict, show_figs, output_dir)
 
-        if method == "elbow": self._inertia = performance_dict
-        elif method == "davies_bouldin": self._davies_bouldin = performance_dict
-        elif method == "silhouette": self._silhouette_scores = performance_dict
-        else: self._variance_ratio = performance_dict
+        self._cluster_scores = {"Cluster_Selection_Method": method}
+        self._cluster_scores.update({"Scores": performance_dict})
 
     def _plot_method(self, method, performance_dict, group, plot_dict, show_figs, output_dir):
         y_titles = {"elbow": "Inertia", "davies_bouldin": "Davies Bouldin Score", "silhouette": "Silhouette Score",
@@ -817,7 +775,7 @@ class CAP(_CAPGetter):
                               ]=["temporal_fraction", "persistence", "counts", "transition_frequency"],
                           return_df: bool=True,
                           output_dir: Optional[os.PathLike]=None,
-                          prefix_file_name: Optional[str]=None) -> dict[str, pd.DataFrame]:
+                          prefix_filename: Optional[str]=None) -> dict[str, pd.DataFrame]:
         """
         Compute Participant-wise CAP Metrics.
 
@@ -937,20 +895,11 @@ class CAP(_CAPGetter):
                 # Computation of each CAP metric will be conducted on the combined vector
                 continuous_runs = [0, 1, 1, 2, 3, 3]
 
-            .. versionchanged:: 0.17.11 the label in the "Run" column in the dataframe changed from
-               "continuous_runs" to "run-continuous"
-
         metrics: {"temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"} \
                  or :obj:`list["temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"]`, \
                  default=["temporal_fraction", "persistence", "counts", "transition_frequency"]
             The metrics to calculate. Available options include "temporal_fraction", "persistence",
             "counts", "transition_frequency", and "transition_probability".
-
-            .. versionadded:: 0.16.2 "transition_probabilities"
-
-            .. versionchanged:: 0.16.6 calculation for "counts" has changed to align with the equation,
-               temporal fraction = (persistence*counts)/total volumes, which can be found in the supplemental
-               material of Yang et al., 2022
 
         return_df: :obj:`str`, default=True
             If True, returns ``pandas.DataFrame`` inside a dictionary`, mapping each dataframe to their metric.
@@ -959,8 +908,10 @@ class CAP(_CAPGetter):
             Directory to save ``pandas.DataFrame`` as csv files. The directory will be created if it does not exist.
             Dataframes will not be saved if None.
 
-        prefix_file_name: :obj:`str` or :obj:`None`, default=None
+        prefix_filename: :obj:`str` or :obj:`None`, default=None
             A prefix to append to the saved file names for each ``pandas.DataFrame``, if ``output_dir`` is provided.
+
+            .. versionchanged:: 0.19.0  ``prefix_file_name`` to ``prefix_filename``
 
         Returns
         -------
@@ -1068,8 +1019,8 @@ class CAP(_CAPGetter):
             raise AttributeError("Cannot calculate metrics since `self._kmeans` attribute does not exist. Run "
                                  "`self.get_caps()` first.")
 
-        if prefix_file_name is not None and output_dir is None:
-            LG.warning("`prefix_file_name` supplied but no `output_dir` specified. Files will not be saved.")
+        if prefix_filename is not None and output_dir is None:
+            LG.warning("`prefix_filename` supplied but no `output_dir` specified. Files will not be saved.")
 
         if runs and not isinstance(runs, list): runs = [runs]
 
@@ -1191,7 +1142,7 @@ class CAP(_CAPGetter):
 
         if "transition_probability" in metrics: df_dict["transition_probability"] = temp_dict
 
-        if output_dir: self._save_metrics(output_dir, df_dict, prefix_file_name)
+        if output_dir: self._save_metrics(output_dir, df_dict, prefix_filename)
 
         if return_df: return df_dict
 
@@ -1336,28 +1287,29 @@ class CAP(_CAPGetter):
 
         return binary_arr, segments
 
-    def _save_metrics(self, output_dir, df_dict, prefix_file_name):
+    def _save_metrics(self, output_dir, df_dict, prefix_filename):
         if not os.path.exists(output_dir): os.makedirs(output_dir)
 
         for metric in df_dict:
-            if prefix_file_name:
-                file_name = os.path.splitext(prefix_file_name.rstrip())[0].rstrip() + f"-{metric}"
+            if prefix_filename:
+                filename = os.path.splitext(prefix_filename.rstrip())[0].rstrip() + f"-{metric}"
             else:
-                file_name = f"{metric}"
+                filename = f"{metric}"
 
             if metric != "transition_probability":
-                df_dict[f"{metric}"].to_csv(path_or_buf=os.path.join(output_dir, f"{file_name}.csv"),
+                df_dict[f"{metric}"].to_csv(path_or_buf=os.path.join(output_dir, f"{filename}.csv"),
                                             sep=",", index=False)
             else:
                 for group in self._groups:
                     df_dict[f"{metric}"][group].to_csv(
-                        path_or_buf=os.path.join(output_dir, f"{file_name}-{group.replace(' ', '_')}.csv"),
+                        path_or_buf=os.path.join(output_dir, f"{filename}-{group.replace(' ', '_')}.csv"),
                         sep=",", index=False
                         )
 
     def caps2plot(self,
                   output_dir: Optional[os.PathLike]=None,
                   suffix_title: Optional[str]=None,
+                  suffix_filename: Optional[str]=None,
                   plot_options: Union[Literal["outer_product", "heatmap"],
                                       list[Literal["outer_product", "heatmap"]]]="outer_product",
                   visual_scope: Union[Literal["regions", "nodes"],
@@ -1379,7 +1331,12 @@ class CAP(_CAPGetter):
             plots will not be saved.
 
         suffix_title: :obj:`str` or :obj:`None`, default=None
-            Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
+            Appended to the title of each plot.
+
+        suffix_filename: :obj:`str` or :obj:`None`, default=None
+            Appended to the filename of each saved plot if ``output_dir`` is provided.
+
+            .. versionadded:: 0.19.0
 
         plot_options: {"outer_product", "heatmap"} or :obj:`list["outer_product", "heatmap"]`, default="outer_product"
             Type of plots to create. Options are "outer_product" or "heatmap".
@@ -1492,6 +1449,9 @@ class CAP(_CAPGetter):
             raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` "
                                  "first.")
 
+        if suffix_filename is not None and output_dir is None:
+            LG.warning("`suffix_filename` supplied but no `output_dir` specified. Files will not be saved.")
+
         # Check if parcellation_approach is custom
         if "Custom" in self._parcel_approach and any(key not in self._parcel_approach["Custom"] for key in ["nodes", "regions"]):
             _check_parcel_approach(parcel_approach=self._parcel_approach, call="caps2plot")
@@ -1563,8 +1523,8 @@ class CAP(_CAPGetter):
 
             #  Generate plot for each group
             input_keys = dict(group=group, plot_dict=plot_dict, cap_dict=cap_dict, columns=columns,
-                              output_dir=output_dir, suffix_title=suffix_title, show_figs=show_figs, scope=scope,
-                              parcellation_name=parcellation_name)
+                              output_dir=output_dir, suffix_title=suffix_title, suffix_filename=suffix_filename,
+                              show_figs=show_figs, scope=scope, parcellation_name=parcellation_name)
 
             #  Generate plot for each group
             if plot_option == "outer_product": self._generate_outer_product_plots(**input_keys, subplots=subplots)
@@ -1600,7 +1560,7 @@ class CAP(_CAPGetter):
                 self._region_caps[group].update({cap: region_caps})
 
     def _generate_outer_product_plots(self, group, plot_dict, cap_dict, columns, subplots, output_dir, suffix_title,
-                                      show_figs, scope, parcellation_name):
+                                      suffix_filename, show_figs, scope, parcellation_name):
         # Nested dictionary for group
         self._outer_products[group] = {}
 
@@ -1717,22 +1677,24 @@ class CAP(_CAPGetter):
 
                 # Save individual plots
                 if output_dir:
-                    partial_filename = f"{group}_{cap}_{suffix_title}" if suffix_title else f"{group}_{cap}"
-                    self._save_heatmap(display, scope, partial_filename, plot_dict, output_dir, call="outer_product")
+                    partial_filename = f"{group}_{cap}"
+                    self._save_heatmap(display, scope, partial_filename, suffix_filename, plot_dict,
+                                       output_dir, call="outer_product")
 
         # Remove subplots with no data
         if subplots: [fig.delaxes(ax) for ax in axes.flatten() if not ax.has_data()]
 
         # Save subplot
         if subplots and output_dir:
-            partial_filename = f"{group}_CAPs_{suffix_title}" if suffix_title else f"{group}_CAPs"
-            self._save_heatmap(display, scope, partial_filename, plot_dict, output_dir, call="outer_product")
+            partial_filename = f"{group}_CAPs"
+            self._save_heatmap(display, scope, partial_filename, suffix_filename, plot_dict, output_dir,
+                               call="outer_product")
 
         # Display figures
         plt.show() if show_figs else plt.close()
 
-    def _generate_heatmap_plots(self, group, plot_dict, cap_dict, columns, output_dir, suffix_title, show_figs,
-                                scope, parcellation_name):
+    def _generate_heatmap_plots(self, group, plot_dict, cap_dict, columns, output_dir, suffix_title, suffix_filename,
+                                show_figs, scope, parcellation_name):
         # Initialize new grid
         plt.figure(figsize=plot_dict["figsize"])
 
@@ -1771,8 +1733,8 @@ class CAP(_CAPGetter):
 
         # Save plots
         if output_dir:
-            partial_filename = f"{group}_CAPs_{suffix_title}" if suffix_title else f"{group}_CAPs"
-            self._save_heatmap(display, scope, partial_filename, plot_dict, output_dir, call="heatmap")
+            partial_filename = f"{group}_CAPs"
+            self._save_heatmap(display, scope, partial_filename, suffix_filename, plot_dict, output_dir, call="heatmap")
 
         # Display figures
         plt.show() if show_figs else plt.close()
@@ -1884,14 +1846,17 @@ class CAP(_CAPGetter):
 
     # Function to save plots for outer_product and heatmap called by caps2plot
     @staticmethod
-    def _save_heatmap(display, scope, partial, plot_dict, output_dir, call):
-        full_filename = f"{partial.replace(' ', '_')}_{call}-{scope}.png"
+    def _save_heatmap(display, scope, partial, suffix, plot_dict, output_dir, call):
+        full_filename = partial + f"_{call}-{scope}"
+        if suffix: full_filename += f"_{suffix}".replace(' ', '_')
+        full_filename += ".png"
         display.get_figure().savefig(os.path.join(output_dir, full_filename), dpi=plot_dict["dpi"],
                                      bbox_inches=plot_dict["bbox_inches"])
 
     def caps2corr(self,
                   output_dir: Optional[os.PathLike]=None,
                   suffix_title: Optional[str]=None,
+                  suffix_filename: Optional[str]=None,
                   show_figs: bool=True,
                   save_plots: bool=True,
                   return_df: bool=False,
@@ -1913,8 +1878,12 @@ class CAP(_CAPGetter):
             True). The directory will be created if it does not exist. If None, plots and dataFrame will not be saved.
 
         suffix_title: :obj:`str` or :obj:`None`, default=None
-            Appended to the title of each plot as well as the name of the saved file if ``output_dir``
-            is provided.
+            Appended to the title of each plot.
+
+        suffix_filename: :obj:`str` or :obj:`None`, default=None
+            Appended to the filename of each saved plot if ``output_dir`` is provided.
+
+            .. versionadded:: 0.19.0
 
         show_figs: :obj:`bool`, default=True
             Display figures.
@@ -2001,6 +1970,9 @@ class CAP(_CAPGetter):
                 "Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` first."
                 )
 
+        if suffix_filename is not None and output_dir is None:
+            LG.warning("`suffix_filename` supplied but no `output_dir` specified. Files will not be saved.")
+
         # Create plot dictionary
         defaults = {"dpi": 300, "figsize": (8, 6), "fontsize": 14, "xticklabels_size": 8, "yticklabels_size": 8,
                     "shrink": 0.8, "cbarlabels_size": 8, "xlabel_rotation": 0, "ylabel_rotation": 0, "annot": False,
@@ -2030,7 +2002,7 @@ class CAP(_CAPGetter):
 
             # Save figure
             if output_dir:
-                _save_contents(output_dir, suffix_title, group, corr_dict, plot_dict, save_plots, save_df, display,
+                _save_contents(output_dir, suffix_filename, group, corr_dict, plot_dict, save_plots, save_df, display,
                                "corr")
 
             # Display figures
@@ -2051,7 +2023,7 @@ class CAP(_CAPGetter):
 
     def caps2niftis(self,
                     output_dir: os.PathLike,
-                    suffix_file_name: Optional[str]=None,
+                    suffix_filename: Optional[str]=None,
                     fwhm: Optional[float]=None,
                     knn_dict: dict[str, Union[int, list[int], np.array]]=None) -> nib.Nifti1Image:
         """
@@ -2067,8 +2039,10 @@ class CAP(_CAPGetter):
         output_dir: :obj:`os.PathLike`
             Directory to save nii.gz files. The directory will be created if it does not exist.
 
-        suffix_title: :obj:`str` or :obj:`None`, default=None
+        suffix_filename: :obj:`str` or :obj:`None`, default=None
             Appended to the name of the saved file.
+
+            .. versionchanged:: 0.19.0  ``suffix_file_name`` to ``suffix_filename``
 
         fwhm: :obj:`float` or :obj:`None`, default=None
             Strength of spatial smoothing to apply (in millimeters) to the statistical map prior to interpolating
@@ -2146,9 +2120,9 @@ class CAP(_CAPGetter):
                 stat_map = _cap2statmap(atlas_file=self._parcel_approach[parcellation_name]["maps"],
                                         cap_vector=self._caps[group][cap], fwhm=fwhm, knn_dict=knn_dict)
 
-                file_name = self._basename(group, cap, suffix=suffix_file_name, ext="nii.gz")
+                filename = self._basename(group, cap, suffix=suffix_filename, ext="nii.gz")
 
-                nib.save(stat_map, os.path.join(output_dir, file_name))
+                nib.save(stat_map, os.path.join(output_dir, filename))
 
     @staticmethod
     def _validate_knn_dict(knn_dict):
@@ -2184,6 +2158,7 @@ class CAP(_CAPGetter):
     def caps2surf(self,
                   output_dir: Optional[os.PathLike]=None,
                   suffix_title: Optional[str]=None,
+                  suffix_filename: Optional[str]=None,
                   show_figs: bool=True,
                   fwhm: Optional[float]=None,
                   fslr_density: Literal["4k", "8k", "32k", "164k"]="32k",
@@ -2211,7 +2186,12 @@ class CAP(_CAPGetter):
             will not be saved.
 
         suffix_title: :obj:`str` or :obj:`None`, default=None
-            Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
+            Appended to the title of each plot.
+
+        suffix_filename: :obj:`str` or :obj:`None`, default=None
+            Appended to the filename of each saved plot if ``output_dir`` is provided.
+
+            .. versionadded:: 0.19.0
 
         show_figs: :obj:`bool`, default=True
             Display figures.
@@ -2231,8 +2211,6 @@ class CAP(_CAPGetter):
         save_stat_maps: :obj:`bool`, default=False
             If True, saves the statistical map for each CAP for all groups as a Nifti1Image if ``output_dir`` is
             provided.
-
-             .. versionchanged:: 0.16.0 changed from ``save_stat_map`` to ``save_stat_maps``.
 
         fslr_giftis_dict: :obj:`dict` or :obj:`None`, default=None
             Dictionary specifying precomputed GifTI files in fsLR space for plotting statistical maps. This parameter
@@ -2362,6 +2340,9 @@ class CAP(_CAPGetter):
             raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` "
                                  "first.")
 
+        if suffix_filename is not None and output_dir is None:
+            LG.warning("`suffix_filename` supplied but no `output_dir` specified. Files will not be saved.")
+
         # Check `knn_dict`
         if knn_dict:
             knn_dict = self._validate_knn_dict(knn_dict)
@@ -2447,14 +2428,14 @@ class CAP(_CAPGetter):
                 fig.axes[0].set_title(fig_name, pad=plot_dict["title_pad"])
 
                 if output_dir:
-                    file_name = self._basename(group, cap, "surface", suffix_title, "png")
+                    filename = self._basename(group, cap, "surface", suffix_filename, "png")
 
-                    fig.savefig(os.path.join(output_dir, file_name), dpi=plot_dict["dpi"],
+                    fig.savefig(os.path.join(output_dir, filename), dpi=plot_dict["dpi"],
                                 bbox_inches=plot_dict["bbox_inches"])
 
                     # Save stat map
                     if save_stat_maps:
-                        stat_map_name = file_name.split("_surface")[0] + ".nii.gz"
+                        stat_map_name = filename.split("_surface")[0] + ".nii.gz"
                         nib.save(stat_map, os.path.join(output_dir, stat_map_name))
 
                 try: plt.show(fig) if show_figs else plt.close(fig)
@@ -2463,6 +2444,7 @@ class CAP(_CAPGetter):
     def caps2radar(self,
                    output_dir: Optional[os.PathLike]=None,
                    suffix_title: Optional[str]=None,
+                   suffix_filename: Optional[str]=None,
                    show_figs: bool=True,
                    use_scatterpolar: bool=False,
                    as_html: bool=False,
@@ -2562,7 +2544,12 @@ class CAP(_CAPGetter):
             If None, plots will not be saved.
 
         suffix_title: :obj:`str` or :obj:`None`, default=None
-            Appended to the title of each plot as well as the name of the saved file if ``output_dir`` is provided.
+            Appended to the title of each plot.
+
+        suffix_filename: :obj:`str` or :obj:`None`, default=None
+            Appended to the filename of each saved plot if ``output_dir`` is provided.
+
+            .. versionadded:: 0.19.0
 
         show_figs: :obj:`bool`, default=True
             Display figures. If this function detects that it is not being ran in an interactive Python environment,
@@ -2687,6 +2674,9 @@ class CAP(_CAPGetter):
                        "`self.get_caps` should be standardized so that each ROI in the CAP cluster centroid. "
                        "represents activation or de-activation relative to the mean.")
 
+        if suffix_filename is not None and output_dir is None:
+            LG.warning("`suffix_filename` supplied but no `output_dir` specified. Files will not be saved.")
+
         defaults = {"scale": 2, "height": 800, "width": 1200, "line_close": True, "bgcolor": "white", "fill": "none",
                     "scattersize": 8, "connectgaps": True, "opacity": 0.5, "linewidth": 2,
                     "radialaxis": {"showline": False, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)",
@@ -2785,14 +2775,14 @@ class CAP(_CAPGetter):
                 if output_dir:
                     if not os.path.exists(output_dir): os.makedirs(output_dir)
 
-                    file_name = self._basename(group, cap, "radar", suffix_title, "png")
+                    filename = self._basename(group, cap, "radar", suffix_filename, "png")
 
                     if not as_html:
-                        fig.write_image(os.path.join(output_dir, file_name), scale=plot_dict["scale"],
+                        fig.write_image(os.path.join(output_dir, filename), scale=plot_dict["scale"],
                                         engine=plot_dict["engine"])
                     else:
-                        file_name = file_name.replace(".png", ".html")
-                        fig.write_html(os.path.join(output_dir, file_name))
+                        filename = filename.replace(".png", ".html")
+                        fig.write_html(os.path.join(output_dir, filename))
 
     def _update_radar_dict(self, group, parcellation_name, radar_dict):
         for cap in self._caps[group]:

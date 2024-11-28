@@ -77,7 +77,7 @@ Saving Timeseries
 .. code-block:: python
 
     extractor.timeseries_to_pickle(output_dir=dir,
-                                   file_name="rest_Schaefer.pkl")
+                                   filename="rest_Schaefer.pkl")
 
 Visualizing Timeseries
 ----------------------
