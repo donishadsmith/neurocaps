@@ -2,9 +2,8 @@
 from sklearn.cluster import KMeans
 from sklearn.metrics import davies_bouldin_score, calinski_harabasz_score, silhouette_score
 
-def _run_kmeans(n_cluster, random_state, init, n_init, max_iter, tol, algorithm, concatenated_timeseries, method):
-    model = KMeans(n_clusters=n_cluster, random_state=random_state, init=init, n_init=n_init, max_iter=max_iter,
-                   tol=tol, algorithm=algorithm).fit(concatenated_timeseries)
+def _run_kmeans(n_cluster, configs, concatenated_timeseries, method):
+    model = KMeans(n_clusters=n_cluster, **configs).fit(concatenated_timeseries)
 
     cluster_labels = model.labels_
 

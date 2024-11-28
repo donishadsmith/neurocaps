@@ -91,14 +91,14 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
     assert len(subject_timeseries_list) > 1, "Merging cannot be done with less than two dictionaries or files."
 
     if isinstance(subject_timeseries_list[0],dict): subject_timeseries_merged = subject_timeseries_list[0]
-    else: subject_timeseries_merged = _convert_pickle_to_dict(pickle_file=subject_timeseries_list[0])
+    else: subject_timeseries_merged = _convert_pickle_to_dict(subject_timeseries_list[0])
 
     # Get common subject ids
     subject_set = {}
 
     for curr_dict in subject_timeseries_list:
         if isinstance(curr_dict, str) and curr_dict.endswith(".pkl"):
-            curr_dict = _convert_pickle_to_dict(pickle_file=curr_dict)
+            curr_dict = _convert_pickle_to_dict(curr_dict)
 
         if not subject_set: subject_set = set(curr_dict)
 
@@ -111,7 +111,7 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
 
     for curr_dict in subject_timeseries_list:
         if isinstance(curr_dict, str) and curr_dict.endswith(".pkl"):
-            curr_dict = _convert_pickle_to_dict(pickle_file=curr_dict)
+            curr_dict = _convert_pickle_to_dict(curr_dict)
 
         for subj_id in intersect_subjects:
             if subj_id not in subject_timeseries_merged: subject_timeseries_merged.update({subj_id: {}})
@@ -133,7 +133,7 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarr
 
     if return_reduced_dicts or (save_reduced_dicts and output_dir):
         for indx, curr_dict in enumerate(subject_timeseries_list):
-            if "pkl" in curr_dict: curr_dict = _convert_pickle_to_dict(pickle_file=curr_dict)
+            if "pkl" in curr_dict: curr_dict = _convert_pickle_to_dict(curr_dict)
             else: curr_dict = copy.deepcopy(curr_dict)
 
             if any([elem in subject_timeseries_merged for elem in curr_dict]):

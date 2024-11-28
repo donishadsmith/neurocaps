@@ -553,6 +553,8 @@ class CAP(_CAPGetter):
         # Ensure all unique values if n_clusters is a list
         self._n_clusters = n_clusters if isinstance(n_clusters, int) else sorted(list(set(n_clusters)))
         self._cluster_selection_method = cluster_selection_method
+        configs = {"random_state": random_state, "init": init, "n_init": n_init, "max_iter": max_iter,
+                   "tol": tol, "algorithm": algorithm}
 
         if isinstance(n_clusters, list):
             self._n_clusters =  self._n_clusters[0] if all([isinstance(self._n_clusters, list),
@@ -584,16 +586,13 @@ class CAP(_CAPGetter):
                 formatted_string = ', '.join(["'{a}'".format(a=x) for x in valid_methods])
                 raise ValueError(f"Options for `cluster_selection_method` are - {formatted_string}.")
             else:
-                self._select_optimal_clusters(random_state=random_state, init=init, n_init=n_init, max_iter=max_iter,
-                                              tol=tol, algorithm=algorithm, show_figs=show_figs, output_dir=output_dir,
-                                              **kwargs)
+                self._select_optimal_clusters(configs, show_figs, output_dir, **kwargs)
         else:
             self._kmeans = {}
             for group in self._groups:
                 self._kmeans[group] = {}
-                self._kmeans[group] = KMeans(n_clusters=self._n_clusters, random_state=random_state, init=init,
-                                             n_init=n_init, max_iter=max_iter, tol=tol,
-                                             algorithm=algorithm).fit(self._concatenated_timeseries[group])
+                self._kmeans[group] = KMeans(n_clusters=self._n_clusters,
+                                             **configs).fit(self._concatenated_timeseries[group])
 
         # Create variance explained dict
         self._var_explained()
@@ -604,7 +603,7 @@ class CAP(_CAPGetter):
     @staticmethod
     def _process_subject_timeseries(subject_timeseries):
         if isinstance(subject_timeseries, str) and subject_timeseries.endswith(".pkl"):
-            subject_timeseries = _convert_pickle_to_dict(pickle_file=subject_timeseries)
+            subject_timeseries = _convert_pickle_to_dict(subject_timeseries)
         elif isinstance(subject_timeseries, dict) and len(list(subject_timeseries)) == 1:
             # Potential mutability issue if only a single subject in dictionary potentially due to the variable
             # for the concatenated data being set to the subject timeseries if concatenated data is empty.
@@ -621,7 +620,7 @@ class CAP(_CAPGetter):
                     LG.warning(f"[SUBJECT: {subj_id}] Appears more than once. Only the first instance of this "
                                "subject will be included in the analysis.")
                 else:
-                    self._subject_table.update({subj_id : group})
+                    self._subject_table.update({subj_id: group})
 
     def _concatenate_timeseries(self, subject_timeseries, runs):
         # Create dictionary for "All Subjects" if no groups are specified to reuse the same loop instead of having to
@@ -678,8 +677,7 @@ class CAP(_CAPGetter):
 
         return runs, miss_runs
 
-    def _select_optimal_clusters(self, random_state, init, n_init, max_iter, tol, algorithm,
-                                 show_figs, output_dir, **kwargs):
+    def _select_optimal_clusters(self, configs, show_figs, output_dir, **kwargs):
         # Initialize attributes
         self._davies_bouldin = {}
         self._inertia = {}
@@ -703,18 +701,14 @@ class CAP(_CAPGetter):
 
             if self._n_cores is None:
                 for n_cluster in self._n_clusters:
-                    output_score, model = _run_kmeans(n_cluster=n_cluster, random_state=random_state, init=init,
-                                                      n_init=n_init, max_iter=max_iter, tol=tol, algorithm=algorithm,
-                                                      concatenated_timeseries=self._concatenated_timeseries[group],
-                                                      method=method)
+                    output_score, model = _run_kmeans(n_cluster, configs, self._concatenated_timeseries[group], method)
 
                     performance_dict[group].update(output_score)
                     model_dict.update(model)
             else:
                 parallel = Parallel(return_as="generator", n_jobs=self._n_cores)
-                output = parallel(delayed(_run_kmeans)(n_cluster, random_state, init, n_init, max_iter, tol,
-                                                       algorithm, self._concatenated_timeseries[group],
-                                                       method) for n_cluster in self._n_clusters)
+                output = parallel(delayed(_run_kmeans)(n_cluster, configs, self._concatenated_timeseries[group], method)
+                                  for n_cluster in self._n_clusters)
 
                 output_scores, models = zip(*output)
                 for output in output_scores: performance_dict[group].update(output)
