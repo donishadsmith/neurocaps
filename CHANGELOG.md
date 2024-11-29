@@ -20,6 +20,9 @@ improvements/enhancements. Fixes and modifications will be backwards compatible.
 - Cleaning some of the API, specifically parameter names and properties, no defaults have been changed in
 this update.
 
+[API for 0.18.0 versions](https://neurocaps.readthedocs.io/en/0.18.9/api.html): https://neurocaps.readthedocs.io/en/0.18.9/api.html
+[API for 0.19.0](https://neurocaps.readthedocs.io/en/latest/api.html): https://neurocaps.readthedocs.io/en/latest/api.html
+
 ### 🚀 New/Added
 - ``suffix_filename`` added to ``CAP.caps2plot``, ``CAP.caps2surf``, ``CAP.caps2radar``, and ``transition_matrix``.
 This addition was done to allow the ``suffix_title`` parameter in each of the previously listed methods to only be
