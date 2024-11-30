@@ -539,7 +539,6 @@ class CAP(_CAPGetter):
         self._standardize = standardize
 
         subject_timeseries = self._process_subject_timeseries(subject_timeseries)
-
         self._concatenated_timeseries = self._concatenate_timeseries(subject_timeseries, runs)
 
         valid_methods = ["elbow", "davies_bouldin", "silhouette", "variance_ratio"]
@@ -633,9 +632,7 @@ class CAP(_CAPGetter):
     @staticmethod
     def _get_runs(requested_runs, curr_runs):
         if requested_runs: requested_runs = [f"run-{run}" for run in requested_runs]
-
         runs = [run for run in requested_runs if run in curr_runs] if requested_runs else curr_runs
-
         miss_runs = list(set(requested_runs) - set(runs)) if requested_runs else None
 
         return runs, miss_runs
@@ -649,10 +646,6 @@ class CAP(_CAPGetter):
         performance_dict = {}
 
         method = self._cluster_selection_method
-
-        # Defaults
-        defaults = {"dpi": 300, "figsize": (8, 6), "step": None, "bbox_inches": "tight"}
-        plot_dict = _check_kwargs(defaults, **kwargs)
 
         for group in self._groups:
             performance_dict[group] = {}
@@ -704,14 +697,18 @@ class CAP(_CAPGetter):
 
             # Plot
             if show_figs or output_dir is not None:
-                self._plot_method(method, performance_dict, group, plot_dict, show_figs, output_dir)
+                self._plot_method(method, performance_dict, group, show_figs, output_dir, **kwargs)
 
         self._cluster_scores = {"Cluster_Selection_Method": method}
         self._cluster_scores.update({"Scores": performance_dict})
 
-    def _plot_method(self, method, performance_dict, group, plot_dict, show_figs, output_dir):
+    def _plot_method(self, method, performance_dict, group, show_figs, output_dir, **kwargs):
         y_titles = {"elbow": "Inertia", "davies_bouldin": "Davies Bouldin Score", "silhouette": "Silhouette Score",
                     "variance_ratio": "Variance Ratio Score"}
+
+        # Defaults
+        defaults = {"dpi": 300, "figsize": (8, 6), "step": None, "bbox_inches": "tight"}
+        plot_dict = _check_kwargs(defaults, **kwargs)
 
         y_title = y_titles[method]
 
@@ -1116,8 +1113,8 @@ class CAP(_CAPGetter):
                     trans_array = predicted_subject_timeseries[subj_id][curr_run].copy()
                     # Set all values not equal to target1 or target2 to zero
                     trans_array[(trans_array != target1) & (trans_array != target2)] = 0
-                    trans_array[np.where(trans_array == target1)] = 1
-                    trans_array[np.where(trans_array == target2)] = 3
+                    trans_array[trans_array == target1] = 1
+                    trans_array[trans_array == target2] = 3
                     # 2 indicates forward transition target1 -> target2; -2 means reverse/backward transition
                     # target2 -> target1
                     diff_array = np.diff(trans_array, n=1)
@@ -2029,10 +2026,10 @@ class CAP(_CAPGetter):
         """
         Standalone Method to Convert CAPs to NifTI Statistical Maps.
 
-        Projects CAPs onto parcellation to create NifTI statistical maps by replacing parcellation labels with their
-        corresponding CAP (cluster centroid) values. Creates compressed NifTI (.nii.gz) files. One image is generated
-        per CAP. Note, if groups were given when the ``CAP`` class was initialized, separate NifTI images will be
-        generated per CAP for all groups.
+        Projects CAPs onto the parcellation in ``self.parcel_approach`` to create NifTI statistical maps by replacing
+        parcellation labels with their corresponding CAP (cluster centroid) values. Creates compressed NifTI (.nii.gz)
+        files. One image is generated per CAP. Note, if groups were given when the ``CAP`` class was initialized,
+        separate NifTI images will be generated per CAP for all groups.
 
         Parameters
         ----------
@@ -2096,7 +2093,7 @@ class CAP(_CAPGetter):
 
             # Start at 1 to avoid assigment to the background label
             for indx, value in enumerate(cap_vector, start=1):
-                atlas_array[np.where(atlas_fdata == target_array[indx])] = value
+                atlas_array[atlas_fdata == target_array[indx]] = value
         """
         if not self._parcel_approach:
             raise AttributeError("`self.parcel_approach` is None. Set "
@@ -2330,7 +2327,7 @@ class CAP(_CAPGetter):
 
             # Start at 1 to avoid assigment to the background label
             for indx, value in enumerate(cap_vector, start=1):
-                atlas_array[np.where(atlas_fdata == target_array[indx])] = value
+                atlas_array[atlas_fdata == target_array[indx]] = value
         """
         if not self._parcel_approach and fslr_giftis_dict is None:
             raise AttributeError("`self.parcel_approach` is None. Add parcel_approach using "

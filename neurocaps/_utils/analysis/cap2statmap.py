@@ -16,7 +16,7 @@ def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
 
     # Start at 1 to avoid assigment to the background label
     for indx, value in enumerate(cap_vector, start=1):
-        atlas_array[np.where(atlas_fdata == target_array[indx])] = value
+        atlas_array[atlas_fdata == target_array[indx]] = value
 
     stat_map = nib.Nifti1Image(atlas_array, atlas.affine, atlas.header)
 
