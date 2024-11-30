@@ -72,10 +72,10 @@ where = ["."]
 include = ["neurocaps", "neurocaps.*"]
 
 [project.urls]
-Homepage = "https://neurocaps.readthedocs.io/en/latest/"
+Homepage = "https://neurocaps.readthedocs.io"
 Github = "https://github.com/donishadsmith/neurocaps"
 Issues = "https://github.com/donishadsmith/neurocaps/issues"
-Changelog = "https://neurocaps.readthedocs.io/en/latest/changelog.html"
+Changelog = "https://neurocaps.readthedocs.io/en/stable/changelog.html"
 
 [bdist_wheel]
 universal = 1

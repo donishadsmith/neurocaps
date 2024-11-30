@@ -119,7 +119,7 @@ pip install -e .[windows]
 ```
 
 ## Usage
-**Note, documentation of each function can be found in the [API](https://neurocaps.readthedocs.io/en/latest/api.html)
+**Note, documentation of each function can be found in the [API](https://neurocaps.readthedocs.io/en/stable/api.html)
 section of the documentation homepage.**
 
 **This package contains two main classes: `TimeseriesExtractor` for extracting the timeseries, and `CAP` for performing the CAPs analysis.**
@@ -155,7 +155,7 @@ activations of each CAP and each a-priori regions in a parcellation [^3] [^4].
 - `transition_matrix`: Uses the "transition_probability" output from ``CAP.calculate_metrics`` to generate and visualize the averaged transition probability matrix for all groups from the analysis.
 
 Please refer to the [demos](https://github.com/donishadsmith/neurocaps/tree/main/demos) or
-the [tutorials](https://neurocaps.readthedocs.io/en/latest/examples/examples.html) on the documentation website
+the [tutorials](https://neurocaps.readthedocs.io/en/stable/examples/examples.html) on the documentation website
 for a more extensive demonstration of the features included in this package.
 
 **Demonstration**:
@@ -422,7 +422,7 @@ Please refer the [contributing guidelines](https://github.com/donishadsmith/neur
 
 ## Acknowledgements
 Neurocaps relies on several popular data processing, machine learning, neuroimaging, and visualization
-[packages](https://neurocaps.readthedocs.io/en/latest/#dependencies).
+[packages](https://neurocaps.readthedocs.io/en/stable/#dependencies).
 
 Additionally, some foundational concepts in this package take inspiration from features or design patterns implemented
 in other neuroimaging Python packages, specically:
