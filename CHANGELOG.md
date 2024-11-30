@@ -16,6 +16,11 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.19.1] - 2024-11-30
+- Primarily to ensure all the latest distributions have the correct documentation links.
+- Includes some internal code changes that won't change results.
+- TODO for future version is to support Python 3.13.
+
 ## [0.19.0] - 2024-11-28
 - Cleaning some of the API, specifically parameter names and properties, no defaults have been changed in
 this update.
