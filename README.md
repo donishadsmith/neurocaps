@@ -180,7 +180,7 @@ include = [
     "derivatives/fmriprep/sub-0006/fmriprep/sub-0006/ses-2/func/*run-[12]*confounds_timeseries*",
     "derivatives/fmriprep/sub-0006/fmriprep/sub-0006/ses-2/func/*run-[12]_space-MNI152NLin*preproc_bold*",
     "derivatives/fmriprep/sub-0006/fmriprep/sub-0006/ses-2/func/*run-[12]_space-MNI152NLin*brain_mask*",
-    ]
+]
 
 download(dataset="ds005381", include=include, target_dir=demo_dir, verify_hash=False)
 
@@ -191,16 +191,10 @@ desc = {
     "Name": "fMRIPrep - fMRI PREProcessing workflow",
     "BIDSVersion": "1.0.0",
     "DatasetType": "derivative",
-    "GeneratedBy": [
-        {
-            "Name": "fMRIPrep",
-            "Version": "20.2.0",
-            "CodeURL": "https://github.com/nipreps/fmriprep"
-        }
-    ]
+    "GeneratedBy": [{"Name": "fMRIPrep", "Version": "20.2.0", "CodeURL": "https://github.com/nipreps/fmriprep"}],
 }
 
-with open("neurocaps_demo/derivatives/fmriprep/dataset_description.json", 'w', encoding='utf-8') as f:
+with open("neurocaps_demo/derivatives/fmriprep/dataset_description.json", "w", encoding="utf-8") as f:
     json.dump(desc, f)
 ```
 
@@ -209,39 +203,34 @@ from neurocaps.extraction import TimeseriesExtractor
 from neurocaps.analysis import CAP
 
 # Set specific confounds for nuisance regression
-confounds = [
-    "cosine*",
-    "trans_x",
-    "trans_y",
-    "trans_z",
-    "rot_x",
-    "rot_y",
-    "rot_z"
-]
+confounds = ["cosine*", "trans_x", "trans_y", "trans_z", "rot_x", "rot_y", "rot_z"]
 
 # Set parcellation
 parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7, "resolution_mm": 2}}
 
 # Initialize TimeseriesExtractor
-extractor = TimeseriesExtractor(space="MNI152NLin6Asym",
-                                parcel_approach=parcel_approach,
-                                standardize="zscore_sample",
-                                use_confounds=True,
-                                detrend=True,
-                                low_pass=0.1,
-                                high_pass=None,
-                                n_acompcor_separate=2, # 2 acompcor from WM and CSF masks = 4 total
-                                confound_names=confounds,
-                                fd_threshold={"threshold": 0.35, "outlier_percentage": 0.20, "n_before": 2,
-                                              "n_after": 1, "use_sample_mask": True})
+extractor = TimeseriesExtractor(
+    space="MNI152NLin6Asym",
+    parcel_approach=parcel_approach,
+    standardize="zscore_sample",
+    use_confounds=True,
+    detrend=True,
+    low_pass=0.1,
+    high_pass=None,
+    n_acompcor_separate=2,  # 2 acompcor from WM and CSF masks = 4 total
+    confound_names=confounds,
+    fd_threshold={"threshold": 0.35, "outlier_percentage": 0.20, "n_before": 2, "n_after": 1, "use_sample_mask": True},
+)
 
 # Extract timeseries for subjects in the BIDS directory; Subject 0006 run-1 will be flagged and skipped
-extractor.get_bold(bids_dir="neurocaps_demo",
-                   task="DET",
-                   session="2",
-                   n_cores=None,
-                   pipeline_name="fmriprep", # Can specify if multiple pipelines exists in derivatives directory
-                   verbose=True)
+extractor.get_bold(
+    bids_dir="neurocaps_demo",
+    task="DET",
+    session="2",
+    n_cores=None,
+    pipeline_name="fmriprep",  # Can specify if multiple pipelines exists in derivatives directory
+    verbose=True,
+)
 ```
 **Output:**
 ```
@@ -260,27 +249,27 @@ extractor.get_bold(bids_dir="neurocaps_demo",
 # Get CAPs
 cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
 
-cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
-                      n_clusters=2,
-                      standardize=True)
+cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, n_clusters=2, standardize=True)
 
 # `sharey` only applicable to outer product plots
-kwargs = {"sharey": True, "ncol": 3, "subplots": True, "cmap": "coolwarm", "xticklabels_size": 10,
-          "yticklabels_size": 10, "xlabel_rotation": 90, "cbarlabels_size": 10}
+kwargs = {
+    "sharey": True,
+    "ncol": 3,
+    "subplots": True,
+    "cmap": "coolwarm",
+    "xticklabels_size": 10,
+    "yticklabels_size": 10,
+    "xlabel_rotation": 90,
+    "cbarlabels_size": 10,
+}
 
 # Outer Product
-cap_analysis.caps2plot(visual_scope="regions",
-                       plot_options=["outer_product"],
-                       suffix_title="- DET Task",
-                       **kwargs)
+cap_analysis.caps2plot(visual_scope="regions", plot_options=["outer_product"], suffix_title="- DET Task", **kwargs)
 
 # Heatmap
 kwargs["xlabel_rotation"] = 0
 
-cap_analysis.caps2plot(visual_scope="regions",
-                       plot_options=["heatmap"],
-                       suffix_title="- DET Task",
-                       **kwargs)
+cap_analysis.caps2plot(visual_scope="regions", plot_options=["heatmap"], suffix_title="- DET Task", **kwargs)
 ```
 **Plot Outputs:**
 
@@ -288,13 +277,14 @@ cap_analysis.caps2plot(visual_scope="regions",
 <img src="assets/heatmap.png" width=70% height=70%>
 
 ```python
-
 # Get CAP metrics
-outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries,
-                                         tr=2.0, # TR to convert persistence to time units
-                                         return_df=True,
-                                         metrics=["temporal_fraction", "persistence"],
-                                         continuous_runs=True)
+outputs = cap_analysis.calculate_metrics(
+    subject_timeseries=extractor.subject_timeseries,
+    tr=2.0,  # TR to convert persistence to time units
+    return_df=True,
+    metrics=["temporal_fraction", "persistence"],
+    continuous_runs=True,
+)
 
 # Subject 0006 only has run-2 data since run-1 was flagged during timeseries extraction
 print(outputs["temporal_fraction"])
@@ -307,8 +297,14 @@ print(outputs["temporal_fraction"])
 
 ```python
 # Create surface plots
-kwargs = {"cmap": "cold_hot", "layout": "row", "size": (500, 200), "zoom": 1,
-          "cbar_kws": {"location": "bottom"}, "color_range": (-1, 1)}
+kwargs = {
+    "cmap": "cold_hot",
+    "layout": "row",
+    "size": (500, 200),
+    "zoom": 1,
+    "cbar_kws": {"location": "bottom"},
+    "color_range": (-1, 1),
+}
 
 cap_analysis.caps2surf(**kwargs)
 ```
@@ -319,8 +315,7 @@ cap_analysis.caps2surf(**kwargs)
 
 ```python
 # Create Pearson correlation matrix
-kwargs = {"annot": True, "cmap": "viridis", "xticklabels_size": 10,
-          "yticklabels_size": 10, "cbarlabels_size": 10}
+kwargs = {"annot": True, "cmap": "viridis", "xticklabels_size": 10, "yticklabels_size": 10, "cbarlabels_size": 10}
 
 cap_analysis.caps2corr(**kwargs)
 ```
@@ -330,25 +325,35 @@ cap_analysis.caps2corr(**kwargs)
 
 ```python
 # Create radar plots showing cosine similarity between region/networks and caps
-radialaxis={"showline": True,
-            "linewidth": 2,
-            "linecolor": "rgba(0, 0, 0, 0.25)",
-            "gridcolor": "rgba(0, 0, 0, 0.25)",
-            "ticks": "outside" ,
-            "tickfont": {"size": 14, "color": "black"},
-            "range": [0, 0.6],
-            "tickvals": [0.1, "", "", 0.4, "", "", 0.6]}
+radialaxis = {
+    "showline": True,
+    "linewidth": 2,
+    "linecolor": "rgba(0, 0, 0, 0.25)",
+    "gridcolor": "rgba(0, 0, 0, 0.25)",
+    "ticks": "outside",
+    "tickfont": {"size": 14, "color": "black"},
+    "range": [0, 0.6],
+    "tickvals": [0.1, "", "", 0.4, "", "", 0.6],
+}
 
-legend = {"yanchor": "top",
-          "y": 0.99,
-          "x": 0.99,
-          "title_font_family": "Times New Roman",
-          "font": {"size": 12, "color": "black"}}
+legend = {
+    "yanchor": "top",
+    "y": 0.99,
+    "x": 0.99,
+    "title_font_family": "Times New Roman",
+    "font": {"size": 12, "color": "black"},
+}
 
-colors =  {"High Amplitude": "black", "Low Amplitude": "orange"}
+colors = {"High Amplitude": "black", "Low Amplitude": "orange"}
 
-kwargs = {"radialaxis": radialaxis, "fill": "toself", "legend": legend, "color_discrete_map": colors,
-          "height": 400, "width": 600}
+kwargs = {
+    "radialaxis": radialaxis,
+    "fill": "toself",
+    "legend": legend,
+    "color_discrete_map": colors,
+    "height": 400,
+    "width": 600,
+}
 
 cap_analysis.caps2radar(**kwargs)
 ```
@@ -362,26 +367,37 @@ cap_analysis.caps2radar(**kwargs)
 from neurocaps.analysis import transition_matrix
 
 # Optimal cluster sizes are saved automatically
-cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries,
-                      cluster_selection_method="silhouette",
-                      standardize=True,
-                      show_figs=True,
-                      n_clusters=range(2, 6))
+cap_analysis.get_caps(
+    subject_timeseries=extractor.subject_timeseries,
+    cluster_selection_method="silhouette",
+    standardize=True,
+    show_figs=True,
+    n_clusters=range(2, 6),
+)
 
-outputs = cap_analysis.calculate_metrics(subject_timeseries=extractor.subject_timeseries,
-                                         return_df=True,
-                                         metrics=["transition_probability"],
-                                         continuous_runs=True)
+outputs = cap_analysis.calculate_metrics(
+    subject_timeseries=extractor.subject_timeseries,
+    return_df=True,
+    metrics=["transition_probability"],
+    continuous_runs=True,
+)
 
 print(outputs["transition_probability"]["All Subjects"])
 
-kwargs = {"cmap": "Blues", "fmt": ".3f", "annot": True, "vmin": 0, "vmax": 1, "xticklabels_size": 10,
-          "yticklabels_size": 10, "cbarlabels_size": 10}
+kwargs = {
+    "cmap": "Blues",
+    "fmt": ".3f",
+    "annot": True,
+    "vmin": 0,
+    "vmax": 1,
+    "xticklabels_size": 10,
+    "yticklabels_size": 10,
+    "cbarlabels_size": 10,
+}
 
-trans_outputs = transition_matrix(trans_dict=outputs["transition_probability"],
-                                  show_figs=True,
-                                  return_df=True,
-                                  **kwargs)
+trans_outputs = transition_matrix(
+    trans_dict=outputs["transition_probability"], show_figs=True, return_df=True, **kwargs
+)
 
 print(trans_outputs["All Subjects"])
 ```

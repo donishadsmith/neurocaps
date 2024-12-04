@@ -22,14 +22,14 @@ This configuration sets the root logger to output to the console and configures 
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(name)s [%(levelname)s] %(message)s",
-        handlers=[logging.StreamHandler(sys.stdout)]
-        )
+        handlers=[logging.StreamHandler(sys.stdout)],
+    )
 
     # Configuring the logger for the internal function that does timeseries extraction
     extract_timeseries_logger = logging.getLogger("neurocaps._utils.extraction.extract_timeseries")
     extract_timeseries_logger.setLevel(logging.WARNING)
     file_handler = logging.FileHandler("neurocaps.log")
-    file_handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
+    file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
     extract_timeseries_logger.addHandler(file_handler)
 
     # Import package
@@ -56,7 +56,7 @@ internal ``neurocaps._utils.extraction.extract_timeseries`` module to be redirec
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.INFO)
     file_handler = logging.FileHandler("neurocaps.log")
-    file_handler.setFormatter(logging.Formatter('%(asctime)s %(name)s [%(levelname)s] %(message)s'))
+    file_handler.setFormatter(logging.Formatter("%(asctime)s %(name)s [%(levelname)s] %(message)s"))
     root_logger.addHandler(file_handler)
 
     if __name__ == "__main__":
@@ -76,11 +76,13 @@ internal ``neurocaps._utils.extraction.extract_timeseries`` module to be redirec
         extractor = TimeseriesExtractor()
 
         # Use the `parallel_log_config` parameter to pass queue and the logging level
-        extractor.get_bold(bids_dir="path/to/bids/dir",
-                        task="rest",
-                        tr=2,
-                        n_cores=5,
-                        parallel_log_config = {"queue": queue, "level": logging.WARNING})
+        extractor.get_bold(
+            bids_dir="path/to/bids/dir",
+            task="rest",
+            tr=2,
+            n_cores=5,
+            parallel_log_config={"queue": queue, "level": logging.WARNING},
+        )
 
         # Stop listener
         listener.stop()
