@@ -1,7 +1,11 @@
 """A class which is responsible for accessing all TimeseriesExtractorGetter and to keep track of all attributes in
 TimeSeriesExtractor"""
-import copy
+import copy, os
+from typing import Union
+
 import numpy as np
+from numpy.typing import NDArray
+
 from ..check_parcel_approach import _check_parcel_approach
 from ..pickle_utils import _convert_pickle_to_dict
 
@@ -11,7 +15,7 @@ class _TimeseriesExtractorGetter:
 
     #### Exists upon initialization of TimeseriesExtractor
     @property
-    def space(self):
+    def space(self) -> str:
         return self._space
 
     @space.setter
@@ -20,37 +24,40 @@ class _TimeseriesExtractorGetter:
         self._space = new_space
 
     @property
-    def parcel_approach(self):
+    def parcel_approach(self) -> Union[
+        dict[str, dict[str, Union[os.PathLike, list[str]]]],
+        dict[str, dict[str, Union[os.PathLike, list[str], dict[str, dict[str, list[int]]]]]]
+        ]:
         return self._parcel_approach
-
-    @property
-    def signal_clean_info(self):
-        return self._signal_clean_info
 
     @parcel_approach.setter
     def parcel_approach(self, parcel_dict):
         self._parcel_approach = _check_parcel_approach(parcel_approach=parcel_dict, call="setter")
 
+    @property
+    def signal_clean_info(self) -> Union[dict[str, Union[bool, int, float, str]], None]:
+        return self._signal_clean_info
+
     ### Does not exists upon initialization of Timeseries Extractor
 
     # Exist when TimeSeriesExtractor.get_bold() used
     @property
-    def task_info(self):
+    def task_info(self) -> Union[dict[str, Union[str, int]], None]:
         return self._task_info if hasattr(self, "_task_info") else None
 
     # Gets initialized and populated in TimeSeriesExtractor.get_bold(),
     @property
-    def subject_ids(self):
+    def subject_ids(self) -> Union[list[str], None]:
         return self._subject_ids if hasattr(self, "_subject_ids") else None
 
     @property
-    def n_cores(self):
+    def n_cores(self) -> Union[int, None]:
         return self._n_cores if hasattr(self, "_n_cores") else None
 
     # Gets initialized in TimeSeriesExtractor.get_bold(), gets populated when
     # TimeseriesExtractor._timeseries_aggregator gets called in TimeseriesExtractor._extract_timeseries
     @property
-    def subject_timeseries(self):
+    def subject_timeseries(self) -> Union[dict[str, dict[str, NDArray[np.floating]]], None]:
         return self._subject_timeseries if hasattr(self, "_subject_timeseries") else None
 
     @subject_timeseries.setter

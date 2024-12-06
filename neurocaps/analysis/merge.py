@@ -1,15 +1,18 @@
 import copy, os
 from typing import Union, Optional
+
 import numpy as np
+from numpy.typing import NDArray
+
 from .._utils import (_convert_pickle_to_dict, _dicts_to_pickles, _logger)
 
 LG = _logger(__name__)
 
-def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, np.ndarray]]], list[os.PathLike]],
+def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, NDArray[np.floating]]]], list[os.PathLike]],
                 return_merged_dict: bool=True, return_reduced_dicts: bool=False,
                 output_dir: Optional[Union[str, os.PathLike]]=None,
                 filenames: Optional[list[str]]=None,
-                save_reduced_dicts: bool=False) -> dict[str, dict[str, dict[str, np.ndarray]]]:
+                save_reduced_dicts: bool=False) -> dict[str, dict[str, dict[str, NDArray[np.floating]]]]:
     """
     Merge Participant Timeseries Across Multiple Sessions or Tasks.
 

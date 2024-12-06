@@ -1,4 +1,4 @@
-import copy, glob, json, math, pickle, os, shutil, sys, tempfile
+import copy, glob, json, math, pickle, os, re, shutil, sys, tempfile
 import pytest, numpy as np, pandas as pd
 from neurocaps.extraction import TimeseriesExtractor
 
@@ -1208,7 +1208,6 @@ def test_validate_timeseries_setter():
 
 
 def test_custom_error():
-    import re
     from neurocaps.extraction.timeseriesextractor import BIDSQueryError
 
     extractor = TimeseriesExtractor(space="Placeholder")
@@ -1221,3 +1220,13 @@ def test_custom_error():
 
     with pytest.raises(BIDSQueryError, match=re.escape(msg)):
         extractor.get_bold(bids_dir=bids_dir, task="rest", run_subjects=["01"])
+
+
+def test_check_raise_error():
+    msg = (
+        f"Cannot do x since `self.subject_timeseries` is None, either run "
+        "`self.get_bold()` or assign a valid timeseries dictionary to `self.subject_timeseries`."
+    )
+
+    with pytest.raises(AttributeError, match=re.escape(msg)):
+        TimeseriesExtractor._raise_error("Cannot do x")

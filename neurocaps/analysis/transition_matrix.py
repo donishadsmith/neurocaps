@@ -1,13 +1,21 @@
-from typing import Optional
 import os
+from typing import Optional, Union
+
 import matplotlib.pyplot as plt, pandas as pd
+
 from .._utils import (_check_kwargs, _create_display, _logger, _save_contents)
 
 LG = _logger(__name__)
 
-def transition_matrix(trans_dict: dict[str, pd.DataFrame], output_dir: Optional[os.PathLike]=None,
-                      suffix_title: Optional[str]=None, suffix_filename: Optional[str]=None, show_figs: bool = True,
-                      save_plots: bool=True, return_df: bool = True,  save_df: bool=True, **kwargs):
+def transition_matrix(trans_dict: dict[str, pd.DataFrame],
+                      output_dir: Optional[os.PathLike]=None,
+                      suffix_title: Optional[str]=None,
+                      suffix_filename: Optional[str]=None,
+                      show_figs: bool = True,
+                      save_plots: bool=True,
+                      return_df: bool = True,
+                      save_df: bool=True,
+                      **kwargs) -> pd.DataFrame:
     """
     Generate and Visualize the Averaged Transition Probabilities.
 
@@ -102,8 +110,6 @@ def transition_matrix(trans_dict: dict[str, pd.DataFrame], output_dir: Optional[
 
     Returns
     -------
-    `seaborn.heatmap`
-        An instance of `seaborn.heatmap`.
     `dict[str, pd.DataFrame]`
         An instance of a pandas DataFrame for each group.
 

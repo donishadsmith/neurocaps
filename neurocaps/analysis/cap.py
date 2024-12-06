@@ -1,5 +1,5 @@
 import collections, copy, itertools, os, re, sys, tempfile
-from typing import Union, Literal, Optional
+from typing import Callable, Literal, Optional, Union
 
 import numpy as np, nibabel as nib, matplotlib.pyplot as plt, pandas as pd, seaborn, surfplot
 import plotly.express as px, plotly.graph_objects as go, plotly.offline as pyo
@@ -8,6 +8,7 @@ from joblib import Parallel, delayed
 from nilearn.plotting.cm import _cmap_d
 from neuromaps.transforms import mni152_to_fslr, fslr_to_fslr
 from neuromaps.datasets import fetch_fslr
+from numpy.typing import ArrayLike, NDArray
 from scipy.stats import pearsonr
 from sklearn.cluster import KMeans
 
@@ -24,8 +25,8 @@ class CAP(_CAPGetter):
 
     Parameters
     ----------
-    parcel_approach: :obj:`dict[str, dict[str, os.PathLike | list[str]]]`, :obj:`dict[str, dict[str, str | int]]`, \
-                      or :obj:`os.PathLike`, default=None
+    parcel_approach: :obj:`dict[str, dict[str, Union[os.PathLike, list[str]]]`, \
+                     :obj:`dict[str, dict[str, Union[os.PathLike, list[str]]]]`, or :obj:`os.PathLike`, default=None
         The approach used to parcellate NifTI images. Similar to ``TimeseriesExtractor``, "Schaefer" and "AAL"
         can be initialized here to create the appropriate ``parcel_approach`` that includes the sub-keys
         ("maps", "nodes", and "regions"), which are needed for several plotting functions in this class. This
@@ -68,17 +69,8 @@ class CAP(_CAPGetter):
 
     Properties
     ----------
-    n_clusters: :obj:`int` or :obj:`list[int]`
-        An integer or list of integers (if ``cluster_selection_method`` is not None) that was used for
-        ``sklearn.cluster.KMeans`` in ``self.get_caps()``.
-
-    groups: :obj:`dict[str, list[str]]` or :obj:`None`:
-        A mapping of groups names to unique subject IDs.
-
-    cluster_selection_method: :obj:`str` or :obj:`None`:
-        The cluster selection method used in ``self.get_caps()`` to identify the optimal number of clusters.
-
-    parcel_approach: :obj:`dict[str, dict[str, os.PathLike | list[str]]]`
+    parcel_approach: :obj:`dict[str, dict[str, Union[os.PathLike, list[str]]]]` or \
+                     :obj:`dict[str, dict[str, Union[os.PathLike, list[str], dict[str, dict[str, list[int]]]]]]`
         A dictionary containing information about the parcellation. Can also be used as a setter, which accepts a
         dictionary or a dictionary saved as a pickle file. The structure is as follows:
 
@@ -106,14 +98,23 @@ class CAP(_CAPGetter):
 
         Refer to the example for "Custom" in the Note section below for the expected structure.
 
-    n_cores: :obj:`int`
-        Number of cores to use for multiprocessing with joblib. Is None until ``self.get_caps()`` is used
-        and ``n_cores`` is specified.
+    groups: :obj:`dict[str, list[str]]` or :obj:`None`:
+        A mapping of groups names to unique subject IDs.
 
-    runs: :obj:`int` or :obj:`list[int]`
+    n_clusters: :obj:`int`, :obj:`list[int]`, or :obj:`None`
+        An integer or list of integers (if ``cluster_selection_method`` is not None) that was used for
+        ``sklearn.cluster.KMeans`` in ``self.get_caps()``.
+
+    cluster_selection_method: :obj:`str` or :obj:`None`:
+        The cluster selection method used in ``self.get_caps()`` to identify the optimal number of clusters.
+
+    n_cores: :obj:`int` or :obj:`None`
+        Number of cores specified in ``self.get_caps()`` to use for multiprocessing with joblib.
+
+    runs: :obj:`int`, :obj:`list[Union[int, str]]`, or :obj:`None`
         The run IDs specified in ``self.get_caps()``.
 
-    caps: :obj:`dict[str, dict[str, np.array]]`
+    caps: :obj:`dict[str, dict[str, np.array]]` or :obj:`None`
         A dictionary mapping the cluster centroids, extracted from the k-means model, to each group after
         ``self.get_caps`` is used. The structure is as follows:
 
@@ -127,7 +128,7 @@ class CAP(_CAPGetter):
 
             }
 
-    kmeans: :obj:`dict[str, sklearn.cluster.KMeans]`
+    kmeans: :obj:`dict[str, sklearn.cluster.KMeans]` or :obj:`None`
         A dictionary mapping group-specific ``sklearn.cluster.KMeans`` model to each group when ``self.get_caps()`` is
         used. If ``cluster_selection_method`` is used, the model stored in this property is the optimal k-means model.
         The structure is as follows:
@@ -138,7 +139,7 @@ class CAP(_CAPGetter):
                 "GroupName": sklearn.cluster.KMeans,
             }
 
-    cluster_scores: :obj:`dict[str, Union[str, dict[str, float]]]`
+    cluster_scores: :obj:`dict[str, Union[str, dict[str, float]]]` or :obj:`None`
         A dictionary mapping groups to the assessed cluster sizes and corresponding score of a specific
         ``cluster_selection_method`` available in ``self.get_caps()``. The structure is as follows:
 
@@ -157,7 +158,7 @@ class CAP(_CAPGetter):
 
         .. versionadded:: 0.19.0 ``inertia``, ``silhouette``, ``davies_bouldin``, and ``variance_ratio`` consolidated into this property
 
-    variance_explained: :obj:`dict[str, dict[float]]`
+    variance_explained: :obj:`dict[str, float]` or :obj:`None`
         A dictionary mapping groups to a float representing the total variance explained by their respective model
         stored in ``self.kmeans``. The structure is as follows:
 
@@ -169,7 +170,7 @@ class CAP(_CAPGetter):
 
         .. versionadded:: 0.18.8
 
-    optimal_n_clusters: :obj:`dict[str, dict[int]]`
+    optimal_n_clusters: :obj:`dict[str, int]` or :obj:`None`
         A dictionary mapping groups to their optimal cluster sizes if ``cluster_selection_method`` is not None in
         ``self.get_caps()``. The structure is as follows:
 
@@ -179,11 +180,11 @@ class CAP(_CAPGetter):
                 "GroupName": int,
             }
 
-    standardize: :obj:`bool`
+    standardize: :obj:`bool` or :obj:`None`
         A boolean denoting whether the features of the concatenated timeseries data are standardized if standardization
         was requested in ``self.get_caps()``.
 
-    means: :obj:`dict[str, np.array]`
+    means: :obj:`dict[str, np.array]` or :obj:`None`
         A dictionary mapping groups to their associated numpy array containing the means of each feature (ROI) if
         ``standardize`` is True in ``self.get_caps()``. The structure is as follows:
 
@@ -193,7 +194,7 @@ class CAP(_CAPGetter):
                 "GroupName": np.array([...]), # Shape: 1 x ROIs
             }
 
-    stdev: :obj:`dict[str, np.array]`
+    stdev: :obj:`dict[str, np.array]` or :obj:`None`
         A dictionary mapping groups to their associated numpy array containing the sample standard deviation of each
         feature (ROI) if ``standardize`` is True in ``self.get_caps()``. The structure is as follows:
 
@@ -203,7 +204,7 @@ class CAP(_CAPGetter):
                 "GroupName": np.array([...]), # Shape: 1 x ROIs
             }
 
-    concatenated_timeseries: :obj:`dict[str, np.array]`
+    concatenated_timeseries: :obj:`dict[str, np.array]` or :obj:`None`
         A dictionary mapping each group to their associated concatenated numpy array [(participants x TRs) x ROIs] when
         ``self.get_caps()`` is used. Note, if there are memory issues, ``delattr(self, "_concatenated_timeseries")``
         (version < 0.18.10) or ``del self.concatenated_timeseries`` (version >= 0.18.10) can be used to delete
@@ -215,7 +216,7 @@ class CAP(_CAPGetter):
                 "GroupName": np.array([...]), # Shape: (participants x TRs) x ROIs
             }
 
-    region_caps: :obj:`dict[str, np.array]`
+    region_caps: :obj:`dict[str, dict[str, np.array]]` or :obj:`None`
         A dictionary mapping group to their CAPs and corresponding numpy array (1 x regions) containing the averaged
         value of each region or network if ``visual_scope`` set to "regions" in ``self.caps2plot()``.
         The position of elements corresponds to "regions" in ``parcel_approach``. The structure is as follows:
@@ -230,7 +231,7 @@ class CAP(_CAPGetter):
 
             }
 
-    outer_products: :obj:`dict[str, dict[str, np.array]]`
+    outer_products: :obj:`dict[str, dict[str, np.array]]` or :obj:`None`
         A dictionary mapping group to their CAPs and corresponding numpy array (ROIs x ROIs) containing the outer
         product if ``plot_options`` set to "outer_product" ``self.caps2plot()``. The structure is as follows:
 
@@ -244,7 +245,7 @@ class CAP(_CAPGetter):
 
             }
 
-    subject_table: :obj:`dict[str, str]`
+    subject_table: :obj:`dict[str, str]` or :obj:`None`
         A dictionary generated when ``self.get_caps()`` is used. Operates as a lookup table that pairs each subject ID
         with the associated group. Also can be used as a setter. The structure is as follows.
 
@@ -255,7 +256,7 @@ class CAP(_CAPGetter):
                 "Subject-ID": "GroupName",
             }
 
-    cosine_similarity: :obj: `dict[str, dict[list]]`
+    cosine_similarity: :obj: `dict[str, Union[list[str], dict[str, dict[str, float]]]]` or :obj:`None`
         A dictionary mapping each group to their CAPs and their associated "High Amplitude" and "Low Amplitude"
         list containing the cosine similarities. Each group contains a "Regions" key, consisting of a list of
         regions or networks. The position of the cosine similarities in the "High Amplitude" and "Low Amplitude"
@@ -267,14 +268,15 @@ class CAP(_CAPGetter):
             {
                 "GroupName": {
                     "Regions": [...],
-                    "CAP-1": {"High Amplitude": [...], # Shape: 1 x Regions
-                              "Low Amplitude": [...]   # Shape: 1 x Regions
-                              }
-                    "CAP-2": {"High Amplitude": [...], # Shape: 1 x Regions
-                              "Low Amplitude": [...]   # Shape: 1 x Regions
-                              }
+                    "CAP-1": {
+                        "High Amplitude": [...], # Shape: 1 x Regions
+                        "Low Amplitude": [...]   # Shape: 1 x Regions
+                    }
+                    "CAP-2": {
+                        "High Amplitude": [...], # Shape: 1 x Regions
+                        "Low Amplitude": [...]   # Shape: 1 x Regions
+                    }
                 }
-
             }
 
     Note
@@ -393,12 +395,12 @@ class CAP(_CAPGetter):
         self._parcel_approach = parcel_approach
 
     def get_caps(self,
-                 subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.PathLike],
+                 subject_timeseries: Union[dict[str, dict[str, NDArray[np.floating]]], os.PathLike],
                  runs: Optional[Union[int, str, list[int], list[str]]]=None,
                  n_clusters: Union[int, list[int]]=5,
                  cluster_selection_method: Literal["elbow", "davies_bouldin", "silhouette", "variance_ratio"]=None,
                  random_state: Optional[int]=None,
-                 init: Union[np.array, Literal["k-means++", "random"]]="k-means++",
+                 init: Union[Literal["k-means++", "random"], Callable, ArrayLike]="k-means++",
                  n_init: Union[Literal["auto"], int]="auto",
                  max_iter: int=300,
                  tol: float=0.0001,
@@ -407,7 +409,7 @@ class CAP(_CAPGetter):
                  n_cores: Optional[int]=None,
                  show_figs: bool=False,
                  output_dir: Optional[os.PathLike]=None,
-                 **kwargs) -> plt.figure:
+                 **kwargs) -> None:
         """
         Perform K-Means Clustering to Identify CAPs.
 
@@ -445,7 +447,7 @@ class CAP(_CAPGetter):
             all runs in the subject timeseries will be concatenated into a single dataframe and subjected to k-means
             clustering.
 
-        n_clusters: :obj:`int | list[int]`, default=5
+        n_clusters: :obj:`Union[int, list[int]]`, default=5
             The number of clusters to use for ``sklearn.cluster.KMeans``. Can be a single integer or a list of
             integers (if ``cluster_selection_method`` is not None).
 
@@ -456,9 +458,9 @@ class CAP(_CAPGetter):
         random_state: :obj:`int` or :obj:`None`, default=None
             The random state to use for ``sklearn.cluster.KMeans``. Ensures reproducible results.
 
-        init: {"k-means++", "random"}, or :class:`np.ndarray`, default="k-means++"
+        init: {"k-means++", "random"}, :obj:`Callable`, or `ArrayLike`, default="k-means++"
             Method for choosing initial cluster centroid for ``sklearn.cluster.KMeans``. Options are "k-means++",
-            "random", or np.ndarray.
+            "random", or callable or array-like of shape (n_clusters, n_features).
 
         n_init: {"auto"} or :obj:`int`, default="auto"
             Number of times ``sklearn.cluster.KMeans`` is ran with different initial clusters.
@@ -506,11 +508,6 @@ class CAP(_CAPGetter):
             - step: :obj:`int`, default=None
                 An integer value that controls the progression of the x-axis in plots for the specified
                 ``cluster_selection_method``. When set, only integer values will be displayed on the x-axis.
-
-        Returns
-        -------
-        `matplotlib.Figure`
-            An instance of `matplotlib.Figure`.
         """
         self._n_cores = n_cores
         # Ensure all unique values if n_clusters is a list
@@ -758,8 +755,19 @@ class CAP(_CAPGetter):
             self._caps[group].update({f"CAP-{state_number}": state_vector
                                       for state_number, state_vector in cluster_centroids})
 
+    @staticmethod
+    def _raise_error(property_name):
+        if property_name == "caps":
+            raise AttributeError("Cannot plot caps since `self.caps` is None. Run `self.get_caps()` first.")
+        elif property_name == "parcel_approach":
+            raise AttributeError("`self.parcel_approach` is None. Add `parcel_approach` using "
+                                 "`self.parcel_approach=parcel_approach` to use this method.")
+        else:
+            raise AttributeError("Cannot calculate metrics since `self.kmeans` is None. Run "
+                                 "`self.get_caps()` first.")
+
     def calculate_metrics(self,
-                          subject_timeseries: Union[dict[str, dict[str, np.ndarray]], os.PathLike],
+                          subject_timeseries: Union[dict[str, dict[str, NDArray[np.floating]]], os.PathLike],
                           tr: Optional[float]=None,
                           runs: Optional[Union[int, str, list[int], list[str]]]=None,
                           continuous_runs: bool=False,
@@ -924,7 +932,7 @@ class CAP(_CAPGetter):
         standard deviation derived from the concatenated data.
 
         **Group-Specific CAPs**: When the ``groups`` parameter is used during initialization of the ``CAP`` class,
-        ``self.get_caps`` computes separate k-means model for each group. This means that each group has its own
+        ``self.get_caps()`` computes separate k-means model for each group. This means that each group has its own
         specific k-means model that is used for CAP metric calculations. The inclusion of all groups within the same
         dataframe (for "temporal_fraction", "persistence", "counts", and "transition_frequency") is primarily to
         reduce the number of dataframes generated. Hence, each CAP (e.g., "CAP-1") is specific to its respective groups.
@@ -1012,9 +1020,7 @@ class CAP(_CAPGetter):
         patterns of functional brain networks reveal the aberrant dynamic state transition in schizophrenia.
         NeuroImage, 237, 118193. https://doi.org/10.1016/j.neuroimage.2021.118193
         """
-        if not hasattr(self, "_kmeans"):
-            raise AttributeError("Cannot calculate metrics since `self._kmeans` attribute does not exist. Run "
-                                 "`self.get_caps()` first.")
+        if not self.kmeans: self._raise_error("kmeans")
 
         if prefix_filename is not None and output_dir is None:
             LG.warning("`prefix_filename` supplied but no `output_dir` specified. Files will not be saved.")
@@ -1313,7 +1319,7 @@ class CAP(_CAPGetter):
                                       list[Literal["regions", "nodes"]]]="regions",
                   show_figs: bool=True,
                   subplots: bool=False,
-                  **kwargs) -> seaborn.heatmap:
+                  **kwargs) -> None:
         """
         Generate Heatmaps and Outer Product Plots for CAPs.
 
@@ -1424,11 +1430,6 @@ class CAP(_CAPGetter):
             - vmax: :obj:`float` or :obj:`None`, default=None
                 The maximum value to display in colormap.
 
-        Returns
-        -------
-        `seaborn.heatmap`
-            An instance of `seaborn.heatmap`.
-
         Note
         ----
         **Parcellation Approach**: the "nodes" and "regions" sub-keys are required in ``parcel_approach`` for this
@@ -1438,13 +1439,9 @@ class CAP(_CAPGetter):
         https://seaborn.pydata.org/tutorial/color_palettes.html
 
         """
-        if not self._parcel_approach:
-            raise AttributeError("`self.parcel_approach` is None. Add `parcel_approach` using "
-                                 "`self.parcel_approach=parcel_approach` to use this method.")
+        if not self.parcel_approach: self._raise_error("parcel_approach")
 
-        if not hasattr(self, "_caps"):
-            raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` "
-                                 "first.")
+        if not self.caps: self._raise_error("caps")
 
         if suffix_filename is not None and output_dir is None:
             LG.warning("`suffix_filename` supplied but no `output_dir` specified. Files will not be saved.")
@@ -1858,7 +1855,7 @@ class CAP(_CAPGetter):
                   save_plots: bool=True,
                   return_df: bool=False,
                   save_df: bool=False,
-                  **kwargs) -> Union[seaborn.heatmap, dict[str, pd.DataFrame]]:
+                  **kwargs) -> dict[str, pd.DataFrame]:
         """
         Generate Pearson Correlation Matrix for CAPs.
 
@@ -1950,8 +1947,6 @@ class CAP(_CAPGetter):
 
         Returns
         -------
-        `seaborn.heatmap`
-            An instance of `seaborn.heatmap`.
         `dict[str, pd.DataFrame]`
             An instance of a pandas DataFrame for each group.
 
@@ -1962,10 +1957,7 @@ class CAP(_CAPGetter):
         """
         corr_dict = {group: None for group in self._groups} if return_df or save_df else None
 
-        if not hasattr(self, "_caps"):
-            raise AttributeError(
-                "Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` first."
-                )
+        if not self.caps: self._raise_error("caps")
 
         if suffix_filename is not None and output_dir is None:
             LG.warning("`suffix_filename` supplied but no `output_dir` specified. Files will not be saved.")
@@ -2022,7 +2014,7 @@ class CAP(_CAPGetter):
                     output_dir: os.PathLike,
                     suffix_filename: Optional[str]=None,
                     fwhm: Optional[float]=None,
-                    knn_dict: dict[str, Union[int, list[int], np.array]]=None) -> nib.Nifti1Image:
+                    knn_dict: dict[str, Union[int, list[int], NDArray[np.integer]]]=None) -> None:
         """
         Standalone Method to Convert CAPs to NifTI Statistical Maps.
 
@@ -2045,7 +2037,7 @@ class CAP(_CAPGetter):
             Strength of spatial smoothing to apply (in millimeters) to the statistical map prior to interpolating
             from MNI152 space to fslr surface space. Uses ``nilearn.image.smooth_img``.
 
-        knn_dict: :obj:`dict[str, int | bool]`, default=None
+        knn_dict: :obj:`dict[str, Union[int, bool]]`, default=None
             Use KNN (k-nearest neighbors) interpolation to fill in non-background coordinates that are assigned zero.
             This is primarily used as a fix for when a custom parcellation does not project well from volumetric to
             surface space. This method involves resampling a reference volumetric parcellation that projects
@@ -2071,11 +2063,6 @@ class CAP(_CAPGetter):
             .. versionchanged:: 0.18.0 "remove_subcortical" key changed to "remove_labels" and default of "k" changed
                1 to 3
 
-        Returns
-        -------
-        `NifTI1Image`
-            `NifTI` statistical map.
-
         Note
         ----
         **Assumption**: This function assumes that the background label for the parcellation is zero. Additionaly,
@@ -2095,14 +2082,9 @@ class CAP(_CAPGetter):
             for indx, value in enumerate(cap_vector, start=1):
                 atlas_array[atlas_fdata == target_array[indx]] = value
         """
-        if not self._parcel_approach:
-            raise AttributeError("`self.parcel_approach` is None. Set "
-                                 "`self.parcel_approach=parcel_approach` to use this method.")
+        if not self.parcel_approach: self._raise_error("parcel_approach")
 
-        if not hasattr(self, "_caps"):
-            raise AttributeError(
-                "Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` first."
-                )
+        if not self.caps: self._raise_error("caps")
 
         # Check `knn_dict`
         if knn_dict:
@@ -2162,8 +2144,8 @@ class CAP(_CAPGetter):
                   method: Literal["linear", "nearest"]="linear",
                   save_stat_maps: bool=False,
                   fslr_giftis_dict: Optional[dict]=None,
-                  knn_dict: dict[str, Union[int, list[int], np.array]]=None,
-                  **kwargs) -> surfplot.Plot:
+                  knn_dict: dict[str, Union[int, list[int], NDArray[np.integer]]]=None,
+                  **kwargs) -> None:
         """
         Project CAPs onto Surface Plots.
 
@@ -2229,7 +2211,7 @@ class CAP(_CAPGetter):
             parameter allows plotting without re-running the analysis. Initialize the CAP class and use this method
             if using this parameter.
 
-        knn_dict: :obj:`dict[str, int | bool]`, default=None
+        knn_dict: :obj:`dict[str, Union[int, bool]]`, default=None
             Use KNN (k-nearest neighbors) interpolation to fill in non-background coordinates that are assigned zero.
             This is primarily used as a fix for when a custom parcellation does not project well from volumetric to
             surface space. This method involves resampling a reference volumetric parcellation that projects
@@ -2300,13 +2282,6 @@ class CAP(_CAPGetter):
             - bbox_inches: :obj:`str` or :obj:`None`, default="tight"
                 Alters size of the whitespace in the saved image.
 
-        Returns
-        -------
-        `NifTI1Image`
-            `NifTI` statistical map.
-        `surfplot.plotting.Plot`
-            An instance of `surfplot.plotting.Plot`.
-
         Note
         ----
         **Parcellation Approach**: ``parcel_approach`` must have the "maps" sub-key containing the path to th
@@ -2329,13 +2304,9 @@ class CAP(_CAPGetter):
             for indx, value in enumerate(cap_vector, start=1):
                 atlas_array[atlas_fdata == target_array[indx]] = value
         """
-        if not self._parcel_approach and fslr_giftis_dict is None:
-            raise AttributeError("`self.parcel_approach` is None. Add parcel_approach using "
-                                 "`self.parcel_approach=parcel_approach` to use this method.")
+        if not self.parcel_approach and fslr_giftis_dict is None: self._raise_error("parcel_approach")
 
-        if not hasattr(self, "_caps") and fslr_giftis_dict is None:
-            raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` "
-                                 "first.")
+        if not self.caps and fslr_giftis_dict is None: self._raise_error("caps")
 
         if suffix_filename is not None and output_dir is None:
             LG.warning("`suffix_filename` supplied but no `output_dir` specified. Files will not be saved.")
@@ -2445,7 +2416,7 @@ class CAP(_CAPGetter):
                    show_figs: bool=True,
                    use_scatterpolar: bool=False,
                    as_html: bool=False,
-                   **kwargs) -> Union[px.line_polar, go.Scatterpolar]:
+                   **kwargs) -> None:
         """
         Generate Radar Plots for CAPs using Cosine Similarity.
 
@@ -2617,13 +2588,6 @@ class CAP(_CAPGetter):
             - engine: {"kaleido", "orca"}, default="kaleido"
                 Engine used for saving plots.
 
-        Returns
-        -------
-        `plotly.express.line_polar`
-            An instance of `plotly.express.line_polar`.
-        `plotly.graph_objects.Scatterpolar`
-            An instance of `plotly.graph_objects.Scatterpolar`.
-
         Note
         -----
         **Saving Plots**: By default, this function uses "kaleido" (which is also a dependency in this package)
@@ -2658,13 +2622,9 @@ class CAP(_CAPGetter):
         occupancy in the presence of cerebral small vessel disease — A pre-registered replication analysis of the
         Hamburg City Health Study. Imaging Neuroscience, 2, 1–17. https://doi.org/10.1162/imag_a_00122
         """
-        if not self._parcel_approach:
-            raise AttributeError("`self.parcel_approach` is None. Add parcel_approach using "
-                                 "`self.parcel_approach=parcel_approach` to use this method.")
+        if not self.parcel_approach: self._raise_error("parcel_approach")
 
-        if not hasattr(self, "_caps"):
-            raise AttributeError("Cannot plot caps since `self._caps` attribute does not exist. Run `self.get_caps()` "
-                                 "first.")
+        if not self.caps: self._raise_error("caps")
 
         if not self._standardize:
             LG.warning("To better aid interpretation, the matrix subjected to kmeans clustering in "

@@ -4,6 +4,7 @@ from typing import Callable, Literal, Optional, Union
 
 import matplotlib.pyplot as plt, numpy as np
 from joblib import Parallel, delayed, dump
+
 from .._utils import (_TimeseriesExtractorGetter, _check_kwargs, _check_confound_names,
                       _check_parcel_approach, _extract_timeseries, _logger)
 
@@ -15,7 +16,7 @@ class BIDSQueryError(Exception):
         super().__init__(message)
         self.message = message
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.message}"
 
 class TimeseriesExtractor(_TimeseriesExtractorGetter):
@@ -30,7 +31,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         The standard template space that the preprocessed bold data is registered to. Used for querying with pybids
         to locate preprocessed BOLD-related files.
 
-    parcel_approach: :obj:`dict[str, dict[str, str | int]]` or :obj:`os.PathLike`, \
+    parcel_approach: :obj:`dict[str, dict[str, Union[str, int]]]` or :obj:`os.PathLike`, \
                      default={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
         The approach to parcellate NifTI images. This must be a nested dictionary with the first key being the
         parcellation name. Currently, only "Schaefer", "AAL", and "Custom" are supported. Recognized second level
@@ -122,7 +123,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         components derived from combined masks (WM & CSF), leave this parameter as None and list the specific
         acompcors of interest in ``confound_names``.
 
-    dummy_scans: :obj:`int`, :obj:`dict[str, bool | int]`, or :obj:`None`, default=None
+    dummy_scans: :obj:`int`, :obj:`dict[str, Union[bool, int]]`, or :obj:`None`, default=None
         Removes the first `n` volumes before extracting the timeseries. If, ``dummy_scans`` is a dictionary,
         the following keys can be used:
 
@@ -149,7 +150,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         The standard template space that the preprocessed BOLD data is registered to. The space can also be set after
         class initialization using ``self.space = "New Space"`` if the template space needs to be changed.
 
-    parcel_approach: :obj:`dict[str, dict[str, os.PathLike | list[str]]]`
+    parcel_approach: :obj:`dict[str, dict[str, Union[os.PathLike, list[str]]]]` or \
+                     :obj:`dict[str, dict[str, Union[os.PathLike, list[str], dict[str, dict[str, list[int]]]]]]`
         A dictionary containing information about the parcellation. Can also be used as a setter, which accepts a
         dictionary or a dictionary saved as pickle file. If "Schaefer" or "AAL" was specified during
         initialization of the ``TimeseriesExtractor`` class, then ``nilearn.datasets.fetch_atlas_schaefer_2018``
@@ -180,23 +182,23 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         Refer to the example for "Custom" in the Note section below for the expected structure.
 
-    signal_clean_info: :obj:`dict[str]`
+    signal_clean_info: :obj:`dict[str, Union[bool, int, float, str]]` or :obj:`None`
         Dictionary containing parameters for signal cleaning specified during initialization of the
         ``TimeseriesExtractor`` class. This information includes ``standardize``, ``detrend``, ``low_pass``,
         ``high_pass``, ``fwhm``, ``dummy_scans``, ``use_confounds``, ``n_compcor_separate``, and ``fd_threshold``.
 
-    task_info: :obj:`dict[str]`
+    task_info: :obj:`dict[str, Union[str, int]]` or :obj:`None`
         If ``self.get_bold()`` ran, is a dictionary containing all task-related information such as ``task``,
         ``condition``, ``session``, ``runs``, and ``tr`` (if specified) else None.
 
-    subject_ids: :obj:`list[str]`
+    subject_ids: :obj:`list[str]` or :obj:`None`
         A list containing all subject IDs that have retrieved from pybids and subjected to timeseries
         extraction.
 
-    n_cores: :obj:`int`
+    n_cores: :obj:`int` or :obj:`None`
         Number of cores used for multiprocessing with joblib.
 
-    subject_timeseries: :obj:`dict[str, dict[str, np.ndarray]`
+    subject_timeseries: :obj:`dict[str, dict[str, np.ndarray]]` or :obj:`None`
         A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a numpy array.
         Can also be a path to a pickle file containing this same structure. If this property needs to be deleted due
         to memory issues,  ``delattr(self, "_subject_timeseries")`` (version < 0.18.10) or
@@ -537,11 +539,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     extractor = TimeseriesExtractor()
 
                     # Use the `parallel_log_config` parameter to pass queue and the logging level
-                    extractor.get_bold(bids_dir="path/to/bids/dir",
-                                       task="rest",
-                                       tr=2,
-                                       n_cores=5,
-                                       parallel_log_config = {"queue": queue, "level": logging.WARNING})
+                    extractor.get_bold(
+                        bids_dir="path/to/bids/dir",
+                        task="rest",
+                        tr=2,
+                        n_cores=5,
+                        parallel_log_config = {"queue": queue, "level": logging.WARNING}
+                    )
 
                     # Stop listener
                     listener.stop()
@@ -885,6 +889,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         return tr
 
+    @staticmethod
+    def _raise_error(msg):
+        raise AttributeError(f"{msg} since `self.subject_timeseries` is None, either run "
+                             "`self.get_bold()` or assign a valid timeseries dictionary to `self.subject_timeseries`.")
+
     def timeseries_to_pickle(self, output_dir: Union[str, os.PathLike], filename: Optional[str]=None) -> None:
         """
         Save the Extracted Subject Timeseries.
@@ -904,12 +913,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             .. versionchanged:: 0.19.0  ``file_name`` to ``filename``
         """
-        if not hasattr(self, "_subject_timeseries"):
-            raise AttributeError("Cannot save pickle file since `self._subject_timeseries` does not exist, either run "
-                                 "`self.get_bold()` or assign a valid timeseries dictionary to `self.subject_timeseries`.")
+        if not self.subject_timeseries: self._raise_error("Cannot save pickle file")
 
-        if output_dir:
-            if not os.path.exists(output_dir): os.makedirs(output_dir)
+        if output_dir and not os.path.exists(output_dir): os.makedirs(output_dir)
 
         if filename is None: save_filename = "subject_timeseries.pkl"
         else: save_filename = f"{os.path.splitext(filename.rstrip())[0].rstrip()}.pkl"
@@ -925,7 +931,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                        show_figs: bool=True,
                        output_dir: Optional[Union[str, os.PathLike]]=None,
                        filename: Optional[str]=None,
-                       **kwargs) -> plt.figure:
+                       **kwargs) -> None:
         """
         Plot the Extracted Subject Timeseries.
 
@@ -971,19 +977,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             - bbox_inches: :obj:`str` or :obj:`None`, default="tight"
                 Alters size of the whitespace in the saved image.
 
-        Returns
-        -------
-        `matplotlib.Figure`
-            An instance of `matplotlib.Figure`.
-
         Note
         ----
         **Parcellation Approach**: the "nodes" and "regions" sub-keys are required in ``parcel_approach``.
         """
 
-        if not hasattr(self, "_subject_timeseries"):
-            raise AttributeError("Cannot plot bold data since `self._subject_timeseries` does not exist, either run "
-                                 "`self.get_bold()` or assign a valid timeseries structure to `self.subject_timeseries`.")
+        if not self.subject_timeseries: self._raise_error("Cannot plot bold data")
 
         if roi_indx is None and region is None:
             raise ValueError("either `roi_indx` or `region` must be specified.")

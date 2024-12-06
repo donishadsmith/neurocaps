@@ -16,6 +16,14 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.19.2] - 2024-12-06
+### 🐛 Fixes
+- Add type hints to properties.
+- Improve accuracy of type hints for the properties.
+- Fixes type hints for certain parameters that included numpy.ndarray.
+- Replaces any returns that implies a plot object is returned and replaces with None for clarity.
+- Raise type error when ``self.subject_table`` in ``CAP`` is set but is not a dictionary.
+
 ## [0.19.1] - 2024-11-30
 - Primarily to ensure all the latest distributions have the correct documentation links.
 - Includes some internal code changes that won't change results.

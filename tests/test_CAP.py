@@ -1,4 +1,4 @@
-import copy, glob, logging, math, os, pickle, sys, tempfile
+import copy, glob, logging, math, os, pickle, re, sys, tempfile
 import nibabel as nib, numpy as np, pandas as pd, pytest
 from kneed import KneeLocator
 from neurocaps.extraction import TimeseriesExtractor
@@ -932,3 +932,18 @@ def test_calculate_metrics_w_change_dtype():
         output_dir=tmp_dir.name,
     )
     assert glob.glob(os.path.join(tmp_dir.name, "*prefixname*"))
+
+
+def test_check_raise_error():
+    error_msg = {
+        "caps": "Cannot plot caps since `self.caps` is None. Run `self.get_caps()` first.",
+        "parcel_approach": (
+            "`self.parcel_approach` is None. Add `parcel_approach` using "
+            "`self.parcel_approach=parcel_approach` to use this method."
+        ),
+        "kmeans": ("Cannot calculate metrics since `self.kmeans` is None. Run " "`self.get_caps()` first."),
+    }
+
+    for i in ["caps", "parcel_approach", "kmeans"]:
+        with pytest.raises(AttributeError, match=re.escape(error_msg[i])):
+            CAP._raise_error(i)
