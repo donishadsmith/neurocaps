@@ -963,7 +963,7 @@ class CAP(_CAPGetter):
         in instances when two or more groups are specified and have different number of CAPs. As mentioned previously,
         "CAP-1", "CAP-2", and "CAP-3" for Group A is distinct from Group B due to using separate k-means models.
 
-        When no groups were specified during initialization of the ``CAP`` class, the resulting `"temporal_fraction"`
+        If no groups were specified during initialization of the ``CAP`` class, the resulting `"temporal_fraction"`
         dataframe (assuming four CAPs were identified in the k-means model using all participants):
 
         **Without Groups**
