@@ -63,7 +63,8 @@ def change_dtype(subject_timeseries_list: Union[list[dict[str, dict[str, NDArray
 
     Returns
     -------
-    `dict[str, dict[str, dict[str, np.ndarray]]]`
+    dict[str, dict[str, dict[str, np.ndarray]]]
+        A nested dictionary containing the converted subject timeseries.
 
     Warning
     -------

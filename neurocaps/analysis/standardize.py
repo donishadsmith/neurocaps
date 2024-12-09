@@ -61,7 +61,8 @@ def standardize(subject_timeseries_list: Union[list[dict[str, dict[str, NDArray[
 
     Returns
     -------
-    `dict[str, dict[str, dict[str, np.ndarray]]]`
+    dict[str, dict[str, dict[str, np.ndarray]]]
+        A nested dictionary containing the standardized subject timeseries.
     """
     assert isinstance(subject_timeseries_list, list) and len(subject_timeseries_list) > 0, \
         "`subject_timeseries_list` must be a list greater than length 0."

@@ -110,7 +110,7 @@ def transition_matrix(trans_dict: dict[str, pd.DataFrame],
 
     Returns
     -------
-    `dict[str, pd.DataFrame]`
+    dict[str, pd.DataFrame]
         An instance of a pandas DataFrame for each group.
 
     Note

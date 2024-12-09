@@ -1230,3 +1230,11 @@ def test_check_raise_error():
 
     with pytest.raises(AttributeError, match=re.escape(msg)):
         TimeseriesExtractor._raise_error("Cannot do x")
+
+def test_chain_TimeseriesExtractor():
+    a = {"show_figs": False}
+    extractor = TimeseriesExtractor()
+    extractor.get_bold(
+        bids_dir=bids_dir,
+        task="rest",
+        run_subjects=["01"]).timeseries_to_pickle(tmp_dir.name).visualize_bold("01", 0, 0, **a)

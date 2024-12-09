@@ -1,7 +1,7 @@
 # neurocaps
 [![Latest Version](https://img.shields.io/pypi/v/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.14286989)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.14322286)
 [![Github Repository](https://img.shields.io/badge/Source%20Code-neurocaps-purple)](https://github.com/donishadsmith/neurocaps)
 [![Test Status](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg)](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml)
 [![codecov](https://codecov.io/github/donishadsmith/neurocaps/graph/badge.svg?token=WS2V7I16WF)](https://codecov.io/github/donishadsmith/neurocaps)
@@ -230,7 +230,9 @@ extractor.get_bold(
     n_cores=None,
     pipeline_name="fmriprep",  # Can specify if multiple pipelines exists in derivatives directory
     verbose=True,
-)
+).timeseries_to_pickle(
+    "neurocaps_demo/derivatives", "timeseries.pkl"
+)  # Method chaining supported in >= 0.19.3 and available for several methods in `CAP` and `TimeseriesExtractor` classes
 ```
 **Output:**
 ```
@@ -249,6 +251,7 @@ extractor.get_bold(
 # Get CAPs
 cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
 
+# Pkl files can also be used as input for `subject_timeseries`
 cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, n_clusters=2, standardize=True)
 
 # `sharey` only applicable to outer product plots
