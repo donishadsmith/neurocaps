@@ -513,7 +513,7 @@ class CAP(_CAPGetter):
         -------
         self
 
-        
+
             .. versionadded:: 0.19.3
         """
         self._n_cores = n_cores
@@ -1443,7 +1443,7 @@ class CAP(_CAPGetter):
         -------
         self
 
-        
+
             .. versionadded:: 0.19.3
 
         Note
@@ -2085,7 +2085,7 @@ class CAP(_CAPGetter):
         -------
         self
 
-        
+
             .. versionadded:: 0.19.3
 
         Note
@@ -2313,7 +2313,7 @@ class CAP(_CAPGetter):
         -------
         self
 
-        
+
             .. versionadded:: 0.19.3
 
         Note
@@ -2628,7 +2628,7 @@ class CAP(_CAPGetter):
         -------
         self
 
-        
+
             .. versionadded:: 0.19.3
 
         Note

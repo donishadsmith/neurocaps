@@ -565,7 +565,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         -------
         self
 
-        
+
             .. versionadded:: 0.19.3
 
         Note
@@ -926,7 +926,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         -------
         self
 
-        
+
             .. versionadded:: 0.19.3
         """
         if not self.subject_timeseries: self._raise_error("Cannot save pickle file")
