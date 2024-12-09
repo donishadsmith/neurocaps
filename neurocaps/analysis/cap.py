@@ -508,6 +508,13 @@ class CAP(_CAPGetter):
             - step: :obj:`int`, default=None
                 An integer value that controls the progression of the x-axis in plots for the specified
                 ``cluster_selection_method``. When set, only integer values will be displayed on the x-axis.
+
+        Returns
+        -------
+        self
+
+        
+            .. versionadded:: 0.19.3
         """
         self._n_cores = n_cores
         # Ensure all unique values if n_clusters is a list
@@ -558,6 +565,8 @@ class CAP(_CAPGetter):
 
         # Create states dict
         self._create_caps_dict()
+
+        return self
 
     @staticmethod
     def _process_subject_timeseries(subject_timeseries):
@@ -1430,6 +1439,13 @@ class CAP(_CAPGetter):
             - vmax: :obj:`float` or :obj:`None`, default=None
                 The maximum value to display in colormap.
 
+        Returns
+        -------
+        self
+
+        
+            .. versionadded:: 0.19.3
+
         Note
         ----
         **Parcellation Approach**: the "nodes" and "regions" sub-keys are required in ``parcel_approach`` for this
@@ -1523,6 +1539,8 @@ class CAP(_CAPGetter):
             #  Generate plot for each group
             if plot_option == "outer_product": self._generate_outer_product_plots(**input_keys, subplots=subplots)
             elif plot_option == "heatmap": self._generate_heatmap_plots(**input_keys)
+
+        return self
 
     def _create_regions(self, parcellation_name):
         # Internal function to create an attribute called `region_caps`. Purpose is to average the values of all nodes
@@ -1947,7 +1965,7 @@ class CAP(_CAPGetter):
 
         Returns
         -------
-        `dict[str, pd.DataFrame]`
+        dict[str, pd.DataFrame]
             An instance of a pandas DataFrame for each group.
 
         Note
@@ -2063,6 +2081,13 @@ class CAP(_CAPGetter):
             .. versionchanged:: 0.18.0 "remove_subcortical" key changed to "remove_labels" and default of "k" changed
                1 to 3
 
+        Returns
+        -------
+        self
+
+        
+            .. versionadded:: 0.19.3
+
         Note
         ----
         **Assumption**: This function assumes that the background label for the parcellation is zero. Additionaly,
@@ -2102,6 +2127,8 @@ class CAP(_CAPGetter):
                 filename = self._basename(group, cap, suffix=suffix_filename, ext="nii.gz")
 
                 nib.save(stat_map, os.path.join(output_dir, filename))
+
+        return self
 
     @staticmethod
     def _validate_knn_dict(knn_dict):
@@ -2282,6 +2309,13 @@ class CAP(_CAPGetter):
             - bbox_inches: :obj:`str` or :obj:`None`, default="tight"
                 Alters size of the whitespace in the saved image.
 
+        Returns
+        -------
+        self
+
+        
+            .. versionadded:: 0.19.3
+
         Note
         ----
         **Parcellation Approach**: ``parcel_approach`` must have the "maps" sub-key containing the path to th
@@ -2408,6 +2442,8 @@ class CAP(_CAPGetter):
 
                 try: plt.show(fig) if show_figs else plt.close(fig)
                 except: plt.show() if show_figs else plt.close()
+
+        return self
 
     def caps2radar(self,
                    output_dir: Optional[os.PathLike]=None,
@@ -2588,6 +2624,13 @@ class CAP(_CAPGetter):
             - engine: {"kaleido", "orca"}, default="kaleido"
                 Engine used for saving plots.
 
+        Returns
+        -------
+        self
+
+        
+            .. versionadded:: 0.19.3
+
         Note
         -----
         **Saving Plots**: By default, this function uses "kaleido" (which is also a dependency in this package)
@@ -2740,6 +2783,8 @@ class CAP(_CAPGetter):
                     else:
                         filename = filename.replace(".png", ".html")
                         fig.write_html(os.path.join(output_dir, filename))
+
+        return self
 
     def _update_radar_dict(self, group, parcellation_name, radar_dict):
         for cap in self._caps[group]:

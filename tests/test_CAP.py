@@ -947,3 +947,10 @@ def test_check_raise_error():
     for i in ["caps", "parcel_approach", "kmeans"]:
         with pytest.raises(AttributeError, match=re.escape(error_msg[i])):
             CAP._raise_error(i)
+
+def test_chain_CAP():
+    a = {"show_figs" : False}
+    cap_analysis = CAP(parcel_approach)
+    cap_analysis.get_caps(
+        subject_timeseries=extractor.subject_timeseries,
+        n_clusters=2).caps2plot(**a)

@@ -22,14 +22,14 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, NDArray[
     For example, if three dictionaries are provided contain subject 1 with:
 
         - dict 1: run-1 (resting-state)
-        - dict 2: run-1 and run-2 (Stroop)
-        - dict 3: run-3 (N-back)
+        - dict 2: run-1 and run-2 (stroop)
+        - dict 3: run-3 (n-back)
 
     Then subject 1 in the final merged dictionary will contain:
 
-        - run-1: concatenated timeseries from dict 1 and dict 2 (resting-state + Stroop)
-        - run-2: timeseries from dict 2 (Stroop)
-        - run-3: timeseries from dict 3 (N-back)
+        - run-1: concatenated timeseries from dict 1 and dict 2 (resting-state + stroop)
+        - run-2: timeseries from dict 2 (stroop)
+        - run-3: timeseries from dict 3 (n-back)
 
     This function supports workflows for identifying similar CAPs across tasks or sessions. Specifically, using the
     merged dictionary as input for ``CAP.get_caps`` and the filtered input dictionaries, containing only subjects
@@ -87,7 +87,8 @@ def merge_dicts(subject_timeseries_list: Union[list[dict[str, dict[str, NDArray[
 
     Returns
     -------
-    `dict[str, dict[str, dict[str, np.ndarray]]]`
+    dict[str, dict[str, dict[str, np.ndarray]]]
+        A nested dictionary containing the merged subject timeseries and reduced subject timeseries if specified.
 
     References
     ----------

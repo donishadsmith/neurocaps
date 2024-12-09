@@ -230,7 +230,9 @@ extractor.get_bold(
     n_cores=None,
     pipeline_name="fmriprep",  # Can specify if multiple pipelines exists in derivatives directory
     verbose=True,
-)
+).timeseries_to_pickle(
+    "neurocaps_demo/derivatives", "timeseries.pkl"
+)  # Method chaining supported in >= 0.19.3 and available for several methods in `CAP` and `TimeseriesExtractor` classes
 ```
 **Output:**
 ```
@@ -249,6 +251,7 @@ extractor.get_bold(
 # Get CAPs
 cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
 
+# Pkl files can also be used as input for `subject_timeseries`
 cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, n_clusters=2, standardize=True)
 
 # `sharey` only applicable to outer product plots

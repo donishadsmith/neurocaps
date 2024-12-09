@@ -561,6 +561,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         flush: :obj:`bool`, default=False
             If True, flushes the logged subject-specific information produced during the timeseries extraction process.
 
+        Returns
+        -------
+        self
+
+        
+            .. versionadded:: 0.19.3
+
         Note
         ----
         **Subject Timeseries Dictionary**: This method stores the extracted timeseries of all subjects
@@ -664,6 +671,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
                 # Aggregate new timeseries
                 if isinstance(subject_timeseries, dict): self._subject_timeseries.update(subject_timeseries)
+
+        return self
 
     @staticmethod
     @lru_cache(maxsize=4)
@@ -912,6 +921,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Name of the file with or without the "pkl" extension.
 
             .. versionchanged:: 0.19.0  ``file_name`` to ``filename``
+
+        Returns
+        -------
+        self
+
+        
+            .. versionadded:: 0.19.3
         """
         if not self.subject_timeseries: self._raise_error("Cannot save pickle file")
 
@@ -922,6 +938,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         with open(os.path.join(output_dir, save_filename), "wb") as f:
             dump(self._subject_timeseries, f)
+
+        return self
 
     def visualize_bold(self,
                        subj_id: Union[int, str],
@@ -977,6 +995,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             - bbox_inches: :obj:`str` or :obj:`None`, default="tight"
                 Alters size of the whitespace in the saved image.
 
+        Returns
+        -------
+        self
+
+
+            .. versionadded:: 0.19.3
+
         Note
         ----
         **Parcellation Approach**: the "nodes" and "regions" sub-keys are required in ``parcel_approach``.
@@ -1031,6 +1056,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                         bbox_inches=plot_dict["bbox_inches"])
 
         plt.show() if show_figs else plt.close()
+
+        return self
 
     def _get_roi_indices(self, roi_indx, parcellation_name):
         if isinstance(roi_indx, int):
