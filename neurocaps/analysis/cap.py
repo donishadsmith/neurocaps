@@ -1493,12 +1493,12 @@ class CAP(_CAPGetter):
         if "regions" in visual_scope: self._create_regions(parcellation_name=parcellation_name)
 
         # Create plot dictionary
-        defaults= {"dpi": 300, "figsize": (8, 6), "fontsize": 14, "hspace": 0.2, "wspace": 0.2, "xticklabels_size": 8,
-                   "yticklabels_size": 8, "cbarlabels_size": 8, "shrink": 0.8, "nrow": None, "ncol": None,
-                   "suptitle_fontsize": 20, "tight_layout": True, "rect": [0, 0.03, 1, 0.95], "sharey": True,
-                   "xlabel_rotation": 0, "ylabel_rotation": 0, "annot": False, "annot_kws": None, "fmt": ".2g",
-                   "linewidths": 0, "linecolor": "black", "cmap": "coolwarm", "edgecolors": None, "alpha": None,
-                   "hemisphere_labels": False, "borderwidths": 0, "vmin": None, "vmax": None, "bbox_inches": "tight"}
+        defaults = {"dpi": 300, "figsize": (8, 6), "fontsize": 14, "hspace": 0.2, "wspace": 0.2, "xticklabels_size": 8,
+                    "yticklabels_size": 8, "cbarlabels_size": 8, "shrink": 0.8, "nrow": None, "ncol": None,
+                    "suptitle_fontsize": 20, "tight_layout": True, "rect": [0, 0.03, 1, 0.95], "sharey": True,
+                    "xlabel_rotation": 0, "ylabel_rotation": 0, "annot": False, "annot_kws": None, "fmt": ".2g",
+                    "linewidths": 0, "linecolor": "black", "cmap": "coolwarm", "edgecolors": None, "alpha": None,
+                    "hemisphere_labels": False, "borderwidths": 0, "vmin": None, "vmax": None, "bbox_inches": "tight"}
 
         plot_dict = _check_kwargs(defaults, **kwargs)
 
