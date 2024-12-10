@@ -15,12 +15,17 @@ def standardize(subject_timeseries_list: Union[list[dict[str, dict[str, NDArray[
                 filenames: Optional[list[str]]=None) -> dict[str, dict[str, dict[str, NDArray[np.floating]]]]:
 
     """
-    Perform Participant-wise Timeseries Standardization.
+    Perform Participant-wise Timeseries Standardization Within Runs.
 
-    Standardizes the columns/ROIs of each run independently for all subjects in the subject timeseries. This function
-    uses sample standard deviation, meaning Bessel's correction, `n-1` is used in the denominator. Note,
-    this function is intended for use  when standardization was not performed during timeseries extraction using
-    ``TimeseriesExtractor.get_bold``, as requested by the user.
+    Standardizes the columns/ROIs of each run independently for all subjects in the subject timeseries. Uses sample
+    standard deviation with Bessel's correction (`n-1` in denominator).
+
+    This function serves two main purposes:
+
+    1. When standardizing was not done in ``TimeseriesExtractor``
+    2. When re-standardizing is needed because ALL of the following occurred in ``TimeseriesExtractor``:
+        - High-motion volumes were removed using ``fd_threshold`` without setting the *"use_sample_mask"* key to True
+        - ``standardize`` was not set to False
 
     Parameters
     ----------

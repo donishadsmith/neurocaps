@@ -16,6 +16,10 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.19.3.post0] - 2024-12-10
+### 📖 Documentation
+- Additional documentation for `standardize` function.
+
 ## [0.19.3] - 2024-12-08
 ### 🚀 New/Added
 - Method chaining for several methods in the `CAP` and `TimeseriesExtractor` class.

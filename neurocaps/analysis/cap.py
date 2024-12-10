@@ -477,8 +477,8 @@ class CAP(_CAPGetter):
             The type of algorithm to use for ``sklearn.cluster.KMeans``. Options are "lloyd" and "elkan".
 
         standardize: :obj:`bool`, default=True
-            Standardizes the columns (ROIs) of the concatenated timeseries data. The sample standard deviation will
-            be used, meaning Bessel's correction, `n-1`, will be used in the denominator.
+            Standardizes the columns (ROIs) of the concatenated timeseries data. Uses sample standard deviation with
+            Bessel's correction (`n-1` in denominator).
 
         n_cores: :obj:`int` or :obj:`None`, default=None
             The number of cores to use for multiprocessing, with joblib, to run multiple ``sklearn.cluster.KMeans``
