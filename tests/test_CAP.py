@@ -29,6 +29,7 @@ aal_subject_timeseries = {str(x): {f"run-{y}": np.random.rand(100, 116) for y in
 subject_timeseries = {str(x): {f"run-{y}": np.random.rand(100, 100) for y in range(1, 4)} for x in range(1, 11)}
 extractor.subject_timeseries = subject_timeseries
 
+
 # Similar to internal function used in CAP; function is _concatenated_timeseries
 def concat_data(subject_table, standardize, runs=[1, 2, 3]):
     concatenated_timeseries = {group: None for group in set(subject_table.values())}
@@ -521,7 +522,7 @@ def test_calculate_metrics():
 
     for cap in ["CAP-1", "CAP-2"]:
         for i in temp.index:
-            assert math.isclose((counts.loc[i, cap] * persistence.loc[i, cap]) / 100, temp.loc[i, cap], abs_tol=0.01)
+            assert math.isclose((counts.loc[i, cap] * persistence.loc[i, cap]) / 100, temp.loc[i, cap], abs_tol=0.001)
 
     # Check for continuous too
     counts = cap_analysis.calculate_metrics(
@@ -538,7 +539,7 @@ def test_calculate_metrics():
     )["temporal_fraction"]
     for cap in ["CAP-1", "CAP-2"]:
         for i in temp.index:
-            assert math.isclose((counts.loc[i, cap] * persistence.loc[i, cap]) / 300, temp.loc[i, cap], abs_tol=0.01)
+            assert math.isclose((counts.loc[i, cap] * persistence.loc[i, cap]) / 300, temp.loc[i, cap], abs_tol=0.001)
 
     # Check values of metrics; new methods
     counts_df = cap_analysis.calculate_metrics(
@@ -948,9 +949,10 @@ def test_check_raise_error():
         with pytest.raises(AttributeError, match=re.escape(error_msg[i])):
             CAP._raise_error(i)
 
+
 def test_chain_CAP():
-    a = {"show_figs" : False}
+    a = {"show_figs": False}
     cap_analysis = CAP(parcel_approach)
-    cap_analysis.get_caps(
-        subject_timeseries=extractor.subject_timeseries,
-        n_clusters=2).caps2plot(**a)
+    cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, n_clusters=2).caps2plot(**a).caps2radar(
+        **a
+    ).caps2niftis(tmp_dir.name)

@@ -66,6 +66,7 @@ with open(confounds_file.replace("tsv", "json"), "w") as f:
 
 confound_df.to_csv(confounds_file, sep="\t", index=None)
 
+
 # Adds non_steady_state_outlier columns to the confound tsv for test data
 def add_non_steady(n):
     n_columns = 31 + len(mask_names)
@@ -1231,10 +1232,10 @@ def test_check_raise_error():
     with pytest.raises(AttributeError, match=re.escape(msg)):
         TimeseriesExtractor._raise_error("Cannot do x")
 
+
 def test_chain_TimeseriesExtractor():
     a = {"show_figs": False}
     extractor = TimeseriesExtractor()
-    extractor.get_bold(
-        bids_dir=bids_dir,
-        task="rest",
-        run_subjects=["01"]).timeseries_to_pickle(tmp_dir.name).visualize_bold("01", 0, 0, **a)
+    extractor.get_bold(bids_dir=bids_dir, task="rest", run_subjects=["01"]).timeseries_to_pickle(
+        tmp_dir.name
+    ).visualize_bold("01", 0, 0, **a)
