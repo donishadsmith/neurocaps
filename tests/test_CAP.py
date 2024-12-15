@@ -29,6 +29,7 @@ aal_subject_timeseries = {str(x): {f"run-{y}": np.random.rand(100, 116) for y in
 subject_timeseries = {str(x): {f"run-{y}": np.random.rand(100, 100) for y in range(1, 4)} for x in range(1, 11)}
 extractor.subject_timeseries = subject_timeseries
 
+
 # Similar to internal function used in CAP; function is _concatenated_timeseries
 def concat_data(subject_table, standardize, runs=[1, 2, 3]):
     concatenated_timeseries = {group: None for group in set(subject_table.values())}

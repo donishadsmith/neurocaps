@@ -1,5 +1,6 @@
 from nilearn import datasets
 
+
 # Always check that AAL indices are sorted from lowest -> highest fou future nilearn versions
 def test_aal_indices_ordering():
     def check_order(version):

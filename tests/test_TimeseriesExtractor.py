@@ -66,6 +66,7 @@ with open(confounds_file.replace("tsv", "json"), "w") as f:
 
 confound_df.to_csv(confounds_file, sep="\t", index=None)
 
+
 # Adds non_steady_state_outlier columns to the confound tsv for test data
 def add_non_steady(n):
     n_columns = 31 + len(mask_names)
