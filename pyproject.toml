@@ -71,6 +71,11 @@ demo = ["openneuro-py"]
 where = ["."]
 include = ["neurocaps", "neurocaps.*"]
 
+[tool.ruff]
+select = ["T201"]
+exclude = ["demos",
+           "docs"]
+
 [project.urls]
 Homepage = "https://neurocaps.readthedocs.io"
 Github = "https://github.com/donishadsmith/neurocaps"
