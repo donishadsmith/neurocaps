@@ -1,4 +1,5 @@
 """A class which is responsible for accessing all CAP metadata and to keep track of all attributes in CAP"""
+
 import copy, os
 from typing import Union
 
@@ -6,16 +7,19 @@ import numpy as np
 from ..check_parcel_approach import _check_parcel_approach
 from sklearn.cluster import KMeans
 
+
 class _CAPGetter:
     def __init__(self):
         pass
 
     ### Attributes exist when CAP initialized
     @property
-    def parcel_approach(self) -> Union[
+    def parcel_approach(
+        self,
+    ) -> Union[
         dict[str, dict[str, Union[os.PathLike, list[str]]]],
-        dict[str, dict[str, Union[os.PathLike, list[str], dict[str, dict[str, list[int]]]]]]
-        ]:
+        dict[str, dict[str, Union[os.PathLike, list[str], dict[str, dict[str, list[int]]]]]],
+    ]:
         return self._parcel_approach
 
     @parcel_approach.setter
@@ -61,7 +65,7 @@ class _CAPGetter:
 
     @property
     def optimal_n_clusters(self) -> Union[dict[str, int], None]:
-        return self._optimal_n_clusters if hasattr(self, "_optimal_n_clusters")else None
+        return self._optimal_n_clusters if hasattr(self, "_optimal_n_clusters") else None
 
     @property
     def standardize(self) -> Union[bool, None]:
@@ -101,8 +105,10 @@ class _CAPGetter:
         if isinstance(subject_dict, dict):
             self._subject_table = copy.deepcopy(subject_dict)
         else:
-            raise TypeError("`self.subject_table` must be a dictionary where the keys are the subject IDs and the "
-                            "values are the group names.")
+            raise TypeError(
+                "`self.subject_table` must be a dictionary where the keys are the subject IDs and the "
+                "values are the group names."
+            )
 
     @property
     def cosine_similarity(self) -> Union[dict[str, Union[list[str], dict[str, dict[str, float]]]], None]:

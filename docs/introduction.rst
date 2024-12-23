@@ -132,27 +132,28 @@ Neurocaps relies on several packages:
 
 ::
 
-   dependencies = ["numpy>=1.22.0",
-                   "pandas>=2.0.0",
-                   "joblib>=1.3.0",
-                   "matplotlib>=3.6.0",
-                   "seaborn>=0.11.0",
-                   "kneed>=0.8.0",
-                   "nibabel>=3.2.0",
-                   "nilearn>=0.10.1, !=0.10.3",
-                   "scikit-learn>=1.4.0",
-                   "scipy>=1.6.0",
-                   "brainspace>=0.1.16",
-                   "surfplot>=0.2.0",
-                   "neuromaps>=0.0.5",
-                   "pybids>=0.16.2; platform_system != 'Windows'",
-                   "plotly>=4.9",
-                   "nbformat>=4.2.0",
-                   "kaleido==0.1.0.post1; platform_system == 'Windows'",
-                   "kaleido; platform_system != 'Windows'",
-                   "setuptools; python_version>='3.12'",
-                   "vtk<9.4.0"
-                  ]
+   dependencies = [
+      "numpy>=1.22.0",
+      "pandas>=2.0.0",
+      "joblib>=1.3.0",
+      "matplotlib>=3.6.0",
+      "seaborn>=0.11.0",
+      "kneed>=0.8.0",
+      "nibabel>=3.2.0",
+      "nilearn>=0.10.1, !=0.10.3",
+      "scikit-learn>=1.4.0",
+      "scipy>=1.6.0",
+      "brainspace>=0.1.16",
+      "surfplot>=0.2.0",
+      "neuromaps>=0.0.5",
+      "pybids>=0.16.2; platform_system != 'Windows'",
+      "plotly>=4.9",
+      "nbformat>=4.2.0",
+      "kaleido==0.1.0.post1; platform_system == 'Windows'",
+      "kaleido; platform_system != 'Windows'",
+      "setuptools; python_version>='3.12'",
+      "vtk<9.4.0"
+      ]
 
 Acknowledgements
 ----------------

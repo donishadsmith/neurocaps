@@ -4,16 +4,18 @@ from typing import Union, Optional
 import numpy as np
 from numpy.typing import NDArray
 
-from .._utils import (_convert_pickle_to_dict, _dicts_to_pickles, _logger)
+from .._utils import _convert_pickle_to_dict, _dicts_to_pickles, _logger
 
 LG = _logger(__name__)
 
-def change_dtype(subject_timeseries_list: Union[list[dict[str, dict[str, NDArray[np.floating]]]], list[os.PathLike]],
-                 dtype: Union[str, np.floating],
-                 return_dicts: bool=True,
-                 output_dir: Optional[os.PathLike]=None,
-                 filenames: Optional[list[str]]=None) -> dict[str, dict[str, dict[str, NDArray[np.floating]]]]:
 
+def change_dtype(
+    subject_timeseries_list: Union[list[dict[str, dict[str, NDArray[np.floating]]]], list[os.PathLike]],
+    dtype: Union[str, np.floating],
+    return_dicts: bool = True,
+    output_dir: Optional[os.PathLike] = None,
+    filenames: Optional[list[str]] = None,
+) -> dict[str, dict[str, dict[str, NDArray[np.floating]]]]:
     """
     Perform Participant-wise Dtype Conversion.
 
@@ -82,8 +84,10 @@ def change_dtype(subject_timeseries_list: Union[list[dict[str, dict[str, NDArray
     changed_dtype_dicts = {}
 
     for indx, curr_dict in enumerate(subject_timeseries_list):
-        if isinstance(curr_dict, str) and curr_dict.endswith(".pkl"): curr_dict = _convert_pickle_to_dict(curr_dict)
-        else: curr_dict = copy.deepcopy(curr_dict)
+        if isinstance(curr_dict, str) and curr_dict.endswith(".pkl"):
+            curr_dict = _convert_pickle_to_dict(curr_dict)
+        else:
+            curr_dict = copy.deepcopy(curr_dict)
 
         for subj_id in curr_dict:
             for run in curr_dict[subj_id]:
@@ -92,7 +96,9 @@ def change_dtype(subject_timeseries_list: Union[list[dict[str, dict[str, NDArray
         changed_dtype_dicts[f"dict_{indx}"] = curr_dict
 
     if output_dir:
-        _dicts_to_pickles(output_dir=output_dir, dict_list=changed_dtype_dicts, filenames=filenames,
-                          call="change_dtype")
+        _dicts_to_pickles(
+            output_dir=output_dir, dict_list=changed_dtype_dicts, filenames=filenames, call="change_dtype"
+        )
 
-    if return_dicts: return changed_dtype_dicts
+    if return_dicts:
+        return changed_dtype_dicts

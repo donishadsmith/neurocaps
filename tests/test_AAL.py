@@ -1,7 +1,7 @@
 from nilearn import datasets
 
 
-# Always check that AAL indices are sorted from lowest -> highest fou future nilearn versions
+# Always check that AAL indices are sorted from lowest -> highest for future nilearn versions
 def test_aal_indices_ordering():
     def check_order(version):
         aal = datasets.fetch_atlas_aal(version=version)

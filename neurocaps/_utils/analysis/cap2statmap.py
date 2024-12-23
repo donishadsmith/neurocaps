@@ -1,9 +1,11 @@
 """Internal function for turning CAPs into NifTI Statistical Maps"""
+
 from functools import lru_cache
 
 import nibabel as nib, numpy as np
 from nilearn import datasets, image
 from scipy.spatial import KDTree
+
 
 def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
     atlas = nib.load(atlas_file)
@@ -28,8 +30,9 @@ def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
             remove_labels = None
 
         # Get target indices
-        target_indices = _get_target_indices(atlas_file, knn_dict["reference_atlas"], knn_dict["resolution_mm"],
-                                             remove_labels)
+        target_indices = _get_target_indices(
+            atlas_file, knn_dict["reference_atlas"], knn_dict["resolution_mm"], remove_labels
+        )
 
         # Get non-zero indices; Build kdtree for nearest neighbors
         kdtree, non_zero_indices = _build_tree(atlas_file)
@@ -39,14 +42,14 @@ def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
 
         for target_indx in target_indices:
             # Get the nearest non-zero index
-            _ , neighbor_indx = kdtree.query(target_indx, k = k)
+            _, neighbor_indx = kdtree.query(target_indx, k=k)
             nearest_neighbors = non_zero_indices[neighbor_indx]
 
             if k > 1:
                 # Values of nearest neighbors
                 neighbor_values = [
                     stat_map.get_fdata()[tuple(nearest_neighbor)] for nearest_neighbor in nearest_neighbors
-                    ]
+                ]
 
                 # Majority vote
                 new_value = max(set(neighbor_values), key=neighbor_values.count)
@@ -58,9 +61,11 @@ def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
             stat_map.get_fdata()[tuple(target_indx)] = new_value
 
     # Add smoothing to stat map to help mitigate potential coverage issues
-    if fwhm is not None: stat_map = image.smooth_img(stat_map, fwhm=fwhm)
+    if fwhm is not None:
+        stat_map = image.smooth_img(stat_map, fwhm=fwhm)
 
     return stat_map
+
 
 @lru_cache(maxsize=2)
 def _build_tree(atlas_file):
@@ -71,11 +76,13 @@ def _build_tree(atlas_file):
 
     return kdtree, non_zero_indices
 
+
 def _get_remove_indices(atlas_file, remove_labels):
     atlas = nib.load(atlas_file)
     remove_indxs = np.where(np.isin(atlas.get_fdata(), remove_labels))
 
     return remove_indxs
+
 
 @lru_cache(maxsize=4)
 def _get_target_indices(atlas_file, reference_atlas, resolution_mm, remove_labels):
@@ -87,8 +94,9 @@ def _get_target_indices(atlas_file, reference_atlas, resolution_mm, remove_label
         reference_atlas_map = datasets.fetch_atlas_aal()["maps"]
 
     # Resample schaefer to atlas file using nearest interpolation to retain labels
-    resampled_reference_atlas = image.resample_to_img(reference_atlas_map, atlas, interpolation="nearest",
-                                                      force_resample=True)
+    resampled_reference_atlas = image.resample_to_img(
+        reference_atlas_map, atlas, interpolation="nearest", force_resample=True
+    )
     # Get indices that equal zero in schaefer atlas to avoid interpolating background values
     reference_background_indices = set(zip(*np.where(resampled_reference_atlas.get_fdata() == 0)))
 

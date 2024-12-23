@@ -3,19 +3,22 @@ from typing import Optional, Union
 
 import matplotlib.pyplot as plt, pandas as pd
 
-from .._utils import (_check_kwargs, _create_display, _logger, _save_contents)
+from .._utils import _check_kwargs, _create_display, _logger, _save_contents
 
 LG = _logger(__name__)
 
-def transition_matrix(trans_dict: dict[str, pd.DataFrame],
-                      output_dir: Optional[os.PathLike]=None,
-                      suffix_title: Optional[str]=None,
-                      suffix_filename: Optional[str]=None,
-                      show_figs: bool = True,
-                      save_plots: bool=True,
-                      return_df: bool = True,
-                      save_df: bool=True,
-                      **kwargs) -> pd.DataFrame:
+
+def transition_matrix(
+    trans_dict: dict[str, pd.DataFrame],
+    output_dir: Optional[os.PathLike] = None,
+    suffix_title: Optional[str] = None,
+    suffix_filename: Optional[str] = None,
+    show_figs: bool = True,
+    save_plots: bool = True,
+    return_df: bool = True,
+    save_df: bool = True,
+    **kwargs,
+) -> pd.DataFrame:
     """
     Generate and Visualize the Averaged Transition Probabilities.
 
@@ -137,11 +140,29 @@ def transition_matrix(trans_dict: dict[str, pd.DataFrame],
         LG.warning("`suffix_filename` supplied but no `output_dir` specified. Files will not be saved.")
 
     # Create plot dictionary
-    defaults = {"dpi": 300, "figsize": (8, 6), "fontsize": 14, "xticklabels_size": 8, "yticklabels_size": 8,
-                "shrink": 0.8, "cbarlabels_size": 8, "xlabel_rotation": 0, "ylabel_rotation": 0, "annot": False,
-                "linewidths": 0, "linecolor": "black", "cmap": "coolwarm", "fmt": ".2g", "borderwidths": 0,
-                "edgecolors": None, "alpha": None, "bbox_inches": "tight", "annot_kws": None, "vmin": None,
-                "vmax": None}
+    defaults = {
+        "dpi": 300,
+        "figsize": (8, 6),
+        "fontsize": 14,
+        "xticklabels_size": 8,
+        "yticklabels_size": 8,
+        "shrink": 0.8,
+        "cbarlabels_size": 8,
+        "xlabel_rotation": 0,
+        "ylabel_rotation": 0,
+        "annot": False,
+        "linewidths": 0,
+        "linecolor": "black",
+        "cmap": "coolwarm",
+        "fmt": ".2g",
+        "borderwidths": 0,
+        "edgecolors": None,
+        "alpha": None,
+        "bbox_inches": "tight",
+        "annot_kws": None,
+        "vmin": None,
+        "vmax": None,
+    }
 
     plot_dict = _check_kwargs(defaults, **kwargs)
 
@@ -169,10 +190,12 @@ def transition_matrix(trans_dict: dict[str, pd.DataFrame],
 
         # Save figure & dataframe
         if output_dir:
-            _save_contents(output_dir, suffix_filename, group, trans_mat_dict, plot_dict, save_plots, save_df, display,
-                           "trans")
+            _save_contents(
+                output_dir, suffix_filename, group, trans_mat_dict, plot_dict, save_plots, save_df, display, "trans"
+            )
 
         # Display figures
         plt.show() if show_figs else plt.close()
 
-    if return_df: return trans_mat_dict
+    if return_df:
+        return trans_mat_dict

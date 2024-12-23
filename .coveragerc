@@ -6,4 +6,6 @@ source = neurocaps
 show_missing = True
 exclude_also =
     raise .*
-    LG.warning
+    LG\.warning
+    os\.makedirs
+    self\._raise_error

@@ -1,7 +1,9 @@
 """Internal function to check kwargs"""
+
 from .logger import _logger
 
 LG = _logger(__name__)
+
 
 def _check_kwargs(defaults, **kwargs):
     plot_dict = defaults.copy()

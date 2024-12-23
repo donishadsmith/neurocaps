@@ -12,10 +12,21 @@ from numpy.typing import ArrayLike, NDArray
 from scipy.stats import pearsonr
 from sklearn.cluster import KMeans
 
-from .._utils import (_CAPGetter, _cap2statmap, _check_kwargs, _create_display, _convert_pickle_to_dict,
-                      _check_parcel_approach, _handle_aal, _logger, _run_kmeans, _save_contents)
+from .._utils import (
+    _CAPGetter,
+    _cap2statmap,
+    _check_kwargs,
+    _create_display,
+    _convert_pickle_to_dict,
+    _check_parcel_approach,
+    _handle_aal,
+    _logger,
+    _run_kmeans,
+    _save_contents,
+)
 
 LG = _logger(__name__)
+
 
 class CAP(_CAPGetter):
     """
@@ -367,49 +378,55 @@ class CAP(_CAPGetter):
     **Note**: Different sub-keys are required depending on the function used. Refer to the Note section under each
     function for information regarding the sub-keys required for that specific function.
     """
-    def __init__(self,
-                 parcel_approach: Union[
-                     dict[str, dict[str, Union[os.PathLike, list[str]]]],
-                     dict[str, dict[str, Union[str, int]]],
-                     os.PathLike
-                     ]=None,
-                 groups: dict[str, list[str]]=None) -> None:
+
+    def __init__(
+        self,
+        parcel_approach: Union[
+            dict[str, dict[str, Union[os.PathLike, list[str]]]], dict[str, dict[str, Union[str, int]]], os.PathLike
+        ] = None,
+        groups: dict[str, list[str]] = None,
+    ) -> None:
         self._groups = groups
         # Raise error if self groups is not a dictionary
         if self._groups:
             if not isinstance(self._groups, dict):
-                raise TypeError("`groups` must be a dictionary where the keys are the group names and the items "
-                                "correspond to subject ids in the groups.")
+                raise TypeError(
+                    "`groups` must be a dictionary where the keys are the group names and the items "
+                    "correspond to subject ids in the groups."
+                )
 
             for group_name in self._groups:
                 assert self._groups[group_name], f"{group_name} has zero subject ids."
 
             # Convert ids to strings
             for group in set(self._groups):
-                self._groups[group] = [str(subj_id) if not isinstance(subj_id, str)
-                                       else subj_id for subj_id in self._groups[group]]
+                self._groups[group] = [
+                    str(subj_id) if not isinstance(subj_id, str) else subj_id for subj_id in self._groups[group]
+                ]
 
         if parcel_approach is not None:
             parcel_approach = _check_parcel_approach(parcel_approach=parcel_approach, call="CAP")
 
         self._parcel_approach = parcel_approach
 
-    def get_caps(self,
-                 subject_timeseries: Union[dict[str, dict[str, NDArray[np.floating]]], os.PathLike],
-                 runs: Optional[Union[int, str, list[int], list[str]]]=None,
-                 n_clusters: Union[int, list[int]]=5,
-                 cluster_selection_method: Literal["elbow", "davies_bouldin", "silhouette", "variance_ratio"]=None,
-                 random_state: Optional[int]=None,
-                 init: Union[Literal["k-means++", "random"], Callable, ArrayLike]="k-means++",
-                 n_init: Union[Literal["auto"], int]="auto",
-                 max_iter: int=300,
-                 tol: float=0.0001,
-                 algorithm: Literal["lloyd", "elkan"]="lloyd",
-                 standardize: bool=True,
-                 n_cores: Optional[int]=None,
-                 show_figs: bool=False,
-                 output_dir: Optional[os.PathLike]=None,
-                 **kwargs) -> None:
+    def get_caps(
+        self,
+        subject_timeseries: Union[dict[str, dict[str, NDArray[np.floating]]], os.PathLike],
+        runs: Optional[Union[int, str, list[int], list[str]]] = None,
+        n_clusters: Union[int, list[int]] = 5,
+        cluster_selection_method: Literal["elbow", "davies_bouldin", "silhouette", "variance_ratio"] = None,
+        random_state: Optional[int] = None,
+        init: Union[Literal["k-means++", "random"], Callable, ArrayLike] = "k-means++",
+        n_init: Union[Literal["auto"], int] = "auto",
+        max_iter: int = 300,
+        tol: float = 0.0001,
+        algorithm: Literal["lloyd", "elkan"] = "lloyd",
+        standardize: bool = True,
+        n_cores: Optional[int] = None,
+        show_figs: bool = False,
+        output_dir: Optional[os.PathLike] = None,
+        **kwargs,
+    ) -> None:
         """
         Perform K-Means Clustering to Identify CAPs.
 
@@ -520,12 +537,21 @@ class CAP(_CAPGetter):
         # Ensure all unique values if n_clusters is a list
         self._n_clusters = n_clusters if isinstance(n_clusters, int) else sorted(list(set(n_clusters)))
         self._cluster_selection_method = cluster_selection_method
-        configs = {"random_state": random_state, "init": init, "n_init": n_init, "max_iter": max_iter,
-                   "tol": tol, "algorithm": algorithm}
+        configs = {
+            "random_state": random_state,
+            "init": init,
+            "n_init": n_init,
+            "max_iter": max_iter,
+            "tol": tol,
+            "algorithm": algorithm,
+        }
 
         if isinstance(n_clusters, list):
-            self._n_clusters =  self._n_clusters[0] if all([isinstance(self._n_clusters, list),
-                                                            len(self._n_clusters) == 1]) else self._n_clusters
+            self._n_clusters = (
+                self._n_clusters[0]
+                if all([isinstance(self._n_clusters, list), len(self._n_clusters) == 1])
+                else self._n_clusters
+            )
             # Raise error if n_clusters is a list and no cluster selection method is specified
             if all([len(n_clusters) > 1, self._cluster_selection_method is None]):
                 raise ValueError("`cluster_selection_method` cannot be None since `n_clusters` is a list.")
@@ -537,7 +563,8 @@ class CAP(_CAPGetter):
         if self._n_cores and self._cluster_selection_method is None:
             raise ValueError("Parallel processing will not run since `cluster_selection_method` is None.")
 
-        if runs and not isinstance(runs, list): runs = [runs]
+        if runs and not isinstance(runs, list):
+            runs = [runs]
 
         self._runs = runs
         self._standardize = standardize
@@ -549,7 +576,7 @@ class CAP(_CAPGetter):
 
         if self._cluster_selection_method is not None:
             if self._cluster_selection_method not in valid_methods:
-                formatted_string = ', '.join(["'{a}'".format(a=x) for x in valid_methods])
+                formatted_string = ", ".join(["'{a}'".format(a=x) for x in valid_methods])
                 raise ValueError(f"Options for `cluster_selection_method` are - {formatted_string}.")
             else:
                 self._select_optimal_clusters(configs, show_figs, output_dir, **kwargs)
@@ -557,8 +584,9 @@ class CAP(_CAPGetter):
             self._kmeans = {}
             for group in self._groups:
                 self._kmeans[group] = {}
-                self._kmeans[group] = KMeans(n_clusters=self._n_clusters,
-                                             **configs).fit(self._concatenated_timeseries[group])
+                self._kmeans[group] = KMeans(n_clusters=self._n_clusters, **configs).fit(
+                    self._concatenated_timeseries[group]
+                )
 
         # Create variance explained dict
         self._var_explained()
@@ -585,15 +613,18 @@ class CAP(_CAPGetter):
         for group in self._groups:
             for subj_id in self._groups[group]:
                 if subj_id in self._subject_table:
-                    LG.warning(f"[SUBJECT: {subj_id}] Appears more than once. Only the first instance of this "
-                               "subject will be included in the analysis.")
+                    LG.warning(
+                        f"[SUBJECT: {subj_id}] Appears more than once. Only the first instance of this "
+                        "subject will be included in the analysis."
+                    )
                 else:
                     self._subject_table.update({subj_id: group})
 
     def _concatenate_timeseries(self, subject_timeseries, runs):
         # Create dictionary for "All Subjects" if no groups are specified to reuse the same loop instead of having to
         # create logic for grouped and non-grouped version of the same code
-        if not self._groups: self._groups = {"All Subjects": [subject for subject in subject_timeseries]}
+        if not self._groups:
+            self._groups = {"All Subjects": [subject for subject in subject_timeseries]}
 
         concatenated_timeseries = {group: None for group in self._groups}
 
@@ -616,10 +647,12 @@ class CAP(_CAPGetter):
                 if concatenated_timeseries[group] is None:
                     concatenated_timeseries[group] = subject_timeseries[subj_id][curr_run]
                 else:
-                    concatenated_timeseries[group] = np.vstack([concatenated_timeseries[group],
-                                                                subject_timeseries[subj_id][curr_run]])
+                    concatenated_timeseries[group] = np.vstack(
+                        [concatenated_timeseries[group], subject_timeseries[subj_id][curr_run]]
+                    )
         # Standardize
-        if self._standardize: concatenated_timeseries = self._scale(concatenated_timeseries)
+        if self._standardize:
+            concatenated_timeseries = self._scale(concatenated_timeseries)
 
         return concatenated_timeseries
 
@@ -631,13 +664,14 @@ class CAP(_CAPGetter):
             # Taken from nilearn pipeline, used for numerical stability purposes to avoid numpy division error
             self._stdev_vec[group][self._stdev_vec[group] < eps] = 1.0
             diff = concatenated_timeseries[group] - self._mean_vec[group]
-            concatenated_timeseries[group] = diff/self._stdev_vec[group]
+            concatenated_timeseries[group] = diff / self._stdev_vec[group]
 
         return concatenated_timeseries
 
     @staticmethod
     def _get_runs(requested_runs, curr_runs):
-        if requested_runs: requested_runs = [f"run-{run}" for run in requested_runs]
+        if requested_runs:
+            requested_runs = [f"run-{run}" for run in requested_runs]
         runs = [run for run in requested_runs if run in curr_runs] if requested_runs else curr_runs
         miss_runs = list(set(requested_runs) - set(runs)) if requested_runs else None
 
@@ -666,35 +700,43 @@ class CAP(_CAPGetter):
                     model_dict.update(model)
             else:
                 parallel = Parallel(return_as="generator", n_jobs=self._n_cores)
-                output = parallel(delayed(_run_kmeans)(n_cluster, configs, self._concatenated_timeseries[group], method)
-                                  for n_cluster in self._n_clusters)
+                output = parallel(
+                    delayed(_run_kmeans)(n_cluster, configs, self._concatenated_timeseries[group], method)
+                    for n_cluster in self._n_clusters
+                )
 
                 output_scores, models = zip(*output)
-                for output in output_scores: performance_dict[group].update(output)
-                for model in models: model_dict.update(model)
+                for output in output_scores:
+                    performance_dict[group].update(output)
+                for model in models:
+                    model_dict.update(model)
 
             # Select optimal clusters
             if method == "elbow":
                 knee_dict = {"S": kwargs["S"] if "S" in kwargs else 1}
-                kneedle = KneeLocator(x=list(performance_dict[group]),
-                                      y=list(performance_dict[group].values()),
-                                      curve="convex", direction="decreasing", S=knee_dict["S"])
+                kneedle = KneeLocator(
+                    x=list(performance_dict[group]),
+                    y=list(performance_dict[group].values()),
+                    curve="convex",
+                    direction="decreasing",
+                    S=knee_dict["S"],
+                )
 
                 self._optimal_n_clusters[group] = kneedle.elbow
 
                 if self._optimal_n_clusters[group] is None:
-                    raise ValueError(f"[GROUP: {group}] - No elbow detected. Try adjusting the sensitivity parameter, "
-                                     "`S`, to increase or decrease sensitivity (higher values are less sensitive), "
-                                     "expanding the list of `n_clusters` to test, or using another "
-                                     "`cluster_selection_method`.")
+                    raise ValueError(
+                        f"[GROUP: {group}] - No elbow detected. Try adjusting the sensitivity parameter, "
+                        "`S`, to increase or decrease sensitivity (higher values are less sensitive), "
+                        "expanding the list of `n_clusters` to test, or using another "
+                        "`cluster_selection_method`."
+                    )
             elif method == "davies_bouldin":
                 # Get minimum for davies bouldin
-                self._optimal_n_clusters[group] = min(performance_dict[group],
-                                                      key=performance_dict[group].get)
+                self._optimal_n_clusters[group] = min(performance_dict[group], key=performance_dict[group].get)
             else:
                 # Get max for silhouette and variance ratio
-                self._optimal_n_clusters[group] = max(performance_dict[group],
-                                                      key=performance_dict[group].get)
+                self._optimal_n_clusters[group] = max(performance_dict[group], key=performance_dict[group].get)
 
             # Get the optimal kmeans model
             self._kmeans[group] = model_dict[self._optimal_n_clusters[group]]
@@ -709,8 +751,12 @@ class CAP(_CAPGetter):
         self._cluster_scores.update({"Scores": performance_dict})
 
     def _plot_method(self, method, performance_dict, group, show_figs, output_dir, **kwargs):
-        y_titles = {"elbow": "Inertia", "davies_bouldin": "Davies Bouldin Score", "silhouette": "Silhouette Score",
-                    "variance_ratio": "Variance Ratio Score"}
+        y_titles = {
+            "elbow": "Inertia",
+            "davies_bouldin": "Davies Bouldin Score",
+            "silhouette": "Silhouette Score",
+            "variance_ratio": "Variance Ratio Score",
+        }
 
         # Defaults
         defaults = {"dpi": 300, "figsize": (8, 6), "step": None, "bbox_inches": "tight"}
@@ -720,7 +766,7 @@ class CAP(_CAPGetter):
 
         # Create visualization for method
         plt.figure(figsize=plot_dict["figsize"])
-        y_values = [y for _ , y in  performance_dict[group].items()]
+        y_values = [y for _, y in performance_dict[group].items()]
         plt.plot(self._n_clusters, y_values)
 
         if plot_dict["step"]:
@@ -733,14 +779,13 @@ class CAP(_CAPGetter):
 
         # Add vertical line for elbow method
         if y_title == "Inertia":
-            plt.vlines(self._optimal_n_clusters[group], plt.ylim()[0], plt.ylim()[1], linestyles="--",
-                       label="elbow")
+            plt.vlines(self._optimal_n_clusters[group], plt.ylim()[0], plt.ylim()[1], linestyles="--", label="elbow")
 
         if output_dir:
-            if not os.path.exists(output_dir): os.makedirs(output_dir)
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
             save_name = f"{group.replace(' ', '_')}_{self._cluster_selection_method}.png"
-            plt.savefig(os.path.join(output_dir, save_name), dpi=plot_dict["dpi"],
-                        bbox_inches=plot_dict["bbox_inches"])
+            plt.savefig(os.path.join(output_dir, save_name), dpi=plot_dict["dpi"], bbox_inches=plot_dict["bbox_inches"])
 
         plt.show() if show_figs else plt.close()
 
@@ -759,37 +804,44 @@ class CAP(_CAPGetter):
 
         for group in self._groups:
             self._caps[group] = {}
-            cluster_centroids = zip([num for num in range(1, len(self._kmeans[group].cluster_centers_) + 1)],
-                                    self._kmeans[group].cluster_centers_)
-            self._caps[group].update({f"CAP-{state_number}": state_vector
-                                      for state_number, state_vector in cluster_centroids})
+            cluster_centroids = zip(
+                [num for num in range(1, len(self._kmeans[group].cluster_centers_) + 1)],
+                self._kmeans[group].cluster_centers_,
+            )
+            self._caps[group].update(
+                {f"CAP-{state_number}": state_vector for state_number, state_vector in cluster_centroids}
+            )
 
     @staticmethod
     def _raise_error(property_name):
         if property_name == "caps":
             raise AttributeError("Cannot plot caps since `self.caps` is None. Run `self.get_caps()` first.")
         elif property_name == "parcel_approach":
-            raise AttributeError("`self.parcel_approach` is None. Add `parcel_approach` using "
-                                 "`self.parcel_approach=parcel_approach` to use this method.")
+            raise AttributeError(
+                "`self.parcel_approach` is None. Add `parcel_approach` using "
+                "`self.parcel_approach=parcel_approach` to use this method."
+            )
         else:
-            raise AttributeError("Cannot calculate metrics since `self.kmeans` is None. Run "
-                                 "`self.get_caps()` first.")
+            raise AttributeError(
+                "Cannot calculate metrics since `self.kmeans` is None. Run " "`self.get_caps()` first."
+            )
 
-    def calculate_metrics(self,
-                          subject_timeseries: Union[dict[str, dict[str, NDArray[np.floating]]], os.PathLike],
-                          tr: Optional[float]=None,
-                          runs: Optional[Union[int, str, list[int], list[str]]]=None,
-                          continuous_runs: bool=False,
-                          metrics: Union[
-                              Literal[
-                                  "temporal_fraction", "persistence", "counts",
-                                  "transition_frequency", "transition_probability"],
-                              list[Literal["temporal_fraction", "persistence", "counts",
-                                           "transition_frequency", "transition_probability"]]
-                              ]=["temporal_fraction", "persistence", "counts", "transition_frequency"],
-                          return_df: bool=True,
-                          output_dir: Optional[os.PathLike]=None,
-                          prefix_filename: Optional[str]=None) -> dict[str, pd.DataFrame]:
+    def calculate_metrics(
+        self,
+        subject_timeseries: Union[dict[str, dict[str, NDArray[np.floating]]], os.PathLike],
+        tr: Optional[float] = None,
+        runs: Optional[Union[int, str, list[int], list[str]]] = None,
+        continuous_runs: bool = False,
+        metrics: Union[
+            Literal["temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"],
+            list[
+                Literal["temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"]
+            ],
+        ] = ["temporal_fraction", "persistence", "counts", "transition_frequency"],
+        return_df: bool = True,
+        output_dir: Optional[os.PathLike] = None,
+        prefix_filename: Optional[str] = None,
+    ) -> dict[str, pd.DataFrame]:
         """
         Compute Participant-wise CAP Metrics.
 
@@ -1029,12 +1081,14 @@ class CAP(_CAPGetter):
         patterns of functional brain networks reveal the aberrant dynamic state transition in schizophrenia.
         NeuroImage, 237, 118193. https://doi.org/10.1016/j.neuroimage.2021.118193
         """
-        if not self.kmeans: self._raise_error("kmeans")
+        if not self.kmeans:
+            self._raise_error("kmeans")
 
         if prefix_filename is not None and output_dir is None:
             LG.warning("`prefix_filename` supplied but no `output_dir` specified. Files will not be saved.")
 
-        if runs and not isinstance(runs, list): runs = [runs]
+        if runs and not isinstance(runs, list):
+            runs = [runs]
 
         metrics = self._filter_metrics(metrics)
 
@@ -1059,14 +1113,18 @@ class CAP(_CAPGetter):
         for subj_id, group, curr_run in distributed_list:
             if "temporal_fraction" in metrics:
                 # Get frequency
-                frequency_dict = {key: np.where(predicted_subject_timeseries[subj_id][curr_run] == key, 1, 0).sum()
-                                  for key in range(1, group_cap_counts[group] + 1)}
+                frequency_dict = {
+                    key: np.where(predicted_subject_timeseries[subj_id][curr_run] == key, 1, 0).sum()
+                    for key in range(1, group_cap_counts[group] + 1)
+                }
 
                 self._update_dict(cap_numbers, group_cap_counts[group], frequency_dict)
 
                 if "temporal_fraction" in metrics:
-                    proportion_dict = {key: value/(len(predicted_subject_timeseries[subj_id][curr_run]))
-                                       for key, value in frequency_dict.items()}
+                    proportion_dict = {
+                        key: value / (len(predicted_subject_timeseries[subj_id][curr_run]))
+                        for key, value in frequency_dict.items()
+                    }
 
                     # Populate Dataframe
                     new_row = [subj_id, group, curr_run] + [items for items in proportion_dict.values()]
@@ -1075,7 +1133,7 @@ class CAP(_CAPGetter):
             if "counts" in metrics:
                 count_dict = {}
                 for target in cap_numbers:
-                    _ , segments = self._segments(target, predicted_subject_timeseries[subj_id][curr_run])
+                    _, segments = self._segments(target, predicted_subject_timeseries[subj_id][curr_run])
                     count_dict.update({target: segments})
 
                 self._update_dict(cap_numbers, group_cap_counts[group], count_dict)
@@ -1094,19 +1152,20 @@ class CAP(_CAPGetter):
                     # Sum of ones in the binary array divided by segments, then multiplied by 1 or the tr; segment is
                     # always 1 at minimum due to + 1; np.where(np.diff(target_indices, n=1) > 1, 1, 0).sum() is 0
                     # when empty or the condition isn't met
-                    persistence_dict.update({target: (binary_arr.sum()/segments) * (tr if tr else 1)})
+                    persistence_dict.update({target: (binary_arr.sum() / segments) * (tr if tr else 1)})
 
                 self._update_dict(cap_numbers, group_cap_counts[group], persistence_dict)
 
                 # Populate Dataframe
-                new_row = [subj_id, group, curr_run] + [items for _ , items in persistence_dict.items()]
+                new_row = [subj_id, group, curr_run] + [items for _, items in persistence_dict.items()]
                 df_dict["persistence"].loc[len(df_dict["persistence"])] = new_row
 
             if "transition_frequency" in metrics:
                 # Sum the differences that are not zero - [1, 2, 1, 1, 1, 3] becomes [1, -1, 0, 0, 2]
                 # , binary representation for values not zero is [1, 1, 0, 0, 1] = 3 transitions
                 transition_frequency = np.where(
-                    np.diff(predicted_subject_timeseries[subj_id][curr_run], n=1) != 0, 1, 0).sum()
+                    np.diff(predicted_subject_timeseries[subj_id][curr_run], n=1) != 0, 1, 0
+                ).sum()
 
                 # Populate DataFrame
                 new_row = [subj_id, group, curr_run, transition_frequency]
@@ -1117,8 +1176,10 @@ class CAP(_CAPGetter):
                 temp_dict[group].loc[len(temp_dict[group])] = base_row
 
                 # Get number of transitions
-                trans_dict = {target: np.sum(np.where(predicted_subject_timeseries[subj_id][curr_run][:-1] == target, 1, 0))
-                              for target in group_caps[group]}
+                trans_dict = {
+                    target: np.sum(np.where(predicted_subject_timeseries[subj_id][curr_run][:-1] == target, 1, 0))
+                    for target in group_caps[group]
+                }
 
                 indx = temp_dict[group].index[-1]
 
@@ -1137,26 +1198,32 @@ class CAP(_CAPGetter):
                     # Avoid division by zero errors and calculate both the forward and reverse transition
                     if trans_dict[target1] != 0:
                         temp_dict[group].loc[indx, f"{target1}.{target2}"] = float(
-                            np.sum(np.where(diff_array == 2, 1, 0))/trans_dict[target1])
+                            np.sum(np.where(diff_array == 2, 1, 0)) / trans_dict[target1]
+                        )
 
                     if trans_dict[target2] != 0:
                         temp_dict[group].loc[indx, f"{target2}.{target1}"] = float(
-                            np.sum(np.where(diff_array == -2, 1, 0))/trans_dict[target2])
+                            np.sum(np.where(diff_array == -2, 1, 0)) / trans_dict[target2]
+                        )
 
                 # Calculate the probability for the self transitions/diagonals
                 for target in group_caps[group]:
-                    if trans_dict[target] == 0: continue
+                    if trans_dict[target] == 0:
+                        continue
 
                     # Will include the {target}.{target} column, but the value is initially set to zero
-                    columns = temp_dict[group].filter(regex=fr"^{target}\.").columns.tolist()
+                    columns = temp_dict[group].filter(regex=rf"^{target}\.").columns.tolist()
                     cumulative = temp_dict[group].loc[indx, columns].values.sum()
                     temp_dict[group].loc[indx, f"{target}.{target}"] = 1.0 - cumulative
 
-        if "transition_probability" in metrics: df_dict["transition_probability"] = temp_dict
+        if "transition_probability" in metrics:
+            df_dict["transition_probability"] = temp_dict
 
-        if output_dir: self._save_metrics(output_dir, df_dict, prefix_filename)
+        if output_dir:
+            self._save_metrics(output_dir, df_dict, prefix_filename)
 
-        if return_df: return df_dict
+        if return_df:
+            return df_dict
 
     @staticmethod
     def _filter_metrics(metrics):
@@ -1172,11 +1239,11 @@ class CAP(_CAPGetter):
         metrics = metrics.intersection(valid_metrics)
 
         if set_diff:
-            formatted_string = ', '.join(["'{a}'".format(a=x) for x in set_diff])
+            formatted_string = ", ".join(["'{a}'".format(a=x) for x in set_diff])
             LG.warning(f"Invalid metrics will be ignored: {formatted_string}.")
 
         if not metrics:
-            formatted_string = ', '.join(["'{a}'".format(a=x) for x in valid_metrics])
+            formatted_string = ", ".join(["'{a}'".format(a=x) for x in valid_metrics])
             raise ValueError(f"No valid metrics in `metrics` list. Valid metrics are {formatted_string}.")
 
         return metrics
@@ -1197,7 +1264,8 @@ class CAP(_CAPGetter):
     def _build_prediction_dict(self, subject_timeseries, runs, continuous_runs):
         for subj_id, group in self._subject_table.items():
             # Initialize predicted timeseries dict if first subject in table
-            if subj_id == list(self._subject_table)[0]: predicted_subject_timeseries = {}
+            if subj_id == list(self._subject_table)[0]:
+                predicted_subject_timeseries = {}
 
             predicted_subject_timeseries[subj_id] = {}
             subject_runs, miss_runs = self._get_runs(runs, list(subject_timeseries[subj_id]))
@@ -1212,7 +1280,9 @@ class CAP(_CAPGetter):
             for curr_run in subject_runs:
                 # Standardize or not
                 if self._standardize:
-                    timeseries = (subject_timeseries[subj_id][curr_run] - self._mean_vec[group])/self._stdev_vec[group]
+                    timeseries = (subject_timeseries[subj_id][curr_run] - self._mean_vec[group]) / self._stdev_vec[
+                        group
+                    ]
                 else:
                     timeseries = subject_timeseries[subj_id][curr_run]
 
@@ -1227,9 +1297,12 @@ class CAP(_CAPGetter):
                     predicted_subject_timeseries[subj_id].update({run_id: prediction_vector})
                 else:
                     # Horizontally stack predicted runs
-                    if curr_run == subject_runs[0]: predicted_continuous_timeseries = prediction_vector
-                    else: predicted_continuous_timeseries = np.hstack([predicted_continuous_timeseries,
-                                                                       prediction_vector])
+                    if curr_run == subject_runs[0]:
+                        predicted_continuous_timeseries = prediction_vector
+                    else:
+                        predicted_continuous_timeseries = np.hstack(
+                            [predicted_continuous_timeseries, prediction_vector]
+                        )
             if run_id == "run-continuous":
                 predicted_subject_timeseries[subj_id].update({run_id: predicted_continuous_timeseries})
 
@@ -1247,9 +1320,11 @@ class CAP(_CAPGetter):
             products_unique[group] = []
 
             for prod in products[group]:
-                if prod[0] == prod[1]: continue
+                if prod[0] == prod[1]:
+                    continue
                 # Include only the first instance of symmetric pairs
-                if (prod[1], prod[0]) not in products_unique[group]: products_unique[group].append(prod)
+                if (prod[1], prod[0]) not in products_unique[group]:
+                    products_unique[group].append(prod)
 
         return group_caps, products, products_unique
 
@@ -1265,12 +1340,15 @@ class CAP(_CAPGetter):
                 temp_dict = {}
                 for group in self._groups:
                     temp_dict.update(
-                        {group: pd.DataFrame(columns=base_cols + [f"{x}.{y}" for x, y in products[group]])} )
+                        {group: pd.DataFrame(columns=base_cols + [f"{x}.{y}" for x, y in products[group]])}
+                    )
             else:
                 df_dict.update({metric: pd.DataFrame(columns=base_cols + ["Transition_Frequency"])})
 
-        if "transition_probability" in metrics: return df_dict, temp_dict
-        else: return df_dict
+        if "transition_probability" in metrics:
+            return df_dict, temp_dict
+        else:
+            return df_dict
 
     def _distribute(self, predicted_subject_timeseries):
         distributed_list = []
@@ -1285,7 +1363,8 @@ class CAP(_CAPGetter):
     @staticmethod
     def _update_dict(cap_numbers, group_cap_counts, curr_dict):
         if max(cap_numbers) > group_cap_counts:
-            for i in range(group_cap_counts + 1, max(cap_numbers) + 1): curr_dict.update({i: float("nan")})
+            for i in range(group_cap_counts + 1, max(cap_numbers) + 1):
+                curr_dict.update({i: float("nan")})
 
     @staticmethod
     def _segments(target, timeseries):
@@ -1300,7 +1379,8 @@ class CAP(_CAPGetter):
         return binary_arr, segments
 
     def _save_metrics(self, output_dir, df_dict, prefix_filename):
-        if not os.path.exists(output_dir): os.makedirs(output_dir)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
 
         for metric in df_dict:
             if prefix_filename:
@@ -1309,26 +1389,30 @@ class CAP(_CAPGetter):
                 filename = f"{metric}"
 
             if metric != "transition_probability":
-                df_dict[f"{metric}"].to_csv(path_or_buf=os.path.join(output_dir, f"{filename}.csv"),
-                                            sep=",", index=False)
+                df_dict[f"{metric}"].to_csv(
+                    path_or_buf=os.path.join(output_dir, f"{filename}.csv"), sep=",", index=False
+                )
             else:
                 for group in self._groups:
                     df_dict[f"{metric}"][group].to_csv(
                         path_or_buf=os.path.join(output_dir, f"{filename}-{group.replace(' ', '_')}.csv"),
-                        sep=",", index=False
-                        )
+                        sep=",",
+                        index=False,
+                    )
 
-    def caps2plot(self,
-                  output_dir: Optional[os.PathLike]=None,
-                  suffix_title: Optional[str]=None,
-                  suffix_filename: Optional[str]=None,
-                  plot_options: Union[Literal["outer_product", "heatmap"],
-                                      list[Literal["outer_product", "heatmap"]]]="outer_product",
-                  visual_scope: Union[Literal["regions", "nodes"],
-                                      list[Literal["regions", "nodes"]]]="regions",
-                  show_figs: bool=True,
-                  subplots: bool=False,
-                  **kwargs) -> None:
+    def caps2plot(
+        self,
+        output_dir: Optional[os.PathLike] = None,
+        suffix_title: Optional[str] = None,
+        suffix_filename: Optional[str] = None,
+        plot_options: Union[
+            Literal["outer_product", "heatmap"], list[Literal["outer_product", "heatmap"]]
+        ] = "outer_product",
+        visual_scope: Union[Literal["regions", "nodes"], list[Literal["regions", "nodes"]]] = "regions",
+        show_figs: bool = True,
+        subplots: bool = False,
+        **kwargs,
+    ) -> None:
         """
         Generate Heatmaps and Outer Product Plots for CAPs.
 
@@ -1455,15 +1539,19 @@ class CAP(_CAPGetter):
         https://seaborn.pydata.org/tutorial/color_palettes.html
 
         """
-        if not self.parcel_approach: self._raise_error("parcel_approach")
+        if not self.parcel_approach:
+            self._raise_error("parcel_approach")
 
-        if not self.caps: self._raise_error("caps")
+        if not self.caps:
+            self._raise_error("caps")
 
         if suffix_filename is not None and output_dir is None:
             LG.warning("`suffix_filename` supplied but no `output_dir` specified. Files will not be saved.")
 
         # Check if parcellation_approach is custom
-        if "Custom" in self._parcel_approach and any(key not in self._parcel_approach["Custom"] for key in ["nodes", "regions"]):
+        if "Custom" in self._parcel_approach and any(
+            key not in self._parcel_approach["Custom"] for key in ["nodes", "regions"]
+        ):
             _check_parcel_approach(parcel_approach=self._parcel_approach, call="caps2plot")
 
         # Get parcellation name
@@ -1474,14 +1562,18 @@ class CAP(_CAPGetter):
         check_caps = check_caps[list(check_caps)[0]]
 
         if check_caps.shape[0] != len(self._parcel_approach[parcellation_name]["nodes"]):
-            raise ValueError("Number of nodes used for CAPs does not equal the number of nodes specified in "
-                             "`parcel_approach`.")
+            raise ValueError(
+                "Number of nodes used for CAPs does not equal the number of nodes specified in " "`parcel_approach`."
+            )
 
-        if output_dir and not os.path.exists(output_dir): os.makedirs(output_dir)
+        if output_dir and not os.path.exists(output_dir):
+            os.makedirs(output_dir)
 
         # Convert to list
-        if isinstance(plot_options, str): plot_options = [plot_options]
-        if isinstance(visual_scope, str): visual_scope = [visual_scope]
+        if isinstance(plot_options, str):
+            plot_options = [plot_options]
+        if isinstance(visual_scope, str):
+            visual_scope = [visual_scope]
 
         # Check inputs for plot_options and visual_scope
         if not any(["heatmap" in plot_options, "outer_product" in plot_options]):
@@ -1490,15 +1582,42 @@ class CAP(_CAPGetter):
         if not any(["regions" in visual_scope, "nodes" in visual_scope]):
             raise ValueError("Valid inputs for `visual_scope` are 'regions' and 'nodes'.")
 
-        if "regions" in visual_scope: self._create_regions(parcellation_name=parcellation_name)
+        if "regions" in visual_scope:
+            self._create_regions(parcellation_name=parcellation_name)
 
         # Create plot dictionary
-        defaults = {"dpi": 300, "figsize": (8, 6), "fontsize": 14, "hspace": 0.2, "wspace": 0.2, "xticklabels_size": 8,
-                    "yticklabels_size": 8, "cbarlabels_size": 8, "shrink": 0.8, "nrow": None, "ncol": None,
-                    "suptitle_fontsize": 20, "tight_layout": True, "rect": [0, 0.03, 1, 0.95], "sharey": True,
-                    "xlabel_rotation": 0, "ylabel_rotation": 0, "annot": False, "annot_kws": None, "fmt": ".2g",
-                    "linewidths": 0, "linecolor": "black", "cmap": "coolwarm", "edgecolors": None, "alpha": None,
-                    "hemisphere_labels": False, "borderwidths": 0, "vmin": None, "vmax": None, "bbox_inches": "tight"}
+        defaults = {
+            "dpi": 300,
+            "figsize": (8, 6),
+            "fontsize": 14,
+            "hspace": 0.2,
+            "wspace": 0.2,
+            "xticklabels_size": 8,
+            "yticklabels_size": 8,
+            "cbarlabels_size": 8,
+            "shrink": 0.8,
+            "nrow": None,
+            "ncol": None,
+            "suptitle_fontsize": 20,
+            "tight_layout": True,
+            "rect": [0, 0.03, 1, 0.95],
+            "sharey": True,
+            "xlabel_rotation": 0,
+            "ylabel_rotation": 0,
+            "annot": False,
+            "annot_kws": None,
+            "fmt": ".2g",
+            "linewidths": 0,
+            "linecolor": "black",
+            "cmap": "coolwarm",
+            "edgecolors": None,
+            "alpha": None,
+            "hemisphere_labels": False,
+            "borderwidths": 0,
+            "vmin": None,
+            "vmax": None,
+            "bbox_inches": "tight",
+        }
 
         plot_dict = _check_kwargs(defaults, **kwargs)
 
@@ -1512,7 +1631,8 @@ class CAP(_CAPGetter):
         plot_options = plot_options if isinstance(plot_options, list) else list(plot_options)
         visual_scope = visual_scope if isinstance(visual_scope, list) else list(visual_scope)
         # Initialize outer product attribute
-        if "outer_product" in plot_options: self._outer_products = {}
+        if "outer_product" in plot_options:
+            self._outer_products = {}
 
         distributed_list = list(itertools.product(plot_options, visual_scope, self._groups))
 
@@ -1528,17 +1648,30 @@ class CAP(_CAPGetter):
                     cap_dict, columns = self._caps, self._parcel_approach[parcellation_name]["nodes"]
                 else:
                     cap_dict = self._caps
-                    columns =  [x[0] + " " + x[1] for x in
-                                list(itertools.product(["LH", "RH"], self._parcel_approach["Custom"]["regions"]))]
+                    columns = [
+                        x[0] + " " + x[1]
+                        for x in list(itertools.product(["LH", "RH"], self._parcel_approach["Custom"]["regions"]))
+                    ]
 
             #  Generate plot for each group
-            input_keys = dict(group=group, plot_dict=plot_dict, cap_dict=cap_dict, columns=columns,
-                              output_dir=output_dir, suffix_title=suffix_title, suffix_filename=suffix_filename,
-                              show_figs=show_figs, scope=scope, parcellation_name=parcellation_name)
+            input_keys = dict(
+                group=group,
+                plot_dict=plot_dict,
+                cap_dict=cap_dict,
+                columns=columns,
+                output_dir=output_dir,
+                suffix_title=suffix_title,
+                suffix_filename=suffix_filename,
+                show_figs=show_figs,
+                scope=scope,
+                parcellation_name=parcellation_name,
+            )
 
             #  Generate plot for each group
-            if plot_option == "outer_product": self._generate_outer_product_plots(**input_keys, subplots=subplots)
-            elif plot_option == "heatmap": self._generate_heatmap_plots(**input_keys)
+            if plot_option == "outer_product":
+                self._generate_outer_product_plots(**input_keys, subplots=subplots)
+            elif plot_option == "heatmap":
+                self._generate_heatmap_plots(**input_keys)
 
         return self
 
@@ -1552,9 +1685,13 @@ class CAP(_CAPGetter):
                 region_caps = None
                 if parcellation_name != "Custom":
                     for region in self._parcel_approach[parcellation_name]["regions"]:
-                        region_indxs = np.array([index for index, node in
-                                                 enumerate(self._parcel_approach[parcellation_name]["nodes"])
-                                                 if region in node])
+                        region_indxs = np.array(
+                            [
+                                index
+                                for index, node in enumerate(self._parcel_approach[parcellation_name]["nodes"])
+                                if region in node
+                            ]
+                        )
                         if region_caps is None:
                             region_caps = np.array([np.average(self._caps[group][cap][region_indxs])])
                         else:
@@ -1565,14 +1702,26 @@ class CAP(_CAPGetter):
                     for region in region_keys:
                         roi_indxs = np.array(region_dict[region]["lh"] + region_dict[region]["rh"])
                         if region_caps is None:
-                            region_caps= np.array([np.average(self._caps[group][cap][roi_indxs])])
+                            region_caps = np.array([np.average(self._caps[group][cap][roi_indxs])])
                         else:
-                            region_caps= np.hstack([region_caps, np.average(self._caps[group][cap][roi_indxs])])
+                            region_caps = np.hstack([region_caps, np.average(self._caps[group][cap][roi_indxs])])
 
                 self._region_caps[group].update({cap: region_caps})
 
-    def _generate_outer_product_plots(self, group, plot_dict, cap_dict, columns, subplots, output_dir, suffix_title,
-                                      suffix_filename, show_figs, scope, parcellation_name):
+    def _generate_outer_product_plots(
+        self,
+        group,
+        plot_dict,
+        cap_dict,
+        columns,
+        subplots,
+        output_dir,
+        suffix_title,
+        suffix_filename,
+        show_figs,
+        scope,
+        parcellation_name,
+    ):
         # Nested dictionary for group
         self._outer_products[group] = {}
 
@@ -1581,11 +1730,12 @@ class CAP(_CAPGetter):
             # Max five subplots per row for default
             default_col = len(cap_dict[group]) if len(cap_dict[group]) <= 5 else 5
             ncol = plot_dict["ncol"] if plot_dict["ncol"] is not None else default_col
-            if ncol > len(cap_dict[group]): ncol = len(cap_dict[group])
+            if ncol > len(cap_dict[group]):
+                ncol = len(cap_dict[group])
             # Pad nrow, since int will round down, padding is needed for cases
             # where len(cap_dict[group])/ncol is a float. This will add the extra row needed
-            x_pad = 0 if len(cap_dict[group])/ncol <= 1 else 1
-            nrow = plot_dict["nrow"] if plot_dict["nrow"] is not None else x_pad + int(len(cap_dict[group])/ncol)
+            x_pad = 0 if len(cap_dict[group]) / ncol <= 1 else 1
+            nrow = plot_dict["nrow"] if plot_dict["nrow"] is not None else x_pad + int(len(cap_dict[group]) / ncol)
 
             subplot_figsize = (8 * ncol, 6 * nrow) if plot_dict["figsize"] == (8, 6) else plot_dict["figsize"]
 
@@ -1593,7 +1743,8 @@ class CAP(_CAPGetter):
             suptitle = f"{group} {suffix_title}" if suffix_title else f"{group}"
             fig.suptitle(suptitle, fontsize=plot_dict["suptitle_fontsize"])
             fig.subplots_adjust(hspace=plot_dict["hspace"], wspace=plot_dict["wspace"])
-            if plot_dict["tight_layout"]: fig.tight_layout(rect=plot_dict["rect"])
+            if plot_dict["tight_layout"]:
+                fig.tight_layout(rect=plot_dict["rect"])
 
             # Current subplot
             axes_x, axes_y = [0, 0]
@@ -1610,22 +1761,29 @@ class CAP(_CAPGetter):
                 ax = axes[axes_y] if nrow == 1 else axes[axes_x, axes_y]
                 # Modify tick labels based on scope
                 if scope == "regions":
-                    display = seaborn.heatmap(ax=ax, data=self._outer_products[group][cap], xticklabels=columns,
-                                              yticklabels=columns, **self._base_kwargs(plot_dict))
+                    display = seaborn.heatmap(
+                        ax=ax,
+                        data=self._outer_products[group][cap],
+                        xticklabels=columns,
+                        yticklabels=columns,
+                        **self._base_kwargs(plot_dict),
+                    )
                 else:
                     if plot_dict["hemisphere_labels"] is False:
-                        display = seaborn.heatmap(ax=ax, data=self._outer_products[group][cap],
-                                                  **self._base_kwargs(plot_dict))
+                        display = seaborn.heatmap(
+                            ax=ax, data=self._outer_products[group][cap], **self._base_kwargs(plot_dict)
+                        )
                     else:
-                        display = seaborn.heatmap(ax=ax, data=self._outer_products[group][cap],
-                                                  **self._base_kwargs(plot_dict, False, False))
+                        display = seaborn.heatmap(
+                            ax=ax, data=self._outer_products[group][cap], **self._base_kwargs(plot_dict, False, False)
+                        )
 
                     if plot_dict["hemisphere_labels"] is False:
                         ax = self._set_ticks(ax, labels)
                     else:
-                        ax, division_line, plot_dict["linewidths"] = self._division_line(ax,
-                                                                                         parcellation_name,
-                                                                                         plot_dict["linewidths"])
+                        ax, division_line, plot_dict["linewidths"] = self._division_line(
+                            ax, parcellation_name, plot_dict["linewidths"]
+                        )
 
                         ax.axhline(division_line, color=plot_dict["linecolor"], linewidth=plot_dict["linewidths"])
                         ax.axvline(division_line, color=plot_dict["linecolor"], linewidth=plot_dict["linewidths"])
@@ -1639,7 +1797,8 @@ class CAP(_CAPGetter):
 
                 # Modify label sizes; if share_y, only set y for plots at axes == 0
                 if plot_dict["sharey"]:
-                    if axes_y == 0: display = self._label_size(display, plot_dict, False, True)
+                    if axes_y == 0:
+                        display = self._label_size(display, plot_dict, False, True)
                 else:
                     display = self._label_size(display, plot_dict, False, True)
 
@@ -1657,22 +1816,34 @@ class CAP(_CAPGetter):
                 plt.figure(figsize=plot_dict["figsize"])
 
                 if scope == "regions":
-                    display = seaborn.heatmap(self._outer_products[group][cap], xticklabels=columns,
-                                              yticklabels=columns, **self._base_kwargs(plot_dict))
+                    display = seaborn.heatmap(
+                        self._outer_products[group][cap],
+                        xticklabels=columns,
+                        yticklabels=columns,
+                        **self._base_kwargs(plot_dict),
+                    )
                 else:
                     if plot_dict["hemisphere_labels"] is False:
-                        display = seaborn.heatmap(self._outer_products[group][cap], xticklabels=[], yticklabels=[],
-                                                  **self._base_kwargs(plot_dict))
+                        display = seaborn.heatmap(
+                            self._outer_products[group][cap],
+                            xticklabels=[],
+                            yticklabels=[],
+                            **self._base_kwargs(plot_dict),
+                        )
                     else:
-                        display = seaborn.heatmap(self._outer_products[group][cap], xticklabels=[], yticklabels=[],
-                                                  **self._base_kwargs(plot_dict, False, False))
+                        display = seaborn.heatmap(
+                            self._outer_products[group][cap],
+                            xticklabels=[],
+                            yticklabels=[],
+                            **self._base_kwargs(plot_dict, False, False),
+                        )
 
                     if plot_dict["hemisphere_labels"] is False:
                         display = self._set_ticks(display, labels)
                     else:
-                        display, division_line, plot_dict["linewidths"] = self._division_line(display,
-                                                                                              parcellation_name,
-                                                                                              plot_dict["linewidths"])
+                        display, division_line, plot_dict["linewidths"] = self._division_line(
+                            display, parcellation_name, plot_dict["linewidths"]
+                        )
 
                         plt.axhline(division_line, color=plot_dict["linecolor"], linewidth=plot_dict["linewidths"])
                         plt.axvline(division_line, color=plot_dict["linecolor"], linewidth=plot_dict["linewidths"])
@@ -1690,47 +1861,71 @@ class CAP(_CAPGetter):
                 # Save individual plots
                 if output_dir:
                     partial_filename = f"{group}_{cap}"
-                    self._save_heatmap(display, scope, partial_filename, suffix_filename, plot_dict,
-                                       output_dir, call="outer_product")
+                    self._save_heatmap(
+                        display, scope, partial_filename, suffix_filename, plot_dict, output_dir, call="outer_product"
+                    )
 
         # Remove subplots with no data
-        if subplots: [fig.delaxes(ax) for ax in axes.flatten() if not ax.has_data()]
+        if subplots:
+            [fig.delaxes(ax) for ax in axes.flatten() if not ax.has_data()]
 
         # Save subplot
         if subplots and output_dir:
             partial_filename = f"{group}_CAPs"
-            self._save_heatmap(display, scope, partial_filename, suffix_filename, plot_dict, output_dir,
-                               call="outer_product")
+            self._save_heatmap(
+                display, scope, partial_filename, suffix_filename, plot_dict, output_dir, call="outer_product"
+            )
 
         # Display figures
         plt.show() if show_figs else plt.close()
 
-    def _generate_heatmap_plots(self, group, plot_dict, cap_dict, columns, output_dir, suffix_title, suffix_filename,
-                                show_figs, scope, parcellation_name):
+    def _generate_heatmap_plots(
+        self,
+        group,
+        plot_dict,
+        cap_dict,
+        columns,
+        output_dir,
+        suffix_title,
+        suffix_filename,
+        show_figs,
+        scope,
+        parcellation_name,
+    ):
         # Initialize new grid
         plt.figure(figsize=plot_dict["figsize"])
 
         if scope == "regions":
-            display = seaborn.heatmap(pd.DataFrame(cap_dict[group], index=columns), xticklabels=True, yticklabels=True,
-                                      **self._base_kwargs(plot_dict))
+            display = seaborn.heatmap(
+                pd.DataFrame(cap_dict[group], index=columns),
+                xticklabels=True,
+                yticklabels=True,
+                **self._base_kwargs(plot_dict),
+            )
         else:
             # Create Labels
             if plot_dict["hemisphere_labels"] is False:
                 labels, names_list = self._create_node_labels(parcellation_name, self._parcel_approach, columns)
 
-                display = seaborn.heatmap(pd.DataFrame(cap_dict[group], columns=list(cap_dict[group])),
-                                          xticklabels=True, yticklabels=True, **self._base_kwargs(plot_dict))
+                display = seaborn.heatmap(
+                    pd.DataFrame(cap_dict[group], columns=list(cap_dict[group])),
+                    xticklabels=True,
+                    yticklabels=True,
+                    **self._base_kwargs(plot_dict),
+                )
 
                 plt.yticks(ticks=[pos for pos, label in enumerate(labels) if label], labels=names_list)
             else:
-                display = seaborn.heatmap(pd.DataFrame(cap_dict[group], columns=list(cap_dict[group])),
-                                          xticklabels=True, yticklabels=True,
-                                          **self._base_kwargs(plot_dict, False, False))
+                display = seaborn.heatmap(
+                    pd.DataFrame(cap_dict[group], columns=list(cap_dict[group])),
+                    xticklabels=True,
+                    yticklabels=True,
+                    **self._base_kwargs(plot_dict, False, False),
+                )
 
-                display, division_line, plot_dict["linewidths"] = self._division_line(display,
-                                                                                      parcellation_name,
-                                                                                      plot_dict["linewidths"],
-                                                                                      call="heatmap")
+                display, division_line, plot_dict["linewidths"] = self._division_line(
+                    display, parcellation_name, plot_dict["linewidths"], call="heatmap"
+                )
 
                 plt.axhline(division_line, color=plot_dict["linecolor"], linewidth=plot_dict["linewidths"])
 
@@ -1741,7 +1936,7 @@ class CAP(_CAPGetter):
         # Modify label sizes
         display = self._label_size(display, plot_dict)
         plot_title = f"{group} CAPs {suffix_title}" if suffix_title else f"{group} CAPs"
-        display.set_title(plot_title, fontdict= {"fontsize": plot_dict["fontsize"]})
+        display.set_title(plot_title, fontdict={"fontsize": plot_dict["fontsize"]})
 
         # Save plots
         if output_dir:
@@ -1752,14 +1947,23 @@ class CAP(_CAPGetter):
         plt.show() if show_figs else plt.close()
 
     @staticmethod
-    def _base_kwargs(plot_dict, line = True, edge = True):
-        kwargs = {"cmap": plot_dict["cmap"], "cbar_kws": {"shrink": plot_dict["shrink"]}, "annot": plot_dict["annot"],
-                  "annot_kws": plot_dict["annot_kws"], "fmt": plot_dict["fmt"], "alpha": plot_dict["alpha"],
-                  "vmin": plot_dict["vmin"], "vmax": plot_dict["vmax"]}
+    def _base_kwargs(plot_dict, line=True, edge=True):
+        kwargs = {
+            "cmap": plot_dict["cmap"],
+            "cbar_kws": {"shrink": plot_dict["shrink"]},
+            "annot": plot_dict["annot"],
+            "annot_kws": plot_dict["annot_kws"],
+            "fmt": plot_dict["fmt"],
+            "alpha": plot_dict["alpha"],
+            "vmin": plot_dict["vmin"],
+            "vmax": plot_dict["vmax"],
+        }
 
-        if line: kwargs.update({"linewidths": plot_dict["linewidths"], "linecolor": plot_dict["linecolor"]})
+        if line:
+            kwargs.update({"linewidths": plot_dict["linewidths"], "linecolor": plot_dict["linecolor"]})
 
-        if edge: kwargs.update({"edgecolors": plot_dict["edgecolors"]})
+        if edge:
+            kwargs.update({"edgecolors": plot_dict["edgecolors"]})
 
         return kwargs
 
@@ -1803,11 +2007,11 @@ class CAP(_CAPGetter):
 
         return labels, names_list
 
-    def _division_line(self, display, parcellation_name, linewidths, call = "outer"):
+    def _division_line(self, display, parcellation_name, linewidths, call="outer"):
         n_labels = len(self._parcel_approach[parcellation_name]["nodes"])
-        division_line = n_labels//2
-        left_hemisphere_tick = (0 + division_line)//2
-        right_hemisphere_tick = (division_line + n_labels)//2
+        division_line = n_labels // 2
+        left_hemisphere_tick = (0 + division_line) // 2
+        right_hemisphere_tick = (division_line + n_labels) // 2
 
         if call == "outer":
             display.set_xticks([left_hemisphere_tick, right_hemisphere_tick])
@@ -1832,24 +2036,28 @@ class CAP(_CAPGetter):
         return display
 
     @staticmethod
-    def _border(display, plot_dict, length, axvline = None):
+    def _border(display, plot_dict, length, axvline=None):
         display.axhline(y=0, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
         display.axhline(y=length, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
         display.axvline(x=0, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
 
-        if axvline: display.axvline(x=axvline, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
-        else: display.axvline(x=length, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
+        if axvline:
+            display.axvline(x=axvline, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
+        else:
+            display.axvline(x=length, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
 
         return display
 
     @staticmethod
-    def _label_size(display, plot_dict, set_x = True, set_y = True):
+    def _label_size(display, plot_dict, set_x=True, set_y=True):
         if set_x:
-            display.set_xticklabels(display.get_xticklabels(), size=plot_dict["xticklabels_size"],
-                                    rotation=plot_dict["xlabel_rotation"])
+            display.set_xticklabels(
+                display.get_xticklabels(), size=plot_dict["xticklabels_size"], rotation=plot_dict["xlabel_rotation"]
+            )
         if set_y:
-            display.set_yticklabels(display.get_yticklabels(), size=plot_dict["yticklabels_size"],
-                                    rotation=plot_dict["ylabel_rotation"])
+            display.set_yticklabels(
+                display.get_yticklabels(), size=plot_dict["yticklabels_size"], rotation=plot_dict["ylabel_rotation"]
+            )
         if plot_dict["cbarlabels_size"]:
             cbar = display.collections[0].colorbar
             cbar.ax.tick_params(labelsize=plot_dict["cbarlabels_size"])
@@ -1860,20 +2068,24 @@ class CAP(_CAPGetter):
     @staticmethod
     def _save_heatmap(display, scope, partial, suffix, plot_dict, output_dir, call):
         full_filename = partial + f"_{call}-{scope}"
-        if suffix: full_filename += f"_{suffix}".replace(' ', '_')
+        if suffix:
+            full_filename += f"_{suffix}".replace(" ", "_")
         full_filename += ".png"
-        display.get_figure().savefig(os.path.join(output_dir, full_filename), dpi=plot_dict["dpi"],
-                                     bbox_inches=plot_dict["bbox_inches"])
+        display.get_figure().savefig(
+            os.path.join(output_dir, full_filename), dpi=plot_dict["dpi"], bbox_inches=plot_dict["bbox_inches"]
+        )
 
-    def caps2corr(self,
-                  output_dir: Optional[os.PathLike]=None,
-                  suffix_title: Optional[str]=None,
-                  suffix_filename: Optional[str]=None,
-                  show_figs: bool=True,
-                  save_plots: bool=True,
-                  return_df: bool=False,
-                  save_df: bool=False,
-                  **kwargs) -> dict[str, pd.DataFrame]:
+    def caps2corr(
+        self,
+        output_dir: Optional[os.PathLike] = None,
+        suffix_title: Optional[str] = None,
+        suffix_filename: Optional[str] = None,
+        show_figs: bool = True,
+        save_plots: bool = True,
+        return_df: bool = False,
+        save_df: bool = False,
+        **kwargs,
+    ) -> dict[str, pd.DataFrame]:
         """
         Generate Pearson Correlation Matrix for CAPs.
 
@@ -1975,17 +2187,36 @@ class CAP(_CAPGetter):
         """
         corr_dict = {group: None for group in self._groups} if return_df or save_df else None
 
-        if not self.caps: self._raise_error("caps")
+        if not self.caps:
+            self._raise_error("caps")
 
         if suffix_filename is not None and output_dir is None:
             LG.warning("`suffix_filename` supplied but no `output_dir` specified. Files will not be saved.")
 
         # Create plot dictionary
-        defaults = {"dpi": 300, "figsize": (8, 6), "fontsize": 14, "xticklabels_size": 8, "yticklabels_size": 8,
-                    "shrink": 0.8, "cbarlabels_size": 8, "xlabel_rotation": 0, "ylabel_rotation": 0, "annot": False,
-                    "linewidths": 0, "linecolor": "black", "cmap": "coolwarm", "fmt": ".2g", "borderwidths": 0,
-                    "edgecolors": None, "alpha": None, "bbox_inches": "tight", "annot_kws": None, "vmin": None,
-                    "vmax": None}
+        defaults = {
+            "dpi": 300,
+            "figsize": (8, 6),
+            "fontsize": 14,
+            "xticklabels_size": 8,
+            "yticklabels_size": 8,
+            "shrink": 0.8,
+            "cbarlabels_size": 8,
+            "xlabel_rotation": 0,
+            "ylabel_rotation": 0,
+            "annot": False,
+            "linewidths": 0,
+            "linecolor": "black",
+            "cmap": "coolwarm",
+            "fmt": ".2g",
+            "borderwidths": 0,
+            "edgecolors": None,
+            "alpha": None,
+            "bbox_inches": "tight",
+            "annot_kws": None,
+            "vmin": None,
+            "vmax": None,
+        }
 
         plot_dict = _check_kwargs(defaults, **kwargs)
 
@@ -2002,37 +2233,44 @@ class CAP(_CAPGetter):
                 pval_df = df.corr(method=lambda x, y: pearsonr(x, y)[1]) - np.eye(*corr_df.shape)
                 # Add asterisk to values that meet the threshold
                 pval_df = pval_df.map(
-                    lambda x: f'({format(x, plot_dict["fmt"])})' + "".join(["*" for code in [0.05, 0.01, 0.001] if x < code])
-                    )
+                    lambda x: f'({format(x, plot_dict["fmt"])})'
+                    + "".join(["*" for code in [0.05, 0.01, 0.001] if x < code])
+                )
                 # Add the p-values to the correlation matrix
                 corr_dict[group] = corr_df.map(lambda x: f'{format(x, plot_dict["fmt"])}') + " " + pval_df
 
             # Save figure
             if output_dir:
-                _save_contents(output_dir, suffix_filename, group, corr_dict, plot_dict, save_plots, save_df, display,
-                               "corr")
+                _save_contents(
+                    output_dir, suffix_filename, group, corr_dict, plot_dict, save_plots, save_df, display, "corr"
+                )
 
             # Display figures
             plt.show() if show_figs else plt.close()
 
-        if return_df: return corr_dict
+        if return_df:
+            return corr_dict
 
     # Create basename for certain files
     @staticmethod
     def _basename(group, cap, desc=None, suffix=None, ext="png"):
         base = f"{group.replace(' ', '_')}_{cap}"
 
-        if desc: base += f"_{desc}"
+        if desc:
+            base += f"_{desc}"
 
-        if suffix: base += f"_{suffix.rstrip().replace(' ', '_')}"
+        if suffix:
+            base += f"_{suffix.rstrip().replace(' ', '_')}"
 
         return base + f".{ext}"
 
-    def caps2niftis(self,
-                    output_dir: os.PathLike,
-                    suffix_filename: Optional[str]=None,
-                    fwhm: Optional[float]=None,
-                    knn_dict: dict[str, Union[int, list[int], NDArray[np.integer]]]=None) -> None:
+    def caps2niftis(
+        self,
+        output_dir: os.PathLike,
+        suffix_filename: Optional[str] = None,
+        fwhm: Optional[float] = None,
+        knn_dict: dict[str, Union[int, list[int], NDArray[np.integer]]] = None,
+    ) -> None:
         """
         Standalone Method to Convert CAPs to NifTI Statistical Maps.
 
@@ -2107,22 +2345,29 @@ class CAP(_CAPGetter):
             for indx, value in enumerate(cap_vector, start=1):
                 atlas_array[atlas_fdata == target_array[indx]] = value
         """
-        if not self.parcel_approach: self._raise_error("parcel_approach")
+        if not self.parcel_approach:
+            self._raise_error("parcel_approach")
 
-        if not self.caps: self._raise_error("caps")
+        if not self.caps:
+            self._raise_error("caps")
 
         # Check `knn_dict`
         if knn_dict:
             knn_dict = self._validate_knn_dict(knn_dict)
 
-        if output_dir and not os.path.exists(output_dir): os.makedirs(output_dir)
+        if output_dir and not os.path.exists(output_dir):
+            os.makedirs(output_dir)
 
         parcellation_name = list(self._parcel_approach)[0]
 
         for group in self._caps:
             for cap in self._caps[group]:
-                stat_map = _cap2statmap(atlas_file=self._parcel_approach[parcellation_name]["maps"],
-                                        cap_vector=self._caps[group][cap], fwhm=fwhm, knn_dict=knn_dict)
+                stat_map = _cap2statmap(
+                    atlas_file=self._parcel_approach[parcellation_name]["maps"],
+                    cap_vector=self._caps[group][cap],
+                    fwhm=fwhm,
+                    knn_dict=knn_dict,
+                )
 
                 filename = self._basename(group, cap, suffix=suffix_filename, ext="nii.gz")
 
@@ -2146,14 +2391,17 @@ class CAP(_CAPGetter):
 
         if "resolution_mm" not in knn_dict and knn_dict["reference_atlas"] == "Schaefer":
             knn_dict["resolution_mm"] = 1
-            LG.warning("Defaulting to 1mm resolution for the Schaefer atlas since 'resolution_mm' was not specified in "
-                       "`knn_dict`.")
+            LG.warning(
+                "Defaulting to 1mm resolution for the Schaefer atlas since 'resolution_mm' was not specified in "
+                "`knn_dict`."
+            )
         else:
             if "resolution_mm" in knn_dict and not knn_dict["reference_atlas"] == "Schaefer":
                 knn_dict["resolution_mm"] = None
                 LG.warning("'resolution_mm' only used when 'reference_atlas' is set to 'Schaefer'.")
 
-            if "resolution_mm" not in knn_dict: knn_dict["resolution_mm"] = None
+            if "resolution_mm" not in knn_dict:
+                knn_dict["resolution_mm"] = None
 
         if "k" not in knn_dict:
             knn_dict["k"] = 3
@@ -2161,18 +2409,20 @@ class CAP(_CAPGetter):
 
         return knn_dict
 
-    def caps2surf(self,
-                  output_dir: Optional[os.PathLike]=None,
-                  suffix_title: Optional[str]=None,
-                  suffix_filename: Optional[str]=None,
-                  show_figs: bool=True,
-                  fwhm: Optional[float]=None,
-                  fslr_density: Literal["4k", "8k", "32k", "164k"]="32k",
-                  method: Literal["linear", "nearest"]="linear",
-                  save_stat_maps: bool=False,
-                  fslr_giftis_dict: Optional[dict]=None,
-                  knn_dict: dict[str, Union[int, list[int], NDArray[np.integer]]]=None,
-                  **kwargs) -> None:
+    def caps2surf(
+        self,
+        output_dir: Optional[os.PathLike] = None,
+        suffix_title: Optional[str] = None,
+        suffix_filename: Optional[str] = None,
+        show_figs: bool = True,
+        fwhm: Optional[float] = None,
+        fslr_density: Literal["4k", "8k", "32k", "164k"] = "32k",
+        method: Literal["linear", "nearest"] = "linear",
+        save_stat_maps: bool = False,
+        fslr_giftis_dict: Optional[dict] = None,
+        knn_dict: dict[str, Union[int, list[int], NDArray[np.integer]]] = None,
+        **kwargs,
+    ) -> None:
         """
         Project CAPs onto Surface Plots.
 
@@ -2338,9 +2588,11 @@ class CAP(_CAPGetter):
             for indx, value in enumerate(cap_vector, start=1):
                 atlas_array[atlas_fdata == target_array[indx]] = value
         """
-        if not self.parcel_approach and fslr_giftis_dict is None: self._raise_error("parcel_approach")
+        if not self.parcel_approach and fslr_giftis_dict is None:
+            self._raise_error("parcel_approach")
 
-        if not self.caps and fslr_giftis_dict is None: self._raise_error("caps")
+        if not self.caps and fslr_giftis_dict is None:
+            self._raise_error("caps")
 
         if suffix_filename is not None and output_dir is None:
             LG.warning("`suffix_filename` supplied but no `output_dir` specified. Files will not be saved.")
@@ -2349,37 +2601,61 @@ class CAP(_CAPGetter):
         if knn_dict:
             knn_dict = self._validate_knn_dict(knn_dict)
 
-        if output_dir and not os.path.exists(output_dir): os.makedirs(output_dir)
+        if output_dir and not os.path.exists(output_dir):
+            os.makedirs(output_dir)
 
         # Create plot dictionary
-        defaults = {"dpi": 300, "title_pad": -3, "cmap": "cold_hot", "cbar_kws":  {"location": "bottom", "n_ticks": 3},
-                    "size": (500, 400), "layout": "grid", "zoom": 1.5, "views": ["lateral", "medial"], "alpha": 1,
-                    "zero_transparent": True, "as_outline": False, "brightness": 0.5, "figsize": None, "scale": (2, 2),
-                    "surface": "inflated", "color_range": None, "bbox_inches": "tight", "outline_alpha": 1}
+        defaults = {
+            "dpi": 300,
+            "title_pad": -3,
+            "cmap": "cold_hot",
+            "cbar_kws": {"location": "bottom", "n_ticks": 3},
+            "size": (500, 400),
+            "layout": "grid",
+            "zoom": 1.5,
+            "views": ["lateral", "medial"],
+            "alpha": 1,
+            "zero_transparent": True,
+            "as_outline": False,
+            "brightness": 0.5,
+            "figsize": None,
+            "scale": (2, 2),
+            "surface": "inflated",
+            "color_range": None,
+            "bbox_inches": "tight",
+            "outline_alpha": 1,
+        }
 
         plot_dict = _check_kwargs(defaults, **kwargs)
 
         groups = self._caps if hasattr(self, "_caps") and fslr_giftis_dict is None else fslr_giftis_dict
 
-        if fslr_giftis_dict is None: parcellation_name = list(self._parcel_approach)[0]
+        if fslr_giftis_dict is None:
+            parcellation_name = list(self._parcel_approach)[0]
 
         for group in groups:
             caps = self._caps[group] if hasattr(self, "_caps") and fslr_giftis_dict is None else fslr_giftis_dict[group]
 
             for cap in caps:
                 if fslr_giftis_dict is None:
-                    stat_map = _cap2statmap(atlas_file=self._parcel_approach[parcellation_name]["maps"],
-                                            cap_vector=self._caps[group][cap], fwhm=fwhm, knn_dict=knn_dict)
+                    stat_map = _cap2statmap(
+                        atlas_file=self._parcel_approach[parcellation_name]["maps"],
+                        cap_vector=self._caps[group][cap],
+                        fwhm=fwhm,
+                        knn_dict=knn_dict,
+                    )
 
-                # Fix for python 3.12, saving stat map so that it is path instead of a NifTi
+                    # Fix for python 3.12, saving stat map so that it is path instead of a NifTi
                     try:
                         gii_lh, gii_rh = mni152_to_fslr(stat_map, method=method, fslr_density=fslr_density)
                     except TypeError:
                         # Create temp
                         temp_nifti = tempfile.NamedTemporaryFile(delete=False, suffix=".nii.gz")
-                        LG.warning("TypeError raised by neuromaps due to changes in pathlib.py in Python 3.12 "
-                                   "Converting `statistical map` into a temporary nii.gz file (which will be "
-                                   f"automatically deleted afterwards) [TEMP FILE: {temp_nifti.name}]")
+                        LG.warning(
+                            "TypeError raised by neuromaps due to changes in pathlib.py in Python 3.12 "
+                            "Converting `statistical map` into a temporary nii.gz file (which will be "
+                            f"automatically deleted afterwards) [TEMP FILE: {temp_nifti.name}]"
+                        )
 
                         # Ensure file is closed
                         temp_nifti.close()
@@ -2389,15 +2665,19 @@ class CAP(_CAPGetter):
                         # Delete
                         os.unlink(temp_nifti.name)
                 else:
-                    gii_lh, gii_rh = fslr_to_fslr((fslr_giftis_dict[group][cap]["lh"],
-                                                   fslr_giftis_dict[group][cap]["rh"]),
-                                                   target_density=fslr_density, method=method)
+                    gii_lh, gii_rh = fslr_to_fslr(
+                        (fslr_giftis_dict[group][cap]["lh"], fslr_giftis_dict[group][cap]["rh"]),
+                        target_density=fslr_density,
+                        method=method,
+                    )
                 # Code slightly adapted from surfplot example 2
                 surfaces = fetch_fslr()
 
                 if plot_dict["surface"] not in ["inflated", "veryinflated"]:
-                    LG.warning(f"{plot_dict['surface']} is an invalid option for `surface`. Available options "
-                               "include 'inflated' or 'verinflated'. Defaulting to 'inflated'.")
+                    LG.warning(
+                        f"{plot_dict['surface']} is an invalid option for `surface`. Available options "
+                        "include 'inflated' or 'verinflated'. Defaulting to 'inflated'."
+                    )
 
                     plot_dict["surface"] = "inflated"
 
@@ -2407,8 +2687,15 @@ class CAP(_CAPGetter):
                 sulc_lh, sulc_rh = surfaces["sulc"]
                 sulc_lh = str(sulc_lh) if not isinstance(sulc_lh, str) else sulc_lh
                 sulc_rh = str(sulc_rh) if not isinstance(sulc_rh, str) else sulc_rh
-                p = surfplot.Plot(lh, rh, size=plot_dict["size"], layout=plot_dict["layout"], zoom=plot_dict["zoom"],
-                                  views=plot_dict["views"], brightness=plot_dict["brightness"])
+                p = surfplot.Plot(
+                    lh,
+                    rh,
+                    size=plot_dict["size"],
+                    layout=plot_dict["layout"],
+                    zoom=plot_dict["zoom"],
+                    views=plot_dict["views"],
+                    brightness=plot_dict["brightness"],
+                )
 
                 # Add base layer
                 p.add_layer({"left": sulc_lh, "right": sulc_rh}, cmap="binary_r", cbar=False)
@@ -2416,13 +2703,23 @@ class CAP(_CAPGetter):
                 # Check cmap
                 cmap = _cmap_d[plot_dict["cmap"]] if isinstance(plot_dict["cmap"], str) else plot_dict["cmap"]
                 # Add stat map layer
-                p.add_layer({"left": gii_lh, "right": gii_rh}, cmap=cmap,
-                            alpha=plot_dict["alpha"], color_range=plot_dict["color_range"],
-                            zero_transparent=plot_dict["zero_transparent"], as_outline=False)
+                p.add_layer(
+                    {"left": gii_lh, "right": gii_rh},
+                    cmap=cmap,
+                    alpha=plot_dict["alpha"],
+                    color_range=plot_dict["color_range"],
+                    zero_transparent=plot_dict["zero_transparent"],
+                    as_outline=False,
+                )
 
                 if plot_dict["as_outline"] is True:
-                    p.add_layer({"left": gii_lh, "right": gii_rh}, cmap="gray", cbar=False,
-                                alpha=plot_dict["outline_alpha"], as_outline=True)
+                    p.add_layer(
+                        {"left": gii_lh, "right": gii_rh},
+                        cmap="gray",
+                        cbar=False,
+                        alpha=plot_dict["outline_alpha"],
+                        as_outline=True,
+                    )
 
                 # Color bar
                 fig = p.build(cbar_kws=plot_dict["cbar_kws"], figsize=plot_dict["figsize"], scale=plot_dict["scale"])
@@ -2432,27 +2729,32 @@ class CAP(_CAPGetter):
                 if output_dir:
                     filename = self._basename(group, cap, "surface", suffix_filename, "png")
 
-                    fig.savefig(os.path.join(output_dir, filename), dpi=plot_dict["dpi"],
-                                bbox_inches=plot_dict["bbox_inches"])
+                    fig.savefig(
+                        os.path.join(output_dir, filename), dpi=plot_dict["dpi"], bbox_inches=plot_dict["bbox_inches"]
+                    )
 
                     # Save stat map
                     if save_stat_maps:
                         stat_map_name = filename.split("_surface")[0] + ".nii.gz"
                         nib.save(stat_map, os.path.join(output_dir, stat_map_name))
 
-                try: plt.show(fig) if show_figs else plt.close(fig)
-                except: plt.show() if show_figs else plt.close()
+                try:
+                    plt.show(fig) if show_figs else plt.close(fig)
+                except:
+                    plt.show() if show_figs else plt.close()
 
         return self
 
-    def caps2radar(self,
-                   output_dir: Optional[os.PathLike]=None,
-                   suffix_title: Optional[str]=None,
-                   suffix_filename: Optional[str]=None,
-                   show_figs: bool=True,
-                   use_scatterpolar: bool=False,
-                   as_html: bool=False,
-                   **kwargs) -> None:
+    def caps2radar(
+        self,
+        output_dir: Optional[os.PathLike] = None,
+        suffix_title: Optional[str] = None,
+        suffix_filename: Optional[str] = None,
+        show_figs: bool = True,
+        use_scatterpolar: bool = False,
+        as_html: bool = False,
+        **kwargs,
+    ) -> None:
         """
         Generate Radar Plots for CAPs using Cosine Similarity.
 
@@ -2665,32 +2967,63 @@ class CAP(_CAPGetter):
         occupancy in the presence of cerebral small vessel disease — A pre-registered replication analysis of the
         Hamburg City Health Study. Imaging Neuroscience, 2, 1–17. https://doi.org/10.1162/imag_a_00122
         """
-        if not self.parcel_approach: self._raise_error("parcel_approach")
+        if not self.parcel_approach:
+            self._raise_error("parcel_approach")
 
-        if not self.caps: self._raise_error("caps")
+        if not self.caps:
+            self._raise_error("caps")
 
         if not self._standardize:
-            LG.warning("To better aid interpretation, the matrix subjected to kmeans clustering in "
-                       "`self.get_caps` should be standardized so that each ROI in the CAP cluster centroid. "
-                       "represents activation or de-activation relative to the mean.")
+            LG.warning(
+                "To better aid interpretation, the matrix subjected to kmeans clustering in "
+                "`self.get_caps` should be standardized so that each ROI in the CAP cluster centroid. "
+                "represents activation or de-activation relative to the mean."
+            )
 
         if suffix_filename is not None and output_dir is None:
             LG.warning("`suffix_filename` supplied but no `output_dir` specified. Files will not be saved.")
 
-        defaults = {"scale": 2, "height": 800, "width": 1200, "line_close": True, "bgcolor": "white", "fill": "none",
-                    "scattersize": 8, "connectgaps": True, "opacity": 0.5, "linewidth": 2,
-                    "radialaxis": {"showline": False, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)",
-                                   "gridcolor": "rgba(0, 0, 0, 0.25)", "ticks": "outside",
-                                   "tickfont": {"size": 14, "color": "black"}},
-                    "angularaxis": {"showline": True, "linewidth": 2, "linecolor": "rgba(0, 0, 0, 0.25)",
-                                    "gridcolor": "rgba(0, 0, 0, 0.25)", "tickfont": {"size": 16, "color": "black"}},
-                    "color_discrete_map": {"High Amplitude": "rgba(255, 0, 0, 1)",
-                                           "Low Amplitude": "rgba(0, 0, 255, 1)"},
-                    "title_font": {"family": "Times New Roman", "size": 30, "color": "black"},
-                    "title_x": 0.5, "title_y": None,
-                    "legend": {"yanchor": "top", "xanchor": "left", "y": 0.99, "x": 0.01,
-                               "title_font_family": "Times New Roman", "font": {"size": 12, "color": "black"}},
-                    "mode": "markers+lines", "engine": "kaleido"}
+        defaults = {
+            "scale": 2,
+            "height": 800,
+            "width": 1200,
+            "line_close": True,
+            "bgcolor": "white",
+            "fill": "none",
+            "scattersize": 8,
+            "connectgaps": True,
+            "opacity": 0.5,
+            "linewidth": 2,
+            "radialaxis": {
+                "showline": False,
+                "linewidth": 2,
+                "linecolor": "rgba(0, 0, 0, 0.25)",
+                "gridcolor": "rgba(0, 0, 0, 0.25)",
+                "ticks": "outside",
+                "tickfont": {"size": 14, "color": "black"},
+            },
+            "angularaxis": {
+                "showline": True,
+                "linewidth": 2,
+                "linecolor": "rgba(0, 0, 0, 0.25)",
+                "gridcolor": "rgba(0, 0, 0, 0.25)",
+                "tickfont": {"size": 16, "color": "black"},
+            },
+            "color_discrete_map": {"High Amplitude": "rgba(255, 0, 0, 1)", "Low Amplitude": "rgba(0, 0, 255, 1)"},
+            "title_font": {"family": "Times New Roman", "size": 30, "color": "black"},
+            "title_x": 0.5,
+            "title_y": None,
+            "legend": {
+                "yanchor": "top",
+                "xanchor": "left",
+                "y": 0.99,
+                "x": 0.01,
+                "title_font_family": "Times New Roman",
+                "font": {"size": 12, "color": "black"},
+            },
+            "mode": "markers+lines",
+            "engine": "kaleido",
+        }
 
         plot_dict = _check_kwargs(defaults, **kwargs)
 
@@ -2709,7 +3042,7 @@ class CAP(_CAPGetter):
                 if use_scatterpolar:
                     # Create dataframe
                     df = pd.DataFrame({"Regions": radar_dict["Regions"]})
-                    df = pd.concat([df, pd.DataFrame(radar_dict[cap])], axis = 1)
+                    df = pd.concat([df, pd.DataFrame(radar_dict[cap])], axis=1)
                     # Initialize figure
                     fig = go.Figure(layout=go.Layout(width=plot_dict["width"], height=plot_dict["height"]))
                     regions = df["Regions"].values
@@ -2718,38 +3051,55 @@ class CAP(_CAPGetter):
                         values = df[i].values
 
                         # Add traces
-                        fig.add_trace(go.Scatterpolar(
-                        r=list(values),
-                        theta=regions,
-                        connectgaps=plot_dict["connectgaps"],
-                        name=i,
-                        opacity=plot_dict["opacity"],
-                        marker=dict(color=plot_dict["color_discrete_map"][i], size=plot_dict["scattersize"]),
-                        line=dict(color=plot_dict["color_discrete_map"][i], width=plot_dict["linewidth"])))
+                        fig.add_trace(
+                            go.Scatterpolar(
+                                r=list(values),
+                                theta=regions,
+                                connectgaps=plot_dict["connectgaps"],
+                                name=i,
+                                opacity=plot_dict["opacity"],
+                                marker=dict(color=plot_dict["color_discrete_map"][i], size=plot_dict["scattersize"]),
+                                line=dict(color=plot_dict["color_discrete_map"][i], width=plot_dict["linewidth"]),
+                            )
+                        )
                 else:
                     # Create dataframe
                     n = len(radar_dict["Regions"])
-                    df = pd.DataFrame({"Regions": radar_dict["Regions"]*2,
-                                       "Amp": radar_dict[cap]["High Amplitude"] + radar_dict[cap]["Low Amplitude"]})
-                    df["Groups"] = ["High Amplitude"]*n + ["Low Amplitude"]*n
+                    df = pd.DataFrame(
+                        {
+                            "Regions": radar_dict["Regions"] * 2,
+                            "Amp": radar_dict[cap]["High Amplitude"] + radar_dict[cap]["Low Amplitude"],
+                        }
+                    )
+                    df["Groups"] = ["High Amplitude"] * n + ["Low Amplitude"] * n
 
-                    fig = px.line_polar(df, r=df["Amp"].values, theta="Regions", line_close=plot_dict["line_close"],
-                                        color=df["Groups"].values, width=plot_dict["width"],
-                                        height=plot_dict["height"], category_orders={"Regions": df["Regions"]},
-                                        color_discrete_map=plot_dict["color_discrete_map"])
+                    fig = px.line_polar(
+                        df,
+                        r=df["Amp"].values,
+                        theta="Regions",
+                        line_close=plot_dict["line_close"],
+                        color=df["Groups"].values,
+                        width=plot_dict["width"],
+                        height=plot_dict["height"],
+                        category_orders={"Regions": df["Regions"]},
+                        color_discrete_map=plot_dict["color_discrete_map"],
+                    )
 
                 if use_scatterpolar:
                     fig.update_traces(fill=plot_dict["fill"], mode=plot_dict["mode"])
                 else:
-                    fig.update_traces(fill=plot_dict["fill"], mode=plot_dict["mode"],
-                                      marker=dict(size=plot_dict["scattersize"]))
+                    fig.update_traces(
+                        fill=plot_dict["fill"], mode=plot_dict["mode"], marker=dict(size=plot_dict["scattersize"])
+                    )
 
                 # Set max value
                 if "tickvals" not in plot_dict["radialaxis"] and "range" not in plot_dict["radialaxis"]:
-                    if use_scatterpolar: max_value = max(df[["High Amplitude", "Low Amplitude"]].max())
-                    else: max_value = df["Amp"].max()
+                    if use_scatterpolar:
+                        max_value = max(df[["High Amplitude", "Low Amplitude"]].max())
+                    else:
+                        max_value = df["Amp"].max()
 
-                    default_ticks = [max_value/4, max_value/2, 3*max_value/4, max_value]
+                    default_ticks = [max_value / 4, max_value / 2, 3 * max_value / 4, max_value]
                     plot_dict["radialaxis"]["tickvals"] = [round(x, 2) for x in default_ticks]
 
                 title_text = f"{group} {cap} {suffix_title}" if suffix_title else f"{group} {cap}"
@@ -2765,21 +3115,26 @@ class CAP(_CAPGetter):
                     polar=dict(
                         bgcolor=plot_dict["bgcolor"],
                         radialaxis=plot_dict["radialaxis"],
-                        angularaxis=plot_dict["angularaxis"]
-                    ))
+                        angularaxis=plot_dict["angularaxis"],
+                    ),
+                )
 
                 if show_figs:
-                    if bool(getattr(sys, "ps1", sys.flags.interactive)): fig.show()
-                    else: pyo.plot(fig, auto_open=True)
+                    if bool(getattr(sys, "ps1", sys.flags.interactive)):
+                        fig.show()
+                    else:
+                        pyo.plot(fig, auto_open=True)
 
                 if output_dir:
-                    if not os.path.exists(output_dir): os.makedirs(output_dir)
+                    if not os.path.exists(output_dir):
+                        os.makedirs(output_dir)
 
                     filename = self._basename(group, cap, "radar", suffix_filename, "png")
 
                     if not as_html:
-                        fig.write_image(os.path.join(output_dir, filename), scale=plot_dict["scale"],
-                                        engine=plot_dict["engine"])
+                        fig.write_image(
+                            os.path.join(output_dir, filename), scale=plot_dict["scale"], engine=plot_dict["engine"]
+                        )
                     else:
                         filename = filename.replace(".png", ".html")
                         fig.write_html(os.path.join(output_dir, filename))
@@ -2797,9 +3152,13 @@ class CAP(_CAPGetter):
                     rh = self._parcel_approach[parcellation_name]["regions"][region]["rh"]
                     indxs = lh + rh
                 else:
-                    indxs = np.array([value for value, node in
-                                      enumerate(self._parcel_approach[parcellation_name]["nodes"])
-                                      if region in node])
+                    indxs = np.array(
+                        [
+                            value
+                            for value, node in enumerate(self._parcel_approach[parcellation_name]["nodes"])
+                            if region in node
+                        ]
+                    )
 
                 # Create mask to set ROIs not in regions to zero and ROIs in regions as 1
                 binary_vector = np.zeros_like(cap_vector)
@@ -2814,16 +3173,18 @@ class CAP(_CAPGetter):
                 low_amp = np.where(cap_vector < 0, -cap_vector, 0)
                 vecs = {"High Amplitude": high_amp, "Low Amplitude": low_amp}
 
-                warning_msg = (f"[GROUP: {group} | REGION: {region} | CAP: {cap}] - "
-                               "Division by zero error when calculating cosine similarity for the "
-                               "{0} activations. Setting cosine similarity to zero.")
+                warning_msg = (
+                    f"[GROUP: {group} | REGION: {region} | CAP: {cap}] - "
+                    "Division by zero error when calculating cosine similarity for the "
+                    "{0} activations. Setting cosine similarity to zero."
+                )
 
                 for vec in vecs:
                     dot_product = np.dot(vecs[vec], binary_vector)
                     norm_vec = np.linalg.norm(vecs[vec])
 
                     try:
-                        cosine_similarity = dot_product/(norm_vec * norm_binary_vector)
+                        cosine_similarity = dot_product / (norm_vec * norm_binary_vector)
                     except ZeroDivisionError:
                         LG.warning(warning_msg.format(vec))
                         cosine_similarity = 0

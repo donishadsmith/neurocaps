@@ -277,10 +277,21 @@ def test_extraction(parcel_approach, use_confounds, name):
     )
 
     png_files = glob.glob(os.path.join(tmp_dir.name, "*testing_save*.png"))
-
     assert len(png_files) == 3
-
     [os.remove(x) for x in png_files]
+
+    if "Custom" in parcel_approach:
+        extractor.visualize_bold(
+            subj_id="01",
+            run="001",
+            roi_indx="Primary_Visual_Cortex_L",
+            show_figs=False,
+            output_dir=tmp_dir.name,
+            filename="testing_primary",
+        )
+        png_file = glob.glob(os.path.join(tmp_dir.name, "testing_primary.png"))
+        assert len(png_file) == 1
+        os.remove(png_file[0])
 
     # Task condition; will issue warning due to max index for condition being 40 when the max index for timeseries is 39
     extractor.get_bold(

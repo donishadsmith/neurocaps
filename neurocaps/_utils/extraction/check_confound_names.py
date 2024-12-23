@@ -1,7 +1,9 @@
 """Internal Function for checking confound names"""
+
 from ..logger import _logger
 
 LG = _logger(__name__)
+
 
 def _check_confound_names(high_pass, user_confounds, n_acompcor_separate):
     if user_confounds is None:
@@ -20,7 +22,7 @@ def _check_confound_names(high_pass, user_confounds, n_acompcor_separate):
                 "rot_y",
                 "rot_y_derivative1",
                 "rot_z",
-                "rot_z_derivative1"
+                "rot_z_derivative1",
             ]
         else:
             confound_names = [
@@ -42,26 +44,30 @@ def _check_confound_names(high_pass, user_confounds, n_acompcor_separate):
                 "a_comp_cor_02",
                 "a_comp_cor_03",
                 "a_comp_cor_04",
-                "a_comp_cor_05"
+                "a_comp_cor_05",
             ]
     else:
         assert isinstance(user_confounds, list) and user_confounds, "`confound_names` must be a non-empty list."
         confound_names = user_confounds
 
-    if n_acompcor_separate: confound_names = _acompcor_check(confound_names, user_confounds, n_acompcor_separate)
+    if n_acompcor_separate:
+        confound_names = _acompcor_check(confound_names, user_confounds, n_acompcor_separate)
 
     LG.info(f"Confound regressors to be used if available: {', '.join(confound_names)}.")
 
     return confound_names
+
 
 def _acompcor_check(confound_names, user_confounds, n):
     check_confounds = [confound for confound in confound_names if "a_comp_cor" not in confound]
     if len(confound_names) > len(check_confounds):
         removed_confounds = [element for element in confound_names if element not in check_confounds]
         if user_confounds:
-            LG.warning("Since `n_acompcor_separate` has been specified, acompcor components in "
-                       f"`confound_names` will be disregarded and replaced with the first {n} "
-                       "components of the white matter and cerebrospinal fluid masks for each participant. "
-                       f"The following components will not be used {removed_confounds}.")
+            LG.warning(
+                "Since `n_acompcor_separate` has been specified, acompcor components in "
+                f"`confound_names` will be disregarded and replaced with the first {n} "
+                "components of the white matter and cerebrospinal fluid masks for each participant. "
+                f"The following components will not be used {removed_confounds}."
+            )
 
     return check_confounds

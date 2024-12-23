@@ -1,6 +1,8 @@
 """Internal function for performing silhouette or elbow method with or without joblib"""
+
 from sklearn.cluster import KMeans
 from sklearn.metrics import davies_bouldin_score, calinski_harabasz_score, silhouette_score
+
 
 def _run_kmeans(n_cluster, configs, concatenated_timeseries, method):
     model = KMeans(n_clusters=n_cluster, **configs).fit(concatenated_timeseries)

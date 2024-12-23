@@ -22,6 +22,7 @@ with open(os.path.join(os.path.dirname(__file__), "data", "HCPex_parcel_approach
     }
 
 extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
+# AAL
 extractor2 = TimeseriesExtractor(parcel_approach={"AAL": {}})
 
 aal_subject_timeseries = {str(x): {f"run-{y}": np.random.rand(100, 116) for y in range(1, 4)} for x in range(1, 11)}
@@ -517,7 +518,7 @@ def test_calculate_metrics():
         subject_timeseries=extractor.subject_timeseries, return_df=True, metrics="persistence"
     )["persistence"]
     temp = cap_analysis.calculate_metrics(
-        subject_timeseries=extractor.subject_timeseries, return_df=True, metrics="temporal_fraction"
+        subject_timeseries=extractor.subject_timeseries, return_df=True, metrics=["temporal_fraction", "incorrect"]
     )["temporal_fraction"]
 
     for cap in ["CAP-1", "CAP-2"]:
@@ -675,7 +676,11 @@ def check_imgs(values_dict, plot_type="map"):
 
 @pytest.mark.parametrize(
     "current_timeseries, parcel_approach",
-    [(extractor.subject_timeseries, extractor.parcel_approach), (custom_subject_timeseries, custom_parcel_approach)],
+    [
+        (extractor.subject_timeseries, extractor.parcel_approach),
+        (custom_subject_timeseries, custom_parcel_approach),
+        (aal_subject_timeseries, extractor2.parcel_approach),
+    ],
 )
 def test_plotting_functions(current_timeseries, parcel_approach):
     cap_analysis = CAP(parcel_approach=parcel_approach)
@@ -708,6 +713,7 @@ def test_plotting_functions(current_timeseries, parcel_approach):
     cap_analysis.caps2plot(
         subplots=False,
         yticklabels_size=5,
+        borderwidths=2,
         wspace=0.1,
         visual_scope=["regions", "nodes"],
         xlabel_rotation=90,
@@ -722,23 +728,24 @@ def test_plotting_functions(current_timeseries, parcel_approach):
     )
     check_imgs(values_dict={"heatmap": 2, "outer": 4})
 
-    cap_analysis.caps2plot(
-        subplots=False,
-        yticklabels_size=5,
-        wspace=0.1,
-        visual_scope=["regions", "nodes"],
-        xlabel_rotation=90,
-        xticklabels_size=5,
-        hspace=0.6,
-        tight_layout=False,
-        show_figs=False,
-        plot_options=["heatmap", "outer_product"],
-        hemisphere_labels=True,
-        invalid_kwarg=0,
-        cbarlabels_size=8,
-        output_dir=tmp_dir.name,
-    )
-    check_imgs(values_dict={"heatmap": 2, "outer": 4})
+    if "AAL" not in parcel_approach:
+        cap_analysis.caps2plot(
+            subplots=False,
+            yticklabels_size=5,
+            wspace=0.1,
+            visual_scope=["regions", "nodes"],
+            xlabel_rotation=90,
+            xticklabels_size=5,
+            hspace=0.6,
+            tight_layout=False,
+            show_figs=False,
+            plot_options=["heatmap", "outer_product"],
+            hemisphere_labels=True,
+            invalid_kwarg=0,
+            cbarlabels_size=8,
+            output_dir=tmp_dir.name,
+        )
+        check_imgs(values_dict={"heatmap": 2, "outer": 4})
 
     cap_analysis.caps2plot(
         subplots=True,
@@ -752,18 +759,19 @@ def test_plotting_functions(current_timeseries, parcel_approach):
     )
     check_imgs(values_dict={"heatmap": 2, "outer": 2})
 
-    cap_analysis.caps2plot(
-        subplots=True,
-        xlabel_rotation=90,
-        sharey=True,
-        borderwidths=10,
-        show_figs=False,
-        visual_scope=["regions", "nodes"],
-        plot_options=["outer_product", "heatmap"],
-        hemisphere_labels=True,
-        output_dir=tmp_dir.name,
-    )
-    check_imgs(values_dict={"heatmap": 2, "outer": 2})
+    if "AAL" not in parcel_approach:
+        cap_analysis.caps2plot(
+            subplots=True,
+            xlabel_rotation=90,
+            sharey=True,
+            borderwidths=10,
+            show_figs=False,
+            visual_scope=["regions", "nodes"],
+            plot_options=["outer_product", "heatmap"],
+            hemisphere_labels=True,
+            output_dir=tmp_dir.name,
+        )
+        check_imgs(values_dict={"heatmap": 2, "outer": 2})
 
     df = cap_analysis.caps2corr(
         annot=True,

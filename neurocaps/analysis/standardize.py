@@ -1,19 +1,22 @@
 """Function to standardize timeseries within subject runs"""
+
 import copy, os
 from typing import Union, Optional
 
 import numpy as np
 from numpy.typing import NDArray
 
-from .._utils import (_convert_pickle_to_dict, _dicts_to_pickles, _logger)
+from .._utils import _convert_pickle_to_dict, _dicts_to_pickles, _logger
 
 LG = _logger(__name__)
 
-def standardize(subject_timeseries_list: Union[list[dict[str, dict[str, NDArray[np.floating]]]], list[os.PathLike]],
-                return_dicts: bool=True,
-                output_dir: Optional[os.PathLike]=None,
-                filenames: Optional[list[str]]=None) -> dict[str, dict[str, dict[str, NDArray[np.floating]]]]:
 
+def standardize(
+    subject_timeseries_list: Union[list[dict[str, dict[str, NDArray[np.floating]]]], list[os.PathLike]],
+    return_dicts: bool = True,
+    output_dir: Optional[os.PathLike] = None,
+    filenames: Optional[list[str]] = None,
+) -> dict[str, dict[str, dict[str, NDArray[np.floating]]]]:
     """
     Perform Participant-wise Timeseries Standardization Within Runs.
 
@@ -69,8 +72,9 @@ def standardize(subject_timeseries_list: Union[list[dict[str, dict[str, NDArray[
     dict[str, dict[str, dict[str, np.ndarray]]]
         A nested dictionary containing the standardized subject timeseries.
     """
-    assert isinstance(subject_timeseries_list, list) and len(subject_timeseries_list) > 0, \
-        "`subject_timeseries_list` must be a list greater than length 0."
+    assert (
+        isinstance(subject_timeseries_list, list) and len(subject_timeseries_list) > 0
+    ), "`subject_timeseries_list` must be a list greater than length 0."
 
     if filenames is not None and output_dir is None:
         LG.warning("`filenames` supplied but no `output_dir` specified. Files will not be saved.")
@@ -79,8 +83,10 @@ def standardize(subject_timeseries_list: Union[list[dict[str, dict[str, NDArray[
     standardized_dicts = {}
 
     for indx, curr_dict in enumerate(subject_timeseries_list):
-        if isinstance(curr_dict, str) and curr_dict.endswith(".pkl"): curr_dict = _convert_pickle_to_dict(curr_dict)
-        else: curr_dict = copy.deepcopy(curr_dict)
+        if isinstance(curr_dict, str) and curr_dict.endswith(".pkl"):
+            curr_dict = _convert_pickle_to_dict(curr_dict)
+        else:
+            curr_dict = copy.deepcopy(curr_dict)
 
         for subj_id in curr_dict:
             for run in curr_dict[subj_id]:
@@ -89,12 +95,12 @@ def standardize(subject_timeseries_list: Union[list[dict[str, dict[str, NDArray[
                 # Taken from nilearn pipeline, used for numerical stability purposes to avoid numpy division error
                 std[std < eps] = 1.0
                 mean = np.mean(curr_dict[subj_id][run], axis=0)
-                curr_dict[subj_id][run] = (curr_dict[subj_id][run] - mean)/std
+                curr_dict[subj_id][run] = (curr_dict[subj_id][run] - mean) / std
 
         standardized_dicts[f"dict_{indx}"] = curr_dict
 
     if output_dir:
-        _dicts_to_pickles(output_dir=output_dir, dict_list=standardized_dicts, filenames=filenames,
-                          call="standardize")
+        _dicts_to_pickles(output_dir=output_dir, dict_list=standardized_dicts, filenames=filenames, call="standardize")
 
-    if return_dicts: return standardized_dicts
+    if return_dicts:
+        return standardized_dicts
