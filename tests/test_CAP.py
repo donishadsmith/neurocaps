@@ -1,5 +1,5 @@
-import copy, glob, logging, math, os, pickle, re, sys, tempfile
-import nibabel as nib, numpy as np, pandas as pd, pytest
+import copy, glob, logging, math, os, re, sys, tempfile
+import joblib, nibabel as nib, numpy as np, pandas as pd, pytest
 from kneed import KneeLocator
 from neurocaps.extraction import TimeseriesExtractor
 from neurocaps.analysis import CAP, change_dtype
@@ -15,7 +15,7 @@ tmp_dir = tempfile.TemporaryDirectory()
 parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
 
 with open(os.path.join(os.path.dirname(__file__), "data", "HCPex_parcel_approach.pkl"), "rb") as f:
-    custom_parcel_approach = pickle.load(f)
+    custom_parcel_approach = joblib.load(f)
     custom_parcel_approach["Custom"]["maps"] = os.path.join(os.path.dirname(__file__), "data", "HCPex.nii.gz")
     custom_subject_timeseries = {
         str(x): {f"run-{y}": np.random.rand(100, 426) for y in range(1, 4)} for x in range(1, 11)

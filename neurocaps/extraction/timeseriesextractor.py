@@ -61,9 +61,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             - "nodes": A list of node names in the order of the label IDs in the parcellation.
             - "regions": The regions or networks in the parcellation.
 
-        Refer to documentation from nilearn's ``datasets.fetch_atlas_schaefer_2018`` and ``datasets.fetch_atlas_aal``
-        functions for more information about the "Schaefer" and "AAL" sub-keys. Also, refer to the "Note" section below
-        for an explanation of the "Custom" sub-keys.
+        Refer to `Nilearn's Fetch Schaefer Documentation
+        <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_schaefer_2018.html#nilearn.datasets.fetch_atlas_schaefer_2018>`_
+        and `Nilearn's Fetch AAL Documentation
+        <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_aal.html#nilearn.datasets.fetch_atlas_aal>`_
+        for more information about the "Schaefer" and "AAL" sub-keys. Also, refer to the "Note" section below for an
+        explanation of the "Custom" sub-keys.
 
     standardize: {"zscore_sample", "zscore", "psc", True, False}, default="zscore_sample"
         Standardizes the timeseries. Refer to ``nilearn.maskers.NiftiLabelsMasker`` for an explanation of each
@@ -79,7 +82,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         Filters out signals below the specified cutoff frequency.
 
     fwhm: :obj:`float`, :obj:`int`, or :obj:`None`, default=None
-        Applies spatial smoothing to data (in millimeters). Note that using parcellations already averages voxels
+        Applies spatial smoothing to data (in millimeters). Note that using a parcellation already averages voxels
         within parcel boundaries, which can improve signal-to-noise ratio (SNR) assuming Gaussian noise
         distribution. However, smoothing may also blur parcel boundaries.
 
@@ -114,10 +117,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         - "n_after": An integer indicating the number of volumes to scrub after to the flagged volume. Hence,
           if frame 5 is flagged and "n_after" is 2, then volumes 5, 6, and 7 are scrubbed.
         - "use_sample_mask": A boolean value. If True, a sample mask is generated and passed to the ``sample_mask``
-          parameter in nilearn's ``NiftiLabelsMasker`` to censor prior to nuisance regression. Internally,
+          parameter in Nilearn's ``NiftiLabelsMasker`` to censor prior to nuisance regression. Internally,
           ``clean__extrapolate`` is set to False and passed to ``NiftiLabelsMasker``, which prevents censored
           volumes at the end from being interpolated prior to applying the butterworth filter. See
-          documentation from ``nilearn.signal_clean`` and  ``nilearn.maskers.NiftiLabelsMasker`` for how nilearn
+          `Nilearn's Signal Clean Documentation
+          <https://nilearn.github.io/stable/modules/generated/nilearn.signal.clean.html>`_ and
+          `Nilearn's NiftiLabelsMasker Documentation
+          <https://nilearn.github.io/stable/modules/generated/nilearn.maskers.NiftiLabelsMasker.html>`_ for how Nilearn
           handles censored volumes when ``sample_mask`` is used.  If this key is set to False, data is only censored
           after nuisance regression, which is the default behavior.
 
@@ -149,7 +155,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
           "max" is set to five, then five dummy volumes will be discarded.
 
     dtype: :obj:`str` or "auto", default=None
-        The numpy dtype the NIfTI images are converted to when passed to nilearn's ``load_img`` function.
+        The NumPy dtype the NIfTI images are converted to when passed to Nilearn's ``load_img`` function.
 
 
     Properties
@@ -204,10 +210,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         extraction.
 
     n_cores: :obj:`int` or :obj:`None`
-        Number of cores used for multiprocessing with joblib.
+        Number of cores used for multiprocessing with Joblib.
 
     subject_timeseries: :obj:`dict[str, dict[str, np.ndarray]]` or :obj:`None`
-        A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a numpy array.
+        A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a NumPy array.
         Can also be a path to a pickle file containing this same structure. If this property needs to be deleted due
         to memory issues,  ``delattr(self, "_subject_timeseries")`` (version < 0.18.10) or
         ``del self.subject_timeseries`` (version >= 0.18.10) can be used to delete this property and only have it
@@ -517,7 +523,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             then ``pipeline_name = "fmriprep/fmriprep-20.0.0"``.
 
         n_cores: :obj:`int` or :obj:`None`, default=None
-            The number of cores to use for multiprocessing with joblib. The default backend for joblib is used.
+            The number of cores to use for multiprocessing with Joblib. The "loky" backend is used.
 
         parallel_log_config: :obj:`dict[str, Union[multiprocessing.Manager.Queue, int]]`
             Passes a user-defined managed queue and logging level to the internal timeseries extraction function
@@ -531,46 +537,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             - "level": The logging level (e.g. ``logging.INFO``, ``logging.WARNING``). If not specified, the default
               level is ``logging.INFO``.
 
-            ::
-
-                import logging
-                from logging.handlers import QueueListener
-                from multiprocessing import Manager
-
-                # Configure root with FileHandler
-                root_logger = logging.getLogger()
-                root_logger.setLevel(logging.INFO)
-                file_handler = logging.FileHandler('neurocaps.log')
-                file_handler.setFormatter(logging.Formatter('%(asctime)s %(name)s [%(levelname)s] %(message)s'))
-                root_logger.addHandler(file_handler)
-
-                if __name__ == "__main__":
-                    # Import the TimeseriesExtractor
-                    from neurocaps.extraction import TimeseriesExtractor
-
-                    # Setup managed queue
-                    manager = Manager()
-                    queue = manager.Queue()
-
-                    # Set up the queue listener
-                    listener = QueueListener(queue, *root_logger.handlers)
-
-                    # Start listener
-                    listener.start()
-
-                    extractor = TimeseriesExtractor()
-
-                    # Use the `parallel_log_config` parameter to pass queue and the logging level
-                    extractor.get_bold(
-                        bids_dir="path/to/bids/dir",
-                        task="rest",
-                        tr=2,
-                        n_cores=5,
-                        parallel_log_config = {"queue": queue, "level": logging.WARNING}
-                    )
-
-                    # Stop listener
-                    listener.stop()
+            Refer to the `neurocaps Logging Documentation <https://neurocaps.readthedocs.io/en/stable/logging.html>`_
+            for a detailed example of setting up this parameter.
 
             .. versionchanged:: 0.18.0 moved from being the last parameter, to being underneath ``n_cores``
 
@@ -587,14 +555,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         -------
         self
 
-
             .. versionadded:: 0.19.3
 
         Note
         ----
         **Subject Timeseries Dictionary**: This method stores the extracted timeseries of all subjects
         in ``self.subject_timeseries``. The structure is a dictionary mapping subject IDs to their run IDs and
-        their associated timeseries (TRs x ROIs) as a numpy array:
+        their associated timeseries (TRs x ROIs) as a NumPy array:
 
         ::
 
@@ -613,18 +580,18 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         By default, "run-0", will be used if run IDs are not specified in the NifTI file.
 
         **Parcellation & Nuisance Regression**: For timeseries extraction, nuisance regression, and spatial
-        dimensionality reduction using a parcellation,  nilearn's ``NiftiLabelsMasker`` function is used. If requested,
+        dimensionality reduction using a parcellation, Nilearn's ``NiftiLabelsMasker`` function is used. If requested,
         dummy scans are removed from the NIfTI images and confound dataset prior to timeseries extraction. For volumes
         exceeding a specified framewise displacement (FD) threshold, if the "use_sample_mask" key in the
         ``fd_threshold`` dictionary is set to True, then a boolean sample mask is generated (where False indicates the
-        high motion volumes) and passed to the ``sample_mask`` parameter in nilearn's ``NiftiLabelsMasker``. If,
+        high motion volumes) and passed to the ``sample_mask`` parameter in Nilearn's ``NiftiLabelsMasker``. If,
         "use_sample_mask" key is False or not specified in the ``fd_threshold`` dictionary, then censoring is done
         after nuisance regression, which is the default behavior.
 
         **Extraction of Task Conditions**: when extracting specific conditions, ``int`` to round down for the
         beginning scan index ``start_scan = int(onset/tr)`` and ``math.ceil`` is used to round up for the ending scan
         index ``end_scan = math.ceil((onset + duration)/tr)``. Filtering a specific condition from the
-        timeseries is done after nuisance regression. Additionally,  if the "use_sample_mask" key in the
+        timeseries is done after nuisance regression. Additionally, if the "use_sample_mask" key in the
         ``fd_threshold`` dictionary is set to True, then the truncated 2D timeseries is temporarily padded to
         ensure the correct rows corresponding to the condition are obtained.
         """
@@ -679,7 +646,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 for subj_id in self._subject_ids
             ]
 
-            parallel = Parallel(return_as="generator", n_jobs=self._n_cores)
+            parallel = Parallel(return_as="generator", n_jobs=self._n_cores, backend="loky")
             outputs = parallel(delayed(_extract_timeseries)(*args) for args in args_list)
 
             for output in outputs:
@@ -1007,7 +974,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         -------
         self
 
-
             .. versionadded:: 0.19.3
         """
         if not self.subject_timeseries:
@@ -1086,7 +1052,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         -------
         self
 
-
             .. versionadded:: 0.19.3
 
         Note
@@ -1164,7 +1129,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             if "Custom" in self._parcel_approach and "nodes" not in self._parcel_approach["Custom"]:
                 _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_bold")
 
-            plot_indxs = self._parcel_approach[parcellation_name]["nodes"].index(roi_indx)
+            plot_indxs = list(self._parcel_approach[parcellation_name]["nodes"]).index(roi_indx)
         else:
             if all([isinstance(indx, int) for indx in roi_indx]):
                 plot_indxs = np.array(roi_indx)
@@ -1174,7 +1139,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_bold")
 
                 plot_indxs = np.array(
-                    [self._parcel_approach[parcellation_name]["nodes"].index(index) for index in roi_indx]
+                    [list(self._parcel_approach[parcellation_name]["nodes"]).index(index) for index in roi_indx]
                 )
             else:
                 raise ValueError("All elements in `roi_indx` need to be all strings or all integers.")
@@ -1187,8 +1152,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_bold")
             else:
                 plot_indxs = np.array(
-                    self._parcel_approach["Custom"]["regions"][region]["lh"]
-                    + self._parcel_approach["Custom"]["regions"][region]["rh"]
+                    list(self._parcel_approach["Custom"]["regions"][region]["lh"])
+                    + list(self._parcel_approach["Custom"]["regions"][region]["rh"])
                 )
         else:
             plot_indxs = np.array(

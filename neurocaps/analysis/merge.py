@@ -44,7 +44,7 @@ def merge_dicts(
     ----------
     subject_timeseries_list: :obj:`list[dict[str, dict[str, np.ndarray]]]` or :obj:`list[os.PathLike]`
         A list where each element consist of a dictionary mapping subject IDs to their run IDs and associated
-        timeseries (TRs x ROIs) as a numpy array. Can also be a list consisting of paths to pickle files
+        timeseries (TRs x ROIs) as a NumPy array. Can also be a list consisting of paths to pickle files
         containing this same structure. The expected structure of each dictionary is as follows:
 
         ::

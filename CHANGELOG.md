@@ -16,6 +16,76 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.19.4] - 2024-12-24
+### 📖 Documentation
+- Links are fixed in the documentation.
+### 🐛 Fixes
+- Fix indexing error for ``visualize_bold`` if ``parcel_approach["Custom"]["nodes"]`` is a NumPy array instead of list.
+### ♻ Changed
+- Internally, the verbose parameter is set to 0 for nilearn's `fetch_atlas_aal` and `fetch_atlas_schaefer`.
+and the behavior is stated in the documentation. Cosine similarity in this case is assigned `np.nan`
+- When creating "regions" for the "Custom" parcel approach, both a list and range can be accepted. Previously, only
+lists were accepted.
+
+List method:
+
+```python
+parcel_approach["Custom"]["regions"] = {
+    "Primary Visual": {"lh": [0], "rh": [180]},
+    "Early Visual": {"lh": [1, 2, 3], "rh": [181, 182, 183]},
+    "Dorsal Stream Visual": {"lh": list(range(4, 10)), "rh": list(range(184, 190))},
+    "Ventral Stream Visual": {"lh": list(range(10, 17)), "rh": list(range(190, 197))},
+    "MT+ Complex": {"lh": list(range(17, 26)), "rh": list(range(197, 206))},
+    "SomaSens Motor": {"lh": list(range(26, 31)), "rh": list(range(206, 211))},
+    "ParaCentral MidCing": {"lh": list(range(31, 40)), "rh": list(range(211, 220))},
+    "Premotor": {"lh": list(range(40, 47)), "rh": list(range(220, 227))},
+    "Posterior Opercular": {"lh": list(range(47, 52)), "rh": list(range(227, 232))},
+    "Early Auditory": {"lh": list(range(52, 59)), "rh": list(range(232, 239))},
+    "Auditory Association": {"lh": list(range(59, 67)), "rh": list(range(239, 247))},
+    "Insula FrontalOperc": {"lh": list(range(67, 79)), "rh": list(range(247, 259))},
+    "Medial Temporal": {"lh": list(range(79, 87)), "rh": list(range(259, 267))},
+    "Lateral Temporal": {"lh": list(range(87, 95)), "rh": list(range(267, 275))},
+    "TPO": {"lh": list(range(95, 100)), "rh": list(range(275, 280))},
+    "Superior Parietal": {"lh": list(range(100, 110)), "rh": list(range(280, 290))},
+    "Inferior Parietal": {"lh": list(range(110, 120)), "rh": list(range(290, 300))},
+    "Posterior Cingulate": {"lh": list(range(120, 133)), "rh": list(range(300, 313))},
+    "AntCing MedPFC": {"lh": list(range(133, 149)), "rh": list(range(313, 329))},
+    "OrbPolaFrontal": {"lh": list(range(149, 158)), "rh": list(range(329, 338))},
+    "Inferior Frontal": {"lh": list(range(158, 167)), "rh": list(range(338, 347))},
+    "Dorsolateral Prefrontal": {"lh": list(range(167, 180)), "rh": list(range(347, 360))},
+    "Subcortical Regions": {"lh": list(range(360, 393)), "rh": list(range(393, 426))},
+}
+```
+
+List and range method:
+```python
+parcel_approach["Custom"]["regions"] = {
+    "Primary Visual": {"lh": [0], "rh": [180]},
+    "Early Visual": {"lh": [1, 2, 3], "rh": [181, 182, 183]},
+    "Dorsal Stream Visual": {"lh": range(4, 10), "rh": range(184, 190)},
+    "Ventral Stream Visual": {"lh": range(10, 17), "rh": range(190, 197)},
+    "MT+ Complex": {"lh": range(17, 26), "rh": range(197, 206)},
+    "SomaSens Motor": {"lh": range(26, 31), "rh": range(206, 211)},
+    "ParaCentral MidCing": {"lh": range(31, 40), "rh": range(211, 220)},
+    "Premotor": {"lh": range(40, 47), "rh": range(220, 227)},
+    "Posterior Opercular": {"lh": range(47, 52), "rh": range(227, 232)},
+    "Early Auditory": {"lh": range(52, 59), "rh": range(232, 239)},
+    "Auditory Association": {"lh": range(59, 67), "rh": range(239, 247)},
+    "Insula FrontalOperc": {"lh": range(67, 79), "rh": range(247, 259)},
+    "Medial Temporal": {"lh": range(79, 87), "rh": range(259, 267)},
+    "Lateral Temporal": {"lh": range(87, 95), "rh": range(267, 275)},
+    "TPO": {"lh": range(95, 100), "rh": range(275, 280)},
+    "Superior Parietal": {"lh": range(100, 110), "rh": range(280, 290)},
+    "Inferior Parietal": {"lh": range(110, 120), "rh": range(290, 300)},
+    "Posterior Cingulate": {"lh": range(120, 133), "rh": range(300, 313)},
+    "AntCing MedPFC": {"lh": range(133, 149), "rh": range(313, 329)},
+    "OrbPolaFrontal": {"lh": range(149, 158), "rh": range(329, 338)},
+    "Inferior Frontal": {"lh": range(158, 167), "rh": range(338, 347)},
+    "Dorsolateral Prefrontal": {"lh": range(167, 180), "rh": range(347, 360)},
+    "Subcortical Regions": {"lh": range(360, 393), "rh": range(393, 426)},
+}
+```
+
 ## [0.19.3.post0] - 2024-12-10
 ### 📖 Documentation
 - Additional documentation for `standardize` function.
@@ -294,10 +364,12 @@ import logging, sys
 _USER_ROOT_HANDLER = None
 _USER_MODULE_HANDLERS = {}
 
+
 class _Flush(logging.StreamHandler):
     def emit(self, record):
         super().emit(record)
         self.flush()
+
 
 def _logger(name, flush=False, top_level=True):
     global _USER_ROOT_HANDLER, _USER_MODULE_HANDLERS
@@ -311,7 +383,8 @@ def _logger(name, flush=False, top_level=True):
         _USER_ROOT_HANDLER = logging.getLogger().hasHandlers()
         _USER_MODULE_HANDLERS[logger.name] = logging.getLogger(logger.name).hasHandlers()
 
-    if not logger.level: logger.setLevel(logging.INFO)
+    if not logger.level:
+        logger.setLevel(logging.INFO)
 
     # Check if user defined root handler or assigned a specific handler for module
     default_handlers = _USER_ROOT_HANDLER or _USER_MODULE_HANDLERS[logger.name]
@@ -322,10 +395,13 @@ def _logger(name, flush=False, top_level=True):
     # Add or messages will repeat several times due to multiple handlers if same name used
     if not default_handlers and not (logger.name == "_extract_timeseries" and top_level):
         # If no user specified default handler, any handler is assigned by OS and is cleared
-        if logger.name == "_extract_timeseries": logger.handlers.clear()
+        if logger.name == "_extract_timeseries":
+            logger.handlers.clear()
 
-        if flush: handler = _Flush(sys.stdout)
-        else: handler = logging.StreamHandler(sys.stdout)
+        if flush:
+            handler = _Flush(sys.stdout)
+        else:
+            handler = logging.StreamHandler(sys.stdout)
 
         handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
         logger.addHandler(handler)
@@ -342,32 +418,34 @@ def _logger(name, flush=False, top_level=True):
 uses `functools` `@cache` when calling `BIDSLayout` now.
 
 ```python
-    @staticmethod
-    @cache
-    def _call_layout(bids_dir, pipeline_name):
-        try:
-            import bids
-        except ModuleNotFoundError:
-            raise ModuleNotFoundError(
-                "This function relies on the pybids package to query subject-specific files. "
-                "If on Windows, pybids does not install by default to avoid long path error issues "
-                "during installation. Try using `pip install pybids` or `pip install neurocaps[windows]`.")
+@staticmethod
+@cache
+def _call_layout(bids_dir, pipeline_name):
+    try:
+        import bids
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError(
+            "This function relies on the pybids package to query subject-specific files. "
+            "If on Windows, pybids does not install by default to avoid long path error issues "
+            "during installation. Try using `pip install pybids` or `pip install neurocaps[windows]`."
+        )
 
-        bids_dir = os.path.normpath(bids_dir).rstrip(os.path.sep)
+    bids_dir = os.path.normpath(bids_dir).rstrip(os.path.sep)
 
-        if bids_dir.endswith("derivatives"): bids_dir = os.path.dirname(bids_dir)
+    if bids_dir.endswith("derivatives"):
+        bids_dir = os.path.dirname(bids_dir)
 
-        if pipeline_name:
-            pipeline_name = os.path.normpath(pipeline_name).lstrip(os.path.sep).rstrip(os.path.sep)
-            if pipeline_name.startswith("derivatives"):
-                pipeline_name = pipeline_name[len("derivatives"):].lstrip(os.path.sep)
-            layout = bids.BIDSLayout(bids_dir, derivatives=os.path.join(bids_dir, "derivatives", pipeline_name))
-        else:
-            layout = bids.BIDSLayout(bids_dir, derivatives=True)
+    if pipeline_name:
+        pipeline_name = os.path.normpath(pipeline_name).lstrip(os.path.sep).rstrip(os.path.sep)
+        if pipeline_name.startswith("derivatives"):
+            pipeline_name = pipeline_name[len("derivatives") :].lstrip(os.path.sep)
+        layout = bids.BIDSLayout(bids_dir, derivatives=os.path.join(bids_dir, "derivatives", pipeline_name))
+    else:
+        layout = bids.BIDSLayout(bids_dir, derivatives=True)
 
-        LG.info(f"{layout}")
+    LG.info(f"{layout}")
 
-        return layout
+    return layout
 ```
 
 ## [0.17.4] - 2024-10-12
@@ -382,7 +460,7 @@ no longer produces an error and now does the following:
 
 ```python
 if "tickvals" not in plot_dict["radialaxis"] and "range" not in plot_dict["radialaxis"]:
-    default_ticks = [max_value/4, max_value/2, 3*max_value/4, max_value]
+    default_ticks = [max_value / 4, max_value / 2, 3 * max_value / 4, max_value]
     plot_dict["radialaxis"]["tickvals"] = [round(x, 2) for x in default_ticks]
 ```
 ### ♻ Changed
@@ -452,25 +530,28 @@ function that creates the logger:
 ```python
 import logging, sys
 
+
 class _Flush(logging.StreamHandler):
     def emit(self, record):
         super().emit(record)
         self.flush()
 
-def _logger(name, level = logging.INFO, flush=False):
+
+def _logger(name, level=logging.INFO, flush=False):
     logger = logging.getLogger(name.split(".")[-1])
     logger.setLevel(level)
     # Works to see if root has handler and propagate if it does
     logger.propagate = logging.getLogger().hasHandlers()
     # Add or messages will repeat several times due to multiple handlers if same name used
     if not logger.hasHandlers():
-        if flush: handler = _Flush(sys.stdout)
-        else: handler = logging.StreamHandler(sys.stdout)
+        if flush:
+            handler = _Flush(sys.stdout)
+        else:
+            handler = logging.StreamHandler(sys.stdout)
         handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
         logger.addHandler(handler)
 
     return logger
-
 ```
 - **Note**: The logger is initialized within the [internal time series extraction function]((https://github.com/donishadsmith/neurocaps/blob/900bf7a89d3ff16a8dd91310c8d177c5b5d6de8a/neurocaps/_utils/_timeseriesextractor_internals/_extract_timeseries.py#L12)) to ensure that each child
 process has its own independent logger. This guarantees that subject-level information and warnings will be properly
@@ -480,11 +561,10 @@ For non-parallel processing, the logger can be configured by a user with a comma
 
 ```python
 logging.basicConfig(
-    level=logging.INFO
+    level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout),
-              logging.FileHandler('info.out')]
-    )
+    handlers=[logging.StreamHandler(sys.stdout), logging.FileHandler("info.out")],
+)
 ```
 
 - Subject-specific messages are now more compact.
@@ -535,84 +615,95 @@ internal function `_extract_timeseries`.
 - Transition probabilities has been added to `CAP.calculate_metrics`. Below is a snippet from the codebase
 of how the calculation is done.
 ```python
-    if "transition_probability" in metrics:
-        temp_dict[group].loc[len(temp_dict[group])] = [subj_id, group, curr_run] + [0.0]*(temp_dict[group].shape[-1]-3)
-        # Get number of transitions
-        trans_dict = {target: np.sum(np.where(predicted_subject_timeseries[subj_id][curr_run][:-1] == target, 1, 0))
-                        for target in group_caps[group]}
-        indx = temp_dict[group].index[-1]
-        # Iterate through products and calculate all symmetric pairs/off-diagonals
-        for prod in products_unique[group]:
-            target1, target2 = prod[0], prod[1]
-            trans_array = predicted_subject_timeseries[subj_id][curr_run].copy()
-            # Set all values not equal to target1 or target2 to zero
-            trans_array[(trans_array != target1) & (trans_array != target2)] = 0
-            trans_array[np.where(trans_array == target1)] = 1
-            trans_array[np.where(trans_array == target2)] = 3
-            # 2 indicates forward transition target1 -> target2; -2 means reverse/backward transition target2 -> target1
-            diff_array = np.diff(trans_array,n=1)
-            # Avoid division by zero errors and calculate both the forward and reverse transition
-            if trans_dict[target1] != 0:
-                temp_dict[group].loc[indx,f"{target1}.{target2}"] = float(np.sum(np.where(diff_array==2,1,0))/trans_dict[target1])
-            if trans_dict[target2] != 0:
-                temp_dict[group].loc[indx,f"{target2}.{target1}"] = float(np.sum(np.where(diff_array==-2,1,0))/trans_dict[target2])
+if "transition_probability" in metrics:
+    temp_dict[group].loc[len(temp_dict[group])] = [subj_id, group, curr_run] + [0.0] * (temp_dict[group].shape[-1] - 3)
+    # Get number of transitions
+    trans_dict = {
+        target: np.sum(np.where(predicted_subject_timeseries[subj_id][curr_run][:-1] == target, 1, 0))
+        for target in group_caps[group]
+    }
+    indx = temp_dict[group].index[-1]
+    # Iterate through products and calculate all symmetric pairs/off-diagonals
+    for prod in products_unique[group]:
+        target1, target2 = prod[0], prod[1]
+        trans_array = predicted_subject_timeseries[subj_id][curr_run].copy()
+        # Set all values not equal to target1 or target2 to zero
+        trans_array[(trans_array != target1) & (trans_array != target2)] = 0
+        trans_array[np.where(trans_array == target1)] = 1
+        trans_array[np.where(trans_array == target2)] = 3
+        # 2 indicates forward transition target1 -> target2; -2 means reverse/backward transition target2 -> target1
+        diff_array = np.diff(trans_array, n=1)
+        # Avoid division by zero errors and calculate both the forward and reverse transition
+        if trans_dict[target1] != 0:
+            temp_dict[group].loc[indx, f"{target1}.{target2}"] = float(
+                np.sum(np.where(diff_array == 2, 1, 0)) / trans_dict[target1]
+            )
+        if trans_dict[target2] != 0:
+            temp_dict[group].loc[indx, f"{target2}.{target1}"] = float(
+                np.sum(np.where(diff_array == -2, 1, 0)) / trans_dict[target2]
+            )
 
-        # Calculate the probability for the self transitions/diagonals
-        for target in group_caps[group]:
-            if trans_dict[target] == 0: continue
-            # Will include the {target}.{target} column, but the value is initially set to zero
-            columns = temp_dict[group].filter(regex=fr"^{target}\.").columns.tolist()
-            cumulative = temp_dict[group].loc[indx,columns].values.sum()
-            temp_dict[group].loc[indx,f"{target}.{target}"] = 1.0 - cumulative
+    # Calculate the probability for the self transitions/diagonals
+    for target in group_caps[group]:
+        if trans_dict[target] == 0:
+            continue
+        # Will include the {target}.{target} column, but the value is initially set to zero
+        columns = temp_dict[group].filter(regex=rf"^{target}\.").columns.tolist()
+        cumulative = temp_dict[group].loc[indx, columns].values.sum()
+        temp_dict[group].loc[indx, f"{target}.{target}"] = 1.0 - cumulative
 ```
 Below is a simplified version of the above snippet.
 ```python
-    import itertools, math, pandas as pd, numpy as np
-    groups = [["101","A","1"], ["102","B","1"]]
-    timeseries_dict = {
-        "101": np.array([1,1,1,1,2,2,1,4,3,5,3,3,5,5,6,7]),
-        "102": np.array([1,2,1,1,3,3,1,4,3,5,3,3,4,5,6,8,7])
-    }
-    caps = list(range(1,9))
-    # Get all combinations of transitions
-    products = list(itertools.product(caps,caps))
-    df = pd.DataFrame(columns=["Subject_ID", "Group","Run"]+[f"{x}.{y}" for x,y in products])
-    # Filter out all reversed products and products with the self transitions
-    products_unique = []
-    for prod in products:
-        if prod[0] == prod[1]: continue
-        # Include only the first instance of symmetric pairs
-        if (prod[1],prod[0]) not in products_unique: products_unique.append(prod)
+import itertools, math, pandas as pd, numpy as np
 
-    for info in groups:
-        df.loc[len(df)] = info + [0.0]*(df.shape[-1]-3)
-        timeseries = timeseries_dict[info[0]]
-        # Get number of transitions
-        trans_dict = {target: np.sum(np.where(timeseries[:-1] == target, 1, 0)) for target in caps}
-        indx = df.index[-1]
-        # Iterate through products and calculate all symmetric pairs/off-diagonals
-        for prod in products_unique:
-            target1, target2 = prod[0], prod[1]
-            trans_array = timeseries.copy()
-            # Set all values not equal to target1 or target2 to zero
-            trans_array[(trans_array != target1) & (trans_array != target2)] = 0
-            trans_array[np.where(trans_array == target1)] = 1
-            trans_array[np.where(trans_array == target2)] = 3
-            # 2 indicates forward transition target1 -> target2; -2 means reverse/backward transition target2 -> target1
-            diff_array = np.diff(trans_array,n=1)
-            # Avoid division by zero errors and calculate both the forward and reverse transition
-            if trans_dict[target1] != 0:
-                df.loc[indx,f"{target1}.{target2}"] = float(np.sum(np.where(diff_array==2,1,0))/trans_dict[target1])
-            if trans_dict[target2] != 0:
-                df.loc[indx,f"{target2}.{target1}"] = float(np.sum(np.where(diff_array==-2,1,0))/trans_dict[target2])
+groups = [["101", "A", "1"], ["102", "B", "1"]]
+timeseries_dict = {
+    "101": np.array([1, 1, 1, 1, 2, 2, 1, 4, 3, 5, 3, 3, 5, 5, 6, 7]),
+    "102": np.array([1, 2, 1, 1, 3, 3, 1, 4, 3, 5, 3, 3, 4, 5, 6, 8, 7]),
+}
+caps = list(range(1, 9))
+# Get all combinations of transitions
+products = list(itertools.product(caps, caps))
+df = pd.DataFrame(columns=["Subject_ID", "Group", "Run"] + [f"{x}.{y}" for x, y in products])
+# Filter out all reversed products and products with the self transitions
+products_unique = []
+for prod in products:
+    if prod[0] == prod[1]:
+        continue
+    # Include only the first instance of symmetric pairs
+    if (prod[1], prod[0]) not in products_unique:
+        products_unique.append(prod)
 
-        # Calculate the probability for the self transitions/diagonals
-        for target in caps:
-            if trans_dict[target] == 0: continue
-            # Will include the {target}.{target} column, but the value is initially set to zero
-            columns = df.filter(regex=fr"^{target}\.").columns.tolist()
-            cumulative = df.loc[indx,columns].values.sum()
-            df.loc[indx,f"{target}.{target}"] = 1.0 - cumulative
+for info in groups:
+    df.loc[len(df)] = info + [0.0] * (df.shape[-1] - 3)
+    timeseries = timeseries_dict[info[0]]
+    # Get number of transitions
+    trans_dict = {target: np.sum(np.where(timeseries[:-1] == target, 1, 0)) for target in caps}
+    indx = df.index[-1]
+    # Iterate through products and calculate all symmetric pairs/off-diagonals
+    for prod in products_unique:
+        target1, target2 = prod[0], prod[1]
+        trans_array = timeseries.copy()
+        # Set all values not equal to target1 or target2 to zero
+        trans_array[(trans_array != target1) & (trans_array != target2)] = 0
+        trans_array[np.where(trans_array == target1)] = 1
+        trans_array[np.where(trans_array == target2)] = 3
+        # 2 indicates forward transition target1 -> target2; -2 means reverse/backward transition target2 -> target1
+        diff_array = np.diff(trans_array, n=1)
+        # Avoid division by zero errors and calculate both the forward and reverse transition
+        if trans_dict[target1] != 0:
+            df.loc[indx, f"{target1}.{target2}"] = float(np.sum(np.where(diff_array == 2, 1, 0)) / trans_dict[target1])
+        if trans_dict[target2] != 0:
+            df.loc[indx, f"{target2}.{target1}"] = float(np.sum(np.where(diff_array == -2, 1, 0)) / trans_dict[target2])
+
+    # Calculate the probability for the self transitions/diagonals
+    for target in caps:
+        if trans_dict[target] == 0:
+            continue
+        # Will include the {target}.{target} column, but the value is initially set to zero
+        columns = df.filter(regex=rf"^{target}\.").columns.tolist()
+        cumulative = df.loc[indx, columns].values.sum()
+        df.loc[indx, f"{target}.{target}"] = 1.0 - cumulative
 ```
 - Added new external function - ``transition_matrix``, which generates and visualizes the average transition probabilities
 for all groups, using the transition probability dataframe outputted by `CAP.calculate_metrics`
@@ -705,34 +796,41 @@ import or use numpy operations to reduce needed to create the same calculation.
         sorted_frequency_dict = {key: frequency_dict[key] for key in sorted(list(frequency_dict))}
         # Add zero to missing CAPs for participants that exhibit zero instances of a certain CAP
         if len(sorted_frequency_dict) != len(cap_numbers):
-            sorted_frequency_dict = {cap_number: sorted_frequency_dict[cap_number] if cap_number in
-                                     list(sorted_frequency_dict) else 0 for cap_number in cap_numbers}
+            sorted_frequency_dict = {
+                cap_number: sorted_frequency_dict[cap_number] if cap_number in list(sorted_frequency_dict) else 0
+                for cap_number in cap_numbers
+            }
         # Replace zeros with nan for groups with less caps than the group with the max caps
         if len(cap_numbers) > group_cap_counts[group]:
-            sorted_frequency_dict = {cap_number: sorted_frequency_dict[cap_number] if
-                                     cap_number <= group_cap_counts[group] else float("nan") for cap_number in
-                                     cap_numbers}
-
+            sorted_frequency_dict = {
+                cap_number: sorted_frequency_dict[cap_number] if cap_number <= group_cap_counts[group] else float("nan")
+                for cap_number in cap_numbers
+            }
         ```
         - Refactored Code:
         ```python
         # Get frequency;
-        frequency_dict = {key: np.where(predicted_subject_timeseries[subj_id][curr_run] == key,1,0).sum()
-                          for key in range(1, group_cap_counts[group] + 1)}
+        frequency_dict = {
+            key: np.where(predicted_subject_timeseries[subj_id][curr_run] == key, 1, 0).sum()
+            for key in range(1, group_cap_counts[group] + 1)
+        }
         # Replace zeros with nan for groups with less caps than the group with the max caps
         if max(cap_numbers) > group_cap_counts[group]:
-            for i in range(group_cap_counts[group] + 1, max(cap_numbers) + 1): frequency_dict.update({i: float("nan")})
+            for i in range(group_cap_counts[group] + 1, max(cap_numbers) + 1):
+                frequency_dict.update({i: float("nan")})
         ```
     - **"temporal_fraction"**
         - Previous Code:
         ```python
-        proportion_dict = {key: item/(len(predicted_subject_timeseries[subj_id][curr_run]))
-                                       for key, item in sorted_frequency_dict.items()}
+        proportion_dict = {
+            key: item / (len(predicted_subject_timeseries[subj_id][curr_run])) for key, item in sorted_frequency_dict.items()
+        }
         ```
         - "Refactored Code": Nothing other than some parameter names have changed.
         ```python
-        proportion_dict = {key: value/(len(predicted_subject_timeseries[subj_id][curr_run]))
-                           for key, value in frequency_dict.items()}
+        proportion_dict = {
+            key: value / (len(predicted_subject_timeseries[subj_id][curr_run])) for key, value in frequency_dict.items()
+        }
         ```
     - **"persistence"**
         - Previous Code:
@@ -744,9 +842,9 @@ import or use numpy operations to reduce needed to create the same calculation.
         # Iterate through caps
         for target in cap_numbers:
             # Iterate through each element and count uninterrupted volumes that equal target
-            for index in range(0,len(predicted_subject_timeseries[subj_id][curr_run])):
+            for index in range(0, len(predicted_subject_timeseries[subj_id][curr_run])):
                 if predicted_subject_timeseries[subj_id][curr_run][index] == target:
-                    count +=1
+                    count += 1
                 # Store count in list if interrupted and not zero
                 else:
                     if count != 0:
@@ -758,9 +856,9 @@ import or use numpy operations to reduce needed to create the same calculation.
                 uninterrupted_volumes.append(count)
             # If uninterrupted_volumes not zero, multiply elements in the list by repetition time, sum and divide
             if len(uninterrupted_volumes) > 0:
-                persistence_value = np.array(uninterrupted_volumes).sum()/len(uninterrupted_volumes)
+                persistence_value = np.array(uninterrupted_volumes).sum() / len(uninterrupted_volumes)
                 if tr:
-                    persistence_dict.update({target: persistence_value*tr})
+                    persistence_dict.update({target: persistence_value * tr})
                 else:
                     persistence_dict.update({target: persistence_value})
             else:
@@ -772,9 +870,10 @@ import or use numpy operations to reduce needed to create the same calculation.
 
         # Replace zeros with nan for groups with less caps than the group with the max caps
         if len(cap_numbers) > group_cap_counts[group]:
-            persistence_dict = {cap_number: persistence_dict[cap_number] if
-                                cap_number <= group_cap_counts[group] else float("nan") for cap_number in
-                                cap_numbers}
+            persistence_dict = {
+                cap_number: persistence_dict[cap_number] if cap_number <= group_cap_counts[group] else float("nan")
+                for cap_number in cap_numbers
+            }
         ```
         - Refactored Code:
         ```python
@@ -783,30 +882,34 @@ import or use numpy operations to reduce needed to create the same calculation.
         # Iterate through caps
         for target in cap_numbers:
             # Binary representation of array - if [1,2,1,1,1,3] and target is 1, then it is [1,0,1,1,1,0]
-            binary_arr = np.where(predicted_subject_timeseries[subj_id][curr_run] == target,1,0)
+            binary_arr = np.where(predicted_subject_timeseries[subj_id][curr_run] == target, 1, 0)
             # Get indices of values that equal 1; [0,2,3,4]
             target_indices = np.where(binary_arr == 1)[0]
             # Count the transitions, indices where diff > 1 is a transition; diff of indices = [2,1,1];
             # binary for diff > 1 = [1,0,0]; thus, segments = transitions + first_sequence(1) = 2
-            segments = np.where(np.diff(target_indices, n=1) > 1, 1,0).sum() + 1
+            segments = np.where(np.diff(target_indices, n=1) > 1, 1, 0).sum() + 1
             # Sum of ones in the binary array divided by segments, then multiplied by 1 or the tr; segment is
             # always 1 at minimum due to + 1; np.where(np.diff(target_indices, n=1) > 1, 1,0).sum() is 0 when empty or the condition isn't met
-            persistence_dict.update({target: (binary_arr.sum()/segments) * (tr if tr else 1)})
+            persistence_dict.update({target: (binary_arr.sum() / segments) * (tr if tr else 1)})
 
         # Replace zeros with nan for groups with less caps than the group with the max caps
         if max(cap_numbers) > group_cap_counts[group]:
-            for i in range(group_cap_counts[group] + 1, max(cap_numbers) + 1): persistence_dict.update({i: float("nan")})
+            for i in range(group_cap_counts[group] + 1, max(cap_numbers) + 1):
+                persistence_dict.update({i: float("nan")})
         ```
     - **"transition_frequency"**
         - Previous Code:
         ```python
         count = 0
         # Iterate through predicted values
-        for index in range(0,len(predicted_subject_timeseries[subj_id][curr_run])):
+        for index in range(0, len(predicted_subject_timeseries[subj_id][curr_run])):
             if index != 0:
                 # If the subsequent element does not equal the previous element, this is considered a transition
-                if predicted_subject_timeseries[subj_id][curr_run][index-1] != predicted_subject_timeseries[subj_id][curr_run][index]:
-                    count +=1
+                if (
+                    predicted_subject_timeseries[subj_id][curr_run][index - 1]
+                    != predicted_subject_timeseries[subj_id][curr_run][index]
+                ):
+                    count += 1
         # Populate DataFrame
         new_row = [subj_id, group_name, curr_run, count]
         df_dict["transition_frequency"].loc[len(df_dict["transition_frequency"])] = new_row
@@ -816,7 +919,7 @@ import or use numpy operations to reduce needed to create the same calculation.
         ```python
         # Sum the differences that are not zero - [1,2,1,1,1,3] becomes [1,-1,0,0,2], binary representation
         # for values not zero is [1,1,0,0,1] = 3 transitions
-        transition_frequency = np.where(np.diff(predicted_subject_timeseries[subj_id][curr_run]) != 0,1,0).sum()
+        transition_frequency = np.where(np.diff(predicted_subject_timeseries[subj_id][curr_run]) != 0, 1, 0).sum()
         ```
         *Note, the `n` parameter in `np.diff` defaults to 1, and differences are calculated as `out[i] = a[i+1] - a[i]`*
 ### 🐛 Fixes
@@ -1092,20 +1195,23 @@ This doesn't affect functionality but it may be better to respect the original u
       implementing this fix.
 
 ```python3
-
 # Fix for python 3.12, saving stat map so that it is path instead of a NifTi
 try:
     gii_lh, gii_rh = mni152_to_fslr(stat_map, method=method, fslr_density=fslr_density)
 except TypeError:
     # Create temp
     temp_nifti = tempfile.NamedTemporaryFile(delete=False, suffix=".nii.gz")
-    warnings.warn(textwrap.dedent(f"""
+    warnings.warn(
+        textwrap.dedent(
+            f"""
                     Potential error due to changes in pathlib.py in Python 3.12 causing the error
                     message to output as "not 'Nifti1Image'" instead of "not Nifti1Image", which
                     neuromaps uses to determine if the input is a Nifti1Image object.
                     Converting stat_map into a temporary nii.gz file (which will be automatically
                     deleted afterwards) at {temp_nifti.name}
-                    """))
+                    """
+        )
+    )
     # Ensure file is closed
     temp_nifti.close()
     # Save temporary nifti to temp file
@@ -1335,16 +1441,41 @@ processed with `TimeseriesExtractor.get_bold` that do not have a run ID due to o
 
 ```python
 if high_pass:
-    confound_names = ["trans_x", "trans_x_derivative1","trans_y", "trans_y_derivative1",
-                        "trans_z", "trans_z_derivative1",  "rot_x", "rot_x_derivative1",
-                        "rot_y", "rot_y_derivative1", "rot_z", "rot_z_derivative1"
+    confound_names = [
+        "trans_x",
+        "trans_x_derivative1",
+        "trans_y",
+        "trans_y_derivative1",
+        "trans_z",
+        "trans_z_derivative1",
+        "rot_x",
+        "rot_x_derivative1",
+        "rot_y",
+        "rot_y_derivative1",
+        "rot_z",
+        "rot_z_derivative1",
     ]
 else:
     confound_names = [
-        "cosine*","trans_x", "trans_x_derivative1","trans_y", "trans_y_derivative1",
-        "trans_z", "trans_z_derivative1", "rot_x", "rot_x_derivative1",
-        "rot_y", "rot_y_derivative1", "rot_z", "rot_z_derivative1", "a_comp_cor_00",
-        "a_comp_cor_01", "a_comp_cor_02", "a_comp_cor_03", "a_comp_cor_04", "a_comp_cor_05"
+        "cosine*",
+        "trans_x",
+        "trans_x_derivative1",
+        "trans_y",
+        "trans_y_derivative1",
+        "trans_z",
+        "trans_z_derivative1",
+        "rot_x",
+        "rot_x_derivative1",
+        "rot_y",
+        "rot_y_derivative1",
+        "rot_z",
+        "rot_z_derivative1",
+        "a_comp_cor_00",
+        "a_comp_cor_01",
+        "a_comp_cor_02",
+        "a_comp_cor_03",
+        "a_comp_cor_04",
+        "a_comp_cor_05",
     ]
 ```
 

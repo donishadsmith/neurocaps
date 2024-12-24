@@ -61,9 +61,12 @@ class CAP(_CAPGetter):
             - "regions": The regions or networks in the parcellation.
 
         Note, if ``parcel_approach`` was initialized in ``TimeSeriesExtractor`` class, then this parameter can be
-        set to ``self.parcel_approach``. Refer to documentation from nilearn's ``datasets.fetch_atlas_schaefer_2018``
-        and ``datasets.fetch_atlas_aal`` functions for more information about the "Schaefer" and "AAL" sub-keys. Also,
-        refer to the "Note" section below for an explanation of the "Custom" sub-keys.
+        set to ``self.parcel_approach``. Refer to `Nilearn's Fetch Schaefer Documentation
+        <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_schaefer_2018.html#nilearn.datasets.fetch_atlas_schaefer_2018>`_
+        and `Nilearn's Fetch AAL Documentation
+        <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_aal.html#nilearn.datasets.fetch_atlas_aal>`_
+        for more information about the "Schaefer" and "AAL" sub-keys. Also, refer to the "Note" section below for an
+        explanation of the "Custom" sub-keys.
 
     groups: :obj:`dict[str, list[str]]` or :obj:`None`, default=None
         A mapping of group names to unique subject IDs. If specified, then separate analyses are performed on groups
@@ -120,7 +123,7 @@ class CAP(_CAPGetter):
         The cluster selection method used in ``self.get_caps()`` to identify the optimal number of clusters.
 
     n_cores: :obj:`int` or :obj:`None`
-        Number of cores specified in ``self.get_caps()`` to use for multiprocessing with joblib.
+        Number of cores specified in ``self.get_caps()`` to use for multiprocessing with Joblib.
 
     runs: :obj:`int`, :obj:`list[Union[int, str]]`, or :obj:`None`
         The run IDs specified in ``self.get_caps()``.
@@ -196,7 +199,7 @@ class CAP(_CAPGetter):
         was requested in ``self.get_caps()``.
 
     means: :obj:`dict[str, np.array]` or :obj:`None`
-        A dictionary mapping groups to their associated numpy array containing the means of each feature (ROI) if
+        A dictionary mapping groups to their associated NumPy array containing the means of each feature (ROI) if
         ``standardize`` is True in ``self.get_caps()``. The structure is as follows:
 
         ::
@@ -206,7 +209,7 @@ class CAP(_CAPGetter):
             }
 
     stdev: :obj:`dict[str, np.array]` or :obj:`None`
-        A dictionary mapping groups to their associated numpy array containing the sample standard deviation of each
+        A dictionary mapping groups to their associated NumPy array containing the sample standard deviation of each
         feature (ROI) if ``standardize`` is True in ``self.get_caps()``. The structure is as follows:
 
         ::
@@ -216,7 +219,7 @@ class CAP(_CAPGetter):
             }
 
     concatenated_timeseries: :obj:`dict[str, np.array]` or :obj:`None`
-        A dictionary mapping each group to their associated concatenated numpy array [(participants x TRs) x ROIs] when
+        A dictionary mapping each group to their associated concatenated NumPy array [(participants x TRs) x ROIs] when
         ``self.get_caps()`` is used. Note, if there are memory issues, ``delattr(self, "_concatenated_timeseries")``
         (version < 0.18.10) or ``del self.concatenated_timeseries`` (version >= 0.18.10) can be used to delete
         property and have it only return None. The structure is as follows:
@@ -228,7 +231,7 @@ class CAP(_CAPGetter):
             }
 
     region_caps: :obj:`dict[str, dict[str, np.array]]` or :obj:`None`
-        A dictionary mapping group to their CAPs and corresponding numpy array (1 x regions) containing the averaged
+        A dictionary mapping group to their CAPs and corresponding NumPy array (1 x regions) containing the averaged
         value of each region or network if ``visual_scope`` set to "regions" in ``self.caps2plot()``.
         The position of elements corresponds to "regions" in ``parcel_approach``. The structure is as follows:
 
@@ -243,7 +246,7 @@ class CAP(_CAPGetter):
             }
 
     outer_products: :obj:`dict[str, dict[str, np.array]]` or :obj:`None`
-        A dictionary mapping group to their CAPs and corresponding numpy array (ROIs x ROIs) containing the outer
+        A dictionary mapping group to their CAPs and corresponding NumPy array (ROIs x ROIs) containing the outer
         product if ``plot_options`` set to "outer_product" ``self.caps2plot()``. The structure is as follows:
 
         ::
@@ -430,7 +433,7 @@ class CAP(_CAPGetter):
         """
         Perform K-Means Clustering to Identify CAPs.
 
-        Concatenates the timeseries of each subject into a single numpy array with dimensions
+        Concatenates the timeseries of each subject into a single NumPy array with dimensions
         (participants x TRs) x ROI and uses ``sklearn.cluster.KMeans`` on the concatenated data. Note,
         ``KMeans`` uses Euclidean distance. Additionally, the Elbow method is determined using ``KneeLocator`` from
         the kneed package and the Davies Bouldin, Silhouette, and Variance Ratio methods are calculated using
@@ -441,7 +444,7 @@ class CAP(_CAPGetter):
         Parameters
         ----------
         subject_timeseries: :obj:`dict[str, dict[str, np.ndarray]]` or :obj:`os.PathLike`
-            A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a numpy
+            A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a NumPy
             array. Can also be a path to a pickle file containing this same structure. The expected structure of is as
             follows:
 
@@ -498,8 +501,8 @@ class CAP(_CAPGetter):
             Bessel's correction (`n-1` in denominator).
 
         n_cores: :obj:`int` or :obj:`None`, default=None
-            The number of cores to use for multiprocessing, with joblib, to run multiple ``sklearn.cluster.KMeans``
-            models if ``cluster_selection_method`` is not None. The default backend for joblib is used.
+            The number of cores to use for multiprocessing, with Joblib, to run multiple ``sklearn.cluster.KMeans``
+            models if ``cluster_selection_method`` is not None. The "loky" backend is used.
 
         show_figs: :obj:`bool`, default=False
             Displays the plots for the specified ``cluster_selection_method`` for all groups
@@ -530,8 +533,14 @@ class CAP(_CAPGetter):
         -------
         self
 
-
             .. versionadded:: 0.19.3
+
+        Note
+        ----
+        **KMeans Algorithm:** Refer to `scikit-learn's Documentation
+        <https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html>`_ for additional information
+        about the ``KMeans`` algorithm used in this method.
+
         """
         self._n_cores = n_cores
         # Ensure all unique values if n_clusters is a list
@@ -699,7 +708,7 @@ class CAP(_CAPGetter):
                     performance_dict[group].update(output_score)
                     model_dict.update(model)
             else:
-                parallel = Parallel(return_as="generator", n_jobs=self._n_cores)
+                parallel = Parallel(return_as="generator", n_jobs=self._n_cores, backend="loky")
                 output = parallel(
                     delayed(_run_kmeans)(n_cluster, configs, self._concatenated_timeseries[group], method)
                     for n_cluster in self._n_clusters
@@ -922,7 +931,7 @@ class CAP(_CAPGetter):
         Parameters
         ----------
         subject_timeseries: :obj:`dict[str, dict[str, np.ndarray]]` or :obj:`os.PathLike`
-            A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a numpy
+            A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a NumPy
             array. Can also be a path to a pickle file containing this same structure. The expected structure of is as
             follows:
 
@@ -1527,7 +1536,6 @@ class CAP(_CAPGetter):
         -------
         self
 
-
             .. versionadded:: 0.19.3
 
         Note
@@ -1535,8 +1543,8 @@ class CAP(_CAPGetter):
         **Parcellation Approach**: the "nodes" and "regions" sub-keys are required in ``parcel_approach`` for this
         function.
 
-        **Color Palettes**: For valid pre-made palettes for seaborn, refer to
-        https://seaborn.pydata.org/tutorial/color_palettes.html
+        **Color Palettes**: Refer to `seaborn's Color Palettes <https://seaborn.pydata.org/tutorial/color_palettes.html>`_
+        for valid pre-made palettes.
 
         """
         if not self.parcel_approach:
@@ -1700,7 +1708,7 @@ class CAP(_CAPGetter):
                     region_dict = self._parcel_approach["Custom"]["regions"]
                     region_keys = list(region_dict)
                     for region in region_keys:
-                        roi_indxs = np.array(region_dict[region]["lh"] + region_dict[region]["rh"])
+                        roi_indxs = np.array(list(region_dict[region]["lh"]) + list(region_dict[region]["rh"]))
                         if region_caps is None:
                             region_caps = np.array([np.average(self._caps[group][cap][roi_indxs])])
                         else:
@@ -2182,8 +2190,8 @@ class CAP(_CAPGetter):
 
         Note
         ----
-        **Color Palettes**: For valid pre-made palettes for ``seaborn``, refer to
-        https://seaborn.pydata.org/tutorial/color_palettes.html
+        **Color Palettes**: Refer to `seaborn's Color Palettes <https://seaborn.pydata.org/tutorial/color_palettes.html>`_
+        for valid pre-made palettes.
         """
         corr_dict = {group: None for group in self._groups} if return_df or save_df else None
 
@@ -2323,7 +2331,6 @@ class CAP(_CAPGetter):
         -------
         self
 
-
             .. versionadded:: 0.19.3
 
         Note
@@ -2454,7 +2461,7 @@ class CAP(_CAPGetter):
 
         fwhm: :obj:`float` or :obj:`None`, defualt=None
             Strength of spatial smoothing to apply (in millimeters) to the statistical map prior to interpolating
-            from MNI152 space to fsLR surface space. Uses nilearn's ``image.smooth``.
+            from MNI152 space to fsLR surface space. Uses Nilearn's ``image.smooth``.
 
         fslr_density: {"4k", "8k", "32k", "164k"}, default="32k"
             Density of the fsLR surface when converting from MNI152 space to fsLR surface. Options are "32k" or
@@ -2527,8 +2534,10 @@ class CAP(_CAPGetter):
                 - Strings to call ``nilearn.plotting.cm._cmap_d`` fuction.
                 - ``matplotlib.colors.LinearSegmentedColormap`` to generate custom colormaps.
             - cbar_kws: :obj:`dict`, default={"location": "bottom", "n_ticks": 3}
-                Customize colorbar. Refer to ``_add_colorbars`` at for valid kwargs in ``surfplot.plotting.Plot``
-                documentation listed in the Note section.
+                Customize colorbar. Refer to ``_add_colorbars`` for ``surfplot.plotting.Plot`` in
+                `Surfplot's Plot Documentation
+                <https://surfplot.readthedocs.io/en/latest/generated/surfplot.plotting.Plot.html#surfplot.plotting.Plot._add_colorbars>`_
+                for valid parameters.
             - alpha: :obj:`float`, default=1
                 Transparency level of the colorbar.
             - outline_alpha: :obj:`float`, default=1
@@ -2562,7 +2571,6 @@ class CAP(_CAPGetter):
         Returns
         -------
         self
-
 
             .. versionadded:: 0.19.3
 
@@ -2653,7 +2661,7 @@ class CAP(_CAPGetter):
                         temp_nifti = tempfile.NamedTemporaryFile(delete=False, suffix=".nii.gz")
                         LG.warning(
                             "TypeError raised by neuromaps due to changes in pathlib.py in Python 3.12 "
-                            "Converting `statistical map` into a temporary nii.gz file (which will be "
+                            "Converting NifTI image into a temporary nii.gz file (which will be "
                             f"automatically deleted afterwards) [TEMP FILE: {temp_nifti.name}]"
                         )
 
@@ -2930,30 +2938,36 @@ class CAP(_CAPGetter):
         -------
         self
 
-
             .. versionadded:: 0.19.3
 
         Note
         -----
-        **Saving Plots**: By default, this function uses "kaleido" (which is also a dependency in this package)
-        to save plots. For other engines such as "orca", those packages must be installed seperately.
+        **Handling Division by Zero:** NumPy automatically handles division by zero errors. This may occur if the
+        network or the "High Amplitude" or "Low Amplitude" vectors are all zeroes. In such cases, NumPy assigns `NaN`
+        to the cosine similarity for the affected network(s), indicating that the similarity is undefined.
+        Plotly is capable of handling `NaN` values.
 
         **Parcellation Approach**: If using "Custom" for ``parcel_approach`` the "regions" sub-key is required.
+
+        **Saving Plots**: By default, this function uses "kaleido" (which is also a dependency in this package)
+        to save plots. For other engines such as "orca", those packages must be installed seperately.
 
         **Tick Values**: if the ``tickvals`` or  ``range`` sub-keys in this code are not specified in the ``radialaxis``
         kwarg, then four values are shown - 0.25*(max value), 0.50*(max value), 0.75*(max value), and the max value.
         These values are also rounded to the second decimal place.
 
-        **Radial Axis Kwargs**: For valid keys for ``radialaxis`` refer to plotly's documentation at
-        https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.radialaxis.html or
-        https://plotly.com/python/reference/layout/polar/ for valid kwargs.
+        **Radial Axis Kwargs**: Refer to `Plotly's radialaxis Documentation
+        <https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.radialaxis.html>`_
+        or `Plotly's polar Documentation <https://plotly.com/python/reference/layout/polar/>`_ for valid keys for
+        ``radialaxis``.
 
-        **Angular Axis Kwargs**: For valid keys for ``angularaxis`` refer to plotly's documentation at
-        https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.angularaxis.html or
-        https://plotly.com/python/reference/layout/polar/ for valid kwargs.
+        **Angular Axis Kwargs**: Refer to `Plotly's angularaxis Documentation
+        <https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.angularaxis.html>`_
+        or `Plotly's polar Documentation <https://plotly.com/python/reference/layout/polar/>`_ for valid keys for
+        ``angularaxis``.
 
-        **Legend and Title Font Kwargs**: For valid keys for ``legend`` and ``title_font``, refer to plotly's
-        documentation at https://plotly.com/python/reference/layout/ for valid kwargs.
+        **Legend and Title Font Kwargs**: Refer to `Plotly's layout Documentation
+        <https://plotly.com/python/reference/layout/>`_ for valid keys for ``legend`` and ``title_font``.
 
         References
         ----------
@@ -3148,8 +3162,8 @@ class CAP(_CAPGetter):
 
             for region in radar_dict["Regions"]:
                 if parcellation_name == "Custom":
-                    lh = self._parcel_approach[parcellation_name]["regions"][region]["lh"]
-                    rh = self._parcel_approach[parcellation_name]["regions"][region]["rh"]
+                    lh = list(self._parcel_approach[parcellation_name]["regions"][region]["lh"])
+                    rh = list(self._parcel_approach[parcellation_name]["regions"][region]["rh"])
                     indxs = lh + rh
                 else:
                     indxs = np.array(
@@ -3173,21 +3187,11 @@ class CAP(_CAPGetter):
                 low_amp = np.where(cap_vector < 0, -cap_vector, 0)
                 vecs = {"High Amplitude": high_amp, "Low Amplitude": low_amp}
 
-                warning_msg = (
-                    f"[GROUP: {group} | REGION: {region} | CAP: {cap}] - "
-                    "Division by zero error when calculating cosine similarity for the "
-                    "{0} activations. Setting cosine similarity to zero."
-                )
-
                 for vec in vecs:
                     dot_product = np.dot(vecs[vec], binary_vector)
                     norm_vec = np.linalg.norm(vecs[vec])
 
-                    try:
-                        cosine_similarity = dot_product / (norm_vec * norm_binary_vector)
-                    except ZeroDivisionError:
-                        LG.warning(warning_msg.format(vec))
-                        cosine_similarity = 0
+                    cosine_similarity = dot_product / (norm_vec * norm_binary_vector)
 
                     # Store value in dict
                     radar_dict[cap][vec].append(cosine_similarity)

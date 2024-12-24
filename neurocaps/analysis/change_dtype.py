@@ -19,15 +19,15 @@ def change_dtype(
     """
     Perform Participant-wise Dtype Conversion.
 
-    Changes the dtypes of each participants numpy array. This function uses the ``.astype()`` method from numpy.
-    This function can help reduce memory usage. For example, converting a numpy array from "float64" to "float32" can
+    Changes the dtypes of each participants NumPy array. This function uses the ``.astype()`` method from NumPy.
+    This function can help reduce memory usage. For example, converting a NumPy array from "float64" to "float32" can
     halve the memory required, which is particularly useful when analyzing large datasets on a local machine.
 
     Parameters
     ----------
     subject_timeseries_list: :obj:`list[dict[str, dict[str, np.ndarray]]]` or :obj:`list[os.PathLike]`
         A list where each element consist of a dictionary mapping subject IDs to their run IDs and associated
-        timeseries (TRs x ROIs) as a numpy array. Can also be a list consisting of paths to pickle files
+        timeseries (TRs x ROIs) as a NumPy array. Can also be a list consisting of paths to pickle files
         containing this same structure. The expected structure of each dictionary is as follows:
 
         ::
@@ -45,7 +45,7 @@ def change_dtype(
                 }
 
     dtype: :obj:`bool` or :obj:`np.floating`
-        Target data type (e.g "float32" or ``np.float32``) to convert each participant's numpy arrays into.
+        Target data type (e.g "float32" or ``np.float32``) to convert each participant's NumPy arrays into.
 
     return_dicts: :obj:`bool`, default=True
         If True, returns a single dictionary containing the converted input dictionaries. Keys are named "dict_{0}"
@@ -70,7 +70,7 @@ def change_dtype(
 
     Warning
     -------
-    **Floating Point Precision**: While this function allows conversion to any valid numpy dtype, it is recommended to
+    **Floating Point Precision**: While this function allows conversion to any valid NumPy dtype, it is recommended to
     use floating-point dtypes. Reducing the dtype could introduce rounding errors that may lower the precision of
     subsequent analyses as decimal digits are reduced when lower dtypes are requested. Thus, the lowest recommended
     floating-point dtype would be "float32", since it allows for memory usage reduction while limiting rounding errors

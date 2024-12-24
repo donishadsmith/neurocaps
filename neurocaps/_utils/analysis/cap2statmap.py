@@ -89,9 +89,9 @@ def _get_target_indices(atlas_file, reference_atlas, resolution_mm, remove_label
     atlas = nib.load(atlas_file)
 
     if reference_atlas == "Schaefer":
-        reference_atlas_map = datasets.fetch_atlas_schaefer_2018(resolution_mm=resolution_mm)["maps"]
+        reference_atlas_map = datasets.fetch_atlas_schaefer_2018(resolution_mm=resolution_mm, verbose=0)["maps"]
     else:
-        reference_atlas_map = datasets.fetch_atlas_aal()["maps"]
+        reference_atlas_map = datasets.fetch_atlas_aal(verbose=0)["maps"]
 
     # Resample schaefer to atlas file using nearest interpolation to retain labels
     resampled_reference_atlas = image.resample_to_img(

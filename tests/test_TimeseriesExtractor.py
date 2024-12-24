@@ -1,5 +1,5 @@
-import copy, glob, json, math, pickle, os, re, shutil, sys, tempfile
-import pytest, numpy as np, pandas as pd
+import copy, glob, json, math, os, re, shutil, sys, tempfile
+import joblib, pytest, numpy as np, pandas as pd
 from neurocaps.extraction import TimeseriesExtractor
 
 dir = os.path.dirname(__file__)
@@ -23,7 +23,7 @@ confounds_file = glob.glob(
 )[0]
 
 with open(os.path.join(dir, "data", "HCPex_parcel_approach.pkl"), "rb") as f:
-    parcel_approach = pickle.load(f)
+    parcel_approach = joblib.load(f)
     parcel_approach["Custom"]["maps"] = os.path.join(dir, "data", "HCPex.nii.gz")
 
 # Create event data

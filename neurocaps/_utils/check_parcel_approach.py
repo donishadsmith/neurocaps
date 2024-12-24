@@ -58,11 +58,7 @@ def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
             parcel_dict["Schaefer"].update({"resolution_mm": 1})
 
         # Get atlas
-        fetched_schaefer = datasets.fetch_atlas_schaefer_2018(
-            n_rois=parcel_dict["Schaefer"]["n_rois"],
-            yeo_networks=parcel_dict["Schaefer"]["yeo_networks"],
-            resolution_mm=parcel_dict["Schaefer"]["resolution_mm"],
-        )
+        fetched_schaefer = datasets.fetch_atlas_schaefer_2018(**parcel_dict["Schaefer"], verbose=0)
 
         parcel_dict["Schaefer"].update({"maps": fetched_schaefer.maps})
         network_name = "7Networks_" if parcel_dict["Schaefer"]["yeo_networks"] == 7 else "17Networks_"
@@ -91,7 +87,7 @@ def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
             parcel_dict["AAL"].update({"version": "SPM12"})
 
         # Get atlas
-        fetched_aal = datasets.fetch_atlas_aal(version=parcel_dict["AAL"]["version"])
+        fetched_aal = datasets.fetch_atlas_aal(version=parcel_dict["AAL"]["version"], verbose=0)
         parcel_dict["AAL"].update({"maps": fetched_aal.maps})
         parcel_dict["AAL"].update({"nodes": [label for label in fetched_aal.labels]})
 
