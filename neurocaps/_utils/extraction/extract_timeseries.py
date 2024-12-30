@@ -50,6 +50,10 @@ class _Data:
         return self.task_info["condition"]
 
     @property
+    def shift(self):
+        return self.task_info["condition_tr_shift"]
+
+    @property
     def use_confounds(self):
         return self.signal_clean_info["use_confounds"]
 
@@ -201,7 +205,7 @@ def _extract_timeseries(
                 continue
 
             # Get condition indices
-            Data.scans = _get_condition(Data, condition_df)
+            Data.scans = _get_condition(Data, condition_df, LG)
 
             if Data.censor_vols:
                 Data.scans, n = _filter_condition(Data, LG)
@@ -221,6 +225,7 @@ def _extract_timeseries(
             percent_msg = f"Percentage of volumes exceeding the threshold limit is {Data.vols_exceed_percent * 100}%"
             if Data.condition:
                 percent_msg = f"{percent_msg} for [CONDITION: {Data.condition}]"
+
             LG.warning(
                 f"{Data.head}" + f"Timeseries Extraction Skipped: Run flagged due to more than "
                 f"{Data.scrub_lim * 100}% of the volumes exceeding the framewise displacement threshold of "
@@ -273,6 +278,9 @@ def _continue_extraction(Data, LG):
 
     # Load and discard volumes if needed
     nifti_img = load_img(Data.files["nifti"], dtype=Data.signal_clean_info["dtype"])
+    # Get length of timeseries and append scan indices to ensure no scans are out of bounds due to shift
+    if (Data.condition and Data.shift > 0) and (max(Data.scans) > nifti_img.shape[-1] - 1):
+        Data.scans = _check_indices(Data, nifti_img.shape[-1], LG, False)
 
     if Data.dummy_vols:
         nifti_img = index_img(nifti_img, slice(Data.dummy_vols, None))
@@ -297,6 +305,10 @@ def _continue_extraction(Data, LG):
         # If any out of bound indices, remove them instead of getting indexing error.
         if max(Data.scans) > timeseries.shape[0] - 1:
             Data.scans = _check_indices(Data, timeseries.shape[0], LG)
+
+        if Data.verbose:
+            LG.info(Data.head + f"Nuisance regression completed; extracting [CONDITION: {Data.condition}].")
+
         # Extract condition
         timeseries = timeseries[Data.scans, :]
 
@@ -396,14 +408,15 @@ def _flag(n_censor, n, scrub_lim):
 
 
 # Get event condition
-def _get_condition(Data, condition_df):
+def _get_condition(Data, condition_df, LG):
     scans = []
 
     # Convert times into scan numbers to obtain the scans taken when the participant was exposed to the
     # condition of interest; include partial scans
     for i in condition_df.index:
-        onset_scan = int(condition_df.loc[i, "onset"] / Data.tr)
-        end_scan = math.ceil((condition_df.loc[i, "onset"] + condition_df.loc[i, "duration"]) / Data.tr)
+        # Int is always the floor for positive floats
+        onset_scan = int(condition_df.loc[i, "onset"] / Data.tr) + Data.shift
+        end_scan = math.ceil((condition_df.loc[i, "onset"] + condition_df.loc[i, "duration"]) / Data.tr) + Data.shift
         # Add one since range is not inclusive
         scans.extend(list(range(onset_scan, end_scan + 1)))
 
@@ -418,12 +431,13 @@ def _get_condition(Data, condition_df):
 
 
 def _filter_condition(Data, LG):
-    # New `scans` list created if conditions met
+    # New `scans` list always created
     scans = Data.scans
 
     # Assess if any condition indices greater than fd array to not dilute outlier calculation
     if max(scans) > Data.max_len - 1:
         scans = _check_indices(Data, Data.max_len, LG)
+
     # Get length of scan list prior to assess outliers if requested
     n_before_censor = len(scans)
     scans = [volume for volume in scans if volume not in Data.censor_vols]
@@ -503,13 +517,16 @@ def _pad(timeseries, Data):
     return padded_timeseries
 
 
-# Check if indices valid
-def _check_indices(Data, arr_shape, LG):
-    LG.warning(
-        f"{Data.head}" + f"[CONDITION: {Data.condition}] Max scan index for exceeds timeseries max index. "
-        f"Max condition index is {max(Data.scans)}, while max timeseries index is {arr_shape - 1}. Timing may "
-        "be misaligned or specified repetition time incorrect. If intentional, ignore warning. Extracting "
-        "indices for condition only within timeseries range."
-    )
+# Check if indices valid or truncate indices if shift applied and causes indices to be out of bounds
+def _check_indices(Data, arr_shape, LG, warn=True):
+    # Warn is false in instances were shift is used to prevent unnecessary logging, the warning is specifically
+    # for instances related to misalignment such as potentially incorrect onsets and durations
+    if warn:
+        LG.warning(
+            f"{Data.head}" + f"[CONDITION: {Data.condition}] Max scan index for exceeds timeseries max index. "
+            f"Max condition index is {max(Data.scans)}, while max timeseries index is {arr_shape - 1}. Timing may "
+            "be misaligned or specified repetition time incorrect. If intentional, ignore warning. Only "
+            "indices for condition within the timeseries range will be extracted."
+        )
 
     return [scan for scan in Data.scans if scan in range(0, arr_shape)]

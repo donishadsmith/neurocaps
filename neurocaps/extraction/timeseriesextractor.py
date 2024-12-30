@@ -127,6 +127,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
           handles censored volumes when ``sample_mask`` is used.  If this key is set to False, data is only censored
           after nuisance regression, which is the default behavior.
 
+        **Note**: If "use_sample_mask" is not True and the ``standardize`` is not False, it is recommended to apply an
+        additional within-run standardization (using ``neurocaps.analysis.standardize``) once outlier volumes have been
+        removed.
+
         .. versionadded:: 0.18.8 "use_sample_mask"
 
     n_acompcor_separate: :obj:`int` or :obj:`None`, default=None
@@ -405,6 +409,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         session: Optional[Union[int, str]] = None,
         runs: Optional[Union[int, str, list[int], list[str]]] = None,
         condition: Optional[str] = None,
+        condition_tr_shift: int = 0,
         tr: Optional[Union[int, float]] = None,
         run_subjects: Optional[list[str]] = None,
         exclude_subjects: Optional[list[str]] = None,
@@ -496,6 +501,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Isolates the timeseries data corresponding to a specific condition, only after the timeseries has been
             extracted and subjected to nuisance regression. Only a single condition can be extracted at a time.
 
+        condition_tr_shift: :obj:`int`, default=0
+            Number of TR units to units to offset both the start and end scan indices of a condition. This parameter
+            only applies when a ``condition`` is specified. For more details about how this offset affects the
+            calculation of task conditions, see the "Extraction of Task Conditions" section below.
+
+            .. versionadded:: 0.20.0
+
         tr: :obj:`int`, :obj:`float`, or :obj:`None`, default=None
             Repetition time (TR) for the specified task. If not provided, the TR will be automatically extracted from
             the first BOLD metadata file found for the task, searching first in the pipeline directory, then in
@@ -555,6 +567,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         -------
         self
 
+
             .. versionadded:: 0.19.3
 
         Note
@@ -588,18 +601,28 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         "use_sample_mask" key is False or not specified in the ``fd_threshold`` dictionary, then censoring is done
         after nuisance regression, which is the default behavior.
 
-        **Extraction of Task Conditions**: when extracting specific conditions, ``int`` to round down for the
-        beginning scan index ``start_scan = int(onset/tr)`` and ``math.ceil`` is used to round up for the ending scan
-        index ``end_scan = math.ceil((onset + duration)/tr)``. Filtering a specific condition from the
-        timeseries is done after nuisance regression. Additionally, if the "use_sample_mask" key in the
-        ``fd_threshold`` dictionary is set to True, then the truncated 2D timeseries is temporarily padded to
+        **Extraction of Task Conditions**: When extracting specific conditions, ``int`` is used to round down for the
+        beginning scan index (``start_scan = int(onset /tr) + condition_tr_shift``) and ``math.ceil`` is used to round up
+        for the ending scan index (``end_scan = math.ceil((onset + duration)/tr) + condition_tr_shift``). Filtering a
+        specific condition from the timeseries is done after nuisance regression. Additionally, if the "use_sample_mask"
+        key in the ``fd_threshold`` dictionary is set to True, then the truncated 2D timeseries is temporarily padded to
         ensure the correct rows corresponding to the condition are obtained.
         """
         if runs and not isinstance(runs, list):
             runs = [runs]
 
         # Update attributes
-        self._task_info = {"task": task, "condition": condition, "session": session, "runs": runs, "tr": tr}
+        self._task_info = {
+            "task": task,
+            "session": session,
+            "runs": runs,
+            "condition": condition,
+            "condition_tr_shift": condition_tr_shift,
+            "tr": tr,
+        }
+
+        # Quick check condition_tr_shift to not cause issues later in the pipeline
+        self._check_condition_tr_shift()
 
         # Initialize new attributes
         self._subject_ids = []
@@ -676,6 +699,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     self._subject_timeseries.update(subject_timeseries)
 
         return self
+
+    def _check_condition_tr_shift(self):
+        if self.task_info["condition_tr_shift"] != 0:
+            if not isinstance(self.task_info["condition_tr_shift"], int) or self.task_info["condition_tr_shift"] < 0:
+                raise ValueError("`condition_tr_shift` must be a integer value equal to or greater than 0.")
+
+            if self.task_info["condition"] is None:
+                LG.warning("`condition_tr_shift` specified but `condition` is None.")
 
     @staticmethod
     @lru_cache(maxsize=4)
@@ -974,6 +1005,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         -------
         self
 
+
             .. versionadded:: 0.19.3
         """
         if not self.subject_timeseries:
@@ -1051,6 +1083,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         Returns
         -------
         self
+
 
             .. versionadded:: 0.19.3
 

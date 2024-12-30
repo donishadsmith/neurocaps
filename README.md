@@ -1,7 +1,7 @@
 # neurocaps
 [![Latest Version](https://img.shields.io/pypi/v/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.14553662)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.14583740)
 [![Github Repository](https://img.shields.io/badge/Source%20Code-neurocaps-purple)](https://github.com/donishadsmith/neurocaps)
 [![Test Status](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg)](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml)
 [![codecov](https://codecov.io/github/donishadsmith/neurocaps/graph/badge.svg?token=WS2V7I16WF)](https://codecov.io/github/donishadsmith/neurocaps)
@@ -164,6 +164,7 @@ Use dataset from OpenNeuro [^6]:
 ```python
 # Download Sample Dataset from OpenNeuro, requires the openneuro-py package
 # [Dataset] doi: doi:10.18112/openneuro.ds005381.v1.0.0
+import os
 from openneuro import download
 
 demo_dir = "neurocaps_demo"
@@ -225,33 +226,36 @@ extractor = TimeseriesExtractor(
 # Extract timeseries for subjects in the BIDS directory; Subject 0006 run-1 will be flagged and skipped
 extractor.get_bold(
     bids_dir="neurocaps_demo",
+    pipeline_name="fmriprep",  # Can specify if multiple pipelines exists in derivatives directory
     task="DET",
+    condition="late",  # Can extract a specific condition if events.tsv is available
+    condition_tr_shift=1,
     session="2",
     n_cores=None,
-    pipeline_name="fmriprep",  # Can specify if multiple pipelines exists in derivatives directory
     verbose=True,
-).timeseries_to_pickle(
-    "neurocaps_demo/derivatives", "timeseries.pkl"
-)  # Method chaining supported in >= 0.19.3 and available for several methods in `CAP` and `TimeseriesExtractor` classes
+).timeseries_to_pickle("neurocaps_demo/derivatives", "timeseries.pkl")
 ```
 **Output:**
 ```
-2024-11-24 23:45:02,378 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: cosine*, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z.
-2024-11-24 23:45:02,513 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-1_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
-2024-11-24 23:45:02,525 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z, a_comp_cor_00, a_comp_cor_01, a_comp_cor_33, a_comp_cor_34.
-2024-11-24 23:45:12,837 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-2_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
-2024-11-24 23:45:12,844 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z, a_comp_cor_00, a_comp_cor_01, a_comp_cor_100, a_comp_cor_101.
-2024-11-24 23:45:23,065 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 1] Preparing for Timeseries Extraction using [FILE: sub-0006_ses-2_task-DET_run-1_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
-2024-11-24 23:45:23,065 neurocaps._utils.extraction.extract_timeseries [WARNING] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 1] Timeseries Extraction Skipped: Run flagged due to more than 20.0% of the volumes exceeding the framewise displacement threshold of 0.35. Percentage of volumes exceeding the threshold limit is 26.785714285714285%.
-2024-11-24 23:45:23,065 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 2] Preparing for Timeseries Extraction using [FILE: sub-0006_ses-2_task-DET_run-2_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
-2024-11-24 23:45:23,081 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 2] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z, a_comp_cor_00, a_comp_cor_01, a_comp_cor_24, a_comp_cor_25.
+2024-12-31 19:06:58,729 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: cosine*, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z.
+2024-12-31 19:06:58,913 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-1_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
+2024-12-31 19:06:58,926 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z, a_comp_cor_00, a_comp_cor_01, a_comp_cor_33, a_comp_cor_34.
+2024-12-31 19:07:10,165 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Nuisance regression completed; extracting [CONDITION: late].
+2024-12-31 19:07:10,205 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-2_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
+2024-12-31 19:07:10,219 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z, a_comp_cor_00, a_comp_cor_01, a_comp_cor_100, a_comp_cor_101.
+2024-12-31 19:07:21,070 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] Nuisance regression completed; extracting [CONDITION: late].
+2024-12-31 19:07:21,107 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 1] Preparing for Timeseries Extraction using [FILE: sub-0006_ses-2_task-DET_run-1_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
+2024-12-31 19:07:21,120 neurocaps._utils.extraction.extract_timeseries [WARNING] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 1] Timeseries Extraction Skipped: Run flagged due to more than 20.0% of the volumes exceeding the framewise displacement threshold of 0.35. Percentage of volumes exceeding the threshold limit is 23.636363636363637% for [CONDITION: late].
+2024-12-31 19:07:21,121 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 2] Preparing for Timeseries Extraction using [FILE: sub-0006_ses-2_task-DET_run-2_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
+2024-12-31 19:07:21,135 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 2] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z, a_comp_cor_00, a_comp_cor_01, a_comp_cor_24, a_comp_cor_25.
+2024-12-31 19:07:31,746 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 2] Nuisance regression completed; extracting [CONDITION: late].
 ```
 
 ```python
-# Get CAPs
+# Initialize CAP class
 cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
 
-# Pkl files can also be used as input for `subject_timeseries`
+# Pkl files can also be used as input for `subject_timeseries`; only 2 clusters for simplicity
 cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, n_clusters=2, standardize=True)
 
 # `sharey` only applicable to outer product plots
@@ -267,12 +271,12 @@ kwargs = {
 }
 
 # Outer Product
-cap_analysis.caps2plot(visual_scope="regions", plot_options=["outer_product"], suffix_title="- DET Task", **kwargs)
+cap_analysis.caps2plot(visual_scope="regions", plot_options=["outer_product"], suffix_title="DET Task - late", **kwargs)
 
 # Heatmap
 kwargs["xlabel_rotation"] = 0
 
-cap_analysis.caps2plot(visual_scope="regions", plot_options=["heatmap"], suffix_title="- DET Task", **kwargs)
+cap_analysis.caps2plot(visual_scope="regions", plot_options=["heatmap"], suffix_title="DET Task - late", **kwargs)
 ```
 **Plot Outputs:**
 
@@ -295,8 +299,8 @@ print(outputs["temporal_fraction"])
 **DataFrame Output:**
 | Subject_ID | Group | Run | CAP-1 | CAP-2 |
 | --- | --- | --- | --- | --- |
-| 0004 | All Subjects | run-continuous | 0.501529 | 0.498471 |
-| 0006 | All Subjects | run-2 | 0.520000 | 0.480000 |
+| 0004 | All Subjects | run-continuous | 0.193182 | 0.806818 |
+| 0006 | All Subjects | run-2 | 0.121951 | 0.878049 |
 
 ```python
 # Create surface plots
@@ -406,20 +410,20 @@ print(trans_outputs["All Subjects"])
 ```
 **Outputs:**
 ```
-2024-11-24 23:58:39,470 neurocaps.analysis.cap [INFO] [GROUP: All Subjects | METHOD: silhouette] Optimal cluster size is 2.
+2024-12-31 16:51:03,148 neurocaps.analysis.cap [INFO] [GROUP: All Subjects | METHOD: silhouette] Optimal cluster size is 2.
 ```
 | Subject_ID | Group | Run | 1.1 | 1.2 | 2.1 | 2.2 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 0004 | All Subjects | run-continuous | 0.802395 | 0.197605 | 0.207547 | 0.792453 |
-| 0006 | All Subjects | run-2 | 0.790123 | 0.209877 | 0.235294 | 0.764706 |
+| 0004 | All Subjects | run-continuous | 0.470588 | 0.529412 | 0.114286 | 0.885714 |
+| 0006 | All Subjects | run-2 | 0.600000 | 0.400000 | 0.057143 | 0.942857 |
 
 <img src="assets/silhouette.png" width=70% height=70%>
 <img src="assets/transprob.png" width=70% height=70%>
 
 | From/To | CAP-1 | CAP-2 |
 | --- | --- | --- |
-| CAP-1 | 0.796259 | 0.203741 |
-| CAP-2 | 0.221421 | 0.778579 |
+| CAP-1 | 0.535294 | 0.464706 |
+| CAP-2 | 0.085714 | 0.914286 |
 
 ## Testing
 This package was tested using a closed dataset as well as a modified version of a single-subject open dataset to test the `TimeseriesExtractor` function on GitHub Actions. The open dataset provided by [Laumann & Poldrack](https://openfmri.org/dataset/ds000031/) and used in [Laumann et al., 2015](https://doi.org/10.1016/j.neuron.2015.06.037)[^7]. was also utilized. This data was obtained from the OpenfMRI database, accession number ds000031.

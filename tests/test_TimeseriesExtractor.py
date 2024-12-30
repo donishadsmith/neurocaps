@@ -83,7 +83,7 @@ def add_non_steady(n):
 
 # Gets scan indices in a roughly similar manner as _extract_timeseries;
 # Core logic for calculating onset and duration is similar
-def get_scans(condition, dummy_scans=None, fd=False, tr=1.2, remove_ses_id=False):
+def get_scans(condition, dummy_scans=None, fd=False, tr=1.2, remove_ses_id=False, condition_tr_shift=0):
     if remove_ses_id:
         event_df = pd.read_csv(os.path.join(bids_dir, "sub-01", "func", "sub-01_task-rest_events.tsv"), sep="\t")
     else:
@@ -94,8 +94,8 @@ def get_scans(condition, dummy_scans=None, fd=False, tr=1.2, remove_ses_id=False
     scan_list = []
 
     for i in condition_df.index:
-        onset = int(condition_df.loc[i, "onset"] / tr)
-        duration = math.ceil((condition_df.loc[i, "onset"] + condition_df.loc[i, "duration"]) / tr)
+        onset = int(condition_df.loc[i, "onset"] / tr) + condition_tr_shift
+        duration = math.ceil((condition_df.loc[i, "onset"] + condition_df.loc[i, "duration"]) / tr) + condition_tr_shift
         scan_list.extend(list(range(onset, duration + 1)))
 
     if dummy_scans:
@@ -910,6 +910,38 @@ def test_check_exclusion():
         exclude_niftis=["sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"],
     )
     assert len(extractor.subject_timeseries) == 0
+
+
+@pytest.mark.parametrize("onset", [2, 3, 4])
+def test_condition_tr_shift(onset):
+    extractor = TimeseriesExtractor(use_confounds=False)
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
+    timeseries = copy.deepcopy(extractor.subject_timeseries)
+    # Get condition for rest
+    extractor.get_bold(
+        bids_dir=bids_dir, pipeline_name=pipeline_name, task="rest", condition="rest", condition_tr_shift=onset
+    )
+    scan_arr = np.array(get_scans("rest", condition_tr_shift=onset))
+    scan_arr = scan_arr[scan_arr < 40]
+    assert np.array_equal(timeseries["01"]["run-001"][scan_arr, :], extractor.subject_timeseries["01"]["run-001"])
+    # Get condition for active
+    extractor.get_bold(
+        bids_dir=bids_dir, pipeline_name=pipeline_name, task="rest", condition="active", condition_tr_shift=onset
+    )
+    scan_arr = np.array(get_scans("active", condition_tr_shift=onset))
+    scan_arr = scan_arr[scan_arr < 40]
+    assert np.array_equal(timeseries["01"]["run-001"][scan_arr, :], extractor.subject_timeseries["01"]["run-001"])
+
+
+def test_condition_tr_shift_error():
+    extractor = TimeseriesExtractor(use_confounds=False)
+    # Get condition for rest
+    with pytest.raises(
+        ValueError, match=re.escape("`condition_tr_shift` must be a integer value equal to or greater than 0.")
+    ):
+        extractor.get_bold(
+            bids_dir=bids_dir, pipeline_name=pipeline_name, task="rest", condition="rest", condition_tr_shift=1.2
+        )
 
 
 # Use setup_environment 2

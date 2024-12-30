@@ -533,6 +533,7 @@ class CAP(_CAPGetter):
         -------
         self
 
+
             .. versionadded:: 0.19.3
 
         Note
@@ -1536,6 +1537,7 @@ class CAP(_CAPGetter):
         -------
         self
 
+
             .. versionadded:: 0.19.3
 
         Note
@@ -2331,6 +2333,7 @@ class CAP(_CAPGetter):
         -------
         self
 
+
             .. versionadded:: 0.19.3
 
         Note
@@ -2571,6 +2574,7 @@ class CAP(_CAPGetter):
         Returns
         -------
         self
+
 
             .. versionadded:: 0.19.3
 
@@ -2937,6 +2941,7 @@ class CAP(_CAPGetter):
         Returns
         -------
         self
+
 
             .. versionadded:: 0.19.3
 

@@ -16,6 +16,12 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.20.0] - 2024-12-31
+### 🚀 New/Added
+- Added new log message specifying the condition being extracted if ``condition`` is not None.
+- Added a new parameter, ``condition_tr_shift`` in ``TimeseriesExtractor.get_bold`` to allow a shift in the
+the starting and ending scan in TR units for a condition.
+
 ## [0.19.4] - 2024-12-24
 ### 📖 Documentation
 - Links are fixed in the documentation.
