@@ -411,6 +411,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         condition: Optional[str] = None,
         condition_tr_shift: int = 0,
         tr: Optional[Union[int, float]] = None,
+        slice_time_ref: Union[int, float] = 0.0,
         run_subjects: Optional[list[str]] = None,
         exclude_subjects: Optional[list[str]] = None,
         exclude_niftis: Optional[list[str]] = None,
@@ -508,10 +509,17 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             .. versionadded:: 0.20.0
 
-        tr: :obj:`int`, :obj:`float`, or :obj:`None`, default=None
+        tr: :obj:`int`, :obj:`float` or :obj:`None`, default=None
             Repetition time (TR) for the specified task. If not provided, the TR will be automatically extracted from
             the first BOLD metadata file found for the task, searching first in the pipeline directory, then in
             the ``bids_dir`` if not found.
+
+        slice_time_ref: :obj:`int` or :obj:`float`, default=0.0
+            The reference slice expressed as a fraction of the ``tr`` that is subtracted from the condition onset times
+            to adjust for slice time correction when ``condition`` is not None (``onset - slice_time_ref * tr``). Values
+            can range from 0 to 1.
+
+            .. versionadded:: 0.21.0
 
         run_subjects: :obj:`list[str]` or :obj:`None`, default=None
             List of subject IDs to process (e.g. ``run_subjects=["01", "02"]``). Processes all subjects if None.
@@ -601,12 +609,30 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         "use_sample_mask" key is False or not specified in the ``fd_threshold`` dictionary, then censoring is done
         after nuisance regression, which is the default behavior.
 
-        **Extraction of Task Conditions**: When extracting specific conditions, ``int`` is used to round down for the
-        beginning scan index (``start_scan = int(onset /tr) + condition_tr_shift``) and ``math.ceil`` is used to round up
-        for the ending scan index (``end_scan = math.ceil((onset + duration)/tr) + condition_tr_shift``). Filtering a
-        specific condition from the timeseries is done after nuisance regression. Additionally, if the "use_sample_mask"
-        key in the ``fd_threshold`` dictionary is set to True, then the truncated 2D timeseries is temporarily padded to
-        ensure the correct rows corresponding to the condition are obtained.
+        **Extraction of Task Conditions**: The formula used for computing the scan indices corresponding to the
+        corresponding to a specific condition:
+
+        ::
+
+            adjusted_onset = onset - slice_time_ref * tr
+            adjusted_onset = adjusted_onset if adjusted_onset >= 0 else 0
+            start_scan = int(adjusted_onset / tr) + condition_tr_shift
+            end_scan = math.ceil((adjusted_onset + duration) / tr) + condition_tr_shift
+
+        When partial scans are computed, ``int`` is used to round down for the beginning scan index and ``math.ceil``
+        is used to round up for the ending scan index. Negative scan indices are set to 0 to avoid unintentional
+        negative indexing. For simplicity, note that when ``slice_time_ref`` and ``condition_tr_shift`` are 0, the
+        formula simplifies to:
+
+        ::
+
+            start_scan = int(onset / tr)
+            end_scan = math.ceil((onset + duration) / tr)
+
+        Filtering a specific condition from the timeseries is done after nuisance regression and the indices are used
+        to extract the TRs corresponding to the condition from the timeseries. Additionally, if the "use_sample_mask"
+        key in the ``fd_threshold`` dictionary is set to True, then the truncated 2D timeseries is temporarily padded
+        to ensure the correct rows corresponding to the condition are obtained.
         """
         if runs and not isinstance(runs, list):
             runs = [runs]
@@ -619,10 +645,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             "condition": condition,
             "condition_tr_shift": condition_tr_shift,
             "tr": tr,
+            "slice_time_ref": slice_time_ref,
         }
 
-        # Quick check condition_tr_shift to not cause issues later in the pipeline
-        self._check_condition_tr_shift()
+        # Quick check condition_tr_shift and slice_time_ref to not cause issues later in the pipeline
+        self._check_params()
 
         # Initialize new attributes
         self._subject_ids = []
@@ -700,13 +727,22 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         return self
 
-    def _check_condition_tr_shift(self):
+    def _check_params(self):
         if self.task_info["condition_tr_shift"] != 0:
             if not isinstance(self.task_info["condition_tr_shift"], int) or self.task_info["condition_tr_shift"] < 0:
                 raise ValueError("`condition_tr_shift` must be a integer value equal to or greater than 0.")
 
             if self.task_info["condition"] is None:
                 LG.warning("`condition_tr_shift` specified but `condition` is None.")
+
+        if self.task_info["slice_time_ref"] != 0:
+            if not isinstance(self.task_info["slice_time_ref"], (float, int)) or (
+                self.task_info["slice_time_ref"] < 0 or (self.task_info["slice_time_ref"] > 1)
+            ):
+                raise ValueError("`slice_time_ref` must be a numerical value from 0 to 1.")
+
+            if self.task_info["condition"] is None:
+                LG.warning("`slice_time_ref` specified but `condition` is None.")
 
     @staticmethod
     @lru_cache(maxsize=4)

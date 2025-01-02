@@ -870,7 +870,7 @@ class CAP(_CAPGetter):
 
                 predicted_subject_timeseries = [1, 2, 1, 1, 1, 3]
                 target = 1
-                temporal_fraction = 4/6
+                temporal_fraction = 4 / 6
 
          - ``"persistence"``: The average time spent in a single CAP before transitioning to another CAP
            (average consecutive/uninterrupted time).
@@ -881,11 +881,11 @@ class CAP(_CAPGetter):
                 target = 1
 
                 # Sequences for 1 are [1] and [1, 1, 1]; There are 2 contiguous sequences
-                persistence = (1 + 3)/2
+                persistence = (1 + 3) / 2
 
                 # Turns average frames into average time = 4
                 tr = 2
-                if tr: persistence = ((1 + 3)/2)*2
+                if tr: persistence = ((1 + 3) / 2) * 2
 
          - ``"counts"``: The total number of initiations of a specific CAP across an entire run. An initiation is
            defined as the first occurrence of a CAP. If the same CAP is maintained in contiguous segment
@@ -927,7 +927,7 @@ class CAP(_CAPGetter):
                 n_transitions_from_1 = 3
 
                 # There is only one 1 -> 2 transition
-                transition_probability = 1/3
+                transition_probability = 1 / 3
 
         Parameters
         ----------

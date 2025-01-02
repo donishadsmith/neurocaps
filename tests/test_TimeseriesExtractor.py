@@ -83,7 +83,9 @@ def add_non_steady(n):
 
 # Gets scan indices in a roughly similar manner as _extract_timeseries;
 # Core logic for calculating onset and duration is similar
-def get_scans(condition, dummy_scans=None, fd=False, tr=1.2, remove_ses_id=False, condition_tr_shift=0):
+def get_scans(
+    condition, dummy_scans=None, fd=False, tr=1.2, remove_ses_id=False, condition_tr_shift=0, slice_time_ref=0.0
+):
     if remove_ses_id:
         event_df = pd.read_csv(os.path.join(bids_dir, "sub-01", "func", "sub-01_task-rest_events.tsv"), sep="\t")
     else:
@@ -94,9 +96,13 @@ def get_scans(condition, dummy_scans=None, fd=False, tr=1.2, remove_ses_id=False
     scan_list = []
 
     for i in condition_df.index:
-        onset = int(condition_df.loc[i, "onset"] / tr) + condition_tr_shift
-        duration = math.ceil((condition_df.loc[i, "onset"] + condition_df.loc[i, "duration"]) / tr) + condition_tr_shift
-        scan_list.extend(list(range(onset, duration + 1)))
+        adjusted_onset = condition_df.loc[i, "onset"] - slice_time_ref * tr
+        adjusted_onset = adjusted_onset if adjusted_onset >= 0 else 0
+        start = int(adjusted_onset / tr) + condition_tr_shift
+        end = math.ceil((adjusted_onset + condition_df.loc[i, "duration"]) / tr) + condition_tr_shift
+        scan_list.extend(list(range(start, end + 1)))
+
+    assert min(scan_list) >= 0
 
     if dummy_scans:
         scan_list = [scan - dummy_scans for scan in scan_list if scan not in range(dummy_scans)]
@@ -933,7 +939,26 @@ def test_condition_tr_shift(onset):
     assert np.array_equal(timeseries["01"]["run-001"][scan_arr, :], extractor.subject_timeseries["01"]["run-001"])
 
 
-def test_condition_tr_shift_error():
+@pytest.mark.parametrize("shift", [0.5, 1])
+def test_condition_tr_shift(shift):
+    extractor = TimeseriesExtractor(use_confounds=False)
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
+    timeseries = copy.deepcopy(extractor.subject_timeseries)
+    # Get condition for rest
+    extractor.get_bold(
+        bids_dir=bids_dir, pipeline_name=pipeline_name, task="rest", condition="rest", slice_time_ref=shift
+    )
+    scan_arr = np.array(get_scans("rest", slice_time_ref=shift))
+    assert np.array_equal(timeseries["01"]["run-001"][scan_arr, :], extractor.subject_timeseries["01"]["run-001"])
+    # Get condition for active
+    extractor.get_bold(
+        bids_dir=bids_dir, pipeline_name=pipeline_name, task="rest", condition="active", slice_time_ref=shift
+    )
+    scan_arr = np.array(get_scans("active", slice_time_ref=shift))
+    assert np.array_equal(timeseries["01"]["run-001"][scan_arr, :], extractor.subject_timeseries["01"]["run-001"])
+
+
+def test_shift_errors():
     extractor = TimeseriesExtractor(use_confounds=False)
     # Get condition for rest
     with pytest.raises(
@@ -941,6 +966,16 @@ def test_condition_tr_shift_error():
     ):
         extractor.get_bold(
             bids_dir=bids_dir, pipeline_name=pipeline_name, task="rest", condition="rest", condition_tr_shift=1.2
+        )
+
+    with pytest.raises(ValueError, match=re.escape("`slice_time_ref` must be a numerical value from 0 to 1.")):
+        extractor.get_bold(
+            bids_dir=bids_dir, pipeline_name=pipeline_name, task="rest", condition="rest", slice_time_ref=1.2
+        )
+
+    with pytest.raises(ValueError, match=re.escape("`slice_time_ref` must be a numerical value from 0 to 1.")):
+        extractor.get_bold(
+            bids_dir=bids_dir, pipeline_name=pipeline_name, task="rest", condition="rest", slice_time_ref=-1.2
         )
 
 
