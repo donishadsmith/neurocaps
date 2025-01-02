@@ -25,6 +25,13 @@ repos:
         additional_dependencies:
         - black
 
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.5
+    hooks:
+        - id: ruff
+          entry: ruff check --select T201
+          files: '^neurocaps/.*\.py$'
+
 -   repo: local
     hooks:
     -   id: pytest
@@ -34,4 +41,4 @@ repos:
         entry: python -m pytest
         language: system
         pass_filenames: false
-        always_run: false
+        always_run: true

@@ -16,6 +16,11 @@ noted in the changelog (i.e new functions or parameters, changes in parameter de
 improvements/enhancements. Fixes and modifications will be backwards compatible.
 - *.postN* : Consists of only metadata-related changes, such as updates to type hints or doc strings/documentation.
 
+## [0.20.0] - 2025-01-02
+### 🚀 New/Added
+- Added a new parameter, ``slice_time_ref`` in ``TimeseriesExtractor.get_bold`` to allow onset to be
+subtracted by `slice_time_ref * tr` if desired.
+
 ## [0.20.0] - 2024-12-31
 ### 🚀 New/Added
 - Added new log message specifying the condition being extracted if ``condition`` is not None.

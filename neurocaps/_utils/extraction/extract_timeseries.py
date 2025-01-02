@@ -54,6 +54,10 @@ class _Data:
         return self.task_info["condition_tr_shift"]
 
     @property
+    def slice_ref(self):
+        return self.task_info["slice_time_ref"]
+
+    @property
     def use_confounds(self):
         return self.signal_clean_info["use_confounds"]
 
@@ -414,9 +418,12 @@ def _get_condition(Data, condition_df, LG):
     # Convert times into scan numbers to obtain the scans taken when the participant was exposed to the
     # condition of interest; include partial scans
     for i in condition_df.index:
+        adjusted_onset = condition_df.loc[i, "onset"] - Data.slice_ref * Data.tr
+        # Avoid accidental negative indexing
+        adjusted_onset = adjusted_onset if adjusted_onset >= 0 else 0
         # Int is always the floor for positive floats
-        onset_scan = int(condition_df.loc[i, "onset"] / Data.tr) + Data.shift
-        end_scan = math.ceil((condition_df.loc[i, "onset"] + condition_df.loc[i, "duration"]) / Data.tr) + Data.shift
+        onset_scan = int(adjusted_onset / Data.tr) + Data.shift
+        end_scan = math.ceil((adjusted_onset + condition_df.loc[i, "duration"]) / Data.tr) + Data.shift
         # Add one since range is not inclusive
         scans.extend(list(range(onset_scan, end_scan + 1)))
 
@@ -523,7 +530,7 @@ def _check_indices(Data, arr_shape, LG, warn=True):
     # for instances related to misalignment such as potentially incorrect onsets and durations
     if warn:
         LG.warning(
-            f"{Data.head}" + f"[CONDITION: {Data.condition}] Max scan index for exceeds timeseries max index. "
+            f"{Data.head}" + f"[CONDITION: {Data.condition}] Max scan index exceeds timeseries max index. "
             f"Max condition index is {max(Data.scans)}, while max timeseries index is {arr_shape - 1}. Timing may "
             "be misaligned or specified repetition time incorrect. If intentional, ignore warning. Only "
             "indices for condition within the timeseries range will be extracted."
