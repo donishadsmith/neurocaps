@@ -15,7 +15,7 @@ Tutorials are available for all classes and functions in neurocaps. Note: Most e
 .. raw:: html
 
    <div class="sphx-glr-thumbnails">
-      <div class="sphx-glr-thumbcontainer" tooltip="Extract timeseries from preprocessed data, including using parcellations, performing nuisance regression, and checkpointing with serialization.">
+      <div class="sphx-glr-thumbcontainer" tooltip="Extract timeseries from preprocessed data, perform nuisance regression, visualize and serialize timeseries.">
       <a href="extraction.html">
 
 .. only:: html
