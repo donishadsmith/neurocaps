@@ -1,5 +1,8 @@
 Tutorial 2: Using ``neurocaps.analysis.CAP``
 ============================================
+The ``CAP`` class is designed to perform CAP analyses (on all subjects or group of subjects). It offers the flexibility
+to analyze data from all subjects or focus on specific groups, compute CAP-specific metrics, and generate visualizations
+to aid in the interpretation of results.
 
 Performing CAPs on All Subjects
 -------------------------------

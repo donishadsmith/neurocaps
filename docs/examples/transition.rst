@@ -1,7 +1,8 @@
 Tutorial 6: Generating Transition Probability Matrices ``neurocaps.analysis.transition_matrix``
 ===============================================================================================
-``CAP.calculate_metrics``` can be used to calculate the transition probabilities for all subjects,
-which can then be converted to matrix form and visualized with ``transition_matrix``.
+The ``CAP.calculate_metrics`` function is designed to compute transition probabilities for all subjects and store these
+values into dataframes (one per group). These dataframes can subsequently be used as input for the ``transition_matrix``
+function to generate visualizations of the average transition probabilities per group.
 
 .. code-block:: python
 

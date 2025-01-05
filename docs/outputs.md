@@ -1,6 +1,6 @@
-# Outputs of Neurocaps
+# Outputs of ``neurocaps``
 
-In neurocaps, functions that produce NifTI images, plots, or dataframes have an `output_dir` parameter to specify
+In neurocaps, functions that produce NifTI images, plots, or dataframes have an ``output_dir`` parameter to specify
 where files should be saved. The file types includes:
 
 - NifTI images: saved as "nii.gz".
@@ -14,14 +14,14 @@ prefix (before the default file name) or suffix (after the default file name and
 
 ## General File Naming Format
 
-The default file naming convention for the most files produced by the `neurocaps.analysis` module typically includes:
+The default file naming convention for the most files produced by the ``neurocaps.analysis`` module typically includes:
 
 1. The group name (if specified, defaults to "All Subjects" if not specified).
-2. The CAP ID (for functions in the `CAP` class that produce one output per CAP; else, "CAPs" is used).
+2. The CAP ID (for functions in the ``CAP`` class that produce one output per CAP; else, "CAPs" is used).
 3. A descriptor of the file content.
 4. The file extension.
 
-**Format for Files Produced by `CAP` or `transition_matrix`:**
+- Examples for files produced by ``CAP`` or ``transition_matrix``
 
 ```
 [Group_Name]_[CAP-n]_[descriptor].[extension]
@@ -29,11 +29,11 @@ The default file naming convention for the most files produced by the `neurocaps
 # Or
 [Group_Name]_CAPs_[descriptor].[extension]
 
-# Format for Files Produced by CAP.get_caps
+# Format for Files Produced by ``CAP.get_caps``
 [Group_Name]_[clustering_evaluation_metric].[extension]
 ```
 
-**Examples for Files Produced by `CAP` or `transition_matrix` (No Group Specified):**
+- Examples for files produced by ``CAP`` or ``transition_matrix`` (No Group Specified)
 
 ```
 All_Subjects_CAP-1_radar.png
@@ -49,10 +49,7 @@ All_Subjects_CAPs_transition_probability_matrix.png
 All_Subjects_CAPs_transition_probability_matrix.csv
 ```
 
-**Examples (With Groups Specified):**
-
-In this example, "High ADHD" and "Low ADHD" are used as group names. Note that an underscore is added despite the
-whitespace in the names:
+- Examples by ``CAP`` (With Groups Specified)
 
 ```
 High_ADHD_davies_bouldin.png

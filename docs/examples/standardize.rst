@@ -1,8 +1,8 @@
 Tutorial 4: Standardizing Within Runs Using ``neurocaps.analysis.standardize``
 ==============================================================================
-While standardizing the features/columns within runs can be done with the ``standardize`` parameter within
-``TimeseriesExtractor``, standardizing can also be done using ``neurocaps.analysis.standardize`` if not done during
-timeseries extraction.
+While standardizing the features/columns within runs can be done using the ``standardize`` parameter within the
+``TimeseriesExtractor`` class, the ``neurocaps.analysis.standardize`` function can be used to perform
+within-run standardization post-extraction.
 
 .. code-block:: python
 

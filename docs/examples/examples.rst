@@ -1,9 +1,6 @@
 Tutorials
 =========
-Tutorials for all classes and functions in neurocaps. **Note**, most of these examples use randomized data.
-Output from the `Extracting Timeseries` section is from a test from Github Actions using a truncated version of an open dataset provided by `Laumann & Poldrack <https://openfmri.org/dataset/ds000031/>`_
-and used in `Laumann et al., 2015 <https://doi.org/10.1016/j.neuron.2015.06.037>`_ [1]_ was also utilized. This data was obtained from the OpenfMRI database, accession number ds000031.
-
+Tutorials are available for all classes and functions in neurocaps. Note: Most examples use simulated data.
 
 .. toctree::
    :hidden:
@@ -18,7 +15,7 @@ and used in `Laumann et al., 2015 <https://doi.org/10.1016/j.neuron.2015.06.037>
 .. raw:: html
 
    <div class="sphx-glr-thumbnails">
-      <div class="sphx-glr-thumbcontainer" tooltip="Tutorials for extracting (using parcellations), cleaning, pickling, and saving timeseries.">
+      <div class="sphx-glr-thumbcontainer" tooltip="Extract timeseries from preprocessed data, including using parcellations, performing nuisance regression, and checkpointing with serialization.">
       <a href="extraction.html">
 
 .. only:: html
@@ -35,7 +32,7 @@ and used in `Laumann et al., 2015 <https://doi.org/10.1016/j.neuron.2015.06.037>
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbcontainer" tooltip="Tutorials for performing Co-Activation Patterns (CAPs) and visualizing CAPs using multiple visualization methods.">
+      <div class="sphx-glr-thumbcontainer" tooltip="Perform Co-Activation Patterns (CAPs) analyses and generate CAP specific metrics and visualizations.">
       <a href="analysis.html">
 
 .. only:: html
@@ -52,7 +49,7 @@ and used in `Laumann et al., 2015 <https://doi.org/10.1016/j.neuron.2015.06.037>
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbcontainer" tooltip="Tutorial to merge subject timeseries.">
+      <div class="sphx-glr-thumbcontainer" tooltip="Merge the timeseries data of the same subjects across different dictionaries.">
       <a href="merge.html">
 
 .. only:: html
@@ -68,7 +65,7 @@ and used in `Laumann et al., 2015 <https://doi.org/10.1016/j.neuron.2015.06.037>
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbcontainer" tooltip="Tutorial to standardize timeseries within runs outside TimeseriesExtractor.">
+      <div class="sphx-glr-thumbcontainer" tooltip="Perform within-run standardization if not done at the time of extraction.">
       <a href="standardize.html">
 
 .. only:: html
@@ -85,7 +82,7 @@ and used in `Laumann et al., 2015 <https://doi.org/10.1016/j.neuron.2015.06.037>
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbcontainer" tooltip="Tutorial to change the dtype of each subject's numpy array to reduce memory usage.">
+      <div class="sphx-glr-thumbcontainer" tooltip="Change the dtype of each subject's NumPy array to reduce memory usage.">
       <a href="dtype.html">
 
 .. only:: html
@@ -101,7 +98,7 @@ and used in `Laumann et al., 2015 <https://doi.org/10.1016/j.neuron.2015.06.037>
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbcontainer" tooltip="Tutorial for creating transition probability matrixes from CAPs results.">
+      <div class="sphx-glr-thumbcontainer" tooltip="Create an averaged transition probability matrix and heatmap from individual-level transition probabilities.">
       <a href="transition.html">
 
 .. only:: html

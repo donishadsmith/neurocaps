@@ -1,23 +1,23 @@
 Tutorial 1: Using ``neurocaps.extraction.TimeseriesExtractor``
 ==============================================================
-The purpose of this module is to perform timeseries extraction, cleaning, and visualization. Additionally, it is used
-to create the necessary dictionary structure needed for CAP. Technically, this dictionary structure can be manually
-created if the BOLD images where not preprocessed using fMRIPrep. Output from the `Extracting Timeseries` section
-is from a test from Github Actions using a truncated version of an open dataset provided by `Laumann & Poldrack <https://openfmri.org/dataset/ds000031/>`_
-and used in `Laumann et al., 2015 <https://doi.org/10.1016/j.neuron.2015.06.037>`_ [1]_ was also utilized. This data was obtained from the OpenfMRI database, accession number ds000031.
+This module is designed to perform timeseries extraction, nuisance regression, and visualization. Additionally, it
+generates the necessary dictionary structure required for ``CAP``. If the BOLD images have not been preprocessed using
+fMRIPrep (or a similar pipeline), the dictionary structure can be manually created.
+
+The output in the `Extracting Timeseries` section is generated from a test run using GitHub Actions. This test uses
+a truncated version of the open dataset provided by `Laumann & Poldrack <https://openfmri.org/dataset/ds000031/>`_ [1]_
+and was obtained from the OpenfMRI database, accession number ds000031.
 
 Extracting Timeseries
 ---------------------
+Note: when an asterisk (*) follows a name, all confounds that start with the preceding term will be automatically included.
+For example, placing an asterisk after cosine (cosine*) will utilize all parameters that begin with cosine.
 
 .. code-block:: python
 
     from neurocaps.extraction import TimeseriesExtractor
 
     dir = os.path.dirname(__file__)
-
-    """If an asterisk '*' is after a name, all confounds starting with the
-    term preceding the parameter will be used. in this case, all parameters
-    starting with cosine will be used."""
 
     confounds = ["Cosine*", "aComp*", "Rot*"]
 
@@ -90,7 +90,6 @@ Visualizing Timeseries
 
     # Visualizing a several nodes
     extractor.visualize_bold(subj_id="01", run="001", roi_indx=[0, 1, 2])
-    # or
     extractor.visualize_bold(subj_id="01", run="001", roi_indx=["LH_Vis_1", "LH_Vis_2", "LH_Vis_3"])
 
 .. image:: embed/visualize_timeseries_nodes.png

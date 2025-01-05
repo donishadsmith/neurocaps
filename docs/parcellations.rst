@@ -17,8 +17,6 @@ For Schaefer, the available subkeys are "n_rois", "yeo_networks", and "resolutio
 
     parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7, "resolution_mm": 1}}
 
-
-
 AAL Parcellation
 ----------------
 For AAL, the only available subkey is "version".
@@ -26,7 +24,6 @@ For AAL, the only available subkey is "version".
 .. code-block:: python
 
     parcel_approach = {"AAL": {"version": "SPM12"}}
-
 
 Custom Parcellations
 ---------------------
