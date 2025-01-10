@@ -1250,7 +1250,7 @@ class CAP(_CAPGetter):
 
         if set_diff:
             formatted_string = ", ".join(["'{a}'".format(a=x) for x in set_diff])
-            LG.warning(f"Invalid metrics will be ignored: {formatted_string}.")
+            LG.warning(f"The following invalid metrics will be ignored: {formatted_string}.")
 
         if not metrics:
             formatted_string = ", ".join(["'{a}'".format(a=x) for x in valid_metrics])

@@ -100,13 +100,16 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         names in the confound files starting with "cosine".
 
     fd_threshold: :obj:`float`, :obj:`dict[str, float]`, or :obj:`None`, default=None
-        Sets a threshold for removing exceeding volumes. This requires a column named `framewise_displacement` in the
+        Sets a threshold for removing volumes that exceed a specified level. This parameter applies the condition
+        ``framewise displacement (FD) > threshold``, meaning that only frames with a framewise displacement above the
+        set threshold are removed. This requires a column named `framewise_displacement` in the
         confounds file and ``use_confounds`` set to True. Additionally, `framewise_displacement` should be
         specified in ``confound_names`` if using this parameter. By default, censoring is done after nuisance
         regression; however, this behavior can be modified with the "use_sample_mask" key to censor prior to
         nuisance regression. If, ``fd_threshold`` is a dictionary, the following keys can be specified:
 
-        - "threshold": A float value. Volumes with a `framewise_displacement` value exceeding this threshold are removed.
+        - "threshold": A float or integer value. Volumes with a `framewise_displacement` value exceeding this threshold
+          are removed.
         - "outlier_percentage": A float value between 0 and 1 representing a percentage. Runs where the proportion of
           volumes exceeding the "threshold" is higher than this percentage are removed. If ``condition`` is specified
           in ``self.get_bold``, only the runs where the proportion of volumes exceeds this value for the specific
@@ -341,7 +344,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         fwhm: Optional[Union[float, int]] = None,
         use_confounds: bool = True,
         confound_names: Optional[list[str]] = None,
-        fd_threshold: Optional[Union[float, dict[str, float]]] = None,
+        fd_threshold: Optional[Union[float, dict[str, Union[bool, float, int]]]] = None,
         n_acompcor_separate: Optional[int] = None,
         dummy_scans: Optional[Union[int, dict[str, Union[bool, int]]]] = None,
         dtype: Union[str, Literal["auto"]] = None,
@@ -349,34 +352,17 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         self._space = space
 
-        if isinstance(dummy_scans, dict):
-            if "auto" not in dummy_scans:
-                raise KeyError("'auto' sub-key must be included when `dummy_scans` is a dictionary.")
-            if not use_confounds:
-                raise ValueError(
-                    "`use_confounds` must be True to use 'auto' for `dummy_scans` because the "
-                    "fMRIPrep confounds tsv file is needed to detect the number of "
-                    "'non_steady_state_outlier_XX' columns."
-                )
-
-        if not use_confounds and fd_threshold:
+        if use_confounds is False and fd_threshold is not None:
             LG.warning(
                 "`fd_threshold` specified but `use_confounds` is not True so removal of volumes after "
                 "nuisance regression will not be done since the fMRIPrep confounds tsv file is needed."
             )
+        elif use_confounds is True and fd_threshold:
+            self._validate_init_params("fd_threshold", fd_threshold)
 
-        if isinstance(fd_threshold, dict):
-            if "threshold" not in fd_threshold:
-                raise KeyError("'threshold' sub-key must be included in `fd_threshold` dictionary.")
-            if "outlier_percentage" in fd_threshold:
-                if fd_threshold["outlier_percentage"] >= 1 or fd_threshold["outlier_percentage"] <= 0:
-                    raise ValueError("'outlier_percentage' must be a positive float between 0 and 1.")
-            if "n_before" in fd_threshold and not isinstance(fd_threshold["n_before"], int):
-                raise ValueError("'n_before' must be an integer value.")
-            if "n_after" in fd_threshold and not isinstance(fd_threshold["n_after"], int):
-                raise ValueError("'n_after' must be an integer value.")
-            if "use_sample_mask" in fd_threshold and not isinstance(fd_threshold["use_sample_mask"], bool):
-                raise ValueError("'use_sample_mask' must be an boolean value.")
+        # Check dummy_scans and fd_threshold
+        if dummy_scans:
+            self._validate_init_params("dummy_scans", dummy_scans)
 
         self._signal_clean_info = {
             "masker_init": {
@@ -401,6 +387,44 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             )
 
             self._signal_clean_info["fd_threshold"] = fd_threshold
+
+    @staticmethod
+    def _validate_init_params(param, struct):
+
+        mandatory_keys = {"dummy_scans": {"auto": bool}, "fd_threshold": {"threshold": (float, int)}}
+
+        optional_keys = {
+            "dummy_scans": {"min": int, "max": int},
+            "fd_threshold": {"n_before": int, "n_after": int, "use_sample_mask": bool},
+        }
+
+        valid_types = (dict, int) if param == "dummy_scans" else (dict, float, int)
+        error_msg = "dictionary or integer" if param == "dummy_scans" else "dictionary, float, or integer"
+
+        if not isinstance(struct, valid_types):
+            raise TypeError(f"`{param}` must be a {error_msg}.")
+
+        if isinstance(struct, dict):
+            # Check mandatory keys
+            key = list(mandatory_keys[param].keys())[0]
+            if key not in struct:
+                raise KeyError(f"'{key}' is a mandatory key when `{param}` is a dictionary.")
+
+            if not isinstance(struct[key], mandatory_keys[param][key]):
+                raise TypeError(f"'{key}' must be a {'boolean' if key == 'auto' else 'float or integer'}.")
+
+            # Check optional keys
+            for key in optional_keys[param]:
+                if key in struct and not isinstance(struct[key], optional_keys[param][key]):
+                    raise TypeError(f"'{key}' must be {'a boolean' if key == 'use_sample_mask' else 'an integer'}.")
+
+            # Check invalid keys
+            set_diff = set(struct) - set(optional_keys[param])
+            if set_diff:
+                formatted_string = ", ".join(["'{a}'".format(a=x) for x in set_diff])
+                LG.warning(
+                    f"The following invalid keys have been found in `{param}` and will be ignored: {formatted_string}."
+                )
 
     def get_bold(
         self,
@@ -649,7 +673,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         }
 
         # Quick check condition_tr_shift and slice_time_ref to not cause issues later in the pipeline
-        self._check_params()
+        self._validate_get_bold_params()
 
         # Initialize new attributes
         self._subject_ids = []
@@ -727,7 +751,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         return self
 
-    def _check_params(self):
+    def _validate_get_bold_params(self):
         if self.task_info["condition_tr_shift"] != 0:
             if not isinstance(self.task_info["condition_tr_shift"], int) or self.task_info["condition_tr_shift"] < 0:
                 raise ValueError("`condition_tr_shift` must be a integer value equal to or greater than 0.")

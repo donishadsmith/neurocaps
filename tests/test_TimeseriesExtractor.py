@@ -228,7 +228,50 @@ def setup_environment_3():
     os.rmdir(fmriprep_old_dir)
 
 
-# Check if dictionary updating works when parallel isn't used; Use setup_environment 1
+def test_validate_init_params():
+    # Check dummy_scans
+    with pytest.raises(TypeError, match=re.escape("`dummy_scans` must be a dictionary or integer.")):
+        TimeseriesExtractor._validate_init_params("dummy_scans", "placeholder")
+
+    dummy_scans = {"placeholder": None}
+    with pytest.raises(KeyError, match=re.escape("'auto' is a mandatory key when `dummy_scans` is a dictionary.")):
+        TimeseriesExtractor._validate_init_params("dummy_scans", dummy_scans)
+
+    dummy_scans.update({"auto": 2})
+    with pytest.raises(TypeError, match=re.escape("'auto' must be a boolean.")):
+        TimeseriesExtractor._validate_init_params("dummy_scans", dummy_scans)
+
+    dummy_scans["auto"] = True
+    dummy_scans.update({"min": "placeholder"})
+    with pytest.raises(TypeError, match=re.escape("'min' must be an integer.")):
+        TimeseriesExtractor._validate_init_params("dummy_scans", dummy_scans)
+
+    # Check fd_threshold
+    with pytest.raises(TypeError, match=re.escape("`fd_threshold` must be a dictionary, float, or integer.")):
+        TimeseriesExtractor._validate_init_params("fd_threshold", "placeholder")
+
+    fd_threshold = {"placeholder": None}
+    with pytest.raises(
+        KeyError, match=re.escape("'threshold' is a mandatory key when `fd_threshold` is a dictionary.")
+    ):
+        TimeseriesExtractor._validate_init_params("fd_threshold", fd_threshold)
+
+    fd_threshold.update({"threshold": "placeholder"})
+    with pytest.raises(TypeError, match=re.escape("'threshold' must be a float or integer.")):
+        TimeseriesExtractor._validate_init_params("fd_threshold", fd_threshold)
+
+    fd_threshold["threshold"] = 0.3
+    fd_threshold.update({"use_sample_mask": "placeholder"})
+    with pytest.raises(TypeError, match=re.escape("'use_sample_mask' must be a boolean.")):
+        TimeseriesExtractor._validate_init_params("fd_threshold", fd_threshold)
+
+    # Should not fail
+    fd_threshold["use_sample_mask"] = True
+    fd_threshold.update({"invalid_key": None})
+    TimeseriesExtractor._validate_init_params("fd_threshold", fd_threshold)
+
+
+# Check if dictionary updating works when parallel isn't used
 @pytest.mark.parametrize(
     "parcel_approach, use_confounds, name",
     [
@@ -427,7 +470,6 @@ def test_confounds(detrend, low_pass, high_pass, standardize):
 
 
 def test_wrong_condition():
-    import re
     from neurocaps.extraction.timeseriesextractor import BIDSQueryError
 
     msg = (
@@ -1242,8 +1284,6 @@ def test_dtype():
 
 
 def test_validate_timeseries_setter():
-    import re
-
     extractor = TimeseriesExtractor()
 
     correct_format = {str(x): {f"run-{y}": np.random.rand(100, 100) for y in range(1, 4)} for x in range(1, 4)}
