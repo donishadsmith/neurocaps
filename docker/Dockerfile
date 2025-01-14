@@ -21,6 +21,7 @@ RUN apt-get update && apt-get install -y \
     tar \
     gzip \
     bzip2 \
+    curl \
     wget && \
     chmod -R 777 /root /mnt
 
