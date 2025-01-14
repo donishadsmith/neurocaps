@@ -95,7 +95,7 @@ def _get_target_indices(atlas_file, reference_atlas, resolution_mm, remove_label
 
     # Resample schaefer to atlas file using nearest interpolation to retain labels
     resampled_reference_atlas = image.resample_to_img(
-        reference_atlas_map, atlas, interpolation="nearest", force_resample=True
+        reference_atlas_map, atlas, interpolation="nearest", force_resample=True, copy_header=True
     )
     # Get indices that equal zero in schaefer atlas to avoid interpolating background values
     reference_background_indices = set(zip(*np.where(resampled_reference_atlas.get_fdata() == 0)))

@@ -265,8 +265,18 @@ def test_validate_init_params():
     with pytest.raises(TypeError, match=re.escape("'use_sample_mask' must be a boolean.")):
         TimeseriesExtractor._validate_init_params("fd_threshold", fd_threshold)
 
+    fd_threshold["use_sample_mask"] = True
+    fd_threshold["outlier_percentage"] = 2
+    with pytest.raises(TypeError, match=re.escape("'outlier_percentage' must be a float.")):
+        TimeseriesExtractor._validate_init_params("fd_threshold", fd_threshold)
+
+    fd_threshold["outlier_percentage"] = 2.0
+    with pytest.raises(ValueError, match=re.escape("'outlier_percentage' must be float between 0 and 1.")):
+        TimeseriesExtractor._validate_init_params("fd_threshold", fd_threshold)
+
     # Should not fail
     fd_threshold["use_sample_mask"] = True
+    fd_threshold["outlier_percentage"] = 0.5
     fd_threshold.update({"invalid_key": None})
     TimeseriesExtractor._validate_init_params("fd_threshold", fd_threshold)
 

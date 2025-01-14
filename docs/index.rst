@@ -5,6 +5,7 @@
    :maxdepth: 2
 
    installation
+   docker
    api
    parcellations
    examples/examples

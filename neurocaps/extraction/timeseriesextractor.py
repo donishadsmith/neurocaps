@@ -395,7 +395,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         optional_keys = {
             "dummy_scans": {"min": int, "max": int},
-            "fd_threshold": {"n_before": int, "n_after": int, "use_sample_mask": bool},
+            "fd_threshold": {"n_before": int, "n_after": int, "outlier_percentage": float, "use_sample_mask": bool},
         }
 
         valid_types = (dict, int) if param == "dummy_scans" else (dict, float, int)
@@ -415,11 +415,22 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             # Check optional keys
             for key in optional_keys[param]:
-                if key in struct and not isinstance(struct[key], optional_keys[param][key]):
-                    raise TypeError(f"'{key}' must be {'a boolean' if key == 'use_sample_mask' else 'an integer'}.")
+                if key in struct:
+                    if not isinstance(struct[key], optional_keys[param][key]):
+                        type_msg = (
+                            "a boolean"
+                            if key == "use_sample_mask"
+                            else ("a float" if key == "outlier_percentage" else "an integer")
+                        )
+                        raise TypeError(f"'{key}' must be {type_msg}.")
+
+                    # Additional check for "outlier_percentage"
+                    if key == "outlier_percentage" and not 0 < struct[key] < 1:
+                        raise ValueError("'outlier_percentage' must be float between 0 and 1.")
 
             # Check invalid keys
-            set_diff = set(struct) - set(optional_keys[param])
+            set_diff = set(struct) - set(optional_keys[param]) - set(mandatory_keys[param])
+
             if set_diff:
                 formatted_string = ", ".join(["'{a}'".format(a=x) for x in set_diff])
                 LG.warning(
