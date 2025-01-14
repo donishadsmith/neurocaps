@@ -4,6 +4,12 @@
     "config:recommended",
     "schedule:earlyMondays"
   ],
+  "packageRules": [
+    {
+      "matchPackageNames": ["*"],
+      "automerge": false
+    }
+  ],
   "prConcurrentLimit": 2,
   "prHourlyLimit": 0
 }
