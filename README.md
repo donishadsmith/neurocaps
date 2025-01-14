@@ -9,6 +9,7 @@
 [![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 ![Platform Support](https://img.shields.io/badge/OS-Ubuntu%20|%20macOS%20|%20Windows-blue)
+[![Docker](https://img.shields.io/badge/docker-donishadsmith/neurocaps-darkblue.svg?logo=docker)](https://hub.docker.com/r/donishadsmith/neurocaps/tags/)
 
 neurocaps is a Python package for performing Co-activation Patterns (CAPs) analyses on resting-state or task-based fMRI
 data (resting-state & task-based). CAPs identifies recurring brain states through k-means clustering of BOLD timeseries

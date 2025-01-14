@@ -31,7 +31,9 @@
 .. image:: https://img.shields.io/badge/OS-Ubuntu%20|%20macOS%20|%20Windows-blue
   :alt: Platform Support
 
-
+.. image:: https://img.shields.io/badge/docker-donishadsmith/neurocaps-darkblue.svg?logo=docker&style=round
+   :target: https://hub.docker.com/r/donishadsmith/neurocaps/tags/
+   :alt: Docker
 
 neurocaps is a Python package for performing Co-activation Patterns (CAPs) analyses on resting-state or task-based fMRI
 data (resting-state & task-based). CAPs identifies recurring brain states through k-means clustering of BOLD timeseries
