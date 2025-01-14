@@ -17,6 +17,7 @@ improvements/enhancements. All fixes and modifications are backwards compatible.
 ### 🐛 Fixes
 - Fixes warning about ignoring mandatory keys in `fd_threshold` and `dummy_scans`.
 - Also adds check to ensure that the "outlier_percentage" key is a float between 0 and 1.
+- Setuptools version pinned to 64.0 or greater.
 
 ## [0.21.1] - 2025-01-10
 ### 🐛 Fixes
