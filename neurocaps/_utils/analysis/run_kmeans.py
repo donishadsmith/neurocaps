@@ -1,4 +1,4 @@
-"""Internal function for performing silhouette or elbow method with or without joblib"""
+"""Internal function for performing cluster selection with or without joblib"""
 
 from sklearn.cluster import KMeans
 from sklearn.metrics import davies_bouldin_score, calinski_harabasz_score, silhouette_score
