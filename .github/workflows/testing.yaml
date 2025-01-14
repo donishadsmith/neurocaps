@@ -16,8 +16,8 @@ jobs:
         python-ver: ['3.9', '3.10', '3.11', '3.12']
     name: Python ${{ matrix.python-ver }} check on ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-ver }}
       - name: Install package & pytest for Mac & Ubuntu
@@ -60,6 +60,6 @@ jobs:
         working-directory: tests
       - name: Upload coverage reports to Codecov for Ubuntu
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-ver == '3.12' }}
-        uses: codecov/codecov-action@v4.0.1
+        uses: codecov/codecov-action@v5.1.2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
