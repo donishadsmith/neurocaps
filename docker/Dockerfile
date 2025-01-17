@@ -4,9 +4,6 @@ FROM ubuntu:22.04
 # No installation prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Set default permissions for new files in bashrc
-RUN echo "umask 000" >> /root/.bashrc
-
 # Install Python, Pip, Git & additional system libraries for headless VTK and file uncompressing; Modify folder permissions recursively
 RUN apt-get update && apt-get install -y \
     python3.10 \
@@ -21,30 +18,42 @@ RUN apt-get update && apt-get install -y \
     tar \
     gzip \
     bzip2 \
+    nano \
+    vim \
     curl \
     wget && \
-    chmod -R 777 /root /mnt
+    rm -rf /var/lib/apt/lists/*
+
+# Create user, set bash as default shell
+RUN useradd -ms /bin/bash user
 
 # Working directory
-WORKDIR /mnt
+WORKDIR /home/user
+ENV HOME="/home/user"
 
 # Copy files
-COPY neurocaps/ neurocaps/
+COPY neurocaps/ src/neurocaps/
 COPY demos/* demos/
-COPY docker/scripts/entry.sh entrypoint/
-COPY pyproject.toml .
+COPY docker/scripts/entrypoint.sh /usr/local/bin
+COPY pyproject.toml src/
 
 # Install package in editable mode and install notebook
-RUN pip install --upgrade pip setuptools wheel
-RUN pip install -e .[demo] notebook
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install -e src[demo] notebook && \
+    rm -rf ~/.cache/pip && sync
+
+# Change ownership and permissions
+RUN chown -R user:user /home/user && chmod -R 775 /home/user
 
 # Make entry script executable
-RUN chmod +x /mnt/entrypoint/entry.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Document port jupyter notebook will use
 EXPOSE 9999
+# More metadata
+LABEL maintainer="Donisha Smith <donishasmith@outlook.com>"
 
 # Shell script as entry point
-ENTRYPOINT ["/mnt/entrypoint/entry.sh"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 # Will use exec bash by default if "docker run -it -p 9999:9999 neurocaps jupyter notebook" not used
