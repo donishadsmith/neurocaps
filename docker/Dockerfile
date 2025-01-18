@@ -32,7 +32,6 @@ RUN apt-get update && apt-get install -y \
     ln -sf /usr/bin/python3.11 /usr/bin/python3 && \
     curl https://bootstrap.pypa.io/get-pip.py | python3.11
 
-
 # Create user and home directory; recursively change ownership of home directory to user; add user to sudo group
 # Append no password requirement for sudo users to sudoers
 RUN useradd -md /home/user user && \
