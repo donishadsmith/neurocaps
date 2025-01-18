@@ -13,6 +13,10 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.21.3] - 2025-01-17
+### 🐛 Fixes
+- Added ipywidgets in optional dependencies for a better experience with the "openneuro_demo" Jupyter notebook.
+
 ## [0.21.2] - 2025-01-14
 ### 🐛 Fixes
 - Fixes warning about ignoring mandatory keys in `fd_threshold` and `dummy_scans`.

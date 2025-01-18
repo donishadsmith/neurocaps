@@ -66,7 +66,7 @@ dependencies = [
 [project.optional-dependencies]
 windows = ["pybids>=0.16.2"]
 test = ["pytest", "pytest-cov"]
-demo = ["openneuro-py"]
+demo = ["openneuro-py", "ipywidgets"]
 
 [tool.setuptools.packages.find]
 where = ["."]
