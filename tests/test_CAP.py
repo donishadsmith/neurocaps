@@ -86,9 +86,9 @@ def segments(target, timeseries):
     target_indices = np.where(binary_arr == 1)[0]
     # Count the transitions, indices where diff > 1 is a transition; diff of indices = [2,1,1];
     # binary for diff > 1 = [1,0,0]; thus, segments = transitions + first_sequence(1) = 2
-    segments = np.where(np.diff(target_indices, n=1) > 1, 1, 0).sum() + 1
+    n_segments = np.where(np.diff(target_indices, n=1) > 1, 1, 0).sum() + 1
 
-    return binary_arr, segments
+    return binary_arr, n_segments
 
 
 @pytest.fixture(autouse=False, scope="module")
@@ -524,6 +524,8 @@ def test_calculate_metrics():
     for cap in ["CAP-1", "CAP-2"]:
         for i in temp.index:
             assert math.isclose((counts.loc[i, cap] * persistence.loc[i, cap]) / 100, temp.loc[i, cap], abs_tol=0.001)
+            if persistence.loc[i, cap] == 0:
+                assert counts.loc[i, cap] == 0 and temp.loc[i, cap] == 0
 
     # Check for continuous too
     counts = cap_analysis.calculate_metrics(
@@ -586,6 +588,7 @@ def test_calculate_metrics():
     counts_dict = {}
     for target in range(1, n_caps + 1):
         _, counts = segments(target, first_subject_labels)
+        counts = counts if target in first_subject_labels else 0
         counts_dict.update({target: counts})
 
     assert [x for x in list(counts_dict.values()) if not math.isnan(x)] == [

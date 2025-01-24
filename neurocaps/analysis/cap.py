@@ -864,7 +864,7 @@ class CAP(_CAPGetter):
            Additionally, in the supplementary material of Yang et al., the stated relationship between
            temporal fraction, counts, and persistence is temporal fraction = (persistence*counts)/total volumes
            If persistence and temporal fraction is converted into time units,
-           then ``temporal fraction = (persistence*counts)/(total volumes * TR)``.
+           then ``temporal fraction = (persistence * counts) / (total volumes * TR)``.
 
            ::
 
@@ -1112,8 +1112,8 @@ class CAP(_CAPGetter):
 
         # Get combination of transitions in addition to building the base dataframe dictionary
         if "transition_probability" in metrics:
-            group_caps, products, products_unique = self._combinations()
-            df_dict, temp_dict = self._build_df(metrics, cap_names, products)
+            group_caps, all_pairs, filtered_pairs = self._get_pairs()
+            df_dict, temp_dict = self._build_df(metrics, cap_names, all_pairs)
         else:
             df_dict = self._build_df(metrics, cap_names)
 
@@ -1143,8 +1143,14 @@ class CAP(_CAPGetter):
             if "counts" in metrics:
                 count_dict = {}
                 for target in cap_numbers:
-                    _, segments = self._segments(target, predicted_subject_timeseries[subj_id][curr_run])
-                    count_dict.update({target: segments})
+                    # + 1 is always added to segments to handle the + 1 needed to account for transitions and to avoid
+                    # a NaN for persistence. This ensures counts is 0 if target not present
+                    if target in predicted_subject_timeseries[subj_id][curr_run]:
+                        _, counts = self._segments(target, predicted_subject_timeseries[subj_id][curr_run])
+                    else:
+                        counts = 0
+
+                    count_dict.update({target: counts})
 
                 self._update_dict(cap_numbers, group_cap_counts[group], count_dict)
 
@@ -1158,11 +1164,11 @@ class CAP(_CAPGetter):
 
                 # Iterate through caps
                 for target in cap_numbers:
-                    binary_arr, segments = self._segments(target, predicted_subject_timeseries[subj_id][curr_run])
+                    binary_arr, n_segments = self._segments(target, predicted_subject_timeseries[subj_id][curr_run])
                     # Sum of ones in the binary array divided by segments, then multiplied by 1 or the tr; segment is
-                    # always 1 at minimum due to + 1; np.where(np.diff(target_indices, n=1) > 1, 1, 0).sum() is 0
-                    # when empty or the condition isn't met
-                    persistence_dict.update({target: (binary_arr.sum() / segments) * (tr if tr else 1)})
+                    # always 1 at minimum due to + 1; binary_arr.sum() is 0 when empty or the condition isn't met;
+                    # thus, persistence is 0 instead of NaN in this case
+                    persistence_dict.update({target: (binary_arr.sum() / n_segments) * (tr if tr else 1)})
 
                 self._update_dict(cap_numbers, group_cap_counts[group], persistence_dict)
 
@@ -1193,9 +1199,9 @@ class CAP(_CAPGetter):
 
                 indx = temp_dict[group].index[-1]
 
-                # Iterate through products and calculate all symmetric pairs/off-diagonals
-                for prod in products_unique[group]:
-                    target1, target2 = prod[0], prod[1]
+                # Iterate through pairs and calculate all symmetric pairs/off-diagonals
+                for pair in filtered_pairs[group]:
+                    target1, target2 = pair[0], pair[1]
                     trans_array = predicted_subject_timeseries[subj_id][curr_run].copy()
                     # Set all values not equal to target1 or target2 to zero
                     trans_array[(trans_array != target1) & (trans_array != target2)] = 0
@@ -1318,27 +1324,27 @@ class CAP(_CAPGetter):
 
         return predicted_subject_timeseries
 
-    # Get all combinations of transitions
-    def _combinations(self):
+    # Get all pairs and filtered version of pairs for all possible transitions
+    def _get_pairs(self):
         group_caps = {}
-        products, products_unique = {}, {}
+        all_pairs, filtered_pairs = {}, {}
 
         for group in self._groups:
             group_caps.update({group: [int(name.split("-")[-1]) for name in self._caps[group]]})
-            products.update({group: list(itertools.product(group_caps[group], group_caps[group]))})
-            # Filter out all reversed products and products with the self transitions
-            products_unique[group] = []
+            all_pairs.update({group: list(itertools.product(group_caps[group], group_caps[group]))})
+            # Filter out all reversed pairs and pairs with self to self transitions
+            filtered_pairs[group] = []
 
-            for prod in products[group]:
-                if prod[0] == prod[1]:
+            for pair in all_pairs[group]:
+                if pair[0] == pair[1]:
                     continue
                 # Include only the first instance of symmetric pairs
-                if (prod[1], prod[0]) not in products_unique[group]:
-                    products_unique[group].append(prod)
+                if (pair[1], pair[0]) not in filtered_pairs[group]:
+                    filtered_pairs[group].append(pair)
 
-        return group_caps, products, products_unique
+        return group_caps, all_pairs, filtered_pairs
 
-    def _build_df(self, metrics, cap_names, products=None):
+    def _build_df(self, metrics, cap_names, pairs=None):
         df_dict = {}
 
         base_cols = ["Subject_ID", "Group", "Run"]
@@ -1349,9 +1355,7 @@ class CAP(_CAPGetter):
             elif metric == "transition_probability":
                 temp_dict = {}
                 for group in self._groups:
-                    temp_dict.update(
-                        {group: pd.DataFrame(columns=base_cols + [f"{x}.{y}" for x, y in products[group]])}
-                    )
+                    temp_dict.update({group: pd.DataFrame(columns=base_cols + [f"{x}.{y}" for x, y in pairs[group]])})
             else:
                 df_dict.update({metric: pd.DataFrame(columns=base_cols + ["Transition_Frequency"])})
 
@@ -1383,10 +1387,10 @@ class CAP(_CAPGetter):
         # Get indices of values that equal 1; [0, 2, 3, 4]
         target_indices = np.where(binary_arr == 1)[0]
         # Count the transitions, indices where diff > 1 is a transition; diff of indices = [2, 1, 1];
-        # binary for diff > 1 = [1, 0, 0]; thus, segments = transitions + first_sequence(1) = 2
-        segments = np.where(np.diff(target_indices, n=1) > 1, 1, 0).sum() + 1
+        # binary for diff > 1 = [1, 0, 0]; thus, n_segments = transitions + first_sequence(1) = 2
+        n_segments = np.where(np.diff(target_indices, n=1) > 1, 1, 0).sum() + 1
 
-        return binary_arr, segments
+        return binary_arr, n_segments
 
     def _save_metrics(self, output_dir, df_dict, prefix_filename):
         if not os.path.exists(output_dir):

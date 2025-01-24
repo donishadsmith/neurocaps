@@ -13,6 +13,12 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.21.4] - 2025-01-24
+### 🐛 Fixes
+- Fix issue in "counts" computation in `CAP.calculate_metrics` for case where no TRs are assigned to a specific
+label/CAP. Instead of "counts" being 0 in this case, it would be a 1. Issue did not affect the other metrics
+("temporal fraction", "persistence", etc), which would correctly be 0 in such cases.
+
 ## [0.21.3] - 2025-01-17
 ### 🐛 Fixes
 - Added ipywidgets in optional dependencies for a better experience with the "openneuro_demo" Jupyter notebook.
