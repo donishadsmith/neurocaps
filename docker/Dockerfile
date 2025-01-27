@@ -1,5 +1,5 @@
 # Use Ubuntu version 22.04 as base image
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 # No installation prompts
 ENV DEBIAN_FRONTEND=noninteractive
