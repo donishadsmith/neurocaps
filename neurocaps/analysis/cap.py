@@ -11,6 +11,7 @@ from neuromaps.datasets import fetch_fslr
 from numpy.typing import ArrayLike, NDArray
 from scipy.stats import pearsonr
 from sklearn.cluster import KMeans
+from tqdm.auto import tqdm
 
 from .._utils import (
     _CAPGetter,
@@ -182,8 +183,6 @@ class CAP(_CAPGetter):
                 "GroupName": float,
             }
 
-        .. versionadded:: 0.18.8
-
     optimal_n_clusters: :obj:`dict[str, int]` or :obj:`None`
         A dictionary mapping groups to their optimal cluster sizes if ``cluster_selection_method`` is not None in
         ``self.get_caps()``. The structure is as follows:
@@ -220,9 +219,8 @@ class CAP(_CAPGetter):
 
     concatenated_timeseries: :obj:`dict[str, np.array]` or :obj:`None`
         A dictionary mapping each group to their associated concatenated NumPy array [(participants x TRs) x ROIs] when
-        ``self.get_caps()`` is used. Note, if there are memory issues, ``delattr(self, "_concatenated_timeseries")``
-        (version < 0.18.10) or ``del self.concatenated_timeseries`` (version >= 0.18.10) can be used to delete
-        property and have it only return None. The structure is as follows:
+        ``self.get_caps()`` is used. Note, if there are memory issues, ``del self.concatenated_timeseries``
+        can be used to delete property and have it only return None. The structure is as follows:
 
         ::
 
@@ -307,76 +305,14 @@ class CAP(_CAPGetter):
 
     The recognized sub-keys for the "Custom" parcellation approach includes:
 
-    - "maps": Directory path containing the parcellation file in a supported format (e.g., .nii or .nii.gz for NifTI).
-    - "nodes": A list of all node labels. The node labels should be arranged in ascending order based on their
-      numerical IDs from the parcellation files. The node with the lowest numerical label in the parcellation file
-      should occupy the 0th index in the list, regardless of its actual numerical value. For instance, if the numerical
-      IDs are sequential, and the lowest, non-background numerical ID in the parcellation is "1" which corresponds
-      to "left hemisphere visual cortex area" ("LH_Vis1"), then "LH_Vis1" should occupy the 0th element in this list.
-      Even if the numerical IDs are non-sequential and the earliest non-background, numerical ID is "2000"
-      (assuming "0" is the background), then the node label corresponding to "2000" should occupy the 0th element of
-      this list.
+    - "maps": Directory path containing the parcellation in a supported format (e.g., .nii or .nii.gz for NifTI).
+    - "nodes": A list of all node labels arranged in ascending order based on their numerical IDs from the parcellation.
+      The 0th index should contain the label corresponding to the lowest, non-background numerical ID.
+    - "regions": A dictionary defining major brain regions or networks, with each region containing "lh"
+      (left hemisphere) and "rh" (right hemisphere) sub-keys listing node indices.
 
-      ::
-
-            # Example of numerical label IDs and their organization in the "nodes" key
-            "nodes": {
-                "LH_Vis1",          # Corresponds to parcellation label 2000; lowest non-background numerical ID
-                "LH_Vis2",          # Corresponds to parcellation label 2100; second lowest non-background numerical ID
-                "LH_Hippocampus",   # Corresponds to parcellation label 2150; third lowest non-background numerical ID
-                "RH_Vis1",          # Corresponds to parcellation label 2200; fourth lowest non-background numerical ID
-                "RH_Vis2",          # Corresponds to parcellation label 2220; fifth lowest non-background numerical ID
-                "RH_Hippocampus"    # Corresponds to parcellation label 2300; sixth lowest non-background numerical ID
-            }
-
-    - "regions": A dictionary defining major brain regions or networks. Each region should list node indices under
-      "lh" (left hemisphere) and "rh" (right hemisphere) to specify the respective nodes. Both the "lh" and "rh"
-      sub-keys should contain the indices of the nodes belonging to each region/hemisphere pair, as determined
-      by the order/index in the "nodes" list. The naming of the sub-keys defining the major brain regions or networks
-      have zero naming requirements and simply define the nodes belonging to the same name.
-
-      ::
-
-            # Example of the "regions" sub-keys
-            "regions": {
-                "Visual": {
-                    "lh": [0, 1], # Corresponds to "LH_Vis1" and "LH_Vis2"
-                    "rh": [3, 4]  # Corresponds to "RH_Vis1" and "RH_Vis2"
-                },
-                "Hippocampus": {
-                    "lh": [2], # Corresponds to "LH_Hippocampus"
-                    "rh": [5]  # Corresponds to "RH_Hippocampus"
-                }
-            }
-
-    The provided example demonstrates setting up a custom parcellation containing nodes for the visual network (Vis)
-    and hippocampus regions in full:
-
-    ::
-
-        parcel_approach = {
-            "Custom": {
-                "maps": "/location/to/parcellation.nii.gz",
-                "nodes": [
-                    "LH_Vis1",
-                    "LH_Vis2",
-                    "LH_Hippocampus",
-                    "RH_Vis1",
-                    "RH_Vis2",
-                    "RH_Hippocampus"
-                ],
-                "regions": {
-                    "Visual": {
-                        "lh": [0, 1],
-                        "rh": [3, 4]
-                    },
-                    "Hippocampus": {
-                        "lh": [2],
-                        "rh": [5]
-                    }
-                }
-            }
-        }
+    Refer to the `neurocaps Parcellation Documentation <https://neurocaps.readthedocs.io/en/stable/parcellations.html>`_
+    for more detailed explanations and example structures for the "nodes" and "regions" sub-keys.
 
     **Note**: Different sub-keys are required depending on the function used. Refer to the Note section under each
     function for information regarding the sub-keys required for that specific function.
@@ -428,6 +364,7 @@ class CAP(_CAPGetter):
         n_cores: Optional[int] = None,
         show_figs: bool = False,
         output_dir: Optional[os.PathLike] = None,
+        progress_bar: bool = False,
         **kwargs,
     ) -> None:
         """
@@ -512,6 +449,11 @@ class CAP(_CAPGetter):
             Directory to save plots as png files if ``cluster_selection_method`` is not None. The directory will be
             created if it does not exist. If None, plots will not be saved.
 
+        progress_bar: :obj:`bool`, default=False
+            If True and ``cluster_selection_method`` is not None, displays a progress bar.
+
+            .. versionadded:: 0.21.5
+
         kwargs: :obj:`dict`
             Dictionary to adjust certain parameters when ``cluster_selection_method`` is not None.
             Additional parameters include:
@@ -589,7 +531,7 @@ class CAP(_CAPGetter):
                 formatted_string = ", ".join(["'{a}'".format(a=x) for x in valid_methods])
                 raise ValueError(f"Options for `cluster_selection_method` are - {formatted_string}.")
             else:
-                self._select_optimal_clusters(configs, show_figs, output_dir, **kwargs)
+                self._select_optimal_clusters(configs, show_figs, output_dir, progress_bar, **kwargs)
         else:
             self._kmeans = {}
             for group in self._groups:
@@ -687,7 +629,7 @@ class CAP(_CAPGetter):
 
         return runs, miss_runs
 
-    def _select_optimal_clusters(self, configs, show_figs, output_dir, **kwargs):
+    def _select_optimal_clusters(self, configs, show_figs, output_dir, progress_bar, **kwargs):
         # Initialize attributes
         self._cluster_scores = {}
         self._optimal_n_clusters = {}
@@ -703,16 +645,21 @@ class CAP(_CAPGetter):
             model_dict = {}
 
             if self._n_cores is None:
-                for n_cluster in self._n_clusters:
+                for n_cluster in tqdm(self._n_clusters, desc=f"Clustering [GROUP: {group}]", disable=not progress_bar):
                     output_score, model = _run_kmeans(n_cluster, configs, self._concatenated_timeseries[group], method)
 
                     performance_dict[group].update(output_score)
                     model_dict.update(model)
             else:
                 parallel = Parallel(return_as="generator", n_jobs=self._n_cores, backend="loky")
-                output = parallel(
-                    delayed(_run_kmeans)(n_cluster, configs, self._concatenated_timeseries[group], method)
-                    for n_cluster in self._n_clusters
+                output = tqdm(
+                    parallel(
+                        delayed(_run_kmeans)(n_cluster, configs, self._concatenated_timeseries[group], method)
+                        for n_cluster in self._n_clusters
+                    ),
+                    desc=f"Clustering [GROUP: {group}]",
+                    total=len(self._n_clusters),
+                    disable=not progress_bar,
                 )
 
                 output_scores, models = zip(*output)
@@ -851,6 +798,7 @@ class CAP(_CAPGetter):
         return_df: bool = True,
         output_dir: Optional[os.PathLike] = None,
         prefix_filename: Optional[str] = None,
+        progress_bar: bool = False,
     ) -> dict[str, pd.DataFrame]:
         """
         Compute Participant-wise CAP Metrics.
@@ -989,6 +937,11 @@ class CAP(_CAPGetter):
 
             .. versionchanged:: 0.19.0  ``prefix_file_name`` to ``prefix_filename``
 
+        progress_bar: :obj:`bool`, default=False
+            If True, displays a progress bar.
+
+            .. versionadded:: 0.21.5
+
         Returns
         -------
         dict[str, pd.DataFrame] or dict[str, dict[str, pd.DataFrame]]
@@ -1118,120 +1071,122 @@ class CAP(_CAPGetter):
             df_dict = self._build_df(metrics, cap_names)
 
         # Generate list for iteration
-        distributed_list = self._distribute(predicted_subject_timeseries)
+        distributed_dict = self._distribute(predicted_subject_timeseries)
 
-        for subj_id, group, curr_run in distributed_list:
-            if "temporal_fraction" in metrics:
-                # Get frequency
-                frequency_dict = {
-                    key: np.where(predicted_subject_timeseries[subj_id][curr_run] == key, 1, 0).sum()
-                    for key in range(1, group_cap_counts[group] + 1)
-                }
-
-                self._update_dict(cap_numbers, group_cap_counts[group], frequency_dict)
-
+        for subj_id in tqdm(distributed_dict, desc="Computing Metrics for Subjects", disable=not progress_bar):
+            for group, curr_run in distributed_dict[subj_id]:
                 if "temporal_fraction" in metrics:
-                    proportion_dict = {
-                        key: value / (len(predicted_subject_timeseries[subj_id][curr_run]))
-                        for key, value in frequency_dict.items()
+                    # Get frequency
+                    frequency_dict = {
+                        key: np.where(predicted_subject_timeseries[subj_id][curr_run] == key, 1, 0).sum()
+                        for key in range(1, group_cap_counts[group] + 1)
                     }
 
+                    self._update_dict(cap_numbers, group_cap_counts[group], frequency_dict)
+
+                    if "temporal_fraction" in metrics:
+                        proportion_dict = {
+                            key: value / (len(predicted_subject_timeseries[subj_id][curr_run]))
+                            for key, value in frequency_dict.items()
+                        }
+
+                        # Populate Dataframe
+                        new_row = [subj_id, group, curr_run] + [items for items in proportion_dict.values()]
+                        df_dict["temporal_fraction"].loc[len(df_dict["temporal_fraction"])] = new_row
+
+                if "counts" in metrics:
+                    count_dict = {}
+                    for target in cap_numbers:
+                        # + 1 is always added to segments to handle the + 1 needed to account for transitions and to avoid
+                        # a NaN for persistence. This ensures counts is 0 if target not present
+                        if target in predicted_subject_timeseries[subj_id][curr_run]:
+                            _, counts = self._segments(target, predicted_subject_timeseries[subj_id][curr_run])
+                        else:
+                            counts = 0
+
+                        count_dict.update({target: counts})
+
+                    self._update_dict(cap_numbers, group_cap_counts[group], count_dict)
+
                     # Populate Dataframe
-                    new_row = [subj_id, group, curr_run] + [items for items in proportion_dict.values()]
-                    df_dict["temporal_fraction"].loc[len(df_dict["temporal_fraction"])] = new_row
+                    new_row = [subj_id, group, curr_run] + [items for items in count_dict.values()]
+                    df_dict["counts"].loc[len(df_dict["counts"])] = new_row
 
-            if "counts" in metrics:
-                count_dict = {}
-                for target in cap_numbers:
-                    # + 1 is always added to segments to handle the + 1 needed to account for transitions and to avoid
-                    # a NaN for persistence. This ensures counts is 0 if target not present
-                    if target in predicted_subject_timeseries[subj_id][curr_run]:
-                        _, counts = self._segments(target, predicted_subject_timeseries[subj_id][curr_run])
-                    else:
-                        counts = 0
+                if "persistence" in metrics:
+                    # Initialize variable
+                    persistence_dict = {}
 
-                    count_dict.update({target: counts})
+                    # Iterate through caps
+                    for target in cap_numbers:
+                        binary_arr, n_segments = self._segments(target, predicted_subject_timeseries[subj_id][curr_run])
+                        # Sum of ones in the binary array divided by segments, then multiplied by 1 or the tr; segment is
+                        # always 1 at minimum due to + 1; binary_arr.sum() is 0 when empty or the condition isn't met;
+                        # thus, persistence is 0 instead of NaN in this case
+                        persistence_dict.update({target: (binary_arr.sum() / n_segments) * (tr if tr else 1)})
 
-                self._update_dict(cap_numbers, group_cap_counts[group], count_dict)
+                    self._update_dict(cap_numbers, group_cap_counts[group], persistence_dict)
 
-                # Populate Dataframe
-                new_row = [subj_id, group, curr_run] + [items for items in count_dict.values()]
-                df_dict["counts"].loc[len(df_dict["counts"])] = new_row
+                    # Populate Dataframe
+                    new_row = [subj_id, group, curr_run] + [items for _, items in persistence_dict.items()]
+                    df_dict["persistence"].loc[len(df_dict["persistence"])] = new_row
 
-            if "persistence" in metrics:
-                # Initialize variable
-                persistence_dict = {}
+                if "transition_frequency" in metrics:
+                    # Sum the differences that are not zero - [1, 2, 1, 1, 1, 3] becomes [1, -1, 0, 0, 2]
+                    # , binary representation for values not zero is [1, 1, 0, 0, 1] = 3 transitions
+                    transition_frequency = np.where(
+                        np.diff(predicted_subject_timeseries[subj_id][curr_run], n=1) != 0, 1, 0
+                    ).sum()
 
-                # Iterate through caps
-                for target in cap_numbers:
-                    binary_arr, n_segments = self._segments(target, predicted_subject_timeseries[subj_id][curr_run])
-                    # Sum of ones in the binary array divided by segments, then multiplied by 1 or the tr; segment is
-                    # always 1 at minimum due to + 1; binary_arr.sum() is 0 when empty or the condition isn't met;
-                    # thus, persistence is 0 instead of NaN in this case
-                    persistence_dict.update({target: (binary_arr.sum() / n_segments) * (tr if tr else 1)})
+                    # Populate DataFrame
+                    new_row = [subj_id, group, curr_run, transition_frequency]
+                    df_dict["transition_frequency"].loc[len(df_dict["transition_frequency"])] = new_row
 
-                self._update_dict(cap_numbers, group_cap_counts[group], persistence_dict)
+                if "transition_probability" in metrics:
+                    base_row = [subj_id, group, curr_run] + [0.0] * (temp_dict[group].shape[-1] - 3)
+                    temp_dict[group].loc[len(temp_dict[group])] = base_row
 
-                # Populate Dataframe
-                new_row = [subj_id, group, curr_run] + [items for _, items in persistence_dict.items()]
-                df_dict["persistence"].loc[len(df_dict["persistence"])] = new_row
+                    # Get number of transitions
+                    trans_dict = {
+                        target: np.sum(np.where(predicted_subject_timeseries[subj_id][curr_run][:-1] == target, 1, 0))
+                        for target in group_caps[group]
+                    }
 
-            if "transition_frequency" in metrics:
-                # Sum the differences that are not zero - [1, 2, 1, 1, 1, 3] becomes [1, -1, 0, 0, 2]
-                # , binary representation for values not zero is [1, 1, 0, 0, 1] = 3 transitions
-                transition_frequency = np.where(
-                    np.diff(predicted_subject_timeseries[subj_id][curr_run], n=1) != 0, 1, 0
-                ).sum()
+                    indx = temp_dict[group].index[-1]
 
-                # Populate DataFrame
-                new_row = [subj_id, group, curr_run, transition_frequency]
-                df_dict["transition_frequency"].loc[len(df_dict["transition_frequency"])] = new_row
+                    # Iterate through pairs and calculate all symmetric pairs/off-diagonals
+                    for pair in filtered_pairs[group]:
+                        target1, target2 = pair[0], pair[1]
+                        trans_array = predicted_subject_timeseries[subj_id][curr_run].copy()
+                        # Set all values not equal to target1 or target2 to zero
+                        trans_array[(trans_array != target1) & (trans_array != target2)] = 0
+                        trans_array[trans_array == target1] = 1
+                        trans_array[trans_array == target2] = 3
+                        # 2 indicates forward transition target1 -> target2; -2 means reverse/backward transition
+                        # target2 -> target1
+                        diff_array = np.diff(trans_array, n=1)
 
-            if "transition_probability" in metrics:
-                base_row = [subj_id, group, curr_run] + [0.0] * (temp_dict[group].shape[-1] - 3)
-                temp_dict[group].loc[len(temp_dict[group])] = base_row
+                        # Avoid division by zero errors and calculate both the forward and reverse transition
+                        if trans_dict[target1] != 0:
+                            temp_dict[group].loc[indx, f"{target1}.{target2}"] = float(
+                                np.sum(np.where(diff_array == 2, 1, 0)) / trans_dict[target1]
+                            )
 
-                # Get number of transitions
-                trans_dict = {
-                    target: np.sum(np.where(predicted_subject_timeseries[subj_id][curr_run][:-1] == target, 1, 0))
-                    for target in group_caps[group]
-                }
+                        if trans_dict[target2] != 0:
+                            temp_dict[group].loc[indx, f"{target2}.{target1}"] = float(
+                                np.sum(np.where(diff_array == -2, 1, 0)) / trans_dict[target2]
+                            )
 
-                indx = temp_dict[group].index[-1]
+                    # Calculate the probability for the self transitions/diagonals
+                    for target in group_caps[group]:
+                        if trans_dict[target] == 0:
+                            continue
 
-                # Iterate through pairs and calculate all symmetric pairs/off-diagonals
-                for pair in filtered_pairs[group]:
-                    target1, target2 = pair[0], pair[1]
-                    trans_array = predicted_subject_timeseries[subj_id][curr_run].copy()
-                    # Set all values not equal to target1 or target2 to zero
-                    trans_array[(trans_array != target1) & (trans_array != target2)] = 0
-                    trans_array[trans_array == target1] = 1
-                    trans_array[trans_array == target2] = 3
-                    # 2 indicates forward transition target1 -> target2; -2 means reverse/backward transition
-                    # target2 -> target1
-                    diff_array = np.diff(trans_array, n=1)
+                        # Will include the {target}.{target} column, but the value is initially set to zero
+                        columns = temp_dict[group].filter(regex=rf"^{target}\.").columns.tolist()
+                        cumulative = temp_dict[group].loc[indx, columns].values.sum()
+                        temp_dict[group].loc[indx, f"{target}.{target}"] = 1.0 - cumulative
 
-                    # Avoid division by zero errors and calculate both the forward and reverse transition
-                    if trans_dict[target1] != 0:
-                        temp_dict[group].loc[indx, f"{target1}.{target2}"] = float(
-                            np.sum(np.where(diff_array == 2, 1, 0)) / trans_dict[target1]
-                        )
-
-                    if trans_dict[target2] != 0:
-                        temp_dict[group].loc[indx, f"{target2}.{target1}"] = float(
-                            np.sum(np.where(diff_array == -2, 1, 0)) / trans_dict[target2]
-                        )
-
-                # Calculate the probability for the self transitions/diagonals
-                for target in group_caps[group]:
-                    if trans_dict[target] == 0:
-                        continue
-
-                    # Will include the {target}.{target} column, but the value is initially set to zero
-                    columns = temp_dict[group].filter(regex=rf"^{target}\.").columns.tolist()
-                    cumulative = temp_dict[group].loc[indx, columns].values.sum()
-                    temp_dict[group].loc[indx, f"{target}.{target}"] = 1.0 - cumulative
-
+        # Add temporary dict for transition probability to `df_dict`
         if "transition_probability" in metrics:
             df_dict["transition_probability"] = temp_dict
 
@@ -1365,13 +1320,14 @@ class CAP(_CAPGetter):
             return df_dict
 
     def _distribute(self, predicted_subject_timeseries):
-        distributed_list = []
+        distributed_dict = {}
 
         for subj_id, group in self._subject_table.items():
+            distributed_dict[subj_id] = []
             for curr_run in predicted_subject_timeseries[subj_id]:
-                distributed_list.append([subj_id, group, curr_run])
+                distributed_dict[subj_id].append((group, curr_run))
 
-        return distributed_list
+        return distributed_dict
 
     # Replace zeros with nan for groups with less caps than the group with the max caps
     @staticmethod
@@ -2284,6 +2240,7 @@ class CAP(_CAPGetter):
         suffix_filename: Optional[str] = None,
         fwhm: Optional[float] = None,
         knn_dict: dict[str, Union[int, list[int], NDArray[np.integer]]] = None,
+        progress_bar: bool = False,
     ) -> None:
         """
         Standalone Method to Convert CAPs to NifTI Statistical Maps.
@@ -2329,9 +2286,10 @@ class CAP(_CAPGetter):
 
             This method is applied before the ``fwhm``.
 
-            .. versionadded:: 0.18.0 "reference_atlas"
-            .. versionchanged:: 0.18.0 "remove_subcortical" key changed to "remove_labels" and default of "k" changed
-               1 to 3
+        progress_bar: :obj:`bool`, default=False
+            If True, displays a progress bar.
+
+            .. versionadded:: 0.21.5
 
         Returns
         -------
@@ -2375,7 +2333,9 @@ class CAP(_CAPGetter):
         parcellation_name = list(self._parcel_approach)[0]
 
         for group in self._caps:
-            for cap in self._caps[group]:
+            for cap in tqdm(
+                self._caps[group], desc=f"Generating Statistical Maps [GROUP: {group}]", disable=not progress_bar
+            ):
                 stat_map = _cap2statmap(
                     atlas_file=self._parcel_approach[parcellation_name]["maps"],
                     cap_vector=self._caps[group][cap],
@@ -2435,6 +2395,7 @@ class CAP(_CAPGetter):
         save_stat_maps: bool = False,
         fslr_giftis_dict: Optional[dict] = None,
         knn_dict: dict[str, Union[int, list[int], NDArray[np.integer]]] = None,
+        progress_bar: bool = False,
         **kwargs,
     ) -> None:
         """
@@ -2524,8 +2485,10 @@ class CAP(_CAPGetter):
 
             This method is applied before the ``fwhm``.
 
-            .. versionadded:: 0.18.0 "reference_atlas" key added
-            .. versionchanged:: 0.18.0 "remove_subcortical" key changed to "remove_labels"
+        progress_bar: :obj:`bool`, default=False
+            If True, displays a progress bar.
+
+            .. versionadded:: 0.21.5
 
         kwargs: :obj:`dict`
             Additional parameters to pass to modify certain plot parameters. Options include:
@@ -2652,7 +2615,7 @@ class CAP(_CAPGetter):
         for group in groups:
             caps = self._caps[group] if hasattr(self, "_caps") and fslr_giftis_dict is None else fslr_giftis_dict[group]
 
-            for cap in caps:
+            for cap in tqdm(caps, desc=f"Generating Surface Plots [GROUP: {group}]", disable=not progress_bar):
                 if fslr_giftis_dict is None:
                     stat_map = _cap2statmap(
                         atlas_file=self._parcel_approach[parcellation_name]["maps"],

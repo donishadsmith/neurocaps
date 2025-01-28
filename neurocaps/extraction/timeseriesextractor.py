@@ -4,7 +4,7 @@ from typing import Callable, Literal, Optional, Union
 
 import matplotlib.pyplot as plt, numpy as np
 from joblib import Parallel, delayed, dump
-
+from tqdm.auto import tqdm
 from .._utils import (
     _TimeseriesExtractorGetter,
     _check_kwargs,
@@ -134,8 +134,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         additional within-run standardization (using ``neurocaps.analysis.standardize``) once outlier volumes have been
         removed.
 
-        .. versionadded:: 0.18.8 "use_sample_mask"
-
     n_acompcor_separate: :obj:`int` or :obj:`None`, default=None
         Specifies the number of separate acompcor components derived from white-matter (WM) and cerebrospinal
         fluid (CSF) masks to use. For example, if set to 5, the first five components from the WM mask
@@ -222,8 +220,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     subject_timeseries: :obj:`dict[str, dict[str, np.ndarray]]` or :obj:`None`
         A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a NumPy array.
         Can also be a path to a pickle file containing this same structure. If this property needs to be deleted due
-        to memory issues,  ``delattr(self, "_subject_timeseries")`` (version < 0.18.10) or
-        ``del self.subject_timeseries`` (version >= 0.18.10) can be used to delete this property and only have it
+        to memory issues, ``del self.subject_timeseries`` can be used to delete this property and only have it
         return None. The structure is as follows:
 
         ::
@@ -256,76 +253,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
     The recognized sub-keys for the "Custom" parcellation approach includes:
 
-    - "maps": Directory path containing the parcellation file in a supported format (e.g., .nii or .nii.gz for NifTI).
-    - "nodes": A list of all node labels. The node labels should be arranged in ascending order based on their
-      numerical IDs from the parcellation files. The node with the lowest numerical label in the parcellation file
-      should occupy the 0th index in the list, regardless of its actual numerical value. For instance, if the numerical
-      IDs are sequential, and the lowest, non-background numerical ID in the parcellation is "1" which corresponds
-      to "left hemisphere visual cortex area" ("LH_Vis1"), then "LH_Vis1" should occupy the 0th element in this list.
-      Even if the numerical IDs are non-sequential and the earliest non-background, numerical ID is "2000"
-      (assuming "0" is the background), then the node label corresponding to "2000" should occupy the 0th element of
-      this list.
+    - "maps": Directory path containing the parcellation in a supported format (e.g., .nii or .nii.gz for NifTI).
+    - "nodes": A list of all node labels arranged in ascending order based on their numerical IDs from the parcellation.
+      The 0th index should contain the label corresponding to the lowest, non-background numerical ID.
+    - "regions": A dictionary defining major brain regions or networks, with each region containing "lh"
+      (left hemisphere) and "rh" (right hemisphere) sub-keys listing node indices.
 
-      ::
-
-            # Example of numerical label IDs and their organization in the "nodes" key
-            "nodes": {
-                "LH_Vis1",          # Corresponds to parcellation label 2000; lowest non-background numerical ID
-                "LH_Vis2",          # Corresponds to parcellation label 2100; second lowest non-background numerical ID
-                "LH_Hippocampus",   # Corresponds to parcellation label 2150; third lowest non-background numerical ID
-                "RH_Vis1",          # Corresponds to parcellation label 2200; fourth lowest non-background numerical ID
-                "RH_Vis2",          # Corresponds to parcellation label 2220; fifth lowest non-background numerical ID
-                "RH_Hippocampus"    # Corresponds to parcellation label 2300; sixth lowest non-background numerical ID
-            }
-
-    - "regions": A dictionary defining major brain regions or networks. Each region should list node indices under
-      "lh" (left hemisphere) and "rh" (right hemisphere) to specify the respective nodes. Both the "lh" and "rh"
-      sub-keys should contain the indices of the nodes belonging to each region/hemisphere pair, as determined
-      by the order/index in the "nodes" list. The naming of the sub-keys defining the major brain regions or networks
-      have zero naming requirements and simply define the nodes belonging to the same name.
-
-      ::
-
-            # Example of the "regions" sub-keys
-            "regions": {
-                "Visual": {
-                    "lh": [0, 1], # Corresponds to "LH_Vis1" and "LH_Vis2"
-                    "rh": [3, 4]  # Corresponds to "RH_Vis1" and "RH_Vis2"
-                },
-                "Hippocampus": {
-                    "lh": [2], # Corresponds to "LH_Hippocampus"
-                    "rh": [5]  # Corresponds to "RH_Hippocampus"
-                }
-            }
-
-    The provided example demonstrates setting up a custom parcellation containing nodes for the visual network (Vis)
-    and hippocampus regions in full:
-
-    ::
-
-        parcel_approach = {
-            "Custom": {
-                "maps": "/location/to/parcellation.nii.gz",
-                "nodes": [
-                    "LH_Vis1",
-                    "LH_Vis2",
-                    "LH_Hippocampus",
-                    "RH_Vis1",
-                    "RH_Vis2",
-                    "RH_Hippocampus"
-                ],
-                "regions": {
-                    "Visual": {
-                        "lh": [0, 1],
-                        "rh": [3, 4]
-                    },
-                    "Hippocampus": {
-                        "lh": [2],
-                        "rh": [5]
-                    }
-                }
-            }
-        }
+    Refer to the `neurocaps Parcellation Documentation <https://neurocaps.readthedocs.io/en/stable/parcellations.html>`_
+    for more detailed explanations and example structures for the "nodes" and "regions" sub-keys.
 
     **Note**: Different sub-keys are required depending on the function used. Refer to the Note section under each
     function for information regarding the sub-keys required for that specific function.
@@ -455,6 +390,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         parallel_log_config: Optional[dict[str, Union[Callable, int]]] = None,
         verbose: bool = True,
         flush: bool = False,
+        progress_bar: bool = False,
     ) -> None:
         """
         Retrieve Preprocessed BOLD Data from BIDS Datasets.
@@ -566,9 +502,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             List of the specific preprocessed NIfTI files to exclude, preventing their timeseries data from being
             extracted. Used if there are specific runs across different participants that need to be excluded.
 
-            .. versionchanged:: 0.18.0 moved from being the second to last parameter, to being underneath
-               ``exclude_subjects``
-
         pipeline_name: :obj:`str` or :obj:`None`, default=None
             The name of the pipeline folder in the derivatives folder containing the preprocessed data. If None,
             ``BIDSLayout`` will default to using the ``bids_dir`` with ``derivatives=True``. This parameter should be
@@ -595,8 +528,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Refer to the `neurocaps Logging Documentation <https://neurocaps.readthedocs.io/en/stable/logging.html>`_
             for a detailed example of setting up this parameter.
 
-            .. versionchanged:: 0.18.0 moved from being the last parameter, to being underneath ``n_cores``
-
         verbose: :obj:`bool`, default=True
             If True, logs detailed subject-specific information including: subjects skipped due to missing required
             files, current subject being processed for timeseries extraction, confounds identified for nuisance
@@ -605,6 +536,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         flush: :obj:`bool`, default=False
             If True, flushes the logged subject-specific information produced during the timeseries extraction process.
+
+        progress_bar: :obj:`bool`, default=False
+            If True, displays a progress bar.
+
+            .. versionadded:: 0.21.5
 
         Returns
         -------
@@ -732,7 +668,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             ]
 
             parallel = Parallel(return_as="generator", n_jobs=self._n_cores, backend="loky")
-            outputs = parallel(delayed(_extract_timeseries)(*args) for args in args_list)
+            outputs = tqdm(
+                parallel(delayed(_extract_timeseries)(*args) for args in args_list),
+                desc="Processing Subjects",
+                total=len(args_list),
+                disable=not progress_bar,
+            )
 
             for output in outputs:
                 if isinstance(output, dict):
@@ -745,7 +686,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     "package import."
                 )
 
-            for subj_id in self._subject_ids:
+            for subj_id in tqdm(self._subject_ids, desc="Processing Subjects", disable=not progress_bar):
                 subject_timeseries = _extract_timeseries(
                     subj_id=subj_id,
                     **self._subject_info[subj_id],

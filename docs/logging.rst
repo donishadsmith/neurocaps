@@ -3,11 +3,7 @@ Logging
 
 In neurocaps, all informational messages and warnings are managed using Python's logging module. By default, logs are
 output to the console (``sys.stdout``) with a logging level of ``INFO``. Before importing the neurocaps package, you can
-configure the root handler or specific module loggers to override these default settings. Additionally, the naming of
-each logger uses ``__name__.split(".")[-1]`` for versions ``<=0.17.9`` and ``__name__`` for versions ``>=0.17.10``.
-Additionally, modules in  ``neurocaps._utils`` will have a leading underscore in ``<=0.17.9``. For instance, the logger
-name ``neurocaps._utils.extraction.extract_timeseries`` (``>=0.17.10``) would be ``_extract_timeseries`` in
-``<=0.17.9``.
+configure the root handler or specific module loggers to override these default settings.
 
 Configuration (Without Parallel Processing)
 -------------------------------------------

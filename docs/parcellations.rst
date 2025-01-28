@@ -34,9 +34,9 @@ background label is 0. Therefore, do not add a background label in the "nodes" o
 
     The recognized sub-keys for the "Custom" parcellation approach includes:
 
-    - "maps": Directory path containing the parcellation file in a supported format (e.g., .nii or .nii.gz for NifTI).
+    - "maps": Directory path containing the parcellation in a supported format (e.g., .nii or .nii.gz for NifTI).
     - "nodes": A list of all node labels. The node labels should be arranged in ascending order based on their
-      numerical IDs from the parcellation files. The node with the lowest numerical label in the parcellation file
+      numerical IDs from the parcellation. The node with the lowest numerical label in the parcellation
       should occupy the 0th index in the list, regardless of its actual numerical value. For instance, if the numerical
       IDs are sequential, and the lowest, non-background numerical ID in the parcellation is "1" which corresponds
       to "left hemisphere visual cortex area" ("LH_Vis1"), then "LH_Vis1" should occupy the 0th element in this list.
@@ -104,3 +104,6 @@ background label is 0. Therefore, do not add a background label in the "nodes" o
                 }
             }
         }
+
+
+Complete examples can be found in the `demos <https://github.com/donishadsmith/neurocaps/tree/stable/demos>`_.

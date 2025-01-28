@@ -60,6 +60,6 @@ jobs:
         working-directory: tests
       - name: Upload coverage reports to Codecov for Ubuntu
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-ver == '3.12' }}
-        uses: codecov/codecov-action@v5.1.2
+        uses: codecov/codecov-action@v5.3.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

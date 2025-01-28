@@ -13,6 +13,16 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.21.5] - 2025-01-27
+### 🚀 New/Added
+- Added new `progress_bar` parameter to `CAP.calculate_metrics`, `CAP.caps2niftis`, `CAP.caps2surf`,
+`CAP.get_caps`, and `TimeseriesExtractor.get_bold` to display tqdm progress bars.
+### 📖 Documentation
+- Cleans version change/version added directives and references for versions under 0.19.0 to clean up documentation.
+- Additional minor documentation cleaning.
+### 🐳 Docker
+- Updated image in DockerHub to latest version.
+
 ## [0.21.4] - 2025-01-24
 ### 🐛 Fixes
 - Fix issue in "counts" computation in `CAP.calculate_metrics` for case where no TRs are assigned to a specific
