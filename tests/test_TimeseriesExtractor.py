@@ -373,32 +373,6 @@ def test_extraction(parcel_approach, use_confounds, name):
     assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 24
 
 
-def test_check_parallel_and_non_parallel():
-    if sys.platform == "win32":
-        pipeline_name = "derivatives\\fmriprep_1.0.0\\fmriprep"
-    else:
-        pipeline_name = "derivatives/fmriprep_1.0.0/fmriprep"
-
-    extractor = TimeseriesExtractor(
-        parcel_approach=parcel_approach,
-        standardize="zscore_sample",
-        use_confounds=True,
-        detrend=False,
-        low_pass=0.15,
-        high_pass=None,
-        confound_names=confounds,
-    )
-
-    extractor.get_bold(
-        bids_dir=bids_dir, session="002", runs="001", task="rest", pipeline_name=pipeline_name, tr=1.2, n_cores=1
-    )
-
-    parallel_timeseries = copy.deepcopy(extractor.subject_timeseries["01"]["run-001"])
-    extractor.get_bold(bids_dir=bids_dir, session="002", runs="001", task="rest", pipeline_name=pipeline_name, tr=1.2)
-    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 40
-    assert np.array_equal(parallel_timeseries, extractor.subject_timeseries["01"]["run-001"])
-
-
 @pytest.mark.parametrize("use_confounds", [True, False])
 # Ensure correct indices are extracted
 def test_condition(use_confounds):
@@ -512,7 +486,7 @@ def test_acompcor_seperate():
     assert all("a_comp_cor" not in x for x in extractor.signal_clean_info["confound_names"])
 
 
-def test_no_session_w_custom():
+def test_pipeline_name():
     # Written like this to test that .get_bold removes the /
     if sys.platform == "win32":
         pipeline_name = "\\fmriprep_1.0.0\\fmriprep"
@@ -673,7 +647,7 @@ def test_censoring():
     assert np.array_equal(no_condition_timeseries[scan_list, :], extractor.subject_timeseries["01"]["run-001"])
 
 
-def test_censoring_w_sample_mask():
+def test_censoring_with_sample_mask():
     extractor = TimeseriesExtractor(
         parcel_approach=parcel_approach,
         standardize="zscore_sample",
@@ -992,7 +966,7 @@ def test_condition_tr_shift(onset):
 
 
 @pytest.mark.parametrize("shift", [0.5, 1])
-def test_condition_tr_shift(shift):
+def test_slice_time_shift(shift):
     extractor = TimeseriesExtractor(use_confounds=False)
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
     timeseries = copy.deepcopy(extractor.subject_timeseries)
@@ -1056,6 +1030,31 @@ def test_append(setup_environment_2):
     assert not np.array_equal(
         extractor.subject_timeseries["02"]["run-001"], extractor.subject_timeseries["01"]["run-002"]
     )
+
+
+def test_parallel_and_sequential_preprocessing():
+    extractor = TimeseriesExtractor(
+        parcel_approach=parcel_approach,
+        standardize="zscore_sample",
+        use_confounds=True,
+        detrend=False,
+        low_pass=0.15,
+        high_pass=None,
+        confound_names=confounds,
+    )
+
+    # Parallel
+    extractor.get_bold(bids_dir=bids_dir, session="002", task="rest", pipeline_name=pipeline_name, tr=1.2, n_cores=2)
+
+    parallel_timeseries = copy.deepcopy(extractor.subject_timeseries)
+
+    # Sequential
+    extractor.get_bold(bids_dir=bids_dir, session="002", runs="001", task="rest", pipeline_name=pipeline_name, tr=1.2)
+
+    for sub in extractor.subject_timeseries:
+        for run in extractor.subject_timeseries[sub]:
+            assert extractor.subject_timeseries[sub][run].shape[0] == 40
+            assert np.array_equal(parallel_timeseries[sub][run], extractor.subject_timeseries[sub][run])
 
 
 @pytest.mark.parametrize("runs", ["001", ["002"]])
@@ -1126,7 +1125,7 @@ def test_session_error():
 
 
 # Use setup_environment 3
-def test_exclude_sub(setup_environment_3):
+def test_exclude_subjects(setup_environment_3):
     pipeline_name = "fmriprep_1.0.0"
     parcel_approach = {"Schaefer": {"yeo_networks": 7}}
     extractor = TimeseriesExtractor(
@@ -1181,7 +1180,7 @@ def test_removal_of_run_desc(use_confounds, verbose, pipeline_name):
 
 
 @pytest.mark.parametrize("pipeline_name", [None, "fmriprep-1.0.0"])
-def test_skip(pipeline_name):
+def test_skip_no_matching_run_id(pipeline_name):
     pipeline_name = "fmriprep_1.0.0"
     extractor = TimeseriesExtractor(
         parcel_approach=parcel_approach,
@@ -1201,7 +1200,7 @@ def test_skip(pipeline_name):
 
 
 @pytest.mark.parametrize("n_cores, pipeline_name", [(None, None), (2, "fmriprep_1.0.0")])
-def test_append_2(n_cores, pipeline_name):
+def test_append_subjects_with_different_run_ids(n_cores, pipeline_name):
     pipeline_name = "fmriprep_1.0.0"
     parcel_approach = {"Schaefer": {"yeo_networks": 7}}
     extractor = TimeseriesExtractor(
@@ -1221,7 +1220,7 @@ def test_append_2(n_cores, pipeline_name):
 
 
 @pytest.mark.parametrize("high_pass, low_pass", [(None, None), (0.08, None), (None, 0.1), (0.08, 0.1)])
-def test_tr(high_pass, low_pass):
+def test_tr_with_and_without_bandpass(high_pass, low_pass):
     extractor = TimeseriesExtractor(
         parcel_approach=parcel_approach,
         standardize="zscore_sample",
