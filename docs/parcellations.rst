@@ -106,4 +106,4 @@ background label is 0. Therefore, do not add a background label in the "nodes" o
         }
 
 
-Complete examples can be found in the `demos <https://github.com/donishadsmith/neurocaps/tree/stable/demos>`_.
+**NOTE**: Complete examples can be found in the `demos <https://github.com/donishadsmith/neurocaps/tree/stable/demos>`_.
