@@ -27,10 +27,17 @@ schaefer_subject_timeseries = {
 }
 schaefer_subject_timeseries = schaefer_subject_timeseries
 
-# AAL
-extractor_aal = TimeseriesExtractor(parcel_approach={"AAL": {}})
-aal_subject_timeseries = {str(x): {f"run-{y}": np.random.rand(100, 116) for y in range(1, 4)} for x in range(1, 11)}
-extractor_aal.subject_timeseries = aal_subject_timeseries
+# AAL - SPM8
+extractor_aal_SPM8 = TimeseriesExtractor(parcel_approach={"AAL": {"version": "SPM8"}})
+aal_subject_timeseries_SPM8 = {
+    str(x): {f"run-{y}": np.random.rand(100, 116) for y in range(1, 4)} for x in range(1, 11)
+}
+extractor_aal_SPM8.subject_timeseries = aal_subject_timeseries_SPM8
+
+# AAL - 3v2
+extractor_aal_3v2 = TimeseriesExtractor(parcel_approach={"AAL": {"version": "3v2"}})
+aal_subject_timeseries_3v2 = {str(x): {f"run-{y}": np.random.rand(100, 166) for y in range(1, 4)} for x in range(1, 11)}
+extractor_aal_3v2.subject_timeseries = aal_subject_timeseries_3v2
 
 
 # Similar to internal function used in CAP; function is _concatenated_timeseries
@@ -331,7 +338,7 @@ def test_variance_ratio(groups, n_cores):
 
 
 @pytest.mark.parametrize("method", ["silhouette", "davies_bouldin", "variance_ratio"])
-def test_cluster_selection_method_parallel_and_sequential(method):
+def test_methods_parallel_and_sequential_equivalence(method):
     cap_analysis = CAP(parcel_approach=schaefer_parcel_approach)
     cap_analysis.get_caps(
         subject_timeseries=schaefer_subject_timeseries,
@@ -485,7 +492,6 @@ def test_transition_frequency():
     )
     cap_analysis.get_caps(subject_timeseries=schaefer_subject_timeseries, n_clusters=2)
 
-    # Should ignore bad metrix
     df_dict = cap_analysis.calculate_metrics(
         subject_timeseries=schaefer_subject_timeseries, return_df=True, metrics=["transition_frequency"]
     )
@@ -507,7 +513,6 @@ def test_transition_probability():
     )
     cap_analysis.get_caps(subject_timeseries=schaefer_subject_timeseries, n_clusters=2)
 
-    # Should ignore bad metrix
     df_dict = cap_analysis.calculate_metrics(
         subject_timeseries=schaefer_subject_timeseries, return_df=True, metrics=["transition_probability"]
     )
@@ -646,7 +651,8 @@ def check_imgs(values_dict, plot_type="map"):
     [
         (schaefer_subject_timeseries, schaefer_parcel_approach),
         (custom_subject_timeseries, custom_parcel_approach),
-        (aal_subject_timeseries, extractor_aal.parcel_approach),
+        (aal_subject_timeseries_SPM8, extractor_aal_SPM8.parcel_approach),
+        (aal_subject_timeseries_3v2, extractor_aal_3v2.parcel_approach),
     ],
 )
 def test_get_caps_cluster_selection_plot(timeseries, parcel_approach):
@@ -668,7 +674,8 @@ def test_get_caps_cluster_selection_plot(timeseries, parcel_approach):
 @pytest.mark.parametrize(
     "timeseries, parcel_approach",
     [
-        (extractor_aal.subject_timeseries, extractor_aal.parcel_approach),
+        (aal_subject_timeseries_SPM8, extractor_aal_SPM8.parcel_approach),
+        (aal_subject_timeseries_3v2, extractor_aal_3v2.parcel_approach),
         (schaefer_subject_timeseries, schaefer_parcel_approach),
         (custom_subject_timeseries, custom_parcel_approach),
     ],
@@ -723,7 +730,8 @@ def test_cap2plot(timeseries, parcel_approach):
     [
         (schaefer_subject_timeseries, schaefer_parcel_approach),
         (custom_subject_timeseries, custom_parcel_approach),
-        (aal_subject_timeseries, extractor_aal.parcel_approach),
+        (aal_subject_timeseries_SPM8, extractor_aal_SPM8.parcel_approach),
+        (aal_subject_timeseries_3v2, extractor_aal_3v2.parcel_approach),
     ],
 )
 def test_cap2corr(timeseries, parcel_approach):
@@ -756,7 +764,8 @@ def test_cap2corr(timeseries, parcel_approach):
     [
         (schaefer_subject_timeseries, schaefer_parcel_approach),
         (custom_subject_timeseries, custom_parcel_approach),
-        (aal_subject_timeseries, extractor_aal.parcel_approach),
+        (aal_subject_timeseries_SPM8, extractor_aal_SPM8.parcel_approach),
+        (aal_subject_timeseries_3v2, extractor_aal_3v2.parcel_approach),
     ],
 )
 def test_cap2radar(timeseries, parcel_approach):
@@ -827,7 +836,8 @@ def test_caps2surf(remove_files):
     "timeseries, parcel_approach",
     [
         (schaefer_subject_timeseries, extractor_schaefer.parcel_approach),
-        (aal_subject_timeseries, extractor_aal.parcel_approach),
+        (aal_subject_timeseries_SPM8, extractor_aal_SPM8.parcel_approach),
+        (aal_subject_timeseries_3v2, extractor_aal_3v2.parcel_approach),
         (custom_subject_timeseries, custom_parcel_approach),
     ],
 )
@@ -930,9 +940,12 @@ def test_check_raise_error():
             CAP._raise_error(i)
 
 
-def test_chain_CAP():
+def test_method_chaining():
     a = {"show_figs": False}
     cap_analysis = CAP(schaefer_parcel_approach)
     cap_analysis.get_caps(subject_timeseries=schaefer_subject_timeseries, n_clusters=2).caps2plot(**a).caps2radar(
         **a
     ).caps2niftis(tmp_dir.name)
+
+    # Should not be None
+    assert cap_analysis.cosine_similarity

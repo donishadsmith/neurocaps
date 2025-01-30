@@ -157,7 +157,7 @@ def test_merge_dicts_pkl(return_reduced_dicts, return_merged_dicts):
             assert all(os.path.getsize(file) > 0 for file in files)
             [os.remove(x) for x in files]
 
-            # Use no name
+            # Use no name to check default name
             all_dicts = merge_dicts(
                 [
                     os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"),
