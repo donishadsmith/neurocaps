@@ -463,24 +463,6 @@ Clustering [GROUP: All Subjects]: 100%|█████████████�
 | CAP-1 | 0.535294 | 0.464706 |
 | CAP-2 | 0.085714 | 0.914286 |
 
-## Testing
-This package was tested using a closed dataset as well as a modified version of a single-subject open dataset to test the `TimeseriesExtractor` function on GitHub Actions. The open dataset provided by [Laumann & Poldrack](https://openfmri.org/dataset/ds000031/) and used in [Laumann et al., 2015](https://doi.org/10.1016/j.neuron.2015.06.037)[^7]. was also utilized. This data was obtained from the OpenfMRI database, accession number ds000031.
-
-Modifications to the data included:
-
-- Truncating the preprocessed BOLD data and confounds from 448 timepoints to 40 timepoints.
-- Only including session 002 data.
-- Adding a dataset_description.json file to the fmriprep folder.
-- Excluding the nii.gz file in the root BIDS folder.
-- Retaining only the mask, truncated preprocessed BOLD file, and truncated confounds file in the fmriprep folder.
-- Slightly changing the naming style of the mask, preprocessed BOLD file, and confounds file in the fmriprep folder to conform with the naming conventions of modern fmriprep outputs.
-- Testing with custom parcellations was done using the HCPex parcellation, an extension of the HCP (Human Connectome Project) parcellation, which adds 66 subcortical areas. This original atlas can be downloaded from.
-
-Testing with custom parcellations was done with the HCPex parcellation, an extension of the HCP (Human Connectome Project) parcellation, which adds 66 subcortical areas [^8], [^9]. This original atlas can be downloaded from https://github.com/wayalan/HCPex.
-
-## Contributing
-Please refer the [contributing guidelines](https://github.com/donishadsmith/neurocaps/blob/test/CONTRIBUTING.md) on how to contribute to neurocaps.
-
 ## Acknowledgements
 Neurocaps relies on several popular data processing, machine learning, neuroimaging, and visualization
 [packages](https://neurocaps.readthedocs.io/en/stable/#dependencies).
@@ -492,6 +474,9 @@ in other neuroimaging Python packages, specically:
 dynamic functionality methods.
 - 62442katieb's [idconn](https://github.com/62442katieb/IDConn), a pipeline for assessing individual differences in
 resting-state or task-based functional connectivity.
+
+## Contributing
+Please refer the [contributing guidelines](https://github.com/donishadsmith/neurocaps/blob/test/CONTRIBUTING.md) on how to contribute to neurocaps.
 
 ## References
 [^1]: Liu, X., Zhang, N., Chang, C., & Duyn, J. H. (2018). Co-activation patterns in resting-state fMRI signals. NeuroImage, 180, 485–494. https://doi.org/10.1016/j.neuroimage.2018.01.041
@@ -506,9 +491,3 @@ Disrupted brain state dynamics in opioid and alcohol use disorder: attenuation b
 [^5]: Kupis, L., Romero, C., Dirks, B., Hoang, S., Parladé, M. V., Beaumont, A. L., Cardona, S. M., Alessandri, M., Chang, C., Nomi, J. S., & Uddin, L. Q. (2020). Evoked and intrinsic brain network dynamics in children with autism spectrum disorder. NeuroImage: Clinical, 28, 102396. https://doi.org/10.1016/j.nicl.2020.102396
 
 [^6]: Hyunwoo Gu and Joonwon Lee and Sungje Kim and Jaeseob Lim and Hyang-Jung Lee and Heeseung Lee and Minjin Choe and Dong-Gyu Yoo and Jun Hwan (Joshua) Ryu and Sukbin Lim and Sang-Hun Lee (2024). Discrimination-Estimation Task. OpenNeuro. [Dataset] doi: https://doi.org/10.18112/openneuro.ds005381.v1.0.0
-
-[^7]: Laumann, T. O., Gordon, E. M., Adeyemo, B., Snyder, A. Z., Joo, S. J., Chen, M. Y., Gilmore, A. W., McDermott, K. B., Nelson, S. M., Dosenbach, N. U., Schlaggar, B. L., Mumford, J. A., Poldrack, R. A., & Petersen, S. E. (2015). Functional system and areal organization of a highly sampled individual human brain. Neuron, 87(3), 657–670. https://doi.org/10.1016/j.neuron.2015.06.037
-
-[^8]: Huang, CC., Rolls, E.T., Feng, J. et al. An extended Human Connectome Project multimodal parcellation atlas of the human cortex and subcortical areas. Brain Struct Funct 227, 763–778 (2022). https://doi.org/10.1007/s00429-021-02421-6
-
-[^9]: Huang, C.-C., Rolls, E. T., Hsu, C.-C. H., Feng, J., & Lin, C.-P. (2021). Extensive Cortical Connectivity of the Human Hippocampal Memory System: Beyond the “What” and “Where” Dual Stream Model. Cerebral Cortex, 31(10), 4652–4669. https://doi.org/10.1093/cercor/bhab113
