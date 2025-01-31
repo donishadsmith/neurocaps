@@ -36,16 +36,25 @@ For example, placing an asterisk after cosine (cosine*) will utilize all paramet
 
     bids_dir = os.path.join(dir, "ds000031_R1.0.4_ses001-022/ds000031_R1.0.4")
 
-    extractor.get_bold(bids_dir=bids_dir, session="002", task="rest", pipeline_name="fmriprep_1.0.0/fmriprep", tr=1.2)
+    extractor.get_bold(
+        bids_dir=bids_dir,
+        session="002",
+        task="rest",
+        pipeline_name="fmriprep_1.0.0/fmriprep",
+        tr=1.2,
+        progress_bar=True,  # Parameter available in versions >= 0.21.5
+    )
 
 .. rst-class:: sphx-glr-script-out
 
     .. code-block:: none
 
-        2024-11-02 20:35:47,797 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: Cosine*, aComp*, Rot*.
-        2024-11-02 20:35:48,898 neurocaps.extraction.timeseriesextractor [INFO] BIDS Layout: ...0.4_ses001-022\ds000031_R1.0.4 | Subjects: 1 | Sessions: 1 | Runs: 1
-        2024-11-02 20:35:48,941 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] Preparing for Timeseries Extraction using [FILE: sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz].
-        2024-11-02 20:35:48,946 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] The following confounds will be used for nuisance regression: Cosine00, Cosine01, Cosine02, Cosine03, Cosine04, Cosine05, Cosine06, aCompCor00, aCompCor01, aCompCor02, aCompCor03, aCompCor04, aCompCor05, RotX, RotY, RotZ.
+        2025-01-31 13:21:59,933 neurocaps._utils.check_parcel_approach [WARNING] 'yeo_networks' not specified in `parcel_approach`. Defaulting to 7 networks.
+        2025-01-31 13:21:59,933 neurocaps._utils.check_parcel_approach [WARNING] 'resolution_mm' not specified in `parcel_approach`. Defaulting to 1mm.
+        2025-01-31 13:21:59,938 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: Cosine*, aComp*, Rot*.
+        2025-01-31 13:22:11,745 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] Preparing for Timeseries Extraction using [FILE: sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz].
+        2025-01-31 13:22:11,752 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] The following confounds will be used for nuisance regression: Cosine00, Cosine01, Cosine02, Cosine03, Cosine04, Cosine05, Cosine06, aCompCor00, aCompCor01, aCompCor02, aCompCor03, aCompCor04, aCompCor05, RotX, RotY, RotZ.
+        Processing Subjects: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:05<00:00,  5.73s/it]
 
 .. code-block:: python
 

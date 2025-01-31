@@ -263,22 +263,24 @@ extractor.get_bold(
     session="2",
     n_cores=None,
     verbose=True,
+    progress_bar=False,  # Parameter available in version >=0.21.5
 ).timeseries_to_pickle("neurocaps_demo/derivatives", "timeseries.pkl")
 ```
 **Output:**
 ```
-2024-12-31 19:06:58,729 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: cosine*, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z.
-2024-12-31 19:06:58,913 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-1_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
-2024-12-31 19:06:58,926 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z, a_comp_cor_00, a_comp_cor_01, a_comp_cor_33, a_comp_cor_34.
-2024-12-31 19:07:10,165 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Nuisance regression completed; extracting [CONDITION: late].
-2024-12-31 19:07:10,205 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-2_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
-2024-12-31 19:07:10,219 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z, a_comp_cor_00, a_comp_cor_01, a_comp_cor_100, a_comp_cor_101.
-2024-12-31 19:07:21,070 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] Nuisance regression completed; extracting [CONDITION: late].
-2024-12-31 19:07:21,107 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 1] Preparing for Timeseries Extraction using [FILE: sub-0006_ses-2_task-DET_run-1_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
-2024-12-31 19:07:21,120 neurocaps._utils.extraction.extract_timeseries [WARNING] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 1] Timeseries Extraction Skipped: Run flagged due to more than 20.0% of the volumes exceeding the framewise displacement threshold of 0.35. Percentage of volumes exceeding the threshold limit is 23.636363636363637% for [CONDITION: late].
-2024-12-31 19:07:21,121 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 2] Preparing for Timeseries Extraction using [FILE: sub-0006_ses-2_task-DET_run-2_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
-2024-12-31 19:07:21,135 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 2] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z, a_comp_cor_00, a_comp_cor_01, a_comp_cor_24, a_comp_cor_25.
-2024-12-31 19:07:31,746 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 2] Nuisance regression completed; extracting [CONDITION: late].
+2025-01-31 13:01:23,856 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: cosine*, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z.
+2025-01-31 13:01:28,538 neurocaps.extraction.timeseriesextractor [INFO] BIDS Layout: ...s\demos\testing\neurocaps_demo | Subjects: 2 | Sessions: 2 | Runs: 4
+2025-01-31 13:01:28,788 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-1_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
+2025-01-31 13:01:28,854 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z, a_comp_cor_00, a_comp_cor_01, a_comp_cor_33, a_comp_cor_34.
+2025-01-31 13:01:43,765 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Nuisance regression completed; extracting [CONDITION: late].
+2025-01-31 13:01:43,823 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-2_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
+2025-01-31 13:01:43,841 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z, a_comp_cor_00, a_comp_cor_01, a_comp_cor_100, a_comp_cor_101.
+2025-01-31 13:01:58,269 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] Nuisance regression completed; extracting [CONDITION: late].
+2025-01-31 13:01:58,333 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 1] Preparing for Timeseries Extraction using [FILE: sub-0006_ses-2_task-DET_run-1_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
+2025-01-31 13:01:58,344 neurocaps._utils.extraction.extract_timeseries [WARNING] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 1] Timeseries Extraction Skipped: Run flagged due to more than 20.0% of the volumes exceeding the framewise displacement threshold of 0.35. Percentage of volumes exceeding the threshold limit is 21.818181818181817% for [CONDITION: late].
+2025-01-31 13:01:58,344 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 2] Preparing for Timeseries Extraction using [FILE: sub-0006_ses-2_task-DET_run-2_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
+2025-01-31 13:01:58,371 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 2] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z, a_comp_cor_00, a_comp_cor_01, a_comp_cor_24, a_comp_cor_25.
+2025-01-31 13:02:12,630 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 2] Nuisance regression completed; extracting [CONDITION: late].
 ```
 
 ```python
@@ -321,6 +323,7 @@ outputs = cap_analysis.calculate_metrics(
     return_df=True,
     metrics=["temporal_fraction", "persistence"],
     continuous_runs=True,
+    progress_bar=False,
 )
 
 # Subject 0006 only has run-2 data since run-1 was flagged during timeseries extraction
@@ -343,7 +346,7 @@ kwargs = {
     "color_range": (-1, 1),
 }
 
-cap_analysis.caps2surf(**kwargs)
+cap_analysis.caps2surf(progress_bar=False, **kwargs)
 ```
 **Plot Outputs:**
 
@@ -410,6 +413,7 @@ cap_analysis.get_caps(
     standardize=True,
     show_figs=True,
     n_clusters=range(2, 6),
+    progress_bar=True,
 )
 
 outputs = cap_analysis.calculate_metrics(
@@ -417,6 +421,7 @@ outputs = cap_analysis.calculate_metrics(
     return_df=True,
     metrics=["transition_probability"],
     continuous_runs=True,
+    progress_bar=False,
 )
 
 print(outputs["transition_probability"]["All Subjects"])
@@ -440,14 +445,17 @@ print(trans_outputs["All Subjects"])
 ```
 **Outputs:**
 ```
-2024-12-31 16:51:03,148 neurocaps.analysis.cap [INFO] [GROUP: All Subjects | METHOD: silhouette] Optimal cluster size is 2.
+Clustering [GROUP: All Subjects]: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:00<00:00, 22.42it/s]
+2025-01-31 13:03:45,535 neurocaps.analysis.cap [INFO] [GROUP: All Subjects | METHOD: silhouette] Optimal cluster size is 2.
 ```
+
+<img src="assets/silhouette.png" width=70% height=70%>
+
 | Subject_ID | Group | Run | 1.1 | 1.2 | 2.1 | 2.2 |
 | --- | --- | --- | --- | --- | --- | --- |
 | 0004 | All Subjects | run-continuous | 0.470588 | 0.529412 | 0.114286 | 0.885714 |
 | 0006 | All Subjects | run-2 | 0.600000 | 0.400000 | 0.057143 | 0.942857 |
 
-<img src="assets/silhouette.png" width=70% height=70%>
 <img src="assets/transprob.png" width=70% height=70%>
 
 | From/To | CAP-1 | CAP-2 |

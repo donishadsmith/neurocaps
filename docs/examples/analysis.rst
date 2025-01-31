@@ -9,7 +9,6 @@ Performing CAPs on All Subjects
 .. code-block:: python
 
     import numpy as np
-    from neurocaps.extraction import TimeseriesExtractor
     from neurocaps.analysis import CAP
 
     # Extracting timseries
@@ -19,7 +18,7 @@ Performing CAPs on All Subjects
     subject_timeseries = {str(x): {f"run-{y}": np.random.rand(100, 100) for y in range(1, 4)} for x in range(1, 11)}
 
     # Initialize CAP class
-    cap_analysis = CAP()
+    cap_analysis = CAP(parcel_approach=parcel_approach)
 
     # Get CAPs
     cap_analysis.get_caps(
@@ -28,13 +27,15 @@ Performing CAPs on All Subjects
         cluster_selection_method="elbow",
         show_figs=True,
         step=2,
+        progress_bar=True,  # Available in versions >= 0.21.5
     )
 
 .. rst-class:: sphx-glr-script-out
 
     .. code-block:: none
 
-        2024-11-02 21:02:28,145 neurocaps.analysis.cap [INFO] [GROUP: All Subjects | METHOD: elbow] - Optimal cluster size is 6.
+        Clustering [GROUP: All Subjects]: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 9/9 [00:00<00:00, 20.38it/s]
+        2025-01-31 13:28:43,571 neurocaps.analysis.cap [INFO] [GROUP: All Subjects | METHOD: elbow] Optimal cluster size is 6.
 
 .. image:: embed/All_Subjects_elbow.png
     :width: 600
@@ -51,13 +52,15 @@ Performing CAPs on Groups
         cluster_selection_method="silhouette",
         show_figs=True,
         step=2,
+        progress_bar=True,
     )
 
 .. rst-class:: sphx-glr-script-out
 
     .. code-block:: none
 
-        2024-11-02 21:02:28,322 neurocaps.analysis.cap [INFO] [GROUP: A | METHOD: silhouette] - Optimal cluster size is 2.
+        Clustering [GROUP: A]: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 19/19 [00:01<00:00, 18.71it/s]
+        2025-01-31 13:29:54,234 neurocaps.analysis.cap [INFO] [GROUP: A | METHOD: silhouette] Optimal cluster size is 2.
 
 .. image:: embed/A_silhouette.png
     :width: 600
@@ -66,7 +69,8 @@ Performing CAPs on Groups
 
     .. code-block:: none
 
-        2024-11-02 21:02:28,541 neurocaps.analysis.cap [INFO] [GROUP: B | METHOD: silhouette] - Optimal cluster size is 2.
+        Clustering [GROUP: B]: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 19/19 [00:01<00:00, 12.48it/s]
+        2025-01-31 13:29:57,757 neurocaps.analysis.cap [INFO] [GROUP: B | METHOD: silhouette] Optimal cluster size is 2.
 
 .. image:: embed/B_silhouette.png
     :width: 600
@@ -80,9 +84,16 @@ Calculate Metrics
         return_df=True,
         metrics=["temporal_fraction", "counts", "transition_probability"],
         continuous_runs=True,
+        progress_bar=True,
     )
 
     print(df_dict["temporal_fraction"])
+
+.. rst-class:: sphx-glr-script-out
+
+    .. code-block:: none
+
+        Computing Metrics for Subjects: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10/10 [00:00<00:00, 159.78it/s]
 
 .. csv-table::
    :file: embed/temporal_fraction.csv
@@ -171,10 +182,23 @@ Creating Surface Plots
     custom_cmap = LinearSegmentedColormap.from_list("custom_cold_hot", colors, N=256)
 
     # Apply custom cmap to surface plots
-    cap_analysis.caps2surf(cmap=custom_cmap, size=(500, 100), layout="row")
+    cap_analysis.caps2surf(progress_bar=True, cmap=custom_cmap, size=(500, 100), layout="row")
+
+.. rst-class:: sphx-glr-script-out
+
+    .. code-block:: none
+
+        Generating Surface Plots [GROUP: A]: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2/2 [00:07<00:00,  3.91s/it]
 
 .. image:: embed/All_Subjects_CAP-1_surface_plot.png
     :width: 800
+
+.. rst-class:: sphx-glr-script-out
+
+    .. code-block:: none
+
+        Generating Surface Plots [GROUP: B]: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2/2 [00:04<00:00,  2.12s/it]
+
 .. image:: embed/All_Subjects_CAP-2_surface_plot.png
     :width: 800
 
@@ -202,7 +226,6 @@ Plotting CAPs to Radar
     }
 
     colors = {"High Amplitude": "red", "Low Amplitude": "blue"}
-
 
     kwargs = {
         "radialaxis": radial,
