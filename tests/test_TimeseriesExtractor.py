@@ -1209,7 +1209,7 @@ def test_session_error():
     )
 
     # Should raise value error since sub-01 will have 2 sessions detected
-    with pytest.raises(ValueError, match=error_msg):
+    with pytest.raises(ValueError, match=re.escape(error_msg)):
         extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
 
 
