@@ -902,13 +902,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             if "ses-" in os.path.basename(nifti):
                 ses_list.append(re.search(r"ses-(\S+?)[-_]", os.path.basename(nifti))[0][:-1])
 
-        ses_list = set(ses_list)
+        ses_list = sorted(set(ses_list))
 
         if len(ses_list) > 1:
             raise ValueError(
                 f"{subject_header}"
                 "`session` not specified but subject has more than one session: "
-                f"{', '.join(ses_list)}\n" + "In order to continue timeseries extraction, the "
+                f"{', '.join(ses_list)}. In order to continue timeseries extraction, the "
                 "specific session to extract must be specified using `session`."
             )
 

@@ -624,6 +624,7 @@ class CAP(_CAPGetter):
     def _get_runs(requested_runs, curr_runs):
         if requested_runs:
             requested_runs = [f"run-{run}" for run in requested_runs]
+
         runs = [run for run in requested_runs if run in curr_runs] if requested_runs else curr_runs
         miss_runs = list(set(requested_runs) - set(runs)) if requested_runs else None
 
@@ -1234,8 +1235,8 @@ class CAP(_CAPGetter):
 
     def _build_prediction_dict(self, subject_timeseries, runs, continuous_runs):
         for subj_id, group in self._subject_table.items():
-            # Initialize predicted timeseries dict if first subject in table
-            if subj_id == list(self._subject_table)[0]:
+            # Initialize predicted timeseries dictionary if it does not exist
+            if "predicted_subject_timeseries" not in locals():
                 predicted_subject_timeseries = {}
 
             predicted_subject_timeseries[subj_id] = {}
@@ -1274,6 +1275,7 @@ class CAP(_CAPGetter):
                         predicted_continuous_timeseries = np.hstack(
                             [predicted_continuous_timeseries, prediction_vector]
                         )
+
             if run_id == "run-continuous":
                 predicted_subject_timeseries[subj_id].update({run_id: predicted_continuous_timeseries})
 

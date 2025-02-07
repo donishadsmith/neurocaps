@@ -94,7 +94,7 @@ class _CAPGetter:
 
     @property
     def outer_products(self) -> Union[dict[str, dict[str, np.array]], None]:
-        return self._outer_products if hasattr(self, "_outer_product") else None
+        return self._outer_products if hasattr(self, "_outer_products") else None
 
     @property
     def subject_table(self) -> Union[dict[str, str], None]:

@@ -323,6 +323,8 @@ def test_extraction(parcel_approach, use_confounds, name):
 
     extractor.get_bold(bids_dir=bids_dir, session="002", runs="001", task="rest", pipeline_name=pipeline_name, tr=1.2)
 
+    assert "01" in extractor._subject_ids
+
     # Checking expected shape for rest
     assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == shape
     assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 40
@@ -1119,6 +1121,8 @@ def test_parallel_and_sequential_preprocessing_equivalence():
     # Parallel
     extractor.get_bold(bids_dir=bids_dir, session="002", task="rest", pipeline_name=pipeline_name, tr=1.2, n_cores=2)
 
+    assert extractor.n_cores == 2
+
     parallel_timeseries = copy.deepcopy(extractor.subject_timeseries)
 
     # Sequential
@@ -1194,8 +1198,18 @@ def test_session_error():
         confound_names=confounds,
     )
 
+    subject_header = f"[SUBJECT: 01 | SESSION: None | TASK: rest] "
+    ses_list = ["ses-002", "ses-003"]
+
+    error_msg = (
+        f"{subject_header}"
+        "`session` not specified but subject has more than one session: "
+        f"{', '.join(ses_list)}. In order to continue timeseries extraction, the "
+        "specific session to extract must be specified using `session`."
+    )
+
     # Should raise value error since sub-01 will have 2 sessions detected
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=error_msg):
         extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
 
 
@@ -1546,3 +1560,32 @@ def test_method_chaining():
     pickle_file = glob.glob(os.path.join(tmp_dir.name, "subject_timeseries.pkl"))
     assert len(pickle_file) == 1
     os.remove(pickle_file[0])
+
+
+def test_setters():
+    extractor = TimeseriesExtractor(parcel_approach={"AAL": {}})
+    extractor2 = TimeseriesExtractor()
+
+    # Set new parcel_approach
+    assert "AAL" in extractor.parcel_approach
+
+    extractor.parcel_approach = extractor2.parcel_approach
+
+    assert "Schaefer" in extractor.parcel_approach
+
+    # Check space
+    assert "MNI152NLin2009cAsym" in extractor.space
+    extractor.space = "New Space"
+
+    assert extractor.space == "New Space"
+
+    # Check subject timeseries setting using pickle
+    schaefer_subject_timeseries = {
+        str(x): {f"run-{y}": np.random.rand(100, 400) for y in range(1, 4)} for x in range(1, 11)
+    }
+
+    joblib.dump(schaefer_subject_timeseries, "saved_timeseries.pkl")
+
+    extractor.subject_timeseries = "saved_timeseries.pkl"
+
+    assert extractor.subject_timeseries["1"]["run-1"].shape == (100, 400)

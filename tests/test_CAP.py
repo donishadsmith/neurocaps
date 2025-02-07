@@ -118,6 +118,8 @@ def remove_files():
 def test_without_groups_and_without_cluster_selection(standardize):
     cap_analysis = CAP(parcel_approach=schaefer_parcel_approach)
     cap_analysis.get_caps(subject_timeseries=schaefer_subject_timeseries, n_clusters=2, standardize=standardize)
+    assert cap_analysis.standardize == standardize
+    assert cap_analysis.n_clusters == 2
     assert cap_analysis.caps["All Subjects"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["All Subjects"]["CAP-2"].shape == (100,)
     assert len(cap_analysis.caps["All Subjects"]) == len(np.unique(cap_analysis.kmeans["All Subjects"].labels_))
@@ -150,6 +152,7 @@ def test_subject_skipping():
     cap_analysis = CAP(parcel_approach=schaefer_parcel_approach)
     cap_analysis.get_caps(subject_timeseries=subject_timeseries, runs=1, n_clusters=2)
 
+    assert cap_analysis.runs == [1]
     assert cap_analysis.concatenated_timeseries["All Subjects"].shape == (900, 100)
 
     df_dict = cap_analysis.calculate_metrics(subject_timeseries=subject_timeseries, runs=1, metrics="counts")
@@ -236,6 +239,7 @@ def test_elbow(groups, n_cores):
             )
 
             assert kneedle.elbow == cap_analysis.optimal_n_clusters[group]
+            assert cap_analysis.cluster_selection_method == "elbow"
             assert cap_analysis.cluster_scores["Cluster_Selection_Method"] == "elbow"
             assert (
                 cap_analysis.cluster_scores["Scores"][group][cap_analysis.optimal_n_clusters[group]]
@@ -268,6 +272,7 @@ def test_silhouette(groups, n_cores):
     for group in groups:
         assert all(elem > 0 or elem < 0 for elem in cap_analysis.cluster_scores["Scores"][group].values())
         assert all(-1 <= elem <= 1 for elem in cap_analysis.cluster_scores["Scores"][group].values())
+        assert cap_analysis.cluster_selection_method == "silhouette"
         assert cap_analysis.cluster_scores["Cluster_Selection_Method"] == "silhouette"
         # Maximum value most optimal
         assert (
@@ -293,7 +298,10 @@ def test_davies_bouldin(groups, n_cores):
         n_cores=n_cores,
     )
 
+    assert cap_analysis.n_cores == n_cores
+
     for group in groups:
+        assert cap_analysis.cluster_selection_method == "davies_bouldin"
         assert cap_analysis.cluster_scores["Cluster_Selection_Method"] == "davies_bouldin"
         # Minimum value most optimal
         assert (
@@ -322,6 +330,7 @@ def test_variance_ratio(groups, n_cores):
     )
 
     for group in groups:
+        assert cap_analysis.cluster_selection_method == "variance_ratio"
         assert cap_analysis.cluster_scores["Cluster_Selection_Method"] == "variance_ratio"
         # Maximum value most optimal
         assert (
@@ -616,6 +625,38 @@ def test_calculate_metrics_using_pickle():
     [os.remove(x) for x in csv_files]
 
 
+def test_subject_setter():
+    cap_analysis = CAP(
+        parcel_approach=schaefer_parcel_approach, groups={"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]}
+    )
+    cap_analysis.get_caps(subject_timeseries=schaefer_subject_timeseries, n_clusters=2)
+
+    metrics = ["temporal_fraction"]
+
+    df_shape = cap_analysis.calculate_metrics(
+        subject_timeseries=os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"),
+        metrics=metrics,
+        continuous_runs=True,
+    )["temporal_fraction"].shape
+
+    new_timeseries = copy.deepcopy(schaefer_subject_timeseries)
+    new_timeseries.update({"12": {f"run-{y}": np.random.rand(100, 100) for y in range(1, 4)}})
+
+    subject_table = copy.deepcopy(cap_analysis.subject_table)
+    subject_table.update({"12": "A"})
+
+    # Set
+    cap_analysis.subject_table = subject_table
+
+    new_df_shape = cap_analysis.calculate_metrics(
+        subject_timeseries=new_timeseries,
+        metrics=metrics,
+        continuous_runs=True,
+    )["temporal_fraction"].shape
+
+    assert df_shape[0] + 1 == new_df_shape[0]
+
+
 def check_imgs(values_dict, plot_type="map"):
     if plot_type == "map":
         heatmap_files = glob.glob(os.path.join(tmp_dir.name, "*heatmap*.png"))
@@ -723,6 +764,18 @@ def test_cap2plot(timeseries, parcel_approach):
         kwargs["hemisphere_labels"] = True
         cap_analysis.caps2plot(**kwargs)
         check_imgs(values_dict={"heatmap": 2, "outer": 2})
+
+    parcel_name = list(parcel_approach.keys())[0]
+    if parcel_name != "Custom":
+        parcel_dict = cap_analysis.parcel_approach
+        nodes_dim = (len(parcel_dict[parcel_name]["nodes"]), len(parcel_dict[parcel_name]["nodes"]))
+        regions_dim = (len(parcel_dict[parcel_name]["regions"]),)
+    else:
+        nodes_dim = (426, 426)
+        regions_dim = (23,)
+
+    assert cap_analysis.outer_products["All Subjects"]["CAP-1"].shape == nodes_dim
+    assert cap_analysis.region_caps["All Subjects"]["CAP-1"].shape == regions_dim
 
 
 @pytest.mark.parametrize(
