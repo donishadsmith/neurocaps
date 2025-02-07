@@ -16,6 +16,8 @@ improvements/enhancements. All fixes and modifications are backwards compatible.
 ## [0.21.6] - 2025-02-06
 ### 🐛 Fixes
 - `CAP.outer_products` property now no longer returns None when it is not None.
+### 🐳 Docker
+- Updated image in DockerHub to latest version.
 
 ## [0.21.5] - 2025-01-27
 ### 🚀 New/Added
