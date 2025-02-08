@@ -32,6 +32,8 @@ def test_merge_dicts(return_reduced_dicts, return_merged_dicts):
     )
 
     if return_reduced_dicts and return_merged_dicts:
+        # Should equal minimum intersected subjects
+        assert len(all_dicts["merged"]) == len(subject_timeseries_2)
         assert all_dicts["dict_0"].keys() == all_dicts["dict_1"].keys() == all_dicts["merged"].keys()
         assert not np.array_equal(all_dicts["dict_0"]["1"]["run-1"], all_dicts["dict_1"]["1"]["run-1"])
 

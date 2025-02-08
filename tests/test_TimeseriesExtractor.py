@@ -282,6 +282,60 @@ def test_validate_init_params():
     TimeseriesExtractor._validate_init_params("fd_threshold", fd_threshold)
 
 
+def test_default_confounds():
+    extractor = TimeseriesExtractor()
+
+    default_confounds = [
+        "cosine*",
+        "trans_x",
+        "trans_x_derivative1",
+        "trans_y",
+        "trans_y_derivative1",
+        "trans_z",
+        "trans_z_derivative1",
+        "rot_x",
+        "rot_x_derivative1",
+        "rot_y",
+        "rot_y_derivative1",
+        "rot_z",
+        "rot_z_derivative1",
+        "a_comp_cor_00",
+        "a_comp_cor_01",
+        "a_comp_cor_02",
+        "a_comp_cor_03",
+        "a_comp_cor_04",
+        "a_comp_cor_05",
+    ]
+
+    assert "confound_names" in extractor.signal_clean_info
+    assert extractor.signal_clean_info["confound_names"] == default_confounds
+
+    # With high pass
+    extractor = TimeseriesExtractor(high_pass=0.008)
+
+    default_confounds_high_pass = [
+        "trans_x",
+        "trans_x_derivative1",
+        "trans_y",
+        "trans_y_derivative1",
+        "trans_z",
+        "trans_z_derivative1",
+        "rot_x",
+        "rot_x_derivative1",
+        "rot_y",
+        "rot_y_derivative1",
+        "rot_z",
+        "rot_z_derivative1",
+    ]
+
+    assert "confound_names" in extractor.signal_clean_info
+    assert extractor.signal_clean_info["confound_names"] == default_confounds_high_pass
+
+    # No confounds
+    extractor = TimeseriesExtractor(use_confounds=False)
+    assert "confound_names" not in extractor.signal_clean_info
+
+
 def test_parcel_approach_when_no_keys_specified():
     keys = ["maps", "nodes", "regions"]
     # Schaefer
@@ -1569,9 +1623,31 @@ def test_setters():
     # Set new parcel_approach
     assert "AAL" in extractor.parcel_approach
 
+    # Check parcel approach setter
     extractor.parcel_approach = extractor2.parcel_approach
-
     assert "Schaefer" in extractor.parcel_approach
+
+    # Check parcel approach error
+    error_msg = (
+        "Please include a valid `parcel_approach` in one of the following dictionary formats for 'Schaefer', "
+        "'AAL', or 'Custom': {'Schaefer': {'n_rois': 400, 'yeo_networks': 7, 'resolution_mm': 1}, "
+        "'AAL': {'version': 'SPM12'}, 'Custom': {'maps': '/location/to/parcellation.nii.gz', "
+        "'nodes': ['LH_Vis1', 'LH_Vis2', 'LH_Hippocampus', 'RH_Vis1', 'RH_Vis2', 'RH_Hippocampus'], "
+        "'regions': {'Vis': {'lh': [0, 1], 'rh': [3, 4]}, 'Hippocampus': {'lh': [2], 'rh': [5]}}}}"
+    )
+
+    with pytest.raises(TypeError, match=re.escape(error_msg)):
+        extractor.parcel_approach = None
+
+    # Check parcel approach pickle
+    # Get AAL
+    extractor = TimeseriesExtractor(parcel_approach={"AAL": {}})
+    joblib.dump(extractor.parcel_approach, "test_parcel_setter_AAL.pkl")
+    # Get Schaefer; the default
+    extractor = TimeseriesExtractor()
+    # Set new parcel approach using pkl
+    extractor.parcel_approach = "test_parcel_setter_AAL.pkl"
+    assert "AAL" in extractor.parcel_approach
 
     # Check space
     assert "MNI152NLin2009cAsym" in extractor.space

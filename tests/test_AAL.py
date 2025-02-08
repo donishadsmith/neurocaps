@@ -15,6 +15,7 @@ def test_aal_indices_ordering():
         assert all([nums[i] < nums[i + 1] for i in range(len(nums) - 1)])
         assert np.array_equal(np.array(nums), labels)
 
+    # Check label ordering in each version
     versions = ["3v2", "SPM12", "SPM8", "SPM5"]
 
     for version in versions:
