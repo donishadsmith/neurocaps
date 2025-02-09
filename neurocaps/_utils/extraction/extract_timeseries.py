@@ -209,7 +209,7 @@ def _extract_timeseries(
                 continue
 
             # Get condition indices
-            Data.scans = _get_condition(Data, condition_df, LG)
+            Data.scans = _get_condition(Data, condition_df)
 
             if Data.censor_vols:
                 Data.scans, n = _filter_condition(Data, LG)
@@ -412,7 +412,7 @@ def _flag(n_censor, n, scrub_lim):
 
 
 # Get event condition
-def _get_condition(Data, condition_df, LG):
+def _get_condition(Data, condition_df):
     scans = []
 
     # Convert times into scan numbers to obtain the scans taken when the participant was exposed to the
