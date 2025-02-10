@@ -15,6 +15,7 @@ from tqdm.auto import tqdm
 
 from .._utils import (
     _CAPGetter,
+    _PlotDefaults,
     _cap2statmap,
     _check_kwargs,
     _create_display,
@@ -716,9 +717,8 @@ class CAP(_CAPGetter):
             "variance_ratio": "Variance Ratio Score",
         }
 
-        # Defaults
-        defaults = {"dpi": 300, "figsize": (8, 6), "step": None, "bbox_inches": "tight"}
-        plot_dict = _check_kwargs(defaults, **kwargs)
+        # Create plot dictionary
+        plot_dict = _check_kwargs(_PlotDefaults.get_caps(), **kwargs)
 
         y_title = y_titles[method]
 
@@ -1558,40 +1558,7 @@ class CAP(_CAPGetter):
             self._create_regions(parcellation_name=parcellation_name)
 
         # Create plot dictionary
-        defaults = {
-            "dpi": 300,
-            "figsize": (8, 6),
-            "fontsize": 14,
-            "hspace": 0.2,
-            "wspace": 0.2,
-            "xticklabels_size": 8,
-            "yticklabels_size": 8,
-            "cbarlabels_size": 8,
-            "shrink": 0.8,
-            "nrow": None,
-            "ncol": None,
-            "suptitle_fontsize": 20,
-            "tight_layout": True,
-            "rect": [0, 0.03, 1, 0.95],
-            "sharey": True,
-            "xlabel_rotation": 0,
-            "ylabel_rotation": 0,
-            "annot": False,
-            "annot_kws": None,
-            "fmt": ".2g",
-            "linewidths": 0,
-            "linecolor": "black",
-            "cmap": "coolwarm",
-            "edgecolors": None,
-            "alpha": None,
-            "hemisphere_labels": False,
-            "borderwidths": 0,
-            "vmin": None,
-            "vmax": None,
-            "bbox_inches": "tight",
-        }
-
-        plot_dict = _check_kwargs(defaults, **kwargs)
+        plot_dict = _check_kwargs(_PlotDefaults.caps2plot(), **kwargs)
 
         if plot_dict["hemisphere_labels"] is True:
             if "nodes" not in visual_scope:
@@ -2165,31 +2132,7 @@ class CAP(_CAPGetter):
             LG.warning("`suffix_filename` supplied but no `output_dir` specified. Files will not be saved.")
 
         # Create plot dictionary
-        defaults = {
-            "dpi": 300,
-            "figsize": (8, 6),
-            "fontsize": 14,
-            "xticklabels_size": 8,
-            "yticklabels_size": 8,
-            "shrink": 0.8,
-            "cbarlabels_size": 8,
-            "xlabel_rotation": 0,
-            "ylabel_rotation": 0,
-            "annot": False,
-            "linewidths": 0,
-            "linecolor": "black",
-            "cmap": "coolwarm",
-            "fmt": ".2g",
-            "borderwidths": 0,
-            "edgecolors": None,
-            "alpha": None,
-            "bbox_inches": "tight",
-            "annot_kws": None,
-            "vmin": None,
-            "vmax": None,
-        }
-
-        plot_dict = _check_kwargs(defaults, **kwargs)
+        plot_dict = _check_kwargs(_PlotDefaults.caps2corr(), **kwargs)
 
         for group in self._caps:
             df = pd.DataFrame(self._caps[group])
@@ -2586,28 +2529,7 @@ class CAP(_CAPGetter):
             os.makedirs(output_dir)
 
         # Create plot dictionary
-        defaults = {
-            "dpi": 300,
-            "title_pad": -3,
-            "cmap": "cold_hot",
-            "cbar_kws": {"location": "bottom", "n_ticks": 3},
-            "size": (500, 400),
-            "layout": "grid",
-            "zoom": 1.5,
-            "views": ["lateral", "medial"],
-            "alpha": 1,
-            "zero_transparent": True,
-            "as_outline": False,
-            "brightness": 0.5,
-            "figsize": None,
-            "scale": (2, 2),
-            "surface": "inflated",
-            "color_range": None,
-            "bbox_inches": "tight",
-            "outline_alpha": 1,
-        }
-
-        plot_dict = _check_kwargs(defaults, **kwargs)
+        plot_dict = _check_kwargs(_PlotDefaults.caps2surf(), **kwargs)
 
         groups = self._caps if hasattr(self, "_caps") and fslr_giftis_dict is None else fslr_giftis_dict
 
@@ -2971,49 +2893,8 @@ class CAP(_CAPGetter):
         if suffix_filename is not None and output_dir is None:
             LG.warning("`suffix_filename` supplied but no `output_dir` specified. Files will not be saved.")
 
-        defaults = {
-            "scale": 2,
-            "height": 800,
-            "width": 1200,
-            "line_close": True,
-            "bgcolor": "white",
-            "fill": "none",
-            "scattersize": 8,
-            "connectgaps": True,
-            "opacity": 0.5,
-            "linewidth": 2,
-            "radialaxis": {
-                "showline": False,
-                "linewidth": 2,
-                "linecolor": "rgba(0, 0, 0, 0.25)",
-                "gridcolor": "rgba(0, 0, 0, 0.25)",
-                "ticks": "outside",
-                "tickfont": {"size": 14, "color": "black"},
-            },
-            "angularaxis": {
-                "showline": True,
-                "linewidth": 2,
-                "linecolor": "rgba(0, 0, 0, 0.25)",
-                "gridcolor": "rgba(0, 0, 0, 0.25)",
-                "tickfont": {"size": 16, "color": "black"},
-            },
-            "color_discrete_map": {"High Amplitude": "rgba(255, 0, 0, 1)", "Low Amplitude": "rgba(0, 0, 255, 1)"},
-            "title_font": {"family": "Times New Roman", "size": 30, "color": "black"},
-            "title_x": 0.5,
-            "title_y": None,
-            "legend": {
-                "yanchor": "top",
-                "xanchor": "left",
-                "y": 0.99,
-                "x": 0.01,
-                "title_font_family": "Times New Roman",
-                "font": {"size": 12, "color": "black"},
-            },
-            "mode": "markers+lines",
-            "engine": "kaleido",
-        }
-
-        plot_dict = _check_kwargs(defaults, **kwargs)
+        # Create plot dictionary
+        plot_dict = _check_kwargs(_PlotDefaults.caps2radar(), **kwargs)
 
         parcellation_name = list(self._parcel_approach)[0]
 

@@ -7,6 +7,7 @@ from joblib import Parallel, delayed, dump
 from tqdm.auto import tqdm
 from .._utils import (
     _TimeseriesExtractorGetter,
+    _PlotDefaults,
     _check_kwargs,
     _check_confound_names,
     _check_parcel_approach,
@@ -1118,9 +1119,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         parcellation_name = list(self._parcel_approach)[0]
 
         # Defaults
-        defaults = {"dpi": 300, "figsize": (11, 5), "bbox_inches": "tight"}
-
-        plot_dict = _check_kwargs(defaults, **kwargs)
+        plot_dict = _check_kwargs(_PlotDefaults.visualize_bold(), **kwargs)
 
         # Obtain the column indices associated with the rois
         if roi_indx or roi_indx == 0:

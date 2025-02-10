@@ -3,7 +3,7 @@ from typing import Optional, Union
 
 import matplotlib.pyplot as plt, pandas as pd
 
-from .._utils import _check_kwargs, _create_display, _logger, _save_contents
+from .._utils import _PlotDefaults, _check_kwargs, _create_display, _logger, _save_contents
 
 LG = _logger(__name__)
 
@@ -139,31 +139,7 @@ def transition_matrix(
         LG.warning("`suffix_filename` supplied but no `output_dir` specified. Files will not be saved.")
 
     # Create plot dictionary
-    defaults = {
-        "dpi": 300,
-        "figsize": (8, 6),
-        "fontsize": 14,
-        "xticklabels_size": 8,
-        "yticklabels_size": 8,
-        "shrink": 0.8,
-        "cbarlabels_size": 8,
-        "xlabel_rotation": 0,
-        "ylabel_rotation": 0,
-        "annot": False,
-        "linewidths": 0,
-        "linecolor": "black",
-        "cmap": "coolwarm",
-        "fmt": ".2g",
-        "borderwidths": 0,
-        "edgecolors": None,
-        "alpha": None,
-        "bbox_inches": "tight",
-        "annot_kws": None,
-        "vmin": None,
-        "vmax": None,
-    }
-
-    plot_dict = _check_kwargs(defaults, **kwargs)
+    plot_dict = _check_kwargs(_PlotDefaults.transition_matrix(), **kwargs)
 
     trans_mat_dict = {}
 

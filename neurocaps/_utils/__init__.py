@@ -12,3 +12,4 @@ from .analysis import (
     _save_contents,
 )
 from .extraction import _TimeseriesExtractorGetter, _check_confound_names, _extract_timeseries
+from .plotting_defaults import _PlotDefaults
