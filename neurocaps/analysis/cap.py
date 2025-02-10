@@ -462,7 +462,7 @@ class CAP(_CAPGetter):
                 Adjusts the sensitivity of finding the elbow. Larger values are more conservative and less
                 sensitive to small fluctuations. Passed to ``KneeLocator`` from the kneed package to. Default is 1.
             - dpi: :obj:`int`, default=300
-                Adjusts the dpi of the plots. Default is 300.
+                Dots per inch for the figure.
             - figsize: :obj:`tuple`, default=(8, 6)
                 Adjusts the size of the plots.
             - bbox_inches: :obj:`str` or :obj:`None`, default="tight"
@@ -1424,7 +1424,7 @@ class CAP(_CAPGetter):
             Keyword arguments used when saving figures. Valid keywords include:
 
             - dpi: :obj:`int`, default=300
-                Dots per inch for the figure. Default is 300 if ``output_dir`` is provided and ``dpi`` is not specified.
+                Dots per inch for the figure.
             - figsize: :obj:`tuple`, default=(8, 6)
                 Size of the figure in inches.
             - fontsize: :obj:`int`, default=14
@@ -2098,8 +2098,7 @@ class CAP(_CAPGetter):
             Keyword arguments used when modifying figures. Valid keywords include:
 
             - dpi: :obj:`int`, default=300
-                Dots per inch for the figure. Default is 300 if ``output_dir`` is provided and ``dpi`` is not
-                specified.
+                Dots per inch for the figure.
             - figsize: :obj:`tuple`, default=(8, 6)
                 Size of the figure in inches.
             - fontsize: :obj:`int`, default=14
@@ -2505,6 +2504,7 @@ class CAP(_CAPGetter):
 
                 - Strings to call ``nilearn.plotting.cm._cmap_d`` fuction.
                 - ``matplotlib.colors.LinearSegmentedColormap`` to generate custom colormaps.
+
             - cbar_kws: :obj:`dict`, default={"location": "bottom", "n_ticks": 3}
                 Customize colorbar. Refer to ``_add_colorbars`` for ``surfplot.plotting.Plot`` in
                 `Surfplot's Plot Documentation

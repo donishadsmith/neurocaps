@@ -1085,8 +1085,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Keyword arguments used when saving figures. Valid keywords include:
 
             - dpi: :obj:`int`, default=300
-                Dots per inch for the figure. Default is 300 if ``output_dir`` is provided and ``dpi`` is not
-                specified.
+                Dots per inch for the figure.
             - figsize: :obj:`tuple`, default=(11, 5)
                 Size of the figure in inches. Default is (11, 5) if ``figsize`` is not specified.
             - bbox_inches: :obj:`str` or :obj:`None`, default="tight"

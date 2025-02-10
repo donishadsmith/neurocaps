@@ -62,8 +62,7 @@ def transition_matrix(
         Keyword arguments used when modifying figures. Valid keywords include:
 
         - dpi: :obj:`int`, default=300
-            Dots per inch for the figure. Default is 300 if ``output_dir`` is provided and ``dpi`` is not
-            specified.
+            Dots per inch for the figure.
         - figsize: :obj:`tuple`, default=(8, 6)
             Size of the figure in inches.
         - fontsize: :obj:`int`, default=14
