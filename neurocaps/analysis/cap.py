@@ -2197,21 +2197,17 @@ class CAP(_CAPGetter):
 
         fwhm: :obj:`float` or :obj:`None`, default=None
             Strength of spatial smoothing to apply (in millimeters) to the statistical map prior to interpolating
-            from MNI152 space to fslr surface space. Uses ``nilearn.image.smooth_img``.
+            from MNI152 space to fsLR surface space. Uses Nilearn's ``image.smooth_img``.
 
         knn_dict: :obj:`dict[str, Union[int, bool]]`, default=None
             Use KNN (k-nearest neighbors) interpolation with reference atlas masking to fill in non-background
             coordinates that are assigned zero. Useful when custom parcellation does not project well from volumetric
             to surface space. The following sub-keys are recognized:
 
-            - "k": An integer that determines the number of nearest neighbors to consider, with the majority vote
-              determining the new value. If not specified, the default is 1.
-            - "reference_atlas": A string specifying the atlas to use as a reference to determine the background
-              indices to not interpolate. Options includes "Schaefer" or "AAL". Default is "Schaefer".
-            - "resolution_mm": An integer (1 or 2) that determines the resolution of the Schaefer parcellation.
-              If not specified, the default is 1. Only used when "reference_atlas" is "Schaefer".
-            - "remove_labels": A list or array of label IDs as integers of the regions in the parcellation to not
-              interpolate.
+            - "k": An integer. Determines the number of nearest neighbors to consider. Default is 1.
+            - "reference_atlas": A string. Specifies the atlas to use for reference masking ("AAL" or "Schaefer"). Default is "Schaefer".
+            - "resolution_mm": An integer (1 or 2). Spatial resolution of the Schaefer parcellation (in millimeters). Default is 1.
+            - "remove_labels": A list or array. The label IDs as integers of the regions in the parcellation to not interpolate.
 
             *Note*: This method is applied before the ``fwhm``.
 
@@ -2397,14 +2393,10 @@ class CAP(_CAPGetter):
             coordinates that are assigned zero. Useful when custom parcellation does not project well from volumetric
             to surface space. The following sub-keys are recognized:
 
-            - "k": An integer that determines the number of nearest neighbors to consider, with the majority vote
-              determining the new value. If not specified, the default is 1.
-            - "reference_atlas": A string specifying the atlas to use as a reference to determine the background
-              indices to not interpolate. Options includes "Schaefer" or "AAL". Default is "Schaefer".
-            - "resolution_mm": An integer (1 or 2) that determines the resolution of the Schaefer parcellation.
-              If not specified, the default is 1. Only used when "reference_atlas" is "Schaefer".
-            - "remove_labels": A list or array of label IDs as integers of the regions in the parcellation to not
-              interpolate.
+            - "k": An integer. Determines the number of nearest neighbors to consider. Default is 1.
+            - "reference_atlas": A string. Specifies the atlas to use for reference masking ("AAL" or "Schaefer"). Default is "Schaefer".
+            - "resolution_mm": An integer (1 or 2). Spatial resolution of the Schaefer parcellation (in millimeters). Default is 1.
+            - "remove_labels": A list or array. The label IDs as integers of the regions in the parcellation to not interpolate.
 
             *Note*: This method is applied before the ``fwhm``.
 
