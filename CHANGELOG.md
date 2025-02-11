@@ -13,6 +13,14 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.21.7] - 2025-02-11
+### 🐛 Fixes
+- Fixed documentation rendering issues in VSCode.
+### 📖 Documentation
+- Cleaned documentation in some functions.
+### 🐳 Docker
+- Updated image in DockerHub to latest version.
+
 ## [0.21.6] - 2025-02-06
 ### 🐛 Fixes
 - `CAP.outer_products` property now no longer returns None when it is not None.

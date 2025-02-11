@@ -38,37 +38,30 @@ class CAP(_CAPGetter):
 
     Parameters
     ----------
-    parcel_approach: :obj:`dict[str, dict[str, Union[os.PathLike, list[str]]]`, \
-                     :obj:`dict[str, dict[str, Union[os.PathLike, list[str]]]]`, or :obj:`os.PathLike`, default=None
-        The approach used to parcellate NifTI images. Similar to ``TimeseriesExtractor``, "Schaefer" and "AAL"
-        can be initialized here to create the appropriate ``parcel_approach`` that includes the sub-keys
-        ("maps", "nodes", and "regions"), which are needed for several plotting functions in this class. This
-        should be a nested dictionary with the first key being the parcellation name. Currently, only "Schaefer",
-        "AAL", and "Custom" are supported. Recognized second level keys (sub-keys) are listed below:
+    parcel_approach: :obj:`dict`, or :obj:`os.PathLike`, default=None
+        Specifies the parcellation approach for segmenting NifTI images into distinct regions-of-interests (ROIs).
+        Supported parcellation aproaches includes "Schaefer", "AAL", and "Custom" (user-defined).
 
-        - For "Schaefer":
+        The ``parcel_approach`` requires a nested dictionary with:
 
-            - "n_rois": The number of ROIs (100, 200, 300, 400, 500, 600, 700, 800, 900, or 1000). Defaults to 400.
-            - "yeo_networks": The number of Yeo networks (7 or 17). Defaults to 7.
-            - "resolution_mm": The spatial resolution of the parcellation in millimeters (1 or 2). Defaults to 1.
+            1. First Level Key: The parcellation name (e.g., "Schaefer", "AAL", "Custom")
+            2. Second Level Keys (sub-keys):
 
-        - For "AAL":
+                - "maps": Mapping of regions to coordinates.
+                - "nodes": Node definitions for each region.
+                - "regions": List of anatomical region names (see "Custom Parcellations" in Notes section for detailed
+                  structure requirements).
 
-            - "version": The version of the AAL atlas used ("SPM5", "SPM8", "SPM12", or "3v2"). Defaults to "SPM12" if ``{"AAL": {}}`` is supplied.
+        There are *3* valid input options for this parameter:
 
-        - For "Custom":
+            1. Use the initialization parameters from ``TimeseriesExtractor`` (e.g., "n_rois", "yeo_networks",
+               "resolution_mm" for "Schaefer", or "version" for "AAL") to generate the above structure.
+            2. Provide a nested dictionary with the required structure (first level key of the parcellation name with
+               sub-keys - "maps", "nodes", and "regions").
+            3. Load configuration from a pickle file containing the valid nested dictionary.
 
-            - "maps": Directory path to the location of the parcellation file.
-            - "nodes": A list of node names in the order of the label IDs in the parcellation.
-            - "regions": The regions or networks in the parcellation.
-
-        Note, if ``parcel_approach`` was initialized in ``TimeSeriesExtractor`` class, then this parameter can be
-        set to ``self.parcel_approach``. Refer to `Nilearn's Fetch Schaefer Documentation
-        <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_schaefer_2018.html#nilearn.datasets.fetch_atlas_schaefer_2018>`_
-        and `Nilearn's Fetch AAL Documentation
-        <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_aal.html#nilearn.datasets.fetch_atlas_aal>`_
-        for more information about the "Schaefer" and "AAL" sub-keys. Also, refer to the "Note" section below for an
-        explanation of the "Custom" sub-keys.
+        *Note*: This parameter is required for several visualizaton functions in this class but can be set later
+        using the ``parcel_approach`` property.
 
     groups: :obj:`dict[str, list[str]]` or :obj:`None`, default=None
         A mapping of group names to unique subject IDs. If specified, then separate analyses are performed on groups
@@ -85,8 +78,7 @@ class CAP(_CAPGetter):
 
     Properties
     ----------
-    parcel_approach: :obj:`dict[str, dict[str, Union[os.PathLike, list[str]]]]` or \
-                     :obj:`dict[str, dict[str, Union[os.PathLike, list[str], dict[str, dict[str, list[int]]]]]]`
+    parcel_approach: :obj:`dict`
         A dictionary containing information about the parcellation. Can also be used as a setter, which accepts a
         dictionary or a dictionary saved as a pickle file. The structure is as follows:
 
@@ -269,7 +261,7 @@ class CAP(_CAPGetter):
                 "Subject-ID": "GroupName",
             }
 
-    cosine_similarity: :obj: `dict[str, Union[list[str], dict[str, dict[str, float]]]]` or :obj:`None`
+    cosine_similarity: :obj: `dict` or :obj:`None`
         A dictionary mapping each group to their CAPs and their associated "High Amplitude" and "Low Amplitude"
         list containing the cosine similarities. Each group contains a "Regions" key, consisting of a list of
         regions or networks. The position of the cosine similarities in the "High Amplitude" and "Low Amplitude"
@@ -321,12 +313,11 @@ class CAP(_CAPGetter):
 
     def __init__(
         self,
-        parcel_approach: Union[
-            dict[str, dict[str, Union[os.PathLike, list[str]]]], dict[str, dict[str, Union[str, int]]], os.PathLike
-        ] = None,
+        parcel_approach: Union[dict, os.PathLike] = None,
         groups: dict[str, list[str]] = None,
     ) -> None:
         self._groups = groups
+
         # Raise error if self groups is not a dictionary
         if self._groups:
             if not isinstance(self._groups, dict):
@@ -2209,26 +2200,20 @@ class CAP(_CAPGetter):
             from MNI152 space to fslr surface space. Uses ``nilearn.image.smooth_img``.
 
         knn_dict: :obj:`dict[str, Union[int, bool]]`, default=None
-            Use KNN (k-nearest neighbors) interpolation to fill in non-background coordinates that are assigned zero.
-            This is primarily used as a fix for when a custom parcellation does not project well from volumetric to
-            surface space. This method involves resampling a reference volumetric parcellation that projects
-            well onto surface space (Schaefer or AAL), to the target parcellation specified in the "maps" sub-key in
-            ``self.parcel_approach``. The background coordinates are extracted from the reference parcellation and are
-            used to obtain the non-background coordinates that are set to zero in the target parcellation. These
-            coordinates are then replaced with the value of the nearest neighbor, determined by the sub-key "k".
-            The following sub-keys are recognized:
+            Use KNN (k-nearest neighbors) interpolation with reference atlas masking to fill in non-background
+            coordinates that are assigned zero. Useful when custom parcellation does not project well from volumetric
+            to surface space. The following sub-keys are recognized:
 
-            - "k": An integer that determines the number of nearest neighbors to consider, with the majority vote \
-                   determining the new value. If not specified, the default is 1.
-            - "reference_atlas": A string specifying the atlas to use as a reference to determine the background \
-                                 indices to not interpolate. Options includes "Schaefer" or "AAL". If not specified \
-                                 the default will be "Schaefer".
-            - "resolution_mm": An integer (1 or 2) that determines the resolution of the Schaefer parcellation. \
-                               If not specified, the default is 1. Only used when "reference_atlas" is "Schaefer".
-            - "remove_labels": A list or array of label IDs as integers of the regions in the parcellation to not \
-                               interpolate.
+            - "k": An integer that determines the number of nearest neighbors to consider, with the majority vote
+              determining the new value. If not specified, the default is 1.
+            - "reference_atlas": A string specifying the atlas to use as a reference to determine the background
+              indices to not interpolate. Options includes "Schaefer" or "AAL". Default is "Schaefer".
+            - "resolution_mm": An integer (1 or 2) that determines the resolution of the Schaefer parcellation.
+              If not specified, the default is 1. Only used when "reference_atlas" is "Schaefer".
+            - "remove_labels": A list or array of label IDs as integers of the regions in the parcellation to not
+              interpolate.
 
-            This method is applied before the ``fwhm``.
+            *Note*: This method is applied before the ``fwhm``.
 
         progress_bar: :obj:`bool`, default=False
             If True, displays a progress bar.
@@ -2403,31 +2388,25 @@ class CAP(_CAPGetter):
                     }
                 }
 
-            GroupName can be "All Subjects" or any specific group name. CAP-Name is the name of the CAP. This
+            "GroupName" can be "All Subjects" or any specific group name. CAP-Name is the name of the CAP. This
             parameter allows plotting without re-running the analysis. Initialize the CAP class and use this method
             if using this parameter.
 
         knn_dict: :obj:`dict[str, Union[int, bool]]`, default=None
-            Use KNN (k-nearest neighbors) interpolation to fill in non-background coordinates that are assigned zero.
-            This is primarily used as a fix for when a custom parcellation does not project well from volumetric to
-            surface space. This method involves resampling a reference volumetric parcellation that projects
-            well onto surface space (Schaefer or AAL), to the target parcellation specified in the "maps" sub-key in
-            ``self.parcel_approach``. The background coordinates are extracted from the reference parcellation and are
-            used to obtain the non-background coordinates that are set to zero in the target parcellation. These
-            coordinates are then replaced with the value of the nearest neighbor, determined by the sub-key "k".
-            The following sub-keys are recognized:
+            Use KNN (k-nearest neighbors) interpolation with reference atlas masking to fill in non-background
+            coordinates that are assigned zero. Useful when custom parcellation does not project well from volumetric
+            to surface space. The following sub-keys are recognized:
 
-            - "k": An integer that determines the number of nearest neighbors to consider, with the majority vote \
-                   determining the new value. If not specified, the default is 1.
-            - "reference_atlas": A string specifying the atlas to use as a reference to determine the background \
-                                 indices to not interpolate. Options includes "AAL" or "Schaefer". If not specified \
-                                 the default will be "Schaefer".
-            - "resolution_mm": An integer (1 or 2) that determines the resolution of the Schaefer parcellation. \
-                               If not specified, the default is 1. Only used when "reference_atlas" is "Schaefer".
-            - "remove_labels": A list or array of label IDs as integers of the regions in the parcellation to not \
-                               interpolate.
+            - "k": An integer that determines the number of nearest neighbors to consider, with the majority vote
+              determining the new value. If not specified, the default is 1.
+            - "reference_atlas": A string specifying the atlas to use as a reference to determine the background
+              indices to not interpolate. Options includes "Schaefer" or "AAL". Default is "Schaefer".
+            - "resolution_mm": An integer (1 or 2) that determines the resolution of the Schaefer parcellation.
+              If not specified, the default is 1. Only used when "reference_atlas" is "Schaefer".
+            - "remove_labels": A list or array of label IDs as integers of the regions in the parcellation to not
+              interpolate.
 
-            This method is applied before the ``fwhm``.
+            *Note*: This method is applied before the ``fwhm``.
 
         progress_bar: :obj:`bool`, default=False
             If True, displays a progress bar.
@@ -2671,11 +2650,11 @@ class CAP(_CAPGetter):
 
         The process involves the following steps:
 
-            1. **Extract Cluster Centroids**:
+            1. Extract Cluster Centroids:
 
               - Each CAP is represented by a cluster centroid, which is a 1 x ROI (Region of Interest) vector.
 
-            2. **Generate Binary Vectors**:
+            2. Generate Binary Vectors:
 
               - For each region create a binary vector (1 x ROI) where `1` indicates that the ROI is part of the specific
                 region and `0` otherwise.
@@ -2693,7 +2672,7 @@ class CAP(_CAPGetter):
                     # Binary mask for the Visual Network (Vis)
                     binary_vector = np.array([1, 1, 0, 0, 1, 1, 0, 0])
 
-            3. **Isolate Positive and Negative Activations in CAP Centroid**:
+            3. Isolate Positive and Negative Activations in CAP Centroid:
 
               - Positive activations are defined as the values in the CAP centroid that are greater than zero.
                 These values represent the "High Amplitude" activations for that CAP.
@@ -2716,7 +2695,7 @@ class CAP(_CAPGetter):
                   # Assign values less than 0 as 0 to isolate the low amplitude activations; Also invert the sign
                   low_amp = high_amp = np.where(cap_1_cluster_centroid < 0, -cap_1_cluster_centroid, 0)
 
-            4. **Calculate Cosine Similarity**:
+            4. Calculate Cosine Similarity:
 
               - Normalize the dot product by the product of the Euclidean norms of the cluster centroid and the binary
                 vector to obtain the cosine similarity:
@@ -2736,7 +2715,7 @@ class CAP(_CAPGetter):
                     high_cos = high_dot / (high_norm * bin_norm)
                     low_cos = low_dot / (low_norm * bin_norm)
 
-            5. **Generate Radar Plots of Each CAPs**:
+            5. Generate Radar Plots of Each CAPs:
 
               - Each radar plot visualizes the cosine similarity for both "High Amplitude" (positive) and
                 "Low Amplitude" (negative) activations of the CAP. The cosine similarity values range from 0 to 1,
@@ -2761,19 +2740,14 @@ class CAP(_CAPGetter):
             .. versionadded:: 0.19.0
 
         show_figs: :obj:`bool`, default=True
-            Display figures. If this function detects that it is not being ran in an interactive Python environment,
-            then it uses ``plotly.offline``, creates an html file named "temp-plot.html", and opens each plot in the
-            default browser.
+            Display figures. If the current Python session is non-interactive, then ``plotly.offline`` is used to
+            generate an html file named "temp-plot.html", which opens each plot in the default browser.
 
         use_scatterpolar: :obj:`bool`, default=False
-            Uses ``plotly.graph_objects.Scatterpolar`` instead of ``plotly.express.line_polar``. The primary difference
-            is that ``plotly.graph_objects.Scatterpolar`` shows the scatter dots. However, this can be acheived with
-            ``plotly.express.line_polar`` by setting ``mode`` to "markers+lines". There also seems to be a difference
-            in default opacity behavior.
+            Uses ``plotly.graph_objects.Scatterpolar`` instead of ``plotly.express.line_polar``.
 
         as_html: :obj:`bool`, default=False
-            When ``output_dir`` is specified, plots are saved as html images instead of png images. The advantage is
-            that plotly's radar plots will retain its interactive properties, can be opened in a browser.
+            When ``output_dir`` is specified, plots are saved as html images instead of png images.
 
         kwargs: :obj:`dict`
             Additional parameters to pass to modify certain plot parameters. Options include:
@@ -2782,11 +2756,11 @@ class CAP(_CAPGetter):
                 If ``output_dir`` provided, controls resolution of image when saving. Serves a similar purpose as dpi.
             - savefig_options: :obj:`dict[str]`, default={"width": 3, "height": 3, "scale": 1}
                 If ``output_dir`` provided, controls the width (in inches), height (in inches), and scale of the
-                plot. The height and width are multiplied by the dpi.
+                plot.
             - height: :obj:`int`, default=800
-                Height of the plot. Value is multiplied by the dpi when saving.
+                Height of the plot.
             - width: :obj:`int`, defualt=1200
-                Width of the plot. Value is multiplied by the dpi when saving.
+                Width of the plot.
             - line_close: :obj:`bool`, default=True
                 Whether to close the lines
             - bgcolor: :obj:`str`, default="white"
@@ -2814,7 +2788,7 @@ class CAP(_CAPGetter):
                                                  "tickfont": {"size": 16, "color": "black"}}
                 Customizes the angular axis.
             - color_discrete_map: :obj:`dict`, default={"High Amplitude": "red", "Low Amplitude": "blue"},
-                Change color of the "High Amplitude" and "Low Amplitude" groups. Must use the keys
+                Change the color of the "High Amplitude" and "Low Amplitude" groups. Must use the keys
                 "High Amplitude" and "Low Amplitude" to work.
             - title_font: :obj:`dict`, default={"family": "Times New Roman", "size": 30, "color": "black"}
                 Modifies the font of the title.

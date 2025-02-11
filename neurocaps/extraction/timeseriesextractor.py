@@ -40,41 +40,55 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         The standard template space that the preprocessed bold data is registered to. Used for querying with pybids
         to locate preprocessed BOLD-related files.
 
-    parcel_approach: :obj:`dict[str, dict[str, Union[str, int]]]` or :obj:`os.PathLike`, \
+    parcel_approach: :obj:`dict` or :obj:`os.PathLike`,\
                      default={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
-        The approach to parcellate NifTI images. This must be a nested dictionary with the first key being the
-        parcellation name. Currently, only "Schaefer", "AAL", and "Custom" are supported. Recognized second level
-        keys (sub-keys) are listed below:
+        The approach used to parcellate NifTI images into distinct regions-of-interests (ROIs).
 
-        - For "Schaefer":
+        To initialize a ``parcel_approach``, the configuration requires a nested dictionary with:
 
-            - "n_rois": The number of ROIs (100, 200, 300, 400, 500, 600, 700, 800, 900, or 1000). Defaults to 400.
-            - "yeo_networks": The number of Yeo networks (7 or 17). Defaults to 7.
-            - "resolution_mm": The spatial resolution of the parcellation in millimeters (1 or 2). Defaults to 1.
+            1. First Level Key: The parcellation name ("Schaefer", "AAL", or "Custom").
+            2. Second Level Keys: Parameters specific to each parcellation method.
 
-        - For "AAL":
+        Supported parcellation approaches and their parameters, includes:
 
-            - "version": The version of the AAL atlas used ("SPM5", "SPM8", "SPM12", or "3v2"). Defaults to "SPM12" if ``{"AAL": {}}`` is supplied.
+        - "Schaefer":
 
-        - For "Custom":
+            - "n_rois": Number of ROIs (100, 200, 300, 400, 500, 600, 700, 800, 900, or 1000). Defaults to 400.
+            - "yeo_networks": Number of Yeo networks (7 or 17). Defaults to 7.
+            - "resolution_mm": Spatial resolution in millimeters (1 or 2). Defaults to 1.
+
+        - "AAL":
+
+            - "version": AAL parcellation version to use ("SPM5", "SPM8", "SPM12", or "3v2"). Defaults to "SPM12" if
+              ``{"AAL": {}}`` is given.
+
+        - "Custom" (user-defined):
 
             - "maps": Directory path to the location of the parcellation file.
             - "nodes": A list of node names in the order of the label IDs in the parcellation.
             - "regions": The regions or networks in the parcellation.
 
-        Refer to `Nilearn's Fetch Schaefer Documentation
-        <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_schaefer_2018.html#nilearn.datasets.fetch_atlas_schaefer_2018>`_
-        and `Nilearn's Fetch AAL Documentation
-        <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_aal.html#nilearn.datasets.fetch_atlas_aal>`_
-        for more information about the "Schaefer" and "AAL" sub-keys. Also, refer to the "Note" section below for an
-        explanation of the "Custom" sub-keys.
+        *Notes*:
+
+        - Input can also be a pickle file containing a processed parcel approach with required keys
+          ("maps", "nodes", and "regions").
+        - For detailed parameter information, see:
+
+            - `Schaefer (Nilearn's Fetch Schaefer Documentation)
+            <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_schaefer_2018.html>`_
+            - `AAL (Nilearn's Fetch AAL Documentation)
+            <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_aal.html>`_
+            - Custom: See Notes section below for structure requirements.
 
     standardize: {"zscore_sample", "zscore", "psc", True, False}, default="zscore_sample"
-        Standardizes the timeseries. Refer to ``nilearn.maskers.NiftiLabelsMasker`` for an explanation of each
-        available option.
+        Standardizes the timeseries.
+
+        *Note*: Refer to `nilearn.maskers.NiftiLabelsMasker
+        <https://nilearn.github.io/stable/modules/generated/nilearn.maskers.NiftiLabelsMasker.html>`_ for an
+        explanation of each available option.
 
     detrend: :obj:`bool`, default=True
-        Detrends the timeseries during extraction.
+        Detrends the timeseries.
 
     low_pass: :obj:`float`, :obj:`int`, or :obj:`None`, default=None
         Filters out signals above the specified cutoff frequency.
@@ -83,82 +97,81 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         Filters out signals below the specified cutoff frequency.
 
     fwhm: :obj:`float`, :obj:`int`, or :obj:`None`, default=None
-        Applies spatial smoothing to data (in millimeters). Note that using a parcellation already averages voxels
-        within parcel boundaries, which can improve signal-to-noise ratio (SNR) assuming Gaussian noise
-        distribution. However, smoothing may also blur parcel boundaries.
+        Applies spatial smoothing to data (in millimeters).
 
     use_confounds: :obj:`bool`, default=True
-        Perform nuisance regression using the default or user-specified confounds in ``confound_names`` when
-        extracting timeseries. Note, the confound tsv files must be located in the same directory as the preprocessed
-        BOLD images.
+        If True, performs nuisance regression during timeseries extraction using the default or user-specified
+        confounds in ``confound_names``.
+
+        *Note*: requires that confound tsv files to be in same directory as preprocessed BOLD images.
 
     confound_names: :obj:`list[str]` or :obj:`None`, default=None
-        The names of the confounds to extract from the confound tsv files. If None, default confounds are used, which
-        consists of all cosine-basis parameters, the six-head motion parameters and their first-order derivatives,
-        and the first six combined acompcor components. Additionally, the names of these confounds follow the
-        naming scheme of confounds in fMRIPrep versions ``>= 1.2.0``. Note, an asterisk ("*") can be used to find
-        confound names that start with the term preceding the asterisk. For instance, "cosine*" will find all confound
-        names in the confound files starting with "cosine".
+        Names of confounds extracted from the confound tsv files if ``use_confounds=True``.
+
+        If None, the following confounds are used by default:
+
+        - All cosine-basis parameters.
+        - Six head-motion parameters and their first-order derivatives.
+        - First six combined aCompcor components.
+
+        *Notes*:
+
+        - Confound names follow fMRIPrep's naming scheme (versions >= 1.2.0).
+        - Wildcards are supported: e.g., "cosine*" matches all confounds starting with "cosine".
 
     fd_threshold: :obj:`float`, :obj:`dict[str, float]`, or :obj:`None`, default=None
-        Sets a threshold for removing volumes that exceed a specified level. This parameter applies the condition
-        ``framewise displacement (FD) > threshold``, meaning that only frames with a framewise displacement above the
-        set threshold are removed. This requires a column named `framewise_displacement` in the
-        confounds file and ``use_confounds`` set to True. Additionally, `framewise_displacement` should be
-        specified in ``confound_names`` if using this parameter. By default, censoring is done after nuisance
-        regression; however, this behavior can be modified with the "use_sample_mask" key to censor prior to
-        nuisance regression. If, ``fd_threshold`` is a dictionary, the following keys can be specified:
+        Threshold for volume censoring based on framewise displacement (FD).
 
-        - "threshold": A float or integer value. Volumes with a `framewise_displacement` value exceeding this threshold
-          are removed.
-        - "outlier_percentage": A float value between 0 and 1 representing a percentage. Runs where the proportion of
-          volumes exceeding the "threshold" is higher than this percentage are removed. If ``condition`` is specified
-          in ``self.get_bold``, only the runs where the proportion of volumes exceeds this value for the specific
-          condition of interest are removed. Note, this proportion is calculated after dummy scans have been removed.
-          A warning is issued whenever a run is flagged.
-        - "n_before": An integer value indicating the number of volumes to scrub before the flagged volume. Hence,
-          if frame 5 is flagged and "n_before" is 2, then volumes 3, 4, and 5 are scrubbed.
-        - "n_after": An integer indicating the number of volumes to scrub after to the flagged volume. Hence,
-          if frame 5 is flagged and "n_after" is 2, then volumes 5, 6, and 7 are scrubbed.
-        - "use_sample_mask": A boolean value. If True, a sample mask is generated and passed to the ``sample_mask``
-          parameter in Nilearn's ``NiftiLabelsMasker`` to censor prior to nuisance regression. Internally,
-          ``clean__extrapolate`` is set to False and passed to ``NiftiLabelsMasker``, which prevents censored
-          volumes at the end from being interpolated prior to applying the butterworth filter. See
-          `Nilearn's Signal Clean Documentation
-          <https://nilearn.github.io/stable/modules/generated/nilearn.signal.clean.html>`_ and
-          `Nilearn's NiftiLabelsMasker Documentation
-          <https://nilearn.github.io/stable/modules/generated/nilearn.maskers.NiftiLabelsMasker.html>`_ for how Nilearn
-          handles censored volumes when ``sample_mask`` is used.  If this key is set to False, data is only censored
-          after nuisance regression, which is the default behavior.
+        - *If float*, removes volumes where FD > threshold.
+        - *If dict*, the following sub-keys are available:
 
-        **Note**: If "use_sample_mask" is not True and the ``standardize`` is not False, it is recommended to apply an
-        additional within-run standardization (using ``neurocaps.analysis.standardize``) once outlier volumes have been
-        removed.
+            - "threshold": A float. Removes volumes where FD > threshold.
+            - "outlier_percentage": A float in interval [0,1]. Removes entire runs where proportion of censored volumes
+              exceeds this threshold. Proportion calculated after dummy scan removal. Issues warning when runs are
+              flagged. If ``condition`` specified in ``self.get_bold``, only considers volumes associated with the condition.
+            - "n_before": An integer indicating the number of volumes to remove before each flagged volume. For
+              instance, if volume 5 flagged and ``{"auto": True, "n_before": 2}``, then volumes 3,4, and 5 are discarded.
+            - "n_after": An integer indicating the of volumes to remove after each flagged volume. For instance, if
+              volume 5 flagged and ``{"auto": True, "n_after": 2}``, then volumes 5,6, and 7 are discarded.
+            - "use_sample_mask": A boolean. If True, censors before nuisance regression using Nilearn's
+              ``NiftiLabelsMasker``. Also, sets ``clean__extrapolate=False`` to prevent interpolation of end volumes.
+              If False, censors after nuisance regression (default behavior).
+
+        *Notes*:
+
+        - A column named "framewise_displacement" must be available in the confounds file.
+        - ``use_confounds`` must be set to True.
+        - Do not specify "framewise_displacement" in ``confound_names``.
+        - See Nilearn's documentation for details on censored volume handling:
+
+            - `Signal Clean <https://nilearn.github.io/stable/modules/generated/nilearn.signal.clean.html>`_
+            - `NiftiLabelsMasker <https://nilearn.github.io/stable/modules/generated/nilearn.maskers.NiftiLabelsMasker.html>`_
+
+        - When ``use_sample_mask=False`` and ``standardize=True``, applying an additional within-run standardization
+          (using ``neurocaps.analysis.standardize``) is recommended after outlier removal.
 
     n_acompcor_separate: :obj:`int` or :obj:`None`, default=None
-        Specifies the number of separate acompcor components derived from white-matter (WM) and cerebrospinal
-        fluid (CSF) masks to use. For example, if set to 5, the first five components from the WM mask
-        and the first five from the CSF mask will be used, totaling ten acompcor components. If this parameter is
-        not None, any acompcor components listed in ``confound_names`` will be disregarded. To use acompcor
-        components derived from combined masks (WM & CSF), leave this parameter as None and list the specific
-        acompcors of interest in ``confound_names``.
+        Number of aCompCor components to extract separately from the white-matter (WM) and CSF masks. Uses first "n"
+        components from each mask separately. For instance, if ``n_acompcor_separate=5``, then the the first 5 WM
+        components and the first 5 CSF components (totaling 10 components) are regressed out.
+
+        *Note*: If specified, this parameter overrides any aCompCor components listed in ``confound_names``.
 
     dummy_scans: :obj:`int`, :obj:`dict[str, Union[bool, int]]`, or :obj:`None`, default=None
-        Removes the first `n` volumes before extracting the timeseries. If, ``dummy_scans`` is a dictionary,
-        the following keys can be used:
+        Number of initial volumes to remove before timeseries extraction.
 
-        - "auto": A boolean value. If True, the number of dummy scans removed depend on the number of
-          "non_steady_state_outlier_XX" columns in the participants fMRIPrep confounds tsv file. For instance, if
-          there are two "non_steady_state_outlier_XX" columns detected, then ``dummy_scans`` is set to two since
-          there is one "non_steady_state_outlier_XX" per outlier volume for fMRIPrep. This is assessed for each run of
-          all participants so ``dummy_scans`` depends on the number number of "non_steady_state_outlier_XX" in the
-          confound file associated with the specific participant, task, and run number.
-        - "min": An integer value indicating the minimum dummy scans to discard. The "auto" sub-key must be True
-          for this to work. If, for instance, only two "non_steady_state_outlier_XX" columns are detected but the
-          "min" is set to three, then three dummy volumes will be discarded.
-        - "max": An integer value indicating the maximum dummy scans to discard. The "auto" sub-key must be True
-          for this to work. If, for instance, six "non_steady_state_outlier_XX" columns are detected but the
-          "max" is set to five, then five dummy volumes will be discarded.
+        - *If int*, removes first "n" volumes.
+        - *If dict*, the following keys are supported:
+
+            - "auto": A boolean. If True, Automatically determines dummy scans from fMRIPrep confounds file by
+              counting the number of "non_steady_state_outlier_XX" columns in confounds.tsv file. For instance, if two
+              columns are found,then the first two columns are removed.
+            - "min": An integer. Minimum volumes to remove when auto is set to True. If "auto" finds 2 outliers
+              but ``{"min": 3}``, removes 3 volumes.
+            - "max": An integer. Maximum volumes to remove when auto=True. If "auto" finds 6 outliers but ``{"max": 5}``,
+              removes 5 volumes.
+
+        *Note*: "min" and "max" keys only apply when "auto" is True.
 
     dtype: :obj:`str` or "auto", default=None
         The NumPy dtype the NIfTI images are converted to when passed to Nilearn's ``load_img`` function.
@@ -166,12 +179,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
     Properties
     ----------
-    space: str
+    space: :obj:`str`
         The standard template space that the preprocessed BOLD data is registered to. The space can also be set after
         class initialization using ``self.space = "New Space"`` if the template space needs to be changed.
 
-    parcel_approach: :obj:`dict[str, dict[str, Union[os.PathLike, list[str]]]]` or \
-                     :obj:`dict[str, dict[str, Union[os.PathLike, list[str], dict[str, dict[str, list[int]]]]]]`
+    parcel_approach: :obj:`dict`
         A dictionary containing information about the parcellation. Can also be used as a setter, which accepts a
         dictionary or a dictionary saved as pickle file. If "Schaefer" or "AAL" was specified during
         initialization of the ``TimeseriesExtractor`` class, then ``nilearn.datasets.fetch_atlas_schaefer_2018``
@@ -270,7 +282,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     def __init__(
         self,
         space: str = "MNI152NLin2009cAsym",
-        parcel_approach: Union[dict[str, dict[str, Union[str, int]]], os.PathLike] = {
+        parcel_approach: Union[dict, os.PathLike] = {
             "Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}
         },
         standardize: Union[bool, Literal["zscore_sample", "zscore", "psc"]] = "zscore_sample",
@@ -459,15 +471,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Name of task to extract timeseries data from (i.e "rest", "n-back", etc).
 
         session: :obj:`int`, :obj:`str`, or :obj:`None`, default=None
-            Session ID to extract timeseries data from. Only a single session can be extracted at a time. While files
-            having session IDs are not mandatory, this parameter must be specified if the dataset has multiple sessions
-            . If ``session`` is None and multiple sessions are detected when the preprocessed NifTI files are queried,
-            an error will be raised. The value can be an integer (e.g. ``session=2``) or a string (e.g.
-            ``session="001"``).
+            The session ID to extract timeseries data from. Only a single session can be extracted at a time and an
+            error will be raised if more than one session is detected during querying. The value can be an integer
+            (e.g. ``session=2``) or a string (e.g.``session="001"``).
 
         runs: :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
             List of run numbers to extract timeseries data from. Extracts all runs if unspecified. For instance,
-            extract only "run-0" and "run-1", use ``runs=[0, 1]``. For non-integer run IDs, use strings:
+            to extract only "run-0" and "run-1", use ``runs=[0, 1]``. For non-integer run IDs, use strings:
             ``runs=["000", "001"]``.
 
         condition: :obj:`str` or :obj:`None`, default=None
@@ -504,21 +514,15 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             extracted. Used if there are specific runs across different participants that need to be excluded.
 
         pipeline_name: :obj:`str` or :obj:`None`, default=None
-            The name of the pipeline folder in the derivatives folder containing the preprocessed data. If None,
-            ``BIDSLayout`` will default to using the ``bids_dir`` with ``derivatives=True``. This parameter should be
-            used if multiple pipelines exist or when the pipeline folder containing the "dataset_description.json" file
-            is nested within another folder. The specified folder must contain the "dataset_description.json" file
-            in its root level. For instance, if the json file is in "path/to/bids/derivatives/fmriprep/fmriprep-20.0.0",
-            then ``pipeline_name = "fmriprep/fmriprep-20.0.0"``.
+            The name of the pipeline folder in the derivatives folder containing the preprocessed data. Used if
+            multiple pipeline folders exist in the derivatives folder.
 
         n_cores: :obj:`int` or :obj:`None`, default=None
             The number of cores to use for multiprocessing with Joblib. The "loky" backend is used.
 
         parallel_log_config: :obj:`dict[str, Union[multiprocessing.Manager.Queue, int]]`
             Passes a user-defined managed queue and logging level to the internal timeseries extraction function
-            when parallel processing (``n_cores``) is used. Note, if parallel processing is used, global logging
-            configurations won't be passed to the child processes. Thus, to prevent the child processes from using the
-            default logging behavior, this parameter must be used. Additionally, this parameter must be a dictionary
+            when parallel processing (``n_cores``) is used. Additionally, this parameter must be a dictionary
             and the available keys are:
 
             - "queue": The instance of ``multiprocessing.Manager.Queue`` to pass to ``QueueHandler``. If not specified,

@@ -21,22 +21,17 @@ class _TimeseriesExtractorGetter:
         return self._space
 
     @space.setter
-    def space(self, new_space):
+    def space(self, new_space: str):
         if not isinstance(new_space, str):
             raise TypeError("`space` must be a string.")
         self._space = new_space
 
     @property
-    def parcel_approach(
-        self,
-    ) -> Union[
-        dict[str, dict[str, Union[os.PathLike, list[str]]]],
-        dict[str, dict[str, Union[os.PathLike, list[str], dict[str, dict[str, list[int]]]]]],
-    ]:
+    def parcel_approach(self) -> dict:
         return self._parcel_approach
 
     @parcel_approach.setter
-    def parcel_approach(self, parcel_dict):
+    def parcel_approach(self, parcel_dict: Union[dict, os.PathLike]):
         self._parcel_approach = _check_parcel_approach(parcel_approach=parcel_dict, call="setter")
 
     @property

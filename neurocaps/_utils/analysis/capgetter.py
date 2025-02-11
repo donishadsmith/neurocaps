@@ -4,8 +4,10 @@ import copy, os
 from typing import Union
 
 import numpy as np
-from ..check_parcel_approach import _check_parcel_approach
+from numpy.typing import NDArray
 from sklearn.cluster import KMeans
+
+from ..check_parcel_approach import _check_parcel_approach
 
 
 class _CAPGetter:
@@ -14,16 +16,11 @@ class _CAPGetter:
 
     ### Attributes exist when CAP initialized
     @property
-    def parcel_approach(
-        self,
-    ) -> Union[
-        dict[str, dict[str, Union[os.PathLike, list[str]]]],
-        dict[str, dict[str, Union[os.PathLike, list[str], dict[str, dict[str, list[int]]]]]],
-    ]:
+    def parcel_approach(self) -> dict:
         return self._parcel_approach
 
     @parcel_approach.setter
-    def parcel_approach(self, parcel_dict):
+    def parcel_approach(self, parcel_dict: Union[dict, os.PathLike]):
         self._parcel_approach = _check_parcel_approach(parcel_approach=parcel_dict, call="setter")
 
     @property
@@ -48,7 +45,7 @@ class _CAPGetter:
         return self._runs if hasattr(self, "_runs") else None
 
     @property
-    def caps(self) -> Union[dict[str, dict[str, np.array]], None]:
+    def caps(self) -> Union[dict[str, dict[str, NDArray[np.floating]]], None]:
         return self._caps if hasattr(self, "_caps") else None
 
     @property
@@ -72,15 +69,15 @@ class _CAPGetter:
         return self._standardize if hasattr(self, "_standardize") else None
 
     @property
-    def means(self) -> Union[dict[str, np.array], None]:
+    def means(self) -> Union[dict[str, NDArray[np.floating]], None]:
         return self._mean_vec if hasattr(self, "_mean_vec") else None
 
     @property
-    def stdev(self) -> Union[dict[str, np.array], None]:
+    def stdev(self) -> Union[dict[str, NDArray[np.floating]], None]:
         return self._stdev_vec if hasattr(self, "_stdev_vec") else None
 
     @property
-    def concatenated_timeseries(self) -> Union[dict[str, np.array], None]:
+    def concatenated_timeseries(self) -> Union[dict[str, NDArray[np.floating]], None]:
         return self._concatenated_timeseries if hasattr(self, "_concatenated_timeseries") else None
 
     @concatenated_timeseries.deleter
@@ -89,11 +86,11 @@ class _CAPGetter:
 
     # Generated in `caps2plot`
     @property
-    def region_caps(self) -> Union[dict[str, dict[str, np.array]], None]:
+    def region_caps(self) -> Union[dict[str, dict[str, NDArray[np.floating]]], None]:
         return self._region_caps if hasattr(self, "_region_caps") else None
 
     @property
-    def outer_products(self) -> Union[dict[str, dict[str, np.array]], None]:
+    def outer_products(self) -> Union[dict[str, dict[str, NDArray[np.floating]]], None]:
         return self._outer_products if hasattr(self, "_outer_products") else None
 
     @property
@@ -111,5 +108,5 @@ class _CAPGetter:
             )
 
     @property
-    def cosine_similarity(self) -> Union[dict[str, Union[list[str], dict[str, dict[str, float]]]], None]:
+    def cosine_similarity(self) -> Union[dict, None]:
         return self._cosine_similarity if hasattr(self, "_cosine_similarity") else None

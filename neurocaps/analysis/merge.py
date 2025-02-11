@@ -76,11 +76,19 @@ def merge_dicts(
         Dictionaries will not be saved if None.
 
     filenames: :obj:`list[str]` or :obj:`None`, default=None
-        A list of file names for saving dictionaries when ``output_dir`` is provided. If ``save_reduced_dicts`` is False,
-        only a list with a single name should be supplied, which will be used to save the merged dictionary. If
-        ``save_reduced_dicts`` is True, provide `N+1` names (where `N` is the length of subject_timeseries_list) - `N`
-        names for individual reduced dictionaries followed by one name for the merged dictionary. Names are assigned by
-        input position order. Full paths are handled using basename, and extensions are ignored. If None, uses default
+        A list of file names for saving dictionaries when ``output_dir`` is provided.
+
+        If ``save_reduced_dicts`` is False:
+
+            - Provide a single name, which will be used to save the merged dictionary.
+
+        If ``save_reduced_dicts`` is True:
+
+            - Provide `N+1` names (where `N` is the length of subject_timeseries_list) - `N` names for individual
+              reduced dictionaries followed by one name for the merged dictionary. Names are assigned by input position
+              order.
+
+        *Note*: Full paths are handled using basename and extensions are ignored. If None, uses default
         names - "subject_timeseries_{0}_reduced.pkl" (where {0} indicates the original input order) and
         "merged_subject_timeseries.pkl" for the merged dictionary.
 
@@ -174,6 +182,10 @@ def merge_dicts(
             "Length of `file_names` must be equal to 1 if `save_reduced_dicts`is False or the length of "
             "`subject_timeseries_list` + 1 if `save_reduced_dicts` is True."
         )
+
+        # Convert to list if string
+        if isinstance(filenames, str):
+            filenames = [filenames]
 
         _dicts_to_pickles(
             output_dir=output_dir,

@@ -144,7 +144,7 @@ def test_merge_dicts_pkl(return_reduced_dicts, return_merged_dicts):
                 ],
                 return_reduced_dicts=False,
                 return_merged_dict=True,
-                filenames=["test_merged.pkl"],
+                filenames="test_merged.pkl",
                 output_dir=tmp_dir.name,
                 save_reduced_dicts=False,
             )
