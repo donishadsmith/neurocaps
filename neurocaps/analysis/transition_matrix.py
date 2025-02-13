@@ -58,57 +58,32 @@ def transition_matrix(
         If True, saves the transition probability matrix contained in the DataFrames as csv files. For this to be used,
         ``output_dir`` must be specified.
 
-    kwargs: :obj:`dict`
+    **kwargs
         Keyword arguments used when modifying figures. Valid keywords include:
 
-        - dpi: :obj:`int`, default=300
-            Dots per inch for the figure.
-        - figsize: :obj:`tuple`, default=(8, 6)
-            Size of the figure in inches.
-        - fontsize: :obj:`int`, default=14
-            Font size for the plot title, x-axis title, and y-axis title of each plot.
-        - xticklabels_size: :obj:`int`, default=8
-            Font size for x-axis tick labels.
-        - yticklabels_size: :obj:`int`, default=8
-            Font size for y-axis tick labels.
-        - shrink: :obj:`float`, default=0.8
-            Fraction by which to shrink the colorbar.
-        - cbarlabels_size: :obj:`int`, default=8
-            Font size for the colorbar labels.
-        - xlabel_rotation: :obj:`int`, default=0
-            Rotation angle for x-axis labels.
-        - ylabel_rotation: :obj:`int`, default=0
-            Rotation angle for y-axis labels.
-        - annot: :obj:`bool`, default=False
-            Add values to each cell.
-        - annot_kws: :obj:`dict`, default=None,
-            Customize the annotations.
-        - fmt: :obj:`str`, default=".2g",
-            Modify how the annotated vales are presented.
-        - linewidths: :obj:`float`, default=0
-            Padding between each cell in the plot.
-        - borderwidths: :obj:`float`, default=0
-            Width of the border around the plot.
-        - linecolor: :obj:`str`, default="black"
-            Color of the line that separates each cell.
-        - edgecolors: :obj:`str` or :obj:`None`, default=None
-            Color of the edges.
-        - alpha: :obj:`float` or :obj:`None`, default=None
-            Controls transparency and ranges from 0 (transparent) to 1 (opaque).
-        - bbox_inches: :obj:`str` or :obj:`None`, default="tight"
-            Alters size of the whitespace in the saved image.
-        - cmap: :obj:`str`, :obj:`callable` default="coolwarm"
-            Color map for the plot cells. For this parameter, you can use pre-made color palettes or create custom ones.
-            Below is a list of valid options:
-
-            - Strings to call seaborn's pre-made palettes.
-            - ``seaborn.diverging_palette`` function to generate custom palettes.
-            - ``matplotlib.color.LinearSegmentedColormap`` to generate custom palettes.
-
-        - vmin: :obj:`float` or :obj:`None`, default=None
-                The minimum value to display in colormap.
-        - vmax: :obj:`float` or :obj:`None`, default=None
-                The maximum value to display in colormap.
+        - dpi: :obj:`int`, default=300 -- Dots per inch for the figure.
+        - figsize: :obj:`tuple`, default=(8, 6) -- Size of the figure in inches.
+        - fontsize: :obj:`int`, default=14 -- Font size for the plot title, x-axis title, and y-axis title of each plot.
+        - xticklabels_size: :obj:`int`, default=8 -- Font size for x-axis tick labels.
+        - yticklabels_size: :obj:`int`, default=8 -- Font size for y-axis tick labels.
+        - shrink: :obj:`float`, default=0.8 -- Fraction by which to shrink the colorbar.
+        - cbarlabels_size: :obj:`int`, default=8 -- Font size for the colorbar labels.
+        - xlabel_rotation: :obj:`int`, default=0 -- Rotation angle for x-axis labels.
+        - ylabel_rotation: :obj:`int`, default=0 -- Rotation angle for y-axis labels.
+        - annot: :obj:`bool`, default=False -- Add values to each cell.
+        - annot_kws: :obj:`dict`, default=None, -- Customize the annotations.
+        - fmt: :obj:`str`, default=".2g" -- Modify how the annotated vales are presented.
+        - linewidths: :obj:`float`, default=0 -- Padding between each cell in the plot.
+        - borderwidths: :obj:`float`, default=0 -- Width of the border around the plot.
+        - linecolor: :obj:`str`, default="black" -- Color of the line that separates each cell.
+        - edgecolors: :obj:`str` or :obj:`None`, default=None -- Color of the edges.
+        - alpha: :obj:`float` or :obj:`None`, default=None -- Controls transparency and ranges from 0 (transparent) to 1 (opaque).
+        - bbox_inches: :obj:`str` or :obj:`None`, default="tight" -- Alters size of the whitespace in the saved image.
+        - cmap: :obj:`str`, :obj:`callable` default="coolwarm" -- Color map for the plot cells. Options include\
+            strings to call seaborn's pre-made palettes, ``seaborn.diverging_palette`` function to generate custom\
+            palettes, and ``matplotlib.color.LinearSegmentedColormap`` to generate custom palettes.
+        - vmin: :obj:`float` or :obj:`None`, default=None -- The minimum value to display in colormap.
+        - vmax: :obj:`float` or :obj:`None`, default=None -- The maximum value to display in colormap.
 
     Returns
     -------

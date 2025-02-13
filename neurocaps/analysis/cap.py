@@ -446,22 +446,17 @@ class CAP(_CAPGetter):
 
             .. versionadded:: 0.21.5
 
-        kwargs: :obj:`dict`
-            Dictionary to adjust certain parameters when ``cluster_selection_method`` is not None.
-            Additional parameters include:
+        **kwargs:
+            Dictionary to adjust certain parameters when ``cluster_selection_method`` is not None. Additional\
+            parameters include:
 
-            - S: :obj:`int`, default=1
-                Adjusts the sensitivity of finding the elbow. Larger values are more conservative and less
-                sensitive to small fluctuations. Passed to ``KneeLocator`` from the kneed package to. Default is 1.
-            - dpi: :obj:`int`, default=300
-                Dots per inch for the figure.
-            - figsize: :obj:`tuple`, default=(8, 6)
-                Adjusts the size of the plots.
-            - bbox_inches: :obj:`str` or :obj:`None`, default="tight"
-                Alters size of the whitespace in the saved image.
-            - step: :obj:`int`, default=None
-                An integer value that controls the progression of the x-axis in plots for the specified
-                ``cluster_selection_method``. When set, only integer values will be displayed on the x-axis.
+            - S: :obj:`int`, default=1 -- Adjusts the sensitivity of finding the elbow. Larger values are more\
+                conservative and less sensitive to small fluctuations. Passed to ``KneeLocator`` from the kneed package.
+            - dpi: :obj:`int`, default=300 -- Dots per inch for the figure.
+            - figsize: :obj:`tuple`, default=(8, 6) -- Adjusts the size of the plots.
+            - bbox_inches: :obj:`str` or :obj:`None`, default="tight" -- Alters size of the whitespace in the saved image.
+            - step: :obj:`int`, default=None -- An integer value that controls the progression of the x-axis in plots\
+                for the specified ``cluster_selection_method``. When set, only integer values will be displayed on the x-axis.
 
         Returns
         -------
@@ -1411,80 +1406,46 @@ class CAP(_CAPGetter):
         subplots: :obj:`bool`, default=True
             Produce subplots for outer product plots, combining all plots into a single figure.
 
-        kwargs: :obj:`dict`
+        **kwargs:
             Keyword arguments used when saving figures. Valid keywords include:
 
-            - dpi: :obj:`int`, default=300
-                Dots per inch for the figure.
-            - figsize: :obj:`tuple`, default=(8, 6)
-                Size of the figure in inches.
-            - fontsize: :obj:`int`, default=14
-                Font size for the title of individual plots or subplots.
-            - hspace: :obj:`float`, default=0.4
-                Height space between subplots.
-            - wspace: :obj:`float`, default=0.4
-                Width space between subplots.
-            - xticklabels_size: :obj:`int`, default=8
-                Font size for x-axis tick labels.
-            - yticklabels_size: :obj:`int`, default=8
-                Font size for y-axis tick labels.
-            - shrink: :obj:`float`, default=0.8
-                Fraction by which to shrink the colorbar.
-            - cbarlabels_size: :obj:`int`, default=8
-                Font size for the colorbar labels.
-            - nrow: :obj:`int`, default=varies (max 5)
-                Number of rows for subplots. Default varies but the maximum is 5.
-            - ncol: :obj:`int` or :obj:`None`, default=None
-                Number of columns for subplots. Default varies but the maximum is 5.
-            - suptitle_fontsize: :obj:`float`, default=0.7
-                Font size for the main title when subplot is True.
-            - tight_layout: :obj:`bool`, default=True
-                Use tight layout for subplots.
-            - rect: :obj:`list[int]`, default=[0, 0.03, 1, 0.95]
-                Rectangle parameter for tight layout when subplots are True to fix whitespace issues.
-            - sharey: :obj:`bool`, default=True
-                Share y-axis labels for subplots.
-            - xlabel_rotation: :obj:`int`, default=0
-                Rotation angle for x-axis labels.
-            - ylabel_rotation: :obj:`int`, default=0
-                Rotation angle for y-axis labels.
-            - annot: :obj:`bool`, default=False
-                Add values to cells.
-            - annot_kws: :obj:`dict`, default=None,
-                Customize the annotations.
-            - fmt: :obj:`str`, default=".2g"
-                Modify how the annotated vales are presented.
-            - linewidths: :obj:`float`, default=0
-                Padding between each cell in the plot.
-            - borderwidths: :obj:`float`, default=0
-                Width of the border around the plot.
-            - linecolor: :obj:`str`, default="black"
-                Color of the line that seperates each cell.
-            - edgecolors: :obj:`str` or :obj:`None`, default=None
-                Color of the edges.
-            - alpha: :obj:`float` or :obj:`None`, default=None
-                Controls transparency and ranges from 0 (transparent) to 1 (opaque).
-            - bbox_inches: :obj:`str` or :obj:`None`, default="tight"
-                Alters size of the whitespace in the saved image.
-            - hemisphere_labels: :obj:`bool`, default=False
-                Only available when ``visual_scope="nodes"``. Simplifies node labels to show only left/right hemisphere
-                divisions with a separation line, rather than listing individual node labels. If set to True,
-                ``edgecolors`` is ignored and ``linewidths`` and ``linecolor`` affect only the hemisphere division
-                line. This option is available exclusively for "Custom" and "Schaefer" parcellations.
-                Note, for the "Custom" parcellations, nodes must be ordered with left hemisphere nodes first,
-                followed by right hemisphere nodes.
-            - cmap: :obj:`str` or :obj:`callable` default="coolwarm"
-                Color map for the plot cells. For this parameter, you can use pre-made color palettes or
-                create custom ones. Below is a list of valid options:
-
-                - Strings to call seaborn's pre-made palettes.
-                - ``seaborn.diverging_palette`` function to generate custom palettes.
-                - ``matplotlib.colors.LinearSegmentedColormap`` to generate custom palettes.
-
-            - vmin: :obj:`float` or :obj:`None`, default=None
-                The minimum value to display in colormap.
-            - vmax: :obj:`float` or :obj:`None`, default=None
-                The maximum value to display in colormap.
+            - dpi: :obj:`int`, default=300 -- Dots per inch for the figure.
+            - figsize: :obj:`tuple`, default=(8, 6) -- Size of the figure in inches.
+            - fontsize: :obj:`int`, default=14 -- Font size for the title of individual plots or subplots.
+            - hspace: :obj:`float`, default=0.4 -- Height space between subplots.
+            - wspace: :obj:`float`, default=0.4 -- Width space between subplots.
+            - xticklabels_size: :obj:`int`, default=8 -- Font size for x-axis tick labels.
+            - yticklabels_size: :obj:`int`, default=8 -- Font size for y-axis tick labels.
+            - shrink: :obj:`float`, default=0.8 -- Fraction by which to shrink the colorbar.
+            - cbarlabels_size: :obj:`int`, default=8 -- Font size for the colorbar labels.
+            - nrow: :obj:`int`, default=varies (max 5) -- Number of rows for subplots. Default varies but the maximum is 5.
+            - ncol: :obj:`int` or :obj:`None`, default=None -- Number of columns for subplots. Default varies but the maximum is 5.
+            - suptitle_fontsize: :obj:`float`, default=0.7 -- Font size for the main title when subplot is True.
+            - tight_layout: :obj:`bool`, default=True -- Use tight layout for subplots.
+            - rect: :obj:`list[int]`, default=[0, 0.03, 1, 0.95] -- Rectangle parameter for ``tight_layout`` when\
+                ``subplots`` are True. Fixes whitespace issues.
+            - sharey: :obj:`bool`, default=True -- Share y-axis labels for subplots.
+            - xlabel_rotation: :obj:`int`, default=0 -- Rotation angle for x-axis labels.
+            - ylabel_rotation: :obj:`int`, default=0 -- Rotation angle for y-axis labels.
+            - annot: :obj:`bool`, default=False -- Add values to cells.
+            - annot_kws: :obj:`dict`, default=None -- Customize the annotations.
+            - fmt: :obj:`str`, default=".2g" -- Modify how the annotated vales are presented.
+            - linewidths: :obj:`float`, default=0 -- Padding between each cell in the plot.
+            - borderwidths: :obj:`float`, default=0 -- Width of the border around the plot.
+            - linecolor: :obj:`str`, default="black" -- Color of the line that seperates each cell.
+            - edgecolors: :obj:`str` or :obj:`None`, default=None -- Color of the edges.
+            - alpha: :obj:`float` or :obj:`None`, default=None -- Controls transparency and ranges from 0 (transparent)\
+                to 1 (opaque).
+            - bbox_inches: :obj:`str` or :obj:`None`, default="tight" -- Alters size of the whitespace in the saved image.
+            - hemisphere_labels: :obj:`bool`, default=False -- When ``visual_scope="nodes"``, shows simplified\
+                left/right hemisphere division line instead of individual node labels (only for Custom and Schaefer\
+                parcellations). For Custom parcellations, assumes labels are ordered such that all left hemisphere nodes\
+                come before right hemisphere nodes. Ignores edgecolors; linewidths/linecolor only affect division line.
+            - cmap: :obj:`str`, :obj:`callable` default="coolwarm" -- Color map for the plot cells. Options include\
+                strings to call seaborn's pre-made palettes, ``seaborn.diverging_palette`` function to generate custom\
+                palettes, and ``matplotlib.color.LinearSegmentedColormap`` to generate custom palettes.
+            - vmin: :obj:`float` or :obj:`None`, default=None -- The minimum value to display in colormap.
+            - vmax: :obj:`float` or :obj:`None`, default=None -- The maximum value to display in colormap.
 
         Returns
         -------
@@ -2052,57 +2013,33 @@ class CAP(_CAPGetter):
             If True, saves the correlation matrix contained in the DataFrames as csv files. For this to be used,
             ``output_dir`` must be specified.
 
-        kwargs: :obj:`dict`
+        **kwargs
             Keyword arguments used when modifying figures. Valid keywords include:
 
-            - dpi: :obj:`int`, default=300
-                Dots per inch for the figure.
-            - figsize: :obj:`tuple`, default=(8, 6)
-                Size of the figure in inches.
-            - fontsize: :obj:`int`, default=14
-                Font size for the title each plot.
-            - xticklabels_size: :obj:`int`, default=8
-                Font size for x-axis tick labels.
-            - yticklabels_size: :obj:`int`, default=8
-                Font size for y-axis tick labels.
-            - shrink: :obj:`float`, default=0.8
-                Fraction by which to shrink the colorbar.
-            - cbarlabels_size: :obj:`int`, default=8
-                Font size for the colorbar labels.
-            - xlabel_rotation: :obj:`int`, default=0
-                Rotation angle for x-axis labels.
-            - ylabel_rotation: :obj:`int`, default=0
-                Rotation angle for y-axis labels.
-            - annot: :obj:`bool`, default=False
-                Add values to each cell.
-            - annot_kws: :obj:`dict`, default=None,
-                Customize the annotations.
-            - fmt: :obj:`str`, default=".2g",
-                Modify how the annotated vales are presented.
-            - linewidths: :obj:`float`, default=0
-                Padding between each cell in the plot.
-            - borderwidths: :obj:`float`, default=0
-                Width of the border around the plot.
-            - linecolor: :obj:`str`, default="black"
-                Color of the line that seperates each cell.
-            - edgecolors: :obj:`str` or :obj:`None`, default=None
-                Color of the edges.
-            - alpha: :obj:`float` or :obj:`None`, default=None
-                Controls transparency and ranges from 0 (transparent) to 1 (opaque).
-            - bbox_inches: :obj:`str` or :obj:`None`, default="tight"
-                Alters size of the whitespace in the saved image.
-            - cmap: :obj:`str`, :obj:`callable` default="coolwarm"
-                Color map for the plot cells. For this parameter, you can use pre-made color palettes or create custom ones.
-                Below is a list of valid options:
-
-                - Strings to call seaborn's pre-made palettes.
-                - ``seaborn.diverging_palette`` function to generate custom palettes.
-                - ``matplotlib.color.LinearSegmentedColormap`` to generate custom palettes.
-
-            - vmin: :obj:`float` or :obj:`None`, default=None
-                The minimum value to display in colormap.
-            - vmax: :obj:`float` or :obj:`None`, default=None
-                The maximum value to display in colormap.
+            - dpi: :obj:`int`, default=300 -- Dots per inch for the figure.
+            - figsize: :obj:`tuple`, default=(8, 6) -- Size of the figure in inches.
+            - fontsize: :obj:`int`, default=14 -- Font size for the title each plot.
+            - xticklabels_size: :obj:`int`, default=8 -- Font size for x-axis tick labels.
+            - yticklabels_size: :obj:`int`, default=8 -- Font size for y-axis tick labels.
+            - shrink: :obj:`float`, default=0.8 -- Fraction by which to shrink the colorbar.
+            - cbarlabels_size: :obj:`int`, default=8 -- Font size for the colorbar labels.
+            - xlabel_rotation: :obj:`int`, default=0 -- Rotation angle for x-axis labels.
+            - ylabel_rotation: :obj:`int`, default=0 -- Rotation angle for y-axis labels.
+            - annot: :obj:`bool`, default=False -- Add values to each cell.
+            - annot_kws: :obj:`dict`, default=None -- Customize the annotations.
+            - fmt: :obj:`str`, default=".2g" -- Modify how the annotated vales are presented.
+            - linewidths: :obj:`float`, default=0 -- Padding between each cell in the plot.
+            - borderwidths: :obj:`float`, default=0 -- Width of the border around the plot.
+            - linecolor: :obj:`str`, default="black" -- Color of the line that seperates each cell.
+            - edgecolors: :obj:`str` or :obj:`None`, default=None -- Color of the edges.
+            - alpha: :obj:`float` or :obj:`None`, default=None -- Controls transparency and ranges from 0\
+                (transparent) to 1 (opaque).
+            - bbox_inches: :obj:`str` or :obj:`None`, default="tight" -- Alters size of the whitespace in the saved image.
+            - cmap: :obj:`str`, :obj:`callable` default="coolwarm" -- Color map for the plot cells. Options include\
+                strings to call seaborn's pre-made palettes, ``seaborn.diverging_palette`` function to generate custom\
+                palettes, and ``matplotlib.color.LinearSegmentedColormap`` to generate custom palettes.
+            - vmin: :obj:`float` or :obj:`None`, default=None -- The minimum value to display in colormap.
+            - vmax: :obj:`float` or :obj:`None`, default=None -- The maximum value to display in colormap.
 
         Returns
         -------
@@ -2405,54 +2342,34 @@ class CAP(_CAPGetter):
 
             .. versionadded:: 0.21.5
 
-        kwargs: :obj:`dict`
+        **kwargs
             Additional parameters to pass to modify certain plot parameters. Options include:
 
-            - dpi: :obj:`int`, default=300
-                Dots per inch for the plot.
-            - title_pad: :obj:`int`, default=-3
-                Padding for the plot title.
-            - cmap: :obj:`str` or :obj:`callable`, default="cold_hot"
-                Colormap to be used for the plot. For this parameter, you can use pre-made color palettes or create
-                custom ones. Below is a list of valid options:
-
-                - Strings to call ``nilearn.plotting.cm._cmap_d`` fuction.
-                - ``matplotlib.colors.LinearSegmentedColormap`` to generate custom colormaps.
-
-            - cbar_kws: :obj:`dict`, default={"location": "bottom", "n_ticks": 3}
-                Customize colorbar. Refer to ``_add_colorbars`` for ``surfplot.plotting.Plot`` in
-                `Surfplot's Plot Documentation
-                <https://surfplot.readthedocs.io/en/latest/generated/surfplot.plotting.Plot.html#surfplot.plotting.Plot._add_colorbars>`_
+            - dpi: :obj:`int`, default=300 -- Dots per inch for the plot.
+            - title_pad: :obj:`int`, default=-3 -- Padding for the plot title.
+            - cmap: :obj:`str` or :obj:`callable`, default="cold_hot" -- Colormap to be used for the plot.
+            - cbar_kws: :obj:`dict`, default={"location": "bottom", "n_ticks": 3} -- Customize colorbar.  Refer to \
+                ``_add_colorbars`` for ``surfplot.plotting.Plot`` in `Surfplot's Plot Documentation\
+                <https://surfplot.readthedocs.io/en/latest/generated/surfplot.plotting.Plot.html#surfplot.plotting.Plot._add_colorbars>`_\
                 for valid parameters.
-            - alpha: :obj:`float`, default=1
-                Transparency level of the colorbar.
-            - outline_alpha: :obj:`float`, default=1
-                Transparency level of the colorbar for outline if ``as_outline`` is True.
-            - zero_transparent: :obj:`bool`, default=True
-                Turns vertices with a value of 0 transparent.
-            - as_outline: :obj:`bool`, default=False
-                Plots only an outline of contiguous vertices with the same value.
-            - size: :obj:`tuple`, default=(500, 400)
-                Size of the plot in pixels.
-            - layout: :obj:`str`, default="grid"
-                Layout of the plot.
-            - zoom: :obj:`float`, default=1.5
-                Zoom level for the plot.
-            - views: {"lateral", "medial"} or :obj:`list[{"lateral", "medial}]`, default=["lateral", "medial"]
+            - alpha: :obj:`float`, default=1 -- Transparency level of the colorbar.
+            - as_outline: :obj:`bool`, default=False -- Plots only an outline of contiguous vertices with the same value.
+            - outline_alpha: :obj:`float`, default=1 -- Transparency level of the colorbar for outline if ``as_outline`` is True.
+            - zero_transparent: :obj:`bool`, default=True -- Turns vertices with a value of 0 transparent.
+            - size: :obj:`tuple`, default=(500, 400) -- Size of the plot in pixels.
+            - layout: :obj:`str`, default="grid" -- Layout of the plot.
+            - zoom: :obj:`float`, default=1.5 -- Zoom level for the plot.
+            - views: {"lateral", "medial"} or :obj:`list[{"lateral", "medial}]`, default=["lateral", "medial"] -- \
                 Views to be displayed in the plot.
-            - brightness: :obj:`float`, default=0.5
-                Brightness level of the plot.
-            - figsize: :obj:`tuple` or :obj:`None`, default=None
-                Size of the figure.
-            - scale: :obj:`tuple`, default=(2, 2)
-                Scale factors for the plot.
-            - surface: {"inflated", "veryinflated"}, default="inflated"
-                The surface atlas that is used for plotting. Options are "inflated" or "veryinflated".
-            - color_range: :obj:`tuple` or :obj:`None`, default=None
-                The minimum and maximum value to display in plots. For instance, (-1, 1) where minimum
-                value is first. If None, the minimum and maximum values from the image will be used.
-            - bbox_inches: :obj:`str` or :obj:`None`, default="tight"
-                Alters size of the whitespace in the saved image.
+            - brightness: :obj:`float`, default=0.5 -- Brightness level of the plot.
+            - figsize: :obj:`tuple` or :obj:`None`, default=None -- Size of the figure.
+            - scale: :obj:`tuple`, default=(2, 2) -- Scale factors for the plot.
+            - surface: {"inflated", "veryinflated"}, default="inflated" -- The surface atlas that is used for plotting.\
+                Options are "inflated" or "veryinflated".
+            - color_range: :obj:`tuple` or :obj:`None`, default=None -- The minimum and maximum value to display in\
+                plots. For instance, (-1, 1) where minimum value is first. If None, the minimum and maximum values from\
+                the image will be used.
+            - bbox_inches: :obj:`str` or :obj:`None`, default="tight" -- Alters size of the whitespace in the saved image.
 
         Returns
         -------
@@ -2741,59 +2658,53 @@ class CAP(_CAPGetter):
         as_html: :obj:`bool`, default=False
             When ``output_dir`` is specified, plots are saved as html images instead of png images.
 
-        kwargs: :obj:`dict`
+        **kwargs:
             Additional parameters to pass to modify certain plot parameters. Options include:
 
-            - scale: :obj:`int`, default=2
-                If ``output_dir`` provided, controls resolution of image when saving. Serves a similar purpose as dpi.
-            - savefig_options: :obj:`dict[str]`, default={"width": 3, "height": 3, "scale": 1}
-                If ``output_dir`` provided, controls the width (in inches), height (in inches), and scale of the
-                plot.
-            - height: :obj:`int`, default=800
-                Height of the plot.
-            - width: :obj:`int`, defualt=1200
-                Width of the plot.
-            - line_close: :obj:`bool`, default=True
-                Whether to close the lines
-            - bgcolor: :obj:`str`, default="white"
-                Color of the background
-            - scattersize: :obj:`int`, default=8
-                Controls size of the dots when markers are used.
-            - connectgaps: :obj:`bool`, default=True
-                If ``use_scatterpolar=True``, controls if missing values are connected.
-            - linewidth: :obj:`int`, default = 2
-                The width of the line connecting the values if ``use_scatterpolar=True``.
-            - opacity: :obj:`float`, default=0.5,
-                If ``use_scatterpolar=True``, sets the opacity of the trace.
-            - fill: :obj:`str`, default="none".
-                If "toself" the are of the dots and within the boundaries of the line will be filled.
-            - mode: :obj:`str`, default="markers+lines",
-                Determines how the trace is drawn. Can include "lines", "markers", "lines+markers", "lines+markers+text".
+            - scale: :obj:`int`, default=2 -- If ``output_dir`` provided, controls resolution of image when saving.\
+                Serves a similar purpose as dpi.
+            - savefig_options: :obj:`dict[str]`, default={"width": 3, "height": 3, "scale": 1} -- If ``output_dir``\
+                provided, controls the width (in inches), height (in inches), and scale of the plot.
+            - height: :obj:`int`, default=800 -- Height of the plot.
+            - width: :obj:`int`, defualt=1200 -- Width of the plot.
+            - line_close: :obj:`bool`, default=True -- Whether to close the lines
+            - bgcolor: :obj:`str`, default="white" -- Color of the background
+            - scattersize: :obj:`int`, default=8 -- Controls size of the dots when markers are used.
+            - connectgaps: :obj:`bool`, default=True -- If ``use_scatterpolar=True``, controls if missing values are connected.
+            - linewidth: :obj:`int`, default = 2 -- The width of the line connecting the values if ``use_scatterpolar=True``.
+            - opacity: :obj:`float`, default=0.5 -- If ``use_scatterpolar=True``, sets the opacity of the trace.
+            - fill: :obj:`str`, default="none" -- If "toself" the are of the dots and within the boundaries of the\
+                line will be filled.
+            - mode: :obj:`str`, default="markers+lines" -- Determines how the trace is drawn. Can include "lines",\
+                "markers", "lines+markers", "lines+markers+text".
             - radialaxis: :obj:`dict`, default={"showline": False, "linewidth": 2, \
                                                 "linecolor": "rgba(0, 0, 0, 0.25)", \
                                                 "gridcolor": "rgba(0, 0, 0, 0.25)", \
-                                                "ticks": "outside", "tickfont": {"size": 14, "color": "black"}}
-                Customizes the radial axis.
+                                                "ticks": "outside", "tickfont": {"size": 14, "color": "black"}} --\
+                Customizes the radial axis. Refer to `Plotly's radialaxis Documentation\
+                <https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.radialaxis.html>`_\
+                or `Plotly's polar Documentation <https://plotly.com/python/reference/layout/polar/>`_ for valid keys.
             - angularaxis: :obj:`dict`, default={"showline": True, "linewidth": 2, \
                                                  "linecolor": "rgba(0, 0, 0, 0.25)", \
                                                  "gridcolor": "rgba(0, 0, 0, 0.25)", \
-                                                 "tickfont": {"size": 16, "color": "black"}}
-                Customizes the angular axis.
-            - color_discrete_map: :obj:`dict`, default={"High Amplitude": "red", "Low Amplitude": "blue"},
-                Change the color of the "High Amplitude" and "Low Amplitude" groups. Must use the keys
-                "High Amplitude" and "Low Amplitude" to work.
-            - title_font: :obj:`dict`, default={"family": "Times New Roman", "size": 30, "color": "black"}
-                Modifies the font of the title.
-            - title_x: :obj:`float`, default=0.5
-                Modifies x position of title.
-            - title_y: :obj:`float`, default=None
-                Modifies y position of title.
+                                                 "tickfont": {"size": 16, "color": "black"}} --\
+                Customizes the angular axis. Refer to `Plotly's angularaxis Documentation\
+                <https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.angularaxis.html>`_\
+                or `Plotly's polar Documentation <https://plotly.com/python/reference/layout/polar/>`_ for valid keys.
+            - color_discrete_map: :obj:`dict`, default={"High Amplitude": "red", "Low Amplitude": "blue"} --\
+                Change the color of the "High Amplitude" and "Low Amplitude" groups. Must use the keys "High Amplitude"\
+                and "Low Amplitude".
+            - title_font: :obj:`dict`, default={"family": "Times New Roman", "size": 30, "color": "black"} --\
+                Modifies the font of the title. Refer to `Plotly's layout Documentation\
+                <https://plotly.com/python/reference/layout/>`_ for valid keys.
+            - title_x: :obj:`float`, default=0.5 -- Modifies x position of title.
+            - title_y: :obj:`float`, default=None -- Modifies y position of title.
             - legend: :obj:`dict`, default={"yanchor": "top", "xanchor": "left", "y": 0.99, "x": 0.01, \
                                             "title_font_family": "Times New Roman", "font": {"size": 12, \
-                                            "color": "black"}}
-                Customizes the legend.
-            - engine: {"kaleido", "orca"}, default="kaleido"
-                Engine used for saving plots.
+                                            "color": "black"}} --\
+                Customizes the legend. Refer to `Plotly's layout Documentation\
+                <https://plotly.com/python/reference/layout/>`_ for valid keys
+            - engine: {"kaleido", "orca"}, default="kaleido" -- Engine used for saving plots.
 
         Returns
         -------
@@ -2817,19 +2728,6 @@ class CAP(_CAPGetter):
         **Tick Values**: if the ``tickvals`` or  ``range`` sub-keys in this code are not specified in the ``radialaxis``
         kwarg, then four values are shown - 0.25*(max value), 0.50*(max value), 0.75*(max value), and the max value.
         These values are also rounded to the second decimal place.
-
-        **Radial Axis Kwargs**: Refer to `Plotly's radialaxis Documentation
-        <https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.radialaxis.html>`_
-        or `Plotly's polar Documentation <https://plotly.com/python/reference/layout/polar/>`_ for valid keys for
-        ``radialaxis``.
-
-        **Angular Axis Kwargs**: Refer to `Plotly's angularaxis Documentation
-        <https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.angularaxis.html>`_
-        or `Plotly's polar Documentation <https://plotly.com/python/reference/layout/polar/>`_ for valid keys for
-        ``angularaxis``.
-
-        **Legend and Title Font Kwargs**: Refer to `Plotly's layout Documentation
-        <https://plotly.com/python/reference/layout/>`_ for valid keys for ``legend`` and ``title_font``.
 
         References
         ----------

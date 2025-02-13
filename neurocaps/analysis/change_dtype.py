@@ -74,7 +74,7 @@ def change_dtype(
     use floating-point dtypes. Reducing the dtype could introduce rounding errors that may lower the precision of
     subsequent analyses as decimal digits are reduced when lower dtypes are requested. Thus, the lowest recommended
     floating-point dtype would be "float32", since it allows for memory usage reduction while limiting rounding errors
-    that could significantly  alter calculations.
+    that could significantly alter calculations.
     """
     assert isinstance(subject_timeseries_list, list), "`subject_timeseries_list` must be a list."
 

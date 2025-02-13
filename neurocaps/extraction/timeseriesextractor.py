@@ -1086,15 +1086,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             .. versionchanged:: 0.19.0  ``file_name`` to ``filename``
 
-        kwargs: :obj:`dict`
+        **kwargs:
             Keyword arguments used when saving figures. Valid keywords include:
 
-            - dpi: :obj:`int`, default=300
-                Dots per inch for the figure.
-            - figsize: :obj:`tuple`, default=(11, 5)
-                Size of the figure in inches. Default is (11, 5) if ``figsize`` is not specified.
-            - bbox_inches: :obj:`str` or :obj:`None`, default="tight"
-                Alters size of the whitespace in the saved image.
+            - dpi: :obj:`int`, default=300 -- Dots per inch for the figure.
+            - figsize: :obj:`tuple`, default=(11, 5) -- Size of the figure in inches.
+            - bbox_inches: :obj:`str` or :obj:`None`, default="tight" -- Alters size of the whitespace in the saved image.
 
         Returns
         -------
