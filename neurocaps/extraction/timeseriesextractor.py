@@ -74,9 +74,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
           ("maps", "nodes", and "regions").
         - For detailed parameter information, see:
 
-            - `Schaefer (Nilearn's Fetch Schaefer Documentation)
+            - `Schaefer (Nilearn's Fetch Schaefer Documentation)\
             <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_schaefer_2018.html>`_
-            - `AAL (Nilearn's Fetch AAL Documentation)
+            - `AAL (Nilearn's Fetch AAL Documentation)\
             <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_aal.html>`_
             - Custom: See Notes section below for structure requirements.
 
@@ -473,7 +473,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         session: :obj:`int`, :obj:`str`, or :obj:`None`, default=None
             The session ID to extract timeseries data from. Only a single session can be extracted at a time and an
             error will be raised if more than one session is detected during querying. The value can be an integer
-            (e.g. ``session=2``) or a string (e.g.``session="001"``).
+            (e.g. ``session=2``) or a string (e.g. ``session="001"``).
 
         runs: :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
             List of run numbers to extract timeseries data from. Extracts all runs if unspecified. For instance,
