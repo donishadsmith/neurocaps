@@ -70,11 +70,8 @@ def change_dtype(
 
     Warning
     -------
-    **Floating Point Precision**: While this function allows conversion to any valid NumPy dtype, it is recommended to
-    use floating-point dtypes. Reducing the dtype could introduce rounding errors that may lower the precision of
-    subsequent analyses as decimal digits are reduced when lower dtypes are requested. Thus, the lowest recommended
-    floating-point dtype would be "float32", since it allows for memory usage reduction while limiting rounding errors
-    that could significantly alter calculations.
+    **Floating Point Precision**: The minimum recommended floating-point dtype is *float32*, as lower precision may
+    introduce rounding errors that affect calculations.
     """
     assert isinstance(subject_timeseries_list, list), "`subject_timeseries_list` must be a list."
 

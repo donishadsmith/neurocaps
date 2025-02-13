@@ -383,6 +383,9 @@ def test_extraction(parcel_approach, use_confounds, name):
     assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == shape
     assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 40
 
+    # No error
+    print(extractor)
+
     # Task condition; will issue warning due to max index for condition being 40 when the max index for timeseries is 39
     extractor.get_bold(
         bids_dir=bids_dir, session="002", runs="001", task="rest", pipeline_name=pipeline_name, tr=1.2, condition="rest"

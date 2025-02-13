@@ -1,7 +1,7 @@
 """A class which is responsible for accessing all TimeseriesExtractorGetter and to keep track of all attributes in
 TimeSeriesExtractor"""
 
-import copy, os
+import copy, os, sys
 from typing import Union
 
 import numpy as np
@@ -43,22 +43,22 @@ class _TimeseriesExtractorGetter:
     # Exist when TimeSeriesExtractor.get_bold() used
     @property
     def task_info(self) -> Union[dict[str, Union[str, int]], None]:
-        return self._task_info if hasattr(self, "_task_info") else None
+        return getattr(self, "_task_info", None)
 
     # Gets initialized and populated in TimeSeriesExtractor.get_bold(),
     @property
     def subject_ids(self) -> Union[list[str], None]:
-        return self._subject_ids if hasattr(self, "_subject_ids") else None
+        return getattr(self, "_subject_ids", None)
 
     @property
     def n_cores(self) -> Union[int, None]:
-        return self._n_cores if hasattr(self, "_n_cores") else None
+        return getattr(self, "_n_cores", None)
 
     # Gets initialized in TimeSeriesExtractor.get_bold(), gets populated when
     # TimeseriesExtractor._timeseries_aggregator gets called in TimeseriesExtractor._extract_timeseries
     @property
     def subject_timeseries(self) -> Union[dict[str, dict[str, NDArray[np.floating]]], None]:
-        return self._subject_timeseries if hasattr(self, "_subject_timeseries") else None
+        return getattr(self, "_subject_timeseries", None)
 
     @subject_timeseries.setter
     def subject_timeseries(self, subject_dict):
@@ -110,3 +110,29 @@ class _TimeseriesExtractorGetter:
             for run in runs:
                 if not isinstance(subject_dict[sub][run], np.ndarray):
                     raise TypeError(error_dict["Run"].format(sub, run) + "All 'run-#' keys must contain a numpy array.")
+
+    def _subject_timeseries_size(self):
+        if not self.subject_timeseries:
+            return "0 bytes"
+
+        total_bytes = sum(arr.nbytes for subject in self.subject_timeseries.values() for arr in subject.values())
+        # Adding size of dictionary
+        total_bytes += sys.getsizeof(self.subject_timeseries)
+
+        return f"{total_bytes} bytes"
+
+    def __str__(self):
+        n_subjects = len(self.subject_ids) if self.subject_ids else None
+
+        object_properties = (
+            f"Preprocessed Bold Template Space                           : {self.space}\n"
+            f"Parcellation Approach                                      : {list(self.parcel_approach.keys())[0]}\n"
+            f"Signal Clean Info                                          : {self.signal_clean_info}\n"
+            f"Task Info                                                  : {self.task_info}\n"
+            f"Number of Subjects                                         : {n_subjects}\n"
+            f"CPU Cores Used for Timeseries Extraction (Multiprocessing) : {self.n_cores}\n"
+            f"Subject Timeseries Byte Size                               : {self._subject_timeseries_size()}\n"
+        )
+
+        sep = "=" * len(object_properties.rsplit(": ")[0])
+        return "Metadata:\n" + sep + f"\n{object_properties}"

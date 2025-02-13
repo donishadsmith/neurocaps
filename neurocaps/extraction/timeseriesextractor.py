@@ -46,8 +46,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         To initialize a ``parcel_approach``, the configuration requires a nested dictionary with:
 
-            1. First Level Key: The parcellation name ("Schaefer", "AAL", or "Custom").
-            2. Second Level Keys: Parameters specific to each parcellation method.
+          - First Level Key: The parcellation name ("Schaefer", "AAL", or "Custom").
+          - Second Level Keys: Parameters specific to each parcellation method.
 
         Supported parcellation approaches and their parameters, includes:
 
@@ -59,8 +59,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         - "AAL":
 
-            - "version": AAL parcellation version to use ("SPM5", "SPM8", "SPM12", or "3v2"). Defaults to "SPM12" if
-              ``{"AAL": {}}`` is given.
+            - "version": AAL parcellation version to use ("SPM5", "SPM8", "SPM12", or "3v2"). Defaults to "SPM12" if\
+            ``{"AAL": {}}`` is given.
 
         - "Custom" (user-defined):
 

@@ -124,6 +124,9 @@ def test_without_groups_and_without_cluster_selection(standardize):
     assert cap_analysis.caps["All Subjects"]["CAP-2"].shape == (100,)
     assert len(cap_analysis.caps["All Subjects"]) == len(np.unique(cap_analysis.kmeans["All Subjects"].labels_))
 
+    # No error
+    print(cap_analysis)
+
     concatenated_timeseries = concat_data(cap_analysis.subject_table, standardize=standardize)
 
     # Concatenated data used for kmeans

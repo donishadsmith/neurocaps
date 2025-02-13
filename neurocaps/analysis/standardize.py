@@ -25,10 +25,10 @@ def standardize(
 
     This function serves two main purposes:
 
-    1. When standardizing was not done in ``TimeseriesExtractor``
-    2. When re-standardizing is needed because all of the following occurred in ``TimeseriesExtractor``:
-        - High-motion volumes were removed using ``fd_threshold`` without setting the "use_sample_mask" key to True
-        - ``standardize`` was not set to False
+    - When standardizing was not done in ``TimeseriesExtractor``
+    - When re-standardizing is needed because all of the following occurred in ``TimeseriesExtractor``:
+        - High-motion volumes were removed using ``fd_threshold`` without setting the "use_sample_mask" key to True.
+        - ``standardize`` was not set to False.
 
     Parameters
     ----------
