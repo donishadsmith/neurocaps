@@ -13,6 +13,14 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.22.0] - 2025-02-17
+### ♻ Changed
+- Change in internal logic for condition to not add plus one to the duration scan index 
+(``scans = range(start, end + 1)`` -> ``scans = range(start, end)``) to reduce potential condition spillover
+in certain task designs such as rapid events.
+### 📖 Documentation
+- Remove version change directives under 0.19.0 to clean up docs.
+
 ## [0.21.8] - 2025-02-13
 ### 🚀 New/Added
 - `CAP` and `TimeseriesExtractor` classes now have defined string dunder methods that return specific metadata.

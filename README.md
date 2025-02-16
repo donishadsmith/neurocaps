@@ -1,7 +1,7 @@
 # neurocaps
 [![Latest Version](https://img.shields.io/pypi/v/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.14731510)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.14884785)
 [![Github Repository](https://img.shields.io/badge/Source%20Code-neurocaps-purple)](https://github.com/donishadsmith/neurocaps)
 [![Test Status](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg)](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml)
 [![Documentation Status](https://readthedocs.org/projects/neurocaps/badge/?version=stable)](http://neurocaps.readthedocs.io/en/stable/?badge=stable)
@@ -258,8 +258,9 @@ extractor.get_bold(
     bids_dir="neurocaps_demo",
     pipeline_name="fmriprep",  # Can specify if multiple pipelines exists in derivatives directory
     task="DET",
-    condition="late",  # Can extract a specific condition if events.tsv is available
-    condition_tr_shift=1,
+    condition="late", # Can extract a specific condition if events.tsv is available
+    condition_tr_shift=2, # Account for hemodynamic lag
+    slice_time_ref=1, # Adjust to middle volume used as slice time reference when extracting condition
     session="2",
     n_cores=None,
     verbose=True,
@@ -268,19 +269,19 @@ extractor.get_bold(
 ```
 **Output:**
 ```
-2025-01-31 13:01:23,856 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: cosine*, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z.
-2025-01-31 13:01:28,538 neurocaps.extraction.timeseriesextractor [INFO] BIDS Layout: ...s\demos\testing\neurocaps_demo | Subjects: 2 | Sessions: 2 | Runs: 4
-2025-01-31 13:01:28,788 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-1_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
-2025-01-31 13:01:28,854 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z, a_comp_cor_00, a_comp_cor_01, a_comp_cor_33, a_comp_cor_34.
-2025-01-31 13:01:43,765 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Nuisance regression completed; extracting [CONDITION: late].
-2025-01-31 13:01:43,823 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-2_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
-2025-01-31 13:01:43,841 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z, a_comp_cor_00, a_comp_cor_01, a_comp_cor_100, a_comp_cor_101.
-2025-01-31 13:01:58,269 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] Nuisance regression completed; extracting [CONDITION: late].
-2025-01-31 13:01:58,333 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 1] Preparing for Timeseries Extraction using [FILE: sub-0006_ses-2_task-DET_run-1_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
-2025-01-31 13:01:58,344 neurocaps._utils.extraction.extract_timeseries [WARNING] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 1] Timeseries Extraction Skipped: Run flagged due to more than 20.0% of the volumes exceeding the framewise displacement threshold of 0.35. Percentage of volumes exceeding the threshold limit is 21.818181818181817% for [CONDITION: late].
-2025-01-31 13:01:58,344 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 2] Preparing for Timeseries Extraction using [FILE: sub-0006_ses-2_task-DET_run-2_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
-2025-01-31 13:01:58,371 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 2] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z, a_comp_cor_00, a_comp_cor_01, a_comp_cor_24, a_comp_cor_25.
-2025-01-31 13:02:12,630 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 2] Nuisance regression completed; extracting [CONDITION: late].
+2025-02-17 13:34:09,870 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: cosine*, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z.
+2025-02-17 13:34:12,689 neurocaps.extraction.timeseriesextractor [INFO] BIDS Layout: ...rs\donis\Github\neurocaps_demo | Subjects: 2 | Sessions: 2 | Runs: 4
+2025-02-17 13:34:13,005 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-1_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
+2025-02-17 13:34:13,038 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z, a_comp_cor_00, a_comp_cor_01, a_comp_cor_33, a_comp_cor_34.
+2025-02-17 13:34:26,421 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Nuisance regression completed; extracting [CONDITION: late].
+2025-02-17 13:34:26,469 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-2_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
+2025-02-17 13:34:26,488 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z, a_comp_cor_00, a_comp_cor_01, a_comp_cor_100, a_comp_cor_101.
+2025-02-17 13:34:40,285 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] Nuisance regression completed; extracting [CONDITION: late].
+2025-02-17 13:34:40,334 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 1] Preparing for Timeseries Extraction using [FILE: sub-0006_ses-2_task-DET_run-1_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
+2025-02-17 13:34:40,353 neurocaps._utils.extraction.extract_timeseries [WARNING] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 1] Timeseries Extraction Skipped: Run flagged due to more than 20.0% of the volumes exceeding the framewise displacement threshold of 0.35. Percentage of volumes exceeding the threshold limit is 21.62162162162162% for [CONDITION: late].
+2025-02-17 13:34:40,353 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 2] Preparing for Timeseries Extraction using [FILE: sub-0006_ses-2_task-DET_run-2_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
+2025-02-17 13:34:40,370 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 2] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z, a_comp_cor_00, a_comp_cor_01, a_comp_cor_24, a_comp_cor_25.
+2025-02-17 13:34:53,680 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 2] Nuisance regression completed; extracting [CONDITION: late].
 ```
 
 ```python
@@ -332,8 +333,8 @@ print(outputs["temporal_fraction"])
 **DataFrame Output:**
 | Subject_ID | Group | Run | CAP-1 | CAP-2 |
 | --- | --- | --- | --- | --- |
-| 0004 | All Subjects | run-continuous | 0.193182 | 0.806818 |
-| 0006 | All Subjects | run-2 | 0.121951 | 0.878049 |
+| 0004 | All Subjects | run-continuous | 0.344262 | 0.655738 |
+| 0006 | All Subjects | run-2 | 0.366667 | 0.633333 |
 
 ```python
 # Create surface plots
@@ -446,22 +447,22 @@ print(trans_outputs["All Subjects"])
 **Outputs:**
 ```
 Clustering [GROUP: All Subjects]: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:00<00:00, 22.42it/s]
-2025-01-31 13:03:45,535 neurocaps.analysis.cap [INFO] [GROUP: All Subjects | METHOD: silhouette] Optimal cluster size is 2.
+2025-02-17 13:34:58,392 neurocaps.analysis.cap [INFO] [GROUP: All Subjects | METHOD: silhouette] Optimal cluster size is 2.
 ```
 
 <img src="assets/silhouette.png" width=70% height=70%>
 
 | Subject_ID | Group | Run | 1.1 | 1.2 | 2.1 | 2.2 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 0004 | All Subjects | run-continuous | 0.470588 | 0.529412 | 0.114286 | 0.885714 |
-| 0006 | All Subjects | run-2 | 0.600000 | 0.400000 | 0.057143 | 0.942857 |
+| 0004 | All Subjects | run-continuous | 0.743590 | 0.256410 | 0.523810 | 0.476190 |
+| 0006 | All Subjects | run-2 | 0.722222 | 0.277778 | 0.454545 | 0.545455 |
 
 <img src="assets/transprob.png" width=70% height=70%>
 
 | From/To | CAP-1 | CAP-2 |
 | --- | --- | --- |
-| CAP-1 | 0.535294 | 0.464706 |
-| CAP-2 | 0.085714 | 0.914286 |
+| CAP-1 | 0.732906 | 0.267094 |
+| CAP-2 | 0.489177 | 0.510823 |
 
 ## Acknowledgements
 Neurocaps relies on several popular data processing, machine learning, neuroimaging, and visualization

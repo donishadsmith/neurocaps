@@ -481,8 +481,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             ``runs=["000", "001"]``.
 
         condition: :obj:`str` or :obj:`None`, default=None
-            Isolates the timeseries data corresponding to a specific condition, only after the timeseries has been
-            extracted and subjected to nuisance regression. Only a single condition can be extracted at a time.
+            Isolates the timeseries data corresponding to a specific condition (listed in the "trial_type" column of
+            the "events.tsv" file), only after the timeseries has been extracted and subjected to nuisance regression.
+            Only a single condition can be extracted at a time.
 
         condition_tr_shift: :obj:`int`, default=0
             Number of TR units to units to offset both the start and end scan indices of a condition. This parameter
@@ -550,9 +551,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         Returns
         -------
         self
-
-
-            .. versionadded:: 0.19.3
 
         Note
         ----
@@ -1016,14 +1014,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         filename: :obj:`str` or :obj:`None`, default=None
             Name of the file with or without the "pkl" extension.
 
-            .. versionchanged:: 0.19.0  ``file_name`` to ``filename``
-
         Returns
         -------
         self
-
-
-            .. versionadded:: 0.19.3
         """
         if not self.subject_timeseries:
             self._raise_error("Cannot save pickle file")
@@ -1084,8 +1077,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         filename: :obj:`str` or :obj:`None`, default=None
             Name of the file without the extension.
 
-            .. versionchanged:: 0.19.0  ``file_name`` to ``filename``
-
         **kwargs:
             Keyword arguments used when saving figures. Valid keywords include:
 
@@ -1096,9 +1087,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         Returns
         -------
         self
-
-
-            .. versionadded:: 0.19.3
 
         Note
         ----

@@ -425,7 +425,7 @@ def _get_condition(Data, condition_df):
         onset_scan = int(adjusted_onset / Data.tr) + Data.shift
         end_scan = math.ceil((adjusted_onset + condition_df.loc[i, "duration"]) / Data.tr) + Data.shift
         # Add one since range is not inclusive
-        scans.extend(list(range(onset_scan, end_scan + 1)))
+        scans.extend(list(range(onset_scan, end_scan)))
 
     # Get unique scans to not duplicate information
     scans = sorted(list(set(scans)))

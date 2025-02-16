@@ -92,8 +92,6 @@ def merge_dicts(
         names - "subject_timeseries_{0}_reduced.pkl" (where {0} indicates the original input order) and
         "merged_subject_timeseries.pkl" for the merged dictionary.
 
-        .. versionchanged:: 0.19.0  ``file_names`` to ``filenames``
-
     save_reduced_dicts: :obj:`bool` or None, default=False
         If True and the ``output_dir`` is provided, then the reduced dictionaries are saved as pickle files.
 

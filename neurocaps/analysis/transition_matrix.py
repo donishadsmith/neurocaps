@@ -43,8 +43,6 @@ def transition_matrix(
     suffix_filename: :obj:`str` or :obj:`None`, default=None
         Appended to the filename of each saved plot if ``output_dir`` is provided.
 
-        .. versionadded:: 0.19.0
-
     show_figs: :obj:`bool`, default=True
         Display figures.
 

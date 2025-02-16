@@ -65,8 +65,6 @@ def standardize(
         ``subject_timeseries_list``). If None and ``output_dir`` is specified, uses default file names -
         "subject_timeseries_{0}_standardized.pkl" (where {0} indicates the original input order).
 
-        .. versionchanged:: 0.19.0  ``file_names`` to ``filenames``
-
     Returns
     -------
     dict[str, dict[str, dict[str, np.ndarray]]]

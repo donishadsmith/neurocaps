@@ -210,8 +210,6 @@ class CAP(_CAPGetter):
                 }
             }
 
-        .. versionadded:: 0.19.0 ``inertia``, ``silhouette``, ``davies_bouldin``, and ``variance_ratio`` consolidated into this property
-
     optimal_n_clusters: :obj:`dict[str, int]` or :obj:`None`
         A dictionary mapping groups to their optimal cluster sizes if ``cluster_selection_method`` is not None in
         ``self.get_caps()``. The structure is as follows:
@@ -459,9 +457,6 @@ class CAP(_CAPGetter):
         Returns
         -------
         self
-
-
-            .. versionadded:: 0.19.3
 
         Note
         ----
@@ -919,8 +914,6 @@ class CAP(_CAPGetter):
 
         prefix_filename: :obj:`str` or :obj:`None`, default=None
             A prefix to append to the saved file names for each ``pandas.DataFrame``, if ``output_dir`` is provided.
-
-            .. versionchanged:: 0.19.0  ``prefix_file_name`` to ``prefix_filename``
 
         progress_bar: :obj:`bool`, default=False
             If True, displays a progress bar.
@@ -1388,8 +1381,6 @@ class CAP(_CAPGetter):
         suffix_filename: :obj:`str` or :obj:`None`, default=None
             Appended to the filename of each saved plot if ``output_dir`` is provided.
 
-            .. versionadded:: 0.19.0
-
         plot_options: {"outer_product", "heatmap"} or :obj:`list["outer_product", "heatmap"]`, default="outer_product"
             Type of plots to create. Options are "outer_product" or "heatmap".
 
@@ -1448,9 +1439,6 @@ class CAP(_CAPGetter):
         Returns
         -------
         self
-
-
-            .. versionadded:: 0.19.3
 
         Note
         ----
@@ -1996,8 +1984,6 @@ class CAP(_CAPGetter):
         suffix_filename: :obj:`str` or :obj:`None`, default=None
             Appended to the filename of each saved plot if ``output_dir`` is provided.
 
-            .. versionadded:: 0.19.0
-
         show_figs: :obj:`bool`, default=True
             Display figures.
 
@@ -2128,8 +2114,6 @@ class CAP(_CAPGetter):
         suffix_filename: :obj:`str` or :obj:`None`, default=None
             Appended to the name of the saved file.
 
-            .. versionchanged:: 0.19.0  ``suffix_file_name`` to ``suffix_filename``
-
         fwhm: :obj:`float` or :obj:`None`, default=None
             Strength of spatial smoothing to apply (in millimeters) to the statistical map prior to interpolating
             from MNI152 space to fsLR surface space. Uses Nilearn's ``image.smooth_img``.
@@ -2154,9 +2138,6 @@ class CAP(_CAPGetter):
         Returns
         -------
         self
-
-
-            .. versionadded:: 0.19.3
 
         Note
         ----
@@ -2282,8 +2263,6 @@ class CAP(_CAPGetter):
         suffix_filename: :obj:`str` or :obj:`None`, default=None
             Appended to the filename of each saved plot if ``output_dir`` is provided.
 
-            .. versionadded:: 0.19.0
-
         show_figs: :obj:`bool`, default=True
             Display figures.
 
@@ -2372,9 +2351,6 @@ class CAP(_CAPGetter):
         Returns
         -------
         self
-
-
-            .. versionadded:: 0.19.3
 
         Note
         ----
@@ -2644,8 +2620,6 @@ class CAP(_CAPGetter):
         suffix_filename: :obj:`str` or :obj:`None`, default=None
             Appended to the filename of each saved plot if ``output_dir`` is provided.
 
-            .. versionadded:: 0.19.0
-
         show_figs: :obj:`bool`, default=True
             Display figures. If the current Python session is non-interactive, then ``plotly.offline`` is used to
             generate an html file named "temp-plot.html", which opens each plot in the default browser.
@@ -2707,9 +2681,6 @@ class CAP(_CAPGetter):
         Returns
         -------
         self
-
-
-            .. versionadded:: 0.19.3
 
         Note
         -----

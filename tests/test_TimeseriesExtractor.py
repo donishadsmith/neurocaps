@@ -101,27 +101,18 @@ def get_scans(
         adjusted_onset = adjusted_onset if adjusted_onset >= 0 else 0
         start = int(adjusted_onset / tr) + condition_tr_shift
         end = math.ceil((adjusted_onset + condition_df.loc[i, "duration"]) / tr) + condition_tr_shift
-        scan_list.extend(list(range(start, end + 1)))
+        scan_list.extend(list(range(start, end)))
 
     assert min(scan_list) >= 0
 
-    if dummy_scans:
-        scan_list = [scan - dummy_scans for scan in scan_list if scan not in range(dummy_scans)]
-
     scan_list = sorted(list(set(scan_list)))
 
-    if condition == "rest":
-        remove_int = 40
-        if dummy_scans:
-            remove_int -= dummy_scans
-        if remove_int in scan_list:
-            scan_list.remove(remove_int)
-    if fd:
-        censored_index = 39
-        if dummy_scans:
-            censored_index -= dummy_scans
-        if censored_index in scan_list:
-            scan_list.remove(censored_index)
+    if fd and condition == "rest":
+        # 39 is the scan with high FD
+        scan_list.remove(39)
+
+    if dummy_scans:
+        scan_list = [scan - dummy_scans for scan in scan_list if scan not in range(dummy_scans)]
 
     return scan_list
 
@@ -391,7 +382,7 @@ def test_extraction(parcel_approach, use_confounds, name):
         bids_dir=bids_dir, session="002", runs="001", task="rest", pipeline_name=pipeline_name, tr=1.2, condition="rest"
     )
     assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == shape
-    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 29
+    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 26
 
     # Task condition won't issue warning
     extractor.get_bold(
@@ -404,7 +395,7 @@ def test_extraction(parcel_approach, use_confounds, name):
         condition="active",
     )
     assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == shape
-    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 24
+    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 20
 
 
 @pytest.mark.parametrize(
@@ -633,7 +624,7 @@ def test_pipeline_name():
         bids_dir=bids_dir, session="002", runs="001", task="rest", pipeline_name=pipeline_name, tr=1.2, condition="rest"
     )
     assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 29
+    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 26
 
 
 def test_non_censor():
@@ -673,11 +664,11 @@ def test_non_censor():
     # Test conditions
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, condition="rest")
     assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 29
+    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 26
 
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, condition="active")
     assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 24
+    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 20
 
 
 def test_fd_censoring():
@@ -718,7 +709,7 @@ def test_fd_censoring():
     )
     # Should not be empty
     assert extractor_low_outlier_threshold.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor_low_outlier_threshold.subject_timeseries["01"]["run-001"].shape[0] == 24
+    assert extractor_low_outlier_threshold.subject_timeseries["01"]["run-001"].shape[0] == 20
 
     # Should be empty
     extractor_low_outlier_threshold.get_bold(
@@ -763,13 +754,13 @@ def test_fd_censoring():
     extractor_fd_dict.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, condition="rest")
     scan_list = get_scans("rest", fd=True)
     assert extractor_fd_dict.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor_fd_dict.subject_timeseries["01"]["run-001"].shape[0] == 28
+    assert extractor_fd_dict.subject_timeseries["01"]["run-001"].shape[0] == 25
     assert np.array_equal(no_condition_timeseries[scan_list, :], extractor_fd_dict.subject_timeseries["01"]["run-001"])
 
     scan_list = get_scans("active", fd=True)
     extractor_fd_dict.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, condition="active")
     assert extractor_fd_dict.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor_fd_dict.subject_timeseries["01"]["run-001"].shape[0] == 24
+    assert extractor_fd_dict.subject_timeseries["01"]["run-001"].shape[0] == 20
     assert np.array_equal(no_condition_timeseries[scan_list, :], extractor_fd_dict.subject_timeseries["01"]["run-001"])
 
 
@@ -845,11 +836,11 @@ def test_censoring_with_sample_mask():
     extractor_with_sample_mask_task.get_bold(
         bids_dir=bids_dir, task="rest", condition="active", pipeline_name=pipeline_name, tr=1.2
     )
-    assert extractor_with_sample_mask_task.subject_timeseries["01"]["run-001"].shape[0] == 24
+    assert extractor_with_sample_mask_task.subject_timeseries["01"]["run-001"].shape[0] == 20
     extractor_with_sample_mask_task.get_bold(
         bids_dir=bids_dir, task="rest", condition="rest", pipeline_name=pipeline_name, tr=1.2
     )
-    assert extractor_with_sample_mask_task.subject_timeseries["01"]["run-001"].shape[0] == 28
+    assert extractor_with_sample_mask_task.subject_timeseries["01"]["run-001"].shape[0] == 25
 
 
 @pytest.mark.parametrize("use_confounds", [True, False])
@@ -873,7 +864,7 @@ def test_dummy_scans(use_confounds):
     # Task condition
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, condition="rest")
     assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 28
+    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 25
 
     condition_timeseries = copy.deepcopy(extractor.subject_timeseries["01"]["run-001"])
     scan_list = get_scans(condition="rest", dummy_scans=5)
@@ -908,13 +899,13 @@ def test_dummy_scans_auto():
         session="002",
         runs="001",
         task="rest",
+        condition="rest",
         pipeline_name=pipeline_name,
         tr=1.2,
-        condition="rest",
         verbose=True,
     )
     assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 27
+    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 24
 
     # Clear
     add_non_steady(n=0)
@@ -1034,9 +1025,9 @@ def test_dummy_scans_and_fd():
     )
 
     scan_list = get_scans("rest", dummy_scans=5, fd=True)
-    # Original length is 29, should remove the end scan and the first scan
+    # Original length is 26, should remove the end scan and the first scan
     assert extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"].shape[0] == 27
+    assert extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"].shape[0] == 24
     assert np.array_equal(no_condition[scan_list, :], extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"])
 
     # Check for active condition
@@ -1051,7 +1042,7 @@ def test_dummy_scans_and_fd():
         tr=1.2,
         condition="active",
     )
-    assert extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"].shape[0] == 19
+    assert extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"].shape[0] == 15
     assert np.array_equal(no_condition[scan_list, :], extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"])
 
 
@@ -1297,10 +1288,10 @@ def test_events_without_session_id():
     pipeline_name = "fmriprep_1.0.0"
     extractor = TimeseriesExtractor()
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, condition="rest")
-    assert extractor.subject_timeseries["01"]["run-0"].shape[0] == 29
+    assert extractor.subject_timeseries["01"]["run-0"].shape[0] == 26
 
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, condition="active")
-    assert extractor.subject_timeseries["01"]["run-0"].shape[0] == 24
+    assert extractor.subject_timeseries["01"]["run-0"].shape[0] == 20
 
 
 @pytest.mark.parametrize(
