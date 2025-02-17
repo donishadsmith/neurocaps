@@ -424,7 +424,6 @@ def _get_condition(Data, condition_df):
         # Int is always the floor for positive floats
         onset_scan = int(adjusted_onset / Data.tr) + Data.shift
         end_scan = math.ceil((adjusted_onset + condition_df.loc[i, "duration"]) / Data.tr) + Data.shift
-        # Add one since range is not inclusive
         scans.extend(list(range(onset_scan, end_scan)))
 
     # Get unique scans to not duplicate information

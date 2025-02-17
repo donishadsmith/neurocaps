@@ -592,6 +592,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             adjusted_onset = adjusted_onset if adjusted_onset >= 0 else 0
             start_scan = int(adjusted_onset / tr) + condition_tr_shift
             end_scan = math.ceil((adjusted_onset + duration) / tr) + condition_tr_shift
+            scans.extend(list(range(onset_scan, end_scan)))
+            scans = sorted(list(set(scans)))
 
         When partial scans are computed, ``int`` is used to round down for the beginning scan index and ``math.ceil``
         is used to round up for the ending scan index. Negative scan indices are set to 0 to avoid unintentional
@@ -602,6 +604,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             start_scan = int(onset / tr)
             end_scan = math.ceil((onset + duration) / tr)
+            scans.extend(list(range(onset_scan, end_scan)))
+            scans = sorted(list(set(scans)))
 
         Filtering a specific condition from the timeseries is done after nuisance regression and the indices are used
         to extract the TRs corresponding to the condition from the timeseries. Additionally, if the "use_sample_mask"
