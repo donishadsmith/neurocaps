@@ -260,7 +260,7 @@ extractor.get_bold(
     task="DET",
     condition="late", # Can extract a specific condition if events.tsv is available
     condition_tr_shift=2, # Account for hemodynamic lag
-    slice_time_ref=1, # Adjust to middle volume used as slice time reference when extracting condition
+    slice_time_ref=1, # Adjust if last volume used as slice time reference when extracting condition
     session="2",
     n_cores=None,
     verbose=True,
