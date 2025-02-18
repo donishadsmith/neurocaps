@@ -13,13 +13,17 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.22.1] - 2025-02-18
+### ♻ Changed
+- More efficient computation of transition probability
+
 ## [0.22.0.post0] - 2025-02-17
 ### 📖 Documentation
 - Add clarifying information to docs.
 
 ## [0.22.0] - 2025-02-17
 ### ♻ Changed
-- Change in internal logic for condition to not add plus one to the duration scan index 
+- Change in internal logic for condition to not add plus one to the duration scan index
 (``scans = range(start, end + 1)`` -> ``scans = range(start, end)``) to reduce potential condition spillover
 in certain task designs such as rapid events.
 ### 📖 Documentation

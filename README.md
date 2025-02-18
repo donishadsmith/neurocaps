@@ -1,7 +1,7 @@
 # neurocaps
 [![Latest Version](https://img.shields.io/pypi/v/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.14884914)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.14886003)
 [![Github Repository](https://img.shields.io/badge/Source%20Code-neurocaps-purple)](https://github.com/donishadsmith/neurocaps)
 [![Test Status](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg)](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml)
 [![Documentation Status](https://readthedocs.org/projects/neurocaps/badge/?version=stable)](http://neurocaps.readthedocs.io/en/stable/?badge=stable)
@@ -258,9 +258,9 @@ extractor.get_bold(
     bids_dir="neurocaps_demo",
     pipeline_name="fmriprep",  # Can specify if multiple pipelines exists in derivatives directory
     task="DET",
-    condition="late", # Can extract a specific condition if events.tsv is available
-    condition_tr_shift=2, # Account for hemodynamic lag
-    slice_time_ref=1, # Adjust if last volume used as slice time reference when extracting condition
+    condition="late",  # Can extract a specific condition if events.tsv is available
+    condition_tr_shift=2,  # Account for hemodynamic lag
+    slice_time_ref=1,  # Adjust if last volume used as slice time reference when extracting condition
     session="2",
     n_cores=None,
     verbose=True,

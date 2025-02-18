@@ -1043,8 +1043,8 @@ class CAP(_CAPGetter):
 
         # Get combination of transitions in addition to building the base dataframe dictionary
         if "transition_probability" in metrics:
-            group_caps, all_pairs, filtered_pairs = self._get_pairs()
-            df_dict, temp_dict = self._build_df(metrics, cap_names, all_pairs)
+            cap_pairs = self._get_pairs()
+            df_dict, temp_dict = self._build_df(metrics, cap_names, cap_pairs)
         else:
             df_dict = self._build_df(metrics, cap_names)
 
@@ -1123,46 +1123,21 @@ class CAP(_CAPGetter):
                     base_row = [subj_id, group, curr_run] + [0.0] * (temp_dict[group].shape[-1] - 3)
                     temp_dict[group].loc[len(temp_dict[group])] = base_row
 
-                    # Get number of transitions
-                    trans_dict = {
-                        target: np.sum(np.where(predicted_subject_timeseries[subj_id][curr_run][:-1] == target, 1, 0))
-                        for target in group_caps[group]
-                    }
+                    # Arrays for transitioning from and to element
+                    trans_from = predicted_subject_timeseries[subj_id][curr_run][:-1]
+                    trans_to = predicted_subject_timeseries[subj_id][curr_run][1:]
 
                     indx = temp_dict[group].index[-1]
 
-                    # Iterate through pairs and calculate all symmetric pairs/off-diagonals
-                    for pair in filtered_pairs[group]:
-                        target1, target2 = pair[0], pair[1]
-                        trans_array = predicted_subject_timeseries[subj_id][curr_run].copy()
-                        # Set all values not equal to target1 or target2 to zero
-                        trans_array[(trans_array != target1) & (trans_array != target2)] = 0
-                        trans_array[trans_array == target1] = 1
-                        trans_array[trans_array == target2] = 3
-                        # 2 indicates forward transition target1 -> target2; -2 means reverse/backward transition
-                        # target2 -> target1
-                        diff_array = np.diff(trans_array, n=1)
-
-                        # Avoid division by zero errors and calculate both the forward and reverse transition
-                        if trans_dict[target1] != 0:
-                            temp_dict[group].loc[indx, f"{target1}.{target2}"] = float(
-                                np.sum(np.where(diff_array == 2, 1, 0)) / trans_dict[target1]
-                            )
-
-                        if trans_dict[target2] != 0:
-                            temp_dict[group].loc[indx, f"{target2}.{target1}"] = float(
-                                np.sum(np.where(diff_array == -2, 1, 0)) / trans_dict[target2]
-                            )
-
-                    # Calculate the probability for the self transitions/diagonals
-                    for target in group_caps[group]:
-                        if trans_dict[target] == 0:
-                            continue
-
-                        # Will include the {target}.{target} column, but the value is initially set to zero
-                        columns = temp_dict[group].filter(regex=rf"^{target}\.").columns.tolist()
-                        cumulative = temp_dict[group].loc[indx, columns].values.sum()
-                        temp_dict[group].loc[indx, f"{target}.{target}"] = 1.0 - cumulative
+                    # Iterate through pairs and calculate probability
+                    for e1, e2 in cap_pairs[group]:
+                        # Get total number of possible transitions for first element
+                        total_trans = np.sum(trans_from == e1)
+                        column = f"{e1}.{e2}"
+                        # Compute sum of adjacent pairs of A -> B and divide
+                        temp_dict[group].loc[indx, column] = (
+                            np.sum((trans_from == e1) & (trans_to == e2)) / total_trans if total_trans > 0 else 0
+                        )
 
         # Add temporary dict for transition probability to `df_dict`
         if "transition_probability" in metrics:
@@ -1177,14 +1152,10 @@ class CAP(_CAPGetter):
     @staticmethod
     def _filter_metrics(metrics):
         metrics = [metrics] if isinstance(metrics, str) else metrics
-
         # Change metrics to set
         metrics = set(metrics)
-
         valid_metrics = {"temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"}
-
         set_diff = metrics - valid_metrics
-
         metrics = metrics.intersection(valid_metrics)
 
         if set_diff:
@@ -1237,9 +1208,7 @@ class CAP(_CAPGetter):
 
                 # Set run_id
                 run_id = curr_run if not continuous_runs or len(subject_runs) == 1 else "run-continuous"
-
-                # Add 1 to the prediction vector since labels start at 0, needed to ensure that the labels map onto the
-                # caps
+                # Add 1 to the prediction vector since labels start at 0, needed to ensure that the labels map onto the caps
                 prediction_vector = self._kmeans[group].predict(timeseries) + 1
 
                 if run_id != "run-continuous":
@@ -1258,29 +1227,19 @@ class CAP(_CAPGetter):
 
         return predicted_subject_timeseries
 
-    # Get all pairs and filtered version of pairs for all possible transitions
+    # Get all pairs of all possible transitions
     def _get_pairs(self):
         group_caps = {}
-        all_pairs, filtered_pairs = {}, {}
+        all_pairs = {}
 
         for group in self._groups:
             group_caps.update({group: [int(name.split("-")[-1]) for name in self._caps[group]]})
             all_pairs.update({group: list(itertools.product(group_caps[group], group_caps[group]))})
-            # Filter out all reversed pairs and pairs with self to self transitions
-            filtered_pairs[group] = []
 
-            for pair in all_pairs[group]:
-                if pair[0] == pair[1]:
-                    continue
-                # Include only the first instance of symmetric pairs
-                if (pair[1], pair[0]) not in filtered_pairs[group]:
-                    filtered_pairs[group].append(pair)
-
-        return group_caps, all_pairs, filtered_pairs
+        return all_pairs
 
     def _build_df(self, metrics, cap_names, pairs=None):
         df_dict = {}
-
         base_cols = ["Subject_ID", "Group", "Run"]
 
         for metric in metrics:
