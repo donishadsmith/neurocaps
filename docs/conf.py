@@ -20,7 +20,7 @@ from github_link import make_linkcode_resolve
 # -- Project information -----------------------------------------------------
 
 project = "neurocaps"
-copyright = "2024, neurocaps developers"
+copyright = "2025, neurocaps developers"
 author = "Donisha Smith"
 
 import neurocaps
