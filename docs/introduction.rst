@@ -82,7 +82,13 @@ BIDS directory with session-level organization:
 
 *Note: Only the preprocessed BOLD file is required. Additional files such as the confounds tsv (needed for denoising),
 mask, and task timing tsv file (needed for filtering a specific task condition) depend on the specific analyses.
-The "dataset_description.json" is required in both the bids root and pipeline directories for querying with pybids*
+The "dataset_description.json" is required in both the bids root and pipeline directories for querying with pybids.
+All preprocessed bold related files within the pipeline folder must have the "sub-", "task-", and "desc-" entities
+(key-value pairs within filenames) in their names (e.g. "sub-01_task-rest_desc-confounds_timeseries.tsv").
+The preprocessed bold and brain mask files must include the "space-" entity in their
+names (e.g. "sub-01_task-rest_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"). Additionally, the "ses-" entity
+should be included if specifying a session
+(e.g. "sub-01_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz").*
 
 Citing
 ------
