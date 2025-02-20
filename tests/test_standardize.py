@@ -1,11 +1,8 @@
-import numpy as np, os, glob, pickle, tempfile
-import pytest
+import numpy as np, os, glob, pickle
 from neurocaps.analysis import standardize
 
-tmp_dir = tempfile.TemporaryDirectory()
 
-
-def test_standardize():
+def test_standardize(tmp_dir):
     subject_timeseries = {str(x): {f"run-{y}": np.random.rand(100, 100) for y in range(1, 4)} for x in range(1, 11)}
     standardized_subject_timeseries = standardize(subject_timeseries_list=[subject_timeseries])
     prior_mean, prior_std = subject_timeseries["1"]["run-1"].mean(), subject_timeseries["1"]["run-1"].std()
@@ -23,7 +20,7 @@ def test_standardize():
     assert "10" in standardized_subject_timeseries["dict_0"] and "10" not in standardized_subject_timeseries["dict_1"]
 
 
-def test_standardize_w_pickle():
+def test_standardize_w_pickle(tmp_dir):
     with open(os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"), "rb") as f:
         subject_timeseries = pickle.load(f)
 

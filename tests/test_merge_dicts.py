@@ -1,8 +1,6 @@
-import glob, os, tempfile
+import glob, os
 import numpy as np, pytest
 from neurocaps.analysis import merge_dicts
-
-tmp_dir = tempfile.TemporaryDirectory()
 
 
 @pytest.mark.parametrize(
@@ -51,7 +49,7 @@ def test_merge_dicts(return_reduced_dicts, return_merged_dicts):
 @pytest.mark.parametrize(
     "return_reduced_dicts, return_merged_dicts", [(True, True), (False, False), (True, False), (False, True)]
 )
-def test_merge_dicts_pkl(return_reduced_dicts, return_merged_dicts):
+def test_merge_dicts_pkl(tmp_dir, return_reduced_dicts, return_merged_dicts):
     subject_timeseries_merged = merge_dicts(
         [
             os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"),

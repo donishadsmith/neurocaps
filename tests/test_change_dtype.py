@@ -1,8 +1,6 @@
 import glob, os
-import numpy as np, pytest, tempfile
+import numpy as np
 from neurocaps.analysis import change_dtype
-
-tmp_dir = tempfile.TemporaryDirectory()
 
 
 def test_change_dtype():
@@ -18,7 +16,7 @@ def test_change_dtype():
     assert "10" in changed_subject_timeseries["dict_0"] and "10" not in changed_subject_timeseries["dict_1"]
 
 
-def test_change_dtype_w_pickle():
+def test_change_dtype_w_pickle(tmp_dir):
     changed_subject_timeseries = change_dtype(
         subject_timeseries_list=[os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl")],
         output_dir=tmp_dir.name,
