@@ -1,16 +1,14 @@
-import glob, os, tempfile
+import glob, os
 import numpy as np, pytest
 
 from neurocaps.analysis import CAP, transition_matrix
-
-tmp_dir = tempfile.TemporaryDirectory()
 
 
 @pytest.mark.parametrize(
     "group, suffix_title, suffix_filename",
     [(None, None, None), ({"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]}, "suffix_title", "suffix_filename")],
 )
-def test_transition_matrix(group, suffix_title, suffix_filename):
+def test_transition_matrix(tmp_dir, group, suffix_title, suffix_filename):
     subject_timeseries = {str(x): {f"run-{y}": np.random.rand(100, 100) for y in range(1, 4)} for x in range(1, 11)}
     cap_analysis = CAP(groups=group)
     cap_analysis.get_caps(subject_timeseries=subject_timeseries, n_clusters=3)
@@ -41,7 +39,7 @@ def test_transition_matrix(group, suffix_title, suffix_filename):
 
 
 @pytest.mark.parametrize("group", [None, {"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]}])
-def test_transition_matrix_no(group):
+def test_transition_matrix_no(tmp_dir, group):
     subject_timeseries = {str(x): {f"run-{y}": np.random.rand(100, 100) for y in range(1, 4)} for x in range(1, 11)}
     cap_analysis = CAP(groups=group)
     cap_analysis.get_caps(subject_timeseries=subject_timeseries, n_clusters=3)
