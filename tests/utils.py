@@ -56,10 +56,10 @@ class Parcellation:
 def get_paths(tmp_dir):
     """Platform specific paths for testing if Windows and Posix paths are handled properly."""
     if sys.platform == "win32":
-        bids_dir = os.path.join(tmp_dir, "ds000031_R1.0.4_ses001-022", "ds000031_R1.0.4\\")
+        bids_dir = os.path.join(tmp_dir, "data", "dset\\")
         pipeline_name = "fmriprep_1.0.0\\fmriprep\\"
     else:
-        bids_dir = os.path.join(tmp_dir, "ds000031_R1.0.4_ses001-022", "ds000031_R1.0.4/")
+        bids_dir = os.path.join(tmp_dir, "data", "dset/")
         pipeline_name = "fmriprep_1.0.0/fmriprep/"
 
     return bids_dir, pipeline_name

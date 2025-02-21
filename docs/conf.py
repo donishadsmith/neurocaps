@@ -52,6 +52,7 @@ numpydoc_show_class_members = False
 autoclass_content = "both"
 autodoc_member_order = "bysource"
 autodoc_typehints = "none"
+
 # Remove module name in signature
 add_module_names = False
 smartquotes = False

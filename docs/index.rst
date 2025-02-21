@@ -7,6 +7,7 @@
    installation
    docker
    api
+   bids
    parcellations
    examples/examples
    outputs

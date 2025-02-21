@@ -1,9 +1,11 @@
 :mod:`{{module}}`.{{objname}}
-{{ underline }}====================
+{{ underline }}==============
 
 .. currentmodule:: {{ module }}
 
-.. autoclass:: {{ objname }}
+.. autoexception:: {{ objname }}
+   :show-inheritance:
+   :no-inherited-members:
 
 .. raw:: html
 

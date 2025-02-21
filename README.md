@@ -15,56 +15,9 @@ neurocaps is a Python package for performing Co-activation Patterns (CAPs) analy
 data (resting-state & task-based). CAPs identifies recurring brain states through k-means clustering of BOLD timeseries
 data [^1].
 
-**neurocaps is most optimized for fMRI data preprocessed with fMRIPrep and assumes a BIDs compliant directory
-such as the example directory structures below:**
-
-Basic BIDS directory:
-```
-
-    bids_root/
-    ├── dataset_description.json
-    ├── sub-<subject_label>/
-    │   └── func/
-    │       └── *task-*_events.tsv
-    ├── derivatives/
-    │   └── fmriprep-<version_label>/
-    │       ├── dataset_description.json
-    │       └── sub-<subject_label>/
-    │           └── func/
-    │               ├── *confounds_timeseries.tsv
-    │               ├── *brain_mask.nii.gz
-    │               └── *preproc_bold.nii.gz
-```
-
-BIDS directory with session-level organization:
-```
-
-    bids_root/
-    ├── dataset_description.json
-    ├── sub-<subject_label>/
-    │   └── ses-<session_label>/
-    │       └── func/
-    │           └── *task-*_events.tsv
-    ├── derivatives/
-    │   └── fmriprep-<version_label>/
-    │       ├── dataset_description.json
-    │       └── sub-<subject_label>/
-    │           └── ses-<session_label>/
-    │               └── func/
-    │                   ├── *confounds_timeseries.tsv
-    │                   ├── *brain_mask.nii.gz
-    │                   └── *preproc_bold.nii.gz
-```
-
-*Note: Only the preprocessed BOLD file is required. Additional files such as the confounds tsv (needed for denoising),
-mask, and task timing tsv file (needed for filtering a specific task condition) depend on the specific analyses.
-The "dataset_description.json" is required in both the bids root and pipeline directories for querying with pybids.
-All preprocessed bold related files within the pipeline folder must have the "sub-", "task-", and "desc-" entities
-(key-value pairs within filenames) in their names (e.g. "sub-01_task-rest_desc-confounds_timeseries.tsv").
-The preprocessed bold and brain mask files must include the "space-" entity in their
-names (e.g. "sub-01_task-rest_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"). Additionally, the "ses-" entity
-should be included if specifying a session
-(e.g. "sub-01_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz").*
+**Note:** neurocaps is most optimized for fMRI data preprocessed with fMRIPrep and assumes the data is BIDs compliant.
+Refer to [neurocaps' BIDS Structure and Entities Documentation](https://neurocaps.readthedocs.io/en/stable/bids.html)
+for additional information.
 
 ## Installation
 To install neurocaps, follow the instructions below using your preferred terminal.
@@ -190,7 +143,7 @@ activations of each CAP and each a-priori regions in a parcellation [^3] [^4].
 - `change_dtype`: Changes the dtype of all subjects in the subject timeseries to help with memory usage.
 - `transition_matrix`: Uses the "transition_probability" output from ``CAP.calculate_metrics`` to generate and visualize the averaged transition probability matrix for all groups from the analysis.
 
-Please refer to the [demos](https://github.com/donishadsmith/neurocaps/tree/main/demos) or
+Refer to the [demos](https://github.com/donishadsmith/neurocaps/tree/main/demos) or
 the [tutorials](https://neurocaps.readthedocs.io/en/stable/examples/examples.html) on the documentation website
 for a more extensive demonstration of the features included in this package.
 
@@ -289,6 +242,9 @@ extractor.get_bold(
 2025-02-17 13:34:40,370 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 2] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_y, trans_z, rot_x, rot_y, rot_z, a_comp_cor_00, a_comp_cor_01, a_comp_cor_24, a_comp_cor_25.
 2025-02-17 13:34:53,680 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 2] Nuisance regression completed; extracting [CONDITION: late].
 ```
+
+**Note:** Refer to [neurocaps' Logging Documentation](https://neurocaps.readthedocs.io/en/stable/logging.html) for
+additional information about logging.
 
 ```python
 # Initialize CAP class

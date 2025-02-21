@@ -32,9 +32,13 @@ LG = _logger(__name__)
 
 class CAP(_CAPGetter):
     """
-    Co-Activation Patterns (CAPs) Class.
+    Co-Activation Patterns (CAPs).
 
-    Initializes the CAPs (Co-activation Patterns) class.
+    Performs k-means clustering for CAP identification, computes various temporal dynamics metrics
+    (including counts, temporal fraction, persistence, transition frequency, and transition probability),
+    provides multiple visualizations (such as heatmaps, outer products, correlation matrices, and cosine
+    similarity radar plots that shows the network correspondence to both positive and negative CAP activations),
+    and enables conversion of CAPs to NIfTI statistical maps.
 
     Parameters
     ----------

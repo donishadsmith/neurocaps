@@ -123,13 +123,16 @@ def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
                 )
             else:
                 raise ValueError(
-                    f"{error_message}. Certain sub-keys are needed for plotting. Please check the "
+                    f"{error_message}. Certain sub-keys are needed for plotting. Check the "
                     "documentation for the required sub-keys and reassign `parcel_approach` using "
-                    f"`self.parcel_approach`. Please refer to the example structure:\n{custom_example}"
+                    f"`self.parcel_approach`. Refer to the example structure:\n{custom_example}"
                 )
 
         if call == "TimeseriesExtractor" and not os.path.isfile(parcel_dict["Custom"]["maps"]):
-            raise FileNotFoundError("Please specify the location to the custom parcellation to be used.")
+            raise FileNotFoundError(
+                "The custom parcellation map does not exist in the specified file location: "
+                f"{parcel_dict['Custom']['maps']}"
+            )
 
     return parcel_dict
 

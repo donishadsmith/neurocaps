@@ -25,10 +25,8 @@ The default file naming convention for the most files produced by the ``neurocap
 
 ```
 [Group_Name]_[CAP-n]_[descriptor].[extension]
-
 # Or
 [Group_Name]_CAPs_[descriptor].[extension]
-
 # Format for Files Produced by ``CAP.get_caps``
 [Group_Name]_[clustering_evaluation_metric].[extension]
 ```
@@ -37,15 +35,10 @@ The default file naming convention for the most files produced by the ``neurocap
 
 ```
 All_Subjects_CAP-1_radar.png
-
 All_Subjects_CAP-1_radar.html
-
 All_Subjects_CAPs_heatmap-nodes.png
-
 All_Subjects_CAPs_correlation_matrix.png
-
 All_Subjects_CAPs_transition_probability_matrix.png
-
 All_Subjects_CAPs_transition_probability_matrix.csv
 ```
 
@@ -53,15 +46,10 @@ All_Subjects_CAPs_transition_probability_matrix.csv
 
 ```
 High_ADHD_davies_bouldin.png
-
 Low_ADHD_variance_ratio.png
-
 High_ADHD_CAP-2.nii.gz
-
 Low_ADHD_CAP-2.nii.gz
-
 High_ADHD_CAP-2_surface.png
-
 Low_ADHD_CAP-2_surface.png
 ```
 
@@ -89,13 +77,9 @@ However, for the "transition_probability" metric, separate dataframes are saved 
 
 ```
 persistence.csv
-
 temporal_fraction.csv
-
 counts.csv
-
 transition_frequency.csv
-
 transition_probability-[Group_Name].csv
 ```
 - `merge_dicts`, `standardize`, and `change_dtype` - The default name format for each is as follows (but can be
@@ -105,9 +89,7 @@ overwritten using the `filenames` parameter):
 
     ```
     subject_timeseries_0_reduced.pkl
-
     subject_timeseries_1_reduced.pkl
-
     merged_subject_timeseries.pkl
     ```
     - `standardize`

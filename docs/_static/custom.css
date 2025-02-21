@@ -6,7 +6,6 @@
     background: rgb(0, 0, 0);
 }
 
-
 section {
     text-align: left;
 }
@@ -35,10 +34,11 @@ section {
     background-color: #eaf8f0;
     color: #000000;
     border-radius: 8px;
-    padding: 10px 15px;
+    padding: 2px 5px;
     font-family: Arial, sans-serif;
-    font-size: 14px;
-    margin: 10px 0;
+    font-size: 12px;
+    margin: 5px 0;
+    width: fit-content;
 }
 
 .versionmodified.added::before, .versionchanged.added::before {

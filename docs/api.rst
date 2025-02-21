@@ -1,5 +1,20 @@
 API
 ===
+:mod:`neurocaps.exceptions` - Exceptions
+----------------------------------------
+Module containing custom exceptions (available in versions >= 0.22.2).
+
+.. automodule:: neurocaps.exceptions
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: neurocaps
+
+.. autosummary::
+   :template: exceptions.rst
+   :toctree: generated/
+
+   exceptions.BIDSQueryError
 
 :mod:`neurocaps.extraction` - Timeseries Extraction
 ---------------------------------------------------

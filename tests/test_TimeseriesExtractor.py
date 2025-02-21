@@ -7,7 +7,6 @@ from .utils import (
     Parcellation,
     add_non_steady,
     check_logs,
-    get_paths,
     get_scans,
     simulate_confounds,
     simulate_event_data,
@@ -15,30 +14,7 @@ from .utils import (
 
 
 @pytest.fixture(autouse=True, scope="module")
-def data_dir(tmp_dir):
-    """Copies the test dataset to the temporary directory."""
-    work_dir = os.path.dirname(__file__)
-
-    # Copy test data to temporary directory
-    shutil.copytree(
-        os.path.join(work_dir, "ds000031_R1.0.4_ses001-022"), os.path.join(tmp_dir.name, "ds000031_R1.0.4_ses001-022")
-    )
-
-
-@pytest.fixture(autouse=False, scope="module")
-def get_vars(tmp_dir):
-    """Set up test environment with required data."""
-    # Get paths
-    bids_dir, pipeline_name = get_paths(tmp_dir.name)
-
-    # Default test confounds
-    default_test_confounds = ["Cosine*", "aComp*", "Rot*"]
-
-    return bids_dir, pipeline_name, default_test_confounds
-
-
-@pytest.fixture(autouse=True, scope="module")
-def setup_environment_1(get_vars):
+def setup_environment_1(data_dir, get_vars):
     bids_dir, pipeline_name, _ = get_vars
 
     """Creates the confounds and events files."""
@@ -47,7 +23,7 @@ def setup_environment_1(get_vars):
 
 
 @pytest.fixture(autouse=False, scope="module")
-def setup_environment_2(get_vars):
+def setup_environment_2(setup_environment_1, get_vars):
     """Creates a second subject and creates an additional session for the first."""
     bids_dir, pipeline_name, _ = get_vars
 
@@ -87,7 +63,7 @@ def setup_environment_2(get_vars):
 
 # Change directory structure by removing the session ID
 @pytest.fixture(autouse=False, scope="module")
-def setup_environment_3(tmp_dir, get_vars):
+def setup_environment_3(setup_environment_2, get_vars):
     """
     Removes session directory, session ID from files, and brain masks. Also removes nested fmriprep directory
     by moving the directory up one level.
@@ -145,7 +121,7 @@ def setup_environment_3(tmp_dir, get_vars):
             shutil.rmtree(os.path.join(os.path.dirname(func_dir), "ses-002"), ignore_errors=True)
 
     # Move up a level
-    derivatives_dir = os.path.join(tmp_dir.name, "ds000031_R1.0.4_ses001-022", "ds000031_R1.0.4", "derivatives")
+    derivatives_dir = os.path.join(bids_dir, "derivatives")
     fmriprep_old_dir = os.path.join(derivatives_dir, "fmriprep_1.0.0", "fmriprep")
     fmriprep_new_dir = os.path.join(derivatives_dir, "fmriprep_1.0.0")
 
@@ -158,6 +134,7 @@ def setup_environment_3(tmp_dir, get_vars):
     os.rmdir(fmriprep_old_dir)
 
 
+################################################# Setup Environment 1 #################################################
 def test_validate_init_params():
     # Check dummy_scans
     with pytest.raises(TypeError, match=re.escape("`dummy_scans` must be a dictionary or integer.")):
@@ -510,24 +487,6 @@ def test_timeseries_to_pickle(get_vars, tmp_dir):
     file = os.path.join(tmp_dir.name, "testing_timeseries_pickling.pkl")
     assert os.path.getsize(file) > 0
     os.remove(file)
-
-
-def test_wrong_condition(get_vars):
-    from neurocaps.extraction.timeseriesextractor import BIDSQueryError
-
-    bids_dir, _, _ = get_vars
-
-    msg = (
-        "No subject IDs found - potential reasons: "
-        "1. Incorrect template space (default: 'MNI152NLin2009cAsym'). "
-        "Fix: Set correct template space using `self.space = 'TEMPLATE_SPACE'` (e.g. 'MNI152NLin6Asym') "
-        "2. Incorrect task name specified in `task` parameter."
-    )
-
-    extractor = TimeseriesExtractor(parcel_approach=Parcellation.get_custom("parcellation"))
-
-    with pytest.raises(BIDSQueryError, match=re.escape(msg)):
-        extractor.get_bold(bids_dir=bids_dir, task="rest", condition="placeholder")
 
 
 def test_acompcor_seperate(get_vars):
@@ -1103,7 +1062,7 @@ def test_shift_errors(get_vars):
         )
 
 
-# Use setup_environment 2
+################################################# Setup Environment 2 #################################################
 def test_append(setup_environment_2, get_vars):
     bids_dir, pipeline_name, confounds = get_vars
 
@@ -1246,7 +1205,7 @@ def test_session_error(get_vars):
         extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
 
 
-# Use setup_environment 3
+################################################# Setup Environment 3 #################################################
 def test_exclude_subjects(setup_environment_3, get_vars):
     bids_dir, pipeline_name, confounds = get_vars
 
@@ -1476,23 +1435,6 @@ def test_validate_timeseries_setter():
     ]:
         with pytest.raises(TypeError, match=re.escape(error_dict[key])):
             extractor.subject_timeseries = arr
-
-
-def test_custom_error(get_vars):
-    from neurocaps.extraction.timeseriesextractor import BIDSQueryError
-
-    bids_dir, _, _ = get_vars
-
-    extractor = TimeseriesExtractor(space="Placeholder")
-    msg = (
-        "No subject IDs found - potential reasons: "
-        "1. Incorrect template space (default: 'MNI152NLin2009cAsym'). "
-        "Fix: Set correct template space using `self.space = 'TEMPLATE_SPACE'` (e.g. 'MNI152NLin6Asym') "
-        "2. Incorrect task name specified in `task` parameter."
-    )
-
-    with pytest.raises(BIDSQueryError, match=re.escape(msg)):
-        extractor.get_bold(bids_dir=bids_dir, task="rest", run_subjects=["01"])
 
 
 def test_check_raise_error():

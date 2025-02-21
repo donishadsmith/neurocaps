@@ -5,6 +5,8 @@ from typing import Callable, Literal, Optional, Union
 import matplotlib.pyplot as plt, numpy as np
 from joblib import Parallel, delayed, dump
 from tqdm.auto import tqdm
+
+from ..exceptions import BIDSQueryError
 from .._utils import (
     _TimeseriesExtractorGetter,
     _PlotDefaults,
@@ -18,21 +20,11 @@ from .._utils import (
 LG = _logger(__name__)
 
 
-# Custom error class
-class BIDSQueryError(Exception):
-    def __init__(self, message):
-        super().__init__(message)
-        self.message = message
-
-    def __str__(self) -> str:
-        return f"{self.message}"
-
-
 class TimeseriesExtractor(_TimeseriesExtractorGetter):
     """
-    Timeseries Extractor Class.
+    Timeseries Extractor.
 
-    Initializes the Timeseries Extractor class.
+    Performs timeseries denoising, extraction, serialization (pickling), and BOLD visualization.
 
     Parameters
     ----------
@@ -416,55 +408,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         The timeseries data of all subjects are appended to a single dictionary ``self.subject_timeseries``. Additional
         information regarding the structure of this dictionary can be found in the "Note" section.
 
-        Basic BIDS directory:
-
-        ::
-
-            bids_root/
-            ├── dataset_description.json
-            ├── sub-<subject_label>/
-            │   └── func/
-            │       └── *task-*_events.tsv
-            ├── derivatives/
-            │   └── fmriprep-<version_label>/
-            │       ├── dataset_description.json
-            │       └── sub-<subject_label>/
-            │           └── func/
-            │               ├── *confounds_timeseries.tsv
-            │               ├── *brain_mask.nii.gz
-            │               └── *preproc_bold.nii.gz
-
-        BIDS directory with session-level organization:
-
-        ::
-
-            bids_root/
-            ├── dataset_description.json
-            ├── sub-<subject_label>/
-            │   └── ses-<session_label>/
-            │       └── func/
-            │           └── *task-*_events.tsv
-            ├── derivatives/
-            │   └── fmriprep-<version_label>/
-            │       ├── dataset_description.json
-            │       └── sub-<subject_label>/
-            │           └── ses-<session_label>/
-            │               └── func/
-            │                   ├── *confounds_timeseries.tsv
-            │                   ├── *brain_mask.nii.gz
-            │                   └── *preproc_bold.nii.gz
-
-        *Note: Only the preprocessed BOLD file is required. Additional files such as the confounds tsv (needed for
-        denoising), mask, and task timing tsv file (needed for filtering a specific task condition) depend on the
-        specific analyses. As mentioned previously, the "dataset_description.json" is required in both the bids root
-        and pipeline directories for querying with pybids. All preprocessed bold related files within the pipeline
-        folder must have the "sub-", "task-", and "desc-" entities (key-value pairs within filenames) in their names
-        (e.g. "sub-01_task-rest_desc-confounds_timeseries.tsv"). The preprocessed bold and brain mask files must
-        include the "space-" entity in their names (e.g. "sub-01_task-rest_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz").
-        Additionally, the "ses-" entity should be included if specifying a session
-        (e.g. "sub-01_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-brain_mask.nii.gz").*
-
-        **This pipeline is most optimized for BOLD data preprocessed by fMRIPrep.**
+        **This pipeline is most optimized for BOLD data preprocessed by fMRIPrep.** Refer to
+        `neurocaps' BIDS Structure and Entities Documentation <https://neurocaps.readthedocs.io/en/stable/bids.html>`_
+        for additional information on the expected directory structure and file naming scheme (entities) needed for
+        querying.
 
         Parameters
         ----------
@@ -536,7 +483,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             - "level": The logging level (e.g. ``logging.INFO``, ``logging.WARNING``). If not specified, the default
               level is ``logging.INFO``.
 
-            Refer to the `neurocaps Logging Documentation <https://neurocaps.readthedocs.io/en/stable/logging.html>`_
+            Refer to the `neurocaps' Logging Documentation <https://neurocaps.readthedocs.io/en/stable/logging.html>`_
             for a detailed example of setting up this parameter.
 
         verbose: :obj:`bool`, default=True
@@ -556,6 +503,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         Returns
         -------
         self
+
+        Raises
+        ------
+        BIDSQueryError
+            Subject IDs were not found during querying.
 
         Note
         ----
@@ -645,10 +597,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         if not subj_ids:
             msg = (
-                "No subject IDs found - potential reasons: "
+                "No subject IDs found - potential reasons:\n"
                 "1. Incorrect template space (default: 'MNI152NLin2009cAsym'). "
-                "Fix: Set correct template space using `self.space = 'TEMPLATE_SPACE'` (e.g. 'MNI152NLin6Asym') "
-                "2. Incorrect task name specified in `task` parameter."
+                "Fix: Set correct template space using `self.space = 'TEMPLATE_SPACE'` (e.g. 'MNI152NLin6Asym')\n"
+                "2. File names do not contain specific entities required for querying such as 'sub-', 'space-', "
+                "'task-', or 'desc-' (e.g 'sub-01_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-preproc-bold.nii.gz')\n"
+                "3. Incorrect task name specified in `task` parameter."
             )
             raise BIDSQueryError(msg)
 

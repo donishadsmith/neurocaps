@@ -1,6 +1,6 @@
-from . import analysis, extraction
+from . import analysis, extraction, exceptions
 
-__all__ = ["analysis", "extraction"]
+__all__ = ["analysis", "extraction", "exceptions"]
 
 # Version in single place
-__version__ = "0.22.1.post0"
+__version__ = "0.22.2"
