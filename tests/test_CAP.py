@@ -916,3 +916,25 @@ def test_method_chaining(tmp_dir):
 
     # Should not be None
     assert cap_analysis.cosine_similarity
+
+
+def test_raise_error():
+    error_msg = {
+        "caps": ("Cannot plot caps since `self.caps` is None. Run `self.get_caps()` first."),
+        "parcel_approach": (
+            "`self.parcel_approach` is None. Add `parcel_approach` using "
+            "`self.parcel_approach=parcel_approach` to use this method."
+        ),
+        "kmeans": ("Cannot calculate metrics since `self.kmeans` is None. Run `self.get_caps()` first."),
+    }
+
+    cap_analysis = CAP()
+
+    with pytest.raises(AttributeError, match=re.escape(error_msg["caps"])):
+        cap_analysis.caps2corr()
+
+    with pytest.raises(AttributeError, match=re.escape(error_msg["parcel_approach"])):
+        cap_analysis.caps2plot()
+
+    with pytest.raises(AttributeError, match=re.escape(error_msg["kmeans"])):
+        cap_analysis.calculate_metrics(os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"))
