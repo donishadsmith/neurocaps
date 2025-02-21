@@ -14,7 +14,7 @@ improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
 
-## [0.22.2] - 2025-02-19
+## [0.22.2] - 2025-02-21
 ### 🚀 New/Added
 - Added new "exceptions" module containing the ``BIDSQueryError``.
 ### 📖 Documentation
