@@ -6,7 +6,7 @@ LG = _logger(__name__)
 
 
 def _check_confound_names(high_pass, user_confounds, n_acompcor_separate):
-    if user_confounds is None:
+    if user_confounds == "basic":
         if high_pass:
             # Do not use cosine or acompcor regressor if high-pass filtering is not None.
             # Acompcor regressors are estimated on high pass filtered version of data form fmriprep

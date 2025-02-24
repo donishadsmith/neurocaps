@@ -86,7 +86,7 @@ def simulate_confounds(bids_dir, pipeline_name):
 
     # Create json to test n_acompcor_seperate
     # Get confounds; original is 31 columns
-    confound_df = pd.read_csv(confounds_file, sep="\t").iloc[:, :31]
+    confounds_df = pd.read_csv(confounds_file, sep="\t").iloc[:, :31]
     comp_dict = {}
 
     map_comp = lambda x: {
@@ -102,7 +102,7 @@ def simulate_confounds(bids_dir, pipeline_name):
 
     for i in range(5):
         colname = f"a_comp_cor_0{i}" if i != 4 else "dropped_1"
-        confound_df[colname] = [x[0] for x in np.random.rand(40, 1)]
+        confounds_df[colname] = [x[0] for x in np.random.rand(40, 1)]
         comp_dict.update({colname: map_comp(mask_names[i])})
 
     json_object = json.dumps(comp_dict, indent=1)
@@ -110,7 +110,7 @@ def simulate_confounds(bids_dir, pipeline_name):
     with open(confounds_file.replace("tsv", "json"), "w") as f:
         f.write(json_object)
 
-    confound_df.to_csv(confounds_file, sep="\t", index=None)
+    confounds_df.to_csv(confounds_file, sep="\t", index=None)
 
 
 def add_non_steady(bids_dir, pipeline_name, n):

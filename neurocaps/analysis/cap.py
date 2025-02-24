@@ -763,9 +763,7 @@ class CAP(_CAPGetter):
                 "`self.parcel_approach=parcel_approach` to use this method."
             )
         else:
-            raise AttributeError(
-                "Cannot calculate metrics since `self.kmeans` is None. Run " "`self.get_caps()` first."
-            )
+            raise AttributeError("Cannot calculate metrics since `self.kmeans` is None. Run `self.get_caps()` first.")
 
     def calculate_metrics(
         self,

@@ -97,10 +97,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         *Note*: requires that confound tsv files to be in same directory as preprocessed BOLD images.
 
-    confound_names: :obj:`list[str]` or :obj:`None`, default=None
+    confound_names: {"basic"}, :obj:`list[str]`, or :obj:`None`, default="basic"
         Names of confounds extracted from the confound tsv files if ``use_confounds=True``.
 
-        If None, the following confounds are used by default:
+        If "basic", the following confounds are used by default:
 
         - All cosine-basis parameters.
         - Six head-motion parameters and their first-order derivatives.
@@ -111,23 +111,35 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         - Confound names follow fMRIPrep's naming scheme (versions >= 1.2.0).
         - Wildcards are supported: e.g., "cosine*" matches all confounds starting with "cosine".
 
+        .. versionchanged:: 0.23.0 Changed default from ``None`` to ``"basic"``. The ``"basic"`` option provides the
+           same functionality that ``None`` did in previous versions.
+
     fd_threshold: :obj:`float`, :obj:`dict[str, float]`, or :obj:`None`, default=None
         Threshold for volume censoring based on framewise displacement (FD).
 
         - *If float*, removes volumes where FD > threshold.
         - *If dict*, the following sub-keys are available:
 
-            - "threshold": A float. Removes volumes where FD > threshold.
-            - "outlier_percentage": A float in interval [0,1]. Removes entire runs where proportion of censored volumes
-              exceeds this threshold. Proportion calculated after dummy scan removal. Issues warning when runs are
-              flagged. If ``condition`` specified in ``self.get_bold``, only considers volumes associated with the condition.
-            - "n_before": An integer indicating the number of volumes to remove before each flagged volume. For
-              instance, if volume 5 flagged and ``{"auto": True, "n_before": 2}``, then volumes 3,4, and 5 are discarded.
-            - "n_after": An integer indicating the of volumes to remove after each flagged volume. For instance, if
-              volume 5 flagged and ``{"auto": True, "n_after": 2}``, then volumes 5,6, and 7 are discarded.
-            - "use_sample_mask": A boolean. If True, censors before nuisance regression using Nilearn's
+            - "threshold": A float (Default=None). Removes volumes where FD > threshold.
+            - "outlier_percentage": A float in interval [0,1] (Default=None). Removes entire runs where proportion of
+              censored volumes exceeds this threshold. Proportion calculated after dummy scan removal. Issues warning
+              when runs are flagged. If ``condition`` specified in ``self.get_bold``, only considers volumes associated
+              with the condition.
+            - "n_before": An integer indicating the number of volumes to remove before each flagged volume
+              (Default=None). For instance, if volume 5 flagged and ``{"auto": True, "n_before": 2}``, then volumes 3,
+              4, and 5 are discarded.
+            - "n_after": An integer indicating the of volumes to remove after each flagged volume (Default=False). For
+              instance, if volume 5 flagged and ``{"auto": True, "n_after": 2}``, then volumes 5, 6, and 7 are discarded.
+            - "use_sample_mask": A boolean (Default=False). If True, censors before nuisance regression using Nilearn's
               ``NiftiLabelsMasker``. Also, sets ``clean__extrapolate=False`` to prevent interpolation of end volumes.
-              If False, censors after nuisance regression (default behavior).
+              If False, censors after nuisance regression.
+            - "interpolate": A boolean (Default=None). If True, uses scipy's ``CubicSpline`` function with
+              ``extrapolate=False`` to perform cubic spline interpolation on censored frames that are not at the ends
+              of the timeseries. For example, given a ``censor_mask=[0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0]`` where "0"
+              indicates censored volumes, only the volumes at index 3, 5, 6, and 8 would be interpolated. When False or
+              None (default behavior), no interpolation is performed and all censored frames are discarded.
+
+              .. versionadded:: 0.22.3 "interpolate" key added.
 
         *Notes*:
 
@@ -139,15 +151,22 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             - `Signal Clean <https://nilearn.github.io/stable/modules/generated/nilearn.signal.clean.html>`_
             - `NiftiLabelsMasker <https://nilearn.github.io/stable/modules/generated/nilearn.maskers.NiftiLabelsMasker.html>`_
 
-        - When ``use_sample_mask=False`` and ``standardize=True``, applying an additional within-run standardization
-          (using ``neurocaps.analysis.standardize``) is recommended after outlier removal.
+        - When ``{"use_sample_mask": False}`` and ``standardize=True``, applying an additional within-run
+          standardization (using ``neurocaps.analysis.standardize``) is recommended after outlier removal.
+        - If ``{"interpolation: True}``, then interpolation is only applied nuisance regression and parcellation steps
+          have been completed. It is also applied prior to the condition being extracted from the timeseries.
+        - See Scipy's documentation on their
+          `CubicSpline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicSpline.html>`_
+          function.
 
     n_acompcor_separate: :obj:`int` or :obj:`None`, default=None
         Number of aCompCor components to extract separately from the white-matter (WM) and CSF masks. Uses first "n"
         components from each mask separately. For instance, if ``n_acompcor_separate=5``, then the the first 5 WM
         components and the first 5 CSF components (totaling 10 components) are regressed out.
 
-        *Note*: If specified, this parameter overrides any aCompCor components listed in ``confound_names``.
+        *Notes*:
+        - ``use_confounds`` must be set to True.
+        - If specified, this parameter overrides any aCompCor components listed in ``confound_names``.
 
     dummy_scans: :obj:`int`, :obj:`dict[str, Union[bool, int]]`, or :obj:`None`, default=None
         Number of initial volumes to remove before timeseries extraction.
@@ -155,13 +174,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         - *If int*, removes first "n" volumes.
         - *If dict*, the following keys are supported:
 
-            - "auto": A boolean. If True, Automatically determines dummy scans from fMRIPrep confounds file by
-              counting the number of "non_steady_state_outlier_XX" columns in confounds.tsv file. For instance, if two
-              columns are found,then the first two columns are removed.
-            - "min": An integer. Minimum volumes to remove when auto is set to True. If "auto" finds 2 outliers
-              but ``{"min": 3}``, removes 3 volumes.
-            - "max": An integer. Maximum volumes to remove when auto=True. If "auto" finds 6 outliers but ``{"max": 5}``,
-              removes 5 volumes.
+            - "auto": A boolean (Default=None). If True, Automatically determines dummy scans from fMRIPrep confounds
+              file by counting the number of "non_steady_state_outlier_XX" columns in confounds.tsv file. For instance,
+              if two columns are found,then the first two columns are removed.
+            - "min": An integer (Default=None). Minimum volumes to remove when auto is set to True. If "auto" finds 2
+              outliers but ``{"min": 3}``, removes 3 volumes.
+            - "max": An integer (Default=None). Maximum volumes to remove when auto=True. If "auto" finds 6 outliers but
+              ``{"max": 5}``, removes 5 volumes.
 
         *Note*: "min" and "max" keys only apply when "auto" is True.
 
@@ -283,7 +302,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         high_pass: Optional[Union[float, int]] = None,
         fwhm: Optional[Union[float, int]] = None,
         use_confounds: bool = True,
-        confound_names: Optional[list[str]] = None,
+        confound_names: Optional[Union[list[str], Literal["basic"]]] = "basic",
         fd_threshold: Optional[Union[float, dict[str, Union[bool, float, int]]]] = None,
         n_acompcor_separate: Optional[int] = None,
         dummy_scans: Optional[Union[int, dict[str, Union[bool, int]]]] = None,
@@ -291,18 +310,43 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     ) -> None:
 
         self._space = space
+        # Check parcel_approach
+        self._parcel_approach = _check_parcel_approach(parcel_approach=parcel_approach)
 
-        if use_confounds is False and fd_threshold is not None:
-            LG.warning(
-                "`fd_threshold` specified but `use_confounds` is not True so removal of volumes after "
-                "nuisance regression will not be done since the fMRIPrep confounds tsv file is needed."
-            )
-        elif use_confounds is True and fd_threshold:
-            self._validate_init_params("fd_threshold", fd_threshold)
+        if use_confounds:
+            if confound_names:
+                # Replace confounds if not None
+                confound_names = _check_confound_names(high_pass, confound_names, n_acompcor_separate)
 
-        # Check dummy_scans and fd_threshold
-        if dummy_scans:
-            self._validate_init_params("dummy_scans", dummy_scans)
+            if fd_threshold:
+                self._validate_init_params("fd_threshold", fd_threshold)
+
+            if dummy_scans:
+                self._validate_init_params("dummy_scans", dummy_scans)
+        else:
+            if confound_names:
+                LG.warning(
+                    "`confound_names` is specified but `use_confounds` is not True so nuisance regression will not be done."
+                )
+                confound_names = None
+
+            if fd_threshold:
+                raise ValueError(
+                    "`fd_threshold` specified but `use_confounds` is not True, so removal of volumes after "
+                    "nuisance regression cannot be done since confounds tsv file generated by fMRIPrep is needed."
+                )
+
+            if isinstance(dummy_scans, dict) and dummy_scans.get("auto"):
+                raise ValueError(
+                    "'auto' is True in `dummy_scans` dictionary but `use_confounds` is not True, so automated dummy "
+                    "scans detection cannot be done since confounds tsv file generated by fMRIPrep is needed."
+                )
+
+            if n_acompcor_separate:
+                raise ValueError(
+                    "`n_acompcor_separate` specified `use_confounds` is not True, so separate WM and CSF components "
+                    "cannot be regressed out since confounds tsv file generated by fMRIPrep is needed."
+                )
 
         self._signal_clean_info = {
             "masker_init": {
@@ -312,21 +356,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 "high_pass": high_pass,
                 "smoothing_fwhm": fwhm,
             },
-            "dummy_scans": dummy_scans,
-            "n_acompcor_separate": n_acompcor_separate,
-            "fd_threshold": None,
             "use_confounds": use_confounds,
+            "confound_names": confound_names,
+            "n_acompcor_separate": n_acompcor_separate,
+            "dummy_scans": dummy_scans,
+            "fd_threshold": fd_threshold,
             "dtype": dtype,
         }
-        # Check parcel_approach
-        self._parcel_approach = _check_parcel_approach(parcel_approach=parcel_approach)
-
-        if self._signal_clean_info["use_confounds"]:
-            self._signal_clean_info["confound_names"] = _check_confound_names(
-                high_pass, confound_names, n_acompcor_separate
-            )
-
-            self._signal_clean_info["fd_threshold"] = fd_threshold
 
     @staticmethod
     def _validate_init_params(param, struct):
@@ -335,7 +371,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         optional_keys = {
             "dummy_scans": {"min": int, "max": int},
-            "fd_threshold": {"n_before": int, "n_after": int, "outlier_percentage": float, "use_sample_mask": bool},
+            "fd_threshold": {
+                "n_before": int,
+                "n_after": int,
+                "outlier_percentage": float,
+                "use_sample_mask": bool,
+                "interpolate": bool,
+            },
         }
 
         valid_types = (dict, int) if param == "dummy_scans" else (dict, float, int)
@@ -816,7 +858,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             files["events"] = []
 
         files["confounds"] = self._get_files(**base, desc="confounds", extension="tsv")
-        files["confounds_metas"] = self._get_files(**base, extension="json", desc="confounds")
+
+        if self.signal_clean_info["n_acompcor_separate"]:
+            files["confound_metas"] = self._get_files(**base, extension="json", desc="confounds")
 
         return files
 
@@ -849,7 +893,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     "Timeseries Extraction Skipped: `use_confounds` is requested but no confound files found.",
                 )
 
-            if not files["confounds_metas"] and self._signal_clean_info["n_acompcor_separate"]:
+            if self._signal_clean_info["n_acompcor_separate"] and not files.get("confound_metas"):
                 skip = True
                 msg = (
                     "Timeseries Extraction Skipped: No confound metadata file found, which is needed to locate the "
@@ -904,7 +948,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             if self._signal_clean_info["use_confounds"]:
                 curr_list.append(any([run in file for file in files["confounds"]]))
                 if self._signal_clean_info["n_acompcor_separate"]:
-                    curr_list.append(any([run in file for file in files["confounds_metas"]]))
+                    curr_list.append(any([run in file for file in files["confound_metas"]]))
 
             if files["masks"]:
                 curr_list.append(any([run in file for file in files["masks"]]))
@@ -931,7 +975,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             if self._task_info["condition"]:
                 raise ValueError(
-                    f"{subject_header}" f"{base_msg}" + " The `tr` must be given when `condition` is specified."
+                    f"{subject_header}" f"{base_msg}" + " The `tr` must be provided when `condition` is specified."
                 )
             elif any(
                 [
@@ -941,8 +985,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             ):
                 raise ValueError(
                     f"{subject_header}"
-                    f"{base_msg}" + " The `tr` must be given when `high_pass` or `low_pass` is specified."
+                    f"{base_msg}" + " The `tr` must be provided when `high_pass` or `low_pass` is specified."
                 )
+            elif self.signal_clean_info["fd_threshold"].get("interpolate"):
+                raise ValueError("`tr` must be provided when interpolation of censored volumes is required.")
             else:
                 tr = None
 

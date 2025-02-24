@@ -7,6 +7,7 @@ from functools import cached_property
 import numpy as np, pandas as pd
 from nilearn.maskers import NiftiLabelsMasker
 from nilearn.image import index_img, load_img
+from scipy.interpolate import CubicSpline
 
 from ..logger import _logger
 
@@ -22,7 +23,6 @@ class _Data:
     task_info: dict = field(default_factory=dict)
     tr: int = None
     verbose: bool = False
-
     # Run-specific attributes
     files: dict = field(default_factory=dict)
     fail_fast: bool = False
@@ -62,6 +62,14 @@ class _Data:
         return self.signal_clean_info["use_confounds"]
 
     @property
+    def confound_names(self):
+        return self.signal_clean_info["confound_names"]
+
+    @property
+    def n_acompcor_separate(self):
+        return self.signal_clean_info["n_acompcor_separate"]
+
+    @property
     def fd(self):
         if isinstance(self.signal_clean_info["fd_threshold"], dict):
             return self.signal_clean_info["fd_threshold"]["threshold"]
@@ -71,38 +79,27 @@ class _Data:
     @property
     def scrub_lim(self):
         if isinstance(self.signal_clean_info["fd_threshold"], dict):
-            if "outlier_percentage" in self.signal_clean_info["fd_threshold"]:
-                return self.signal_clean_info["fd_threshold"]["outlier_percentage"]
-        else:
-            return None
+            return self.signal_clean_info["fd_threshold"].get("outlier_percentage")
 
     @property
     def n_before(self):
         if isinstance(self.signal_clean_info["fd_threshold"], dict):
-            if "n_before" in self.signal_clean_info["fd_threshold"]:
-                return self.signal_clean_info["fd_threshold"]["n_before"]
-        else:
-            return None
+            return self.signal_clean_info["fd_threshold"].get("n_before")
 
     @property
     def n_after(self):
         if isinstance(self.signal_clean_info["fd_threshold"], dict):
-            if "n_after" in self.signal_clean_info["fd_threshold"]:
-                return self.signal_clean_info["fd_threshold"]["n_after"]
-        else:
-            return None
-
-    @property
-    def maps(self):
-        return self.parcel_approach[list(self.parcel_approach)[0]]["maps"]
+            return self.signal_clean_info["fd_threshold"].get("n_after")
 
     @property
     def use_sample_mask(self):
         if isinstance(self.signal_clean_info["fd_threshold"], dict):
-            if "use_sample_mask" in self.signal_clean_info["fd_threshold"]:
-                return self.signal_clean_info["fd_threshold"]["use_sample_mask"]
-            else:
-                return False
+            return self.signal_clean_info["fd_threshold"].get("use_sample_mask")
+
+    @property
+    def interpolate(self):
+        if isinstance(self.signal_clean_info["fd_threshold"], dict):
+            return self.signal_clean_info["fd_threshold"].get("interpolate")
 
     @property
     def censor_mask(self):
@@ -114,6 +111,10 @@ class _Data:
             return pd.read_csv(self.files["confound"], sep="\t")
         else:
             return None
+
+    @property
+    def maps(self):
+        return self.parcel_approach[list(self.parcel_approach)[0]]["maps"]
 
 
 def _extract_timeseries(
@@ -131,7 +132,6 @@ def _extract_timeseries(
 
     # Logger inside function to give logger to each child process if parallel processing is done
     LG = _logger(__name__, flush=flush, top_level=False, parallel_log_config=parallel_log_config)
-
     # Initialize subject dictionary
     subject_timeseries = {subj_id: {}}
 
@@ -144,12 +144,14 @@ def _extract_timeseries(
         run_id = "run-0" if run is None else run
         run = run if run is not None else ""
 
-        # Get files from specific run
+        # Get files from specific run; Presence of confound metadata depends on if separate acompcor components requested
         Data.files = {
             "nifti": _grab(run, prepped_files["niftis"]),
             "mask": _grab(run, prepped_files["masks"]),
             "confound": _grab(run, prepped_files["confounds"]),
-            "confound_meta": _grab(run, prepped_files["confounds_metas"]),
+            "confound_meta": _grab(
+                run, prepped_files["confound_metas"] if prepped_files.get("confound_metas") else None
+            ),
             "event": _grab(run, prepped_files["events"]),
         }
 
@@ -181,7 +183,7 @@ def _extract_timeseries(
                 continue
 
             # Create sample mask
-            if Data.censor_vols and Data.use_sample_mask:
+            if Data.censor_vols and (Data.use_sample_mask or Data.interpolate):
                 Data.sample_mask = _create_sample_mask(Data)
 
             # Check if run fails fast due to percentage volumes exceeding user-specified scrub_lim
@@ -258,15 +260,20 @@ def _extract_timeseries(
 def _continue_extraction(Data, LG):
     # Extract confound information of interest and ensure confound file does not contain NAs
     if Data.use_confounds:
-        confound_names = copy.deepcopy(Data.signal_clean_info["confound_names"])
-        # Extract first "n" numbers of specified WM and CSF components
+        confound_names = copy.deepcopy(Data.signal_clean_info["confound_names"]) if Data.confound_names else None
+
+        # Extract first "n" numbers of specified WM and CSF components and extend confound_names list
         if Data.files["confound_meta"]:
-            confound_names = _acompcor(
-                confound_names, Data.files["confound_meta"], Data.signal_clean_info["n_acompcor_separate"]
-            )
+            components_list = _get_separate_acompcor(Data)
+
+        # Extend confounds name
+        if confound_names and "components_list" in locals():
+            confound_names.extend(components_list)
 
         # Get confounds
-        confounds = _get_confounds(Data, confound_names, LG)
+        confounds = _get_confounds(Data, confound_names, LG) if confound_names else None
+    else:
+        confounds = None
 
     # Create the masker for extracting time series; strategy="mean" is the default for NiftiLabelsMasker,
     # added to make it clear in codebase that the mean is the default strategy used for reducing regions
@@ -288,24 +295,18 @@ def _continue_extraction(Data, LG):
 
     if Data.dummy_vols:
         nifti_img = index_img(nifti_img, slice(Data.dummy_vols, None))
-        if Data.use_confounds and confounds is not None:
+        if confounds is not None:
             confounds.drop(list(range(0, Data.dummy_vols)), axis=0, inplace=True)
 
-    # Extract timeseries
-    if Data.use_confounds and confounds is not None:
-        timeseries = masker.fit_transform(nifti_img, confounds=confounds, sample_mask=Data.censor_mask)
-    else:
-        timeseries = masker.fit_transform(nifti_img, sample_mask=Data.censor_mask)
+    # Extract timeseries; Censor mask used only when `use_sample_mask` is set to True
+    timeseries = masker.fit_transform(
+        nifti_img, confounds=confounds, sample_mask=Data.censor_mask if Data.use_sample_mask else None
+    )
 
-    # If sample mask was not used, delete censored volumes
-    if not Data.condition:
-        if Data.censor_vols and not Data.use_sample_mask:
-            timeseries = np.delete(timeseries, Data.censor_vols, axis=0)
+    # Process censored timeseries
+    timeseries = _process_censored_timeseries(timeseries, Data) if Data.censor_vols else timeseries
 
     if Data.condition:
-        # Temporarily pad to extract the correct indices if sample mask was used
-        if Data.censor_vols and Data.use_sample_mask:
-            timeseries = _pad(timeseries, Data)
         # If any out of bound indices, remove them instead of getting indexing error.
         if max(Data.scans) > timeseries.shape[0] - 1:
             Data.scans = _check_indices(Data, timeseries.shape[0], LG)
@@ -345,15 +346,14 @@ def _header(Data, run_id, subj_id):
 def _get_dummy(Data, LG):
     info = Data.signal_clean_info["dummy_scans"]
 
-    if isinstance(info, dict) and info["auto"] is True:
+    if isinstance(info, dict) and info.get("auto"):
+        # If n=0, it will simply be treated as False
         n, flag = len([col for col in Data.confound_df.columns if "non_steady_state" in col]), "auto"
 
-        if "min" in info and n < info["min"]:
+        if info.get("min") and n < info["min"]:
             n, flag = info["min"], "min"
-        if "max" in info and n > info["max"]:
+        if info.get("max") and n > info["max"]:
             n, flag = info["max"], "max"
-        if n == 0:
-            n = None
 
         if Data.verbose:
             if flag == "auto":
@@ -439,20 +439,29 @@ def _get_condition(Data, condition_df):
 def _filter_condition(Data, LG):
     # New `scans` list always created
     scans = Data.scans
-
     # Assess if any condition indices greater than fd array to not dilute outlier calculation
     if max(scans) > Data.max_len - 1:
         scans = _check_indices(Data, Data.max_len, LG)
 
     # Get length of scan list prior to assess outliers if requested
     n_before_censor = len(scans)
-    scans = [volume for volume in scans if volume not in Data.censor_vols]
+
+    # Remove all censored scans if no interpolation else only remove censored ends
+    if not Data.interpolate:
+        scans = [volume for volume in scans if volume not in Data.censor_vols]
+    else:
+        censor_ends = _get_contiguous_ends(Data)
+        scans = [volume for volume in scans if volume not in censor_ends]
 
     return scans, n_before_censor
 
 
 # Extract first "n" numbers of specified WM and CSF components
-def _acompcor(confound_names, confound_metadata_file, n):
+def _get_separate_acompcor(Data):
+    confound_metadata_file = Data.files["confound_meta"]
+    n = Data.n_acompcor_separate
+    components_list = []
+
     with open(confound_metadata_file, "r") as confounds_json:
         confound_metadata = json.load(confounds_json)
 
@@ -461,9 +470,9 @@ def _acompcor(confound_names, confound_metadata_file, n):
     CSF = [CSF for CSF in acompcors if confound_metadata[CSF]["Mask"] == "CSF"][0:n]
     WM = [WM for WM in acompcors if confound_metadata[WM]["Mask"] == "WM"][0:n]
 
-    confound_names.extend(CSF + WM)
+    components_list.extend(CSF + WM)
 
-    return confound_names
+    return components_list
 
 
 # Get confounds
@@ -483,7 +492,7 @@ def _get_confounds(Data, confound_names, LG):
         else:
             invalid_confounds.extend([confound_name])
 
-    # First index of some variables is na
+    # First index of some variables is NaN
     if valid_confounds:
         confounds = Data.confound_df[valid_confounds].fillna(0)
     else:
@@ -517,10 +526,76 @@ def _create_sample_mask(Data):
 
 # Temporarily pad censored rows to correctly filter the condition
 def _pad(timeseries, Data):
+    # Early return if no censoring
+    if Data.censor_mask is None:
+        return timeseries
+
     padded_timeseries = np.zeros((Data.max_len, timeseries.shape[1]))
     padded_timeseries[Data.censor_mask, :] = timeseries
 
     return padded_timeseries
+
+
+# Interpolate volumes; Based on nilearn's _interpolate_volumes
+def _interpolate_volumes(timeseries, Data):
+    # Temporarily pad timeseries if sample mask used
+    timeseries = _pad(timeseries, Data) if Data.use_sample_mask else timeseries
+    sample_mask = copy.deepcopy(Data.sample_mask)
+    sample_mask = np.array(sample_mask, dtype="bool")
+    # Get frame times
+    frame_times = np.arange(Data.max_len) * Data.tr
+    # Retain noncensored frames and timeseries data
+    retained_frames = frame_times[Data.censor_mask]
+    retained_timeseries = timeseries[Data.censor_mask, :]
+    cubic_spline_fitter = CubicSpline(retained_frames, retained_timeseries, extrapolate=False)
+    # Create interpolated timeseries
+    timeseries_interpolated = cubic_spline_fitter(frame_times)
+    # Only replace the high motion volumes with the interpolated data
+    timeseries[~sample_mask, :] = timeseries_interpolated[~sample_mask, :]
+    # Remove ends if not condition, condition already removes these volumes in the Data.scans list
+    if not Data.condition:
+        censor_ends = _get_contiguous_ends(Data)
+        if censor_ends:
+            timeseries = np.delete(timeseries, censor_ends, axis=0)
+
+    return timeseries
+
+
+# Only retain the condition indices that contain anchors/true on both ends if interpolation requested
+def _get_contiguous_ends(Data):
+    # If all volumes are retained, then early return
+    if np.all(Data.sample_mask):
+        return []
+
+    # Example sample mask: [0,0,1,1,0,0,1,1,0,0]; where 1 corresponds to the volume retained
+    sample_mask = np.array(Data.sample_mask)
+    # Diff array of sample mask: [0,1,0,-1,0,1,0,-1,0]
+    # Indices not 0: [1,3,5,7]
+    # Since diff is one less the indx of the array, add + 1 to each element to obtain transition indxs
+    # from sample mask: [2,4,6,8]
+    split_indices = np.where(np.diff(sample_mask) != 0)[0] + 1
+    # Split into groups of contiguous indices: ([0,1], [2,3], [4,5], [6,7], [8,9])
+    contiguous_indices = np.split(np.arange(Data.max_len), split_indices)
+    # Check if first index in sample mask is 0
+    start_indices = contiguous_indices[0].tolist() if sample_mask[0] == 0 else []
+    # Check if last index in sample mask is 0
+    end_indices = contiguous_indices[-1].tolist() if sample_mask[-1] == 0 else []
+
+    return start_indices + end_indices
+
+
+# Interpolating, padding for future condition extraction, or deleting censored data from timeseries
+def _process_censored_timeseries(timeseries, Data):
+    if Data.interpolate:
+        timeseries = _interpolate_volumes(timeseries, Data)
+    else:
+        if Data.use_sample_mask:
+            # Temporarily pad timeseries for correct condition extraction since nilearn returns a truncated array
+            timeseries = _pad(timeseries, Data) if Data.condition else timeseries
+        else:
+            timeseries = np.delete(timeseries, Data.censor_vols, axis=0) if not Data.condition else timeseries
+
+    return timeseries
 
 
 # Check if indices valid or truncate indices if shift applied and causes indices to be out of bounds

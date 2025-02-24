@@ -13,6 +13,24 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.23.0] - 2025-02-25
+- Updates pertain to ``TimeseriesExtractor``
+### 🚀 New/Added
+- Added a new key to ``fd_threshold`` for optional cubic spline interpolation of censored volumes not at the beginning
+or end of the timeseries and is only done after nuisance regression and parcellation. By default, interpolation is not
+done and must explicitly be set to True.
+### ♻ Changed
+- Default for ``confounds_names`` changed from None to ``"basic"``. The ``"basic"`` option now performs the same
+functionality as ``confound_names=None`` did in previous versions.
+- Ordering of some ``self.signal_clean_info`` parameters changed.
+### 🐛 Fixes
+- Raises ValueError when ``use_confounds=False`` but ``fd_threshold``, ``n_acompcor_separate``, or
+``dummy_scans = {"auto": True} is specified.
+**IMPORTANT:**
+- Fixed issue that occured only when ``n_acompcor_separate`` is None (default), which resulted in  all acompcor
+regressors are selected from the confounds metadata due to list slicing issue ``[0:None]``. Not an issue when
+``n_acompcor_separate`` is not None or the preproccesing pipeline directory did not have a confounds json file.
+- Overall improved error handling.
 
 ## [0.22.2] - 2025-02-21
 ### 🚀 New/Added
