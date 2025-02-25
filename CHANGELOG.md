@@ -30,6 +30,7 @@ functionality as ``confound_names=None`` did in previous versions.
 - Fixed issue that occured only when ``n_acompcor_separate`` is None (default), which resulted in  all acompcor
 regressors are selected from the confounds metadata due to list slicing issue ``[0:None]``. Not an issue when
 ``n_acompcor_separate`` is not None or the preproccesing pipeline directory did not have a confounds json file.
+FIX: The confounds metadata is only retrieved when ``n_acompcor_separate`` is not None.
 - Overall improved error handling.
 
 ## [0.22.2] - 2025-02-21
