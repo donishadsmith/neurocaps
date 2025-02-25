@@ -34,16 +34,21 @@ section {
     background-color: #eaf8f0;
     color: #000000;
     border-radius: 8px;
-    padding: 2px 5px;
+    padding: 2px 5px 2px 25px;
     font-family: Arial, sans-serif;
     font-size: 12px;
     margin: 5px 0;
     width: fit-content;
+    position: relative;
 }
 
-.versionmodified.added::before, .versionchanged.added::before {
+.versionadded::before, .versionchanged::before {
     content: "\f06a";
     color: #000000;
     font-family: 'FontAwesome';
-    margin-right: 5px;
+    font-size: 16px;
+    position: absolute;
+    left: 5px;
+    top: 5px;
+    line-height: 1;
 }
