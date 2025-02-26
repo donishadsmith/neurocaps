@@ -1,7 +1,7 @@
 import collections, copy, itertools, os, re, sys, tempfile
 from typing import Callable, Literal, Optional, Union
 
-import numpy as np, nibabel as nib, matplotlib.pyplot as plt, pandas as pd, seaborn, surfplot
+import nibabel as nib, numpy as np, matplotlib.pyplot as plt, pandas as pd, seaborn, surfplot
 import plotly.express as px, plotly.graph_objects as go, plotly.offline as pyo
 from kneed import KneeLocator
 from joblib import Parallel, delayed
@@ -632,7 +632,6 @@ class CAP(_CAPGetter):
             if self._n_cores is None:
                 for n_cluster in tqdm(self._n_clusters, desc=f"Clustering [GROUP: {group}]", disable=not progress_bar):
                     output_score, model = _run_kmeans(n_cluster, configs, self._concatenated_timeseries[group], method)
-
                     performance_dict[group].update(output_score)
                     model_dict.update(model)
             else:
@@ -1906,8 +1905,10 @@ class CAP(_CAPGetter):
     @staticmethod
     def _save_heatmap(display, scope, partial, suffix, plot_dict, output_dir, call):
         full_filename = partial + f"_{call}-{scope}"
+
         if suffix:
             full_filename += f"_{suffix}".replace(" ", "_")
+
         full_filename += ".png"
         display.get_figure().savefig(
             os.path.join(output_dir, full_filename), dpi=plot_dict["dpi"], bbox_inches=plot_dict["bbox_inches"]
@@ -2009,7 +2010,6 @@ class CAP(_CAPGetter):
 
         for group in self._caps:
             df = pd.DataFrame(self._caps[group])
-
             corr_df = df.corr(method="pearson")
 
             display = _create_display(corr_df, plot_dict, suffix_title, group, "corr")
@@ -2826,10 +2826,8 @@ class CAP(_CAPGetter):
                 # Create mask to set ROIs not in regions to zero and ROIs in regions as 1
                 binary_vector = np.zeros_like(cap_vector)
                 binary_vector[indxs] = 1
-
                 # Calculate binary norm
                 norm_binary_vector = np.linalg.norm(binary_vector)
-
                 # Get high and low amplitudes
                 high_amp = np.where(cap_vector > 0, cap_vector, 0)
                 # Invert vector for low_amp so that cosine similarity is positive
@@ -2839,8 +2837,6 @@ class CAP(_CAPGetter):
                 for vec in vecs:
                     dot_product = np.dot(vecs[vec], binary_vector)
                     norm_vec = np.linalg.norm(vecs[vec])
-
                     cosine_similarity = dot_product / (norm_vec * norm_binary_vector)
-
                     # Store value in dict
                     radar_dict[cap][vec].append(cosine_similarity)

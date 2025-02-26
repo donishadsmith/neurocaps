@@ -773,7 +773,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             # Get subject header
             subject_header = self._header(subj_id)
-
             # Check files
             skip, msg = self._check_files(files)
 
