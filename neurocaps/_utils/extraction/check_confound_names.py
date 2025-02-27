@@ -53,6 +53,8 @@ def _check_confound_names(high_pass, user_confounds, n_acompcor_separate):
     if n_acompcor_separate:
         confound_names = _acompcor_check(confound_names, user_confounds, n_acompcor_separate)
 
+    _check_regressors(confound_names, n_acompcor_separate)
+
     LG.info(f"Confound regressors to be used if available: {', '.join(confound_names)}.")
 
     return confound_names
@@ -67,7 +69,20 @@ def _acompcor_check(confound_names, user_confounds, n):
                 "Since `n_acompcor_separate` has been specified, acompcor components in "
                 f"`confound_names` will be disregarded and replaced with the first {n} "
                 "components of the white matter and cerebrospinal fluid masks for each participant. "
-                f"The following components will not be used {removed_confounds}."
+                f"The following components will not be used {', '.join(removed_confounds)}."
             )
 
     return check_confounds
+
+
+def _check_regressors(confound_names, n):
+    cosine = any(i.startswith("cosine") for i in confound_names)
+    acompcor = any(i.startswith("a_comp_cor") for i in confound_names) if not n else n
+    tcompcor = any(i.startswith("t_comp_cor") for i in confound_names)
+
+    if not cosine and (acompcor or tcompcor):
+        LG.warning(
+            "fMRIPrep applies high-pass filtering before running anatomical and temporal CompCor. It is "
+            "recommended to include the discrete cosine-bases regressors ('cosine_XX') in `confound_names` "
+            "if including any 'a_comp_cor' or 't_comp_cor' regressors."
+        )

@@ -13,6 +13,17 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.23.1] - 2025-02-27
+### ♻ Changed
+- Minor improvements in how run IDs are intersected to prevent errors in rare cases.
+### 🐛 Fixes
+- Added pytest-cov and pre-commit as optional dependencies
+- Fix case in version 0.23.0 when ``confound_names`` is None but ``n_acompcor_separate`` is specified, which resulted in the
+no acompcor components being included for nuisance regression.
+- Also, add warning is no cosine regressors are included in ``confound_names`` but the following is detected:
+    - ``n_acompcor_separate`` specified
+    - "a_comp_cor" or "t_comp_cor" included in ``confound_names``
+
 ## [0.23.0] - 2025-02-25
 - Updates pertain to ``TimeseriesExtractor``
 ### 🚀 New/Added

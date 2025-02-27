@@ -77,7 +77,7 @@ def standardize(
     if filenames is not None and output_dir is None:
         LG.warning("`filenames` supplied but no `output_dir` specified. Files will not be saved.")
 
-    # Initialize  dict
+    # Initialize dict
     standardized_dicts = {}
 
     for indx, curr_dict in enumerate(subject_timeseries_list):

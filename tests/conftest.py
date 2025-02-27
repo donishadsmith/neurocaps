@@ -1,4 +1,4 @@
-import os, shutil, tempfile
+import logging, os, shutil, tempfile
 import pytest
 
 from .utils import get_paths
@@ -8,7 +8,9 @@ from .utils import get_paths
 def tmp_dir():
     """Create temporary directory for each test module."""
     temp_dir = tempfile.TemporaryDirectory()
+
     yield temp_dir
+
     temp_dir.cleanup()
 
 
@@ -25,9 +27,16 @@ def data_dir(tmp_dir):
 def get_vars(tmp_dir):
     """Set up test environment with required data."""
     # Get paths
-    bids_dir, pipeline_name = get_paths(tmp_dir.name)
+    return get_paths(tmp_dir.name)
 
-    # Default test confounds
-    default_test_confounds = ["Cosine*", "aComp*", "Rot*"]
 
-    return bids_dir, pipeline_name, default_test_confounds
+@pytest.fixture(autouse=True)
+def configure_logging(request):
+    """Fixture to enable/disable logs."""
+    # Checks if function has the "enable_logs" marker
+    if not request.node.get_closest_marker("enable_logs"):
+        # Only critical logs enabled when marker not present
+        logging.getLogger().setLevel(logging.CRITICAL)
+    else:
+        logging.getLogger().setLevel(logging.INFO)
+    yield

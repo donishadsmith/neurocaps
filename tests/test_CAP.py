@@ -1,17 +1,18 @@
-import copy, glob, logging, math, os, re, sys
+import copy, glob, math, os, re, sys
+
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(name)s [%(levelname)s] %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
+)
 
 import nibabel as nib, numpy as np, pandas as pd, pytest
 from kneed import KneeLocator
 
 from neurocaps.analysis import CAP, change_dtype
 from .utils import Parcellation, check_imgs, concat_data, get_first_subject, segments, predict_labels
-
-
-LG = logging.getLogger(__name__)
-LG.setLevel(logging.WARNING)
-handler = logging.StreamHandler(sys.stdout)
-handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
-LG.addHandler(handler)
 
 
 @pytest.fixture(autouse=False, scope="module")
@@ -31,10 +32,13 @@ def remove_files(tmp_dir):
 
 @pytest.mark.parametrize("standardize", [True, False])
 def test_without_groups_and_without_cluster_selection(standardize):
-    parcel_approach = Parcellation.get_schaefer("parcellation")
     timeseries = Parcellation.get_schaefer("timeseries")
 
-    cap_analysis = CAP(parcel_approach=parcel_approach)
+    cap_analysis = CAP()
+
+    # No error; Testing __call__
+    print(cap_analysis)
+
     cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=2, standardize=standardize)
     assert cap_analysis.standardize == standardize
     assert cap_analysis.n_clusters == 2
@@ -68,12 +72,11 @@ def test_without_groups_and_without_cluster_selection(standardize):
 
 
 def test_subject_skipping():
-    parcel_approach = Parcellation.get_schaefer("parcellation")
     timeseries = Parcellation.get_schaefer("timeseries")
 
     subject_timeseries = copy.deepcopy(timeseries)
     del subject_timeseries["2"]["run-1"]
-    cap_analysis = CAP(parcel_approach=parcel_approach)
+    cap_analysis = CAP()
     cap_analysis.get_caps(subject_timeseries=subject_timeseries, runs=1, n_clusters=2)
 
     assert cap_analysis.runs == [1]
@@ -85,11 +88,10 @@ def test_subject_skipping():
 
 @pytest.mark.parametrize("standardize", [True, False])
 def test_groups_without_cluster_selection(standardize):
-    parcel_approach = Parcellation.get_schaefer("parcellation")
     timeseries = Parcellation.get_schaefer("timeseries")
 
     # Should ignore duplicate id
-    cap_analysis = CAP(parcel_approach=parcel_approach, groups={"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]})
+    cap_analysis = CAP(groups={"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]})
 
     cap_analysis.get_caps(subject_timeseries=timeseries, standardize=standardize)
 
@@ -116,7 +118,7 @@ def test_groups_without_cluster_selection(standardize):
     labels = predict_labels(timeseries, cap_analysis, standardize, "B")
     assert np.array_equal(labels, cap_analysis.kmeans["B"].labels_)
 
-    cap_analysis = CAP(parcel_approach=parcel_approach, groups={"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]})
+    cap_analysis = CAP(groups={"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]})
     cap_analysis.get_caps(subject_timeseries=timeseries, runs=[1, 2], standardize=standardize)
     cap_analysis.concatenated_timeseries["A"].shape == (800, 100)
     cap_analysis.concatenated_timeseries["A"].shape == (1200, 100)
@@ -139,11 +141,11 @@ def test_groups_without_cluster_selection(standardize):
 @pytest.mark.parametrize(
     "groups, n_cores", [(["All Subjects"], None), ({"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]}, 2)]
 )
+@pytest.mark.enable_logs
 def test_elbow(groups, n_cores):
-    parcel_approach = Parcellation.get_schaefer("parcellation")
     timeseries = Parcellation.get_schaefer("timeseries")
 
-    cap_analysis = CAP(parcel_approach=parcel_approach, groups=None if isinstance(groups, list) else groups)
+    cap_analysis = CAP(groups=None if isinstance(groups, list) else groups)
 
     # Elbow sometimes does find the elbow with random data
     try:
@@ -179,7 +181,7 @@ def test_elbow(groups, n_cores):
                 == cap_analysis.optimal_n_clusters[group]
             )
     except:
-        LG.warning("Elbow could not be found for random data.")
+        logging.warning("Elbow could not be found for random data.")
         pass
 
 
@@ -187,10 +189,9 @@ def test_elbow(groups, n_cores):
     "groups, n_cores", [(["All Subjects"], None), ({"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]}, 2)]
 )
 def test_silhouette(groups, n_cores):
-    parcel_approach = Parcellation.get_schaefer("parcellation")
     timeseries = Parcellation.get_schaefer("timeseries")
 
-    cap_analysis = CAP(parcel_approach=parcel_approach, groups=None if isinstance(groups, list) else groups)
+    cap_analysis = CAP(groups=None if isinstance(groups, list) else groups)
     cap_analysis.get_caps(
         subject_timeseries=timeseries,
         n_clusters=[2, 3, 4, 5],
@@ -219,10 +220,9 @@ def test_silhouette(groups, n_cores):
     "groups, n_cores", [(["All Subjects"], None), ({"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]}, 2)]
 )
 def test_davies_bouldin(groups, n_cores):
-    parcel_approach = Parcellation.get_schaefer("parcellation")
     timeseries = Parcellation.get_schaefer("timeseries")
 
-    cap_analysis = CAP(parcel_approach=parcel_approach, groups=None if isinstance(groups, list) else groups)
+    cap_analysis = CAP(groups=None if isinstance(groups, list) else groups)
     cap_analysis.get_caps(
         subject_timeseries=timeseries,
         n_clusters=[2, 3, 4, 5],
@@ -253,10 +253,9 @@ def test_davies_bouldin(groups, n_cores):
     "groups, n_cores", [(["All Subjects"], None), ({"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]}, 2)]
 )
 def test_variance_ratio(groups, n_cores):
-    parcel_approach = Parcellation.get_schaefer("parcellation")
     timeseries = Parcellation.get_schaefer("timeseries")
 
-    cap_analysis = CAP(parcel_approach=parcel_approach, groups=None if isinstance(groups, list) else groups)
+    cap_analysis = CAP(groups=None if isinstance(groups, list) else groups)
     cap_analysis.get_caps(
         subject_timeseries=timeseries,
         n_clusters=[2, 3, 4, 5],
@@ -283,10 +282,9 @@ def test_variance_ratio(groups, n_cores):
 
 @pytest.mark.parametrize("method", ["silhouette", "davies_bouldin", "variance_ratio"])
 def test_methods_parallel_and_sequential_equivalence(method):
-    parcel_approach = Parcellation.get_schaefer("parcellation")
     timeseries = Parcellation.get_schaefer("timeseries")
 
-    cap_analysis = CAP(parcel_approach=parcel_approach)
+    cap_analysis = CAP()
     cap_analysis.get_caps(
         subject_timeseries=timeseries,
         n_clusters=[2, 3, 4, 5],
@@ -318,9 +316,7 @@ def test_var_explained():
 
 
 def test_no_groups_using_pickle():
-    parcel_approach = Parcellation.get_schaefer("parcellation")
-
-    cap_analysis = CAP(parcel_approach=parcel_approach)
+    cap_analysis = CAP()
     cap_analysis.get_caps(
         subject_timeseries=os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"), n_clusters=2
     )
@@ -329,9 +325,7 @@ def test_no_groups_using_pickle():
 
 
 def test_groups_using_pickle():
-    parcel_approach = Parcellation.get_schaefer("parcellation")
-
-    cap_analysis = CAP(parcel_approach=parcel_approach, groups={"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]})
+    cap_analysis = CAP(groups={"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]})
     cap_analysis.get_caps(
         subject_timeseries=os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"), n_clusters=2
     )
@@ -342,10 +336,9 @@ def test_groups_using_pickle():
 
 
 def test_temporal_fraction():
-    parcel_approach = Parcellation.get_schaefer("parcellation")
     timeseries = Parcellation.get_schaefer("timeseries")
 
-    cap_analysis = CAP(parcel_approach=parcel_approach, groups={"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]})
+    cap_analysis = CAP(groups={"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]})
     cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=2)
 
     # Should ignore bad metric
@@ -369,10 +362,9 @@ def test_temporal_fraction():
 
 
 def test_counts():
-    parcel_approach = Parcellation.get_schaefer("parcellation")
     timeseries = Parcellation.get_schaefer("timeseries")
 
-    cap_analysis = CAP(parcel_approach=parcel_approach, groups={"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]})
+    cap_analysis = CAP(groups={"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]})
     cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=2)
 
     df_dict = cap_analysis.calculate_metrics(subject_timeseries=timeseries, return_df=True, metrics=["counts"])
@@ -397,10 +389,9 @@ def test_counts():
 
 @pytest.mark.parametrize("tr", [None, 2])
 def test_persistence(tr):
-    parcel_approach = Parcellation.get_schaefer("parcellation")
     timeseries = Parcellation.get_schaefer("timeseries")
 
-    cap_analysis = CAP(parcel_approach=parcel_approach, groups={"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]})
+    cap_analysis = CAP(groups={"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]})
     cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=2)
 
     df_dict = cap_analysis.calculate_metrics(
@@ -427,10 +418,9 @@ def test_persistence(tr):
 
 
 def test_transition_frequency():
-    parcel_approach = Parcellation.get_schaefer("parcellation")
     timeseries = Parcellation.get_schaefer("timeseries")
 
-    cap_analysis = CAP(parcel_approach=parcel_approach, groups={"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]})
+    cap_analysis = CAP(groups={"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]})
     cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=2)
 
     df_dict = cap_analysis.calculate_metrics(
@@ -449,10 +439,9 @@ def test_transition_frequency():
 
 
 def test_transition_probability():
-    parcel_approach = Parcellation.get_schaefer("parcellation")
     timeseries = Parcellation.get_schaefer("timeseries")
 
-    cap_analysis = CAP(parcel_approach=parcel_approach, groups={"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]})
+    cap_analysis = CAP(groups={"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]})
     cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=2)
 
     df_dict = cap_analysis.calculate_metrics(
@@ -538,10 +527,9 @@ def test_metrics_mathematical_relationship(continuous_runs):
 
 
 def test_calculate_metrics_using_pickle(tmp_dir):
-    parcel_approach = Parcellation.get_schaefer("parcellation")
     timeseries = Parcellation.get_schaefer("timeseries")
 
-    cap_analysis = CAP(parcel_approach=parcel_approach, groups={"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]})
+    cap_analysis = CAP(groups={"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]})
     cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=2)
 
     metrics = ["temporal_fraction", "counts", "transition_frequency", "persistence", "transition_probability"]
@@ -562,10 +550,9 @@ def test_calculate_metrics_using_pickle(tmp_dir):
 
 
 def test_subject_setter():
-    parcel_approach = Parcellation.get_schaefer("parcellation")
     timeseries = Parcellation.get_schaefer("timeseries")
 
-    cap_analysis = CAP(parcel_approach=parcel_approach, groups={"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]})
+    cap_analysis = CAP(groups={"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]})
     cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=2)
 
     metrics = ["temporal_fraction"]
@@ -594,17 +581,21 @@ def test_subject_setter():
     assert df_shape[0] + 1 == new_df_shape[0]
 
 
-@pytest.mark.parametrize(
-    "timeseries, parcel_approach",
-    [
-        (Parcellation.get_schaefer("timeseries"), Parcellation.get_schaefer("parcellation")),
-        (Parcellation.get_custom("timeseries"), Parcellation.get_custom("parcellation")),
-        (Parcellation.get_aal("timeseries", "SPM8"), Parcellation.get_aal("parcellation", "SPM8")),
-        (Parcellation.get_aal("timeseries", "3v2"), Parcellation.get_aal("parcellation", "3v2")),
-    ],
-)
-def test_get_caps_cluster_selection_plot(tmp_dir, timeseries, parcel_approach):
-    cap_analysis = CAP(parcel_approach=parcel_approach)
+def test_parcel_setter():
+    parcel_approach = Parcellation.get_schaefer("parcellation")
+    cap_analysis = CAP()
+
+    assert not cap_analysis.parcel_approach
+
+    # Set
+    cap_analysis.parcel_approach = parcel_approach
+    assert "Schaefer" in cap_analysis.parcel_approach
+
+
+def test_get_caps_cluster_selection_plot(tmp_dir):
+    timeseries = Parcellation.get_schaefer("timeseries")
+    cap_analysis = CAP()
+
     cap_analysis.get_caps(
         subject_timeseries=timeseries,
         n_clusters=[2, 3, 4, 5],
@@ -685,17 +676,9 @@ def test_cap2plot(tmp_dir, timeseries, parcel_approach):
     assert cap_analysis.region_caps["All Subjects"]["CAP-1"].shape == regions_dim
 
 
-@pytest.mark.parametrize(
-    "timeseries, parcel_approach",
-    [
-        (Parcellation.get_schaefer("timeseries"), Parcellation.get_schaefer("parcellation")),
-        (Parcellation.get_custom("timeseries"), Parcellation.get_custom("parcellation")),
-        (Parcellation.get_aal("timeseries", "SPM8"), Parcellation.get_aal("parcellation", "SPM8")),
-        (Parcellation.get_aal("timeseries", "3v2"), Parcellation.get_aal("parcellation", "3v2")),
-    ],
-)
-def test_cap2corr(tmp_dir, timeseries, parcel_approach):
-    cap_analysis = CAP(parcel_approach=parcel_approach)
+def test_cap2corr(tmp_dir):
+    timeseries = Parcellation.get_schaefer("timeseries")
+    cap_analysis = CAP()
     cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=2)
 
     df = cap_analysis.caps2corr(
@@ -768,40 +751,13 @@ def test_cap2radar(tmp_dir, timeseries, parcel_approach):
     check_imgs(tmp_dir, plot_type="radar", values_dict={"html": 2})
 
 
-@pytest.mark.skipif(sys.platform != "linux", reason="VTK action only works for Linux")
-def test_caps2surf(tmp_dir, remove_files):
-    parcel_approach = Parcellation.get_schaefer("parcellation")
-    timeseries = Parcellation.get_schaefer("timeseries")
-
-    cap_analysis = CAP(parcel_approach=parcel_approach)
-    cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=2)
-
-    cap_analysis.caps2surf(
-        method="nearest",
-        fwhm=1,
-        save_stat_maps=True,
-        suffix_filename="suffix_name",
-        output_dir=tmp_dir.name,
-        suffix_title="placeholder",
-        show_figs=False,
-    )
-    check_imgs(tmp_dir, plot_type="surface", values_dict={"png": 2})
-    check_imgs(tmp_dir, plot_type="nifti", values_dict={"nii.gz": 2})
-
-    cap_analysis.caps2surf(
-        method="linear", fwhm=1, save_stat_maps=False, output_dir=tmp_dir.name, as_outline=True, show_figs=False
-    )
-    check_imgs(tmp_dir, plot_type="surface", values_dict={"png": 2})
-    check_imgs(tmp_dir, plot_type="nifti", values_dict={"nii.gz": 0})
-
-
 @pytest.mark.parametrize(
     "timeseries, parcel_approach",
     [
         (Parcellation.get_schaefer("timeseries"), Parcellation.get_schaefer("parcellation")),
+        (Parcellation.get_custom("timeseries"), Parcellation.get_custom("parcellation")),
         (Parcellation.get_aal("timeseries", "SPM8"), Parcellation.get_aal("parcellation", "SPM8")),
         (Parcellation.get_aal("timeseries", "3v2"), Parcellation.get_aal("parcellation", "3v2")),
-        (Parcellation.get_custom("timeseries"), Parcellation.get_custom("parcellation")),
     ],
 )
 def test_caps2niftis(tmp_dir, timeseries, parcel_approach):
@@ -873,11 +829,43 @@ def test_caps2niftis(tmp_dir, timeseries, parcel_approach):
         check_imgs(tmp_dir, plot_type="nifti", values_dict={"nii.gz": 2})
 
 
+@pytest.mark.skipif(sys.platform != "linux", reason="VTK action only works for Linux")
+@pytest.mark.parametrize(
+    "timeseries, parcel_approach",
+    [
+        (Parcellation.get_schaefer("timeseries"), Parcellation.get_schaefer("parcellation")),
+        (Parcellation.get_custom("timeseries"), Parcellation.get_custom("parcellation")),
+        (Parcellation.get_aal("timeseries", "SPM8"), Parcellation.get_aal("parcellation", "SPM8")),
+        (Parcellation.get_aal("timeseries", "3v2"), Parcellation.get_aal("parcellation", "3v2")),
+    ],
+)
+def test_caps2surf(tmp_dir, remove_files, timeseries, parcel_approach):
+    cap_analysis = CAP(parcel_approach=parcel_approach)
+    cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=2)
+
+    cap_analysis.caps2surf(
+        method="nearest",
+        fwhm=1,
+        save_stat_maps=True,
+        suffix_filename="suffix_name",
+        output_dir=tmp_dir.name,
+        suffix_title="placeholder",
+        show_figs=False,
+    )
+    check_imgs(tmp_dir, plot_type="surface", values_dict={"png": 2})
+    check_imgs(tmp_dir, plot_type="nifti", values_dict={"nii.gz": 2})
+
+    cap_analysis.caps2surf(
+        method="linear", fwhm=1, save_stat_maps=False, output_dir=tmp_dir.name, as_outline=True, show_figs=False
+    )
+    check_imgs(tmp_dir, plot_type="surface", values_dict={"png": 2})
+    check_imgs(tmp_dir, plot_type="nifti", values_dict={"nii.gz": 0})
+
+
 def test_calculate_metrics_w_change_dtype(tmp_dir):
-    parcel_approach = Parcellation.get_schaefer("parcellation")
     timeseries = Parcellation.get_schaefer("timeseries")
 
-    cap_analysis = CAP(parcel_approach=parcel_approach, groups={"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]})
+    cap_analysis = CAP(groups={"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]})
     cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=2)
     new_timeseries = change_dtype([timeseries], dtype="float16")
     cap_analysis.calculate_metrics(
@@ -909,10 +897,8 @@ def test_method_chaining(tmp_dir):
     timeseries = Parcellation.get_schaefer("timeseries")
 
     a = {"show_figs": False}
-    cap_analysis = CAP(parcel_approach)
-    cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=2).caps2plot(**a).caps2radar(**a).caps2niftis(
-        tmp_dir.name
-    )
+    cap_analysis = CAP(parcel_approach=parcel_approach)
+    cap_analysis.get_caps(timeseries, n_clusters=2).caps2plot(**a).caps2niftis(tmp_dir.name).caps2radar(**a)
 
     # Should not be None
     assert cap_analysis.cosine_similarity

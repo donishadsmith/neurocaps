@@ -508,9 +508,8 @@ class CAP(_CAPGetter):
         subject_timeseries = self._process_subject_timeseries(subject_timeseries)
         self._concatenated_timeseries = self._concatenate_timeseries(subject_timeseries, runs)
 
-        valid_methods = ["elbow", "davies_bouldin", "silhouette", "variance_ratio"]
-
         if self._cluster_selection_method is not None:
+            valid_methods = ["elbow", "davies_bouldin", "silhouette", "variance_ratio"]
             if self._cluster_selection_method not in valid_methods:
                 formatted_string = ", ".join(["'{a}'".format(a=x) for x in valid_methods])
                 raise ValueError(f"Options for `cluster_selection_method` are - {formatted_string}.")
@@ -586,7 +585,7 @@ class CAP(_CAPGetter):
                     concatenated_timeseries[group] = np.vstack(
                         [concatenated_timeseries[group], subject_timeseries[subj_id][curr_run]]
                     )
-        # Standardize
+
         if self._standardize:
             concatenated_timeseries = self._scale(concatenated_timeseries)
 
@@ -724,6 +723,7 @@ class CAP(_CAPGetter):
         if output_dir:
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
+
             save_name = f"{group.replace(' ', '_')}_{self._cluster_selection_method}.png"
             plt.savefig(os.path.join(output_dir, save_name), dpi=plot_dict["dpi"], bbox_inches=plot_dict["bbox_inches"])
 
@@ -1798,7 +1798,6 @@ class CAP(_CAPGetter):
 
         if line:
             kwargs.update({"linewidths": plot_dict["linewidths"], "linecolor": plot_dict["linecolor"]})
-
         if edge:
             kwargs.update({"edgecolors": plot_dict["edgecolors"]})
 
@@ -2396,7 +2395,8 @@ class CAP(_CAPGetter):
                         target_density=fslr_density,
                         method=method,
                     )
-                # Code slightly adapted from surfplot example 2
+
+                # Code adapted from example on https://surfplot.readthedocs.io/
                 surfaces = fetch_fslr()
 
                 if plot_dict["surface"] not in ["inflated", "veryinflated"]:
@@ -2413,6 +2413,7 @@ class CAP(_CAPGetter):
                 sulc_lh, sulc_rh = surfaces["sulc"]
                 sulc_lh = str(sulc_lh) if not isinstance(sulc_lh, str) else sulc_lh
                 sulc_rh = str(sulc_rh) if not isinstance(sulc_rh, str) else sulc_rh
+
                 p = surfplot.Plot(
                     lh,
                     rh,
@@ -2422,12 +2423,12 @@ class CAP(_CAPGetter):
                     views=plot_dict["views"],
                     brightness=plot_dict["brightness"],
                 )
-
                 # Add base layer
                 p.add_layer({"left": sulc_lh, "right": sulc_rh}, cmap="binary_r", cbar=False)
 
                 # Check cmap
                 cmap = _cmap_d[plot_dict["cmap"]] if isinstance(plot_dict["cmap"], str) else plot_dict["cmap"]
+
                 # Add stat map layer
                 p.add_layer(
                     {"left": gii_lh, "right": gii_rh},
@@ -2437,7 +2438,6 @@ class CAP(_CAPGetter):
                     zero_transparent=plot_dict["zero_transparent"],
                     as_outline=False,
                 )
-
                 if plot_dict["as_outline"] is True:
                     p.add_layer(
                         {"left": gii_lh, "right": gii_rh},
