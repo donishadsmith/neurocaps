@@ -16,6 +16,7 @@ improvements/enhancements. All fixes and modifications are backwards compatible.
 ## [0.23.1] - 2025-02-27
 ### ♻ Changed
 - Minor improvements in how run IDs are intersected to prevent errors in rare cases.
+- Update confound names in test datasets to thier modern counterparts in fMRIPrep.
 ### 🐛 Fixes
 - Added pytest-cov and pre-commit as optional dependencies
 - Fix case in version 0.23.0 when ``confound_names`` is None but ``n_acompcor_separate`` is specified, which resulted in the
