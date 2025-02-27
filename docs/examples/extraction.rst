@@ -19,7 +19,7 @@ For example, placing an asterisk after cosine (cosine*) will utilize all paramet
 
     dir = os.path.dirname(__file__)
 
-    confounds = ["Cosine*", "aComp*", "Rot*"]
+    confounds = ["cosine*", "a_comp_cor*", "rot*"]
 
     parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7, "resolution_mm": 2}}
 
@@ -51,9 +51,9 @@ For example, placing an asterisk after cosine (cosine*) will utilize all paramet
 
         2025-01-31 13:21:59,933 neurocaps._utils.check_parcel_approach [WARNING] 'yeo_networks' not specified in `parcel_approach`. Defaulting to 7 networks.
         2025-01-31 13:21:59,933 neurocaps._utils.check_parcel_approach [WARNING] 'resolution_mm' not specified in `parcel_approach`. Defaulting to 1mm.
-        2025-01-31 13:21:59,938 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: Cosine*, aComp*, Rot*.
+        2025-01-31 13:21:59,938 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: cosine*, a_comp_cor*, rot*.
         2025-01-31 13:22:11,745 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] Preparing for Timeseries Extraction using [FILE: sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz].
-        2025-01-31 13:22:11,752 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] The following confounds will be used for nuisance regression: Cosine00, Cosine01, Cosine02, Cosine03, Cosine04, Cosine05, Cosine06, aCompCor00, aCompCor01, aCompCor02, aCompCor03, aCompCor04, aCompCor05, RotX, RotY, RotZ.
+        2025-01-31 13:22:11,752 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] The following confounds will be used for nuisance regression: cosine_00, cosine_01, cosine_02, cosine_03, cosine_04, cosine_05, cosine_06, a_comp_cor00, a_comp_cor01, a_comp_cor02, a_comp_cor03, a_comp_cor04, a_comp_cor05, rot_x, rot_y, rot_z.
         Processing Subjects: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:05<00:00,  5.73s/it]
 
 .. code-block:: python

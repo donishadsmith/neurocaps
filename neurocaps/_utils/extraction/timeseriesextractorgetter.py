@@ -135,4 +135,5 @@ class _TimeseriesExtractorGetter:
         )
 
         sep = "=" * len(object_properties.rsplit(": ")[0])
+
         return "Metadata:\n" + sep + f"\n{object_properties}"

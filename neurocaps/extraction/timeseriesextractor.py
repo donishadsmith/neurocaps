@@ -510,7 +510,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         pipeline_name: :obj:`str` or :obj:`None`, default=None
             The name of the pipeline folder in the derivatives folder containing the preprocessed data. Used if
-            multiple pipeline folders exist in the derivatives folder.
+            multiple pipeline folders exist in the derivatives folder or the pipeline folder is nested
+            (e.g. "fmriprep/fmriprep-20.0.0").
 
         n_cores: :obj:`int` or :obj:`None`, default=None
             The number of cores to use for multiprocessing with Joblib. The "loky" backend is used.
@@ -571,7 +572,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     }
                 }
 
-        By default, "run-0", will be used if run IDs are not specified in the NifTI file.
+        **NifTI Files Without "run-" Entity**: By default, "run-0" will be used as a placeholder, if run IDs are not
+        specified in the NifTI file.
 
         **Parcellation & Nuisance Regression**: For timeseries extraction, nuisance regression, and spatial
         dimensionality reduction using a parcellation, Nilearn's ``NiftiLabelsMasker`` function is used. If requested,
@@ -773,9 +775,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             # Get subject header
             subject_header = self._header(subj_id)
+
             # Check files
             skip, msg = self._check_files(files)
-
             if msg and verbose:
                 LG.warning(subject_header + msg)
             if skip:
@@ -808,6 +810,18 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                             "Only the following runs available contain all required files: "
                             f"{', '.join(run_list)}."
                         )
+            elif not check_runs and self.task_info["runs"]:
+                if verbose:
+                    requested_runs = [
+                        f"run-{str(run)}" if "run-" not in str(run) else run for run in self.task_info["runs"]
+                    ]
+                    LG.warning(
+                        f"{subject_header}"
+                        "Timeseries Extraction Skipped: Subject does not have any of the requested run IDs: "
+                        f"{', '.join(requested_runs)}"
+                    )
+                    continue
+
             else:
                 # Allows for nifti files that do not have the run- description
                 run_list = [None]
@@ -834,10 +848,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         if desc:
             query_dict.update({"desc": desc})
+
         if suffix:
             query_dict.update({"suffix": suffix})
+
         if self._task_info["session"]:
             query_dict.update({"session": self._task_info["session"]})
+
         if not event and not desc:
             query_dict.update({"space": self._space if space == "attr" else space})
 
@@ -871,6 +888,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         # Base subject message
         sub_message = f'[SUBJECT: {subj_id} | SESSION: {self._task_info["session"]} | TASK: {self._task_info["task"]}]'
         subject_header = f"{sub_message} "
+
         return subject_header
 
     def _check_files(self, files):
@@ -909,7 +927,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         for nifti in niftis:
             if "ses-" in os.path.basename(nifti):
-                ses_list.append(re.search(r"ses-(\S+?)[-_]", os.path.basename(nifti))[0][:-1])
+                ses_list.append(re.search(r"ses-(\S+?)_", os.path.basename(nifti))[0][:-1])
 
         ses_list = sorted(set(ses_list))
 
@@ -925,13 +943,16 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         check_runs = []
 
         for nifti in niftis:
-            if self._task_info["runs"]:
-                check_runs.extend([f"run-{run}" for run in self._task_info["runs"]])
-            else:
-                if "run-" in os.path.basename(niftis[0]):
-                    check_runs.append(re.search(r"run-(\S+?)[-_]", os.path.basename(nifti))[0][:-1])
+            if "run-" in os.path.basename(niftis[0]):
+                check_runs.append(re.search(r"run-(\S+?)_", os.path.basename(nifti))[0][:-1])
 
-        return check_runs
+        check_runs = set(check_runs)
+        requested_runs = {}
+
+        if self._task_info["runs"]:
+            requested_runs = {f"run-{run}" for run in self._task_info["runs"]}
+
+        return sorted(check_runs.intersection(requested_runs)) if requested_runs else sorted(check_runs)
 
     def _intersect_runs(self, check_runs, files):
         run_list = []
@@ -941,16 +962,20 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             curr_list = []
 
             # Assess is any of these returns True
-            curr_list.append(any([run in file for file in files["niftis"]]))
+            curr_list.append(any(f"{run}_" in file for file in files["niftis"]))
+
             if self._task_info["condition"]:
-                curr_list.append(any([run in file for file in files["events"]]))
+                curr_list.append(any(f"{run}_" in file for file in files["events"]))
+
             if self._signal_clean_info["use_confounds"]:
-                curr_list.append(any([run in file for file in files["confounds"]]))
+                curr_list.append(any(f"{run}_" in file for file in files["confounds"]))
+
                 if self._signal_clean_info["n_acompcor_separate"]:
-                    curr_list.append(any([run in file for file in files["confound_metas"]]))
+                    curr_list.append(any(f"{run}_" in file for file in files["confound_metas"]))
 
             if files["masks"]:
-                curr_list.append(any([run in file for file in files["masks"]]))
+                curr_list.append(any(f"{run}_" in file for file in files["masks"]))
+
             # Append runs that contain all needed files
             if all(curr_list):
                 run_list.append(run)
@@ -1171,9 +1196,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             plot_indxs = list(self._parcel_approach[parcellation_name]["nodes"]).index(roi_indx)
         else:
-            if all([isinstance(indx, int) for indx in roi_indx]):
+            if all(isinstance(indx, int) for indx in roi_indx):
                 plot_indxs = np.array(roi_indx)
-            elif all([isinstance(indx, str) for indx in roi_indx]):
+            elif all(isinstance(indx, str) for indx in roi_indx):
                 # Check if parcellation_approach is custom
                 if "Custom" in self._parcel_approach and "nodes" not in self._parcel_approach["Custom"]:
                     _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_bold")

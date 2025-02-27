@@ -1,4 +1,13 @@
 import copy, glob, os, re, shutil, sys
+
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(name)s [%(levelname)s] %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
+)
+
 import joblib, pytest, numpy as np, pandas as pd
 
 from neurocaps.extraction import TimeseriesExtractor
@@ -13,19 +22,53 @@ from .utils import (
 )
 
 
+@pytest.fixture(scope="module")
+def bold_json(tmp_dir):
+    """Creates a temporary json file."""
+    import json
+
+    data = {"placeholder": ""}
+    filename = os.path.join(tmp_dir.name, "bold_metadata.json")
+
+    with open(filename, "w") as foo:
+        json.dump(data, foo, indent=2)
+
+    yield [filename]
+
+    os.remove(filename)
+
+
 @pytest.fixture(autouse=True, scope="module")
 def setup_environment_1(data_dir, get_vars):
-    bids_dir, pipeline_name, _ = get_vars
-
     """Creates the confounds and events files."""
+    bids_dir, pipeline_name = get_vars
+
     simulate_confounds(bids_dir, pipeline_name)
     simulate_event_data(bids_dir)
 
 
 @pytest.fixture(autouse=False, scope="module")
 def setup_environment_2(setup_environment_1, get_vars):
+    """Modifies the confound files."""
+    bids_dir, _ = get_vars
+    derivatives_dir = os.path.join(bids_dir, "derivatives")
+    confound_file = glob.glob(
+        os.path.join(derivatives_dir, "fmriprep_1.0.0", "fmriprep", "sub-01", "ses-002", "func", "*confounds*.tsv")
+    )[0]
+    confound_df = pd.read_csv(confound_file, sep="\t")
+    fd = confound_df["framewise_displacement"].values
+    # Add high FD threshold; 0 censors beginning scan for "active" condition and 28, 29 censors end scans
+    # for "active" condition
+    fd[[0, 10, 11, 28, 29, 38, 39]] = 0.9
+    confound_df["framewise_displacement"] = fd
+
+    confound_df.to_csv(confound_file, sep="\t", index=None)
+
+
+@pytest.fixture(autouse=False, scope="module")
+def setup_environment_3(setup_environment_1, get_vars):
     """Creates a second subject and creates an additional session for the first."""
-    bids_dir, pipeline_name, _ = get_vars
+    bids_dir, pipeline_name = get_vars
 
     # Clear cache
     TimeseriesExtractor._call_layout.cache_clear()
@@ -57,18 +100,18 @@ def setup_environment_2(setup_environment_1, get_vars):
 
     for file in confound_files:
         confound_df = pd.read_csv(file, sep="\t")
-        confound_df["Cosine00"] = np.random.rand(40)
+        confound_df["cosine_00"] = np.random.rand(40)
         confound_df.to_csv(file, sep="\t", index=None)
 
 
 # Change directory structure by removing the session ID
 @pytest.fixture(autouse=False, scope="module")
-def setup_environment_3(setup_environment_2, get_vars):
+def setup_environment_4(setup_environment_3, get_vars):
     """
     Removes session directory, session ID from files, and brain masks. Also removes nested fmriprep directory
     by moving the directory up one level.
     """
-    bids_dir, _, _ = get_vars
+    bids_dir, _ = get_vars
 
     # Clear cache
     TimeseriesExtractor._call_layout.cache_clear()
@@ -132,22 +175,6 @@ def setup_environment_3(setup_environment_2, get_vars):
         shutil.move(source_path, destination_path)
 
     os.rmdir(fmriprep_old_dir)
-
-
-@pytest.fixture(autouse=False, scope="module")
-def setup_environment_4(setup_environment_3, get_vars):
-    """Modifies the confound files."""
-    bids_dir, _, _ = get_vars
-    derivatives_dir = os.path.join(bids_dir, "derivatives")
-    confounds_file = glob.glob(os.path.join(derivatives_dir, "fmriprep_1.0.0", "sub-01", "func", "*confounds*.tsv"))[0]
-    confounds_df = pd.read_csv(confounds_file, sep="\t")
-    fd = confounds_df["framewise_displacement"].values
-    # Add high FD threshold; 0 censors beginning scan for "active" condition and 28, 29 censors end scans
-    # for "active" condition
-    fd[[0, 10, 11, 28, 29, 38, 39]] = 0.9
-    confounds_df["framewise_displacement"] = fd
-
-    confounds_df.to_csv(confounds_file, sep="\t", index=None)
 
 
 ################################################# Setup Environment 1 #################################################
@@ -258,19 +285,181 @@ def test_default_confounds():
     assert extractor.signal_clean_info["confound_names"] is None
 
 
-def test_parcel_approach_when_no_keys_specified():
+def test_partial_parcel_approaches():
     keys = ["maps", "nodes", "regions"]
-    # Schaefer
-    extraction = TimeseriesExtractor(parcel_approach={"Schaefer": {}})
-    assert all([key in extraction.parcel_approach["Schaefer"] for key in keys])
-    assert all([extraction.parcel_approach["Schaefer"][key] is not None for key in keys])
 
-    extraction = TimeseriesExtractor(parcel_approach={"AAL": {}})
-    assert all([key in extraction.parcel_approach["AAL"] for key in keys])
-    assert all([extraction.parcel_approach["AAL"][key] is not None for key in keys])
+    parcel_approach = {"AAL": {}}
+    extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
+
+    assert "AAL" in extractor.parcel_approach
+
+    assert all(key in extractor.parcel_approach["AAL"] for key in keys)
+
+    for i in extractor.parcel_approach["AAL"]:
+        if i == "maps":
+            assert os.path.isfile(extractor.parcel_approach["AAL"]["maps"])
+        elif i == "nodes":
+            assert len(extractor.parcel_approach["AAL"]["nodes"]) == 116
+        else:
+            assert len(extractor.parcel_approach["AAL"][i]) == 30
+
+    parcel_approach = {"Schaefer": {}}
+    extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
+
+    assert "Schaefer" in extractor.parcel_approach
+
+    assert all(key in extractor.parcel_approach["Schaefer"] for key in keys)
+
+    for i in extractor.parcel_approach["Schaefer"]:
+        if i == "maps":
+            assert os.path.isfile(extractor.parcel_approach["Schaefer"]["maps"])
+        elif i == "nodes":
+            assert len(extractor.parcel_approach["Schaefer"]["nodes"]) == 400
+        else:
+            assert len(extractor.parcel_approach["Schaefer"][i]) == 7
+
+
+def test_3v2_AAL():
+    keys = ["maps", "nodes", "regions"]
+
+    parcel_approach = {"AAL": {"version": "3v2"}}
+    extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
+
+    assert "AAL" in extractor.parcel_approach
+
+    assert all(key in extractor.parcel_approach["AAL"] for key in keys)
+
+    for i in extractor.parcel_approach["AAL"]:
+        if i == "maps":
+            assert os.path.isfile(extractor.parcel_approach["AAL"]["maps"])
+        elif i == "nodes":
+            assert len(extractor.parcel_approach["AAL"]["nodes"]) == 166
+        else:
+            assert len(extractor.parcel_approach["AAL"][i]) == 38
+
+
+def test_delete_property(get_vars):
+    bids_dir, pipeline_name = get_vars
+
+    extractor = TimeseriesExtractor(dtype="float64")
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
+
+    assert extractor.subject_timeseries
+
+    del extractor.subject_timeseries
+    assert not extractor.subject_timeseries
+
+
+def test_validate_timeseries_setter():
+    extractor = TimeseriesExtractor()
+
+    correct_format = {str(x): {f"run-{y}": np.random.rand(100, 100) for y in range(1, 4)} for x in range(1, 4)}
+
+    # Correct format
+    extractor.subject_timeseries = correct_format
+
+    incorrect_format1 = []
+
+    incorrect_format2 = {str(x): {f"run-{y}": np.random.rand(100, 100) for y in range(1, 4)} for x in range(1, 4)}
+    incorrect_format2["4"] = np.random.rand(100, 100)
+
+    incorrect_format3 = {str(x): {f"x-{y}": np.random.rand(100, 100) for y in range(1, 4)} for x in range(1, 4)}
+
+    incorrect_format4 = {str(x): {f"run-{y}": np.random.rand(100, 100) for y in range(1, 4)} for x in range(1, 4)}
+    incorrect_format4["3"].update({"run-5": {}})
+
+    error_msg = (
+        "A valid pickle file/subject timeseries should contain a nested dictionary where the "
+        "first level is the subject id, second level is the run number in the form of 'run-#', and "
+        "the final level is the timeseries as a numpy array. "
+    )
+
+    error_dict = {
+        "1": error_msg,
+        "2": error_msg
+        + "The error occurred at [SUBJECT: 4]. The subject must be a dictionary with second level 'run-#' keys.",
+        "3": error_msg + "The error occurred at [SUBJECT: 1]. Not all second level keys follow the form of 'run-#'.",
+        "4": error_msg
+        + "The error occurred at [SUBJECT: 3 | RUN: run-5]. All 'run-#' keys must contain a numpy array.",
+    }
+
+    for key, arr in [
+        ("1", incorrect_format1),
+        ("2", incorrect_format2),
+        ("3", incorrect_format3),
+        ("4", incorrect_format4),
+    ]:
+        with pytest.raises(TypeError, match=re.escape(error_dict[key])):
+            extractor.subject_timeseries = arr
+
+
+def test_subject_timeseries_setter(tmp_dir):
+    extractor = TimeseriesExtractor()
+    # Check subject timeseries setting using pickle
+    timeseries = Parcellation.get_schaefer("timeseries", 400, 7)
+
+    joblib.dump(timeseries, os.path.join(tmp_dir.name, "saved_timeseries.pkl"))
+
+    extractor.subject_timeseries = os.path.join(tmp_dir.name, "saved_timeseries.pkl")
+
+    assert extractor.subject_timeseries["1"]["run-1"].shape == (100, 400)
+
+    os.remove(os.path.join(tmp_dir.name, "saved_timeseries.pkl"))
+
+
+def test_parcel_setter(tmp_dir):
+    extractor = TimeseriesExtractor(parcel_approach={"AAL": {}})
+    extractor2 = TimeseriesExtractor()
+
+    # Check parcel approach setter
+    extractor.parcel_approach = extractor2.parcel_approach
+    assert "Schaefer" in extractor.parcel_approach
+
+    # Check parcel approach error
+    error_msg = (
+        "Please include a valid `parcel_approach` in one of the following dictionary formats for 'Schaefer', "
+        "'AAL', or 'Custom': {'Schaefer': {'n_rois': 400, 'yeo_networks': 7, 'resolution_mm': 1}, "
+        "'AAL': {'version': 'SPM12'}, 'Custom': {'maps': '/location/to/parcellation.nii.gz', "
+        "'nodes': ['LH_Vis1', 'LH_Vis2', 'LH_Hippocampus', 'RH_Vis1', 'RH_Vis2', 'RH_Hippocampus'], "
+        "'regions': {'Vis': {'lh': [0, 1], 'rh': [3, 4]}, 'Hippocampus': {'lh': [2], 'rh': [5]}}}}"
+    )
+
+    with pytest.raises(TypeError, match=re.escape(error_msg)):
+        extractor.parcel_approach = None
+
+    # Check parcel approach pickle
+    # Get AAL
+    extractor = TimeseriesExtractor(parcel_approach={"AAL": {}})
+    joblib.dump(extractor.parcel_approach, os.path.join(tmp_dir.name, "test_parcel_setter_AAL.pkl"))
+    # Get Schaefer; the default
+    extractor = TimeseriesExtractor()
+    # Set new parcel approach using pkl
+    extractor.parcel_approach = os.path.join(tmp_dir.name, "test_parcel_setter_AAL.pkl")
+    assert "AAL" in extractor.parcel_approach
+
+
+def test_space_setter():
+    extractor = TimeseriesExtractor()
+
+    # Check space
+    assert "MNI152NLin2009cAsym" in extractor.space
+    extractor.space = "New Space"
+
+    assert extractor.space == "New Space"
+
+
+def test_check_raise_error():
+    msg = (
+        f"Cannot do x since `self.subject_timeseries` is None, either run "
+        "`self.get_bold()` or assign a valid timeseries dictionary to `self.subject_timeseries`."
+    )
+
+    with pytest.raises(AttributeError, match=re.escape(msg)):
+        TimeseriesExtractor._raise_error("Cannot do x")
 
 
 # Check basic extraction across all parcel approaches
+@pytest.mark.enable_logs
 @pytest.mark.parametrize(
     "parcel_approach, use_confounds, name",
     [
@@ -279,8 +468,8 @@ def test_parcel_approach_when_no_keys_specified():
         (Parcellation.get_custom("parcellation"), False, "Custom"),
     ],
 )
-def test_extraction(get_vars, parcel_approach, use_confounds, name):
-    bids_dir, pipeline_name, confounds = get_vars
+def test_basic_extraction(get_vars, parcel_approach, use_confounds, name):
+    bids_dir, pipeline_name = get_vars
 
     shape_dict = {"Schaefer": 100, "AAL": 116, "Custom": 426}
     shape = shape_dict[name]
@@ -289,46 +478,47 @@ def test_extraction(get_vars, parcel_approach, use_confounds, name):
         parcel_approach=parcel_approach,
         standardize="zscore_sample",
         use_confounds=use_confounds,
-        detrend=False,
+        detrend=True,
         low_pass=0.15,
-        high_pass=None,
-        confound_names=confounds,
+        high_pass=0.008,
+        confound_names=["cosine*", "rot*"],
     )
-
-    if "Schaefer" in parcel_approach or "AAL" in parcel_approach:
-        name = list(extractor.parcel_approach)[0]
-        assert all(key in ["maps", "nodes", "regions"] for key in extractor.parcel_approach[name])
-
-    extractor.get_bold(bids_dir=bids_dir, session="002", runs="001", task="rest", pipeline_name=pipeline_name, tr=1.2)
-
-    assert "01" in extractor._subject_ids
-
-    # Checking expected shape for rest
-    assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == shape
-    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 40
 
     # No error; Testing __call__
     print(extractor)
 
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+
+    # No error; Testing __call__
+    print(extractor)
+
+    assert "01" in extractor._subject_ids
+
+    # Checking expected shape for rest
+    assert extractor.subject_timeseries["01"]["run-001"].shape == (40, shape)
+    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 40
+
     # Task condition; will issue warning due to max index for condition being 40 when the max index for timeseries is 39
-    extractor.get_bold(
-        bids_dir=bids_dir, session="002", runs="001", task="rest", pipeline_name=pipeline_name, tr=1.2, condition="rest"
-    )
-    assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == shape
-    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 26
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, condition="rest")
+    assert extractor.subject_timeseries["01"]["run-001"].shape == (26, shape)
 
     # Task condition won't issue warning
     extractor.get_bold(
         bids_dir=bids_dir,
-        session="002",
-        runs="001",
         task="rest",
         pipeline_name=pipeline_name,
         tr=1.2,
         condition="active",
     )
-    assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == shape
-    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 20
+    assert extractor.subject_timeseries["01"]["run-001"].shape == (20, shape)
+
+
+def test_dtype(get_vars):
+    bids_dir, pipeline_name = get_vars
+
+    extractor = TimeseriesExtractor(dtype="float64")
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
+    assert extractor.subject_timeseries["01"]["run-001"].dtype == np.float64
 
 
 @pytest.mark.parametrize(
@@ -340,11 +530,11 @@ def test_extraction(get_vars, parcel_approach, use_confounds, name):
     ],
 )
 def test_visualize_bold(get_vars, tmp_dir, parcel_approach, name):
-    bids_dir, pipeline_name, _ = get_vars
+    bids_dir, pipeline_name = get_vars
 
     region = {"Schaefer": "Vis", "AAL": "Hippocampus", "Custom": "Subcortical Regions"}
     extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
-    extractor.get_bold(bids_dir=bids_dir, session="002", runs="001", task="rest", pipeline_name=pipeline_name, tr=1.2)
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
 
     extractor.visualize_bold(
         subj_id="01",
@@ -405,34 +595,69 @@ def test_visualize_bold(get_vars, tmp_dir, parcel_approach, name):
         [os.remove(x) for x in png_files]
 
 
-@pytest.mark.parametrize("use_confounds", [True, False])
-# Ensure correct indices are extracted
-def test_condition(get_vars, use_confounds):
-    bids_dir, pipeline_name, confounds = get_vars
+def test_timeseries_to_pickle(get_vars, tmp_dir):
+    bids_dir, pipeline_name = get_vars
+
+    extractor = TimeseriesExtractor()
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+    # Test pickle
+    extractor.timeseries_to_pickle(tmp_dir.name, filename="testing_timeseries_pickling")
+    file = os.path.join(tmp_dir.name, "testing_timeseries_pickling.pkl")
+    assert os.path.getsize(file) > 0
+    os.remove(file)
+
+
+def test_method_chaining(get_vars, tmp_dir):
+    bids_dir, pipeline_name = get_vars
+
+    a = {"show_figs": False}
+
+    extractor = TimeseriesExtractor()
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name).timeseries_to_pickle(
+        tmp_dir.name
+    ).visualize_bold("01", "001", 0, **a)
+
+    # Should not be None
+    pickle_file = glob.glob(os.path.join(tmp_dir.name, "subject_timeseries.pkl"))
+    assert len(pickle_file) == 1
+    os.remove(pickle_file[0])
+
+
+@pytest.mark.parametrize("high_pass, low_pass", [(None, None), (0.08, None), (None, 0.1), (0.08, 0.1)])
+def test_tr_with_and_without_bandpass(tmp_dir, bold_json, get_vars, high_pass, low_pass):
+    import json
+
+    bids_dir, pipeline_name = get_vars
 
     extractor = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
-        standardize="zscore_sample",
-        use_confounds=use_confounds,
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.008,
-        confound_names=confounds,
+        low_pass=low_pass,
+        high_pass=high_pass,
     )
 
-    extractor.get_bold(bids_dir=bids_dir, session="002", runs="001", task="rest", pipeline_name=pipeline_name, tr=1.2)
+    # Gets tr for the json sidecar
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
+    assert extractor.subject_timeseries["01"]["run-001"].shape == (40, 400)
+
+    if any([high_pass, low_pass]):
+        with pytest.raises(ValueError):
+            extractor._get_tr(bold_json, None, None)
+
+
+# Ensure correct indices are extracted
+def test_condition(get_vars):
+    bids_dir, pipeline_name = get_vars
+
+    extractor = TimeseriesExtractor()
+
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
     timeseries = copy.deepcopy(extractor.subject_timeseries["01"]["run-001"])
 
-    extractor.get_bold(
-        bids_dir=bids_dir, session="002", runs="001", task="rest", pipeline_name=pipeline_name, tr=1.2, condition="rest"
-    )
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, condition="rest")
 
     rest_condition = copy.deepcopy(extractor.subject_timeseries["01"]["run-001"])
 
     extractor.get_bold(
         bids_dir=bids_dir,
-        session="002",
-        runs="001",
         task="rest",
         pipeline_name=pipeline_name,
         tr=1.2,
@@ -448,28 +673,25 @@ def test_condition(get_vars, use_confounds):
 
 
 @pytest.mark.parametrize("confound_type", [None, "testing_confounds"])
-def test_confounds2(get_vars, confound_type):
-    bids_dir, pipeline_name, confounds = get_vars
+def test_confounds(get_vars, confound_type):
+    bids_dir, pipeline_name = get_vars
 
-    confound_names = confounds if confound_type == "testing_confounds" else confound_type
+    confound_names = ["cosine*", "rot*"] if confound_type == "testing_confounds" else confound_type
 
     extractor_with_confounds = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
         use_confounds=True,
         confound_names=confound_names,
     )
 
-    extractor_with_confounds.get_bold(bids_dir=bids_dir, task="rest", runs=["001"], pipeline_name=pipeline_name, tr=1.2)
+    extractor_with_confounds.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
 
+    # Set to false but still define confounds to ensure `use_confounds` takes priority
     extractor_without_confounds = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
         use_confounds=False,
         confound_names=confound_names,
     )
 
-    extractor_without_confounds.get_bold(
-        bids_dir=bids_dir, task="rest", runs=["001"], pipeline_name=pipeline_name, tr=1.2
-    )
+    extractor_without_confounds.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
 
     if confound_type is None:
         # confounds_names set to None is the same as use_confounds set to False
@@ -483,67 +705,110 @@ def test_confounds2(get_vars, confound_type):
             extractor_without_confounds.subject_timeseries["01"]["run-001"],
         )
 
+    if confound_type == "testing_confounds":
+        from neurocaps._utils.extraction.extract_timeseries import _Data, _extract_valid_confounds
 
-def test_timeseries_to_pickle(get_vars, tmp_dir):
-    bids_dir, pipeline_name, confounds = get_vars
+        confound_file = os.path.join(
+            bids_dir,
+            "derivatives",
+            "fmriprep_1.0.0",
+            "fmriprep",
+            "sub-01",
+            "ses-002",
+            "func",
+            "sub-01_ses-002_task-rest_run-001_desc-confounds_timeseries.tsv",
+        )
 
-    extractor = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
-        standardize="zscore_sample",
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.008,
-        confound_names=confounds,
-    )
-    extractor.get_bold(bids_dir=bids_dir, session="002", runs="001", task="rest", pipeline_name=pipeline_name, tr=1.2)
-    # Test pickle
-    extractor.timeseries_to_pickle(tmp_dir.name, filename="testing_timeseries_pickling")
-    file = os.path.join(tmp_dir.name, "testing_timeseries_pickling.pkl")
-    assert os.path.getsize(file) > 0
-    os.remove(file)
+        data = _Data(files={"confound": confound_file}, verbose=False)
+
+        correct_confounds = [
+            "cosine_00",
+            "cosine_01",
+            "cosine_02",
+            "cosine_03",
+            "cosine_04",
+            "cosine_05",
+            "cosine_06",
+            "rot_x",
+            "rot_y",
+            "rot_z",
+        ]
+
+        returned_confounds = _extract_valid_confounds(data, confound_names, None)
+        assert isinstance(returned_confounds, pd.DataFrame)
+        assert not returned_confounds.empty
+        assert len(returned_confounds.columns) == len(correct_confounds)
+
+        all(i in returned_confounds for i in correct_confounds)
 
 
 def test_acompcor_separate(get_vars):
-    bids_dir, pipeline_name, _ = get_vars
+    bids_dir, pipeline_name = get_vars
 
-    confounds = ["Cosine*", "Rot*", "a_comp_cor_01", "a_comp_cor_02", "a_comp_cor*"]
+    confounds = ["cosine*", "rot*", "a_comp_cor_01", "a_comp_cor_02", "a_comp_cor*"]
 
     extractor_with_confounds = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
-        standardize="zscore_sample",
         use_confounds=True,
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.08,
         confound_names=confounds,
         n_acompcor_separate=3,
     )
 
-    extractor_with_confounds.get_bold(bids_dir=bids_dir, task="rest", runs=["001"], pipeline_name=pipeline_name, tr=1.2)
+    extractor_with_confounds.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+    # `n_acomp_cor` extracts the names of the regressors from the json files, user-specified "a_comp_cor" should be
+    # removed from the confounds list
     assert all("a_comp_cor" not in x for x in extractor_with_confounds.signal_clean_info["confound_names"])
 
 
-def test_acompcor_error():
+@pytest.mark.parametrize("n", (None, 2))
+def test_get_acompcor_separate(get_vars, n):
+    from neurocaps._utils.extraction.extract_timeseries import _Data, _process_confounds
+
+    bids_dir, _ = get_vars
+    confound_file = os.path.join(
+        bids_dir,
+        "derivatives",
+        "fmriprep_1.0.0",
+        "fmriprep",
+        "sub-01",
+        "ses-002",
+        "func",
+        "sub-01_ses-002_task-rest_run-001_desc-confounds_timeseries.tsv",
+    )
+    confound_json = confound_file.replace(".tsv", ".json")
+    correct_confounds = ["a_comp_cor_00", "a_comp_cor_01", "a_comp_cor_02", "a_comp_cor_03"]
+
+    data = _Data(files={"confound": confound_file, "confound_meta": confound_json}, verbose=False)
+    data.signal_clean_info = {"n_acompcor_separate": n, "use_confounds": True, "confound_names": None}
+
+    confounds = _process_confounds(data, None)
+    assert isinstance(confounds, pd.DataFrame)
+    assert len(correct_confounds) == len(confounds.columns) == 4
+    assert all(i in correct_confounds for i in confounds.columns)
+
+    data.signal_clean_info["confound_names"] = ["rot_x"]
+    correct_confounds += ["rot_x"]
+    confounds = _process_confounds(data, None)
+    assert isinstance(confounds, pd.DataFrame)
+    assert len(correct_confounds) == len(confounds.columns) == 5
+    assert all(i in correct_confounds for i in confounds.columns)
+
+    data.signal_clean_info["use_confounds"] = False
+    confounds = _process_confounds(data, None)
+    assert not confounds
+
+
+def test_n_acompcor_separate_error():
 
     msg = (
         "`n_acompcor_separate` specified `use_confounds` is not True, so separate WM and CSF components "
         "cannot be regressed out since confounds tsv file generated by fMRIPrep is needed."
     )
     with pytest.raises(ValueError, match=re.escape(msg)):
-        TimeseriesExtractor(
-            parcel_approach=Parcellation.get_custom("parcellation"),
-            standardize="zscore_sample",
-            use_confounds=False,
-            detrend=True,
-            low_pass=0.15,
-            high_pass=0.08,
-            confound_names=None,
-            n_acompcor_separate=2,
-        )
+        TimeseriesExtractor(use_confounds=False, n_acompcor_separate=2)
 
 
-def test_pipeline_name(get_vars):
-    bids_dir, _, confounds = get_vars
+def test_nested_pipeline_name(get_vars):
+    bids_dir, _ = get_vars
 
     # Written like this to test that .get_bold removes the / or \\
     if sys.platform == "win32":
@@ -551,27 +816,15 @@ def test_pipeline_name(get_vars):
     else:
         pipeline_name = "/fmriprep_1.0.0/fmriprep"
 
-    extractor = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
-        standardize="zscore_sample",
-        use_confounds=True,
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.01,
-        confound_names=confounds,
-    )
+    extractor = TimeseriesExtractor()
 
     # Should allow subjects with only a single session to pass
-    extractor.get_bold(bids_dir=bids_dir, task="rest", runs=["001"], pipeline_name=pipeline_name, tr=1.2, verbose=False)
-    assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 40
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, verbose=False)
+    assert extractor.subject_timeseries["01"]["run-001"].shape == (40, 400)
 
     # Task condition
-    extractor.get_bold(
-        bids_dir=bids_dir, session="002", runs="001", task="rest", pipeline_name=pipeline_name, tr=1.2, condition="rest"
-    )
-    assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 26
+    extractor.get_bold(bids_dir=bids_dir, task="rest", condition="rest", pipeline_name=pipeline_name, tr=1.2)
+    assert extractor.subject_timeseries["01"]["run-001"].shape == (26, 400)
 
 
 def test_non_censor_error():
@@ -582,44 +835,22 @@ def test_non_censor_error():
 
     with pytest.raises(ValueError, match=re.escape(msg)):
         TimeseriesExtractor(
-            parcel_approach=Parcellation.get_custom("parcellation"),
-            standardize="zscore_sample",
             use_confounds=False,
-            detrend=True,
-            low_pass=0.15,
-            high_pass=0.01,
             fd_threshold=0.35,
         )
 
 
 def test_fd_censoring(get_vars):
-    bids_dir, pipeline_name, confounds = get_vars
+    bids_dir, pipeline_name = get_vars
 
-    # Should censor
-    extractor_censor = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
-        standardize="zscore_sample",
-        use_confounds=True,
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.01,
-        confound_names=confounds,
-        fd_threshold=0.35,
-    )
+    # Should censor; use_confounds is True by default
+    extractor_censor = TimeseriesExtractor(fd_threshold=0.35)
 
     extractor_censor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
-    assert extractor_censor.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor_censor.subject_timeseries["01"]["run-001"].shape[0] == 39
+    assert extractor_censor.subject_timeseries["01"]["run-001"].shape == (39, 400)
 
     # Check "outlier_percentage"
     extractor_low_outlier_threshold = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
-        standardize="zscore_sample",
-        use_confounds=True,
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.01,
-        confound_names=confounds,
         fd_threshold={"threshold": 0.35, "outlier_percentage": 0.0001},
     )
 
@@ -631,8 +862,7 @@ def test_fd_censoring(get_vars):
         bids_dir=bids_dir, task="rest", condition="active", pipeline_name=pipeline_name, tr=1.2
     )
     # Should not be empty
-    assert extractor_low_outlier_threshold.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor_low_outlier_threshold.subject_timeseries["01"]["run-001"].shape[0] == 20
+    assert extractor_low_outlier_threshold.subject_timeseries["01"]["run-001"].shape == (20, 400)
 
     # Should be empty
     extractor_low_outlier_threshold.get_bold(
@@ -642,30 +872,13 @@ def test_fd_censoring(get_vars):
 
     # Test that dictionary fd_threshold and float are the same
     extractor_fd_dict = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
-        standardize="zscore_sample",
-        use_confounds=True,
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.01,
-        confound_names=confounds,
         fd_threshold={"threshold": 0.35, "outlier_percentage": 0.30},
     )
 
     extractor_fd_dict.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
-    assert extractor_fd_dict.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor_fd_dict.subject_timeseries["01"]["run-001"].shape[0] == 39
+    assert extractor_fd_dict.subject_timeseries["01"]["run-001"].shape == (39, 400)
 
-    extractor_fd_float = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
-        standardize="zscore_sample",
-        use_confounds=True,
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.01,
-        confound_names=confounds,
-        fd_threshold=0.35,
-    )
+    extractor_fd_float = TimeseriesExtractor(fd_threshold=0.35)
 
     extractor_fd_float.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
     assert np.array_equal(
@@ -676,43 +889,31 @@ def test_fd_censoring(get_vars):
     no_condition_timeseries = copy.deepcopy(extractor_fd_dict.subject_timeseries["01"]["run-001"])
     extractor_fd_dict.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, condition="rest")
     scan_list = get_scans(bids_dir, "rest", fd=True)
-    assert extractor_fd_dict.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor_fd_dict.subject_timeseries["01"]["run-001"].shape[0] == 25
+    assert extractor_fd_dict.subject_timeseries["01"]["run-001"].shape == (25, 400)
     assert np.array_equal(no_condition_timeseries[scan_list, :], extractor_fd_dict.subject_timeseries["01"]["run-001"])
 
     scan_list = get_scans(bids_dir, "active", fd=True)
     extractor_fd_dict.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, condition="active")
-    assert extractor_fd_dict.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor_fd_dict.subject_timeseries["01"]["run-001"].shape[0] == 20
+    assert extractor_fd_dict.subject_timeseries["01"]["run-001"].shape == (20, 400)
     assert np.array_equal(no_condition_timeseries[scan_list, :], extractor_fd_dict.subject_timeseries["01"]["run-001"])
 
 
 def test_censoring_with_sample_mask(get_vars):
-    bids_dir, pipeline_name, confounds = get_vars
+    bids_dir, pipeline_name = get_vars
 
     extractor_with_sample_mask = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
-        standardize=False,
-        use_confounds=True,
-        confound_names=confounds,
         fd_threshold={"threshold": 0.30, "outlier_percentage": 0.30, "use_sample_mask": True},
     )
 
     extractor_with_sample_mask.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
-    assert extractor_with_sample_mask.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor_with_sample_mask.subject_timeseries["01"]["run-001"].shape[0] == 37
+    assert extractor_with_sample_mask.subject_timeseries["01"]["run-001"].shape == (37, 400)
 
     extractor_without_sample_mask = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
-        standardize=False,
-        use_confounds=True,
-        confound_names=confounds,
         fd_threshold={"threshold": 0.30, "outlier_percentage": 0.30, "use_sample_mask": False},
     )
 
     extractor_without_sample_mask.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
-    assert extractor_without_sample_mask.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor_without_sample_mask.subject_timeseries["01"]["run-001"].shape[0] == 37
+    assert extractor_without_sample_mask.subject_timeseries["01"]["run-001"].shape == (37, 400)
 
     # Should not be equal due to sample mask being passed to nilearn
     assert not np.array_equal(
@@ -722,39 +923,18 @@ def test_censoring_with_sample_mask(get_vars):
 
     # Assess when key is not used at all
     extractor_default_behavior = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
-        standardize="zscore_sample",
-        use_confounds=True,
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.01,
-        confound_names=confounds,
         fd_threshold={"threshold": 0.30, "outlier_percentage": 0.30},
     )
 
     extractor_default_behavior.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
-    assert extractor_default_behavior.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor_default_behavior.subject_timeseries["01"]["run-001"].shape[0] == 37
+    assert extractor_default_behavior.subject_timeseries["01"]["run-001"].shape == (37, 400)
 
-    assert not np.array_equal(
+    assert np.array_equal(
         extractor_without_sample_mask.subject_timeseries["01"]["run-001"],
         extractor_default_behavior.subject_timeseries["01"]["run-001"],
     )
 
-    # Default behavior
-    assert np.array_equal(
-        extractor_default_behavior.subject_timeseries["01"]["run-001"],
-        extractor_default_behavior.subject_timeseries["01"]["run-001"],
-    )
-
     extractor_with_sample_mask_task = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
-        standardize="zscore_sample",
-        use_confounds=True,
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.01,
-        confound_names=confounds,
         fd_threshold={"threshold": 0.35, "outlier_percentage": 0.30, "use_sample_mask": True},
     )
 
@@ -762,6 +942,7 @@ def test_censoring_with_sample_mask(get_vars):
         bids_dir=bids_dir, task="rest", condition="active", pipeline_name=pipeline_name, tr=1.2
     )
     assert extractor_with_sample_mask_task.subject_timeseries["01"]["run-001"].shape[0] == 20
+
     extractor_with_sample_mask_task.get_bold(
         bids_dir=bids_dir, task="rest", condition="rest", pipeline_name=pipeline_name, tr=1.2
     )
@@ -775,41 +956,22 @@ def test_dummy_dict_error():
     )
 
     with pytest.raises(ValueError, match=re.escape(msg)):
-        TimeseriesExtractor(
-            parcel_approach=Parcellation.get_custom("parcellation"),
-            standardize="zscore_sample",
-            use_confounds=False,
-            detrend=True,
-            low_pass=0.15,
-            high_pass=0.01,
-            dummy_scans={"auto": True},
-        )
+        TimeseriesExtractor(use_confounds=False, dummy_scans={"auto": True})
 
 
 @pytest.mark.parametrize("use_confounds", [True, False])
 def test_dummy_scans(get_vars, use_confounds):
-    bids_dir, pipeline_name, confounds = get_vars
+    bids_dir, pipeline_name = get_vars
 
-    extractor = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
-        standardize="zscore_sample",
-        use_confounds=use_confounds,
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.01,
-        confound_names=confounds,
-        dummy_scans=5,
-    )
+    extractor = TimeseriesExtractor(use_confounds=use_confounds, dummy_scans=5)
 
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
-    assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 35
+    assert extractor.subject_timeseries["01"]["run-001"].shape == (35, 400)
 
     no_condition = copy.deepcopy(extractor.subject_timeseries["01"]["run-001"])
     # Task condition
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, condition="rest")
-    assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 25
+    assert extractor.subject_timeseries["01"]["run-001"].shape == (25, 400)
 
     condition_timeseries = copy.deepcopy(extractor.subject_timeseries["01"]["run-001"])
     scan_list = get_scans(bids_dir, condition="rest", dummy_scans=5)
@@ -818,147 +980,74 @@ def test_dummy_scans(get_vars, use_confounds):
 
 
 def test_dummy_scans_auto(get_vars):
-    bids_dir, pipeline_name, confounds = get_vars
+    bids_dir, pipeline_name = get_vars
+
+    # Clear; zero "non-steady" columns
+    add_non_steady(bids_dir, pipeline_name, 0)
+
+    extractor = TimeseriesExtractor(dummy_scans={"auto": True})
+
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+    assert extractor.subject_timeseries["01"]["run-001"].shape == (40, 400)
 
     add_non_steady(bids_dir, pipeline_name, 3)
 
-    extractor = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
-        standardize="zscore_sample",
-        use_confounds=True,
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.01,
-        confound_names=confounds,
-        dummy_scans={"auto": True},
-    )
+    extractor = TimeseriesExtractor(dummy_scans={"auto": True})
 
-    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, flush=True)
-    assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 37
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+    assert extractor.subject_timeseries["01"]["run-001"].shape == (37, 400)
 
     # Clear
     add_non_steady(bids_dir, pipeline_name, 0)
-    add_non_steady(bids_dir, pipeline_name, 6)
 
+    add_non_steady(bids_dir, pipeline_name, 6)
     # Task condition
-    extractor.get_bold(
-        bids_dir=bids_dir,
-        session="002",
-        runs="001",
-        task="rest",
-        condition="rest",
-        pipeline_name=pipeline_name,
-        tr=1.2,
-        verbose=True,
-    )
-    assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 24
+    extractor.get_bold(bids_dir=bids_dir, task="rest", condition="rest", pipeline_name=pipeline_name, tr=1.2)
+    assert extractor.subject_timeseries["01"]["run-001"].shape == (24, 400)
 
     # Clear
     add_non_steady(bids_dir, pipeline_name, 0)
 
     # Check min
     add_non_steady(bids_dir, pipeline_name, 1)
-    extractor = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
-        standardize="zscore_sample",
-        use_confounds=True,
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.01,
-        confound_names=confounds,
-        dummy_scans={"auto": True, "min": 4, "max": 6},
-    )
+    extractor = TimeseriesExtractor(dummy_scans={"auto": True, "min": 4, "max": 6})
 
-    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, flush=True)
-    assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 36
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+    assert extractor.subject_timeseries["01"]["run-001"].shape == (36, 400)
 
     # Clear
     add_non_steady(bids_dir, pipeline_name, 0)
-    extractor = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
-        standardize="zscore_sample",
-        use_confounds=True,
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.01,
-        confound_names=confounds,
-        dummy_scans={"auto": True, "min": 4, "max": 6},
-    )
 
-    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, flush=True)
-    assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 36
-
-    # Clear
-    add_non_steady(bids_dir, pipeline_name, 0)
     # Check max
     add_non_steady(bids_dir, pipeline_name, 10)
-    extractor = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
-        standardize="zscore_sample",
-        use_confounds=True,
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.01,
-        confound_names=confounds,
-        dummy_scans={"auto": True, "min": 4, "max": 6},
-    )
+    extractor = TimeseriesExtractor(dummy_scans={"auto": True, "min": 4, "max": 6})
 
-    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, flush=True)
-    assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 34
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+    assert extractor.subject_timeseries["01"]["run-001"].shape == (34, 400)
 
     # Clear
     add_non_steady(bids_dir, pipeline_name, 0)
-    extractor = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
-        standardize="zscore_sample",
-        use_confounds=True,
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.01,
-        confound_names=confounds,
-        dummy_scans={"auto": True},
-    )
 
-    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, flush=True)
-    assert extractor.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor.subject_timeseries["01"]["run-001"].shape[0] == 40
+    # Check that min is prioritized
+    extractor = TimeseriesExtractor(dummy_scans={"auto": True, "min": 4, "max": 6})
+
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+    assert extractor.subject_timeseries["01"]["run-001"].shape == (36, 400)
+
+    # Clear
+    add_non_steady(bids_dir, pipeline_name, 0)
 
 
 def test_dummy_scans_and_fd(get_vars):
-    bids_dir, pipeline_name, confounds = get_vars
+    bids_dir, pipeline_name = get_vars
 
     # No volumes should meet the fd threshold
-    extractor_fd_and_dummy_censor = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
-        standardize="zscore_sample",
-        use_confounds=True,
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.01,
-        confound_names=confounds,
-        dummy_scans=5,
-        fd_threshold=0.35,
-    )
+    extractor_fd_and_dummy_censor = TimeseriesExtractor(dummy_scans=5, fd_threshold=0.35)
 
     extractor_fd_and_dummy_censor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
-    assert extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"].shape[0] == 34
+    assert extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"].shape == (34, 400)
 
-    extractor_dummy_only_censor = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
-        standardize="zscore_sample",
-        use_confounds=True,
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.01,
-        confound_names=confounds,
-        dummy_scans=5,
-    )
+    extractor_dummy_only_censor = TimeseriesExtractor(dummy_scans=5)
 
     extractor_dummy_only_censor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
 
@@ -971,13 +1060,12 @@ def test_dummy_scans_and_fd(get_vars):
 
     # Task condition
     extractor_fd_and_dummy_censor.get_bold(
-        bids_dir=bids_dir, session="002", runs="001", task="rest", pipeline_name=pipeline_name, tr=1.2, condition="rest"
+        bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, condition="rest"
     )
 
     scan_list = get_scans(bids_dir, "rest", dummy_scans=5, fd=True)
     # Original length is 26, should remove the end scan and the first scan
-    assert extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"].shape[-1] == 426
-    assert extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"].shape[0] == 24
+    assert extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"].shape == (24, 400)
     assert np.array_equal(no_condition[scan_list, :], extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"])
 
     # Check for active condition
@@ -985,30 +1073,75 @@ def test_dummy_scans_and_fd(get_vars):
 
     extractor_fd_and_dummy_censor.get_bold(
         bids_dir=bids_dir,
-        session="002",
-        runs="001",
         task="rest",
+        condition="active",
         pipeline_name=pipeline_name,
         tr=1.2,
-        condition="active",
     )
     assert extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"].shape[0] == 15
     assert np.array_equal(no_condition[scan_list, :], extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"])
 
 
-def test_check_exclusion(get_vars):
-    bids_dir, pipeline_name, confounds = get_vars
+@pytest.mark.parametrize(
+    "fd_threshold",
+    [
+        {"threshold": 0.35, "n_before": 2, "n_after": 3},
+        {"threshold": 0.31, "n_before": 4, "n_after": 2},
+        {"threshold": 0.31, "n_before": 4, "n_after": 2},
+    ],
+)
+def test_extended_censor(get_vars, fd_threshold):
+    bids_dir, pipeline_name = get_vars
 
-    extractor = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
-        standardize="zscore_sample",
-        use_confounds=True,
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.01,
-        confound_names=confounds,
-        fd_threshold=0.35,
+    extractor_censored = TimeseriesExtractor(fd_threshold=fd_threshold)
+    extractor_censored.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
+
+    extractor_not_censored = TimeseriesExtractor()
+    extractor_not_censored.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
+
+    if fd_threshold["threshold"] == 0.35:
+        expected_shape = 37
+        expected_removal = [37, 38, 39]
+    else:
+        expected_shape = 30
+        expected_removal = [0, 1, 2, 3, 4, 35, 36, 37, 38, 39]
+
+    assert extractor_censored.subject_timeseries["01"]["run-001"].shape[0] == expected_shape
+
+    assert np.array_equal(
+        extractor_censored.subject_timeseries["01"]["run-001"],
+        np.delete(extractor_not_censored.subject_timeseries["01"]["run-001"], expected_removal, axis=0),
     )
+
+    extractor_censored.get_bold(bids_dir=bids_dir, task="rest", condition="active", pipeline_name=pipeline_name)
+    scan_list = get_scans(bids_dir, "active")
+    scan_list = [x for x in scan_list if x not in expected_removal]
+
+    assert np.array_equal(
+        extractor_censored.subject_timeseries["01"]["run-001"],
+        extractor_not_censored.subject_timeseries["01"]["run-001"][scan_list, :],
+    )
+
+
+def test_extended_censor_with_dummy(get_vars):
+    bids_dir, pipeline_name = get_vars
+
+    fd_threshold = {"threshold": 0.31, "n_before": 4, "n_after": 2}
+    dummy_scans = 3
+
+    extractor_censored = TimeseriesExtractor(fd_threshold=fd_threshold, dummy_scans=dummy_scans)
+    extractor_censored.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
+
+    # dummy vols = [0, 1, 2]
+    # fd thershold removed = [35, 36, 37, 38, 39]
+
+    assert extractor_censored.subject_timeseries["01"]["run-001"].shape[0] == 32
+
+
+def test_check_exclusion(get_vars):
+    bids_dir, pipeline_name = get_vars
+
+    extractor = TimeseriesExtractor()
 
     extractor.get_bold(
         bids_dir=bids_dir,
@@ -1021,9 +1154,9 @@ def test_check_exclusion(get_vars):
 
 @pytest.mark.parametrize("onset", [2, 3, 4])
 def test_condition_tr_shift(get_vars, onset):
-    bids_dir, pipeline_name, _ = get_vars
+    bids_dir, pipeline_name = get_vars
 
-    extractor = TimeseriesExtractor(use_confounds=False)
+    extractor = TimeseriesExtractor()
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
     timeseries = copy.deepcopy(extractor.subject_timeseries)
     # Get condition for rest
@@ -1044,9 +1177,9 @@ def test_condition_tr_shift(get_vars, onset):
 
 @pytest.mark.parametrize("shift", [0.5, 1])
 def test_slice_time_shift(get_vars, shift):
-    bids_dir, pipeline_name, _ = get_vars
+    bids_dir, pipeline_name = get_vars
 
-    extractor = TimeseriesExtractor(use_confounds=False)
+    extractor = TimeseriesExtractor()
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
     timeseries = copy.deepcopy(extractor.subject_timeseries)
     # Get condition for rest
@@ -1064,9 +1197,9 @@ def test_slice_time_shift(get_vars, shift):
 
 
 def test_shift_errors(get_vars):
-    bids_dir, pipeline_name, _ = get_vars
+    bids_dir, pipeline_name = get_vars
 
-    extractor = TimeseriesExtractor(use_confounds=False)
+    extractor = TimeseriesExtractor()
     # Get condition for rest
     with pytest.raises(
         ValueError, match=re.escape("`condition_tr_shift` must be a integer value equal to or greater than 0.")
@@ -1087,19 +1220,116 @@ def test_shift_errors(get_vars):
 
 
 ################################################# Setup Environment 2 #################################################
-def test_append(setup_environment_2, get_vars):
-    bids_dir, pipeline_name, confounds = get_vars
+@pytest.mark.parametrize("use_sample_mask", [True, False])
+def test_interpolate_no_condition(setup_environment_2, get_vars, use_sample_mask):
+    bids_dir, pipeline_name = get_vars
 
-    parcel_approach = {"Schaefer": {"yeo_networks": 7}}
-    extractor = TimeseriesExtractor(
-        parcel_approach=parcel_approach,
-        standardize="zscore_sample",
-        use_confounds=True,
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.08,
-        confound_names=confounds,
+    # No condition
+    fd_threshold = {"threshold": 0.89, "use_sample_mask": use_sample_mask, "interpolate": True}
+
+    extractor_censored = TimeseriesExtractor(fd_threshold=fd_threshold)
+
+    extractor_censored.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+
+    # No censoring
+    extractor_no_censoring = TimeseriesExtractor()
+
+    extractor_no_censoring.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+
+    # Only ends should not be interpolated, then should be shape 37
+    assert extractor_censored.subject_timeseries["01"]["run-001"].shape == (37, 400)
+
+    # Interpolation should only be at gaps, ensure no other indices are affected; since 0 is dropped, then
+    # index 0 in censored corresponds to index 1 in non-censored
+    if not use_sample_mask:
+        assert np.array_equal(
+            extractor_censored.subject_timeseries["01"]["run-001"][0, :],
+            extractor_no_censoring.subject_timeseries["01"]["run-001"][1, :],
+        )
+
+    # Test with n_after and n_before
+    fd_threshold = {
+        "threshold": 0.89,
+        "n_before": 2,
+        "n_after": 1,
+        "use_sample_mask": use_sample_mask,
+        "interpolate": True,
+    }
+    extractor_extended_censor = TimeseriesExtractor(fd_threshold=fd_threshold)
+
+    extractor_extended_censor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+
+    # The discarded indices are [0, 1, 36, 37, 38, 39]
+    assert extractor_extended_censor.subject_timeseries["01"]["run-001"].shape == (34, 400)
+    # Interpolation should only be at gaps, ensure no other indices are affected; since 0 and 1 is dropped, then
+    # index 0 in censored corresponds to index 2 in non-censored
+    if not use_sample_mask:
+        assert np.array_equal(
+            extractor_extended_censor.subject_timeseries["01"]["run-001"][0, :],
+            extractor_no_censoring.subject_timeseries["01"]["run-001"][2, :],
+        )
+
+
+@pytest.mark.parametrize("use_sample_mask", [True, False])
+def test_interpolate_with_condition(setup_environment_2, get_vars, use_sample_mask):
+    bids_dir, pipeline_name = get_vars
+
+    # No condition
+    fd_threshold = {"threshold": 0.89, "use_sample_mask": use_sample_mask, "interpolate": True}
+
+    extractor_censored = TimeseriesExtractor(fd_threshold=fd_threshold)
+
+    extractor_censored.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, condition="active", tr=1.2)
+
+    # Only ends should not be interpolated, then should be shape 19; Interpolation is always done on the entire timeseries
+    assert extractor_censored.subject_timeseries["01"]["run-001"].shape == (19, 400)
+
+    # No censoring
+    extractor_no_censoring = TimeseriesExtractor()
+
+    extractor_no_censoring.get_bold(
+        bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, condition="active", tr=1.2
     )
+
+    # Interpolation should only be at gaps, ensure no other indices are affected; since 0 is dropped, then
+    # index 0 in censored corresponds to index 1 in non-censored
+    if not use_sample_mask:
+        assert np.array_equal(
+            extractor_censored.subject_timeseries["01"]["run-001"][0, :],
+            extractor_no_censoring.subject_timeseries["01"]["run-001"][1, :],
+        )
+
+    # Test with n_after and n_before
+    fd_threshold = {
+        "threshold": 0.89,
+        "n_before": 2,
+        "n_after": 1,
+        "use_sample_mask": use_sample_mask,
+        "interpolate": True,
+    }
+
+    extractor_extended_censored = TimeseriesExtractor(fd_threshold=fd_threshold)
+
+    extractor_extended_censored.get_bold(
+        bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, condition="active", tr=1.2
+    )
+
+    # The discarded indices are [0,1]
+    assert extractor_extended_censored.subject_timeseries["01"]["run-001"].shape == (18, 400)
+    # Interpolation should only be at gaps, index 0, 1 are deleted so index 0 in censored correspond to index 2
+    # in non-censored
+    if not use_sample_mask:
+        assert np.array_equal(
+            extractor_extended_censored.subject_timeseries["01"]["run-001"][0, :],
+            extractor_no_censoring.subject_timeseries["01"]["run-001"][2, :],
+        )
+
+
+################################################# Setup Environment 3 #################################################
+def test_subject_append(setup_environment_3, get_vars):
+    bids_dir, pipeline_name = get_vars
+
+    extractor = TimeseriesExtractor()
 
     extractor.get_bold(bids_dir=bids_dir, task="rest", session="002", pipeline_name=pipeline_name, tr=1.2)
     assert extractor.subject_timeseries["01"]["run-001"].shape == (40, 400)
@@ -1116,17 +1346,9 @@ def test_append(setup_environment_2, get_vars):
 
 
 def test_parallel_and_sequential_preprocessing_equivalence(get_vars):
-    bids_dir, pipeline_name, confounds = get_vars
+    bids_dir, pipeline_name = get_vars
 
-    extractor = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
-        standardize="zscore_sample",
-        use_confounds=True,
-        detrend=False,
-        low_pass=0.15,
-        high_pass=None,
-        confound_names=confounds,
-    )
+    extractor = TimeseriesExtractor()
 
     # Parallel
     extractor.get_bold(bids_dir=bids_dir, session="002", task="rest", pipeline_name=pipeline_name, tr=1.2, n_cores=2)
@@ -1136,7 +1358,7 @@ def test_parallel_and_sequential_preprocessing_equivalence(get_vars):
     parallel_timeseries = copy.deepcopy(extractor.subject_timeseries)
 
     # Sequential
-    extractor.get_bold(bids_dir=bids_dir, session="002", runs="001", task="rest", pipeline_name=pipeline_name, tr=1.2)
+    extractor.get_bold(bids_dir=bids_dir, session="002", task="rest", pipeline_name=pipeline_name, tr=1.2)
 
     for sub in extractor.subject_timeseries:
         for run in extractor.subject_timeseries[sub]:
@@ -1146,20 +1368,12 @@ def test_parallel_and_sequential_preprocessing_equivalence(get_vars):
 
 @pytest.mark.parametrize("runs", ["001", ["002"]])
 def test_runs(get_vars, runs):
-    bids_dir, pipeline_name, confounds = get_vars
+    bids_dir, pipeline_name = get_vars
 
     # Check run with just the "maps" defined
     parcel_approach = {"Custom": {"maps": os.path.join(os.path.dirname(__file__), "data", "HCPex.nii.gz")}}
 
-    extractor = TimeseriesExtractor(
-        parcel_approach=parcel_approach,
-        standardize="zscore_sample",
-        use_confounds=True,
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.08,
-        confound_names=confounds,
-    )
+    extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
 
     extractor.get_bold(bids_dir=bids_dir, task="rest", session="002", runs=runs, pipeline_name=pipeline_name, tr=1.2)
 
@@ -1178,18 +1392,9 @@ def test_runs(get_vars, runs):
 
 
 def test_session(get_vars):
-    bids_dir, pipeline_name, confounds = get_vars
+    bids_dir, pipeline_name = get_vars
 
-    parcel_approach = {"Schaefer": {"yeo_networks": 7}}
-    extractor = TimeseriesExtractor(
-        parcel_approach=parcel_approach,
-        standardize="zscore_sample",
-        use_confounds=True,
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.08,
-        confound_names=confounds,
-    )
+    extractor = TimeseriesExtractor()
 
     extractor.get_bold(bids_dir=bids_dir, task="rest", session="003", pipeline_name=pipeline_name, tr=1.2)
 
@@ -1201,18 +1406,9 @@ def test_session(get_vars):
 
 
 def test_session_error(get_vars):
-    bids_dir, pipeline_name, confounds = get_vars
+    bids_dir, pipeline_name = get_vars
 
-    parcel_approach = {"Schaefer": {"yeo_networks": 7}}
-    extractor = TimeseriesExtractor(
-        parcel_approach=parcel_approach,
-        standardize="zscore_sample",
-        use_confounds=True,
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.08,
-        confound_names=confounds,
-    )
+    extractor = TimeseriesExtractor()
 
     subject_header = f"[SUBJECT: 01 | SESSION: None | TASK: rest] "
     ses_list = ["ses-002", "ses-003"]
@@ -1229,310 +1425,90 @@ def test_session_error(get_vars):
         extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
 
 
-################################################# Setup Environment 3 #################################################
-def test_exclude_subjects(setup_environment_3, get_vars):
-    bids_dir, pipeline_name, confounds = get_vars
+################################################# Setup Environment 4 #################################################
+@pytest.mark.parametrize("pipeline_name", [None, "fmriprep_1.0.0"])
+def test_unnested_pipeline_folder(setup_environment_4, get_vars, pipeline_name):
+    bids_dir, _ = get_vars
 
-    pipeline_name = "fmriprep_1.0.0"
-    parcel_approach = {"Schaefer": {"yeo_networks": 7}}
-    extractor = TimeseriesExtractor(
-        parcel_approach=parcel_approach,
-        standardize="zscore_sample",
-        use_confounds=True,
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.08,
-        confound_names=confounds,
-    )
+    extractor = TimeseriesExtractor()
+    extractor.get_bold(bids_dir=bids_dir, task="rest", tr=1.2, pipeline_name=pipeline_name)
 
-    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, exclude_subjects=["02"], tr=1.2)
+    # For unnested pipeline folder, should detect files regardless if pipeline name is specified or None
+    assert extractor.subject_timeseries
+
+
+def test_exclude_subjects(get_vars):
+    bids_dir, _ = get_vars
+
+    extractor = TimeseriesExtractor()
+
+    extractor.get_bold(bids_dir=bids_dir, task="rest", exclude_subjects=["02"], tr=1.2)
     assert extractor.subject_timeseries["01"]["run-0"].shape == (40, 400)
     assert "02" not in list(extractor.subject_timeseries)
 
-    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, run_subjects=["01"], tr=1.2)
+    extractor.get_bold(bids_dir=bids_dir, task="rest", run_subjects=["01"], tr=1.2)
     assert extractor.subject_timeseries["01"]["run-0"].shape == (40, 400)
     assert "02" not in list(extractor.subject_timeseries)
 
 
 def test_events_without_session_id(get_vars):
-    bids_dir, pipeline_name, _ = get_vars
+    bids_dir, _ = get_vars
 
-    pipeline_name = "fmriprep_1.0.0"
     extractor = TimeseriesExtractor()
-    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, condition="rest")
+    extractor.get_bold(bids_dir=bids_dir, task="rest", tr=1.2, condition="rest")
     assert extractor.subject_timeseries["01"]["run-0"].shape[0] == 26
 
-    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, condition="active")
+    extractor.get_bold(bids_dir=bids_dir, task="rest", tr=1.2, condition="active")
     assert extractor.subject_timeseries["01"]["run-0"].shape[0] == 20
 
 
-@pytest.mark.parametrize(
-    "use_confounds, verbose, pipeline_name",
-    [(True, True, "fmriprep_1.0.0"), (False, False, None), (True, False, None), (False, True, None)],
-)
-def test_removal_of_run_desc(get_vars, use_confounds, verbose, pipeline_name):
-    bids_dir, _, confounds = get_vars
+def test_removal_of_run_desc(get_vars):
+    bids_dir, _ = get_vars
 
-    pipeline_name = "fmriprep_1.0.0"
+    extractor = TimeseriesExtractor()
 
-    extractor = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
-        standardize="zscore_sample",
-        use_confounds=use_confounds,
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.01,
-        confound_names=confounds,
-        fwhm=2,
-    )
-
-    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, verbose=verbose)
-    assert extractor.subject_timeseries["01"]["run-0"].shape[-1] == 426
-    assert extractor.subject_timeseries["01"]["run-0"].shape[0] == 40
+    extractor.get_bold(bids_dir=bids_dir, task="rest", tr=1.2)
+    assert extractor.subject_timeseries["01"]["run-0"].shape == (40, 400)
 
 
-@pytest.mark.parametrize("pipeline_name", [None, "fmriprep-1.0.0"])
-def test_skip_no_matching_run_id(get_vars, pipeline_name):
-    bids_dir, _, confounds = get_vars
+@pytest.mark.parametrize("run", (0, ["005"]))
+def test_skip_no_matching_run_id(get_vars, run):
+    bids_dir, _ = get_vars
 
-    pipeline_name = "fmriprep_1.0.0"
+    extractor = TimeseriesExtractor()
 
-    extractor = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
-        standardize="zscore_sample",
-        use_confounds=True,
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.08,
-        confound_names=confounds,
-        n_acompcor_separate=3,
-    )
     # No files have run id
-    extractor.get_bold(
-        bids_dir=bids_dir, task="rest", runs=["001"], pipeline_name=pipeline_name, tr=1.2, run_subjects=["01"]
-    )
+    extractor.get_bold(bids_dir=bids_dir, task="rest", runs=[run], tr=1.2)
     assert extractor.subject_timeseries == {}
 
 
-@pytest.mark.parametrize("n_cores, pipeline_name", [(None, None), (2, "fmriprep_1.0.0")])
-def test_append_subjects_with_different_run_ids(get_vars, n_cores, pipeline_name):
-    bids_dir, _, confounds = get_vars
+@pytest.mark.parametrize("run", ("001", ["001", "002"]))
+def test_matching_run_id(get_vars, run):
+    bids_dir, _ = get_vars
 
-    pipeline_name = "fmriprep_1.0.0"
+    extractor = TimeseriesExtractor()
 
-    parcel_approach = {"Schaefer": {"yeo_networks": 7}}
+    extractor.get_bold(bids_dir=bids_dir, task="rest", runs=run, tr=1.2)
+    assert extractor.subject_timeseries
 
-    extractor = TimeseriesExtractor(
-        parcel_approach=parcel_approach,
-        standardize="zscore_sample",
-        use_confounds=True,
-        detrend=True,
-        low_pass=0.15,
-        high_pass=0.08,
-        confound_names=confounds,
-    )
 
-    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, n_cores=n_cores)
+def test_append_subjects_with_different_run_ids(get_vars):
+    bids_dir, _ = get_vars
+
+    extractor = TimeseriesExtractor()
+
+    extractor.get_bold(bids_dir=bids_dir, task="rest", tr=1.2)
 
     assert extractor.subject_timeseries["01"]["run-0"].shape == (40, 400)
     assert extractor.subject_timeseries["02"]["run-001"].shape == (40, 400)
 
 
-@pytest.mark.parametrize("high_pass, low_pass", [(None, None), (0.08, None), (None, 0.1), (0.08, 0.1)])
-def test_tr_with_and_without_bandpass(get_vars, high_pass, low_pass):
-    bids_dir, _, confounds = get_vars
-
-    extractor = TimeseriesExtractor(
-        parcel_approach=Parcellation.get_custom("parcellation"),
-        standardize="zscore_sample",
-        use_confounds=True,
-        detrend=True,
-        low_pass=low_pass,
-        high_pass=high_pass,
-        confound_names=confounds,
-        n_acompcor_separate=3,
-    )
-
-    extractor.get_bold(bids_dir=bids_dir, task="rest", run_subjects=["01"])
-    assert extractor.subject_timeseries["01"]["run-0"].shape == (40, 426)
-
-    if any([high_pass, low_pass]):
-        with pytest.raises(ValueError):
-            extractor.get_bold(bids_dir=bids_dir, task="rest")
-
-
-@pytest.mark.parametrize(
-    "fd_threshold, dummy_scans",
-    [
-        ({"threshold": 0.35, "n_before": 2, "n_after": 3}, None),
-        ({"threshold": 0.31, "n_before": 4, "n_after": 2}, None),
-        ({"threshold": 0.31, "n_before": 4, "n_after": 2}, 3),
-    ],
-)
-def test_extended_censor(get_vars, fd_threshold, dummy_scans):
-    bids_dir, _, _ = get_vars
-
-    extractor_censored = TimeseriesExtractor(fd_threshold=fd_threshold, dummy_scans=dummy_scans)
-    extractor_censored.get_bold(bids_dir=bids_dir, task="rest", run_subjects=["01"])
-
-    extractor_not_censored = TimeseriesExtractor()
-    extractor_not_censored.get_bold(bids_dir=bids_dir, task="rest", run_subjects=["01"])
-
-    if fd_threshold["threshold"] == 0.35:
-        expected_shape = 37
-        expected_removal = [37, 38, 39]
-    else:
-        if not dummy_scans:
-            expected_shape = 30
-            expected_removal = [0, 1, 2, 3, 4, 35, 36, 37, 38, 39]
-        else:
-            expected_shape = 32
-            expected_removal = [0, 1, 2, 35, 36, 37, 38, 39]
-
-    assert extractor_censored.subject_timeseries["01"]["run-0"].shape[0] == expected_shape
-    if not dummy_scans:
-        assert np.array_equal(
-            extractor_censored.subject_timeseries["01"]["run-0"],
-            np.delete(extractor_not_censored.subject_timeseries["01"]["run-0"], expected_removal, axis=0),
-        )
-
-    if not dummy_scans:
-        extractor_censored.get_bold(bids_dir=bids_dir, task="rest", condition="active", run_subjects=["01"])
-        scan_list = get_scans(bids_dir, "active", remove_ses_id=True)
-        scan_list = [x for x in scan_list if x not in expected_removal]
-
-        assert np.array_equal(
-            extractor_censored.subject_timeseries["01"]["run-0"],
-            extractor_not_censored.subject_timeseries["01"]["run-0"][scan_list, :],
-        )
-
-
-def test_dtype(get_vars):
-    bids_dir, _, _ = get_vars
-
-    extractor = TimeseriesExtractor(dtype="float64")
-    extractor.get_bold(bids_dir=bids_dir, task="rest", run_subjects=["01"])
-    assert extractor.subject_timeseries["01"]["run-0"].dtype == np.float64
-    # Quick check deleter
-    del extractor.subject_timeseries
-    assert not extractor.subject_timeseries
-
-
-def test_validate_timeseries_setter():
-    extractor = TimeseriesExtractor()
-
-    correct_format = {str(x): {f"run-{y}": np.random.rand(100, 100) for y in range(1, 4)} for x in range(1, 4)}
-
-    # Correct format
-    extractor.subject_timeseries = correct_format
-
-    incorrect_format1 = []
-
-    incorrect_format2 = {str(x): {f"run-{y}": np.random.rand(100, 100) for y in range(1, 4)} for x in range(1, 4)}
-    incorrect_format2["4"] = np.random.rand(100, 100)
-
-    incorrect_format3 = {str(x): {f"x-{y}": np.random.rand(100, 100) for y in range(1, 4)} for x in range(1, 4)}
-
-    incorrect_format4 = {str(x): {f"run-{y}": np.random.rand(100, 100) for y in range(1, 4)} for x in range(1, 4)}
-    incorrect_format4["3"].update({"run-5": {}})
-
-    error_msg = (
-        "A valid pickle file/subject timeseries should contain a nested dictionary where the "
-        "first level is the subject id, second level is the run number in the form of 'run-#', and "
-        "the final level is the timeseries as a numpy array. "
-    )
-
-    error_dict = {
-        "1": error_msg,
-        "2": error_msg
-        + "The error occurred at [SUBJECT: 4]. The subject must be a dictionary with second level 'run-#' keys.",
-        "3": error_msg + "The error occurred at [SUBJECT: 1]. Not all second level keys follow the form of 'run-#'.",
-        "4": error_msg
-        + "The error occurred at [SUBJECT: 3 | RUN: run-5]. All 'run-#' keys must contain a numpy array.",
-    }
-
-    for key, arr in [
-        ("1", incorrect_format1),
-        ("2", incorrect_format2),
-        ("3", incorrect_format3),
-        ("4", incorrect_format4),
-    ]:
-        with pytest.raises(TypeError, match=re.escape(error_dict[key])):
-            extractor.subject_timeseries = arr
-
-
-def test_check_raise_error():
-    msg = (
-        f"Cannot do x since `self.subject_timeseries` is None, either run "
-        "`self.get_bold()` or assign a valid timeseries dictionary to `self.subject_timeseries`."
-    )
-
-    with pytest.raises(AttributeError, match=re.escape(msg)):
-        TimeseriesExtractor._raise_error("Cannot do x")
-
-
-def test_flush_logging(get_vars):
-    bids_dir, _, _ = get_vars
-
-    extractor = TimeseriesExtractor()
-    extractor.get_bold(bids_dir=bids_dir, task="rest", run_subjects=["01"], flush=True)
-
-
-def test_setters(tmp_dir):
-    extractor = TimeseriesExtractor(parcel_approach={"AAL": {}})
-    extractor2 = TimeseriesExtractor()
-
-    # Set new parcel_approach
-    assert "AAL" in extractor.parcel_approach
-
-    # Check parcel approach setter
-    extractor.parcel_approach = extractor2.parcel_approach
-    assert "Schaefer" in extractor.parcel_approach
-
-    # Check parcel approach error
-    error_msg = (
-        "Please include a valid `parcel_approach` in one of the following dictionary formats for 'Schaefer', "
-        "'AAL', or 'Custom': {'Schaefer': {'n_rois': 400, 'yeo_networks': 7, 'resolution_mm': 1}, "
-        "'AAL': {'version': 'SPM12'}, 'Custom': {'maps': '/location/to/parcellation.nii.gz', "
-        "'nodes': ['LH_Vis1', 'LH_Vis2', 'LH_Hippocampus', 'RH_Vis1', 'RH_Vis2', 'RH_Hippocampus'], "
-        "'regions': {'Vis': {'lh': [0, 1], 'rh': [3, 4]}, 'Hippocampus': {'lh': [2], 'rh': [5]}}}}"
-    )
-
-    with pytest.raises(TypeError, match=re.escape(error_msg)):
-        extractor.parcel_approach = None
-
-    # Check parcel approach pickle
-    # Get AAL
-    extractor = TimeseriesExtractor(parcel_approach={"AAL": {}})
-    joblib.dump(extractor.parcel_approach, os.path.join(tmp_dir.name, "test_parcel_setter_AAL.pkl"))
-    # Get Schaefer; the default
-    extractor = TimeseriesExtractor()
-    # Set new parcel approach using pkl
-    extractor.parcel_approach = os.path.join(tmp_dir.name, "test_parcel_setter_AAL.pkl")
-    assert "AAL" in extractor.parcel_approach
-
-    # Check space
-    assert "MNI152NLin2009cAsym" in extractor.space
-    extractor.space = "New Space"
-
-    assert extractor.space == "New Space"
-
-    # Check subject timeseries setting using pickle
-    timeseries = Parcellation.get_schaefer("timeseries", 400, 7)
-
-    joblib.dump(timeseries, os.path.join(tmp_dir.name, "saved_timeseries.pkl"))
-
-    extractor.subject_timeseries = os.path.join(tmp_dir.name, "saved_timeseries.pkl")
-
-    assert extractor.subject_timeseries["1"]["run-1"].shape == (100, 400)
-
-
 def test_logging_redirection_sequential(get_vars, tmp_dir):
     import logging
 
-    bids_dir, _, _ = get_vars
+    bids_dir, _ = get_vars
 
-    # Configure root with FileHandler
+    # Configure logger with FileHandler for specific module
     extract_timeseries_logger = logging.getLogger("neurocaps._utils.extraction.extract_timeseries")
     extract_timeseries_logger.setLevel(logging.INFO)
     file_handler = logging.FileHandler(os.path.join(tmp_dir.name, "neurocaps_sequential.log"))
@@ -1565,10 +1541,11 @@ def test_logging_redirection_parallel(get_vars, tmp_dir):
     from logging.handlers import QueueListener
     from multiprocessing import Manager
 
-    bids_dir, _, _ = get_vars
+    bids_dir, _ = get_vars
 
     # Configure root with FileHandler
     root_logger = logging.getLogger()
+    root_logger.handlers.clear()
     root_logger.setLevel(logging.WARNING)
     file_handler = logging.FileHandler(os.path.join(tmp_dir.name, "neurocaps_parallel.log"))
     file_handler.setFormatter(logging.Formatter("%(asctime)s %(name)s [%(levelname)s] %(message)s"))
@@ -1608,149 +1585,3 @@ def test_logging_redirection_parallel(get_vars, tmp_dir):
     phrase = "The following confounds were not found:"
 
     check_logs(log_file, phrase, ["01", "02"])
-
-
-def test_method_chaining(get_vars, tmp_dir):
-    bids_dir, _, _ = get_vars
-
-    a = {"show_figs": False}
-
-    extractor = TimeseriesExtractor()
-    extractor.get_bold(bids_dir=bids_dir, task="rest", run_subjects=["01"]).timeseries_to_pickle(
-        tmp_dir.name
-    ).visualize_bold("01", 0, 0, **a)
-
-    # Should not be None
-    pickle_file = glob.glob(os.path.join(tmp_dir.name, "subject_timeseries.pkl"))
-    assert len(pickle_file) == 1
-    os.remove(pickle_file[0])
-
-
-################################################# Setup Environment 4 #################################################
-@pytest.mark.parametrize("use_sample_mask", [True, False])
-def test_interpolate_no_condition(setup_environment_4, get_vars, use_sample_mask):
-    bids_dir, _, _ = get_vars
-
-    # No condition
-    fd_threshold = {"threshold": 0.89, "use_sample_mask": use_sample_mask, "interpolate": True}
-
-    parcel_approach = {"Schaefer": {"yeo_networks": 7}}
-    extractor_censored = TimeseriesExtractor(
-        parcel_approach=parcel_approach,
-        standardize="zscore_sample",
-        use_confounds=True,
-        confound_names=None,
-        fd_threshold=fd_threshold,
-    )
-
-    extractor_censored.get_bold(bids_dir=bids_dir, task="rest", tr=1.2)
-
-    # No censoring
-    extractor_no_censoring = TimeseriesExtractor(
-        parcel_approach=parcel_approach,
-        confound_names=None,
-        standardize="zscore_sample",
-    )
-
-    extractor_no_censoring.get_bold(bids_dir=bids_dir, task="rest", tr=1.2)
-
-    # Only ends should not be interpolated, then should be shape 37
-    assert extractor_censored.subject_timeseries["01"]["run-0"].shape == (37, 400)
-
-    # Interpolation should only be at gaps, ensure no other indices are affected; since 0 is dropped, then
-    # index 0 in censored corresponds to index 1 in non-censored
-    if not use_sample_mask:
-        assert np.array_equal(
-            extractor_censored.subject_timeseries["01"]["run-0"][0, :],
-            extractor_no_censoring.subject_timeseries["01"]["run-0"][1, :],
-        )
-
-    # Test with n_after and n_before
-    fd_threshold = {
-        "threshold": 0.89,
-        "n_before": 2,
-        "n_after": 1,
-        "use_sample_mask": use_sample_mask,
-        "interpolate": True,
-    }
-    extractor_extended_censor = TimeseriesExtractor(
-        parcel_approach=parcel_approach,
-        standardize="zscore_sample",
-        confound_names=None,
-        fd_threshold=fd_threshold,
-    )
-
-    extractor_extended_censor.get_bold(bids_dir=bids_dir, task="rest", tr=1.2)
-
-    # The discarded indices are [0, 1, 36, 37, 38, 39]
-    assert extractor_extended_censor.subject_timeseries["01"]["run-0"].shape == (34, 400)
-    # Interpolation should only be at gaps, ensure no other indices are affected; since 0 and 1 is dropped, then
-    # index 0 in censored corresponds to index 2 in non-censored
-    if not use_sample_mask:
-        assert np.array_equal(
-            extractor_extended_censor.subject_timeseries["01"]["run-0"][0, :],
-            extractor_no_censoring.subject_timeseries["01"]["run-0"][2, :],
-        )
-
-
-@pytest.mark.parametrize("use_sample_mask", [True, False])
-def test_interpolate_with_condition(setup_environment_4, get_vars, use_sample_mask):
-    bids_dir, _, _ = get_vars
-
-    # No condition
-    fd_threshold = {"threshold": 0.89, "use_sample_mask": use_sample_mask, "interpolate": True}
-
-    parcel_approach = {"Schaefer": {"yeo_networks": 7}}
-    extractor_censored = TimeseriesExtractor(
-        parcel_approach=parcel_approach,
-        standardize="zscore_sample",
-        confound_names=None,
-        fd_threshold=fd_threshold,
-    )
-
-    extractor_censored.get_bold(bids_dir=bids_dir, task="rest", condition="active", tr=1.2)
-
-    # Only ends should not be interpolated, then should be shape 19; Interpolation is always done on the entire timeseries
-    assert extractor_censored.subject_timeseries["01"]["run-0"].shape == (19, 400)
-
-    # No censoring
-    extractor_no_censoring = TimeseriesExtractor(
-        parcel_approach=parcel_approach,
-        confound_names=None,
-        standardize="zscore_sample",
-    )
-
-    extractor_no_censoring.get_bold(bids_dir=bids_dir, task="rest", condition="active", tr=1.2)
-
-    # Interpolation should only be at gaps, ensure no other indices are affected; since 0 is dropped, then
-    # index 0 in censored corresponds to index 1 in non-censored
-    if not use_sample_mask:
-        assert np.array_equal(
-            extractor_censored.subject_timeseries["01"]["run-0"][0, :],
-            extractor_no_censoring.subject_timeseries["01"]["run-0"][1, :],
-        )
-
-    # Test with n_after and n_before
-    fd_threshold = {
-        "threshold": 0.89,
-        "n_before": 2,
-        "n_after": 1,
-        "use_sample_mask": use_sample_mask,
-        "interpolate": True,
-    }
-
-    extractor_extended_censored = TimeseriesExtractor(
-        parcel_approach=parcel_approach, confound_names=None, standardize="zscore_sample", fd_threshold=fd_threshold
-    )
-
-    extractor_extended_censored.get_bold(bids_dir=bids_dir, task="rest", condition="active", tr=1.2)
-
-    # The discarded indices are [0,1]
-    assert extractor_extended_censored.subject_timeseries["01"]["run-0"].shape == (18, 400)
-    # Interpolation should only be at gaps, index 0, 1 are deleted so index 0 in censored correspond to index 2
-    # in non-censored
-    if not use_sample_mask:
-        assert np.array_equal(
-            extractor_extended_censored.subject_timeseries["01"]["run-0"][0, :],
-            extractor_no_censoring.subject_timeseries["01"]["run-0"][2, :],
-        )

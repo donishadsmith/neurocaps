@@ -15,7 +15,9 @@ Modifications to the data included:
 - Retaining only the mask, truncated preprocessed BOLD file, and truncated confounds file in the fmriprep folder.
 - Slightly changing the naming style of the mask, preprocessed BOLD file, and confounds file in the fmriprep folder to
 conform with the naming conventions of modern fmriprep outputs.
-- Testing with custom parcellations was done using the HCPex parcellation[^2] [^3], an extension of the HCP
+- Changing confound names to their modern counterpart (fMRIPrep version >= 1.2.0).
+
+Testing with custom parcellations was done using the HCPex parcellation[^2] [^3], an extension of the HCP
 (Human Connectome Project) parcellation, which adds 66 subcortical areas. This original atlas can be downloaded from
 https://github.com/wayalan/HCPex.
 

@@ -5,7 +5,7 @@
     "GeneratedBy": [
         {
             "Name": "fMRIPrep",
-            "Version": "1.0.0",
+            "Version": "1.2.0",
             "CodeURL": "https://github.com/nipreps/fmriprep"
         }
     ],
