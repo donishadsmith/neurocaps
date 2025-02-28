@@ -1,4 +1,11 @@
-import logging, os, shutil, tempfile
+import logging, os, shutil, sys, tempfile
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(name)s [%(levelname)s] %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
+)
+
 import pytest
 
 from .utils import get_paths
@@ -31,7 +38,13 @@ def get_vars(tmp_dir):
 
 
 @pytest.fixture(autouse=True)
-def configure_logging(request):
+def logger():
+    """Logging fixture."""
+    yield logging.getLogger()
+
+
+@pytest.fixture(autouse=True)
+def set_logging_level(request):
     """Fixture to enable/disable logs."""
     # Checks if function has the "enable_logs" marker
     if not request.node.get_closest_marker("enable_logs"):
@@ -39,4 +52,5 @@ def configure_logging(request):
         logging.getLogger().setLevel(logging.CRITICAL)
     else:
         logging.getLogger().setLevel(logging.INFO)
+
     yield

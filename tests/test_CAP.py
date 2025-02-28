@@ -1,13 +1,5 @@
 import copy, glob, math, os, re, sys
 
-import logging
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(name)s [%(levelname)s] %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)],
-)
-
 import nibabel as nib, numpy as np, pandas as pd, pytest
 from kneed import KneeLocator
 
@@ -48,6 +40,9 @@ def test_without_groups_and_without_cluster_selection(standardize):
 
     # No error; Testing __call__
     print(cap_analysis)
+
+    # All subjects in subject table
+    assert all(i in timeseries for i in cap_analysis.subject_table)
 
     concatenated_timeseries = concat_data(timeseries, cap_analysis.subject_table, standardize=standardize)
 
@@ -91,9 +86,13 @@ def test_groups_without_cluster_selection(standardize):
     timeseries = Parcellation.get_schaefer("timeseries")
 
     # Should ignore duplicate id
-    cap_analysis = CAP(groups={"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]})
+    groups = {"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]}
+    cap_analysis = CAP(groups=groups)
 
     cap_analysis.get_caps(subject_timeseries=timeseries, standardize=standardize)
+
+    # Subject table created correctly
+    assert all(k in groups.get(v) for k, v in cap_analysis.subject_table.items())
 
     assert cap_analysis.caps["A"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["A"]["CAP-2"].shape == (100,)
@@ -142,7 +141,7 @@ def test_groups_without_cluster_selection(standardize):
     "groups, n_cores", [(["All Subjects"], None), ({"A": [1, 2, 3, 5], "B": [4, 6, 7, 8, 9, 10, 7]}, 2)]
 )
 @pytest.mark.enable_logs
-def test_elbow(groups, n_cores):
+def test_elbow(logger, groups, n_cores):
     timeseries = Parcellation.get_schaefer("timeseries")
 
     cap_analysis = CAP(groups=None if isinstance(groups, list) else groups)
@@ -181,7 +180,7 @@ def test_elbow(groups, n_cores):
                 == cap_analysis.optimal_n_clusters[group]
             )
     except:
-        logging.warning("Elbow could not be found for random data.")
+        logger.warning("Elbow could not be found for random data.")
         pass
 
 

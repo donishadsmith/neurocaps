@@ -738,6 +738,7 @@ def test_confounds(get_vars, confound_type):
         assert isinstance(returned_confounds, pd.DataFrame)
         assert not returned_confounds.empty
         assert len(returned_confounds.columns) == len(correct_confounds)
+        assert returned_confounds.shape == (40, len(correct_confounds))
 
         all(i in returned_confounds for i in correct_confounds)
 
@@ -783,6 +784,7 @@ def test_get_acompcor_separate(get_vars, n):
     confounds = _process_confounds(data, None)
     assert isinstance(confounds, pd.DataFrame)
     assert len(correct_confounds) == len(confounds.columns) == 4
+    assert confounds.shape == (40, 4)
     assert all(i in correct_confounds for i in confounds.columns)
 
     data.signal_clean_info["confound_names"] = ["rot_x"]
@@ -790,6 +792,7 @@ def test_get_acompcor_separate(get_vars, n):
     confounds = _process_confounds(data, None)
     assert isinstance(confounds, pd.DataFrame)
     assert len(correct_confounds) == len(confounds.columns) == 5
+    assert confounds.shape == (40, 5)
     assert all(i in correct_confounds for i in confounds.columns)
 
     data.signal_clean_info["use_confounds"] = False
