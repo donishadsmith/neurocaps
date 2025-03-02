@@ -487,9 +487,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             .. versionadded:: 0.20.0
 
         tr: :obj:`int`, :obj:`float` or :obj:`None`, default=None
-            Repetition time (TR) for the specified task. If not provided, the TR will be automatically extracted from
-            the first BOLD metadata file found for the task, searching first in the pipeline directory, then in
-            the ``bids_dir`` if not found.
+            Repetition time (TR), in seconds, for the specified task. If not provided, the TR will be automatically
+            extracted from the first BOLD metadata file found for the task, searching first in the pipeline directory,
+            then in the ``bids_dir`` if not found.
 
         slice_time_ref: :obj:`int` or :obj:`float`, default=0.0
             The reference slice expressed as a fraction of the ``tr`` that is subtracted from the condition onset times

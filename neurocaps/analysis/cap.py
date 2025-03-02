@@ -790,10 +790,6 @@ class CAP(_CAPGetter):
         dataframe per group). As described by Liu et al., 2018 and Yang et al., 2021. The metrics include:
 
          - ``"temporal_fraction"``: The proportion of total volumes spent in a single CAP over all volumes in a run.
-           Additionally, in the supplementary material of Yang et al., the stated relationship between
-           temporal fraction, counts, and persistence is temporal fraction = (persistence*counts)/total volumes
-           If persistence and temporal fraction is converted into time units,
-           then ``temporal fraction = (persistence * counts) / (total volumes * TR)``.
 
            ::
 
@@ -858,6 +854,11 @@ class CAP(_CAPGetter):
                 # There is only one 1 -> 2 transition
                 transition_probability = 1 / 3
 
+            **Note**: In the supplementary material for Yang et al., the mathematical relationship between
+            temporal fraction, counts, and persistence is ``temporal fraction = (persistence * counts)/total volumes``.
+            If persistence has been converted into time units (seconds), then
+            ``temporal fraction = (persistence * counts) / (total volumes * TR)``.
+
         Parameters
         ----------
         subject_timeseries: :obj:`dict[str, dict[str, np.ndarray]]` or :obj:`os.PathLike`
@@ -880,9 +881,9 @@ class CAP(_CAPGetter):
                     }
 
         tr: :obj:`float` or :obj:`None`, default=None
-            The repetition time (TR). If provided, persistence will be calculated as the average uninterrupted time
-            spent in each CAP. If not provided, persistence will be calculated as the average uninterrupted volumes
-            (TRs) spent in each state.
+            The repetition time (TR) in seconds. If provided, persistence will be calculated as the average
+            uninterrupted time, in seconds, spent in each CAP. If not provided, persistence will be calculated as the
+            average uninterrupted volumes (TRs), in TR units, spent in each state.
 
         runs: :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
             The run numbers to calculate CAP metrics for (e.g. ``runs=[0, 1]`` or ``runs=["01", "02"]``). If None, CAP
