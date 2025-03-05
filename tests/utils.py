@@ -11,20 +11,20 @@ class Parcellation:
 
     @staticmethod
     @lru_cache(maxsize=4)
-    def get_aal(object, version):
+    def get_aal(object, version, n_subs=10):
         n_rois = 166 if version == "3v2" else 116
         if object == "parcellation":
             aal_parcel = TimeseriesExtractor(parcel_approach={"AAL": {"version": version}}).parcel_approach
             return aal_parcel
         else:
             aal_subject_timeseries = {
-                str(x): {f"run-{y}": np.random.rand(100, n_rois) for y in range(1, 4)} for x in range(1, 11)
+                str(x): {f"run-{y}": np.random.rand(100, n_rois) for y in range(1, 4)} for x in range(n_subs)
             }
             return aal_subject_timeseries
 
     @staticmethod
     @lru_cache(maxsize=2)
-    def get_custom(object):
+    def get_custom(object, n_subs=10):
         dir_path = os.path.dirname(__file__)
 
         if object == "parcellation":
@@ -34,13 +34,13 @@ class Parcellation:
             return custom_parcel
         else:
             custom_timeseries = {
-                str(x): {f"run-{y}": np.random.rand(100, 426) for y in range(1, 4)} for x in range(1, 11)
+                str(x): {f"run-{y}": np.random.rand(100, 426) for y in range(1, 4)} for x in range(n_subs)
             }
             return custom_timeseries
 
     @staticmethod
     @lru_cache(maxsize=2)
-    def get_schaefer(object, n_rois=100, yeo_networks=7):
+    def get_schaefer(object, n_rois=100, yeo_networks=7, n_subs=10):
         if object == "parcellation":
             schaefer_parcel = TimeseriesExtractor(
                 parcel_approach={"Schaefer": {"n_rois": n_rois, "yeo_networks": yeo_networks}}
@@ -48,7 +48,7 @@ class Parcellation:
             return schaefer_parcel
         else:
             schaefer_subject_timeseries = {
-                str(x): {f"run-{y}": np.random.rand(100, n_rois) for y in range(1, 4)} for x in range(1, 11)
+                str(x): {f"run-{y}": np.random.rand(100, n_rois) for y in range(1, 4)} for x in range(n_subs)
             }
             return schaefer_subject_timeseries
 
@@ -254,7 +254,7 @@ def segments(target, timeseries):
 def get_first_subject(timeseries, cap_analysis):
     """Get the first subject from the timeseries data."""
     first_subject_timeseries = {}
-    first_subject_timeseries.update({"1": timeseries["1"]})
+    first_subject_timeseries.update({"0": timeseries["0"]})
     first_subject_labels = (
         predict_labels(first_subject_timeseries, cap_analysis, standardize=True, group="A", runs=[1]) + 1
     )

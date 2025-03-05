@@ -7,9 +7,9 @@ from neurocaps.analysis import merge_dicts
     "return_reduced_dicts, return_merged_dicts", [(True, True), (False, False), (True, False), (False, True)]
 )
 def test_merge_dicts(return_reduced_dicts, return_merged_dicts):
-    subject_timeseries = {str(x): {f"run-{y}": np.random.rand(100, 100) for y in range(1, 4)} for x in range(1, 11)}
+    subject_timeseries = {str(x): {f"run-{y}": np.random.rand(100, 100) for y in range(1, 4)} for x in range(10)}
 
-    subject_timeseries_2 = {str(x): {f"run-{y}": np.random.rand(100, 100) for y in range(1, 3)} for x in range(1, 8)}
+    subject_timeseries_2 = {str(x): {f"run-{y}": np.random.rand(100, 100) for y in range(1, 3)} for x in range(8)}
 
     subject_timeseries_merged = merge_dicts(
         [subject_timeseries, subject_timeseries_2],
@@ -17,9 +17,9 @@ def test_merge_dicts(return_reduced_dicts, return_merged_dicts):
         return_merged_dict=return_merged_dicts,
     )
     if return_merged_dicts:
-        assert subject_timeseries_merged["merged"]["1"]["run-1"].shape == (200, 100)
-        assert subject_timeseries_merged["merged"]["1"]["run-2"].shape == (200, 100)
-        assert subject_timeseries_merged["merged"]["1"]["run-3"].shape == (100, 100)
+        assert subject_timeseries_merged["merged"]["0"]["run-1"].shape == (200, 100)
+        assert subject_timeseries_merged["merged"]["0"]["run-2"].shape == (200, 100)
+        assert subject_timeseries_merged["merged"]["0"]["run-3"].shape == (100, 100)
         assert len(subject_timeseries_merged["merged"]["1"].keys()) == 3
         assert list(subject_timeseries_merged["merged"]["1"].keys()) == ["run-1", "run-2", "run-3"]
 
@@ -60,9 +60,9 @@ def test_merge_dicts_pkl(tmp_dir, return_reduced_dicts, return_merged_dicts):
     )
 
     if return_merged_dicts:
-        assert subject_timeseries_merged["merged"]["1"]["run-1"].shape == (100, 100)
-        assert subject_timeseries_merged["merged"]["1"]["run-2"].shape == (100, 100)
-        assert subject_timeseries_merged["merged"]["1"]["run-3"].shape == (100, 100)
+        assert subject_timeseries_merged["merged"]["1"]["run-1"].shape == (200, 100)
+        assert subject_timeseries_merged["merged"]["1"]["run-2"].shape == (200, 100)
+        assert subject_timeseries_merged["merged"]["1"]["run-3"].shape == (200, 100)
         assert len(subject_timeseries_merged["merged"]["1"].keys()) == 3
         assert list(subject_timeseries_merged["merged"]["1"].keys()) == ["run-1", "run-2", "run-3"]
 
