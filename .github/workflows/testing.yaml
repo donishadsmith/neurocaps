@@ -2,7 +2,8 @@ name: Run Tests
 
 on:
   push:
-    branches: [main, development, testing]
+    branches: [main, development]
+
   # Run weekly on Monday
   schedule:
     - cron: 0 0 * * 1
@@ -10,27 +11,32 @@ on:
 jobs:
   test-build:
     runs-on: ${{ matrix.os }}
+
     strategy:
       matrix:
         os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
         python-ver: ['3.9', '3.10', '3.11', '3.12']
+
     name: Python ${{ matrix.python-ver }} check on ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-ver }}
+
       - name: Install package & pytest for Mac & Ubuntu
         if: ${{ matrix.os != 'windows-latest' }}
         run: |
           pip install -e .[test]
         shell: bash
+
       - name: Install package & pytest for Windows
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
           git config --system core.longpaths true
           pip install -e .[windows,test]
         shell: cmd
+
       - name: Run tests with coverage for Ubuntu on python 3.12
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-ver == '3.12' }}
         uses: coactions/setup-xvfb@v1
@@ -38,6 +44,7 @@ jobs:
           options: -screen 0 1600x1200x24
           run: |
             pytest --cov=neurocaps
+
       - name: Run test without coverage for Ubuntu from 3.9 to 3.11
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-ver != '3.12' }}
         uses: coactions/setup-xvfb@v1
@@ -46,20 +53,23 @@ jobs:
           run: |
             pytest .
           working-directory: tests
+
       - name: Run tests without coverage for Mac for all version
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
           pytest .
         shell: bash
         working-directory: tests
+
       - name: Run tests without coverage for Windows
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
           pytest .
         shell: cmd
         working-directory: tests
+
       - name: Upload coverage reports to Codecov for Ubuntu
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-ver == '3.12' }}
-        uses: codecov/codecov-action@v5.4.0
+        uses: codecov/codecov-action@v5.3.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
