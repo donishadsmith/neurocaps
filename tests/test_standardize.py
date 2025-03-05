@@ -1,4 +1,7 @@
-import numpy as np, os, glob, pickle
+import numpy as np, os, glob
+
+import joblib
+
 from neurocaps.analysis import standardize
 
 
@@ -22,7 +25,7 @@ def test_standardize(tmp_dir):
 
 def test_standardize_w_pickle(tmp_dir):
     with open(os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"), "rb") as f:
-        subject_timeseries = pickle.load(f)
+        subject_timeseries = joblib.load(f)
 
     standardized_subject_timeseries = standardize(
         subject_timeseries_list=[os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl")],

@@ -1,0 +1,11 @@
+{
+    "version": 1,
+    "project": "neurocaps",
+    "project_url": "https://github.com/donishadsmith/neurocaps",
+    "repo": ".",
+    "branches": ["main", "development"],
+    "environment_type": "virtualenv",
+    "install_command": ["python -m pip install .[windows]"],
+    "env_dir": ".asv/env",
+    "results_dir": ".asv/results"
+}

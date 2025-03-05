@@ -1,0 +1,31 @@
+name: Benchmark
+
+on:
+  push:
+    branches: [main, development]
+
+jobs:
+  benchmark:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
+        python-ver: ['3.9', '3.12']
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-ver }}
+
+      - name: Install Packages
+        run: |
+          pip install asv virtualenv
+
+      - name: Run benchmarks in virtual environment; compare previous commit to new commit
+        run: |
+          asv machine --yes
+          asv continuous HEAD~1 HEAD
