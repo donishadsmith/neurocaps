@@ -923,3 +923,10 @@ def test_raise_error():
 
     with pytest.raises(AttributeError, match=re.escape(error_msg["kmeans"])):
         cap_analysis.calculate_metrics(os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"))
+
+
+def test_compute_cosine_similarity():
+    amp, bin_vec = np.array([0.3, 0.3, 0.3]), np.array([0, 0, 0])
+
+    assert np.isnan(CAP._compute_cosine_similarity(amp, bin_vec))
+    assert math.isclose(CAP._compute_cosine_similarity(amp, np.where(bin_vec, 0, 1)), 1, abs_tol=0.0001)

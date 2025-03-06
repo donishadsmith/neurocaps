@@ -467,7 +467,6 @@ class CAP(_CAPGetter):
         **KMeans Algorithm:** Refer to `scikit-learn's Documentation
         <https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html>`_ for additional information
         about the ``KMeans`` algorithm used in this method.
-
         """
         self._n_cores = n_cores
         # Ensure all unique values if n_clusters is a list
@@ -701,10 +700,9 @@ class CAP(_CAPGetter):
         # Create plot dictionary
         plot_dict = _check_kwargs(_PlotDefaults.get_caps(), **kwargs)
 
-        y_title = y_titles[method]
-
         # Create visualization for method
         plt.figure(figsize=plot_dict["figsize"])
+
         y_values = [y for _, y in performance_dict[group].items()]
         plt.plot(self._n_clusters, y_values)
 
@@ -712,10 +710,11 @@ class CAP(_CAPGetter):
             x_ticks = range(self._n_clusters[0], self._n_clusters[-1] + 1, plot_dict["step"])
             plt.xticks(x_ticks)
 
-        plt.xlabel("K")
-        plt.ylabel(y_title)
         plt.title(group)
+        plt.xlabel("K")
 
+        y_title = y_titles[method]
+        plt.ylabel(y_title)
         # Add vertical line for elbow method
         if y_title == "Inertia":
             plt.vlines(self._optimal_n_clusters[group], plt.ylim()[0], plt.ylim()[1], linestyles="--", label="elbow")
@@ -1112,7 +1111,7 @@ class CAP(_CAPGetter):
 
                 if "transition_frequency" in metrics:
                     # Sum the differences that are not zero - [1, 2, 1, 1, 1, 3] becomes [1, -1, 0, 0, 2]
-                    # , binary representation for values not zero is [1, 1, 0, 0, 1] = 3 transitions
+                    # binary representation for values not zero is [1, 1, 0, 0, 1] = 3 transitions
                     transition_frequency = np.where(
                         np.diff(predicted_subject_timeseries[subj_id][curr_run], n=1) != 0, 1, 0
                     ).sum()
@@ -1210,7 +1209,7 @@ class CAP(_CAPGetter):
 
                 # Set run_id
                 run_id = curr_run if not continuous_runs or len(subject_runs) == 1 else "run-continuous"
-                # Add 1 to the prediction vector since labels start at 0, needed to ensure that the labels map onto the caps
+                # Add 1 to the prediction vector since labels start at 0, ensures that the labels map onto the caps
                 prediction_vector = self._kmeans[group].predict(timeseries) + 1
 
                 if run_id != "run-continuous":
@@ -1231,8 +1230,7 @@ class CAP(_CAPGetter):
 
     # Get all pairs of all possible transitions
     def _get_pairs(self):
-        group_caps = {}
-        all_pairs = {}
+        group_caps, all_pairs = {}, {}
 
         for group in self._groups:
             group_caps.update({group: [int(name.split("-")[-1]) for name in self._caps[group]]})
@@ -1570,17 +1568,18 @@ class CAP(_CAPGetter):
             ncol = plot_dict["ncol"] if plot_dict["ncol"] is not None else default_col
             if ncol > len(cap_dict[group]):
                 ncol = len(cap_dict[group])
+
             # Pad nrow, since int will round down, padding is needed for cases
             # where len(cap_dict[group])/ncol is a float. This will add the extra row needed
             x_pad = 0 if len(cap_dict[group]) / ncol <= 1 else 1
             nrow = plot_dict["nrow"] if plot_dict["nrow"] is not None else x_pad + int(len(cap_dict[group]) / ncol)
-
             subplot_figsize = (8 * ncol, 6 * nrow) if plot_dict["figsize"] == (8, 6) else plot_dict["figsize"]
-
             fig, axes = plt.subplots(nrow, ncol, sharex=False, sharey=plot_dict["sharey"], figsize=subplot_figsize)
+
             suptitle = f"{group} {suffix_title}" if suffix_title else f"{group}"
             fig.suptitle(suptitle, fontsize=plot_dict["suptitle_fontsize"])
             fig.subplots_adjust(hspace=plot_dict["hspace"], wspace=plot_dict["wspace"])
+
             if plot_dict["tight_layout"]:
                 fig.tight_layout(rect=plot_dict["rect"])
 
@@ -1891,10 +1890,12 @@ class CAP(_CAPGetter):
             display.set_xticklabels(
                 display.get_xticklabels(), size=plot_dict["xticklabels_size"], rotation=plot_dict["xlabel_rotation"]
             )
+
         if set_y:
             display.set_yticklabels(
                 display.get_yticklabels(), size=plot_dict["yticklabels_size"], rotation=plot_dict["ylabel_rotation"]
             )
+
         if plot_dict["cbarlabels_size"]:
             cbar = display.collections[0].colorbar
             cbar.ax.tick_params(labelsize=plot_dict["cbarlabels_size"])
@@ -2397,61 +2398,7 @@ class CAP(_CAPGetter):
                         method=method,
                     )
 
-                # Code adapted from example on https://surfplot.readthedocs.io/
-                surfaces = fetch_fslr()
-
-                if plot_dict["surface"] not in ["inflated", "veryinflated"]:
-                    LG.warning(
-                        f"{plot_dict['surface']} is an invalid option for `surface`. Available options "
-                        "include 'inflated' or 'verinflated'. Defaulting to 'inflated'."
-                    )
-
-                    plot_dict["surface"] = "inflated"
-
-                lh, rh = surfaces[plot_dict["surface"]]
-                lh = str(lh) if not isinstance(lh, str) else lh
-                rh = str(rh) if not isinstance(rh, str) else rh
-                sulc_lh, sulc_rh = surfaces["sulc"]
-                sulc_lh = str(sulc_lh) if not isinstance(sulc_lh, str) else sulc_lh
-                sulc_rh = str(sulc_rh) if not isinstance(sulc_rh, str) else sulc_rh
-
-                p = surfplot.Plot(
-                    lh,
-                    rh,
-                    size=plot_dict["size"],
-                    layout=plot_dict["layout"],
-                    zoom=plot_dict["zoom"],
-                    views=plot_dict["views"],
-                    brightness=plot_dict["brightness"],
-                )
-                # Add base layer
-                p.add_layer({"left": sulc_lh, "right": sulc_rh}, cmap="binary_r", cbar=False)
-
-                # Check cmap
-                cmap = _cmap_d[plot_dict["cmap"]] if isinstance(plot_dict["cmap"], str) else plot_dict["cmap"]
-
-                # Add stat map layer
-                p.add_layer(
-                    {"left": gii_lh, "right": gii_rh},
-                    cmap=cmap,
-                    alpha=plot_dict["alpha"],
-                    color_range=plot_dict["color_range"],
-                    zero_transparent=plot_dict["zero_transparent"],
-                    as_outline=False,
-                )
-                if plot_dict["as_outline"] is True:
-                    p.add_layer(
-                        {"left": gii_lh, "right": gii_rh},
-                        cmap="gray",
-                        cbar=False,
-                        alpha=plot_dict["outline_alpha"],
-                        as_outline=True,
-                    )
-
-                # Color bar
-                fig = p.build(cbar_kws=plot_dict["cbar_kws"], figsize=plot_dict["figsize"], scale=plot_dict["scale"])
-                fig_name = f"{group} {cap} {suffix_title}" if suffix_title else f"{group} {cap}"
-                fig.axes[0].set_title(fig_name, pad=plot_dict["title_pad"])
+                fig = self._generate_surface_plot(plot_dict, gii_lh, gii_rh, group, cap, suffix_title)
 
                 if output_dir:
                     filename = self._basename(group, cap, "surface", suffix_filename, "png")
@@ -2471,6 +2418,66 @@ class CAP(_CAPGetter):
                     plt.show() if show_figs else plt.close()
 
         return self
+
+    @staticmethod
+    def _generate_surface_plot(plot_dict, gii_lh, gii_rh, group, cap, suffix_title):
+        # Code adapted from example on https://surfplot.readthedocs.io/
+        surfaces = fetch_fslr()
+
+        if plot_dict["surface"] not in ["inflated", "veryinflated"]:
+            LG.warning(
+                f"{plot_dict['surface']} is an invalid option for `surface`. Available options "
+                "include 'inflated' or 'verinflated'. Defaulting to 'inflated'."
+            )
+
+            plot_dict["surface"] = "inflated"
+
+        lh, rh = surfaces[plot_dict["surface"]]
+        lh = str(lh) if not isinstance(lh, str) else lh
+        rh = str(rh) if not isinstance(rh, str) else rh
+        sulc_lh, sulc_rh = surfaces["sulc"]
+        sulc_lh = str(sulc_lh) if not isinstance(sulc_lh, str) else sulc_lh
+        sulc_rh = str(sulc_rh) if not isinstance(sulc_rh, str) else sulc_rh
+
+        p = surfplot.Plot(
+            lh,
+            rh,
+            size=plot_dict["size"],
+            layout=plot_dict["layout"],
+            zoom=plot_dict["zoom"],
+            views=plot_dict["views"],
+            brightness=plot_dict["brightness"],
+        )
+        # Add base layer
+        p.add_layer({"left": sulc_lh, "right": sulc_rh}, cmap="binary_r", cbar=False)
+
+        # Check cmap
+        cmap = _cmap_d[plot_dict["cmap"]] if isinstance(plot_dict["cmap"], str) else plot_dict["cmap"]
+
+        # Add stat map layer
+        p.add_layer(
+            {"left": gii_lh, "right": gii_rh},
+            cmap=cmap,
+            alpha=plot_dict["alpha"],
+            color_range=plot_dict["color_range"],
+            zero_transparent=plot_dict["zero_transparent"],
+            as_outline=False,
+        )
+        if plot_dict["as_outline"] is True:
+            p.add_layer(
+                {"left": gii_lh, "right": gii_rh},
+                cmap="gray",
+                cbar=False,
+                alpha=plot_dict["outline_alpha"],
+                as_outline=True,
+            )
+
+        # Color bar
+        fig = p.build(cbar_kws=plot_dict["cbar_kws"], figsize=plot_dict["figsize"], scale=plot_dict["scale"])
+        fig_name = f"{group} {cap} {suffix_title}" if suffix_title else f"{group} {cap}"
+        fig.axes[0].set_title(fig_name, pad=plot_dict["title_pad"])
+
+        return fig
 
     def caps2radar(
         self,
@@ -2707,9 +2714,10 @@ class CAP(_CAPGetter):
                     # Create dataframe
                     df = pd.DataFrame({"Regions": radar_dict["Regions"]})
                     df = pd.concat([df, pd.DataFrame(radar_dict[cap])], axis=1)
+                    regions = df["Regions"].values
+
                     # Initialize figure
                     fig = go.Figure(layout=go.Layout(width=plot_dict["width"], height=plot_dict["height"]))
-                    regions = df["Regions"].values
 
                     for i in ["High Amplitude", "Low Amplitude"]:
                         values = df[i].values
@@ -2727,8 +2735,8 @@ class CAP(_CAPGetter):
                             )
                         )
                 else:
-                    # Create dataframe
                     n = len(radar_dict["Regions"])
+                    # Create dataframe
                     df = pd.DataFrame(
                         {
                             "Regions": radar_dict["Regions"] * 2,
@@ -2811,33 +2819,47 @@ class CAP(_CAPGetter):
             radar_dict[cap] = {"High Amplitude": [], "Low Amplitude": []}
 
             for region in radar_dict["Regions"]:
-                if parcellation_name == "Custom":
-                    lh = list(self._parcel_approach[parcellation_name]["regions"][region]["lh"])
-                    rh = list(self._parcel_approach[parcellation_name]["regions"][region]["rh"])
-                    indxs = lh + rh
-                else:
-                    indxs = np.array(
-                        [
-                            value
-                            for value, node in enumerate(self._parcel_approach[parcellation_name]["nodes"])
-                            if region in node
-                        ]
-                    )
+                region_mask = self._create_region_mask_1d(parcellation_name, region, cap_vector)
 
-                # Create mask to set ROIs not in regions to zero and ROIs in regions as 1
-                binary_vector = np.zeros_like(cap_vector)
-                binary_vector[indxs] = 1
-                # Calculate binary norm
-                norm_binary_vector = np.linalg.norm(binary_vector)
                 # Get high and low amplitudes
-                high_amp = np.where(cap_vector > 0, cap_vector, 0)
+                high_amp_vector = np.where(cap_vector > 0, cap_vector, 0)
                 # Invert vector for low_amp so that cosine similarity is positive
-                low_amp = np.where(cap_vector < 0, -cap_vector, 0)
-                vecs = {"High Amplitude": high_amp, "Low Amplitude": low_amp}
+                low_amp_vector = np.where(cap_vector < 0, -cap_vector, 0)
 
-                for vec in vecs:
-                    dot_product = np.dot(vecs[vec], binary_vector)
-                    norm_vec = np.linalg.norm(vecs[vec])
-                    cosine_similarity = dot_product / (norm_vec * norm_binary_vector)
-                    # Store value in dict
-                    radar_dict[cap][vec].append(cosine_similarity)
+                # Get cosine similarity between the high amplitude and low amplitude vectors
+                high_amp_cosine = self._compute_cosine_similarity(high_amp_vector, region_mask)
+                low_amp_cosine = self._compute_cosine_similarity(low_amp_vector, region_mask)
+
+                # Store value in dict
+                radar_dict[cap]["High Amplitude"].append(high_amp_cosine)
+                radar_dict[cap]["Low Amplitude"].append(low_amp_cosine)
+
+    def _create_region_mask_1d(self, parcellation_name, region, cap_vector):
+        # Get the index values of nodes in each network/region
+        if parcellation_name == "Custom":
+            lh = list(self._parcel_approach[parcellation_name]["regions"][region]["lh"])
+            rh = list(self._parcel_approach[parcellation_name]["regions"][region]["rh"])
+            indxs = lh + rh
+        else:
+            indxs = np.array(
+                [
+                    value
+                    for value, node in enumerate(self._parcel_approach[parcellation_name]["nodes"])
+                    if region in node
+                ]
+            )
+
+        # Create mask and set ROIs not in regions to zero and ROIs in regions to 1
+        region_mask = np.zeros_like(cap_vector)
+        region_mask[indxs] = 1
+
+        return region_mask
+
+    @staticmethod
+    def _compute_cosine_similarity(amp_vector, region_mask):
+        dot_product = np.dot(amp_vector, region_mask)
+        norm_region_mask = np.linalg.norm(region_mask)
+        norm_amp_vector = np.linalg.norm(amp_vector)
+        cosine_similarity = dot_product / (norm_amp_vector * norm_region_mask)
+
+        return cosine_similarity

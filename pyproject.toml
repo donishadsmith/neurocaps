@@ -65,8 +65,9 @@ dependencies = [
     ]
 
 [project.optional-dependencies]
-demo = ["openneuro-py", "ipywidgets"]
-development = ["pre-commit", "pytest-cov"]
+benchmark = ["asv", "virtualenv"]
+demo = ["ipywidgets", "openneuro-py"]
+development = ["pre-commit"]
 test = ["pytest", "pytest-cov"]
 windows = ["pybids>=0.16.2"]
 

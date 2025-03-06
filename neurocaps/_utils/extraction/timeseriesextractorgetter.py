@@ -127,11 +127,11 @@ class _TimeseriesExtractorGetter:
         object_properties = (
             f"Preprocessed Bold Template Space                           : {self.space}\n"
             f"Parcellation Approach                                      : {list(self.parcel_approach.keys())[0]}\n"
-            f"Signal Clean Info                                          : {self.signal_clean_info}\n"
-            f"Task Info                                                  : {self.task_info}\n"
+            f"Signal Clean Information                                   : {self.signal_clean_info}\n"
+            f"Task Information                                           : {self.task_info}\n"
             f"Number of Subjects                                         : {n_subjects}\n"
             f"CPU Cores Used for Timeseries Extraction (Multiprocessing) : {self.n_cores}\n"
-            f"Subject Timeseries Byte Size                               : {self._subject_timeseries_size()}\n"
+            f"Subject Timeseries Byte Size                               : {self._subject_timeseries_size()}"
         )
 
         sep = "=" * len(object_properties.rsplit(": ")[0])

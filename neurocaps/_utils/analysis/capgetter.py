@@ -131,15 +131,15 @@ class _CAPGetter:
         object_properties = (
             f"Parcellation Approach                           : {parcellation_name}\n"
             f"Groups                                          : {groups_names}\n"
-            f"N Clusters                                      : {self.n_clusters}\n"
+            f"Number of Clusters                              : {self.n_clusters}\n"
             f"Cluster Selection Method                        : {self.cluster_selection_method}\n"
+            f"Optimal Number of Clusters                      : {self.optimal_n_clusters}\n"
             f"CPU Cores Used for Clustering (Multiprocessing) : {self.n_cores}\n"
             f"User-Specified Runs IDs Used for Clustering     : {self.runs}\n"
-            f"Standardize                                     : {self.standardize}\n"
             f"Concatenated Timeseries Bytes                   : {self._concatenated_timeseries_size()}\n"
-            f"CAPs                                            : {group_caps}\n"
-            f"Optimal N Clusters                              : {self.optimal_n_clusters}\n"
-            f"Variance Explained by Clustering                : {self.variance_explained}\n"
+            f"Standardized Concatenated Timeseries            : {self.standardize}\n"
+            f"Co-Activation Patterns (CAPs)                   : {group_caps}\n"
+            f"Variance Explained by Clustering                : {self.variance_explained}"
         )
 
         sep = "=" * len(object_properties.rsplit(": ")[0])

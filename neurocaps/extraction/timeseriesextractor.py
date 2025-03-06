@@ -743,13 +743,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             )
 
         bids_dir = os.path.normpath(bids_dir).rstrip(os.path.sep)
-
         if bids_dir.endswith("derivatives"):
             bids_dir = os.path.dirname(bids_dir)
 
         if pipeline_name:
             pipeline_name = os.path.normpath(pipeline_name).lstrip(os.path.sep).rstrip(os.path.sep)
-
             if pipeline_name.startswith("derivatives"):
                 pipeline_name = pipeline_name[len("derivatives") :].lstrip(os.path.sep)
 
@@ -864,10 +862,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         files = {}
         files["niftis"] = self._get_files(**base, suffix="bold", extension="nii.gz")
         files["masks"] = self._get_files(**base, suffix="mask", extension="nii.gz")
-        files["bold_meta"] = self._get_files(**base, suffix="bold", extension="json")
 
+        files["bold_meta"] = self._get_files(**base, suffix="bold", extension="json")
         if not files["bold_meta"]:
             files["bold_meta"] = self._get_files(**base, scope="raw", suffix="bold", extension="json", space=None)
+
         if self._task_info["condition"]:
             files["events"] = self._get_files(**base, scope="raw", suffix="events", extension="tsv", event=True)
         else:

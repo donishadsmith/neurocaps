@@ -13,6 +13,13 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.23.2] - 2025-03-06
+### ♻ Changed
+- Minor improvements to __str__ call for clarity.
+- Added optional dependencies for benchmarking and cleaned repeating optional dependencies.
+- Created separate static internal function for computing cosine similarity between the 1D region mask and high/low
+amplitude of the CAP vector.
+
 ## [0.23.1] - 2025-02-27
 ### ♻ Changed
 - Minor improvements in how run IDs are intersected to prevent errors in rare cases.
