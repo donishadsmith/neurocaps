@@ -1250,6 +1250,11 @@ def test_interpolate_no_condition(setup_environment_2, get_vars, use_sample_mask
             extractor_no_censoring.subject_timeseries["01"]["run-001"][1, :],
         )
 
+    # Assertion mostly for when sample mask used, to the padding done before is replaced with the non-zero interpolated
+    # values
+    for row in extractor_censored.subject_timeseries["01"]["run-001"]:
+        assert not np.all(row == 0)
+
     # Test with n_after and n_before
     fd_threshold = {
         "threshold": 0.89,
@@ -1271,6 +1276,11 @@ def test_interpolate_no_condition(setup_environment_2, get_vars, use_sample_mask
             extractor_extended_censor.subject_timeseries["01"]["run-001"][0, :],
             extractor_no_censoring.subject_timeseries["01"]["run-001"][2, :],
         )
+
+    # Assertion mostly for when sample mask used, to the padding done before is replaced with the non-zero interpolated
+    # values
+    for row in extractor_extended_censor.subject_timeseries["01"]["run-001"]:
+        assert not np.all(row == 0)
 
 
 @pytest.mark.parametrize("use_sample_mask", [True, False])
@@ -1302,6 +1312,11 @@ def test_interpolate_with_condition(setup_environment_2, get_vars, use_sample_ma
             extractor_no_censoring.subject_timeseries["01"]["run-001"][1, :],
         )
 
+    # Assertion mostly for when sample mask used, to the padding done before is replaced with the non-zero interpolated
+    # values
+    for row in extractor_censored.subject_timeseries["01"]["run-001"]:
+        assert not np.all(row == 0)
+
     # Test with n_after and n_before
     fd_threshold = {
         "threshold": 0.89,
@@ -1326,6 +1341,11 @@ def test_interpolate_with_condition(setup_environment_2, get_vars, use_sample_ma
             extractor_extended_censored.subject_timeseries["01"]["run-001"][0, :],
             extractor_no_censoring.subject_timeseries["01"]["run-001"][2, :],
         )
+
+    # Assertion mostly for when sample mask used, to the padding done before is replaced with the non-zero interpolated
+    # values
+    for row in extractor_extended_censored.subject_timeseries["01"]["run-001"]:
+        assert not np.all(row == 0)
 
 
 ################################################# Setup Environment 3 #################################################
