@@ -1250,8 +1250,8 @@ def test_interpolate_no_condition(setup_environment_2, get_vars, use_sample_mask
             extractor_no_censoring.subject_timeseries["01"]["run-001"][1, :],
         )
 
-    # Assertion mostly for when sample mask used, to the padding done before is replaced with the non-zero interpolated
-    # values
+    # Assertion mostly for when sample mask used and interpolation requested to ensure the row padding done immediately
+    # before cubic spline interpolation is replaced with the non-zero interpolated values
     for row in extractor_censored.subject_timeseries["01"]["run-001"]:
         assert not np.all(row == 0)
 
@@ -1277,8 +1277,8 @@ def test_interpolate_no_condition(setup_environment_2, get_vars, use_sample_mask
             extractor_no_censoring.subject_timeseries["01"]["run-001"][2, :],
         )
 
-    # Assertion mostly for when sample mask used, to the padding done before is replaced with the non-zero interpolated
-    # values
+    # Assertion mostly for when sample mask used and interpolation requested to ensure the row padding done immediately
+    # before cubic spline interpolation is replaced with the non-zero interpolated values
     for row in extractor_extended_censor.subject_timeseries["01"]["run-001"]:
         assert not np.all(row == 0)
 
@@ -1312,8 +1312,8 @@ def test_interpolate_with_condition(setup_environment_2, get_vars, use_sample_ma
             extractor_no_censoring.subject_timeseries["01"]["run-001"][1, :],
         )
 
-    # Assertion mostly for when sample mask used, to the padding done before is replaced with the non-zero interpolated
-    # values
+    # Assertion mostly for when sample mask used and interpolation requested to ensure the row padding done immediately
+    # before cubic spline interpolation is replaced with the non-zero interpolated values
     for row in extractor_censored.subject_timeseries["01"]["run-001"]:
         assert not np.all(row == 0)
 
@@ -1342,8 +1342,8 @@ def test_interpolate_with_condition(setup_environment_2, get_vars, use_sample_ma
             extractor_no_censoring.subject_timeseries["01"]["run-001"][2, :],
         )
 
-    # Assertion mostly for when sample mask used, to the padding done before is replaced with the non-zero interpolated
-    # values
+    # Assertion mostly for when sample mask used and interpolation requested to ensure the row padding done immediately
+    # before cubic spline interpolation is replaced with the non-zero interpolated values
     for row in extractor_extended_censored.subject_timeseries["01"]["run-001"]:
         assert not np.all(row == 0)
 
