@@ -3,7 +3,7 @@ import copy, glob, os, re, shutil, sys
 import logging
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.CRITICAL,
     format="%(asctime)s %(name)s [%(levelname)s] %(message)s",
     handlers=[logging.StreamHandler(sys.stdout)],
 )
@@ -459,7 +459,6 @@ def test_check_raise_error():
 
 
 # Check basic extraction across all parcel approaches
-@pytest.mark.enable_logs
 @pytest.mark.parametrize(
     "parcel_approach, use_confounds, name",
     [
@@ -468,6 +467,7 @@ def test_check_raise_error():
         (Parcellation.get_custom("parcellation"), False, "Custom"),
     ],
 )
+@pytest.mark.enable_logs
 def test_basic_extraction(get_vars, parcel_approach, use_confounds, name):
     bids_dir, pipeline_name = get_vars
 
@@ -1527,8 +1527,6 @@ def test_append_subjects_with_different_run_ids(get_vars):
 
 
 def test_logging_redirection_sequential(get_vars, tmp_dir):
-    import logging
-
     bids_dir, _ = get_vars
 
     # Configure logger with FileHandler for specific module
@@ -1560,7 +1558,6 @@ def test_logging_redirection_sequential(get_vars, tmp_dir):
 
 
 def test_logging_redirection_parallel(get_vars, tmp_dir):
-    import logging
     from logging.handlers import QueueListener
     from multiprocessing import Manager
 
