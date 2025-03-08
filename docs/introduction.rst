@@ -1,5 +1,5 @@
-**neurocaps**
-=============
+**neurocaps: Neuroimaging Co-activation Patterns**
+==================================================
 .. image:: https://img.shields.io/pypi/v/neurocaps.svg
    :target: https://pypi.python.org/pypi/neurocaps/
    :alt: Latest Version
