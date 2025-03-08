@@ -1,13 +1,16 @@
 """Internal function for checking the validity of parcel_approach."""
 
 import copy, os, re
+
+import numpy as np
 from nilearn import datasets
+
 from .pickle_utils import _convert_pickle_to_dict
 from .logger import _logger
 
 LG = _logger(__name__)
 
-VALID_DICT_STUCTURE = {
+VALID_DICT_STUCTURES = {
     "Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1},
     "AAL": {"version": "SPM12"},
     "Custom": {
@@ -24,10 +27,10 @@ def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
     else:
         parcel_dict = copy.deepcopy(parcel_approach)
 
-    if not isinstance(parcel_dict, dict) or not list(parcel_dict)[0] in list(VALID_DICT_STUCTURE):
+    if not isinstance(parcel_dict, dict) or not list(parcel_dict)[0] in list(VALID_DICT_STUCTURES):
         error_message = (
             "Please include a valid `parcel_approach` in one of the following dictionary formats for "
-            f"'Schaefer', 'AAL', or 'Custom': {VALID_DICT_STUCTURE}"
+            f"'Schaefer', 'AAL', or 'Custom': {VALID_DICT_STUCTURES}"
         )
 
         if not isinstance(parcel_dict, dict):
@@ -38,7 +41,7 @@ def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
     if len(parcel_dict) > 1:
         raise ValueError(
             "Only one parcellation approach can be selected. Example format of `parcel_approach`:\n"
-            f"{VALID_DICT_STUCTURE}"
+            f"{VALID_DICT_STUCTURES}"
         )
 
     # Determine if `parcel_dict` already contains the sub-keys needed for Schaefer and AAL to not write a new dict
@@ -77,7 +80,7 @@ def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
         )
 
         # Clean keys
-        for key in VALID_DICT_STUCTURE["Schaefer"]:
+        for key in VALID_DICT_STUCTURES["Schaefer"]:
             if key in parcel_dict["Schaefer"]:
                 del parcel_dict["Schaefer"][key]
 
@@ -96,18 +99,18 @@ def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
         parcel_dict["AAL"].update({"regions": regions})
 
         # Clean keys
-        for key in VALID_DICT_STUCTURE["AAL"]:
+        for key in VALID_DICT_STUCTURES["AAL"]:
             if key in parcel_dict["AAL"]:
                 del parcel_dict["AAL"][key]
 
     elif "Custom" in parcel_dict:
-        custom_example = {"Custom": VALID_DICT_STUCTURE["Custom"]}
+        custom_example = {"Custom": VALID_DICT_STUCTURES["Custom"]}
 
         if call == "TimeseriesExtractor" and "maps" not in parcel_dict["Custom"]:
             raise ValueError(
                 "For `Custom` parcel_approach, a nested key-value pair containing the key 'maps' with the "
-                "value being a string specifying the location of the parcellation is needed. Example:\n"
-                f"{custom_example}"
+                "value being a string specifying the location of the parcellation is needed. "
+                f"Refer to example: {custom_example}"
             )
 
         check_subkeys = ["nodes" in parcel_dict["Custom"], "regions" in parcel_dict["Custom"]]
@@ -134,14 +137,71 @@ def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
                 f"{parcel_dict['Custom']['maps']}"
             )
 
+        # Check structure
+        _check_custom_structure(parcel_dict["Custom"], custom_example)
+
     return parcel_dict
 
 
 def _check_keys(parcel_dict):
-
     required_keys = ["maps", "nodes", "regions"]
 
     return all(key in parcel_dict[list(parcel_dict)[0]] for key in required_keys)
+
+
+# Checks the structure of nodes and regions
+def _check_custom_structure(custom_parcel, custom_example):
+    example_msg = f"Refer to example: {custom_example}"
+
+    if "nodes" in custom_parcel:
+        "numpy.ndarray"
+        if not (isinstance(custom_parcel.get("nodes"), (list, np.ndarray)) and list(custom_parcel.get("nodes"))):
+            raise TypeError(
+                "The 'nodes' sub-key must be a non-empty list or numpy array containing the node labels. "
+                f"{example_msg}"
+            )
+
+        if not all(isinstance(element, str) for element in custom_parcel["nodes"]):
+            raise TypeError(
+                "All elements in the 'nodes' sub-key's list or numpy array must be a string. " f"{example_msg}"
+            )
+
+    if "regions" in custom_parcel:
+        if not (custom_parcel.get("regions") and isinstance(custom_parcel.get("regions"), dict)):
+            raise TypeError(
+                "The 'regions' sub-key must be a non-empty dictionary containing the regions/networks "
+                f"labels. {example_msg}"
+            )
+
+        if not all(isinstance(key, str) for key in custom_parcel["regions"]):
+            raise TypeError(
+                f"All first level keys in the 'regions' sub-key's dictionary must be strings. {example_msg}"
+            )
+
+        regions = custom_parcel["regions"].values()
+        if not all([all([hemisphere in region.keys() for hemisphere in ["lh", "rh"]]) for region in regions]):
+            raise KeyError(
+                "All second level keys in the 'regions' sub-key's dictionary must contain 'lh' and 'rh'. "
+                f"{example_msg}"
+            )
+
+        if not _check_custom_hemisphere_dicts(regions):
+            raise TypeError(
+                "Each 'lh' and 'rh' sub-key in the 'regions' sub-key's dictionary must contain a list of integers or "
+                f"range of node indices. {example_msg}"
+            )
+
+
+# Ensures the proper structure for the hemisphere dictionary
+def _check_custom_hemisphere_dicts(regions):
+    # For the left and right hemisphere sub-keys, check that they contain a list or range
+    # Only check if each element of a list is an integer since range is guaranteed to be a sequence of integers already
+    return all(
+        isinstance(item[key], range)
+        or (isinstance(item[key], list) and all(isinstance(element, int) for element in item[key]))
+        for item in regions
+        for key in ["lh", "rh"]
+    )
 
 
 # Special handling for region names in AAL "3v2"

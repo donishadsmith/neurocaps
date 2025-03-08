@@ -13,6 +13,11 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.23.3] - 2025-03-08
+### ✨ Enhancement
+- Improved error handling for custom parcel approaches. The structure of the sub-keys are validated to prevent errors
+due to incorrect structure down the pipeline.
+
 ## [0.23.2] - 2025-03-06
 ### ♻ Changed
 - Minor improvements to __str__ call for clarity.

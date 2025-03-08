@@ -278,8 +278,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     The recognized sub-keys for the "Custom" parcellation approach includes:
 
     - "maps": Directory path containing the parcellation in a supported format (e.g., .nii or .nii.gz for NifTI).
-    - "nodes": A list of all node labels arranged in ascending order based on their numerical IDs from the parcellation.
-      The 0th index should contain the label corresponding to the lowest, non-background numerical ID.
+    - "nodes": A list or numpy array of all node labels arranged in ascending order based on their numerical IDs from
+      the parcellation. The 0th index should contain the label corresponding to the lowest, non-background numerical ID.
     - "regions": A dictionary defining major brain regions or networks, with each region containing "lh"
       (left hemisphere) and "rh" (right hemisphere) sub-keys listing node indices.
 
