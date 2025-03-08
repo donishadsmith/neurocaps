@@ -21,6 +21,9 @@ Testing with custom parcellations was done using the HCPex parcellation[^2] [^3]
 (Human Connectome Project) parcellation, which adds 66 subcortical areas. This original atlas can be downloaded from
 https://github.com/wayalan/HCPex.
 
+The "nilearn_data" and "neuromaps-data" files are the ones normally fetched by nilearn and neuromaps. They are included
+in the repository so that tests don’t have to download these files every time they run.
+
 # References
 [^1]: Laumann, T. O., Gordon, E. M., Adeyemo, B., Snyder, A. Z., Joo, S. J., Chen, M. Y., Gilmore, A. W., McDermott, K. B., Nelson, S. M., Dosenbach, N. U., Schlaggar, B. L., Mumford, J. A., Poldrack, R. A., & Petersen, S. E. (2015). Functional system and areal organization of a highly sampled individual human brain. Neuron, 87(3), 657–670. https://doi.org/10.1016/j.neuron.2015.06.037
 

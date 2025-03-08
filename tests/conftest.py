@@ -1,4 +1,5 @@
 import logging, os, shutil, sys, tempfile
+from pathlib import Path
 
 logging.basicConfig(
     level=logging.INFO,
@@ -54,3 +55,20 @@ def set_logging_level(request):
         logging.getLogger().setLevel(logging.INFO)
 
     yield
+
+
+def create_data_directories():
+    """Function to copy nilearn and neuromaps data to home directory."""
+    curr_dir = os.path.join(os.path.dirname(__file__), "data")
+
+    target_nilearn = Path("~/nilearn_data").expanduser()
+    if not target_nilearn.is_dir():
+        shutil.copytree(os.path.join(curr_dir, "nilearn_data"), target_nilearn)
+
+    target_neuromaps = Path("~/neuromaps-data").expanduser()
+    if not target_neuromaps.is_dir():
+        shutil.copytree(os.path.join(curr_dir, "neuromaps-data"), target_neuromaps)
+
+
+# Use function immediately on import
+create_data_directories()

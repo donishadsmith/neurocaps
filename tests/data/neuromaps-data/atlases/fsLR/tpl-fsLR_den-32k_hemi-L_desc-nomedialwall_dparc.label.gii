@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE GIFTI SYSTEM "http://www.nitrc.org/frs/download.php/115/gifti.dtd">
+<GIFTI Version="1" NumberOfDataArrays="1"><MetaData><MD><Name>AnatomicalStructurePrimary</Name><Value>CortexLeft</Value></MD><MD><Name>Caret-Version</Name><Value>5.65</Value></MD><MD><Name>Date</Name><Value>2012-11-13T05:25:24</Value></MD><MD><Name>UniqueID</Name><Value>{1fbd4629-1f40-4e61-a530-3f24c4dd18b4}</Value></MD><MD><Name>comment</Name><Value>Deformed from: CCNMD_MyelinMapping.L.Atlas_Cortex_ROI.164k_fs_LR.func.gii
+Deformed with: 164k_fs_LR232k_fs_LR.L.deform_map
+
+Appended File: /media/2TBB/MyelinMapping_Project/CommonFiles/FS_LR/fsaverage.L+R.MedialWall.164k_fs_LR.metric
+Deformed from: fsaverage.L.ProbabilisticArchitectonic.164k_fs_L.metric
+Deformed with: fsaverage.L.registered-to-fs_LR.164k_fs_LR.deform_map
+Appended File: /Users/vanessen/BRAIN_MAP_DATA/PALS_B12_HUMAN/FREESURFER-to-PALS/FREESURFER_AVG-to-PALS/FS_AVERAGE/FS_LR/fsaverage.R.ProbabilisticArchitectonic.164k_fs_LR.metric
+Deformed from: fsaverage.R.ProbabilisticArchitectonic.164k_fs_R.metric
+Deformed with: fsaverage.R.registered-to-fs_LR.164k_fs_LR.deform_map</Value></MD><MD><Name>encoding</Name><Value>XML_BASE64_GZIP</Value></MD></MetaData><LabelTable><Label Key="0" Red="1.0" Green="1.0" Blue="1.0" Alpha="0.0">???</Label></LabelTable><DataArray Intent="NIFTI_INTENT_LABEL" DataType="NIFTI_TYPE_INT32" ArrayIndexingOrder="RowMajorOrder" Dimensionality="1" Encoding="GZipBase64Binary" Endian="LittleEndian" ExternalFileName="" ExternalFileOffset="0" Dim0="32492"><MetaData><MD><Name>Description</Name><Value>Multiplied -1.0 by Atlas_Cortex_ROI
+Deformed with: 164k_fs_LR232k_fs_LR.L.deform_map</Value></MD><MD><Name>Name</Name><Value>deformed_Atlas_Cortex_ROI</Value></MD><MD><Name>UniqueID</Name><Value>{75dd580c-28b9-4aff-b96a-2b3e5ebf0b26}</Value></MD><MD><Name>column-color-mapping</Name><Value>-1.0 1.0</Value></MD><MD><Name>column-threshold</Name><Value>0.0 0.0</Value></MD></MetaData><CoordinateSystemTransformMatrix><DataSpace>NIFTI_XFORM_UNKNOWN</DataSpace><TransformedSpace>NIFTI_XFORM_UNKNOWN</TransformedSpace><MatrixData>  1.000000   0.000000   0.000000   0.000000
+  0.000000   1.000000   0.000000   0.000000
+  0.000000   0.000000   1.000000   0.000000
+  0.000000   0.000000   0.000000   1.000000</MatrixData></CoordinateSystemTransformMatrix><Data>eJzt19tqIzEQRdH2//90ngzGxLa6dakq9TqwGEhA2koCkzyO43h8cHz53DeVd+W9lWTd3d/fMu+qs93etPtbKm6Hd1R/g/b1q9hd7edc6/hV+BnI3pi5L2tbxt/dsv1+nKkny9+wGTp+NcxuyX73jIaIe1ffeea+3jvP3nX1viv3nL3r6h2t92Q8+9cdM87tPfP97JHnjToL2FvvovsBILvXRbdc7a7S/t+im872Zm1uWXRja2d079npu962qrFnd2nK1NO7DB0ZGkZ0jFi1t49Y9jtX3rfqrhX3zL5j5vmzzh61ma0jzxt1VoYzbO/1/v8PAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAd9Szx8u/M++5uuivLcBqz0V39Pbv8Ibojju1V+yu1lypt1prdEPlxueiO6p97bJ1Zfw+ZurJ0pKhI7oh8v6ouyPujfw6AxDraPz48fKxlkW/CwAAAAAAAAAAAAAAAAAAAAAAAIB+R4KG3uZPi+789Yazi24e9Y5sb+md/ph23Wuaq/VGdI9alc6ZrSuXve9sY/Sydr0vY5OZmZmZ7bGVf4fSZ+fv3Y7v2u1Nu7znfdE9d/+eVH9D5f6q7RW7qzVX7Y3uaG2NbtihEQAAAAAAAAAAAAAAAAAA2Ncfd/F0AQ==</Data></DataArray></GIFTI>
