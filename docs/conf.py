@@ -12,6 +12,7 @@
 #
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath(".."))
 sys.path.insert(0, os.path.abspath("sphinxext"))
 
@@ -24,6 +25,7 @@ copyright = "2025, neurocaps developers"
 author = "Donisha Smith"
 
 import neurocaps
+
 # The full version, including alpha/beta/rc tags
 release = neurocaps.__version__
 
@@ -42,7 +44,8 @@ extensions = [
     "sphinx.ext.linkcode",
     "sphinx_rtd_theme",
     "myst_parser",
-    "sphinx_gallery.load_style"
+    "sphinx_copybutton",
+    "sphinx_gallery.load_style",
 ]
 
 # Generate the API documentation when building
@@ -87,16 +90,45 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "_utils/*"]
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = "sphinx_rtd_theme"
+html_theme = "pydata_sphinx_theme"
+
+html_theme_options = {
+    "logo": {
+        "text": "neurocaps",
+    },
+    "back_to_top_button": True,
+    "navbar_start": ["navbar-logo", "version-switcher"],
+    "switcher": {
+        "json_url": "https://raw.githubusercontent.com/donishadsmith/neurocaps/stable/docs/_static/versions.json",
+        "version_match": release
+    },
+    "header_links_before_dropdown": 7,
+    "secondary_sidebar_items": ["page-toc"],
+    "navbar_align": "content",
+    "navbar_persistent": [],
+}
+
+# Remove primary sidebar for certain pages
+html_sidebars = {
+    "installation": [],
+    "bids": [],
+    "parcellations": [],
+    "outputs": [],
+    "logging": [],
+    "contributing": [],
+    "changelog": [],
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
+
 def setup(app):
     app.add_css_file("custom.css")
     app.add_css_file("theme_overrides.css")
+
 
 # The following is used by sphinx.ext.linkcode to provide links to github
 linkcode_resolve = make_linkcode_resolve(

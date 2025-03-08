@@ -1,5 +1,7 @@
 sphinx
 sphinx-gallery
 sphinx_rtd_theme
+sphinx-copybutton
+pydata_sphinx_theme
 myst_parser
 neurocaps
