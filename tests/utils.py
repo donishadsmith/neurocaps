@@ -13,6 +13,7 @@ class Parcellation:
     @lru_cache(maxsize=4)
     def get_aal(object, version, n_subs=10):
         n_rois = 166 if version == "3v2" else 116
+
         if object == "parcellation":
             aal_parcel = TimeseriesExtractor(parcel_approach={"AAL": {"version": version}}).parcel_approach
             return aal_parcel
@@ -123,6 +124,7 @@ def add_non_steady(bids_dir, pipeline_name, n):
 
     n_columns = 31 + len(mask_names)
     confound_df = pd.read_csv(confounds_file, sep="\t").iloc[:, :n_columns]
+
     if n > 0:
         for i in range(n):
             colname = f"non_steady_state_outlier_0{i}" if i < 10 else f"non_steady_state_outlier_{i}"
@@ -180,6 +182,7 @@ def check_logs(log_file, phrase, subjects):
         filtered_lines = [line for line in lines if phrase in line]
 
     assert len(filtered_lines) > 0
+
     logged_subjects = [re.search(r"SUBJECT:\s*(\d+)\s*\|", line).group(1) for line in filtered_lines]
     assert all([subject in logged_subjects for subject in subjects])
 
@@ -220,13 +223,16 @@ def predict_labels(timeseries, cap_analysis, standardize, group, runs=[1, 2, 3])
     """
     labels = None
     group_dict = cap_analysis.groups[group]
+
     for sub in timeseries:
         for run in timeseries[sub]:
             if int(run.split("run-")[-1]) in runs and sub in group_dict:
                 new_timeseries = copy.deepcopy(timeseries[sub][run])
+
                 if standardize:
                     new_timeseries -= cap_analysis.means[group]
                     new_timeseries /= cap_analysis.stdev[group]
+
                 if labels is None:
                     labels = cap_analysis.kmeans[group].predict(new_timeseries)
                 else:
@@ -271,6 +277,7 @@ def check_imgs(tmp_dir, values_dict, plot_type="map"):
         heatmap_files = glob.glob(os.path.join(tmp_dir.name, "*heatmap*.png"))
         assert any(["nodes" in x for x in heatmap_files])
         assert any(["regions" in x for x in heatmap_files])
+
         outer_files = glob.glob(os.path.join(tmp_dir.name, "*outer*.png"))
         assert any(["nodes" in x for x in outer_files])
         assert any(["regions" in x for x in outer_files])

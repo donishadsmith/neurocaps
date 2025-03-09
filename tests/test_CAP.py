@@ -111,6 +111,8 @@ def test_groups_without_cluster_selection(standardize):
         assert np.allclose(cap_analysis.concatenated_timeseries["A"], concatenated_timeseries["A"])
         assert np.allclose(cap_analysis.concatenated_timeseries["B"], concatenated_timeseries["B"])
 
+    # Demonstrates that label assignment using `.predict` method and paired with proper subject level standardization
+    # using the mean and std dev computed from the concatenated data produces the same labels stored in `.labels_`
     labels = predict_labels(timeseries, cap_analysis, standardize, "A")
     assert np.array_equal(labels, cap_analysis.kmeans["A"].labels_)
 
