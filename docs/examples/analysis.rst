@@ -6,6 +6,11 @@ to aid in the interpretation of results.
 
 Performing CAPs on All Subjects
 -------------------------------
+All information pertaining to CAPs (k-means models, activation vectors/cluster centroids, etc) are stored as attributes
+in the ``CAP`` class and this information is used by all methods in the class. These attributes are accessible via
+`properties <https://neurocaps.readthedocs.io/en/stable/generated/neurocaps.analysis.CAP.html#properties>`_.
+**Some properties can also be used as setters.**
+
 .. code-block:: python
 
     import numpy as np
@@ -35,10 +40,35 @@ Performing CAPs on All Subjects
     .. code-block:: none
 
         Clustering [GROUP: All Subjects]: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 9/9 [00:00<00:00, 20.38it/s]
-        2025-01-31 13:28:43,571 neurocaps.analysis.cap [INFO] [GROUP: All Subjects | METHOD: elbow] Optimal cluster size is 6.
+        2025-03-09 08:20:26,819 neurocaps.analysis.cap [INFO] [GROUP: All Subjects | METHOD: elbow] Optimal cluster size is 5.
 
 .. image:: embed/All_Subjects_elbow.png
     :width: 600
+
+
+``print`` can be used to return a string representation of the ``CAP`` class.
+
+.. code-block:: python
+
+    print(cap_analysis)
+
+.. rst-class:: sphx-glr-script-out
+
+    .. code-block:: none
+
+        Metadata:
+        ================================================
+        Parcellation Approach                           : Schaefer
+        Groups                                          : All Subjects
+        Number of Clusters                              : [2, 3, 4, 5, 6, 7, 8, 9, 10]
+        Cluster Selection Method                        : elbow
+        Optimal Number of Clusters                      : {'All Subjects': np.int64(5)}
+        CPU Cores Used for Clustering (Multiprocessing) : None
+        User-Specified Runs IDs Used for Clustering     : None
+        Concatenated Timeseries Bytes                   : 2400184 bytes
+        Standardized Concatenated Timeseries            : True
+        Co-Activation Patterns (CAPs)                   : {'All Subjects': 5}
+        Variance Explained by Clustering                : {'All Subjects': np.float64(0.02448526803307005)}
 
 Performing CAPs on Groups
 -------------------------
@@ -77,6 +107,10 @@ Performing CAPs on Groups
 
 Calculate Metrics
 -----------------
+Note that if ``standardize`` was set to True in ``CAP.get_caps``, then the column (ROI) means and standard deviations
+computed from the concatenated data used to obtain the CAPs are also used to standardize each subject in the timeseries
+data inputted into ``CAP.calculate_metrics``. This ensures proper CAP assignments for each subjects frames.
+
 .. code-block:: python
 
     df_dict = cap_analysis.calculate_metrics(

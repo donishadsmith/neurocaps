@@ -34,7 +34,7 @@ For example, placing an asterisk after cosine (cosine*) will utilize all paramet
         confound_names=confounds,
     )
 
-    bids_dir = os.path.join(dir, "ds000031_R1.0.4_ses001-022/ds000031_R1.0.4")
+    bids_dir = os.path.join(dir, "tests", "data", "dset")
 
     extractor.get_bold(
         bids_dir=bids_dir,
@@ -45,16 +45,40 @@ For example, placing an asterisk after cosine (cosine*) will utilize all paramet
         progress_bar=True,  # Parameter available in versions >= 0.21.5
     )
 
+``print`` can be used to return a string representation of the ``TimeseriesExtractor`` class.
+
+.. code-block:: python
+
+    print(extractor)
+
 .. rst-class:: sphx-glr-script-out
 
     .. code-block:: none
 
-        2025-01-31 13:21:59,933 neurocaps._utils.check_parcel_approach [WARNING] 'yeo_networks' not specified in `parcel_approach`. Defaulting to 7 networks.
-        2025-01-31 13:21:59,933 neurocaps._utils.check_parcel_approach [WARNING] 'resolution_mm' not specified in `parcel_approach`. Defaulting to 1mm.
-        2025-01-31 13:21:59,938 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: cosine*, a_comp_cor*, rot*.
-        2025-01-31 13:22:11,745 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] Preparing for Timeseries Extraction using [FILE: sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz].
-        2025-01-31 13:22:11,752 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] The following confounds will be used for nuisance regression: cosine_00, cosine_01, cosine_02, cosine_03, cosine_04, cosine_05, cosine_06, a_comp_cor00, a_comp_cor01, a_comp_cor02, a_comp_cor03, a_comp_cor04, a_comp_cor05, rot_x, rot_y, rot_z.
+        Metadata:
+        ===========================================================
+        Preprocessed Bold Template Space                           : MNI152NLin2009cAsym
+        Parcellation Approach                                      : Schaefer
+        Signal Clean Information                                   : {'masker_init': {'standardize': 'zscore_sample', 'detrend': True, 'low_pass': 0.15, 'high_pass': None, 'smoothing_fwhm': None}, 'use_confounds': True, 'confound_names': ['cosine*', 'a_comp_cor*', 'rot*'],
+        'n_acompcor_separate': None, 'dummy_scans': None, 'fd_threshold': None, 'dtype': None}
+        Task Information                                           : {'task': 'rest', 'session': '002', 'runs': None, 'condition': None, 'condition_tr_shift': 0, 'tr': 1.2, 'slice_time_ref': 0.0}
+        Number of Subjects                                         : 1
+        CPU Cores Used for Timeseries Extraction (Multiprocessing) : None
+        Subject Timeseries Byte Size                               : 16184 bytes
+
+.. rst-class:: sphx-glr-script-out
+
+    .. code-block:: none
+
+        2025-03-09 08:24:10,432 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: cosine*, a_comp_cor*, rot*.
+        2025-03-09 08:24:10,470 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] Preparing for Timeseries Extraction using [FILE: sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz].
+        2025-03-09 08:24:10,482 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] The following confounds will be used for nuisance regression: cosine_00, cosine_01, cosine_02, cosine_03, cosine_04, cosine_05, cosine_06, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05, rot_x, rot_y, rot_z.
         Processing Subjects: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:05<00:00,  5.73s/it]
+
+The extracted timeseries is stored as a nested dictionary and can be accessed using the ``subject_timeseries``
+property. The ``TimeseriesExtractor`` class has several
+`properties <https://neurocaps.readthedocs.io/en/stable/generated/neurocaps.extraction.TimeseriesExtractor.html#properties>`_.
+**Some properties can also be used as setters.**
 
 .. code-block:: python
 
