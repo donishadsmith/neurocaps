@@ -584,7 +584,7 @@ def _get_contiguous_ends(data):
     sample_mask = np.array(data.sample_mask)
     # Diff array of sample mask: [0,1,0,-1,0,1,0,-1,0]
     # Indices not 0: [1,3,5,7]
-    # Since diff is one less the indx of the array, add + 1 to each element to obtain transition indxs
+    # Since diff is one less the last indx of the original array, add + 1 to each element to obtain transition indxs
     # from sample mask: [2,4,6,8]
     split_indices = np.where(np.diff(sample_mask) != 0)[0] + 1
     # Split into groups of contiguous indices: ([0,1], [2,3], [4,5], [6,7], [8,9])

@@ -1489,7 +1489,7 @@ class CAP(_CAPGetter):
                         for x in list(itertools.product(["LH", "RH"], self._parcel_approach["Custom"]["regions"]))
                     ]
 
-            #  Generate plot for each group
+            # Generate plot for each group
             input_keys = dict(
                 group=group,
                 plot_dict=plot_dict,
@@ -1503,7 +1503,7 @@ class CAP(_CAPGetter):
                 parcellation_name=parcellation_name,
             )
 
-            #  Generate plot for each group
+            # Generate plot for each group
             if plot_option == "outer_product":
                 self._generate_outer_product_plots(**input_keys, subplots=subplots)
             elif plot_option == "heatmap":
