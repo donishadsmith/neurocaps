@@ -15,8 +15,8 @@ neurocaps is a Python package for performing Co-activation Patterns (CAPs) analy
 data (resting-state & task-based). CAPs identifies recurring brain states through k-means clustering of BOLD timeseries
 data [^1].
 
-**Note:** neurocaps is most optimized for fMRI data preprocessed with fMRIPrep and assumes the data is BIDs compliant.
-Refer to [neurocaps' BIDS Structure and Entities Documentation](https://neurocaps.readthedocs.io/en/stable/bids.html)
+**Note:** neurocaps is most optimized for fMRI data preprocessed with [fMRIPrep](https://fmriprep.org/en/stable/) and
+assumes the data is BIDs compliant. Refer to [neurocaps' BIDS Structure and Entities Documentation](https://neurocaps.readthedocs.io/en/stable/bids.html)
 for additional information.
 
 ## Installation
