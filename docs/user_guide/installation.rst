@@ -32,6 +32,7 @@ Installation from Source (Development Version)
 To install the latest development version from the source, there are two options:
 
 1. Install directly via pip:
+
 .. code-block:: bash
 
     pip install git+https://github.com/donishadsmith/neurocaps.git
@@ -57,10 +58,11 @@ To include pybids when installing the development version on Windows, use:
 
 Docker
 ------
-If `Docker <https://docs.docker.com/>`_` is available on your system, you can use the neurocaps Docker image, which
+If `Docker <https://docs.docker.com/>`_ is available on your system, you can use the neurocaps Docker image, which
 includes the demos and configures a headless display for VTK.
 
 To pull the Docker image:
+
 .. code-block:: bash
 
     docker pull donishadsmith/neurocaps && docker tag donishadsmith/neurocaps neurocaps
