@@ -439,7 +439,7 @@ dynamic functionality methods.
 resting-state or task-based functional connectivity.
 
 ## Contributing
-Please refer the [contributing guidelines](https://github.com/donishadsmith/neurocaps/blob/test/CONTRIBUTING.md) on how to contribute to neurocaps.
+Please refer the [contributing guidelines](https://neurocaps.readthedocs.io/en/stable/contributing.html) on how to contribute to neurocaps.
 
 ## References
 [^1]: Liu, X., Zhang, N., Chang, C., & Duyn, J. H. (2018). Co-activation patterns in resting-state fMRI signals. NeuroImage, 180, 485–494. https://doi.org/10.1016/j.neuroimage.2018.01.041
