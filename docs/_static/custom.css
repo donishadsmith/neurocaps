@@ -45,3 +45,17 @@ img, a img {
     border: none !important;
     box-shadow: none !important;
 }
+
+/* Convert badges to inline blocks and set margin, font size, and line height to 0 to remove the fix spacing/
+blue underscore issue */
+.reference.external.image-reference {
+    display: inline-block;
+    margin: 0;
+    font-size: 0;
+    line-height: 0;
+  }
+
+.reference.external.image-reference img {
+    margin: 0;
+    display: inline-block;
+  }
