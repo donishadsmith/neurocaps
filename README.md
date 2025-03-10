@@ -427,7 +427,7 @@ Clustering [GROUP: All Subjects]: 100%|█████████████�
 | CAP-2 | 0.489177 | 0.510823 |
 
 ## Acknowledgements
-Neurocaps relies on several popular data processing, machine learning, neuroimaging, and visualization
+neurocaps relies on several popular data processing, machine learning, neuroimaging, and visualization
 [packages](https://neurocaps.readthedocs.io/en/stable/#dependencies).
 
 Additionally, some foundational concepts in this package take inspiration from features or design patterns implemented

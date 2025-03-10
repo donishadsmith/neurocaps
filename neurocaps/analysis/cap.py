@@ -263,11 +263,11 @@ class CAP(_CAPGetter):
 
             }
 
-    cosine_similarity: :obj: `dict` or :obj:`None`
+    cosine_similarity: :obj:`dict` or :obj:`None`
         A dictionary mapping each group to their CAPs and their associated "High Amplitude" and "Low Amplitude"
         list containing the cosine similarities. Each group contains a "Regions" key, consisting of a list of
         regions or networks. The position of the cosine similarities in the "High Amplitude" and "Low Amplitude"
-        lists, corresponds to the region in the "Regions" list (Cosine similarity value in 0th index belongs to
+        lists, corresponds to the region in the "Regions" list (cosine similarity value in 0th index belongs to
         region in 0th index while the value in the 10th index belongs to the region in the 10th index).
 
         ::

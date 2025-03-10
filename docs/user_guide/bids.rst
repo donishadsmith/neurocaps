@@ -55,6 +55,7 @@ entity in their names. Files in the raw directory, require the "sub-" and "task-
 **Examples of minimum required naming scheme for each file:**
 
 - Files in derivatives folder
+
 ::
 
     "sub-01_task-rest_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
@@ -63,6 +64,7 @@ entity in their names. Files in the raw directory, require the "sub-" and "task-
     "sub-01_task-rest_desc-confounds_timeseries.json"
 
 - Files in the raw directory
+
 ::
 
     "sub-01_task-rest_events.tsv"

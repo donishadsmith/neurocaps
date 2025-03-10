@@ -51,7 +51,7 @@ extensions = [
 
 # Generate the API documentation when building
 autosummary_generate = True
-autodoc_default_options = {"members": True, "inherited-members": True}
+autodoc_default_options = {"members": False, "inherited-members": False}
 numpydoc_show_class_members = False
 autoclass_content = "both"
 autodoc_member_order = "bysource"
