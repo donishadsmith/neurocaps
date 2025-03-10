@@ -46,6 +46,7 @@ extensions = [
     "myst_parser",
     "sphinx_copybutton",
     "sphinx_gallery.load_style",
+    "sphinxcontrib.redirects",
 ]
 
 # Generate the API documentation when building
@@ -100,9 +101,9 @@ html_theme_options = {
     "navbar_start": ["navbar-logo", "version-switcher"],
     "switcher": {
         "json_url": "https://raw.githubusercontent.com/donishadsmith/neurocaps/stable/docs/_static/versions.json",
-        "version_match": release
+        "version_match": release,
     },
-    "header_links_before_dropdown": 7,
+    "header_links_before_dropdown": 6,
     "secondary_sidebar_items": ["page-toc"],
     "navbar_align": "content",
     "navbar_persistent": [],
@@ -110,11 +111,6 @@ html_theme_options = {
 
 # Remove primary sidebar for certain pages
 html_sidebars = {
-    "installation": [],
-    "bids": [],
-    "parcellations": [],
-    "outputs": [],
-    "logging": [],
     "contributing": [],
     "changelog": [],
 }
@@ -123,6 +119,16 @@ html_sidebars = {
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+
+redirects = {
+    "installation.html": "user_guide/installation.html",
+    "bids.html": "user_guide/bids.html",
+    "parcellations.html": "user_guide/parcellations.html",
+    "logging.html": "user_guide/logging.html",
+    "outputs.html": "user_guide/outputs.html",
+}
+
+redirects_file = "redirects"
 
 
 def setup(app):

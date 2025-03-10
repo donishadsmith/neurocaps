@@ -4,12 +4,8 @@
    :hidden:
    :maxdepth: 2
 
-   installation
+   user_guide
    api
-   bids
-   parcellations
    examples/examples
-   outputs
-   logging
    contributing
    changelog
