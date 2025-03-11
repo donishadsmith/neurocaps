@@ -1,0 +1,294 @@
+Tutorial 7: Using Lateralized Custom Parcellations
+==================================================
+While neurocaps leverages Nilearn's fetch functions for the `Schaefer <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_schaefer_2018.html>`_
+and `AAL <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_aal.html>`_, additional
+lateralized parcellations can be manually defined. For custom parcellation approaches, three sub-keys are
+recognized: "maps", "nodes", and "regions". For additional details on these sub-keys, refer to the
+`"Custom Parcellations" sub-section <https://neurocaps.readthedocs.io/en/stable/user_guide/parcellations.html#custom-parcellations>`_.
+
+For this demonstration, the extended Human Connectome Project multimodal parcellation (HCPex) [1]_ [2]_ from
+`wayalan's Github <https://github.com/wayalan/HCPex/>`_ will be used.
+
+.. code-block:: python
+
+    # Fetching atlas NiFTI image and labels from Github
+    import os, subprocess, sys
+
+    demo_dir = "neurocaps_demo"
+    os.makedirs(demo_dir, exist_ok=True)
+
+    if sys.platform != "win32":
+        cmd = [
+            ["wget", "-q", "-P", demo_dir, "https://github.com/wayalan/HCPex/raw/main/HCPex_v1.1/HCPex_LookUpTable.txt"],
+            ["wget", "-q", "-P", demo_dir, "https://github.com/wayalan/HCPex/raw/main/HCPex_v1.1/HCPex.nii.gz"],
+        ]
+    else:
+        cmd = [
+            [
+                "curl",
+                "-L",
+                "-o",
+                f"{demo_dir}\\HCPex_LookUpTable.txt",
+                "https://github.com/wayalan/HCPex/raw/main/HCPex_v1.1/HCPex_LookUpTable.txt",
+            ],
+            [
+                "curl",
+                "-L",
+                "-o",
+                f"{demo_dir}\\HCPex.nii.gz",
+                "https://github.com/wayalan/HCPex/raw/main/HCPex_v1.1/HCPex.nii.gz",
+            ],
+        ]
+
+    for command in cmd:
+        subprocess.run(command, check=True)
+
+
+The code below fetches a single subject from an `OpenNeuro dataset <https://openneuro.org/datasets/ds005381/versions/1.0.0>`_
+preprocessed with fMRIPrep. Downloading data from OpenNeuro requires ``pip install openneuro-py ipywidgets`` or
+``pip install neurocaps[demo]``.
+
+.. code-block:: python
+
+    # [Dataset] doi: doi:10.18112/openneuro.ds005381.v1.0.0
+
+    from openneuro import download
+
+    # Include the run-1 and run-2 data of a single subject
+    include = [
+        "dataset_description.json",
+        "sub-0004/ses-2/func/*run-[12]*events*",
+        "derivatives/fmriprep/sub-0004/fmriprep/sub-0004/ses-2/func/*run-[12]*confounds_timeseries*",
+        "derivatives/fmriprep/sub-0004/fmriprep/sub-0004/ses-2/func/*run-[12]_space-MNI152NLin*preproc_bold*",
+        "derivatives/fmriprep/sub-0004/fmriprep/sub-0004/ses-2/func/*run-[12]_space-MNI152NLin*brain_mask*",
+    ]
+
+    download(
+        dataset="ds005381",
+        include=include,
+        target_dir=demo_dir,
+        verify_hash=False,
+    )
+
+
+The first level of the pipeline directory must also have a dataset_description.json file for querying purposes.
+
+.. code-block:: python
+
+    import json
+
+    desc = {
+        "Name": "fMRIPrep - fMRI PREProcessing workflow",
+        "BIDSVersion": "1.0.0",
+        "DatasetType": "derivative",
+        "GeneratedBy": [{"Name": "fMRIPrep", "Version": "20.2.0", "CodeURL": "https://github.com/nipreps/fmriprep"}],
+    }
+
+    with open("neurocaps_demo/derivatives/fmriprep/dataset_description.json", "w", encoding="utf-8") as f:
+        json.dump(desc, f)
+
+
+Extracting Timeseries
+---------------------
+For ``TimeseriesExtractor.get_bold``, only the "maps" sub-key (the location of the parcellation) needs to be defined.
+
+.. code-block:: python
+
+    # Creating custom parcel approach dictionary and extracting timeseries
+    parcel_approach = {"Custom": {}}
+
+    parcel_approach["Custom"]["maps"] = os.path.join(demo_dir, "HCPex.nii.gz")
+
+    from neurocaps.extraction import TimeseriesExtractor
+
+    extractor = TimeseriesExtractor(
+        space="MNI152NLin6Asym",
+        parcel_approach=parcel_approach,
+        standardize="zscore_sample",
+        use_confounds=True,
+        confound_names="basic",
+        detrend=True,
+        low_pass=0.15,
+        high_pass=None,
+        dummy_scans=5,
+        fd_threshold={"threshold": 0.5, "outlier_percentage": 0.30, "use_sample_mask": True, "interpolate": False},
+    )
+
+    # Using chaining to extract timeseries data and save dictionary as a pickle file
+    extractor.get_bold(
+        bids_dir="neurocaps_demo",
+        session="2",
+        task="DET",
+        condition="late",
+        condition_tr_shift=2,
+        slice_time_ref=0.5,
+        n_cores=None,
+        flush=True,
+        tr=2,
+        verbose=True,
+    ).timeseries_to_pickle(output_dir=demo_dir, "openneuro_data.pkl")
+
+.. rst-class:: sphx-glr-script-out
+
+    .. code-block:: none
+
+        2025-03-11 00:05:49,477 neurocaps._utils.check_parcel_approach [WARNING] The following sub-keys haven't been detected ['nodes', 'regions']. These labels are not needed for timeseries extraction but are needed for plotting.
+        2025-03-11 00:05:49,477 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: cosine*, trans_x, trans_x_derivative1, trans_y, trans_y_derivative1, trans_z, trans_z_derivative1, rot_x, rot_x_derivative1, rot_y, rot_y_derivative1, rot_z, rot_z_derivative1, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05.
+        2025-03-11 00:05:51,017 neurocaps.extraction.timeseriesextractor [INFO] BIDS Layout: ...neurocaps\demos\neurocaps_demo | Subjects: 1 | Sessions: 1 | Runs: 2
+        2025-03-11 00:05:51,095 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-1_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
+        2025-03-11 00:05:51,125 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_x_derivative1, trans_y, trans_y_derivative1, trans_z, trans_z_derivative1, rot_x, rot_x_derivative1, rot_y, rot_y_derivative1, rot_z, rot_z_derivative1, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05.
+        2025-03-11 00:06:01,942 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Nuisance regression completed; extracting [CONDITION: late].
+        2025-03-11 00:06:01,976 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-2_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
+        2025-03-11 00:06:02,009 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_x_derivative1, trans_y, trans_y_derivative1, trans_z, trans_z_derivative1, rot_x, rot_x_derivative1, rot_y, rot_y_derivative1, rot_z, rot_z_derivative1, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05.
+        2025-03-11 00:06:12,606 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] Nuisance regression completed; extracting [CONDITION: late].
+
+
+For visualization methods in the ``TimeseriesExtractor`` and ``CAP`` classes, the nodes and regions need to be defined.
+Refer to the documentation for each function to determine which sub-keys are required, as some methods only need the
+"maps" sub-key, while others require the "nodes" and "regions" sub-keys.
+
+The following code defines the nodes and regions of the HCPex parcellation.
+
+.. code-block:: python
+
+    import joblib, pandas as pd
+
+    # Setting the "nodes"; needed for `TimeseriesExtractor.visualize_bold`; Getting nodes that don't correspond to
+    # background label
+    parcel_approach["Custom"]["nodes"] = pd.read_csv(
+        os.path.join(demo_dir, "HCPex_LookUpTable.txt"),
+        sep=None,
+        engine="python",
+    )["Label"].values[1:]
+
+    # Needed for many plotting methods; Setting the region names and their corresponding indices in the nodes list,
+    # in this case it is just the label id - 1
+    parcel_approach["Custom"]["regions"] = {
+        "Primary Visual": {"lh": [0], "rh": [180]},
+        "Early Visual": {"lh": [1, 2, 3], "rh": [181, 182, 183]},
+        "Dorsal Stream Visual": {"lh": range(4, 10), "rh": range(184, 190)},
+        "Ventral Stream Visual": {"lh": range(10, 17), "rh": range(190, 197)},
+        "MT+ Complex": {"lh": range(17, 26), "rh": range(197, 206)},
+        "SomaSens Motor": {"lh": range(26, 31), "rh": range(206, 211)},
+        "ParaCentral MidCing": {"lh": range(31, 40), "rh": range(211, 220)},
+        "Premotor": {"lh": range(40, 47), "rh": range(220, 227)},
+        "Posterior Opercular": {"lh": range(47, 52), "rh": range(227, 232)},
+        "Early Auditory": {"lh": range(52, 59), "rh": range(232, 239)},
+        "Auditory Association": {"lh": range(59, 67), "rh": range(239, 247)},
+        "Insula FrontalOperc": {"lh": range(67, 79), "rh": range(247, 259)},
+        "Medial Temporal": {"lh": range(79, 87), "rh": range(259, 267)},
+        "Lateral Temporal": {"lh": range(87, 95), "rh": range(267, 275)},
+        "TPO": {"lh": range(95, 100), "rh": range(275, 280)},
+        "Superior Parietal": {"lh": range(100, 110), "rh": range(280, 290)},
+        "Inferior Parietal": {"lh": range(110, 120), "rh": range(290, 300)},
+        "Posterior Cingulate": {"lh": range(120, 133), "rh": range(300, 313)},
+        "AntCing MedPFC": {"lh": range(133, 149), "rh": range(313, 329)},
+        "OrbPolaFrontal": {"lh": range(149, 158), "rh": range(329, 338)},
+        "Inferior Frontal": {"lh": range(158, 167), "rh": range(338, 347)},
+        "Dorsolateral Prefrontal": {"lh": range(167, 180), "rh": range(347, 360)},
+        "Subcortical Regions": {"lh": range(360, 393), "rh": range(393, 426)},
+    }
+
+    # Saving the dictionary as a pickle file for long-term storage
+    with open(os.path.join(demo_dir, "HCPex_dict.pkl"), "wb") as f:
+        joblib.dump(parcel_approach, f)
+
+
+Visualizing BOLD data
+---------------------
+
+.. code-block:: python
+
+    # Setting updated parcellation approach
+    extractor.parcel_approach = parcel_approach
+
+    extractor.visualize_bold(subj_id="0004", run=1, region="TPO", figsize=(5, 4), output_dir=demo_dir, filename="HCPex_TPO")
+
+.. image:: embed/HCPex_TPO.png
+    :width: 800
+
+
+Extracting CAPs
+---------------
+
+The following code uses ``CAP.get_bold`` to extract two CAPs.
+
+.. code-block:: python
+
+    from neurocaps.analyses import CAP
+
+    # Will use the setter method to set the parcel approach later since a parcel approach
+    # does not need to be defined for the `get_caps` method
+    cap_analysis = CAP(parcel_approach=None)
+
+    # Either method works
+    cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, n_clusters=2)
+
+    # Alternative approach using pickle file:
+    # cap_analysis.get_caps(subject_timeseries="openneuro_data.pkl", n_clusters=2)
+
+
+Surface Plotting with and without KNN Interpolation
+---------------------------------------------------
+
+For the following code, the CAPs will be plotted to surface space with and without KNN (K-Nearest Neighbors)
+interpolation. Some parcellations may have issues projecting from MNI space to fsLR space. The ``knn_dict`` parameter,
+which is available in both ``CAP.caps2niftis`` and ``CAP.caps2surf`` can be used to improve the visualization. The KNN
+method uses a reference atlas (either Schaefer or AAL) as a mask to determine the non-background voxels to interpolate
+prior to projecting from MNI to fsLR space. *Note, for this method, only the "maps" sub-key is required, the other
+sub-keys are optional*.
+
+.. code-block:: python
+
+    # Setting parcellation approach using pickle file
+    cap_analysis.parcel_approach = os.path.join(demo_dir, "HCPex_dict.pkl")
+
+    # Without KNN interpolation
+    cap_analysis.caps2surf(
+        size=(500, 100),
+        layout="row",
+        color_range=[-1, 1],
+        output_dir=demo_dir,
+        suffix_title="- No KNN Interpolation",
+        suffix_filename="original",
+    )
+
+    # With KNN interpolation
+    cap_analysis.caps2surf(
+        size=(500, 100),
+        layout="row",
+        color_range=[-1, 1],
+        knn_dict={"k": 5, "reference_atlas": "Schaefer"},
+        output_dir=demo_dir,
+        suffix_title="- With KNN Interpolation",
+        suffix_filename="KNN",
+    )
+
+
+.. image:: embed/All_Subjects_CAP-1_surface_original.png
+    :width: 1000
+
+
+.. image:: embed/All_Subjects_CAP-2_surface_original.png
+    :width: 1000
+
+
+.. rst-class:: sphx-glr-script-out
+
+    .. code-block:: none
+
+        2025-03-11 00:53:19,742 neurocaps.analysis.cap [WARNING] Defaulting to 1mm resolution for the Schaefer atlas since 'resolution_mm' was not specified in `knn_dict`.
+
+
+.. image:: embed/All_Subjects_CAP-1_surface_KNN.png
+    :width: 1000
+
+
+.. image:: embed/All_Subjects_CAP-2_surface_KNN.png
+    :width: 1000
+
+==========
+
+.. [1] Huang, CC., Rolls, E.T., Feng, J. et al. An extended Human Connectome Project multimodal parcellation atlas of the human cortex and subcortical areas. Brain Struct Funct 227, 763–778 (2022). https://doi.org/10.1007/s00429-021-02421-6
+
+.. [2] Huang, C.-C., Rolls, E. T., Hsu, C.-C. H., Feng, J., & Lin, C.-P. (2021). Extensive Cortical Connectivity of the Human Hippocampal Memory System: Beyond the “What” and “Where” Dual Stream Model. Cerebral Cortex, 31(10), 4652–4669. https://doi.org/10.1093/cercor/bhab113

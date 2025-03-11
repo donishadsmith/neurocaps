@@ -13,6 +13,7 @@ Jupyter Notebook demos using either simulated data or data obtained from OpenNeu
    standardize
    dtype
    transition
+   custom
 
 .. raw:: html
 
@@ -110,6 +111,23 @@ Jupyter Notebook demos using either simulated data or data obtained from OpenNeu
 .. raw:: html
 
       <div class="sphx-glr-thumbnail-title">Tutorial 6: Generating a Transition Probability Matrix <code>transition_matrix</code></div>
+      </a>
+      </div>
+
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbcontainer" tooltip="Using lateralized parcellations other than the Schaefer and AAL parcelations.">
+      <a href="custom.html" style="display: block; text-align: center;">
+
+.. only:: html
+
+   .. image:: embed/thumbnail/All_Subjects_CAP-1_surface_embed_thumbnail.png
+      :align: center
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Tutorial 7: Using Lateralized Custom Parcellations</div>
       </a>
       </div>
 
