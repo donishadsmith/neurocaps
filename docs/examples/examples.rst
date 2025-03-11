@@ -19,7 +19,7 @@ Jupyter Notebook demos using either simulated data or data obtained from OpenNeu
 
    <div class="sphx-glr-thumbnails">
       <div class="sphx-glr-thumbcontainer" tooltip="Extract timeseries from preprocessed data, perform nuisance regression, visualize and serialize timeseries.">
-      <a href="extraction.html">
+      <a href="extraction.html" style="display: block; text-align: center;">
 
 .. only:: html
 
@@ -36,7 +36,7 @@ Jupyter Notebook demos using either simulated data or data obtained from OpenNeu
 .. raw:: html
 
       <div class="sphx-glr-thumbcontainer" tooltip="Perform Co-Activation Patterns (CAPs) analyses and generate CAP specific metrics and visualizations.">
-      <a href="analysis.html">
+      <a href="analysis.html" style="display: block; text-align: center;">
 
 .. only:: html
 
@@ -53,7 +53,7 @@ Jupyter Notebook demos using either simulated data or data obtained from OpenNeu
 .. raw:: html
 
       <div class="sphx-glr-thumbcontainer" tooltip="Merge the timeseries data of the same subjects across different dictionaries.">
-      <a href="merge.html">
+      <a href="merge.html" style="display: block; text-align: center;">
 
 .. only:: html
 
@@ -69,7 +69,7 @@ Jupyter Notebook demos using either simulated data or data obtained from OpenNeu
 .. raw:: html
 
       <div class="sphx-glr-thumbcontainer" tooltip="Perform within-run standardization if not done at the time of extraction.">
-      <a href="standardize.html">
+      <a href="standardize.html" style="display: block; text-align: center;">
 
 .. only:: html
 
@@ -86,7 +86,7 @@ Jupyter Notebook demos using either simulated data or data obtained from OpenNeu
 .. raw:: html
 
       <div class="sphx-glr-thumbcontainer" tooltip="Change the dtype of each subject's NumPy array to reduce memory usage.">
-      <a href="dtype.html">
+      <a href="dtype.html" style="display: block; text-align: center;">
 
 .. only:: html
 
@@ -102,7 +102,7 @@ Jupyter Notebook demos using either simulated data or data obtained from OpenNeu
 .. raw:: html
 
       <div class="sphx-glr-thumbcontainer" tooltip="Create an averaged transition probability matrix and heatmap from individual-level transition probabilities.">
-      <a href="transition.html">
+      <a href="transition.html" style="display: block; text-align: center;">
 
 .. only:: html
 
