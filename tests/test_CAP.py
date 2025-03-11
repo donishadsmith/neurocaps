@@ -28,7 +28,7 @@ def test_without_groups_and_without_cluster_selection(standardize):
 
     cap_analysis = CAP()
 
-    # No error; Testing __call__
+    # No error; Testing __str__
     print(cap_analysis)
 
     cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=2, standardize=standardize)
@@ -38,7 +38,7 @@ def test_without_groups_and_without_cluster_selection(standardize):
     assert cap_analysis.caps["All Subjects"]["CAP-2"].shape == (100,)
     assert len(cap_analysis.caps["All Subjects"]) == len(np.unique(cap_analysis.kmeans["All Subjects"].labels_))
 
-    # No error; Testing __call__
+    # No error; Testing __str__
     print(cap_analysis)
 
     # All subjects in subject table

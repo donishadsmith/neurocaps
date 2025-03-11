@@ -45,8 +45,8 @@ For this demonstration, the extended Human Connectome Project multimodal parcell
 
 
 The code below fetches a single subject from an `OpenNeuro dataset <https://openneuro.org/datasets/ds005381/versions/1.0.0>`_
-preprocessed with fMRIPrep. Downloading data from OpenNeuro requires ``pip install openneuro-py ipywidgets`` or
-``pip install neurocaps[demo]``.
+preprocessed with `fMRIPrep <https://fmriprep.org/en/stable/>`_. Downloading data from OpenNeuro requires
+``pip install openneuro-py ipywidgets`` or ``pip install neurocaps[demo]``.
 
 .. code-block:: python
 
@@ -69,6 +69,23 @@ preprocessed with fMRIPrep. Downloading data from OpenNeuro requires ``pip insta
         target_dir=demo_dir,
         verify_hash=False,
     )
+
+
+.. rst-class:: sphx-glr-script-out
+
+    .. code-block:: none
+
+        👋 Hello! This is openneuro-py 2024.2.0. Great to see you! 🤗
+
+        👉 Please report problems 🤯 and bugs 🪲 at
+            https://github.com/hoechenberger/openneuro-py/issues
+
+        🌍 Preparing to download ds005381 …
+
+        📥 Retrieving up to 31 files (5 concurrent downloads).
+        ✅ Finished downloading ds005381.
+
+        🧠 Please enjoy your brains.
 
 
 The first level of the pipeline directory must also have a dataset_description.json file for querying purposes.
@@ -126,7 +143,7 @@ For ``TimeseriesExtractor.get_bold``, only the "maps" sub-key (the location of t
         flush=True,
         tr=2,
         verbose=True,
-    ).timeseries_to_pickle(output_dir=demo_dir, "openneuro_data.pkl")
+    ).timeseries_to_pickle(output_dir=demo_dir, filename="openneuro_data.pkl")
 
 .. rst-class:: sphx-glr-script-out
 
@@ -215,7 +232,7 @@ The following code uses ``CAP.get_bold`` to extract two CAPs.
 
 .. code-block:: python
 
-    from neurocaps.analyses import CAP
+    from neurocaps.analysis import CAP
 
     # Will use the setter method to set the parcel approach later since a parcel approach
     # does not need to be defined for the `get_caps` method

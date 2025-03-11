@@ -4,7 +4,7 @@ from nilearn import datasets
 
 # Always check that AAL indices are sorted from lowest -> highest for future nilearn versions
 def test_aal_indices_ordering():
-    def check_order(version):
+    def check_aal_node_order(version):
         aal = datasets.fetch_atlas_aal(version=version)
         # Get atlas labels
         atlas = nib.load(aal["maps"])
@@ -19,4 +19,4 @@ def test_aal_indices_ordering():
     versions = ["3v2", "SPM12", "SPM8", "SPM5"]
 
     for version in versions:
-        check_order(version)
+        check_aal_node_order(version)

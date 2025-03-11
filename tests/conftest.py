@@ -1,18 +1,15 @@
 import logging, os, shutil, sys, tempfile
 from pathlib import Path
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(name)s [%(levelname)s] %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)],
-)
+# Assign null handler to root to reduce logged output when using `pytest -s`
+logging.getLogger().addHandler(logging.NullHandler())
 
 import pytest
 
 from .utils import get_paths
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(autouse=False, scope="module")
 def tmp_dir():
     """Create temporary directory for each test module."""
     temp_dir = tempfile.TemporaryDirectory()
@@ -38,23 +35,20 @@ def get_vars(tmp_dir):
     return get_paths(tmp_dir.name)
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=False, scope="session")
 def logger():
     """Logging fixture."""
-    yield logging.getLogger()
+    LG = logging.getLogger("Test_Monitor")
 
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter("%(asctime)s %(name)s [%(levelname)s] %(message)s")
 
-@pytest.fixture(autouse=True)
-def set_logging_level(request):
-    """Fixture to enable/disable logs."""
-    # Checks if function has the "enable_logs" marker
-    if not request.node.get_closest_marker("enable_logs"):
-        # Only critical logs enabled when marker not present
-        logging.getLogger().setLevel(logging.CRITICAL)
-    else:
-        logging.getLogger().setLevel(logging.INFO)
+    formatter = logging.Formatter("%(asctime)s %(name)s [%(levelname)s] %(message)s")
+    handler.setFormatter(formatter)
 
-    yield
+    LG.addHandler(handler)
+
+    yield LG
 
 
 def create_data_directories():

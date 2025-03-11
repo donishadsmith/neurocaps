@@ -1,13 +1,4 @@
 import copy, glob, os, re, shutil, sys
-
-import logging
-
-logging.basicConfig(
-    level=logging.CRITICAL,
-    format="%(asctime)s %(name)s [%(levelname)s] %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)],
-)
-
 import joblib, pytest, numpy as np, pandas as pd
 
 from neurocaps.extraction import TimeseriesExtractor
@@ -484,12 +475,12 @@ def test_basic_extraction(get_vars, parcel_approach, use_confounds, name):
         confound_names=["cosine*", "rot*"],
     )
 
-    # No error; Testing __call__
+    # No error; Testing __str__
     print(extractor)
 
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
 
-    # No error; Testing __call__
+    # No error; Testing __str__
     print(extractor)
 
     assert "01" in extractor._subject_ids
@@ -1527,6 +1518,8 @@ def test_append_subjects_with_different_run_ids(get_vars):
 
 
 def test_logging_redirection_sequential(get_vars, tmp_dir):
+    import logging
+
     bids_dir, _ = get_vars
 
     # Configure logger with FileHandler for specific module
@@ -1558,6 +1551,7 @@ def test_logging_redirection_sequential(get_vars, tmp_dir):
 
 
 def test_logging_redirection_parallel(get_vars, tmp_dir):
+    import logging
     from logging.handlers import QueueListener
     from multiprocessing import Manager
 
@@ -1605,3 +1599,5 @@ def test_logging_redirection_parallel(get_vars, tmp_dir):
     phrase = "The following confounds were not found:"
 
     check_logs(log_file, phrase, ["01", "02"])
+
+    logging.getLogger().addHandler(logging.NullHandler())
