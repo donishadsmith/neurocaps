@@ -1,43 +1,5 @@
-.document h2 {
-    font-size: 1.25em;
-}
-
-.wy-side-nav-search, .wy-nav-top {
-    background: rgb(0, 0, 0);
-}
-
-section {
-    text-align: left;
-}
-
-.note .reference,
-.note .external,
-.reference {
-    word-break: break-all;
-}
-
-.wy-nav-content {
-    max-width: none;
- }
-
-.sphx-glr-thumbcontainer {
-    text-align: left;
-}
-
 .sphx-glr-thumbnail-title {
-    font-size: 0.9em;
-    text-align: left;
-}
-
-.versionadded, .versionchanged {
-    border: 2px solid #28a745;
-    background-color: #eaf8f0;
-    color: #000000;
-    border-radius: 8px;
-    font-family: Arial, sans-serif;
-    font-size: 12px;
-    margin: 5px 0;
-    width: fit-content;
+    font-size: 0.9em !important;
 }
 
 img, a img {
@@ -49,13 +11,17 @@ img, a img {
 /* Convert badges to inline blocks and set margin, font size, and line height to 0 to remove the fix spacing/
 blue underscore issue */
 .reference.external.image-reference {
-    display: inline-block;
-    margin: 0;
-    font-size: 0;
-    line-height: 0;
-  }
+    display: inline-block !important;
+    margin: 0 !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+}
 
 .reference.external.image-reference img {
-    margin: 0;
-    display: inline-block;
-  }
+    margin: 0 !important;
+    display: inline-block !important;
+}
+
+.prev-next-title {
+    display: none !important;
+}

@@ -52,14 +52,13 @@ extensions = [
 # Generate the API documentation when building
 autosummary_generate = True
 autodoc_default_options = {"members": False, "inherited-members": False}
-numpydoc_show_class_members = False
+numpydoc_show_class_members = True
 autoclass_content = "both"
 autodoc_member_order = "bysource"
 autodoc_typehints = "none"
 
 # Remove module name in signature
 add_module_names = False
-smartquotes = False
 
 napoleon_google_docstring = False
 napoleon_numpy_docstring = True

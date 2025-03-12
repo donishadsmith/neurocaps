@@ -110,7 +110,7 @@ Jupyter Notebook demos using either simulated data or data obtained from OpenNeu
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbnail-title">Tutorial 6: Generating a Transition Probability Matrix <code>transition_matrix</code></div>
+      <div class="sphx-glr-thumbnail-title">Tutorial 6: Generating a Transition Probability Matrix With <code>transition_matrix</code></div>
       </a>
       </div>
 
