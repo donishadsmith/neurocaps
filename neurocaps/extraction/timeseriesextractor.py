@@ -126,10 +126,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
               when runs are flagged. If ``condition`` specified in ``self.get_bold``, only considers volumes associated
               with the condition.
             - "n_before": An integer indicating the number of volumes to remove before each flagged volume
-              (Default=None). For instance, if volume 5 flagged and ``{"auto": True, "n_before": 2}``, then volumes 3,
+              (Default=None). For instance, if volume 5 flagged and ``{"n_before": 2}``, then volumes 3,
               4, and 5 are discarded.
             - "n_after": An integer indicating the of volumes to remove after each flagged volume (Default=False). For
-              instance, if volume 5 flagged and ``{"auto": True, "n_after": 2}``, then volumes 5, 6, and 7 are discarded.
+              instance, if volume 5 flagged and ``{"n_after": 2}``, then volumes 5, 6, and 7 are discarded.
             - "use_sample_mask": A boolean (Default=False). If True, censors before nuisance regression using Nilearn's
               ``NiftiLabelsMasker``. Also, sets ``clean__extrapolate=False`` to prevent interpolation of end volumes.
               If False, censors after nuisance regression.

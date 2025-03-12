@@ -418,8 +418,8 @@ class CAP(_CAPGetter):
         max_iter: :obj:`int`, default=300
             Maximum number of iterations for a single run of ``sklearn.cluster.KMeans``.
 
-        tol: :obj:`float`, default=1e-4,
-            Stopping criterion for ``sklearn.cluster.KMeans``if the change in inertia is below this value, assuming
+        tol: :obj:`float`, default=1e-4
+            Stopping criterion for ``sklearn.cluster.KMeans`` if the change in inertia is below this value, assuming
             ``max_iter`` has not been reached.
 
         algorithm: {"lloyd", "elkan"}, default="lloyd"
@@ -2085,10 +2085,10 @@ class CAP(_CAPGetter):
             coordinates that are assigned zero. Useful when custom parcellation does not project well from volumetric
             to surface space. The following sub-keys are recognized:
 
-            - "k": An integer. Determines the number of nearest neighbors to consider. Default is 1.
-            - "reference_atlas": A string. Specifies the atlas to use for reference masking ("AAL" or "Schaefer"). Default is "Schaefer".
-            - "resolution_mm": An integer (1 or 2). Spatial resolution of the Schaefer parcellation (in millimeters). Default is 1.
-            - "remove_labels": A list or array. The label IDs as integers of the regions in the parcellation to not interpolate.
+            - "k": An integer (Default=1). Determines the number of nearest neighbors to consider.
+            - "reference_atlas": A string (Default="Schaefer"). Specifies the atlas to use for reference masking ("AAL" or "Schaefer").
+            - "resolution_mm": An integer (Default=1). Spatial resolution of the Schaefer parcellation (in millimeters) (1 or 2).
+            - "remove_labels": A list or array (Default=None). The label IDs as integers of the regions in the parcellation to not interpolate.
 
             *Note*: This method is applied before the ``fwhm``.
 
@@ -2269,10 +2269,10 @@ class CAP(_CAPGetter):
             coordinates that are assigned zero. Useful when custom parcellation does not project well from volumetric
             to surface space. The following sub-keys are recognized:
 
-            - "k": An integer. Determines the number of nearest neighbors to consider. Default is 1.
-            - "reference_atlas": A string. Specifies the atlas to use for reference masking ("AAL" or "Schaefer"). Default is "Schaefer".
-            - "resolution_mm": An integer (1 or 2). Spatial resolution of the Schaefer parcellation (in millimeters). Default is 1.
-            - "remove_labels": A list or array. The label IDs as integers of the regions in the parcellation to not interpolate.
+            - "k": An integer (Default=1). Determines the number of nearest neighbors to consider.
+            - "reference_atlas": A string (Default="Schaefer"). Specifies the atlas to use for reference masking ("AAL" or "Schaefer").
+            - "resolution_mm": An integer (Default=1). Spatial resolution of the Schaefer parcellation (in millimeters) (1 or 2).
+            - "remove_labels": A list or array (Default=None). The label IDs as integers of the regions in the parcellation to not interpolate.
 
             *Note*: This method is applied before the ``fwhm``.
 
