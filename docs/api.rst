@@ -9,6 +9,7 @@ Module containing custom exceptions (available in versions >= 0.22.2).
 
 .. autosummary::
    :template: exceptions.rst
+   :nosignatures:
    :toctree: generated/
 
    BIDSQueryError
@@ -22,6 +23,7 @@ Module containing the ``TimeseriesExtractor`` class for extracting timeseries da
 
 .. autosummary::
    :template: class.rst
+   :nosignatures:
    :toctree: generated/
 
    TimeseriesExtractor
@@ -36,12 +38,14 @@ participant-wise *transition probabilities* dataframes created by ``CAP.calculat
 
 .. autosummary::
    :template: class.rst
+   :nosignatures:
    :toctree: generated/
 
    CAP
 
 .. autosummary::
    :template: function.rst
+   :nosignatures:
    :toctree: generated/
 
    change_dtype

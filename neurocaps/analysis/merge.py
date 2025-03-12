@@ -102,7 +102,9 @@ def merge_dicts(
 
     References
     ----------
-    Kupis, L., Romero, C., Dirks, B., Hoang, S., Parladé, M. V., Beaumont, A. L., Cardona, S. M., Alessandri, M., Chang, C., Nomi, J. S., & Uddin, L. Q. (2020). Evoked and intrinsic brain network dynamics in children with autism spectrum disorder. NeuroImage: Clinical, 28, 102396. https://doi.org/10.1016/j.nicl.2020.102396
+    Kupis, L., Romero, C., Dirks, B., Hoang, S., Parladé, M. V., Beaumont, A. L., Cardona, S. M., Alessandri, M.,
+    Chang, C., Nomi, J. S., & Uddin, L. Q. (2020). Evoked and intrinsic brain network dynamics in children with autism
+    spectrum disorder. NeuroImage: Clinical, 28, 102396. https://doi.org/10.1016/j.nicl.2020.102396
     """
 
     assert isinstance(subject_timeseries_list, list), "`subject_timeseries_list` must be a list."
@@ -140,6 +142,7 @@ def merge_dicts(
         for subj_id in intersect_subjects:
             if subj_id not in subject_timeseries_merged:
                 subject_timeseries_merged.update({subj_id: {}})
+
             # Get run names in the current iteration
             for curr_run in curr_dict[subj_id]:
                 # If run is in merged dict, stack. If not, add

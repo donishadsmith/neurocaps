@@ -32,7 +32,6 @@ def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
             "Please include a valid `parcel_approach` in one of the following dictionary formats for "
             f"'Schaefer', 'AAL', or 'Custom': {VALID_DICT_STUCTURES}"
         )
-
         if not isinstance(parcel_dict, dict):
             raise TypeError(error_message)
         else:
@@ -46,7 +45,6 @@ def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
 
     # Determine if `parcel_dict` already contains the sub-keys needed for Schaefer and AAL to not write a new dict
     has_required_keys = _check_keys(parcel_dict)
-
     if "Schaefer" in parcel_dict and not has_required_keys:
         if "n_rois" not in parcel_dict["Schaefer"]:
             LG.warning("'n_rois' not specified in `parcel_approach`. Defaulting to 400 ROIs.")
@@ -62,12 +60,12 @@ def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
 
         # Get atlas
         fetched_schaefer = datasets.fetch_atlas_schaefer_2018(**parcel_dict["Schaefer"], verbose=0)
-
         parcel_dict["Schaefer"].update({"maps": fetched_schaefer.maps})
         network_name = "7Networks_" if parcel_dict["Schaefer"]["yeo_networks"] == 7 else "17Networks_"
         parcel_dict["Schaefer"].update(
             {"nodes": [label.decode().split(network_name)[-1] for label in fetched_schaefer.labels]}
         )
+
         # Get node networks
         parcel_dict["Schaefer"].update(
             {

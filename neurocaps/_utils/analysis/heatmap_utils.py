@@ -50,7 +50,6 @@ def _create_display(df, plot_dict, suffix_title, group, call):
 
     # Set plot name
     plot_name = "Correlation Matrix" if call == "corr" else "Transition Probabilities"
-
     if suffix_title:
         plot_title = f"{group} CAPs {plot_name} {suffix_title}"
     else:
@@ -62,12 +61,12 @@ def _create_display(df, plot_dict, suffix_title, group, call):
 
 
 def _save_contents(output_dir, suffix_filename, group, curr_dict, plot_dict, save_plots, save_df, display, call):
-    base_name = "correlation_matrix" if call == "corr" else "transition_probability_matrix"
     # Save figure
     if output_dir:
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
+        base_name = "correlation_matrix" if call == "corr" else "transition_probability_matrix"
         if suffix_filename:
             full_filename = f"{group.replace(' ', '_')}_CAPs_{base_name}_{suffix_filename}.png"
         else:

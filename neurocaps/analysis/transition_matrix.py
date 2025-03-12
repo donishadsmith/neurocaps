@@ -135,11 +135,18 @@ def transition_matrix(
 
         # Store df in dict
         trans_mat_dict[group] = trans_mat
-
         # Save figure & dataframe
         if output_dir:
             _save_contents(
-                output_dir, suffix_filename, group, trans_mat_dict, plot_dict, save_plots, save_df, display, "trans"
+                output_dir,
+                suffix_filename,
+                group,
+                trans_mat_dict,
+                plot_dict,
+                save_plots,
+                save_df,
+                display,
+                call="trans",
             )
 
         # Display figures

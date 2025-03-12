@@ -39,7 +39,6 @@ def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
 
         # Get k
         k = knn_dict["k"]
-
         for target_indx in target_indices:
             # Get the nearest non-zero index
             _, neighbor_indx = kdtree.query(target_indx, k=k)
@@ -71,7 +70,6 @@ def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
 def _build_tree(atlas_file):
     atlas = nib.load(atlas_file)
     non_zero_indices = np.array(np.where(atlas.get_fdata() != 0)).T
-
     kdtree = KDTree(non_zero_indices)
 
     return kdtree, non_zero_indices

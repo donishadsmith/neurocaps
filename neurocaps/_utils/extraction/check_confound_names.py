@@ -79,7 +79,6 @@ def _check_regressors(confound_names, n):
     cosine = any(i.startswith("cosine") for i in confound_names)
     acompcor = any(i.startswith("a_comp_cor") for i in confound_names) if not n else n
     tcompcor = any(i.startswith("t_comp_cor") for i in confound_names)
-
     if not cosine and (acompcor or tcompcor):
         LG.warning(
             "fMRIPrep applies high-pass filtering before running anatomical and temporal CompCor. It is "

@@ -212,7 +212,6 @@ def _extract_timeseries(
 
             # Get condition indices
             data.scans = _get_condition(data, condition_df)
-
             if data.censor_vols:
                 data.scans, n = _filter_condition(data, LG)
                 if data.scrub_lim:
@@ -241,7 +240,6 @@ def _extract_timeseries(
 
         # Continue extraction if the continue keyword isn't hit when assessing the fd threshold or events
         timeseries = _perform_extraction(data, LG)
-
         if timeseries.shape[0] == 0:
             LG.warning(
                 f"{data.head}" + f"Timeseries is empty and will not be appended to the "
@@ -457,10 +455,8 @@ def _get_separate_acompcor(data):
         confound_metadata = json.load(confounds_json)
 
     acompcors = sorted([acompcor for acompcor in confound_metadata if "a_comp_cor" in acompcor])
-
     CSF = [CSF for CSF in acompcors if confound_metadata[CSF]["Mask"] == "CSF"][0:n]
     WM = [WM for WM in acompcors if confound_metadata[WM]["Mask"] == "WM"][0:n]
-
     components_list.extend(CSF + WM)
 
     return components_list
@@ -586,7 +582,7 @@ def _get_contiguous_ends(data):
     # Indices not 0: [1,3,5,7]
     # Since diff is one less the last indx of the original array, add + 1 to each element to obtain transition indxs
     # from sample mask: [2,4,6,8]
-    split_indices = np.where(np.diff(sample_mask) != 0)[0] + 1
+    split_indices = np.where(np.diff(sample_mask, n=1) != 0)[0] + 1
     # Split into groups of contiguous indices: ([0,1], [2,3], [4,5], [6,7], [8,9])
     contiguous_indices = np.split(np.arange(data.max_len), split_indices)
     # Check if first index in sample mask is 0

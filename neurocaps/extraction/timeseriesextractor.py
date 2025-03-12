@@ -382,7 +382,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         valid_types = (dict, int) if param == "dummy_scans" else (dict, float, int)
         error_msg = "dictionary or integer" if param == "dummy_scans" else "dictionary, float, or integer"
-
         if not isinstance(struct, valid_types):
             raise TypeError(f"`{param}` must be a {error_msg}.")
 
@@ -412,7 +411,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             # Check invalid keys
             set_diff = set(struct) - set(optional_keys[param]) - set(mandatory_keys[param])
-
             if set_diff:
                 formatted_string = ", ".join(["'{a}'".format(a=x) for x in set_diff])
                 LG.warning(
@@ -684,7 +682,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 total=len(args_list),
                 disable=not progress_bar,
             )
-
             for output in outputs:
                 if isinstance(output, dict):
                     self._subject_timeseries.update(output)
@@ -787,7 +784,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             # Generate a list of runs to iterate through based on runs in niftis
             check_runs = self._gen_runs(files["niftis"])
-
             if check_runs:
                 run_list = self._intersect_runs(check_runs, files)
 
@@ -929,7 +925,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 ses_list.append(re.search(r"ses-(\S+?)_", os.path.basename(nifti))[0][:-1])
 
         ses_list = sorted(set(ses_list))
-
         if len(ses_list) > 1:
             raise ValueError(
                 f"{subject_header}"
@@ -946,8 +941,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 check_runs.append(re.search(r"run-(\S+?)_", os.path.basename(nifti))[0][:-1])
 
         check_runs = set(check_runs)
-        requested_runs = {}
 
+        requested_runs = {}
         if self._task_info["runs"]:
             requested_runs = {f"run-{run}" for run in self._task_info["runs"]}
 
@@ -1137,12 +1132,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         if filename is not None and output_dir is None:
             LG.warning("`filename` supplied but no `output_dir` specified. Files will not be saved.")
 
-        parcellation_name = list(self._parcel_approach)[0]
-
         # Defaults
         plot_dict = _check_kwargs(_PlotDefaults.visualize_bold(), **kwargs)
 
         # Obtain the column indices associated with the rois
+        parcellation_name = list(self._parcel_approach)[0]
         if roi_indx or roi_indx == 0:
             plot_indxs = self._get_roi_indices(roi_indx, parcellation_name)
         else:
@@ -1151,7 +1145,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         plt.figure(figsize=plot_dict["figsize"])
 
         timeseries = self._subject_timeseries[str(subj_id)][f"run-{run}"]
-
         if roi_indx or roi_indx == 0:
             plt.plot(range(1, timeseries.shape[0] + 1), timeseries[:, plot_indxs])
 

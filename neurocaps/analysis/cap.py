@@ -1211,7 +1211,6 @@ class CAP(_CAPGetter):
                 run_id = curr_run if not continuous_runs or len(subject_runs) == 1 else "run-continuous"
                 # Add 1 to the prediction vector since labels start at 0, ensures that the labels map onto the caps
                 prediction_vector = self._kmeans[group].predict(timeseries) + 1
-
                 if run_id != "run-continuous":
                     predicted_subject_timeseries[subj_id].update({run_id: prediction_vector})
                 else:
@@ -1230,7 +1229,8 @@ class CAP(_CAPGetter):
 
     # Get all pairs of all possible transitions
     def _get_pairs(self):
-        group_caps, all_pairs = {}, {}
+        group_caps = {}
+        all_pairs = {}
 
         for group in self._groups:
             group_caps.update({group: [int(name.split("-")[-1]) for name in self._caps[group]]})
@@ -1423,16 +1423,14 @@ class CAP(_CAPGetter):
         ):
             _check_parcel_approach(parcel_approach=self._parcel_approach, call="caps2plot")
 
-        # Get parcellation name
-        parcellation_name = list(self._parcel_approach)[0]
-
         # Check labels
         check_caps = self._caps[list(self._caps)[0]]
         check_caps = check_caps[list(check_caps)[0]]
-
+        # Get parcellation name
+        parcellation_name = list(self._parcel_approach)[0]
         if check_caps.shape[0] != len(self._parcel_approach[parcellation_name]["nodes"]):
             raise ValueError(
-                "Number of nodes used for CAPs does not equal the number of nodes specified in " "`parcel_approach`."
+                "Number of nodes used for CAPs does not equal the number of nodes specified in `parcel_approach`."
             )
 
         if output_dir and not os.path.exists(output_dir):
@@ -1452,11 +1450,10 @@ class CAP(_CAPGetter):
             raise ValueError("Valid inputs for `visual_scope` are 'regions' and 'nodes'.")
 
         if "regions" in visual_scope:
-            self._create_regions(parcellation_name=parcellation_name)
+            self._create_regions(parcellation_name)
 
         # Create plot dictionary
         plot_dict = _check_kwargs(_PlotDefaults.caps2plot(), **kwargs)
-
         if plot_dict["hemisphere_labels"] is True:
             if "nodes" not in visual_scope:
                 raise ValueError("`hemisphere_labels` is only available when `visual_scope == 'nodes'`.")
@@ -1566,6 +1563,7 @@ class CAP(_CAPGetter):
             # Max five subplots per row for default
             default_col = len(cap_dict[group]) if len(cap_dict[group]) <= 5 else 5
             ncol = plot_dict["ncol"] if plot_dict["ncol"] is not None else default_col
+
             if ncol > len(cap_dict[group]):
                 ncol = len(cap_dict[group])
 
@@ -1612,7 +1610,9 @@ class CAP(_CAPGetter):
                         )
                     else:
                         display = seaborn.heatmap(
-                            ax=ax, data=self._outer_products[group][cap], **self._base_kwargs(plot_dict, False, False)
+                            ax=ax,
+                            data=self._outer_products[group][cap],
+                            **self._base_kwargs(plot_dict, line=False, edge=False),
                         )
 
                     if plot_dict["hemisphere_labels"] is False:
@@ -1630,14 +1630,14 @@ class CAP(_CAPGetter):
                     border_length = self._outer_products[group][cap].shape[0]
                     display = self._border(display, plot_dict, border_length)
 
-                display = self._label_size(display, plot_dict, True, False)
-
+                # Modify label sizes
+                display = self._label_size(display, plot_dict, set_x=True, set_y=False)
                 # Modify label sizes; if share_y, only set y for plots at axes == 0
                 if plot_dict["sharey"]:
                     if axes_y == 0:
-                        display = self._label_size(display, plot_dict, False, True)
+                        display = self._label_size(display, plot_dict, set_x=False, set_y=True)
                 else:
-                    display = self._label_size(display, plot_dict, False, True)
+                    display = self._label_size(display, plot_dict, set_x=False, set_y=True)
 
                 # Set title of subplot
                 ax.set_title(cap, fontsize=plot_dict["fontsize"])
@@ -1672,7 +1672,7 @@ class CAP(_CAPGetter):
                             self._outer_products[group][cap],
                             xticklabels=[],
                             yticklabels=[],
-                            **self._base_kwargs(plot_dict, False, False),
+                            **self._base_kwargs(plot_dict, line=False, edge=False),
                         )
 
                     if plot_dict["hemisphere_labels"] is False:
@@ -1757,7 +1757,7 @@ class CAP(_CAPGetter):
                     pd.DataFrame(cap_dict[group], columns=list(cap_dict[group])),
                     xticklabels=True,
                     yticklabels=True,
-                    **self._base_kwargs(plot_dict, False, False),
+                    **self._base_kwargs(plot_dict, line=False, edge=False),
                 )
 
                 display, division_line, plot_dict["linewidths"] = self._division_line(
@@ -2030,7 +2030,7 @@ class CAP(_CAPGetter):
             # Save figure
             if output_dir:
                 _save_contents(
-                    output_dir, suffix_filename, group, corr_dict, plot_dict, save_plots, save_df, display, "corr"
+                    output_dir, suffix_filename, group, corr_dict, plot_dict, save_plots, save_df, display, call="corr"
                 )
 
             # Display figures
@@ -2134,7 +2134,6 @@ class CAP(_CAPGetter):
             os.makedirs(output_dir)
 
         parcellation_name = list(self._parcel_approach)[0]
-
         for group in self._caps:
             for cap in tqdm(
                 self._caps[group], desc=f"Generating Statistical Maps [GROUP: {group}]", disable=not progress_bar
@@ -2453,7 +2452,6 @@ class CAP(_CAPGetter):
 
         # Check cmap
         cmap = _cmap_d[plot_dict["cmap"]] if isinstance(plot_dict["cmap"], str) else plot_dict["cmap"]
-
         # Add stat map layer
         p.add_layer(
             {"left": gii_lh, "right": gii_rh},
@@ -2463,6 +2461,7 @@ class CAP(_CAPGetter):
             zero_transparent=plot_dict["zero_transparent"],
             as_outline=False,
         )
+
         if plot_dict["as_outline"] is True:
             p.add_layer(
                 {"left": gii_lh, "right": gii_rh},
@@ -2698,11 +2697,10 @@ class CAP(_CAPGetter):
         # Create plot dictionary
         plot_dict = _check_kwargs(_PlotDefaults.caps2radar(), **kwargs)
 
-        parcellation_name = list(self._parcel_approach)[0]
-
         # Initialize cosine_similarity attribute
         self._cosine_similarity = {}
 
+        parcellation_name = list(self._parcel_approach)[0]
         # Create radar dict
         for group in self._caps:
             radar_dict = {"Regions": list(self._parcel_approach[parcellation_name]["regions"])}
@@ -2802,7 +2800,6 @@ class CAP(_CAPGetter):
                         os.makedirs(output_dir)
 
                     filename = self._basename(group, cap, "radar", suffix_filename, "png")
-
                     if not as_html:
                         fig.write_image(
                             os.path.join(output_dir, filename), scale=plot_dict["scale"], engine=plot_dict["engine"]
