@@ -123,8 +123,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             - "threshold": A float (Default=None). Removes volumes where FD > threshold.
             - "outlier_percentage": A float in interval [0,1] (Default=None). Removes entire runs where proportion of
               censored volumes exceeds this threshold. Proportion calculated after dummy scan removal. Issues warning
-              when runs are flagged. If ``condition`` specified in ``self.get_bold``, only considers volumes associated
-              with the condition.
+              when runs are flagged. If ``condition`` specified in ``self.get_bold()``, only considers volumes
+              associated with the condition.
             - "n_before": An integer indicating the number of volumes to remove before each flagged volume
               (Default=None). For instance, if volume 5 flagged and ``{"n_before": 2}``, then volumes 3,
               4, and 5 are discarded.
@@ -711,20 +711,20 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         return self
 
     def _validate_get_bold_params(self):
-        if self.task_info["condition_tr_shift"] != 0:
-            if not isinstance(self.task_info["condition_tr_shift"], int) or self.task_info["condition_tr_shift"] < 0:
+        if self._task_info["condition_tr_shift"] != 0:
+            if not isinstance(self._task_info["condition_tr_shift"], int) or self._task_info["condition_tr_shift"] < 0:
                 raise ValueError("`condition_tr_shift` must be a integer value equal to or greater than 0.")
 
-            if self.task_info["condition"] is None:
+            if self._task_info["condition"] is None:
                 LG.warning("`condition_tr_shift` specified but `condition` is None.")
 
-        if self.task_info["slice_time_ref"] != 0:
-            if not isinstance(self.task_info["slice_time_ref"], (float, int)) or (
-                self.task_info["slice_time_ref"] < 0 or (self.task_info["slice_time_ref"] > 1)
+        if self._task_info["slice_time_ref"] != 0:
+            if not isinstance(self._task_info["slice_time_ref"], (float, int)) or (
+                self._task_info["slice_time_ref"] < 0 or (self._task_info["slice_time_ref"] > 1)
             ):
                 raise ValueError("`slice_time_ref` must be a numerical value from 0 to 1.")
 
-            if self.task_info["condition"] is None:
+            if self._task_info["condition"] is None:
                 LG.warning("`slice_time_ref` specified but `condition` is None.")
 
     @staticmethod
@@ -740,13 +740,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             )
 
         bids_dir = os.path.normpath(bids_dir).rstrip(os.path.sep)
-        if bids_dir.endswith("derivatives"):
-            bids_dir = os.path.dirname(bids_dir)
+        bids_dir = bids_dir.removesuffix("derivatives").rstrip(os.sep)
 
         if pipeline_name:
             pipeline_name = os.path.normpath(pipeline_name).lstrip(os.path.sep).rstrip(os.path.sep)
-            if pipeline_name.startswith("derivatives"):
-                pipeline_name = pipeline_name[len("derivatives") :].lstrip(os.path.sep)
+            pipeline_name = pipeline_name.removeprefix("derivatives").lstrip(os.path.sep)
 
             layout = bids.BIDSLayout(bids_dir, derivatives=os.path.join(bids_dir, "derivatives", pipeline_name))
         else:
@@ -804,10 +802,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                             "Only the following runs available contain all required files: "
                             f"{', '.join(run_list)}."
                         )
-            elif not check_runs and self.task_info["runs"]:
+            elif not check_runs and self._task_info["runs"]:
                 if verbose:
                     requested_runs = [
-                        f"run-{str(run)}" if "run-" not in str(run) else run for run in self.task_info["runs"]
+                        f"run-{str(run)}" if "run-" not in str(run) else run for run in self._task_info["runs"]
                     ]
                     LG.warning(
                         f"{subject_header}"
@@ -870,7 +868,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         files["confounds"] = self._get_files(**base, desc="confounds", extension="tsv")
 
-        if self.signal_clean_info["n_acompcor_separate"]:
+        if self._signal_clean_info["n_acompcor_separate"]:
             files["confound_metas"] = self._get_files(**base, extension="json", desc="confounds")
 
         return files
@@ -1005,7 +1003,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     f"{subject_header}"
                     f"{base_msg}" + " The `tr` must be provided when `high_pass` or `low_pass` is specified."
                 )
-            elif self.signal_clean_info["fd_threshold"].get("interpolate"):
+            elif self._signal_clean_info["fd_threshold"].get("interpolate"):
                 raise ValueError("`tr` must be provided when interpolation of censored volumes is required.")
             else:
                 tr = None
@@ -1029,7 +1027,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         Save the Extracted Subject Timeseries.
 
         Saves the extracted timeseries stored in the ``self.subject_timeseries`` dictionary (obtained from running
-        ``self.get_bold``) as a pickle file. This allows for data persistence and easy conversion back into
+        ``self.get_bold()``) as a pickle file. This allows for data persistence and easy conversion back into
         dictionary form for later use.
 
         Parameters
@@ -1045,7 +1043,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         -------
         self
         """
-        if not self.subject_timeseries:
+        if not hasattr(self, "_subject_timeseries"):
             self._raise_error("Cannot save pickle file")
 
         if output_dir and not os.path.exists(output_dir):
@@ -1120,7 +1118,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         **Parcellation Approach**: the "nodes" and "regions" sub-keys are required in ``parcel_approach``.
         """
 
-        if not self.subject_timeseries:
+        if not hasattr(self, "_subject_timeseries"):
             self._raise_error("Cannot plot bold data")
 
         if roi_indx is None and region is None:

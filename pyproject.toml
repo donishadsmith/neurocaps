@@ -75,6 +75,23 @@ windows = ["pybids>=0.16.2"]
 where = ["."]
 include = ["neurocaps", "neurocaps.*"]
 
+[tool.coverage.report]
+show_missing = true
+exclude_also = [
+    "raise .*",
+    "LG\\.warning",
+    "os\\.makedirs",
+    "self\\._raise_error"
+]
+
+[tool.coverage.run]
+branch = true
+source = ["neurocaps"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
 [project.urls]
 Homepage = "https://neurocaps.readthedocs.io"
 Github = "https://github.com/donishadsmith/neurocaps"

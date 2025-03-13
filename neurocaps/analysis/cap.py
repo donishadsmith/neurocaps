@@ -185,7 +185,7 @@ class CAP(_CAPGetter):
 
     caps: :obj:`dict[str, dict[str, np.array]]` or :obj:`None`
         A dictionary mapping the cluster centroids, extracted from the k-means model, to each group after
-        ``self.get_caps`` is used. The structure is as follows:
+        ``self.get_caps()`` is used. The structure is as follows:
 
         ::
 
@@ -752,10 +752,10 @@ class CAP(_CAPGetter):
             )
 
     @staticmethod
-    def _raise_error(property_name):
-        if property_name == "caps":
+    def _raise_error(attr_name):
+        if attr_name == "_caps":
             raise AttributeError("Cannot plot caps since `self.caps` is None. Run `self.get_caps()` first.")
-        elif property_name == "parcel_approach":
+        elif attr_name == "_parcel_approach":
             raise AttributeError(
                 "`self.parcel_approach` is None. Add `parcel_approach` using "
                 "`self.parcel_approach=parcel_approach` to use this method."
@@ -1023,8 +1023,8 @@ class CAP(_CAPGetter):
         patterns of functional brain networks reveal the aberrant dynamic state transition in schizophrenia.
         NeuroImage, 237, 118193. https://doi.org/10.1016/j.neuroimage.2021.118193
         """
-        if not self.kmeans:
-            self._raise_error("kmeans")
+        if not hasattr(self, "_kmeans"):
+            self._raise_error("_kmeans")
 
         if prefix_filename is not None and output_dir is None:
             LG.warning("`prefix_filename` supplied but no `output_dir` specified. Files will not be saved.")
@@ -1408,11 +1408,11 @@ class CAP(_CAPGetter):
         for valid pre-made palettes.
 
         """
-        if not self.parcel_approach:
-            self._raise_error("parcel_approach")
+        if self._parcel_approach is None:
+            self._raise_error("_parcel_approach")
 
-        if not self.caps:
-            self._raise_error("caps")
+        if not hasattr(self, "_caps"):
+            self._raise_error("_caps")
 
         if suffix_filename is not None and output_dir is None:
             LG.warning("`suffix_filename` supplied but no `output_dir` specified. Files will not be saved.")
@@ -1450,6 +1450,7 @@ class CAP(_CAPGetter):
             raise ValueError("Valid inputs for `visual_scope` are 'regions' and 'nodes'.")
 
         if "regions" in visual_scope:
+            # Compute means of regions/networks for each cap
             self._create_regions(parcellation_name)
 
         # Create plot dictionary
@@ -1509,37 +1510,36 @@ class CAP(_CAPGetter):
         return self
 
     def _create_regions(self, parcellation_name):
-        # Internal function to create an attribute called `region_caps`. Purpose is to average the values of all nodes
+        # Internal function to create an attribute called `_region_caps`. Purpose is to average the values of all nodes
         # in a corresponding region to create region heatmaps or outer product plots
         self._region_caps = {group: {} for group in self._groups}
 
-        for group in self._groups:
-            for cap in self._caps[group]:
-                region_caps = None
-                if parcellation_name != "Custom":
-                    for region in self._parcel_approach[parcellation_name]["regions"]:
-                        region_indxs = np.array(
-                            [
-                                index
-                                for index, node in enumerate(self._parcel_approach[parcellation_name]["nodes"])
-                                if region in node
-                            ]
-                        )
-                        if region_caps is None:
-                            region_caps = np.array([np.average(self._caps[group][cap][region_indxs])])
-                        else:
-                            region_caps = np.hstack([region_caps, np.average(self._caps[group][cap][region_indxs])])
-                else:
-                    region_dict = self._parcel_approach["Custom"]["regions"]
-                    region_keys = list(region_dict)
-                    for region in region_keys:
-                        roi_indxs = np.array(list(region_dict[region]["lh"]) + list(region_dict[region]["rh"]))
-                        if region_caps is None:
-                            region_caps = np.array([np.average(self._caps[group][cap][roi_indxs])])
-                        else:
-                            region_caps = np.hstack([region_caps, np.average(self._caps[group][cap][roi_indxs])])
+        region_dict = self._parcel_approach["Custom"]["regions"] if parcellation_name == "Custom" else None
+        # List of regions remains list for Schaefer and AAL but converts keys to list for Custom
+        regions = list(self._parcel_approach[parcellation_name]["regions"])
 
-                self._region_caps[group].update({cap: region_caps})
+        group_caps = [(group, cap) for group in self._caps for cap in self._caps[group]]
+        for group, cap in group_caps:
+            region_means = None
+            for region in regions:
+                if parcellation_name != "Custom":
+                    region_indxs = np.array(
+                        [
+                            index
+                            for index, node in enumerate(self._parcel_approach[parcellation_name]["nodes"])
+                            if region in node
+                        ]
+                    )
+                else:
+                    region_indxs = np.array(list(region_dict[region]["lh"]) + list(region_dict[region]["rh"]))
+
+                if region_means is None:
+                    region_means = np.array([np.average(self._caps[group][cap][region_indxs])])
+                else:
+                    region_means = np.hstack([region_means, np.average(self._caps[group][cap][region_indxs])])
+
+            # Append region means
+            self._region_caps[group].update({cap: region_means})
 
     def _generate_outer_product_plots(
         self,
@@ -2000,8 +2000,8 @@ class CAP(_CAPGetter):
         """
         corr_dict = {group: None for group in self._groups} if return_df or save_df else None
 
-        if not self.caps:
-            self._raise_error("caps")
+        if not hasattr(self, "_caps"):
+            self._raise_error("_caps")
 
         if suffix_filename is not None and output_dir is None:
             LG.warning("`suffix_filename` supplied but no `output_dir` specified. Files will not be saved.")
@@ -2120,11 +2120,11 @@ class CAP(_CAPGetter):
             for indx, value in enumerate(cap_vector, start=1):
                 atlas_array[atlas_fdata == target_array[indx]] = value
         """
-        if not self.parcel_approach:
-            self._raise_error("parcel_approach")
+        if self._parcel_approach is None:
+            self._raise_error("_parcel_approach")
 
-        if not self.caps:
-            self._raise_error("caps")
+        if not hasattr(self, "_caps"):
+            self._raise_error("_caps")
 
         # Check `knn_dict`
         if knn_dict:
@@ -2206,7 +2206,7 @@ class CAP(_CAPGetter):
         Plot CAPs on cortical surface in fsLR space. First, projects CAPs onto parcellation to create
         NifTI statistical maps by replacing parcellation labels with their corresponding CAP (cluster centroid)
         values. Then uses neuromap's ``transforms.mni152_to_fslr`` for coordinate system transformation and surfplot's
-        ``Plot`` for plotting. If CAPs where already converted to NifTI (``self.caps2niftis``) and transformed to
+        ``Plot`` for plotting. If CAPs where already converted to NifTI (``self.caps2niftis()``) and transformed to
         fsLR GifTI files externally, these can be provided using the ``fslr_giftis_dict`` parameter and will be
         converted to a suitable format for surfplot's ``Plot`` function by using neuromap's ``transforms.fslr_to_fslr``
         function. Note, if groups were given when the ``CAP`` class was initialized, surface plots will be generated
@@ -2245,7 +2245,7 @@ class CAP(_CAPGetter):
 
         fslr_giftis_dict: :obj:`dict` or :obj:`None`, default=None
             Dictionary specifying precomputed GifTI files in fsLR space for plotting statistical maps. This parameter
-            should be used if the statistical CAP NIfTI files (can be obtained using ``self.caps2niftis``) were
+            should be used if the statistical CAP NIfTI files (can be obtained using ``self.caps2niftis()``) were
             converted to GifTI files using a tool such as Connectome Workbench. The dictionary structure is:
 
             ::
@@ -2335,11 +2335,11 @@ class CAP(_CAPGetter):
             for indx, value in enumerate(cap_vector, start=1):
                 atlas_array[atlas_fdata == target_array[indx]] = value
         """
-        if not self.parcel_approach and fslr_giftis_dict is None:
-            self._raise_error("parcel_approach")
+        if self._parcel_approach is None and fslr_giftis_dict is None:
+            self._raise_error("_parcel_approach")
 
-        if not self.caps and fslr_giftis_dict is None:
-            self._raise_error("caps")
+        if not hasattr(self, "_caps") and fslr_giftis_dict is None:
+            self._raise_error("_caps")
 
         if suffix_filename is not None and output_dir is None:
             LG.warning("`suffix_filename` supplied but no `output_dir` specified. Files will not be saved.")
@@ -2677,16 +2677,16 @@ class CAP(_CAPGetter):
         occupancy in the presence of cerebral small vessel disease — A pre-registered replication analysis of the
         Hamburg City Health Study. Imaging Neuroscience, 2, 1–17. https://doi.org/10.1162/imag_a_00122
         """
-        if not self.parcel_approach:
-            self._raise_error("parcel_approach")
+        if self._parcel_approach is None:
+            self._raise_error("_parcel_approach")
 
-        if not self.caps:
-            self._raise_error("caps")
+        if not hasattr(self, "_caps"):
+            self._raise_error("_caps")
 
         if not self._standardize:
             LG.warning(
                 "To better aid interpretation, the matrix subjected to kmeans clustering in "
-                "`self.get_caps` should be standardized so that each ROI in the CAP cluster centroid. "
+                "`self.get_caps()` should be standardized so that each ROI in the CAP cluster centroid. "
                 "represents activation or de-activation relative to the mean."
             )
 
