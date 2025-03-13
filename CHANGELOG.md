@@ -16,7 +16,8 @@ improvements/enhancements. All fixes and modifications are backwards compatible.
 ## [0.23.4] - 2025-03-13
 - Primarily some internal refactoring and API docs updates:
     - Some refactoring to reduce some code complexity.
-    - Internal code for classes only use private attributes to separate it from public properties.
+    - Internal code for public classes only use private attributes to separate it from public properties. Exception for
+    private getter classes that are inherited public classes.
 
 ### ♻ Changed
 - Internal function changed from `_create_regions` to `compute_region_means`.
