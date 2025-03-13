@@ -168,7 +168,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         - ``use_confounds`` must be set to True.
         - If specified, this parameter overrides any aCompCor components listed in ``confound_names``.
 
-    dummy_scans: :obj:`int`, :obj:`dict[str, Union[bool, int]]`, or :obj:`None`, default=None
+    dummy_scans: :obj:`int`, :obj:`dict[str, bool | int]`, or :obj:`None`, default=None
         Number of initial volumes to remove before timeseries extraction.
 
         - *If int*, removes first "n" volumes.
@@ -225,12 +225,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         Refer to the example for "Custom" in the Note section below for the expected structure.
 
-    signal_clean_info: :obj:`dict[str, Union[bool, int, float, str]]` or :obj:`None`
+    signal_clean_info: :obj:`dict[str, bool | int | float | str]` or :obj:`None`
         Dictionary containing parameters for signal cleaning specified during initialization of the
         ``TimeseriesExtractor`` class. This information includes ``standardize``, ``detrend``, ``low_pass``,
         ``high_pass``, ``fwhm``, ``dummy_scans``, ``use_confounds``, ``n_compcor_separate``, and ``fd_threshold``.
 
-    task_info: :obj:`dict[str, Union[str, int]]` or :obj:`None`
+    task_info: :obj:`dict[str, str | int]` or :obj:`None`
         If ``self.get_bold()`` ran, is a dictionary containing all task-related information such as ``task``,
         ``condition``, ``session``, ``runs``, and ``tr`` (if specified) else None.
 
@@ -514,7 +514,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         n_cores: :obj:`int` or :obj:`None`, default=None
             The number of cores to use for multiprocessing with Joblib. The "loky" backend is used.
 
-        parallel_log_config: :obj:`dict[str, Union[multiprocessing.Manager.Queue, int]]`
+        parallel_log_config: :obj:`dict[str, multiprocessing.Manager.Queue | int]`
             Passes a user-defined managed queue and logging level to the internal timeseries extraction function
             when parallel processing (``n_cores``) is used. Additionally, this parameter must be a dictionary
             and the available keys are:

@@ -99,9 +99,14 @@ class _CAPGetter:
         return getattr(self, "_variance_explained", None)
 
     # Generated in `caps2plot`
+    # `region_caps` still here for backwards compatibility
     @property
     def region_caps(self) -> Union[dict[str, dict[str, NDArray[np.floating]]], None]:
-        return getattr(self, "_region_caps", None)
+        return getattr(self, "_region_means", None)
+
+    @property
+    def region_means(self) -> Union[dict[str, dict[str, Union[list[str], NDArray[np.floating]]]], None]:
+        return getattr(self, "_region_means", None)
 
     @property
     def outer_products(self) -> Union[dict[str, dict[str, NDArray[np.floating]]], None]:
@@ -109,7 +114,7 @@ class _CAPGetter:
 
     # Generated in `caps2radar`
     @property
-    def cosine_similarity(self) -> Union[dict, None]:
+    def cosine_similarity(self) -> Union[dict[str, dict[str, Union[list[str], NDArray[np.floating]]]], None]:
         return getattr(self, "_cosine_similarity", None)
 
     def _concatenated_timeseries_size(self):

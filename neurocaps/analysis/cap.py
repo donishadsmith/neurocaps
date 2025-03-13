@@ -134,7 +134,7 @@ class CAP(_CAPGetter):
     n_cores: :obj:`int` or :obj:`None`
         Number of cores specified in ``self.get_caps()`` to use for multiprocessing with Joblib.
 
-    runs: :obj:`int`, :obj:`list[Union[int, str]]`, or :obj:`None`
+    runs: :obj:`int`, :obj:`list[int | str]`, or :obj:`None`
         The run IDs specified in ``self.get_caps()``.
 
     standardize: :obj:`bool` or :obj:`None`
@@ -197,7 +197,7 @@ class CAP(_CAPGetter):
 
             }
 
-    cluster_scores: :obj:`dict[str, Union[str, dict[str, float]]]` or :obj:`None`
+    cluster_scores: :obj:`dict[str, str | dict[str, float]]` or :obj:`None`
         A dictionary mapping groups to the assessed cluster sizes and corresponding score of a specific
         ``cluster_selection_method`` available in ``self.get_caps()``. The structure is as follows:
 
@@ -234,7 +234,7 @@ class CAP(_CAPGetter):
                 "GroupName": float,
             }
 
-    region_caps: :obj:`dict[str, dict[str, np.array]]` or :obj:`None`
+    region_means: :obj:`dict[str, dict[str, list[str] | np.array]]` or :obj:`None`
         A dictionary mapping group to their CAPs and corresponding NumPy array (1 x regions) containing the averaged
         value of each region or network if ``visual_scope`` set to "regions" in ``self.caps2plot()``.
         The position of elements corresponds to "regions" in ``parcel_approach``. The structure is as follows:
@@ -243,11 +243,15 @@ class CAP(_CAPGetter):
 
             {
                 "GroupName": {
+                    "Regions": [...],
                     "CAP-1": np.array([...]), # Shape: 1 x regions
                     "CAP-2": np.array([...]), # Shape: 1 x regions
                 }
 
             }
+
+        .. versionchanged:: 0.23.4 Replaces `self.region_caps` and adds the "Regions" keys for each group.
+        For backwards compatibility `self.region_caps` is still available.
 
     outer_products: :obj:`dict[str, dict[str, np.array]]` or :obj:`None`
         A dictionary mapping group to their CAPs and corresponding NumPy array (ROIs x ROIs) containing the outer
@@ -263,7 +267,7 @@ class CAP(_CAPGetter):
 
             }
 
-    cosine_similarity: :obj:`dict` or :obj:`None`
+    cosine_similarity: :obj:`dict[str, dict[str, list[str] | np.array]]` or :obj:`None`
         A dictionary mapping each group to their CAPs and their associated "High Amplitude" and "Low Amplitude"
         list containing the cosine similarities. Each group contains a "Regions" key, consisting of a list of
         regions or networks. The position of the cosine similarities in the "High Amplitude" and "Low Amplitude"
@@ -396,7 +400,7 @@ class CAP(_CAPGetter):
             all runs in the subject timeseries will be concatenated into a single dataframe and subjected to k-means
             clustering.
 
-        n_clusters: :obj:`Union[int, list[int]]`, default=5
+        n_clusters: :obj:`int` or :obj:`list[int]`, default=5
             The number of clusters to use for ``sklearn.cluster.KMeans``. Can be a single integer or a list of
             integers (if ``cluster_selection_method`` is not None).
 
@@ -1451,7 +1455,7 @@ class CAP(_CAPGetter):
 
         if "regions" in visual_scope:
             # Compute means of regions/networks for each cap
-            self._create_regions(parcellation_name)
+            self._compute_region_means(parcellation_name)
 
         # Create plot dictionary
         plot_dict = _check_kwargs(_PlotDefaults.caps2plot(), **kwargs)
@@ -1473,10 +1477,8 @@ class CAP(_CAPGetter):
         for plot_option, scope, group in distributed_list:
             # Get correct labels depending on scope
             if scope == "regions":
-                if parcellation_name in ["Schaefer", "AAL"]:
-                    cap_dict, columns = self._region_caps, self._parcel_approach[parcellation_name]["regions"]
-                else:
-                    cap_dict, columns = self._region_caps, list(self._parcel_approach["Custom"]["regions"])
+                cap_dict = {group: region_means for group, region_means in self._region_means.items()}
+                columns = list(self._parcel_approach[parcellation_name]["regions"])
             elif scope == "nodes":
                 if parcellation_name in ["Schaefer", "AAL"]:
                     cap_dict, columns = self._caps, self._parcel_approach[parcellation_name]["nodes"]
@@ -1509,10 +1511,10 @@ class CAP(_CAPGetter):
 
         return self
 
-    def _create_regions(self, parcellation_name):
-        # Internal function to create an attribute called `_region_caps`. Purpose is to average the values of all nodes
-        # in a corresponding region to create region heatmaps or outer product plots
-        self._region_caps = {group: {} for group in self._groups}
+    def _compute_region_means(self, parcellation_name):
+        # Internal function to create an attribute called `_region_means` (previously `_region_caps`). Purpose is to
+        # average the values of all nodes in a corresponding region to create region heatmaps or outer product plots
+        self._region_means = {group: {} for group in self._groups}
 
         region_dict = self._parcel_approach["Custom"]["regions"] if parcellation_name == "Custom" else None
         # List of regions remains list for Schaefer and AAL but converts keys to list for Custom
@@ -1538,8 +1540,9 @@ class CAP(_CAPGetter):
                 else:
                     region_means = np.hstack([region_means, np.average(self._caps[group][cap][region_indxs])])
 
-            # Append region means
-            self._region_caps[group].update({cap: region_means})
+            # Append regions and their means
+            self._region_means[group].update({"Regions": regions})
+            self._region_means[group].update({cap: region_means})
 
     def _generate_outer_product_plots(
         self,
@@ -2080,7 +2083,7 @@ class CAP(_CAPGetter):
             Strength of spatial smoothing to apply (in millimeters) to the statistical map prior to interpolating
             from MNI152 space to fsLR surface space. Uses Nilearn's ``image.smooth_img``.
 
-        knn_dict: :obj:`dict[str, Union[int, bool]]`, default=None
+        knn_dict: :obj:`dict[str, int | bool]`, default=None
             Use KNN (k-nearest neighbors) interpolation with reference atlas masking to fill in non-background
             coordinates that are assigned zero. Useful when custom parcellation does not project well from volumetric
             to surface space. The following sub-keys are recognized:
@@ -2263,7 +2266,7 @@ class CAP(_CAPGetter):
             parameter allows plotting without re-running the analysis. Initialize the CAP class and use this method
             if using this parameter.
 
-        knn_dict: :obj:`dict[str, Union[int, bool]]`, default=None
+        knn_dict: :obj:`dict[str, int | bool]`, default=None
             Use KNN (k-nearest neighbors) interpolation with reference atlas masking to fill in non-background
             coordinates that are assigned zero. Useful when custom parcellation does not project well from volumetric
             to surface space. The following sub-keys are recognized:
