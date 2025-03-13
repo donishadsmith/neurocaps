@@ -31,7 +31,7 @@ def test_nodes_error(copy_parcellation):
     }
 
     msg = (
-        "All elements in the 'nodes' sub-key's list or numpy array must be a string. Refer to example: "
+        "All elements in the 'nodes' subkey's list or numpy array must be a string. Refer to example: "
         f"{CUSTOM_EXAMPLE}"
     )
     with pytest.raises(TypeError, match=re.escape(msg)):
@@ -49,7 +49,7 @@ def test_regions_error(copy_parcellation):
     }
 
     msg = (
-        "Each 'lh' and 'rh' sub-key in the 'regions' sub-key's dictionary must contain a list of integers or "
+        "Each 'lh' and 'rh' subkey in the 'regions' subkey's dictionary must contain a list of integers or "
         f"range of node indices. Refer to example: {CUSTOM_EXAMPLE}"
     )
     with pytest.raises(TypeError, match=re.escape(msg)):
