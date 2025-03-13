@@ -45,14 +45,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         - "Schaefer":
 
-            - "n_rois": Number of ROIs (100, 200, 300, 400, 500, 600, 700, 800, 900, or 1000). Defaults to 400.
-            - "yeo_networks": Number of Yeo networks (7 or 17). Defaults to 7.
-            - "resolution_mm": Spatial resolution in millimeters (1 or 2). Defaults to 1.
+            - "n_rois": Number of ROIs (Default=400). Options are 100, 200, 300, 400, 500, 600, 700, 800, 900, or 1000.
+            - "yeo_networks": Number of Yeo networks (Default=7). Options are 7 or 17.
+            - "resolution_mm": Spatial resolution in millimeters (Default=1). Options are 1 or 2.
 
         - "AAL":
 
-            - "version": AAL parcellation version to use ("SPM5", "SPM8", "SPM12", or "3v2"). Defaults to "SPM12" if\
-            ``{"AAL": {}}`` is given.
+            - "version": AAL parcellation version to use (Default="SPM12" if ``{"AAL": {}}`` is given). Options are\
+            "SPM5", "SPM8", "SPM12", or "3v2".
 
         - "Custom" (user-defined):
 

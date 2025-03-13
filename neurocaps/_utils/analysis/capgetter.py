@@ -102,7 +102,14 @@ class _CAPGetter:
     # `region_caps` still here for backwards compatibility
     @property
     def region_caps(self) -> Union[dict[str, dict[str, NDArray[np.floating]]], None]:
-        return getattr(self, "_region_means", None)
+        regions_dict = getattr(self, "_region_means", None)
+        if not regions_dict:
+            return None
+        else:
+            # Old property did not have "Regions" key
+            return {
+                group: {k: v for k, v in regions_dict[group].items() if k != "Regions"} for group in regions_dict.keys()
+            }
 
     @property
     def region_means(self) -> Union[dict[str, dict[str, Union[list[str], NDArray[np.floating]]]], None]:

@@ -1477,7 +1477,10 @@ class CAP(_CAPGetter):
         for plot_option, scope, group in distributed_list:
             # Get correct labels depending on scope
             if scope == "regions":
-                cap_dict = {group: region_means for group, region_means in self._region_means.items()}
+                cap_dict = {
+                    group: {k: v for k, v in self._region_means[group].items() if k != "Regions"}
+                    for group in self._region_means.keys()
+                }
                 columns = list(self._parcel_approach[parcellation_name]["regions"])
             elif scope == "nodes":
                 if parcellation_name in ["Schaefer", "AAL"]:
