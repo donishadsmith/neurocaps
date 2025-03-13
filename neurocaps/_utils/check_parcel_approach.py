@@ -43,7 +43,7 @@ def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
             f"{VALID_DICT_STUCTURES}"
         )
 
-    # Determine if `parcel_dict` already contains the sub-keys needed for Schaefer and AAL to not write a new dict
+    # Determine if `parcel_dict` already contains the subkeys needed for Schaefer and AAL to not write a new dict
     has_required_keys = _check_keys(parcel_dict)
     if "Schaefer" in parcel_dict and not has_required_keys:
         if "n_rois" not in parcel_dict["Schaefer"]:
@@ -115,7 +115,7 @@ def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
 
         if not all(check_subkeys):
             missing_subkeys = [["nodes", "regions"][x] for x, y in enumerate(check_subkeys) if y is False]
-            error_message = f"The following sub-keys haven't been detected {missing_subkeys}"
+            error_message = f"The following subkeys haven't been detected {missing_subkeys}"
 
             if call == "TimeseriesExtractor":
                 LG.warning(
@@ -124,8 +124,8 @@ def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
                 )
             else:
                 raise ValueError(
-                    f"{error_message}. Certain sub-keys are needed for plotting. Check the "
-                    "documentation for the required sub-keys and reassign `parcel_approach` using "
+                    f"{error_message}. Certain subkeys are needed for plotting. Check the "
+                    "documentation for the required subkeys and reassign `parcel_approach` using "
                     f"`self.parcel_approach`. Refer to the example structure:\n{custom_example}"
                 )
 
@@ -155,44 +155,42 @@ def _check_custom_structure(custom_parcel, custom_example):
         "numpy.ndarray"
         if not (isinstance(custom_parcel.get("nodes"), (list, np.ndarray)) and list(custom_parcel.get("nodes"))):
             raise TypeError(
-                "The 'nodes' sub-key must be a non-empty list or numpy array containing the node labels. "
+                "The 'nodes' subkey must be a non-empty list or numpy array containing the node labels. "
                 f"{example_msg}"
             )
 
         if not all(isinstance(element, str) for element in custom_parcel["nodes"]):
             raise TypeError(
-                "All elements in the 'nodes' sub-key's list or numpy array must be a string. " f"{example_msg}"
+                "All elements in the 'nodes' subkey's list or numpy array must be a string. " f"{example_msg}"
             )
 
     if "regions" in custom_parcel:
         if not (custom_parcel.get("regions") and isinstance(custom_parcel.get("regions"), dict)):
             raise TypeError(
-                "The 'regions' sub-key must be a non-empty dictionary containing the regions/networks "
+                "The 'regions' subkey must be a non-empty dictionary containing the regions/networks "
                 f"labels. {example_msg}"
             )
 
         if not all(isinstance(key, str) for key in custom_parcel["regions"]):
-            raise TypeError(
-                f"All first level keys in the 'regions' sub-key's dictionary must be strings. {example_msg}"
-            )
+            raise TypeError(f"All first level keys in the 'regions' subkey's dictionary must be strings. {example_msg}")
 
         regions = custom_parcel["regions"].values()
         if not all([all([hemisphere in region.keys() for hemisphere in ["lh", "rh"]]) for region in regions]):
             raise KeyError(
-                "All second level keys in the 'regions' sub-key's dictionary must contain 'lh' and 'rh'. "
+                "All second level keys in the 'regions' subkey's dictionary must contain 'lh' and 'rh'. "
                 f"{example_msg}"
             )
 
         if not _check_custom_hemisphere_dicts(regions):
             raise TypeError(
-                "Each 'lh' and 'rh' sub-key in the 'regions' sub-key's dictionary must contain a list of integers or "
+                "Each 'lh' and 'rh' subkey in the 'regions' subkey's dictionary must contain a list of integers or "
                 f"range of node indices. {example_msg}"
             )
 
 
 # Ensures the proper structure for the hemisphere dictionary
 def _check_custom_hemisphere_dicts(regions):
-    # For the left and right hemisphere sub-keys, check that they contain a list or range
+    # For the left and right hemisphere subkeys, check that they contain a list or range
     # Only check if each element of a list is an integer since range is guaranteed to be a sequence of integers already
     return all(
         isinstance(item[key], range)

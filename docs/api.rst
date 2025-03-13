@@ -3,7 +3,9 @@ API
 
 :mod:`neurocaps.exceptions` - Exceptions
 ----------------------------------------
-Module containing custom exceptions (available in versions >= 0.22.2).
+Module containing custom exceptions.
+
+.. versionadded:: 0.22.2
 
 .. currentmodule:: neurocaps.exceptions
 
@@ -32,7 +34,7 @@ Module containing the ``TimeseriesExtractor`` class for extracting timeseries da
 -------------------------------------------------------------------
 Module containing the ``CAP`` class for performing and visualizing CAPs analyses, as well as functions for changing
 dtype, merging, and standardizing timeseries data, and creating averaged transition probability matrices from the
-participant-wise *transition probabilities* dataframes created by ``CAP.calculate_metrics``.
+participant-wise transition probabilities dataframes created by ``CAP.calculate_metrics()``.
 
 .. currentmodule:: neurocaps.analysis
 

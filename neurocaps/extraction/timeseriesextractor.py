@@ -22,7 +22,7 @@ LG = _logger(__name__)
 
 class TimeseriesExtractor(_TimeseriesExtractorGetter):
     """
-    Timeseries Extractor.
+    Timeseries Extractor Class.
 
     Performs timeseries denoising, extraction, serialization (pickling), and BOLD visualization.
 
@@ -118,7 +118,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         Threshold for volume censoring based on framewise displacement (FD).
 
         - *If float*, removes volumes where FD > threshold.
-        - *If dict*, the following sub-keys are available:
+        - *If dict*, the following subkeys are available:
 
             - "threshold": A float (Default=None). Removes volumes where FD > threshold.
             - "outlier_percentage": A float in interval [0,1] (Default=None). Removes entire runs where proportion of
@@ -275,19 +275,19 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     certain visualization functions in this class also assume that the background label is 0. Therefore, do not add a
     background label in the "nodes" or "regions" keys.
 
-    The recognized sub-keys for the "Custom" parcellation approach includes:
+    The recognized subkeys for the "Custom" parcellation approach includes:
 
     - "maps": Directory path containing the parcellation in a supported format (e.g., .nii or .nii.gz for NifTI).
     - "nodes": A list or numpy array of all node labels arranged in ascending order based on their numerical IDs from
       the parcellation. The 0th index should contain the label corresponding to the lowest, non-background numerical ID.
     - "regions": A dictionary defining major brain regions or networks, with each region containing "lh"
-      (left hemisphere) and "rh" (right hemisphere) sub-keys listing node indices.
+      (left hemisphere) and "rh" (right hemisphere) subkeys listing node indices.
 
     Refer to the `NeuroCAPs' Parcellation Documentation <https://neurocaps.readthedocs.io/en/stable/parcellations.html>`_
-    for more detailed explanations and example structures for the "nodes" and "regions" sub-keys.
+    for more detailed explanations and example structures for the "nodes" and "regions" subkeys.
 
-    **Note**: Different sub-keys are required depending on the function used. Refer to the Note section under each
-    function for information regarding the sub-keys required for that specific function.
+    **Note**: Different subkeys are required depending on the function used. Refer to the Note section under each
+    function for information regarding the subkeys required for that specific function.
     """
 
     def __init__(
@@ -1115,7 +1115,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         Note
         ----
-        **Parcellation Approach**: the "nodes" and "regions" sub-keys are required in ``parcel_approach``.
+        **Parcellation Approach**: the "nodes" and "regions" subkeys are required in ``parcel_approach``.
         """
 
         if not hasattr(self, "_subject_timeseries"):

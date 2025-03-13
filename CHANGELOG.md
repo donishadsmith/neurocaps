@@ -13,9 +13,26 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.23.4] - 2025-03-13
+- Primarily some internal refactoring and API docs updates:
+    - Some refactoring to reduce some code complexity.
+    - Internal code for classes only use private attributes to separate it from public properties.
+
+### ♻ Changed
+- Internal function changed from `_create_regions` to `compute_region_means`.
+- Internal `CAP._raise_error` function changed slightly to accept attribute names, which are preceded by the underscore
+instead of properties. Done so that their is a separation between the internal private attributes and public properties.
+- Property change from `region_caps` to `region_means` and now includes "Regions" key. For backward compatibility,
+the old `region_caps` behavior is still available.
+
+### 📖 Documentation
+- Name change from "neurocaps" to "NeuroCAPs" in documentation only. Package name to remain "neurocaps" for compliance
+with PEP 8.
+- Additional documentation fixes to enhance clarity.
+
 ## [0.23.3] - 2025-03-08
 ### ✨ Enhancement
-- Improved error handling for custom parcel approaches. The structure of the sub-keys are validated to prevent errors
+- Improved error handling for custom parcel approaches. The structure of the subkeys are validated to prevent errors
 due to incorrect structure down the pipeline.
 
 ## [0.23.2] - 2025-03-06

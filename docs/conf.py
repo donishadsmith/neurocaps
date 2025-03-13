@@ -21,7 +21,7 @@ from github_link import make_linkcode_resolve
 # -- Project information -----------------------------------------------------
 
 project = "neurocaps"
-copyright = "2025, neurocaps developers"
+copyright = "2025, NeuroCAPs Developers"
 author = "Donisha Smith"
 
 import neurocaps
@@ -94,7 +94,7 @@ html_theme = "pydata_sphinx_theme"
 
 html_theme_options = {
     "logo": {
-        "text": "neurocaps",
+        "text": "NeuroCAPs",
     },
     "back_to_top_button": True,
     "navbar_start": ["navbar-logo", "version-switcher"],

@@ -12,9 +12,9 @@
 ![Platform Support](https://img.shields.io/badge/OS-Ubuntu%20|%20macOS%20|%20Windows-blue)
 [![Docker](https://img.shields.io/badge/docker-donishadsmith/neurocaps-darkblue.svg?logo=docker)](https://hub.docker.com/r/donishadsmith/neurocaps/tags/)
 
-NeuroCAPs is a Python package for performing Co-Activation Patterns (CAPs) analyses on resting-state or task-based fMRI
-data (resting-state & task-based). CAPs identifies recurring brain states through k-means clustering of BOLD timeseries
-data [^1].
+NeuroCAPs (**Neuro**imaging **C**o-**A**ctivation **P**attern**s**) is a Python package for performing Co-Activation
+Patterns (CAPs) analyses on resting-state or task-based fMRI data. CAPs identifies recurring brain states by applying
+k-means clustering on BOLD timeseries data [^1].
 
 **Note:** NeuroCAPs is most optimized for fMRI data preprocessed with [fMRIPrep](https://fmriprep.org/en/stable/) and
 assumes the data is BIDs compliant. Refer to [NeuroCAPs' BIDS Structure and Entities Documentation](https://neurocaps.readthedocs.io/en/stable/bids.html)
@@ -124,11 +124,11 @@ section of the documentation homepage.**
 - **Grouping:** Perform CAPs analysis for entire sample or groups of subject IDs.
 - **Optimal Cluster Size Identification:** Perform the Davies Bouldin, Silhouette, Elbow, or Variance Ratio criterions to identify the optimal cluster size and automatically save the optimal model as an attribute.
 - **Parallel Processing:** Use parallel processing to speed up optimal cluster size identification.
-- **CAP Visualization:** Visualize the CAPs as outer products or heatmaps at either the region or node level of the parcellation.
+- **CAPs Visualization:** Visualize the CAPs as outer products or heatmaps at either the region or node level of the parcellation.
 - **Save CAPs as NifTIs:** Convert the atlas used for parcellation to a statistical NifTI image.
 - **Surface Plot Visualization:** Project CAPs onto a surface plot.
 - **Correlation Matrix Creation:** Create a correlation matrix from CAPs.
-- **CAP Metrics Calculation:** Calculate several CAP metrics as described in [Liu et al., 2018](https://doi.org/10.1016/j.neuroimage.2018.01.041)[^1] and [Yang et al., 2021](https://doi.org/10.1016/j.neuroimage.2021.118193)[^2]:
+- **CAPs Metrics Calculation:** Calculate several CAPs metrics as described in [Liu et al., 2018](https://doi.org/10.1016/j.neuroimage.2018.01.041)[^1] and [Yang et al., 2021](https://doi.org/10.1016/j.neuroimage.2021.118193)[^2]:
     - *Temporal Fraction:* The proportion of total volumes spent in a single CAP over all volumes in a run.
     - *Persistence:* The average time spent in a single CAP before transitioning to another CAP
     - *Counts:* The total number of initiations of a specific CAP across an entire run. An initiation is defined as the first occurrence of a CAP.
@@ -436,7 +436,7 @@ in other neuroimaging Python packages, specically:
 
 - mtorabi59's [pydfc](https://github.com/neurodatascience/dFC), a toolbox that allows comparisons among several popular
 dynamic functionality methods.
-- 62442katieb's [idconn](https://github.com/62442katieb/IDConn), a pipeline for assessing individual differences in
+- 62442katieb's [IDConn](https://github.com/62442katieb/IDConn), a pipeline for assessing individual differences in
 resting-state or task-based functional connectivity.
 
 ## Contributing

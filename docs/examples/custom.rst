@@ -2,8 +2,8 @@ Tutorial 7: Using Lateralized Custom Parcellations
 ==================================================
 While NeuroCAPs leverages Nilearn's fetch functions for the `Schaefer <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_schaefer_2018.html>`_
 and `AAL <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_aal.html>`_, additional
-lateralized parcellations can be manually defined. For custom parcellation approaches, three sub-keys are
-recognized: "maps", "nodes", and "regions". For additional details on these sub-keys, refer to the
+lateralized parcellations can be manually defined. For custom parcellation approaches, three subkeys are
+recognized: "maps", "nodes", and "regions". For additional details on these subkeys, refer to the
 `"Custom Parcellations" sub-section <https://neurocaps.readthedocs.io/en/stable/user_guide/parcellations.html#custom-parcellations>`_.
 
 For this demonstration, the extended Human Connectome Project multimodal parcellation (HCPex) [1]_ [2]_ from
@@ -51,7 +51,6 @@ preprocessed with `fMRIPrep <https://fmriprep.org/en/stable/>`_. Downloading dat
 .. code-block:: python
 
     # [Dataset] doi: doi:10.18112/openneuro.ds005381.v1.0.0
-
     from openneuro import download
 
     # Include the run-1 and run-2 data of a single subject
@@ -107,7 +106,7 @@ The first level of the pipeline directory must also have a dataset_description.j
 
 Extracting Timeseries
 ---------------------
-For ``TimeseriesExtractor.get_bold``, only the "maps" sub-key (the location of the parcellation) needs to be defined.
+For ``TimeseriesExtractor.get_bold``, only the "maps" subkey (the location of the parcellation) needs to be defined.
 
 .. code-block:: python
 
@@ -149,7 +148,7 @@ For ``TimeseriesExtractor.get_bold``, only the "maps" sub-key (the location of t
 
     .. code-block:: none
 
-        2025-03-11 00:05:49,477 neurocaps._utils.check_parcel_approach [WARNING] The following sub-keys haven't been detected ['nodes', 'regions']. These labels are not needed for timeseries extraction but are needed for plotting.
+        2025-03-11 00:05:49,477 neurocaps._utils.check_parcel_approach [WARNING] The following subkeys haven't been detected ['nodes', 'regions']. These labels are not needed for timeseries extraction but are needed for plotting.
         2025-03-11 00:05:49,477 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: cosine*, trans_x, trans_x_derivative1, trans_y, trans_y_derivative1, trans_z, trans_z_derivative1, rot_x, rot_x_derivative1, rot_y, rot_y_derivative1, rot_z, rot_z_derivative1, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05.
         2025-03-11 00:05:51,017 neurocaps.extraction.timeseriesextractor [INFO] BIDS Layout: ...neurocaps\demos\neurocaps_demo | Subjects: 1 | Sessions: 1 | Runs: 2
         2025-03-11 00:05:51,095 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-1_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
@@ -161,8 +160,8 @@ For ``TimeseriesExtractor.get_bold``, only the "maps" sub-key (the location of t
 
 
 For visualization methods in the ``TimeseriesExtractor`` and ``CAP`` classes, the nodes and regions need to be defined.
-Refer to the documentation for each function to determine which sub-keys are required, as some methods only need the
-"maps" sub-key, while others require the "nodes" and "regions" sub-keys.
+Refer to the documentation for each function to determine which subkeys are required, as some methods only need the
+"maps" subkey, while others require the "nodes" and "regions" subkeys.
 
 The following code defines the nodes and regions of the HCPex parcellation.
 
@@ -252,8 +251,8 @@ For the following code, the CAPs will be plotted to surface space with and witho
 interpolation. Some parcellations may have issues projecting from MNI space to fsLR space. The ``knn_dict`` parameter,
 which is available in both ``CAP.caps2niftis`` and ``CAP.caps2surf`` can be used to improve the visualization. The KNN
 method uses a reference atlas (either Schaefer or AAL) as a mask to determine the non-background voxels to interpolate
-prior to projecting from MNI to fsLR space. *Note, for this method, only the "maps" sub-key is required, the other
-sub-keys are optional*.
+prior to projecting from MNI to fsLR space. *Note, for this method, only the "maps" subkey is required, the other
+subkeys are optional*.
 
 .. code-block:: python
 

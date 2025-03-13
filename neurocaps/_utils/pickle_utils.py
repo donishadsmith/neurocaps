@@ -1,7 +1,8 @@
+"""Internal functions for unpickling with joblib and saving dictionaries with joblib (for the `merge_dicts`,
+`standardize`, and `change_dtypes` function)"""
+
 import copy, os
 import joblib
-
-"""Internal function for unpickling"""
 
 
 def _convert_pickle_to_dict(pickle_file):
@@ -9,9 +10,6 @@ def _convert_pickle_to_dict(pickle_file):
         subject_timeseries = joblib.load(f)
 
     return subject_timeseries
-
-
-"""Internal function to save dictionaries as pickles for the `merge_dicts`, `standardize`, and `change_dtypes` functions."""
 
 
 def _dicts_to_pickles(output_dir, dict_list, call, filenames=None, message=None, save_reduced_dicts=False):

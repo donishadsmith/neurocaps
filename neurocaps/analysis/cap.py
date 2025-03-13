@@ -32,7 +32,7 @@ LG = _logger(__name__)
 
 class CAP(_CAPGetter):
     """
-    Co-Activation Patterns (CAPs).
+    Co-Activation Patterns (CAPs) Class.
 
     Performs k-means clustering for CAP identification, computes various temporal dynamics metrics
     (including counts, temporal fraction, persistence, transition frequency, and transition probability),
@@ -49,7 +49,7 @@ class CAP(_CAPGetter):
         The ``parcel_approach`` requires a nested dictionary with:
 
           - First Level Key: The parcellation name (e.g., "Schaefer", "AAL", "Custom")
-          - Second Level Keys (sub-keys):
+          - Second Level Keys (subkeys):
 
               - "maps": Mapping of regions to coordinates.
               - "nodes": Node definitions for each region.
@@ -61,7 +61,7 @@ class CAP(_CAPGetter):
           - Use the initialization parameters from ``TimeseriesExtractor`` (e.g., ``n_rois``, ``yeo_networks``,\
           ``resolution_mm`` for "Schaefer", or ``version`` for "AAL") to generate the above structure.
           - Provide a nested dictionary with the required structure (first level key of the parcellation name with\
-          sub-keys - "maps", "nodes", and "regions").
+          subkeys - "maps", "nodes", and "regions").
           - Load configuration from a pickle file containing the valid nested dictionary.
 
         *Note*: This parameter is required for several visualization functions in this class but can be set later
@@ -237,7 +237,8 @@ class CAP(_CAPGetter):
     region_means: :obj:`dict[str, dict[str, list[str] | np.array]]` or :obj:`None`
         A dictionary mapping group to their CAPs and corresponding NumPy array (1 x regions) containing the averaged
         value of each region or network if ``visual_scope`` set to "regions" in ``self.caps2plot()``.
-        The position of elements corresponds to "regions" in ``parcel_approach``. The structure is as follows:
+        The position of elements corresponds to the region in the “Regions” list (mean value at the 0th index
+        corresponds to the region at the 0th index). The structure is as follows:
 
         ::
 
@@ -250,8 +251,9 @@ class CAP(_CAPGetter):
 
             }
 
-        .. versionchanged:: 0.23.4 Replaces `self.region_caps` and adds the "Regions" keys for each group.
-        For backwards compatibility `self.region_caps` is still available.
+        .. versionchanged:: 0.23.4 Replaces ``self.region_caps`` and adds the "Regions" key for each group.\
+        For backwards compatibility, ``self.region_caps``, which doesn't include the is the "Regions" key is\
+        still available.
 
     outer_products: :obj:`dict[str, dict[str, np.array]]` or :obj:`None`
         A dictionary mapping group to their CAPs and corresponding NumPy array (ROIs x ROIs) containing the outer
@@ -272,7 +274,7 @@ class CAP(_CAPGetter):
         list containing the cosine similarities. Each group contains a "Regions" key, consisting of a list of
         regions or networks. The position of the cosine similarities in the "High Amplitude" and "Low Amplitude"
         lists, corresponds to the region in the "Regions" list (cosine similarity value in 0th index belongs to
-        region in 0th index while the value in the 10th index belongs to the region in the 10th index).
+        region in 0th index). The structure is as follows:
 
         ::
 
@@ -302,19 +304,19 @@ class CAP(_CAPGetter):
     certain visualization functions in this class also assume that the background label is 0. Therefore, do not add a
     background label in the "nodes" or "regions" keys.
 
-    The recognized sub-keys for the "Custom" parcellation approach includes:
+    The recognized subkeys for the "Custom" parcellation approach includes:
 
     - "maps": Directory path containing the parcellation in a supported format (e.g., .nii or .nii.gz for NifTI).
     - "nodes": A list or numpy array of all node labels arranged in ascending order based on their numerical IDs from
       the parcellation. The 0th index should contain the label corresponding to the lowest, non-background numerical ID.
     - "regions": A dictionary defining major brain regions or networks, with each region containing "lh"
-      (left hemisphere) and "rh" (right hemisphere) sub-keys listing node indices.
+      (left hemisphere) and "rh" (right hemisphere) subkeys listing node indices.
 
     Refer to the `NeuroCAPs' Parcellation Documentation <https://neurocaps.readthedocs.io/en/stable/parcellations.html>`_
-    for more detailed explanations and example structures for the "nodes" and "regions" sub-keys.
+    for more detailed explanations and example structures for the "nodes" and "regions" subkeys.
 
-    **Note**: Different sub-keys are required depending on the function used. Refer to the Note section under each
-    function for information regarding the sub-keys required for that specific function.
+    **Note**: Different subkeys are required depending on the function used. Refer to the Note section under each
+    function for information regarding the subkeys required for that specific function.
     """
 
     def __init__(
@@ -837,7 +839,7 @@ class CAP(_CAPGetter):
                 transition_frequency = 3
 
          - ``"transition_probability"``: The probability of transitioning from one CAP to another CAP (or the same CAP).
-           This is calculated as (Number of transitions from A to B)/ (Total transitions from A). Note that the
+           This is calculated as (Number of transitions from A to B) / (Total transitions from A). Note that the
            transition probability from CAP-A -> CAP-B is not the same as CAP-B -> CAP-A.
 
            ::
@@ -1405,7 +1407,7 @@ class CAP(_CAPGetter):
 
         Note
         ----
-        **Parcellation Approach**: the "nodes" and "regions" sub-keys are required in ``parcel_approach`` for this
+        **Parcellation Approach**: the "nodes" and "regions" subkeys are required in ``parcel_approach`` for this
         function.
 
         **Color Palettes**: Refer to `seaborn's Color Palettes <https://seaborn.pydata.org/tutorial/color_palettes.html>`_
@@ -2089,7 +2091,7 @@ class CAP(_CAPGetter):
         knn_dict: :obj:`dict[str, int | bool]`, default=None
             Use KNN (k-nearest neighbors) interpolation with reference atlas masking to fill in non-background
             coordinates that are assigned zero. Useful when custom parcellation does not project well from volumetric
-            to surface space. The following sub-keys are recognized:
+            to surface space. The following subkeys are recognized:
 
             - "k": An integer (Default=1). Determines the number of nearest neighbors to consider.
             - "reference_atlas": A string (Default="Schaefer"). Specifies the atlas to use for reference masking ("AAL" or "Schaefer").
@@ -2272,7 +2274,7 @@ class CAP(_CAPGetter):
         knn_dict: :obj:`dict[str, int | bool]`, default=None
             Use KNN (k-nearest neighbors) interpolation with reference atlas masking to fill in non-background
             coordinates that are assigned zero. Useful when custom parcellation does not project well from volumetric
-            to surface space. The following sub-keys are recognized:
+            to surface space. The following subkeys are recognized:
 
             - "k": An integer (Default=1). Determines the number of nearest neighbors to consider.
             - "reference_atlas": A string (Default="Schaefer"). Specifies the atlas to use for reference masking ("AAL" or "Schaefer").
@@ -2321,7 +2323,7 @@ class CAP(_CAPGetter):
 
         Note
         ----
-        **Parcellation Approach**: ``parcel_approach`` must have the "maps" sub-key containing the path to th
+        **Parcellation Approach**: ``parcel_approach`` must have the "maps" subkey containing the path to th
         NifTI file of the parcellation.
 
         **Assumptions**: This function assumes that the background label for the parcellation is zero and that is in
@@ -2662,12 +2664,12 @@ class CAP(_CAPGetter):
         to the cosine similarity for the affected network(s), indicating that the similarity is undefined.
         Plotly is capable of handling `NaN` values.
 
-        **Parcellation Approach**: If using "Custom" for ``parcel_approach`` the "regions" sub-key is required.
+        **Parcellation Approach**: If using "Custom" for ``parcel_approach`` the "regions" subkey is required.
 
         **Saving Plots**: By default, this function uses "kaleido" (which is also a dependency in this package)
         to save plots. For other engines such as "orca", those packages must be installed seperately.
 
-        **Tick Values**: if the ``tickvals`` or  ``range`` sub-keys in this code are not specified in the ``radialaxis``
+        **Tick Values**: if the ``tickvals`` or  ``range`` subkeys in this code are not specified in the ``radialaxis``
         kwarg, then four values are shown - 0.25*(max value), 0.50*(max value), 0.75*(max value), and the max value.
         These values are also rounded to the second decimal place.
 
