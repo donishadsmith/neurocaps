@@ -10,7 +10,7 @@ class BIDSQueryError(Exception):
       - File naming issues where required entities (e.g. "sub-", "space-", "task-", "desc-") are missing.
       - An incorrect task name specified in the `task` parameter.
 
-    Refer to `neurocaps BIDS Structure and Entities <https://neurocaps.readthedocs.io/en/stable/bids.html>`_ for
+    Refer to `NeuroCAPs' BIDS Structure and Entities <https://neurocaps.readthedocs.io/en/stable/bids.html>`_ for
     additional information on the expected directory structure and entities needed for querying.
     """
 

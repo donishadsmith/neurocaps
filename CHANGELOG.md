@@ -1,5 +1,5 @@
 # Changelog
-The current changelog contains information on neurocaps versions 0.19.0 and above. For changes in earlier versions
+The current changelog contains information on NeuroCAPs versions 0.19.0 and above. For changes in earlier versions
 (< 0.19.0), please refer to the [Changelog Archive](https://github.com/donishadsmith/neurocaps/blob/stable/archives/CHANGELOG-v0.md).
 
 **Note:** The versions listed in this file have been or will be deployed to [PyPI](https://pypi.org/project/neurocaps/).

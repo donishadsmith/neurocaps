@@ -1,8 +1,8 @@
 Logging
 =======
 
-In neurocaps, all informational messages and warnings are managed using Python's logging module. By default, logs are
-output to the console (``sys.stdout``) with a logging level of ``INFO``. Before importing the neurocaps package, you can
+In NeuroCAPs, all informational messages and warnings are managed using Python's logging module. By default, logs are
+output to the console (``sys.stdout``) with a logging level of ``INFO``. Before importing the NeuroCAPs package, you can
 configure the root handler or specific module loggers to override these default settings.
 
 Configuration (Without Parallel Processing)

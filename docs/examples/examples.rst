@@ -1,6 +1,6 @@
 Tutorials
 =========
-Tutorials are available for all classes and functions in neurocaps. Note: Most examples use simulated data.
+Tutorials are available for all classes and functions in NeuroCAPs. Note: Most examples use simulated data.
 Jupyter Notebook demos using either simulated data or data obtained from OpenNeuro can be found
 `here <https://github.com/donishadsmith/neurocaps/tree/stable/demos>`_.
 

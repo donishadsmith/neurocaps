@@ -29,7 +29,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     Parameters
     ----------
     space: :obj:`str`, default="MNI152NLin2009cAsym"
-        The standard template space that the preprocessed bold data is registered to. Used for querying with pybids
+        The standard template space that the preprocessed bold data is registered to. Used for querying with PyBIDS
         to locate preprocessed BOLD-related files.
 
     parcel_approach: :obj:`dict` or :obj:`os.PathLike`,\
@@ -235,7 +235,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         ``condition``, ``session``, ``runs``, and ``tr`` (if specified) else None.
 
     subject_ids: :obj:`list[str]` or :obj:`None`
-        A list containing all subject IDs that have retrieved from pybids and subjected to timeseries
+        A list containing all subject IDs that have retrieved from PyBIDS and subjected to timeseries
         extraction.
 
     n_cores: :obj:`int` or :obj:`None`
@@ -283,7 +283,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     - "regions": A dictionary defining major brain regions or networks, with each region containing "lh"
       (left hemisphere) and "rh" (right hemisphere) sub-keys listing node indices.
 
-    Refer to the `neurocaps Parcellation Documentation <https://neurocaps.readthedocs.io/en/stable/parcellations.html>`_
+    Refer to the `NeuroCAPs' Parcellation Documentation <https://neurocaps.readthedocs.io/en/stable/parcellations.html>`_
     for more detailed explanations and example structures for the "nodes" and "regions" sub-keys.
 
     **Note**: Different sub-keys are required depending on the function used. Refer to the Note section under each
@@ -440,7 +440,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         """
         Retrieve Preprocessed BOLD Data from BIDS Datasets.
 
-        This function uses pybids for querying and requires the BOLD data directory (specified in ``bids_dir``) to be
+        This function uses PyBIDS for querying and requires the BOLD data directory (specified in ``bids_dir``) to be
         BIDS-compliant, including a "dataset_description.json" file. It assumes the dataset contains a derivatives
         folder with BOLD data preprocessed using a standard pipeline, specifically fMRIPrep. The pipeline directory
         must also include a "dataset_description.json" file for proper querying.
@@ -449,7 +449,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         information regarding the structure of this dictionary can be found in the "Note" section.
 
         **This pipeline is most optimized for BOLD data preprocessed by fMRIPrep.** Refer to
-        `neurocaps' BIDS Structure and Entities Documentation <https://neurocaps.readthedocs.io/en/stable/bids.html>`_
+        `NeuroCAPs' BIDS Structure and Entities Documentation <https://neurocaps.readthedocs.io/en/stable/bids.html>`_
         for additional information on the expected directory structure and file naming scheme (entities) needed for
         querying.
 
@@ -524,7 +524,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             - "level": The logging level (e.g. ``logging.INFO``, ``logging.WARNING``). If not specified, the default
               level is ``logging.INFO``.
 
-            Refer to the `neurocaps' Logging Documentation <https://neurocaps.readthedocs.io/en/stable/logging.html>`_
+            Refer to the `NeuroCAPs' Logging Documentation <https://neurocaps.readthedocs.io/en/stable/logging.html>`_
             for a detailed example of setting up this parameter.
 
         verbose: :obj:`bool`, default=True

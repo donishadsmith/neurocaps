@@ -1,4 +1,4 @@
-# neurocaps: Neuroimaging Co-activation Patterns
+# NeuroCAPs: Neuroimaging Co-Activation Patterns
 
 [![Latest Version](https://img.shields.io/pypi/v/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
@@ -12,16 +12,16 @@
 ![Platform Support](https://img.shields.io/badge/OS-Ubuntu%20|%20macOS%20|%20Windows-blue)
 [![Docker](https://img.shields.io/badge/docker-donishadsmith/neurocaps-darkblue.svg?logo=docker)](https://hub.docker.com/r/donishadsmith/neurocaps/tags/)
 
-neurocaps is a Python package for performing Co-activation Patterns (CAPs) analyses on resting-state or task-based fMRI
+NeuroCAPs is a Python package for performing Co-Activation Patterns (CAPs) analyses on resting-state or task-based fMRI
 data (resting-state & task-based). CAPs identifies recurring brain states through k-means clustering of BOLD timeseries
 data [^1].
 
-**Note:** neurocaps is most optimized for fMRI data preprocessed with [fMRIPrep](https://fmriprep.org/en/stable/) and
-assumes the data is BIDs compliant. Refer to [neurocaps' BIDS Structure and Entities Documentation](https://neurocaps.readthedocs.io/en/stable/bids.html)
+**Note:** NeuroCAPs is most optimized for fMRI data preprocessed with [fMRIPrep](https://fmriprep.org/en/stable/) and
+assumes the data is BIDs compliant. Refer to [NeuroCAPs' BIDS Structure and Entities Documentation](https://neurocaps.readthedocs.io/en/stable/bids.html)
 for additional information.
 
 ## Installation
-To install neurocaps, follow the instructions below using your preferred terminal.
+To install NeuroCAPs, follow the instructions below using your preferred terminal.
 
 ### Standard Installation from PyPi
 ```bash
@@ -32,11 +32,11 @@ pip install neurocaps
 
 **Windows Users**
 
-To avoid installation errors related to long paths not being enabled, pybids will not be installed by default.
+To avoid installation errors related to long paths not being enabled, PyBIDS will not be installed by default.
 Refer to official [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=powershell)
 to enable long paths.
 
-To include pybids in your installation, use:
+To include PyBIDS in your installation, use:
 
 ```bash
 
@@ -44,7 +44,7 @@ pip install neurocaps[windows]
 
 ```
 
-Alternatively, you can install pybids separately:
+Alternatively, you can install PyBIDS separately:
 
 ```bash
 
@@ -72,7 +72,7 @@ pip install -e .
 ```
 **Windows Users**
 
-To include pybids when installing the development version on Windows, use:
+To include PyBIDS when installing the development version on Windows, use:
 
 ```bash
 
@@ -83,7 +83,7 @@ pip install -e .[windows]
 
 ## Docker
 
-If [Docker](https://docs.docker.com/) is available on your system, you can use the neurocaps Docker image, which
+If [Docker](https://docs.docker.com/) is available on your system, you can use the NeuroCAPs Docker image, which
 includes the demos and configures a headless display for VTK.
 
 To pull the Docker image:
@@ -244,7 +244,7 @@ extractor.get_bold(
 2025-02-17 13:34:53,680 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0006 | SESSION: 2 | TASK: DET | RUN: 2] Nuisance regression completed; extracting [CONDITION: late].
 ```
 
-**Note:** Refer to [neurocaps' Logging Documentation](https://neurocaps.readthedocs.io/en/stable/logging.html) for
+**Note:** Refer to [NeuroCAPs' Logging Documentation](https://neurocaps.readthedocs.io/en/stable/logging.html) for
 additional information about logging.
 
 ```python
@@ -428,7 +428,7 @@ Clustering [GROUP: All Subjects]: 100%|█████████████�
 | CAP-2 | 0.489177 | 0.510823 |
 
 ## Acknowledgements
-neurocaps relies on several popular data processing, machine learning, neuroimaging, and visualization
+NeuroCAPs relies on several popular data processing, machine learning, neuroimaging, and visualization
 [packages](https://neurocaps.readthedocs.io/en/stable/#dependencies).
 
 Additionally, some foundational concepts in this package take inspiration from features or design patterns implemented
@@ -440,7 +440,7 @@ dynamic functionality methods.
 resting-state or task-based functional connectivity.
 
 ## Contributing
-Please refer the [contributing guidelines](https://neurocaps.readthedocs.io/en/stable/contributing.html) on how to contribute to neurocaps.
+Please refer the [contributing guidelines](https://neurocaps.readthedocs.io/en/stable/contributing.html) on how to contribute to NeuroCAPs.
 
 ## References
 [^1]: Liu, X., Zhang, N., Chang, C., & Duyn, J. H. (2018). Co-activation patterns in resting-state fMRI signals. NeuroImage, 180, 485–494. https://doi.org/10.1016/j.neuroimage.2018.01.041

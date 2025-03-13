@@ -310,7 +310,7 @@ class CAP(_CAPGetter):
     - "regions": A dictionary defining major brain regions or networks, with each region containing "lh"
       (left hemisphere) and "rh" (right hemisphere) sub-keys listing node indices.
 
-    Refer to the `neurocaps Parcellation Documentation <https://neurocaps.readthedocs.io/en/stable/parcellations.html>`_
+    Refer to the `NeuroCAPs' Parcellation Documentation <https://neurocaps.readthedocs.io/en/stable/parcellations.html>`_
     for more detailed explanations and example structures for the "nodes" and "regions" sub-keys.
 
     **Note**: Different sub-keys are required depending on the function used. Refer to the Note section under each

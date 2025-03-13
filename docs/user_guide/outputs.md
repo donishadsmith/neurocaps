@@ -1,6 +1,6 @@
-# Outputs of ``neurocaps``
+# Outputs of NeuroCAPs
 
-In neurocaps, functions that produce NifTI images, plots, or dataframes have an ``output_dir`` parameter to specify
+In NeuroCAPs, functions that produce NifTI images, plots, or dataframes have an ``output_dir`` parameter to specify
 where files should be saved. The file types includes:
 
 - NifTI images: saved as "nii.gz".

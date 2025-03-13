@@ -1,6 +1,6 @@
 Tutorial 7: Using Lateralized Custom Parcellations
 ==================================================
-While neurocaps leverages Nilearn's fetch functions for the `Schaefer <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_schaefer_2018.html>`_
+While NeuroCAPs leverages Nilearn's fetch functions for the `Schaefer <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_schaefer_2018.html>`_
 and `AAL <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_aal.html>`_, additional
 lateralized parcellations can be manually defined. For custom parcellation approaches, three sub-keys are
 recognized: "maps", "nodes", and "regions". For additional details on these sub-keys, refer to the

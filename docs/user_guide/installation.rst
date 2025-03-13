@@ -1,6 +1,6 @@
 Installation
 ============
-To install neurocaps, follow the instructions below using your preferred terminal.
+To install NeuroCAPs, follow the instructions below using your preferred terminal.
 
 Standard Installation from PyPi
 -------------------------------
@@ -10,18 +10,18 @@ Standard Installation from PyPi
 
 Windows Users
 ^^^^^^^^^^^^^
-To avoid installation errors related to long paths not being enabled, pybids will not be installed by default.
+To avoid installation errors related to long paths not being enabled, PyBIDS will not be installed by default.
 Refer to official `Microsoft documentation <https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=powershell>`_
 to enable long paths.
 
-To include pybids in your installation, use:
+To include PyBIDS in your installation, use:
 
 .. code-block:: bash
 
     pip install neurocaps[windows]
 
 
-Alternatively, you can install pybids separately:
+Alternatively, you can install PyBIDS separately:
 
 .. code-block:: bash
 
@@ -48,7 +48,7 @@ To install the latest development version from the source, there are two options
 
 Windows Users
 ^^^^^^^^^^^^^
-To include pybids when installing the development version on Windows, use:
+To include PyBIDS when installing the development version on Windows, use:
 
 .. code-block:: bash
 
@@ -58,7 +58,7 @@ To include pybids when installing the development version on Windows, use:
 
 Docker
 ------
-If `Docker <https://docs.docker.com/>`_ is available on your system, you can use the neurocaps Docker image, which
+If `Docker <https://docs.docker.com/>`_ is available on your system, you can use the NeuroCAPs Docker image, which
 includes the demos and configures a headless display for VTK.
 
 To pull the Docker image:

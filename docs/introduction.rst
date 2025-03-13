@@ -1,4 +1,4 @@
-**neurocaps: Neuroimaging Co-activation Patterns**
+**NeuroCAPs: Neuroimaging Co-Activation Patterns**
 ==================================================
 .. image:: https://img.shields.io/pypi/v/neurocaps.svg
    :target: https://pypi.python.org/pypi/neurocaps/
@@ -35,19 +35,19 @@
    :target: https://hub.docker.com/r/donishadsmith/neurocaps/tags/
    :alt: Docker
 
-neurocaps is a Python package for performing Co-activation Patterns (CAPs) analyses on resting-state or task-based fMRI
+NeuroCAPs is a Python package for performing Co-Activation Patterns (CAPs) analyses on resting-state or task-based fMRI
 data (resting-state & task-based). CAPs identifies recurring brain states through k-means clustering of BOLD timeseries
 data [1]_.
 
-**Note:** neurocaps is most optimized for fMRI data preprocessed with `fMRIPrep <https://fmriprep.org/en/stable/>`_ and
-assumes the data is BIDs compliant. Refer to `neurocaps' BIDS Structure and Entities Documentation <https://neurocaps.readthedocs.io/en/stable/bids.html>`_
+**Note:** NeuroCAPs is most optimized for fMRI data preprocessed with `fMRIPrep <https://fmriprep.org/en/stable/>`_ and
+assumes the data is BIDs compliant. Refer to `NeuroCAPs' BIDS Structure and Entities Documentation <https://neurocaps.readthedocs.io/en/stable/bids.html>`_
 for additional information.
 
 Citing
 ------
 ::
 
-  Smith, D. (2024). neurocaps. Zenodo. https://doi.org/10.5281/zenodo.14940507
+  Smith, D. (2024). NeuroCAPs. Zenodo. https://doi.org/10.5281/zenodo.14940507
 
 Usage
 -----
@@ -89,7 +89,7 @@ Please refer to the `demos <https://github.com/donishadsmith/neurocaps/tree/main
 
 Dependencies
 ------------
-Neurocaps relies on several packages:
+NeuroCAPs relies on several packages:
 
 ::
 
@@ -119,7 +119,7 @@ Neurocaps relies on several packages:
 
 Acknowledgements
 ----------------
-Some foundational concepts in neurocaps take inspiration from features or design patterns implemented in other
+Some foundational concepts in NeuroCAPs take inspiration from features or design patterns implemented in other
 neuroimaging Python packages, specifically:
 
 - mtorabi59's `pydfc <https://github.com/neurodatascience/dFC>`_, a toolbox that allows comparisons among several popular dynamic functionality methods.

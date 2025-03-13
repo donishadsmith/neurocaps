@@ -1,7 +1,7 @@
 Parcellations
 =============
 
-When extracting the timeseries, neurocaps uses the Schaefer atlas, the Automated Anatomical Labeling (AAL) atlas,
+When extracting the timeseries, NeuroCAPs uses the Schaefer atlas, the Automated Anatomical Labeling (AAL) atlas,
 or a custom parcellation that is lateralized (where each region/network has nodes in the left and right hemispheres)
 for spatial dimensionality reduction. The "Schaefer" and "AAL" parcellations uses nilearn's
 ``datasets.fetch_atlas_schaefer_2018`` and ``datasets.fetch_atlas_aal`` functions, respectively. A nested dictionary,
