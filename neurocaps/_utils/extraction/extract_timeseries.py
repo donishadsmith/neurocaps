@@ -1,4 +1,4 @@
-"""Internal function to extract timeseries with or without joblib"""
+"""Internal functions for extracting timeseries with or without joblib"""
 
 import copy, json, math, os, re
 from dataclasses import dataclass, field

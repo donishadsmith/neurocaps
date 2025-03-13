@@ -2,7 +2,7 @@ import nibabel as nib, numpy as np
 from nilearn import datasets
 
 
-# Always check that AAL indices are sorted from lowest -> highest for future nilearn versions
+# Checks that AAL indices are sorted from lowest -> highest
 def test_aal_indices_ordering():
     def check_aal_node_order(version):
         aal = datasets.fetch_atlas_aal(version=version)

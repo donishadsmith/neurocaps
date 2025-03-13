@@ -2428,7 +2428,6 @@ class CAP(_CAPGetter):
                 f"{plot_dict['surface']} is an invalid option for `surface`. Available options "
                 "include 'inflated' or 'verinflated'. Defaulting to 'inflated'."
             )
-
             plot_dict["surface"] = "inflated"
 
         lh, rh = surfaces[plot_dict["surface"]]
