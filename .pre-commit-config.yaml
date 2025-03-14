@@ -42,3 +42,12 @@ repos:
         entry: python -m pytest
         language: system
         always_run: true
+
+-   repo: local
+    hooks:
+    -   id: grep
+        name: grep
+        description: use grep to ensure that only private attributes are used in the files containing public classes
+        types: [python]
+        entry: python hooks/grep.py
+        language: system
