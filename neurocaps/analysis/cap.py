@@ -1,6 +1,12 @@
 import collections, copy, itertools, os, re, sys, tempfile
 from typing import Callable, Literal, Optional, Union
 
+# Conditional import based on major and minor version of Python
+if sys.version_info < (3, 11):
+    from typing_extensions import Self
+else:
+    from typing import Self
+
 import nibabel as nib, numpy as np, matplotlib.pyplot as plt, pandas as pd, seaborn, surfplot
 import plotly.express as px, plotly.graph_objects as go, plotly.offline as pyo
 from kneed import KneeLocator
@@ -364,7 +370,7 @@ class CAP(_CAPGetter):
         output_dir: Optional[os.PathLike] = None,
         progress_bar: bool = False,
         **kwargs,
-    ) -> None:
+    ) -> Self:
         """
         Perform K-Means Clustering to Identify CAPs.
 
@@ -1326,7 +1332,7 @@ class CAP(_CAPGetter):
         show_figs: bool = True,
         subplots: bool = False,
         **kwargs,
-    ) -> None:
+    ) -> Self:
         """
         Generate Heatmaps and Outer Product Plots for CAPs.
 
@@ -2067,7 +2073,7 @@ class CAP(_CAPGetter):
         fwhm: Optional[float] = None,
         knn_dict: dict[str, Union[int, list[int], NDArray[np.integer]]] = None,
         progress_bar: bool = False,
-    ) -> None:
+    ) -> Self:
         """
         Standalone Method to Convert CAPs to NifTI Statistical Maps.
 
@@ -2207,7 +2213,7 @@ class CAP(_CAPGetter):
         knn_dict: dict[str, Union[int, list[int], NDArray[np.integer]]] = None,
         progress_bar: bool = False,
         **kwargs,
-    ) -> None:
+    ) -> Self:
         """
         Project CAPs onto Surface Plots.
 
@@ -2494,7 +2500,7 @@ class CAP(_CAPGetter):
         use_scatterpolar: bool = False,
         as_html: bool = False,
         **kwargs,
-    ) -> None:
+    ) -> Self:
         """
         Generate Radar Plots for CAPs using Cosine Similarity.
 
