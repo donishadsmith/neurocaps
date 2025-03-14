@@ -1,6 +1,6 @@
-Tutorial 3: Merging Timeseries With ``neurocaps.analysis.merge_dicts``
+Tutorial 3: Merging Timeseries With ``merge_dicts``
 ======================================================================
-The ``merge_dicts`` function allows you to combine timeseries data from different tasks and sessions, enabling analyses
+``merge_dicts()`` combines timeseries data from different tasks and sessions, enabling analyses
 that identify similar CAPs across these tasks, sessions, or both. This is only useful when the tasks and sessions
 includes the same subjects. This function produces a merged dictionary only containing subject IDs present across all
 input dictionaries. Additionally, while the run IDs across task do not need to be similar, the timeseries of the same
@@ -109,9 +109,9 @@ or tasks.
 Then each reduced subject timeseries (representing a session or task) can be used to compute the temporal dynamics
 of the previously identified CAPs from the merged timeseries. These files can then be used to perform analyses
 assessing how to the same CAPs changed across time, tasks, or both time and tasks. Note that if ``standardize`` was set
-to True in ``CAP.get_caps``, then the column (ROI) means and standard deviations computed from the concatenated data
+to True in ``CAP.get_caps()``, then the column (ROI) means and standard deviations computed from the concatenated data
 used to obtain the CAPs are also used to standardize each subject in the timeseries data inputted into
-``CAP.calculate_metrics``. This ensures proper CAP assignments for each subjects frames.
+``CAP.calculate_metrics()``. This ensures proper CAP assignments for each subjects frames.
 
 .. code-block:: python
 

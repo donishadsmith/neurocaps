@@ -1,5 +1,5 @@
-Tutorial 1: Using ``neurocaps.extraction.TimeseriesExtractor``
-==============================================================
+Tutorial 1: Using ``TimeseriesExtractor``
+=========================================
 This module is designed to perform timeseries extraction, nuisance regression, and visualization. Additionally, it
 generates the necessary dictionary structure required for ``CAP``. If the BOLD images have not been preprocessed using
 fMRIPrep (or a similar pipeline), the dictionary structure can be manually created.

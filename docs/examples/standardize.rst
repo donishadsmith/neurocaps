@@ -1,7 +1,7 @@
-Tutorial 4: Standardizing Within Runs Using ``neurocaps.analysis.standardize``
-==============================================================================
+Tutorial 4: Standardizing Within Runs Using ``standardize``
+===========================================================
 While standardizing the features/columns within runs can be done using the ``standardize`` parameter within the
-``TimeseriesExtractor`` class, the ``neurocaps.analysis.standardize`` function can be used to perform
+``TimeseriesExtractor`` class, the ``standardize()`` function can be used to perform
 within-run standardization post-extraction.
 
 .. code-block:: python
@@ -18,8 +18,8 @@ within-run standardization post-extraction.
     std_vec_2 = subject_timeseries["1"]["run-2"].std(ddof=1, axis=0)
 
     # Avoid numerical stability issues
-    std_vec_1[std_vec_1 < np.finfo(np.float64).eps] = 1.0
-    std_vec_2[std_vec_2 < np.finfo(np.float64).eps] = 1.0
+    std_vec_1[std_vec_1 < np.finfo(std_vec_1.dtype).eps] = 1.0
+    std_vec_2[std_vec_2 < np.finfo(std_vec_2.dtype).eps] = 1.0
 
     standardized_subject_timeseries = standardize(subject_timeseries_list=[subject_timeseries])
 

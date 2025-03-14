@@ -12,7 +12,7 @@ This configuration sets the root logger to output to the console and configures 
 
 .. code-block:: python
 
-    import logging
+    import logging, sys
 
     # Configure the root logger for all loggers to propagate to
     logging.basicConfig(
@@ -31,7 +31,9 @@ This configuration sets the root logger to output to the console and configures 
     # Import package
     from neurocaps.extraction import TimeseriesExtractor
 
-    # ...code...
+    extractor = TimeseriesExtractor()
+
+    extractor.get_bold(bids_dir="path/to/bids/dir", task="rest", tr=2)
 
 
 Logging Configuration (With Parallel Processing)

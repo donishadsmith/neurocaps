@@ -249,10 +249,10 @@ Surface Plotting with and without KNN Interpolation
 
 For the following code, the CAPs will be plotted to surface space with and without KNN (K-Nearest Neighbors)
 interpolation. Some parcellations may have issues projecting from MNI space to fsLR space. The ``knn_dict`` parameter,
-which is available in both ``CAP.caps2niftis`` and ``CAP.caps2surf`` can be used to improve the visualization. The KNN
-method uses a reference atlas (either Schaefer or AAL) as a mask to determine the non-background voxels to interpolate
-prior to projecting from MNI to fsLR space. *Note, for this method, only the "maps" subkey is required, the other
-subkeys are optional*.
+which is available in both ``CAP.caps2niftis()`` and ``CAP.caps2surf()`` can be used to improve the visualization. The
+KNN method uses a reference atlas (either Schaefer or AAL) as a mask to determine the non-background voxels to
+interpolate prior to projecting from MNI to fsLR space. *Note, for this method, only the "maps" subkey is required, the
+other subkeys are optional*.
 
 .. code-block:: python
 

@@ -1,5 +1,5 @@
-Tutorial 2: Using ``neurocaps.analysis.CAP``
-============================================
+Tutorial 2: Using ``CAP``
+=========================
 The ``CAP`` class is designed to perform CAPs analyses (on all subjects or group of subjects). It offers the flexibility
 to analyze data from all subjects or focus on specific groups, compute CAP-specific metrics, and generate visualizations
 to aid in the interpretation of results.
@@ -107,9 +107,9 @@ Performing CAPs on Groups
 
 Calculate Metrics
 -----------------
-Note that if ``standardize`` was set to True in ``CAP.get_caps``, then the column (ROI) means and standard deviations
+Note that if ``standardize`` was set to True in ``CAP.get_caps()``, then the column (ROI) means and standard deviations
 computed from the concatenated data used to obtain the CAPs are also used to standardize each subject in the timeseries
-data inputted into ``CAP.calculate_metrics``. This ensures proper CAP assignments for each subjects frames.
+data inputted into ``CAP.calculate_metrics()``. This ensures proper CAP assignments for each subjects frames.
 
 .. code-block:: python
 
