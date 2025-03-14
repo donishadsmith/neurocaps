@@ -1,6 +1,12 @@
-import json, os, re
+import json, os, re, sys
 from functools import lru_cache
 from typing import Callable, Literal, Optional, Union
+
+# Conditional import based on major and minor version of Python
+if sys.version_info < (3, 11):
+    from typing_extensions import Self
+else:
+    from typing import Self
 
 import matplotlib.pyplot as plt, numpy as np
 from joblib import Parallel, delayed, dump
@@ -436,7 +442,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         verbose: bool = True,
         flush: bool = False,
         progress_bar: bool = False,
-    ) -> None:
+    ) -> Self:
         """
         Retrieve Preprocessed BOLD Data from BIDS Datasets.
 
@@ -1022,7 +1028,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             "`self.get_bold()` or assign a valid timeseries dictionary to `self.subject_timeseries`."
         )
 
-    def timeseries_to_pickle(self, output_dir: Union[str, os.PathLike], filename: Optional[str] = None) -> None:
+    def timeseries_to_pickle(self, output_dir: Union[str, os.PathLike], filename: Optional[str] = None) -> Self:
         """
         Save the Extracted Subject Timeseries.
 
@@ -1069,7 +1075,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         output_dir: Optional[Union[str, os.PathLike]] = None,
         filename: Optional[str] = None,
         **kwargs,
-    ) -> None:
+    ) -> Self:
         """
         Plot the Extracted Subject Timeseries.
 

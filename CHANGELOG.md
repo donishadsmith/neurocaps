@@ -13,6 +13,10 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.23.5] - 2025-03-13
+### 🐛 Fixes
+- Updated type hints for class methods that return self from `None` to `Self`.
+
 ## [0.23.4] - 2025-03-13
 - Primarily some internal refactoring and API docs updates:
     - Some refactoring to reduce some code complexity.

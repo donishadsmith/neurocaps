@@ -113,6 +113,7 @@ NeuroCAPs relies on several packages:
       "kaleido==0.1.0.post1; platform_system == 'Windows'",
       "kaleido; platform_system != 'Windows'",
       "setuptools; python_version>='3.12'",
+      "typing_extensions; python_version<'3.11'",
       "vtk<9.4.0",
       "tqdm>=4.65.0"
       ]
