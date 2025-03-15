@@ -7,6 +7,10 @@ from sklearn.metrics import davies_bouldin_score, calinski_harabasz_score, silho
 def _run_kmeans(n_cluster, configs, concatenated_timeseries, method):
     model = KMeans(n_clusters=n_cluster, **configs).fit(concatenated_timeseries)
 
+    # Only return model when no cluster selection chosen
+    if method is None:
+        return model
+
     cluster_labels = model.labels_
     if method == "davies_bouldin":
         performance = {n_cluster: davies_bouldin_score(concatenated_timeseries, cluster_labels)}

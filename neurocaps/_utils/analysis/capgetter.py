@@ -1,6 +1,6 @@
 """A class which is responsible for accessing all CAP metadata and to keep track of all attributes in CAP"""
 
-import copy, os, sys
+import copy, sys
 from typing import Union
 
 import numpy as np
@@ -8,6 +8,7 @@ from numpy.typing import NDArray
 from sklearn.cluster import KMeans
 
 from ..check_parcel_approach import _check_parcel_approach
+from ...typing import ParcelConfig, ParcelApproach
 
 
 class _CAPGetter:
@@ -16,11 +17,11 @@ class _CAPGetter:
 
     ### Attributes exist when CAP initialized
     @property
-    def parcel_approach(self) -> dict:
+    def parcel_approach(self) -> Union[ParcelApproach, None]:
         return self._parcel_approach
 
     @parcel_approach.setter
-    def parcel_approach(self, parcel_dict: Union[dict, os.PathLike]):
+    def parcel_approach(self, parcel_dict: Union[ParcelConfig, ParcelApproach, str]) -> None:
         self._parcel_approach = _check_parcel_approach(parcel_approach=parcel_dict, call="setter")
 
     @property
@@ -33,7 +34,7 @@ class _CAPGetter:
         return getattr(self, "_subject_table", None)
 
     @subject_table.setter
-    def subject_table(self, subject_dict):
+    def subject_table(self, subject_dict: dict[str, str]) -> None:
         if isinstance(subject_dict, dict):
             self._subject_table = copy.deepcopy(subject_dict)
         else:
@@ -75,7 +76,7 @@ class _CAPGetter:
         return getattr(self, "_concatenated_timeseries", None)
 
     @concatenated_timeseries.deleter
-    def concatenated_timeseries(self):
+    def concatenated_timeseries(self) -> None:
         del self._concatenated_timeseries
 
     @property
@@ -124,7 +125,7 @@ class _CAPGetter:
     def cosine_similarity(self) -> Union[dict[str, dict[str, Union[list[str], NDArray[np.floating]]]], None]:
         return getattr(self, "_cosine_similarity", None)
 
-    def _concatenated_timeseries_size(self):
+    def _concatenated_timeseries_size(self) -> str:
         if not self.concatenated_timeseries:
             return "0 bytes"
 
@@ -133,7 +134,7 @@ class _CAPGetter:
 
         return f"{total_bytes} bytes"
 
-    def __str__(self):
+    def __str__(self) -> str:
         parcellation_name = list(self.parcel_approach.keys())[0] if self.parcel_approach else None
         # Get group names
         groups_names = ", ".join(f"{k}" for k in self.groups.keys()) if self.groups else None

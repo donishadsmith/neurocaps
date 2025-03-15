@@ -14,11 +14,10 @@ from joblib import Parallel, delayed
 from nilearn.plotting.cm import _cmap_d
 from neuromaps.transforms import mni152_to_fslr, fslr_to_fslr
 from neuromaps.datasets import fetch_fslr
-from numpy.typing import ArrayLike, NDArray
 from scipy.stats import pearsonr
-from sklearn.cluster import KMeans
 from tqdm.auto import tqdm
 
+from ..typing import ParcelConfig, ParcelApproach, SubjectTimeseries
 from .._utils import (
     _CAPGetter,
     _PlotDefaults,
@@ -48,7 +47,7 @@ class CAP(_CAPGetter):
 
     Parameters
     ----------
-    parcel_approach: :obj:`dict`, or :obj:`os.PathLike`, default=None
+    parcel_approach: :obj:`ParcelConfig`, :obj:`ParcelApproach`, or :obj:`str`, default=None
         Specifies the parcellation approach for segmenting NifTI images into distinct regions-of-interests (ROIs).
         Supported parcellation aproaches includes "Schaefer", "AAL", and "Custom" (user-defined).
 
@@ -88,7 +87,7 @@ class CAP(_CAPGetter):
 
     Properties
     ----------
-    parcel_approach: :obj:`dict`
+    parcel_approach: :obj:`ParcelApproach`
         A dictionary containing information about the parcellation. Can also be used as a setter, which accepts a
         dictionary or a dictionary saved as a pickle file. The structure is as follows:
 
@@ -298,6 +297,13 @@ class CAP(_CAPGetter):
                 }
             }
 
+    See Also
+    --------
+    :class:`neurocaps.typing.ParcelConfig`
+        Type definition representing the configuration options and structure for the Schaefer and AAL parcellations.
+    :class:`neurocaps.typing.ParcelApproach`
+        Type definition representing the structure of the Schaefer, AAL, and Custom parcellation approaches.
+
     Note
     ----
     **Default Group Name**: If no groups were specified, **the default group name will always be "All Subjects"** to
@@ -327,8 +333,8 @@ class CAP(_CAPGetter):
 
     def __init__(
         self,
-        parcel_approach: Union[dict, os.PathLike] = None,
-        groups: dict[str, list[str]] = None,
+        parcel_approach: Optional[Union[ParcelConfig, ParcelApproach, str]] = None,
+        groups: Optional[dict[str, list[str]]] = None,
     ) -> None:
         if parcel_approach is not None:
             parcel_approach = _check_parcel_approach(parcel_approach=parcel_approach, call="CAP")
@@ -354,12 +360,12 @@ class CAP(_CAPGetter):
 
     def get_caps(
         self,
-        subject_timeseries: Union[dict[str, dict[str, NDArray[np.floating]]], os.PathLike],
+        subject_timeseries: Union[SubjectTimeseries, str],
         runs: Optional[Union[int, str, list[int], list[str]]] = None,
-        n_clusters: Union[int, list[int]] = 5,
-        cluster_selection_method: Literal["elbow", "davies_bouldin", "silhouette", "variance_ratio"] = None,
+        n_clusters: Union[int, list[int], range] = 5,
+        cluster_selection_method: Optional[Literal["elbow", "davies_bouldin", "silhouette", "variance_ratio"]] = None,
         random_state: Optional[int] = None,
-        init: Union[Literal["k-means++", "random"], Callable, ArrayLike] = "k-means++",
+        init: Union[Literal["k-means++", "random"], Callable, np.typing.ArrayLike] = "k-means++",
         n_init: Union[Literal["auto"], int] = "auto",
         max_iter: int = 300,
         tol: float = 0.0001,
@@ -367,7 +373,7 @@ class CAP(_CAPGetter):
         standardize: bool = True,
         n_cores: Optional[int] = None,
         show_figs: bool = False,
-        output_dir: Optional[os.PathLike] = None,
+        output_dir: Optional[str] = None,
         progress_bar: bool = False,
         **kwargs,
     ) -> Self:
@@ -384,7 +390,7 @@ class CAP(_CAPGetter):
 
         Parameters
         ----------
-        subject_timeseries: :obj:`dict[str, dict[str, np.ndarray]]` or :obj:`os.PathLike`
+        subject_timeseries: :obj:`SubjectTimeseries` or :obj:`str`
             A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a NumPy
             array. Can also be a path to a pickle file containing this same structure. The expected structure of is as
             follows:
@@ -449,7 +455,7 @@ class CAP(_CAPGetter):
             Displays the plots for the specified ``cluster_selection_method`` for all groups
             if ``cluster_selection_method`` is not None.
 
-        output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
+        output_dir: :obj:`str` or :obj:`None`, default=None
             Directory to save plots as png files if ``cluster_selection_method`` is not None. The directory will be
             created if it does not exist. If None, plots will not be saved.
 
@@ -469,6 +475,11 @@ class CAP(_CAPGetter):
             - bbox_inches: :obj:`str` or :obj:`None`, default="tight" -- Alters size of the whitespace in the saved image.
             - step: :obj:`int`, default=None -- An integer value that controls the progression of the x-axis in plots\
                 for the specified ``cluster_selection_method``. When set, only integer values will be displayed on the x-axis.
+
+        See Also
+        --------
+        :data:`neurocaps.typing.SubjectTimeseries`
+            The type definition for the subject timeseries dictionary structure.
 
         Returns
         -------
@@ -530,8 +541,8 @@ class CAP(_CAPGetter):
             self._kmeans = {}
             for group in self._groups:
                 self._kmeans[group] = {}
-                self._kmeans[group] = KMeans(n_clusters=self._n_clusters, **configs).fit(
-                    self._concatenated_timeseries[group]
+                self._kmeans[group] = _run_kmeans(
+                    self._n_clusters, configs, self._concatenated_timeseries[group], method=None
                 )
 
         # Create variance explained dict
@@ -777,7 +788,7 @@ class CAP(_CAPGetter):
 
     def calculate_metrics(
         self,
-        subject_timeseries: Union[dict[str, dict[str, NDArray[np.floating]]], os.PathLike],
+        subject_timeseries: Union[SubjectTimeseries, str],
         tr: Optional[float] = None,
         runs: Optional[Union[int, str, list[int], list[str]]] = None,
         continuous_runs: bool = False,
@@ -788,10 +799,10 @@ class CAP(_CAPGetter):
             ],
         ] = ["temporal_fraction", "persistence", "counts", "transition_frequency"],
         return_df: bool = True,
-        output_dir: Optional[os.PathLike] = None,
+        output_dir: Optional[str] = None,
         prefix_filename: Optional[str] = None,
         progress_bar: bool = False,
-    ) -> dict[str, pd.DataFrame]:
+    ) -> Union[dict[str, pd.DataFrame], None]:
         """
         Compute Participant-wise CAP Metrics.
 
@@ -872,7 +883,7 @@ class CAP(_CAPGetter):
 
         Parameters
         ----------
-        subject_timeseries: :obj:`dict[str, dict[str, np.ndarray]]` or :obj:`os.PathLike`
+        subject_timeseries: :obj:`SubjectTimeseries` or :obj:`str`
             A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a NumPy
             array. Can also be a path to a pickle file containing this same structure. The expected structure of is as
             follows:
@@ -921,7 +932,7 @@ class CAP(_CAPGetter):
         return_df: :obj:`str`, default=True
             If True, returns ``pandas.DataFrame`` inside a dictionary`, mapping each dataframe to their metric.
 
-        output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
+        output_dir: :obj:`str` or :obj:`None`, default=None
             Directory to save ``pandas.DataFrame`` as csv files. The directory will be created if it does not exist.
             Dataframes will not be saved if None.
 
@@ -933,11 +944,17 @@ class CAP(_CAPGetter):
 
             .. versionadded:: 0.21.5
 
+        See Also
+        --------
+        :data:`neurocaps.typing.SubjectTimeseries`
+            The type definition for the subject timeseries dictionary structure.
+
         Returns
         -------
         dict[str, pd.DataFrame] or dict[str, dict[str, pd.DataFrame]]
             Dictionary containing `pandas.DataFrame` - one for each requested metric. In the case of "transition_probability",
             each group has a separate dataframe which is returned in the from of `dict[str, dict[str, pd.DataFrame]]`.
+            Only returned if ``return_df`` is True.
 
 
         Note
@@ -1023,8 +1040,6 @@ class CAP(_CAPGetter):
         from CAP-1 to CAP-2.
 
         If no groups are specified, then the dataframe is stored in ``df_dict["transition_probability"]["All Subjects"]``.
-
-        *For the "Group" column, whitespace in group names no longer replaced with underscores in versions >=0.17.11.*
 
         References
         ----------
@@ -1322,7 +1337,7 @@ class CAP(_CAPGetter):
 
     def caps2plot(
         self,
-        output_dir: Optional[os.PathLike] = None,
+        output_dir: Optional[str] = None,
         suffix_title: Optional[str] = None,
         suffix_filename: Optional[str] = None,
         plot_options: Union[
@@ -1342,7 +1357,7 @@ class CAP(_CAPGetter):
 
         Parameters
         ----------
-        output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
+        output_dir: :obj:`str` or :obj:`None`, default=None
             Directory for saving plots as png files. The directory will be created if it does not exist. If None,
             plots will not be saved.
 
@@ -1931,7 +1946,7 @@ class CAP(_CAPGetter):
 
     def caps2corr(
         self,
-        output_dir: Optional[os.PathLike] = None,
+        output_dir: Optional[str] = None,
         suffix_title: Optional[str] = None,
         suffix_filename: Optional[str] = None,
         show_figs: bool = True,
@@ -1939,7 +1954,7 @@ class CAP(_CAPGetter):
         return_df: bool = False,
         save_df: bool = False,
         **kwargs,
-    ) -> dict[str, pd.DataFrame]:
+    ) -> Union[dict[str, pd.DataFrame], str]:
         """
         Generate Pearson Correlation Matrix for CAPs.
 
@@ -1951,7 +1966,7 @@ class CAP(_CAPGetter):
 
         Parameters
         ----------
-        output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
+        output_dir: :obj:`str` or :obj:`None`, default=None
             Directory to save plots (if ``save_plots`` is True) and correlation matrices DataFrames (if ``save_df`` is
             True). The directory will be created if it does not exist. If None, plots and dataFrame will not be saved.
 
@@ -2005,7 +2020,8 @@ class CAP(_CAPGetter):
         Returns
         -------
         dict[str, pd.DataFrame]
-            An instance of a pandas DataFrame for each group.
+            A dictionary mapping an instance of a pandas DataFrame for each group. Only returned if ``return_df`` is
+            True.
 
         Note
         ----
@@ -2068,10 +2084,10 @@ class CAP(_CAPGetter):
 
     def caps2niftis(
         self,
-        output_dir: os.PathLike,
+        output_dir: str,
         suffix_filename: Optional[str] = None,
         fwhm: Optional[float] = None,
-        knn_dict: dict[str, Union[int, list[int], NDArray[np.integer]]] = None,
+        knn_dict: dict[str, Union[int, list[int], np.typing.NDArray[np.integer]]] = None,
         progress_bar: bool = False,
     ) -> Self:
         """
@@ -2084,7 +2100,7 @@ class CAP(_CAPGetter):
 
         Parameters
         ----------
-        output_dir: :obj:`os.PathLike`
+        output_dir: :obj:`str`
             Directory to save nii.gz files. The directory will be created if it does not exist.
 
         suffix_filename: :obj:`str` or :obj:`None`, default=None
@@ -2201,7 +2217,7 @@ class CAP(_CAPGetter):
 
     def caps2surf(
         self,
-        output_dir: Optional[os.PathLike] = None,
+        output_dir: Optional[str] = None,
         suffix_title: Optional[str] = None,
         suffix_filename: Optional[str] = None,
         show_figs: bool = True,
@@ -2210,7 +2226,7 @@ class CAP(_CAPGetter):
         method: Literal["linear", "nearest"] = "linear",
         save_stat_maps: bool = False,
         fslr_giftis_dict: Optional[dict] = None,
-        knn_dict: dict[str, Union[int, list[int], NDArray[np.integer]]] = None,
+        knn_dict: dict[str, Union[int, list[int], np.typing.NDArray[np.integer]]] = None,
         progress_bar: bool = False,
         **kwargs,
     ) -> Self:
@@ -2228,7 +2244,7 @@ class CAP(_CAPGetter):
 
         Parameters
         ----------
-        output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
+        output_dir: :obj:`str` or :obj:`None`, default=None
             Directory to save plots as png files. The directory will be created if it does not exist. If None, plots
             will not be saved.
 
@@ -2493,7 +2509,7 @@ class CAP(_CAPGetter):
 
     def caps2radar(
         self,
-        output_dir: Optional[os.PathLike] = None,
+        output_dir: Optional[str] = None,
         suffix_title: Optional[str] = None,
         suffix_filename: Optional[str] = None,
         show_figs: bool = True,
@@ -2591,7 +2607,7 @@ class CAP(_CAPGetter):
 
         Parameters
         ----------
-        output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
+        output_dir: :obj:`str` or :obj:`None`, default=None
             Directory to save plots as png or html images. The directory will be created if it does not exist.
             If None, plots will not be saved.
 

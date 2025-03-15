@@ -13,6 +13,15 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.23.6] - 2025-03-16
+### 🚀 New/Added
+- Add type hints to all internal classes; minor code cleaning.
+- Use new types for subject timeseries and parcellations throughout docs.
+
+### ♻ Changed
+- Change some internal parameters for the private `_Data` class such as `scrub_lim`
+-> `out_percent`, `fd` -> `fd_thresh`, and `shift` -> `tr_shift`. Done for clarity.
+
 ## [0.23.5] - 2025-03-13
 ### 🐛 Fixes
 - Updated type hints for class methods that return self from `None` to `Self`.

@@ -35,7 +35,6 @@ def _dicts_to_pickles(output_dir, dict_list, call, filenames=None, message=None,
                 run_name = list(dict_list[dict_name][sub_name])[0]
                 suffix = f"dtype-{str(dict_list[dict_name][sub_name][run_name].dtype)}"
             save_filenames = [f"subject_timeseries_{key.split('_')[-1]}_{suffix}.pkl" for key in list(dict_list)]
-
     else:
         save_filenames = [f"{os.path.splitext(os.path.basename(name).rstrip())[0].rstrip()}.pkl" for name in filenames]
 

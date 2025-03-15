@@ -13,6 +13,7 @@ from joblib import Parallel, delayed, dump
 from tqdm.auto import tqdm
 
 from ..exceptions import BIDSQueryError
+from ..typing import ParcelConfig, ParcelApproach
 from .._utils import (
     _TimeseriesExtractorGetter,
     _PlotDefaults,
@@ -38,7 +39,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         The standard template space that the preprocessed bold data is registered to. Used for querying with PyBIDS
         to locate preprocessed BOLD-related files.
 
-    parcel_approach: :obj:`dict` or :obj:`os.PathLike`,\
+    parcel_approach: :obj:`ParcelConfig`, :obj:`ParcelApproach`, or :obj:`str`,\
                      default={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
         The approach used to parcellate NifTI images into distinct regions-of-interests (ROIs).
 
@@ -120,7 +121,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         .. versionchanged:: 0.23.0 Changed default from ``None`` to ``"basic"``. The ``"basic"`` option provides the
            same functionality that ``None`` did in previous versions.
 
-    fd_threshold: :obj:`float`, :obj:`dict[str, float]`, or :obj:`None`, default=None
+    fd_threshold: :obj:`float`, :obj:`dict[str, float | int]`, or :obj:`None`, default=None
         Threshold for volume censoring based on framewise displacement (FD).
 
         - *If float*, removes volumes where FD > threshold.
@@ -200,7 +201,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         The standard template space that the preprocessed BOLD data is registered to. The space can also be set after
         class initialization using ``self.space = "New Space"`` if the template space needs to be changed.
 
-    parcel_approach: :obj:`dict`
+    parcel_approach: :obj:`ParcelApproach`
         A dictionary containing information about the parcellation. Can also be used as a setter, which accepts a
         dictionary or a dictionary saved as pickle file. If "Schaefer" or "AAL" was specified during
         initialization of the ``TimeseriesExtractor`` class, then ``nilearn.datasets.fetch_atlas_schaefer_2018``
@@ -247,7 +248,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     n_cores: :obj:`int` or :obj:`None`
         Number of cores used for multiprocessing with Joblib.
 
-    subject_timeseries: :obj:`dict[str, dict[str, np.ndarray]]` or :obj:`None`
+    subject_timeseries: :obj:`SubjectTimeseries` or :obj:`None`
         A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a NumPy array.
         Can also be a path to a pickle file containing this same structure. If this property needs to be deleted due
         to memory issues, ``del self.subject_timeseries`` can be used to delete this property and only have it
@@ -266,6 +267,15 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                         "run-1": np.array([...]), # Shape: TRs x ROIs
                     }
                 }
+
+    See Also
+    --------
+    :class:`neurocaps.typing.ParcelConfig`
+        Type definition representing the configuration options and structure for the Schaefer and AAL parcellations.
+    :class:`neurocaps.typing.ParcelApproach`
+        Type definition representing the structure of the Schaefer, AAL, and Custom parcellation approaches.
+    :data:`neurocaps.typing.SubjectTimeseries`
+        Type definition representing the structure of the subject timeseries.
 
     Note
     ----
@@ -299,7 +309,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     def __init__(
         self,
         space: str = "MNI152NLin2009cAsym",
-        parcel_approach: Union[dict, os.PathLike] = {
+        parcel_approach: Union[ParcelConfig, ParcelApproach, str] = {
             "Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}
         },
         standardize: Union[bool, Literal["zscore_sample", "zscore", "psc"]] = "zscore_sample",
@@ -312,7 +322,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         fd_threshold: Optional[Union[float, dict[str, Union[bool, float, int]]]] = None,
         n_acompcor_separate: Optional[int] = None,
         dummy_scans: Optional[Union[int, dict[str, Union[bool, int]]]] = None,
-        dtype: Union[str, Literal["auto"]] = None,
+        dtype: Optional[Union[str, Literal["auto"]]] = None,
     ) -> None:
 
         self._space = space
@@ -425,7 +435,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
     def get_bold(
         self,
-        bids_dir: os.PathLike,
+        bids_dir: str,
         task: str,
         session: Optional[Union[int, str]] = None,
         runs: Optional[Union[int, str, list[int], list[str]]] = None,
@@ -461,7 +471,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         Parameters
         ----------
-        bids_dir: :obj:`os.PathLike`
+        bids_dir: :obj:`str`
             Path to a BIDS compliant directory. A "dataset_description.json" file must be located in this directory
             or an error will be raised.
 
@@ -1028,7 +1038,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             "`self.get_bold()` or assign a valid timeseries dictionary to `self.subject_timeseries`."
         )
 
-    def timeseries_to_pickle(self, output_dir: Union[str, os.PathLike], filename: Optional[str] = None) -> Self:
+    def timeseries_to_pickle(self, output_dir: Union[str, str], filename: Optional[str] = None) -> Self:
         """
         Save the Extracted Subject Timeseries.
 
@@ -1038,7 +1048,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         Parameters
         ----------
-        output_dir: :obj:`os.PathLike`
+        output_dir: :obj:`str`
             Directory to save ``self.subject_timeseries`` dictionary as a pickle file. The directory will be created if
             it does not exist.
 
@@ -1072,7 +1082,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         roi_indx: Optional[Union[Union[int, str], Union[list[str], list[int]]]] = None,
         region: Optional[str] = None,
         show_figs: bool = True,
-        output_dir: Optional[Union[str, os.PathLike]] = None,
+        output_dir: Optional[Union[str, str]] = None,
         filename: Optional[str] = None,
         **kwargs,
     ) -> Self:
@@ -1101,7 +1111,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         show_figs: :obj:`bool`, default=True
             Display figures.
 
-        output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
+        output_dir: :obj:`str` or :obj:`None`, default=None
             Directory to save plot as png image. The directory will be created if it does not exist. If None, plot will
             not be saved.
 

@@ -1,3 +1,6 @@
+from typing import Any
+
+
 class BIDSQueryError(Exception):
     """
     BIDS File Querying Exception.
@@ -14,5 +17,5 @@ class BIDSQueryError(Exception):
     additional information on the expected directory structure and entities needed for querying.
     """
 
-    def __init__(self, message):
+    def __init__(self, message: Any) -> None:
         super().__init__(message)

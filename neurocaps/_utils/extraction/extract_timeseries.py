@@ -3,6 +3,7 @@
 import copy, json, math, os, re
 from dataclasses import dataclass, field
 from functools import cached_property
+from typing import Union
 
 import numpy as np, pandas as pd
 from nilearn.maskers import NiftiLabelsMasker
@@ -10,6 +11,7 @@ from nilearn.image import index_img, load_img
 from scipy.interpolate import CubicSpline
 
 from ..logger import _logger
+from ...typing import ParcelApproach
 
 # Logger initialization to check if any user-defined loggers where created prior to package import
 LG = _logger(__name__)
@@ -18,102 +20,102 @@ LG = _logger(__name__)
 # data container
 @dataclass
 class _Data:
-    parcel_approach: dict = field(default_factory=dict)
+    parcel_approach: ParcelApproach = field(default_factory=dict)
     signal_clean_info: dict = field(default_factory=dict)
     task_info: dict = field(default_factory=dict)
-    tr: int = None
+    tr: Union[int, None] = None
     verbose: bool = False
     # Run-specific attributes
-    files: dict = field(default_factory=dict)
+    files: dict[str, str] = field(default_factory=dict)
     fail_fast: bool = False
-    dummy_vols: int = None
-    censor_vols: list = field(default_factory=list)
-    sample_mask: list = field(default_factory=list)
-    max_len: int = None
+    dummy_vols: Union[int, None] = None
+    censor_vols: list[int] = field(default_factory=list)
+    sample_mask: Union[list, np.typing.NDArray[np.bool_]] = field(default_factory=list)
+    max_len: Union[int, None] = None
     # Event condition scan indices
-    scans: list = field(default_factory=list)
+    scans: list[int] = field(default_factory=list)
     # Subject header
-    head: str = None
+    head: Union[str, None] = None
     # Percentage of volumes that exceed fd threshold
-    vols_exceed_percent: float = None
+    vols_exceed_percent: Union[float, None] = None
 
     @property
-    def session(self):
+    def session(self) -> Union[int, str, None]:
         return self.task_info["session"]
 
     @property
-    def task(self):
+    def task(self) -> str:
         return self.task_info["task"]
 
     @property
-    def condition(self):
+    def condition(self) -> Union[str, None]:
         return self.task_info["condition"]
 
     @property
-    def shift(self):
+    def tr_shift(self) -> int:
         return self.task_info["condition_tr_shift"]
 
     @property
-    def slice_ref(self):
+    def slice_ref(self) -> float:
         return self.task_info["slice_time_ref"]
 
     @property
-    def use_confounds(self):
+    def use_confounds(self) -> bool:
         return self.signal_clean_info["use_confounds"]
 
     @property
-    def confound_names(self):
+    def confound_names(self) -> Union[list[str], None]:
         return self.signal_clean_info["confound_names"]
 
     @property
-    def n_acompcor_separate(self):
+    def n_acompcor_separate(self) -> Union[int, None]:
         return self.signal_clean_info["n_acompcor_separate"]
 
     @property
-    def fd(self):
+    def fd_thresh(self) -> Union[float, None]:
         if isinstance(self.signal_clean_info["fd_threshold"], dict):
             return self.signal_clean_info["fd_threshold"]["threshold"]
         else:
             return self.signal_clean_info["fd_threshold"]
 
     @property
-    def scrub_lim(self):
+    def out_percent(self) -> Union[float, None]:
         if isinstance(self.signal_clean_info["fd_threshold"], dict):
             return self.signal_clean_info["fd_threshold"].get("outlier_percentage")
 
     @property
-    def n_before(self):
+    def n_before(self) -> Union[int, None]:
         if isinstance(self.signal_clean_info["fd_threshold"], dict):
             return self.signal_clean_info["fd_threshold"].get("n_before")
 
     @property
-    def n_after(self):
+    def n_after(self) -> Union[int, None]:
         if isinstance(self.signal_clean_info["fd_threshold"], dict):
             return self.signal_clean_info["fd_threshold"].get("n_after")
 
     @property
-    def use_sample_mask(self):
+    def use_sample_mask(self) -> Union[bool, None]:
         if isinstance(self.signal_clean_info["fd_threshold"], dict):
             return self.signal_clean_info["fd_threshold"].get("use_sample_mask")
 
     @property
-    def interpolate(self):
+    def interpolate(self) -> Union[bool, None]:
         if isinstance(self.signal_clean_info["fd_threshold"], dict):
             return self.signal_clean_info["fd_threshold"].get("interpolate")
 
     @property
-    def censor_mask(self):
+    def censor_mask(self) -> Union[np.typing.NDArray, None]:
         return np.array(self.sample_mask) if len(self.sample_mask) > 0 else None
 
     @cached_property
-    def confound_df(self):
+    def confound_df(self) -> Union[pd.DataFrame, None]:
         if self.files["confound"]:
             return pd.read_csv(self.files["confound"], sep="\t")
         else:
             return None
 
     @property
-    def maps(self):
+    def maps(self) -> str:
         return self.parcel_approach[list(self.parcel_approach)[0]]["maps"]
 
 
@@ -168,7 +170,7 @@ def _extract_timeseries(
         data.dummy_vols = _get_dummy(data, LG)
 
         # Assess framewise displacement
-        if data.fd and data.files["confound"] and "framewise_displacement" in data.confound_df.columns:
+        if data.fd_thresh and data.files["confound"] and "framewise_displacement" in data.confound_df.columns:
             # Get censor volumes vector, outlier_limit, and threshold
             data.max_len, data.censor_vols = _censor(data)
 
@@ -178,7 +180,7 @@ def _extract_timeseries(
             if len(data.censor_vols) == data.max_len:
                 LG.warning(
                     f"{data.head}" + "Timeseries Extraction Skipped: Timeseries will be empty due to "
-                    f"all volumes exceeding a framewise displacement of {data.fd}."
+                    f"all volumes exceeding a framewise displacement of {data.fd_thresh}."
                 )
                 continue
 
@@ -186,11 +188,11 @@ def _extract_timeseries(
             if data.censor_vols and (data.use_sample_mask or data.interpolate):
                 data.sample_mask = _create_sample_mask(data)
 
-            # Check if run fails fast due to percentage volumes exceeding user-specified scrub_lim
-            if data.scrub_lim and not data.condition:
-                data.vols_exceed_percent, data.fail_fast = _flag(len(data.censor_vols), data.max_len, data.scrub_lim)
+            # Check if run fails fast due to percentage volumes exceeding user-specified out_percent
+            if data.out_percent and not data.condition:
+                data.vols_exceed_percent, data.fail_fast = _flag(len(data.censor_vols), data.max_len, data.out_percent)
 
-        elif data.fd and data.files["confound"] and "framewise_displacement" not in data.confound_df.columns:
+        elif data.fd_thresh and data.files["confound"] and "framewise_displacement" not in data.confound_df.columns:
             LG.warning(
                 f"{data.head}" + "`fd_threshold` specified but 'framewise_displacement' column not "
                 "found in the confound tsv file. Removal of volumes after nuisance regression will not be "
@@ -214,8 +216,8 @@ def _extract_timeseries(
             data.scans = _get_condition(data, condition_df)
             if data.censor_vols:
                 data.scans, n = _filter_condition(data, LG)
-                if data.scrub_lim:
-                    data.vols_exceed_percent, data.fail_fast = _flag(n - len(data.scans), n, data.scrub_lim)
+                if data.out_percent:
+                    data.vols_exceed_percent, data.fail_fast = _flag(n - len(data.scans), n, data.out_percent)
 
             if not data.scans:
                 LG.warning(
@@ -233,8 +235,8 @@ def _extract_timeseries(
 
             LG.warning(
                 f"{data.head}" + f"Timeseries Extraction Skipped: Run flagged due to more than "
-                f"{data.scrub_lim * 100}% of the volumes exceeding the framewise displacement threshold of "
-                f"{data.fd}. {percent_msg}."
+                f"{data.out_percent * 100}% of the volumes exceeding the framewise displacement threshold of "
+                f"{data.fd_thresh}. {percent_msg}."
             )
             continue
 
@@ -276,7 +278,7 @@ def _perform_extraction(data, LG):
     nifti_img = load_img(data.files["nifti"], dtype=data.signal_clean_info["dtype"])
 
     # Get length of timeseries and append scan indices to ensure no scans are out of bounds due to shift
-    if (data.condition and data.shift > 0) and (max(data.scans) > nifti_img.shape[-1] - 1):
+    if (data.condition and data.tr_shift > 0) and (max(data.scans) > nifti_img.shape[-1] - 1):
         data.scans = _check_indices(data, nifti_img.shape[-1], LG, False)
 
     if data.dummy_vols:
@@ -370,7 +372,7 @@ def _censor(data):
     if data.dummy_vols:
         fd_array = fd_array[data.dummy_vols :]
 
-    censor_volumes = sorted(list(np.where(fd_array > data.fd)[0]))
+    censor_volumes = sorted(list(np.where(fd_array > data.fd_thresh)[0]))
 
     return fd_array.shape[0], censor_volumes
 
@@ -393,9 +395,9 @@ def _extended_censor(data):
 
 
 # Determine if run fails fast; when condition is not specified
-def _flag(n_censor, n, scrub_lim):
+def _flag(n_censor, n, out_percent):
     vols_exceed_percent = n_censor / n
-    fail_fast = True if vols_exceed_percent > scrub_lim else False
+    fail_fast = True if vols_exceed_percent > out_percent else False
 
     return vols_exceed_percent, fail_fast
 
@@ -411,8 +413,8 @@ def _get_condition(data, condition_df):
         # Avoid accidental negative indexing
         adjusted_onset = adjusted_onset if adjusted_onset >= 0 else 0
         # Int is always the floor for positive floats
-        onset_scan = int(adjusted_onset / data.tr) + data.shift
-        end_scan = math.ceil((adjusted_onset + condition_df.loc[i, "duration"]) / data.tr) + data.shift
+        onset_scan = int(adjusted_onset / data.tr) + data.tr_shift
+        end_scan = math.ceil((adjusted_onset + condition_df.loc[i, "duration"]) / data.tr) + data.tr_shift
         scans.extend(list(range(onset_scan, end_scan)))
 
     # Get unique scans to not duplicate information

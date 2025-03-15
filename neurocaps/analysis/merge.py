@@ -1,22 +1,22 @@
-import copy, os
+import copy
 from typing import Union, Optional
 
 import numpy as np
-from numpy.typing import NDArray
 
 from .._utils import _convert_pickle_to_dict, _dicts_to_pickles, _logger
+from ..typing import SubjectTimeseries
 
 LG = _logger(__name__)
 
 
 def merge_dicts(
-    subject_timeseries_list: Union[list[dict[str, dict[str, NDArray[np.floating]]]], list[os.PathLike]],
+    subject_timeseries_list: Union[list[SubjectTimeseries], list[str]],
     return_merged_dict: bool = True,
     return_reduced_dicts: bool = False,
-    output_dir: Optional[Union[str, os.PathLike]] = None,
+    output_dir: Optional[Union[str, str]] = None,
     filenames: Optional[list[str]] = None,
     save_reduced_dicts: bool = False,
-) -> dict[str, dict[str, dict[str, NDArray[np.floating]]]]:
+) -> Union[dict[str, SubjectTimeseries], None]:
     """
     Merge Participant Timeseries Across Multiple Sessions or Tasks.
 
@@ -42,7 +42,7 @@ def merge_dicts(
 
     Parameters
     ----------
-    subject_timeseries_list: :obj:`list[dict[str, dict[str, np.ndarray]]]` or :obj:`list[os.PathLike]`
+    subject_timeseries_list: :obj:`list[SubjectTimeseries]` or :obj:`list[str]`
         A list where each element consist of a dictionary mapping subject IDs to their run IDs and associated
         timeseries (TRs x ROIs) as a NumPy array. Can also be a list consisting of paths to pickle files
         containing this same structure. The expected structure of each dictionary is as follows:
@@ -69,7 +69,7 @@ def merge_dicts(
         in the merged dictionary. Keys are named "dict_{0}" where {0} corresponds to the dictionary's position in the
         input list.
 
-    output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
+    output_dir: :obj:`str` or :obj:`None`, default=None
         Directory to save the merged or reduced dictionaries as pickle files. The directory will be created
         if it does not exist. For the reduced dictionaries to be saved, ``save_reduced_dicts`` must be set to True.
         If ``save_reduced_dicts`` is False and ``output_dir`` is provided, only the merged dictionary will be saved.
@@ -84,9 +84,8 @@ def merge_dicts(
 
         If ``save_reduced_dicts`` is True:
 
-            - Provide `N+1` names (where `N` is the length of subject_timeseries_list) - `N` names for individual
-              reduced dictionaries followed by one name for the merged dictionary. Names are assigned by input position
-              order.
+            - Provide N+1 names (where N is the length of ``subject_timeseries_list``): N names for individual reduced
+              dictionaries followed by one name for the merged dictionary. Names are  assigned by input position order.
 
         *Note*: Full paths are handled using basename and extensions are ignored. If None, uses default
         names - "subject_timeseries_{0}_reduced.pkl" (where {0} indicates the original input order) and
@@ -97,8 +96,14 @@ def merge_dicts(
 
     Returns
     -------
-    dict[str, dict[str, dict[str, np.ndarray]]]
-        A nested dictionary containing the merged subject timeseries and reduced subject timeseries if specified.
+    dict[str, SubjectTimeseries]
+        A nested dictionary containing the merged subject timeseries and reduced subject timeseries if either
+        ``return_merged_dict`` or ``return_reduced_dict`` are True.
+
+    See Also
+    --------
+    :data:`neurocaps.typing.SubjectTimeseries`
+        The type definition for the subject timeseries dictionary structure.
 
     References
     ----------

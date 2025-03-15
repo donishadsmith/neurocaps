@@ -9,7 +9,7 @@ _USER_MODULE_HANDLERS = {}
 
 
 class _Flush(logging.StreamHandler):
-    def emit(self, record):
+    def emit(self, record: logging.LogRecord) -> None:
         super().emit(record)
         self.flush()
 

@@ -1,5 +1,4 @@
-import os
-from typing import Optional
+from typing import Optional, Union
 
 import matplotlib.pyplot as plt, pandas as pd
 
@@ -10,7 +9,7 @@ LG = _logger(__name__)
 
 def transition_matrix(
     trans_dict: dict[str, pd.DataFrame],
-    output_dir: Optional[os.PathLike] = None,
+    output_dir: Optional[str] = None,
     suffix_title: Optional[str] = None,
     suffix_filename: Optional[str] = None,
     show_figs: bool = True,
@@ -18,7 +17,7 @@ def transition_matrix(
     return_df: bool = True,
     save_df: bool = True,
     **kwargs,
-) -> pd.DataFrame:
+) -> Union[pd.DataFrame, None]:
     """
     Generate and Visualize the Averaged Transition Probabilities.
 
@@ -32,7 +31,7 @@ def transition_matrix(
         This assumes the output from ``CAP.calculate_metrics`` is being used, specifically
         ``metrics_output["transition_probability"]``.
 
-    output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
+    output_dir: :obj:`str` or :obj:`None`, default=None
         Directory to save plots (if ``save_plots`` is True) and transition probability matrices DataFrames (if
         ``save_df`` is True) to. The directory will be created if it does not exist. Plots and dataframes will not
         be saved if None.
@@ -86,7 +85,7 @@ def transition_matrix(
     Returns
     -------
     dict[str, pd.DataFrame]
-        An instance of a pandas DataFrame for each group.
+        An instance of a pandas DataFrame for each group if ``return_df`` is True.
 
     Note
     ----
@@ -103,8 +102,6 @@ def transition_matrix(
     +------------+---------+-------+-------+
     | CAP-3      |  0.35   | 0.18  |  0.47 |
     +------------+---------+-------+-------+
-
-    *The "From/To" index name appears in versions >=0.17.11.*
     """
     assert isinstance(trans_dict, dict), "transition_dict must be in the form dict[str, pd.DataFrame]."
 

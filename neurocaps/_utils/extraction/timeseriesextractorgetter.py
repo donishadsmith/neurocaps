@@ -1,14 +1,14 @@
 """A class which is responsible for accessing all TimeseriesExtractorGetter and to keep track of all attributes in
 TimeSeriesExtractor"""
 
-import copy, os, sys
+import copy, sys
 from typing import Union
 
 import numpy as np
-from numpy.typing import NDArray
 
 from ..check_parcel_approach import _check_parcel_approach
 from ..pickle_utils import _convert_pickle_to_dict
+from ...typing import ParcelConfig, ParcelApproach, SubjectTimeseries
 
 
 class _TimeseriesExtractorGetter:
@@ -21,17 +21,17 @@ class _TimeseriesExtractorGetter:
         return self._space
 
     @space.setter
-    def space(self, new_space: str):
+    def space(self, new_space: str) -> None:
         if not isinstance(new_space, str):
             raise TypeError("`space` must be a string.")
         self._space = new_space
 
     @property
-    def parcel_approach(self) -> dict:
+    def parcel_approach(self) -> ParcelApproach:
         return self._parcel_approach
 
     @parcel_approach.setter
-    def parcel_approach(self, parcel_dict: Union[dict, os.PathLike]):
+    def parcel_approach(self, parcel_dict: Union[ParcelConfig, ParcelApproach, str]) -> None:
         self._parcel_approach = _check_parcel_approach(parcel_approach=parcel_dict, call="setter")
 
     @property
@@ -57,11 +57,11 @@ class _TimeseriesExtractorGetter:
     # Gets initialized in TimeSeriesExtractor.get_bold(), gets populated when
     # TimeseriesExtractor._timeseries_aggregator gets called in TimeseriesExtractor._extract_timeseries
     @property
-    def subject_timeseries(self) -> Union[dict[str, dict[str, NDArray[np.floating]]], None]:
+    def subject_timeseries(self) -> Union[SubjectTimeseries, None]:
         return getattr(self, "_subject_timeseries", None)
 
     @subject_timeseries.setter
-    def subject_timeseries(self, subject_dict):
+    def subject_timeseries(self, subject_dict: Union[SubjectTimeseries, str]) -> None:
         need_deepcopy = True
 
         if isinstance(subject_dict, str) and subject_dict.endswith(".pkl"):
@@ -76,11 +76,11 @@ class _TimeseriesExtractorGetter:
             self._subject_timeseries = subject_dict
 
     @subject_timeseries.deleter
-    def subject_timeseries(self):
+    def subject_timeseries(self) -> None:
         del self._subject_timeseries
 
     @staticmethod
-    def _validate_timeseries(subject_dict):
+    def _validate_timeseries(subject_dict: SubjectTimeseries) -> None:
         error_msg = (
             "A valid pickle file/subject timeseries should contain a nested dictionary where the "
             "first level is the subject id, second level is the run number in the form of 'run-#', and "
@@ -111,7 +111,7 @@ class _TimeseriesExtractorGetter:
                 if not isinstance(subject_dict[sub][run], np.ndarray):
                     raise TypeError(error_dict["Run"].format(sub, run) + "All 'run-#' keys must contain a numpy array.")
 
-    def _subject_timeseries_size(self):
+    def _subject_timeseries_size(self) -> str:
         if not self.subject_timeseries:
             return "0 bytes"
 
@@ -121,7 +121,7 @@ class _TimeseriesExtractorGetter:
 
         return f"{total_bytes} bytes"
 
-    def __str__(self):
+    def __str__(self) -> str:
         n_subjects = len(self.subject_ids) if self.subject_ids else None
 
         object_properties = (

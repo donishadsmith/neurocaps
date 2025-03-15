@@ -54,3 +54,26 @@ participant-wise transition probabilities dataframes created by ``CAP.calculate_
    merge_dicts
    standardize
    transition_matrix
+
+:mod:`neurocaps.typing` - Types
+--------------------------------
+Module containing custom types.
+
+.. versionadded:: 0.23.6
+
+.. currentmodule:: neurocaps.typing
+
+.. autosummary::
+   :template: types.rst
+   :nosignatures:
+   :toctree: generated/
+
+   SubjectTimeseries
+   ParcelConfig
+   SchaeferParcelConfig
+   AALParcelConfig
+   ParcelApproach
+   SchaeferParcelApproach
+   AALParcelApproach
+   CustomParcelApproach
+   CustomRegionHemispheres

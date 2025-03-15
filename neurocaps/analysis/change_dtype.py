@@ -1,21 +1,21 @@
-import copy, os
+import copy
 from typing import Union, Optional
 
 import numpy as np
-from numpy.typing import NDArray
 
 from .._utils import _convert_pickle_to_dict, _dicts_to_pickles, _logger
+from ..typing import SubjectTimeseries
 
 LG = _logger(__name__)
 
 
 def change_dtype(
-    subject_timeseries_list: Union[list[dict[str, dict[str, NDArray[np.floating]]]], list[os.PathLike]],
+    subject_timeseries_list: Union[list[SubjectTimeseries], list[str]],
     dtype: Union[str, np.floating],
     return_dicts: bool = True,
-    output_dir: Optional[os.PathLike] = None,
+    output_dir: Optional[str] = None,
     filenames: Optional[list[str]] = None,
-) -> dict[str, dict[str, dict[str, NDArray[np.floating]]]]:
+) -> Union[dict[str, SubjectTimeseries], None]:
     """
     Perform Participant-wise Dtype Conversion.
 
@@ -25,7 +25,7 @@ def change_dtype(
 
     Parameters
     ----------
-    subject_timeseries_list: :obj:`list[dict[str, dict[str, np.ndarray]]]` or :obj:`list[os.PathLike]`
+    subject_timeseries_list: :obj:`list[dict[str, dict[str, np.ndarray]]]` or :obj:`list[str]`
         A list where each element consist of a dictionary mapping subject IDs to their run IDs and associated
         timeseries (TRs x ROIs) as a NumPy array. Can also be a list consisting of paths to pickle files
         containing this same structure. The expected structure of each dictionary is as follows:
@@ -51,7 +51,7 @@ def change_dtype(
         If True, returns a single dictionary containing the converted input dictionaries. Keys are named "dict_{0}"
         where {0} corresponds to the dictionary's position in the input list.
 
-    output_dir: :obj:`os.PathLike` or :obj:`None`, default=None
+    output_dir: :obj:`str` or :obj:`None`, default=None
         Directory to save the converted ``subject_timeseries`` as pickle files. The directory will be created if it
         does not exist. Dictionaries will not be saved if None.
 
@@ -63,8 +63,13 @@ def change_dtype(
 
     Returns
     -------
-    dict[str, dict[str, dict[str, np.ndarray]]]
-        A nested dictionary containing the converted subject timeseries.
+    dict[str, SubjectTimeseries]
+        A nested dictionary containing the converted subject timeseries if ``return_dicts`` is True.
+
+    See Also
+    --------
+    :data:`neurocaps.typing.SubjectTimeseries`
+        The type definition for the subject timeseries dictionary structure.
 
     Warning
     -------

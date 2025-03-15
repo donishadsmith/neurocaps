@@ -3,15 +3,15 @@
 
 class _PlotDefaults:
     @staticmethod
-    def visualize_bold():
+    def visualize_bold() -> dict:
         return {"dpi": 300, "figsize": (11, 5), "bbox_inches": "tight"}
 
     @staticmethod
-    def get_caps():
+    def get_caps() -> dict:
         return {"dpi": 300, "figsize": (8, 6), "step": None, "bbox_inches": "tight"}
 
     @staticmethod
-    def caps2plot():
+    def caps2plot() -> dict:
         return {
             "dpi": 300,
             "figsize": (8, 6),
@@ -46,7 +46,7 @@ class _PlotDefaults:
         }
 
     @staticmethod
-    def caps2corr():
+    def caps2corr() -> dict:
         return {
             "dpi": 300,
             "figsize": (8, 6),
@@ -72,7 +72,7 @@ class _PlotDefaults:
         }
 
     @staticmethod
-    def caps2surf():
+    def caps2surf() -> dict:
         return {
             "dpi": 300,
             "title_pad": -3,
@@ -95,7 +95,7 @@ class _PlotDefaults:
         }
 
     @staticmethod
-    def caps2radar():
+    def caps2radar() -> dict:
         return {
             "scale": 2,
             "height": 800,
@@ -139,5 +139,5 @@ class _PlotDefaults:
         }
 
     @staticmethod
-    def transition_matrix():
+    def transition_matrix() -> dict:
         return _PlotDefaults.caps2corr()
