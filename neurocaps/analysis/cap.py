@@ -1546,7 +1546,7 @@ class CAP(_CAPGetter):
         # List of regions remains list for Schaefer and AAL but converts keys to list for Custom
         regions = list(self._parcel_approach[parcellation_name]["regions"])
 
-        group_caps = [(group, cap) for group in self._caps for cap in self._caps[group]]
+        group_caps = [(group, cap) for group in self._groups for cap in self._caps[group]]
         for group, cap in group_caps:
             region_means = None
             for region in regions:
@@ -1954,7 +1954,7 @@ class CAP(_CAPGetter):
         return_df: bool = False,
         save_df: bool = False,
         **kwargs,
-    ) -> Union[dict[str, pd.DataFrame], str]:
+    ) -> Union[dict[str, pd.DataFrame], None]:
         """
         Generate Pearson Correlation Matrix for CAPs.
 
@@ -2039,7 +2039,7 @@ class CAP(_CAPGetter):
         # Create plot dictionary
         plot_dict = _check_kwargs(_PlotDefaults.caps2corr(), **kwargs)
 
-        for group in self._caps:
+        for group in self._groups:
             df = pd.DataFrame(self._caps[group])
             corr_df = df.corr(method="pearson")
 
@@ -2087,7 +2087,7 @@ class CAP(_CAPGetter):
         output_dir: str,
         suffix_filename: Optional[str] = None,
         fwhm: Optional[float] = None,
-        knn_dict: dict[str, Union[int, list[int], np.typing.NDArray[np.integer]]] = None,
+        knn_dict: Optional[dict[str, Union[int, list[int], np.typing.NDArray[np.integer]]]] = None,
         progress_bar: bool = False,
     ) -> Self:
         """
@@ -2164,7 +2164,7 @@ class CAP(_CAPGetter):
             os.makedirs(output_dir)
 
         parcellation_name = list(self._parcel_approach)[0]
-        for group in self._caps:
+        for group in self._groups:
             for cap in tqdm(
                 self._caps[group], desc=f"Generating Statistical Maps [GROUP: {group}]", disable=not progress_bar
             ):
@@ -2226,7 +2226,7 @@ class CAP(_CAPGetter):
         method: Literal["linear", "nearest"] = "linear",
         save_stat_maps: bool = False,
         fslr_giftis_dict: Optional[dict] = None,
-        knn_dict: dict[str, Union[int, list[int], np.typing.NDArray[np.integer]]] = None,
+        knn_dict: Optional[dict[str, Union[int, list[int], np.typing.NDArray[np.integer]]]] = None,
         progress_bar: bool = False,
         **kwargs,
     ) -> Self:
@@ -2731,7 +2731,7 @@ class CAP(_CAPGetter):
 
         parcellation_name = list(self._parcel_approach)[0]
         # Create radar dict
-        for group in self._caps:
+        for group in self._groups:
             radar_dict = {"Regions": list(self._parcel_approach[parcellation_name]["regions"])}
             self._update_radar_dict(group, parcellation_name, radar_dict)
             self._cosine_similarity[group] = radar_dict

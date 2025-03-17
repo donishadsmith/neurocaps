@@ -5,7 +5,7 @@ from sklearn.metrics import davies_bouldin_score, calinski_harabasz_score, silho
 
 
 def _run_kmeans(n_cluster, configs, concatenated_timeseries, method):
-    model = KMeans(n_clusters=n_cluster, **configs).fit(concatenated_timeseries)
+    model = KMeans(n_clusters=n_cluster, **configs, verbose=0).fit(concatenated_timeseries)
 
     # Only return model when no cluster selection chosen
     if method is None:
