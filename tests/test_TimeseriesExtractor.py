@@ -635,7 +635,7 @@ def test_tr_with_and_without_bandpass(tmp_dir, bold_json, get_vars, high_pass, l
 
 
 # Ensure correct indices are extracted
-def test_condition(get_vars):
+def test_condition_extraction(get_vars):
     bids_dir, pipeline_name = get_vars
 
     extractor = TimeseriesExtractor()
@@ -973,7 +973,7 @@ def test_dummy_scans(get_vars, use_confounds):
     assert np.array_equal(no_condition[scan_list, :], condition_timeseries)
 
 
-def test_dummy_scans_auto(get_vars):
+def test_dummy_scans_using_auto_with_min_and_max(get_vars):
     bids_dir, pipeline_name = get_vars
 
     # Clear; zero "non-steady" columns
@@ -1032,7 +1032,7 @@ def test_dummy_scans_auto(get_vars):
     add_non_steady(bids_dir, pipeline_name, 0)
 
 
-def test_dummy_scans_and_fd(get_vars):
+def test_dummy_scans_with_fd_censoring(get_vars):
     bids_dir, pipeline_name = get_vars
 
     # No volumes should meet the fd threshold
@@ -1084,7 +1084,7 @@ def test_dummy_scans_and_fd(get_vars):
         {"threshold": 0.31, "n_before": 4, "n_after": 2},
     ],
 )
-def test_extended_censor(get_vars, fd_threshold):
+def test_extended_censoring(get_vars, fd_threshold):
     bids_dir, pipeline_name = get_vars
 
     extractor_censored = TimeseriesExtractor(fd_threshold=fd_threshold)
@@ -1117,7 +1117,7 @@ def test_extended_censor(get_vars, fd_threshold):
     )
 
 
-def test_extended_censor_with_dummy(get_vars):
+def test_extended_censor_with_dummy_scans(get_vars):
     bids_dir, pipeline_name = get_vars
 
     fd_threshold = {"threshold": 0.31, "n_before": 4, "n_after": 2}
@@ -1132,7 +1132,7 @@ def test_extended_censor_with_dummy(get_vars):
     assert extractor_censored.subject_timeseries["01"]["run-001"].shape[0] == 32
 
 
-def test_check_exclusion(get_vars):
+def test_nifti_file_exclusion(get_vars):
     bids_dir, pipeline_name = get_vars
 
     extractor = TimeseriesExtractor()
@@ -1190,7 +1190,7 @@ def test_slice_time_shift(get_vars, shift):
     assert np.array_equal(timeseries["01"]["run-001"][scan_arr, :], extractor.subject_timeseries["01"]["run-001"])
 
 
-def test_shift_errors(get_vars):
+def test_invalid_input_for_shift_parameters(get_vars):
     bids_dir, pipeline_name = get_vars
 
     extractor = TimeseriesExtractor()
@@ -1215,7 +1215,7 @@ def test_shift_errors(get_vars):
 
 ################################################# Setup Environment 2 #################################################
 @pytest.mark.parametrize("use_sample_mask", [True, False])
-def test_interpolate_no_condition(setup_environment_2, get_vars, use_sample_mask):
+def test_interpolate_without_condition(setup_environment_2, get_vars, use_sample_mask):
     bids_dir, pipeline_name = get_vars
 
     # No condition
@@ -1340,7 +1340,7 @@ def test_interpolate_with_condition(setup_environment_2, get_vars, use_sample_ma
 
 
 ################################################# Setup Environment 3 #################################################
-def test_subject_append(setup_environment_3, get_vars):
+def test_subjects_appending_in_dictionary(setup_environment_3, get_vars):
     bids_dir, pipeline_name = get_vars
 
     extractor = TimeseriesExtractor()
@@ -1465,7 +1465,7 @@ def test_exclude_subjects(get_vars):
     assert "02" not in list(extractor.subject_timeseries)
 
 
-def test_events_without_session_id(get_vars):
+def test_events_without_session_id_in_nifti_files(get_vars):
     bids_dir, _ = get_vars
 
     extractor = TimeseriesExtractor()
@@ -1486,7 +1486,7 @@ def test_removal_of_run_desc(get_vars):
 
 
 @pytest.mark.parametrize("run", (0, ["005"]))
-def test_skip_no_matching_run_id(get_vars, run):
+def test_subject_skipping_when_no_matching_run_id(get_vars, run):
     bids_dir, _ = get_vars
 
     extractor = TimeseriesExtractor()
@@ -1503,7 +1503,17 @@ def test_matching_run_id(get_vars, run):
     extractor = TimeseriesExtractor()
 
     extractor.get_bold(bids_dir=bids_dir, task="rest", runs=run, tr=1.2)
-    assert extractor.subject_timeseries
+
+    # Subject "01" has not run id but subject "02" does
+    assert "01" not in extractor.subject_timeseries and "02" in extractor.subject_timeseries
+
+    run_list = [run for subject in extractor.subject_timeseries.values() for run in subject]
+    if run == "001":
+        assert all([run == "run-001" for run in run_list])
+    else:
+        assert "run-001" in run_list
+        # No subject has "run-002"
+        assert "run-002" not in run_list
 
 
 def test_append_subjects_with_different_run_ids(get_vars):
