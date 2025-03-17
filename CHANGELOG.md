@@ -16,6 +16,7 @@ improvements/enhancements. All fixes and modifications are backwards compatible.
 ## [0.23.7] - 2025-03-16
 ### 🐛 Fixes
 - Fixes an incorrect return typehint for a `CAP.caps2corr` function.
+- Add optional type hint for certain parameter.
 
 ## [0.23.6] - 2025-03-16
 ### 🚀 New/Added
