@@ -13,6 +13,10 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.23.7] - 2025-03-16
+### 🐛 Fixes
+- Fixes an incorrect return typehint for a `CAP.caps2corr` function.
+
 ## [0.23.6] - 2025-03-16
 ### 🚀 New/Added
 - Add type hints to all internal classes; minor code cleaning.
