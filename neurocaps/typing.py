@@ -318,3 +318,15 @@ ParcelApproach = Union[
             }
         }
 """
+
+__all__ = [
+    "SubjectTimeseries",
+    "SchaeferParcelConfig",
+    "AALParcelConfig",
+    "ParcelConfig",
+    "SchaeferParcelApproach",
+    "AALParcelApproach",
+    "CustomParcelApproach",
+    "CustomRegionHemispheres",
+    "ParcelApproach",
+]
