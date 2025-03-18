@@ -35,6 +35,7 @@ def remove_task_entity(get_vars):
 
 
 def test_wrong_task_with_entities(get_vars):
+    """Test error raised when wrong task specified but all entities present."""
     bids_dir, _ = get_vars
 
     extractor = TimeseriesExtractor(parcel_approach=Parcellation.get_custom("parcellation"))
@@ -44,6 +45,7 @@ def test_wrong_task_with_entities(get_vars):
 
 
 def test_no_entities(get_vars, remove_task_entity):
+    """Test error raised when correct task specified but no entities are present."""
     bids_dir, _ = get_vars
 
     extractor = TimeseriesExtractor(parcel_approach=Parcellation.get_custom("parcellation"))

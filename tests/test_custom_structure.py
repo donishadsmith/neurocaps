@@ -11,6 +11,7 @@ CUSTOM_EXAMPLE = {"Custom": VALID_DICT_STUCTURES["Custom"]}
 
 @pytest.fixture(autouse=False, scope="module")
 def copy_parcellation(tmp_dir):
+    """Copies parcellation to temporary directory."""
     nii_file = os.path.join(tmp_dir.name, "HCPex.nii.gz")
     shutil.copyfile(os.path.join(os.path.dirname(__file__), "data", "HCPex.nii.gz"), nii_file)
 
@@ -21,6 +22,7 @@ def copy_parcellation(tmp_dir):
 
 
 def test_nodes_error(copy_parcellation):
+    """Tests error produced when nodes are not strings."""
     nii_file, _ = copy_parcellation
     parcel_approach = {
         "Custom": {
@@ -39,6 +41,7 @@ def test_nodes_error(copy_parcellation):
 
 
 def test_regions_error(copy_parcellation):
+    """Tests errors produces when hemispheres not mapped to integers."""
     nii_file, _ = copy_parcellation
     parcel_approach = {
         "Custom": {
@@ -57,6 +60,7 @@ def test_regions_error(copy_parcellation):
 
 
 def test_pickle(copy_parcellation):
+    """Ensures pickle files can be used as input."""
     _, pickle_file = copy_parcellation
 
     cap_analysis = CAP(parcel_approach=pickle_file)
