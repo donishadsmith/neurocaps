@@ -1,1 +1,4 @@
 *.ipynb linguist-detectable=false
+tests/data/nilearn_data/* linguist-vendored
+tests/data/neuromaps-data/* linguist-vendored
+tests/data/dset/* linguist-vendored
