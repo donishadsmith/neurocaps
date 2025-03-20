@@ -486,7 +486,9 @@ def test_dtype(get_vars):
     ],
 )
 def test_visualize_bold(get_vars, tmp_dir, parcel_approach, name):
-    """Test `visualize_bold` method and ensure files are saved."""
+    """
+    Test `visualize_bold` method and ensure files are saved. May fail on occasion due to  _tkinter.TclError.
+    """
     bids_dir, pipeline_name = get_vars
 
     region = {"Schaefer": "Vis", "AAL": "Hippocampus", "Custom": "Subcortical Regions"}

@@ -4,7 +4,7 @@ from pathlib import Path
 # Assign null handler to root to reduce logged output when using `pytest -s`
 logging.getLogger().addHandler(logging.NullHandler())
 
-import pytest
+import matplotlib, pytest
 
 from .utils import get_paths
 
@@ -49,6 +49,13 @@ def logger():
     LG.addHandler(handler)
 
     yield LG
+
+
+@pytest.fixture(autouse=True, scope="session")
+def use_agg_backend():
+    """Changes backend for matplotlib to prevent random tcl errors."""
+    matplotlib.use("Agg")
+    return
 
 
 def create_data_directories():

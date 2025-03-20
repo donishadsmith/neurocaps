@@ -39,263 +39,124 @@ class CAP(_CAPGetter):
     """
     Co-Activation Patterns (CAPs) Class.
 
-    Performs k-means clustering for CAP identification, computes various temporal dynamics metrics
-    (including counts, temporal fraction, persistence, transition frequency, and transition probability),
-    provides multiple visualizations (such as heatmaps, outer products, correlation matrices, and cosine
-    similarity radar plots that shows the network correspondence to both positive and negative CAP activations),
-    and enables conversion of CAPs to NIfTI statistical maps.
+    Performs k-means clustering for CAP identification, computes temporal dynamics metrics, and provides visualization
+    tools for analyzing brain activation patterns.
 
     Parameters
     ----------
     parcel_approach: :obj:`ParcelConfig`, :obj:`ParcelApproach`, or :obj:`str`, default=None
-        Specifies the parcellation approach for segmenting NifTI images into distinct regions-of-interests (ROIs).
-        Supported parcellation aproaches includes "Schaefer", "AAL", and "Custom" (user-defined).
-
-        The ``parcel_approach`` requires a nested dictionary with:
-
-          - First Level Key: The parcellation name (e.g., "Schaefer", "AAL", "Custom")
-          - Second Level Keys (subkeys):
-
-              - "maps": Mapping of regions to coordinates.
-              - "nodes": Node definitions for each region.
-              - "regions": List of anatomical region names (see "Custom Parcellations" in Notes section for detailed\
-              structure requirements).
-
-        There are *3* valid input options for this parameter:
-
-          - Use the initialization parameters from ``TimeseriesExtractor`` (e.g., ``n_rois``, ``yeo_networks``,\
-          ``resolution_mm`` for "Schaefer", or ``version`` for "AAL") to generate the above structure.
-          - Provide a nested dictionary with the required structure (first level key of the parcellation name with\
-          subkeys - "maps", "nodes", and "regions").
-          - Load configuration from a pickle file containing the valid nested dictionary.
-
-        *Note*: This parameter is required for several visualization functions in this class but can be set later
-        using the ``parcel_approach`` property.
+        Specifies the parcellation approach to use. Options: "Schaefer", "AAL", or "Custom".
+        Can be initialized with parameters, as a nested dictionary, or loaded from a pickle file.
 
     groups: :obj:`dict[str, list[str]]` or :obj:`None`, default=None
-        A mapping of group names to unique subject IDs. If specified, then separate analyses are performed on groups
-        (i.e., group-specific k-means models, group-specific visualization, etc). If None, then the analyses will be
-        performed on all subjects and the default group name is "All Subjects". The structure should be as follows:
-
-        ::
-
-            {
-                "GroupName1": ["1", "2", "3"],
-                "GroupName2": ["4", "5", "6"],
-            }
+        Optional mapping of group names to lists of subject IDs for group-specific analyses.
 
 
     Properties
     ----------
     parcel_approach: :obj:`ParcelApproach`
-        A dictionary containing information about the parcellation. Can also be used as a setter, which accepts a
-        dictionary or a dictionary saved as a pickle file. The structure is as follows:
-
-        ::
-
-            # Structure of Schaefer
-            {
-                "Schaefer":
-                {
-                    "maps": "path/to/parcellation.nii.gz",
-                    "nodes": ["LH_Vis1", "LH_SomSot1", "RH_Vis1", "RH_SomSot1"],
-                    "regions": ["Vis", "SomSot"]
-                }
-            }
-
-            # Structure of AAL
-            {
-                "AAL":
-                {
-                    "maps": "path/to/parcellation.nii.gz",
-                    "nodes": ["Precentral_L", "Precentral_R", "Frontal_Sup_L", "Frontal_Sup_R"],
-                    "regions": ["Precentral", "Frontal"]
-                }
-            }
-
-        Refer to the example for "Custom" in the Note section below for the expected structure.
+        Parcellation information with "maps" (path to parcellation file), "nodes" (labels), and "regions" (anatomical regions or networks).
 
     groups: :obj:`dict[str, list[str]]` or :obj:`None`:
-        A mapping of groups names to unique subject IDs.
+        Mapping of groups names to lists of subject IDs.
 
     subject_table: :obj:`dict[str, str]` or :obj:`None`
-        A dictionary generated when ``self.get_caps()`` is used. Operates as a lookup table that pairs each subject ID
-        with the associated group. Also can be used as a setter. The structure is as follows.
-
-        ::
-
-            {
-                "Subject-ID": "GroupName",
-                "Subject-ID": "GroupName",
-            }
+        Lookup table mapping subject IDs to their groups.
 
     n_clusters: :obj:`int`, :obj:`list[int]`, or :obj:`None`
-        An integer or list of integers (if ``cluster_selection_method`` is not None) that was used for
-        ``sklearn.cluster.KMeans`` in ``self.get_caps()``.
+        An integer or list of integers representing the number of clusters used for k-means.
 
     cluster_selection_method: :obj:`str` or :obj:`None`:
-        The cluster selection method used in ``self.get_caps()`` to identify the optimal number of clusters.
+        Method used to identify the optimal number of clusters.
 
     n_cores: :obj:`int` or :obj:`None`
-        Number of cores specified in ``self.get_caps()`` to use for multiprocessing with Joblib.
+        Number of cores specified used for multiprocessing with Joblib.
 
     runs: :obj:`int`, :obj:`list[int | str]`, or :obj:`None`
-        The run IDs specified in ``self.get_caps()``.
+        Run IDs specified in the analysis.
 
     standardize: :obj:`bool` or :obj:`None`
-        A boolean denoting whether the features of the concatenated timeseries data are standardized if standardization
-        was requested in ``self.get_caps()``.
+        Whether region-of-interests (ROIs)/columns were standardized during analysis.
 
     means: :obj:`dict[str, np.array]` or :obj:`None`
-        A dictionary mapping groups to their associated NumPy array containing the means of each feature (ROI) if
-        ``standardize`` is True in ``self.get_caps()``. The structure is as follows:
+        Group-specific feature means if standardization was applied.
 
         ::
 
-            {
-                "GroupName": np.array([...]), # Shape: 1 x ROIs
-            }
+            {"GroupName": np.array(shape=[1, ROIs])}
 
     stdev: :obj:`dict[str, np.array]` or :obj:`None`
-        A dictionary mapping groups to their associated NumPy array containing the sample standard deviation of each
-        feature (ROI) if ``standardize`` is True in ``self.get_caps()``. The structure is as follows:
+        Group-specific feature standard deviations if standardization was applied.
 
         ::
 
-            {
-                "GroupName": np.array([...]), # Shape: 1 x ROIs
-            }
+            {"GroupName": np.array(shape=[1, ROIs])}
 
     concatenated_timeseries: :obj:`dict[str, np.array]` or :obj:`None`
-        A dictionary mapping each group to their associated concatenated NumPy array [(participants x TRs) x ROIs] when
-        ``self.get_caps()`` is used. Note, if there are memory issues, ``del self.concatenated_timeseries``
-        can be used to delete property and have it only return None. The structure is as follows:
+        Group-specific concatenated timeseries data.
 
         ::
 
-            {
-                "GroupName": np.array([...]), # Shape: (participants x TRs) x ROIs
-            }
+            {"GroupName": np.array(shape=[(participants x TRs), ROIs])}
 
     kmeans: :obj:`dict[str, sklearn.cluster.KMeans]` or :obj:`None`
-        A dictionary mapping group-specific ``sklearn.cluster.KMeans`` model to each group when ``self.get_caps()`` is
-        used. If ``cluster_selection_method`` is used, the model stored in this property is the optimal k-means model.
-        The structure is as follows:
+        Group-specific k-means models.
 
         ::
 
-            {
-                "GroupName": sklearn.cluster.KMeans,
-            }
+            {"GroupName": sklearn.cluster.KMeans}
 
     caps: :obj:`dict[str, dict[str, np.array]]` or :obj:`None`
-        A dictionary mapping the cluster centroids, extracted from the k-means model, to each group after
-        ``self.get_caps()`` is used. The structure is as follows:
+        Cluster centroids for each group and CAP.
 
         ::
 
-            {
-                "GroupName": {
-                    "CAP-1": np.array([...]), # Shape: 1 x ROIs
-                    "CAP-2": np.array([...]), # Shape: 1 x ROIs
-                }
-
-            }
+            {"GroupName": {"CAP-1": np.array(shape=[1, ROIs]), "CAP-2": np.array(shape=[1, ROIs])}}
 
     cluster_scores: :obj:`dict[str, str | dict[str, float]]` or :obj:`None`
-        A dictionary mapping groups to the assessed cluster sizes and corresponding score of a specific
-        ``cluster_selection_method`` available in ``self.get_caps()``. The structure is as follows:
+        Scores for different cluster sizes by group.
 
         ::
 
-            {
-                "Cluster_Selection_Method": str,  # e.g., "elbow", "davies_bouldin", "silhouette", or "variance_ratio"
-                "Scores": {
-                    "GroupName": {
-                        2: float,  # Score for 2 clusters
-                        3: float,  # Score for 3 clusters
-                        4: float,  # Score for 4 clusters
-                    },
-                }
-            }
+            {"Cluster_Selection_Method": str, "Scores": {"GroupName": {2: float, 3: float}}}
 
     optimal_n_clusters: :obj:`dict[str, int]` or :obj:`None`
-        A dictionary mapping groups to their optimal cluster sizes if ``cluster_selection_method`` is not None in
-        ``self.get_caps()``. The structure is as follows:
+        Optimal number of clusters by group if cluster selection was used.
 
         ::
 
-            {
-                "GroupName": int,
-            }
+            {"GroupName": int}
 
     variance_explained: :obj:`dict[str, float]` or :obj:`None`
-        A dictionary mapping groups to a float representing the total variance explained by their respective model
-        stored in ``self.kmeans``. The structure is as follows:
+        Total variance explained by each group's model.
 
         ::
 
-            {
-                "GroupName": float,
-            }
+            {"GroupName": float}
 
     region_means: :obj:`dict[str, dict[str, list[str] | np.array]]` or :obj:`None`
-        A dictionary mapping group to their CAPs and corresponding NumPy array (1 x regions) containing the averaged
-        value of each region or network if ``visual_scope`` set to "regions" in ``self.caps2plot()``.
-        The position of elements corresponds to the region in the “Regions” list (mean value at the 0th index
-        corresponds to the region at the 0th index). The structure is as follows:
+        Region-averaged values used for visualization.
 
         ::
 
-            {
-                "GroupName": {
-                    "Regions": [...],
-                    "CAP-1": np.array([...]), # Shape: 1 x regions
-                    "CAP-2": np.array([...]), # Shape: 1 x regions
-                }
+            {"GroupName": {"Regions": [...], "CAP-1": np.array(shape=[1, Regions]), "CAP-2": np.array(shape=[1, Regions])}}
 
-            }
-
-        .. versionchanged:: 0.23.4 Replaces ``self.region_caps`` and adds the "Regions" key for each group.\
-        For backwards compatibility, ``self.region_caps``, which doesn't include the is the "Regions" key is\
-        still available.
+        .. versionchanged:: 0.23.4 Replaces ``region_caps`` and adds the "Regions" key for each group.\
+        For backwards compatibility, ``region_caps``, which doesn't include the "Regions" key is still available.
 
     outer_products: :obj:`dict[str, dict[str, np.array]]` or :obj:`None`
-        A dictionary mapping group to their CAPs and corresponding NumPy array (ROIs x ROIs) containing the outer
-        product if ``plot_options`` set to "outer_product" ``self.caps2plot()``. The structure is as follows:
+        Outer product matrices for visualization.
 
         ::
 
-            {
-                "GroupName": {
-                    "CAP-1": np.array([...]), # Shape: ROIs x ROIs
-                    "CAP-2": np.array([...]), # Shape: ROIs x ROIs
-                }
-
-            }
+            {"GroupName": {"CAP-1": np.array(shape=[ROIs, ROIs]), "CAP-2": np.array(shape=[ROIs, ROIs])}}
 
     cosine_similarity: :obj:`dict[str, dict[str, list[str] | np.array]]` or :obj:`None`
-        A dictionary mapping each group to their CAPs and their associated "High Amplitude" and "Low Amplitude"
-        list containing the cosine similarities. Each group contains a "Regions" key, consisting of a list of
-        regions or networks. The position of the cosine similarities in the "High Amplitude" and "Low Amplitude"
-        lists, corresponds to the region in the "Regions" list (cosine similarity value in 0th index belongs to
-        region in 0th index). The structure is as follows:
+        Cosine similarities between CAPs and the regions specified in ``parcel_approach``.
 
         ::
 
-            {
-                "GroupName": {
-                    "Regions": [...],
-                    "CAP-1": {
-                        "High Amplitude": [...], # Shape: 1 x Regions
-                        "Low Amplitude": [...]   # Shape: 1 x Regions
-                    }
-                    "CAP-2": {
-                        "High Amplitude": [...], # Shape: 1 x Regions
-                        "Low Amplitude": [...]   # Shape: 1 x Regions
-                    }
-                }
-            }
+            {"GroupName": {"Regions": [...], "CAP-1": {"High Amplitude": np.array(shape=[1, Regions]), "Low Amplitude": np.array(shape=[1, Regions])}}
 
     See Also
     --------
@@ -306,29 +167,11 @@ class CAP(_CAPGetter):
 
     Note
     ----
-    **Default Group Name**: If no groups were specified, **the default group name will always be "All Subjects"** to
-    denote that the data of all subjects in the analysis were used to derive the CAPs. This is done to retain the
-    same nesting structure for each property regardless if groups are specified.
+    **Default Group Name**: The default group name is "All Subjects" when no groups are specified.
 
-    **Custom Parcellations**: If using a "Custom" parcellation approach, ensure that the parcellation is
-    lateralized (where each region/network has nodes in the left and right hemisphere). This is due to certain
-    visualization functions assuming that each region consists of left and right hemisphere nodes. Additionally,
-    certain visualization functions in this class also assume that the background label is 0. Therefore, do not add a
-    background label in the "nodes" or "regions" keys.
-
-    The recognized subkeys for the "Custom" parcellation approach includes:
-
-    - "maps": Directory path containing the parcellation in a supported format (e.g., .nii or .nii.gz for NifTI).
-    - "nodes": A list or numpy array of all node labels arranged in ascending order based on their numerical IDs from
-      the parcellation. The 0th index should contain the label corresponding to the lowest, non-background numerical ID.
-    - "regions": A dictionary defining major brain regions or networks, with each region containing "lh"
-      (left hemisphere) and "rh" (right hemisphere) subkeys listing node indices.
-
-    Refer to the `NeuroCAPs' Parcellation Documentation <https://neurocaps.readthedocs.io/en/stable/parcellations.html>`_
-    for more detailed explanations and example structures for the "nodes" and "regions" subkeys.
-
-    **Note**: Different subkeys are required depending on the function used. Refer to the Note section under each
-    function for information regarding the subkeys required for that specific function.
+    **Custom Parcellations**: Refer to the `NeuroCAPs' Parcellation Documentation
+    <https://neurocaps.readthedocs.io/en/stable/parcellations.html>`_ for detailed explanations and example structures
+    for Custom parcellations.
     """
 
     def __init__(
@@ -380,80 +223,55 @@ class CAP(_CAPGetter):
         """
         Perform K-Means Clustering to Identify CAPs.
 
-        Concatenates the timeseries of each subject into a single NumPy array with dimensions
-        (participants x TRs) x ROI and uses ``sklearn.cluster.KMeans`` on the concatenated data. Note,
-        ``KMeans`` uses Euclidean distance. Additionally, the Elbow method is determined using ``KneeLocator`` from
-        the kneed package and the Davies Bouldin, Silhouette, and Variance Ratio methods are calculated using
-        scikit-learn's ``davies_bouldin_score``, ``silhouette_score``, and ``calinski_harabasz_score`` functions,
-        respectively. Note, if groups were given when the ``CAP`` class was initialized, separate ``KMeans`` models
-        and plots will be generated for all groups.
+        Concatenates the timeseries of each subject into a single NumPy array with dimensions (participants x TRs) x ROI
+        and uses ``sklearn.cluster.KMeans`` on the concatenated data. Separate ``KMeans`` models are generated for all groups.
 
         Parameters
         ----------
         subject_timeseries: :obj:`SubjectTimeseries` or :obj:`str`
             A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a NumPy
-            array. Can also be a path to a pickle file containing this same structure. The expected structure of is as
-            follows:
-
-            ::
-
-                subject_timeseries = {
-                        "101": {
-                            "run-0": np.array([...]), # Shape: TRs x ROIs
-                            "run-1": np.array([...]), # Shape: TRs x ROIs
-                            "run-2": np.array([...]), # Shape: TRs x ROIs
-                        },
-                        "102": {
-                            "run-0": np.array([...]), # Shape: TRs x ROIs
-                            "run-1": np.array([...]), # Shape: TRs x ROIs
-                        }
-                    }
+            array. Can also be a path to a pickle file containing this same structure.
 
         runs: :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
-            The run numbers to perform the CAPs analysis with (e.g. ``runs=[0, 1]`` or ``runs=["01", "02"]``). If None,
-            all runs in the subject timeseries will be concatenated into a single dataframe and subjected to k-means
-            clustering.
+            Specific run IDs to perform the CAPs analysis with (e.g. ``runs=[0, 1]`` or ``runs=["01", "02"]``). If None,
+            all runs will be used.
 
         n_clusters: :obj:`int` or :obj:`list[int]`, default=5
-            The number of clusters to use for ``sklearn.cluster.KMeans``. Can be a single integer or a list of
-            integers (if ``cluster_selection_method`` is not None).
+            Number of clusters to use. Can be a single integer or a list of integers (if ``cluster_selection_method`` is not None).
 
         cluster_selection_method: {"elbow", "davies_bouldin", "silhouette", "variance_ratio"} or :obj:`None`, default=None
             Method to find the optimal number of clusters. Options are "elbow", "davies_bouldin", "silhouette", and
             "variance_ratio".
 
         random_state: :obj:`int` or :obj:`None`, default=None
-            The random state to use for ``sklearn.cluster.KMeans``. Ensures reproducible results.
+            Random state (seed) value to use.
 
         init: {"k-means++", "random"}, :obj:`Callable`, or `ArrayLike`, default="k-means++"
-            Method for choosing initial cluster centroid for ``sklearn.cluster.KMeans``. Options are "k-means++",
-            "random", or callable or array-like of shape (n_clusters, n_features).
+            Method for choosing initial cluster centroid. Options are "k-means++", "random", or callable or array-like
+            of shape (n_clusters, n_features).
 
         n_init: {"auto"} or :obj:`int`, default="auto"
-            Number of times ``sklearn.cluster.KMeans`` is ran with different initial clusters.
-            The model with lowest inertia from these runs will be selected.
+            Number of times k-means is ran with different initial clusters. The model with lowest inertia from these
+            runs will be selected.
 
         max_iter: :obj:`int`, default=300
-            Maximum number of iterations for a single run of ``sklearn.cluster.KMeans``.
+            Maximum number of iterations for a single run of k-means.
 
         tol: :obj:`float`, default=1e-4
-            Stopping criterion for ``sklearn.cluster.KMeans`` if the change in inertia is below this value, assuming
-            ``max_iter`` has not been reached.
+            Stopping criterion if the change in inertia is below this value, assuming ``max_iter`` has not been reached.
 
         algorithm: {"lloyd", "elkan"}, default="lloyd"
-            The type of algorithm to use for ``sklearn.cluster.KMeans``. Options are "lloyd" and "elkan".
+            The algorithm to use. Options are "lloyd" and "elkan".
 
         standardize: :obj:`bool`, default=True
-            Standardizes the columns (ROIs) of the concatenated timeseries data. Uses sample standard deviation with
-            Bessel's correction (`n-1` in denominator).
+            Standardizes the columns (ROIs) of the concatenated timeseries data. Uses sample standard deviation (`n-1`).
 
         n_cores: :obj:`int` or :obj:`None`, default=None
-            The number of cores to use for multiprocessing, with Joblib, to run multiple ``sklearn.cluster.KMeans``
-            models if ``cluster_selection_method`` is not None. The "loky" backend is used.
+            Number of cores to use for multiprocessing, with Joblib, to run multiple k-means models if
+            ``cluster_selection_method`` is not None. The "loky" backend is used.
 
         show_figs: :obj:`bool`, default=False
-            Displays the plots for the specified ``cluster_selection_method`` for all groups
-            if ``cluster_selection_method`` is not None.
+            Displays the plots for the specified ``cluster_selection_method`` for all groups.
 
         output_dir: :obj:`str` or :obj:`None`, default=None
             Directory to save plots as png files if ``cluster_selection_method`` is not None. The directory will be
@@ -465,21 +283,17 @@ class CAP(_CAPGetter):
             .. versionadded:: 0.21.5
 
         **kwargs:
-            Dictionary to adjust certain parameters when ``cluster_selection_method`` is not None. Additional\
-            parameters include:
+            Additional keyword arguments when ``cluster_selection_method`` is specified:
 
             - S: :obj:`int`, default=1 -- Adjusts the sensitivity of finding the elbow. Larger values are more\
                 conservative and less sensitive to small fluctuations. Passed to ``KneeLocator`` from the kneed package.
             - dpi: :obj:`int`, default=300 -- Dots per inch for the figure.
             - figsize: :obj:`tuple`, default=(8, 6) -- Adjusts the size of the plots.
             - bbox_inches: :obj:`str` or :obj:`None`, default="tight" -- Alters size of the whitespace in the saved image.
-            - step: :obj:`int`, default=None -- An integer value that controls the progression of the x-axis in plots\
-                for the specified ``cluster_selection_method``. When set, only integer values will be displayed on the x-axis.
-
+            - step: :obj:`int`, default=None -- An integer value that controls the progression of the x-axis in plots.
         See Also
         --------
         :data:`neurocaps.typing.SubjectTimeseries`
-            The type definition for the subject timeseries dictionary structure.
 
         Returns
         -------
@@ -490,6 +304,9 @@ class CAP(_CAPGetter):
         **KMeans Algorithm:** Refer to `scikit-learn's Documentation
         <https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html>`_ for additional information
         about the ``KMeans`` algorithm used in this method.
+
+        The ``n_clusters``, ``random_state``, ``init``, ``n_init``, ``max_iter``, ``tol``, and ``algorithm`` parameters
+        are passed to ``sklearn.cluster.KMeans``.
         """
         self._n_cores = n_cores
         # Ensure all unique values if n_clusters is a list
@@ -806,10 +623,7 @@ class CAP(_CAPGetter):
         """
         Compute Participant-wise CAP Metrics.
 
-        Uses the k-means model (or group-specific k-means models if ``groups`` specified during initialization of the
-        ``CAP`` class) to assign each subject's TRs to a CAP. Also, creates a single ``pandas.DataFrame`` per
-        CAP metric for all participants (with the exception of "transition_probability" which creates a single
-        dataframe per group). As described by Liu et al., 2018 and Yang et al., 2021. The metrics include:
+        Computes the following temporal dynamic metrics (as described by Liu et al., 2018 and Yang et al., 2021):
 
          - ``"temporal_fraction"``: The proportion of total volumes spent in a single CAP over all volumes in a run.
 
@@ -876,39 +690,24 @@ class CAP(_CAPGetter):
                 # There is only one 1 -> 2 transition
                 transition_probability = 1 / 3
 
-            **Note**: In the supplementary material for Yang et al., the mathematical relationship between
-            temporal fraction, counts, and persistence is ``temporal fraction = (persistence * counts)/total volumes``.
-            If persistence has been converted into time units (seconds), then
-            ``temporal fraction = (persistence * counts) / (total volumes * TR)``.
+            .. note::
+                In the supplementary material for Yang et al., the mathematical relationship between temporal fraction,
+                counts, and persistence is ``temporal fraction = (persistence * counts)/total volumes``. If persistence
+                has been converted into time units (seconds), then ``temporal fraction = (persistence * counts) / (total volumes * TR)``.
 
         Parameters
         ----------
         subject_timeseries: :obj:`SubjectTimeseries` or :obj:`str`
             A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a NumPy
-            array. Can also be a path to a pickle file containing this same structure. The expected structure of is as
-            follows:
-
-            ::
-
-                subject_timeseries = {
-                        "101": {
-                            "run-0": np.array([...]), # Shape: TRs x ROIs
-                            "run-1": np.array([...]), # Shape: TRs x ROIs
-                            "run-2": np.array([...]), # Shape: TRs x ROIs
-                        },
-                        "102": {
-                            "run-0": np.array([...]), # Shape: TRs x ROIs
-                            "run-1": np.array([...]), # Shape: TRs x ROIs
-                        }
-                    }
+            array. Can also be a path to a pickle file containing this same structure.
 
         tr: :obj:`float` or :obj:`None`, default=None
-            The repetition time (TR) in seconds. If provided, persistence will be calculated as the average
+            Repetition time (TR) in seconds. If provided, persistence will be calculated as the average
             uninterrupted time, in seconds, spent in each CAP. If not provided, persistence will be calculated as the
             average uninterrupted volumes (TRs), in TR units, spent in each state.
 
         runs: :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
-            The run numbers to calculate CAP metrics for (e.g. ``runs=[0, 1]`` or ``runs=["01", "02"]``). If None, CAP
+            The run IDs to calculate CAP metrics for (e.g. ``runs=[0, 1]`` or ``runs=["01", "02"]``). If None, CAP
             metrics will be calculated for each run.
 
         continuous_runs: :obj:`bool`, default=False
@@ -947,7 +746,7 @@ class CAP(_CAPGetter):
         See Also
         --------
         :data:`neurocaps.typing.SubjectTimeseries`
-            The type definition for the subject timeseries dictionary structure.
+            Type definition for the subject timeseries dictionary structure.
 
         Returns
         -------
@@ -957,18 +756,16 @@ class CAP(_CAPGetter):
             Only returned if ``return_df`` is True.
 
 
-        Note
-        ----
-        **Scaling:** If standardizing was requested in ``self.get_caps()``, then the columns/ROIs of the
+        Important
+        ---------
+        **Scaling:** If standardizing was requested in ``self.get_caps``, then the columns/ROIs of the
         ``subject_timeseries`` provided to this method will be scaled using the group-specific mean and sample
         standard deviation derived from the concatenated data.
 
-        **Group-Specific CAPs**: When the ``groups`` parameter is used during initialization of the ``CAP`` class,
-        ``self.get_caps()`` computes separate k-means model for each group. This means that each group has its own
-        specific k-means model that is used for CAP metric calculations. The inclusion of all groups within the same
-        dataframe (for "temporal_fraction", "persistence", "counts", and "transition_frequency") is primarily to
-        reduce the number of dataframes generated. Hence, each CAP (e.g., "CAP-1") is specific to its respective groups.
-        For instance, "CAP-1" under Group A is distinct from "CAP-1" under Group B.
+        **Group-Specific CAPs**: If groups were specified, then each group uses their respective k-means models to
+        compute metrics. The inclusion of all groups within the same dataframe (for "temporal_fraction", "persistence",
+        "counts", and "transition_frequency") is primarily to reduce the number of dataframes generated. Hence, each
+        CAP (e.g., "CAP-1") is specific to its respective groups.
 
         For instance, if their are two groups, Group A and Group B, each with their own CAPs:
 
@@ -994,9 +791,6 @@ class CAP(_CAPGetter):
         The "NaN" indicates that "CAP-3" is not applicable for Group A. Additionally, "NaN" will only be observed
         in instances when two or more groups are specified and have different number of CAPs. As mentioned previously,
         "CAP-1", "CAP-2", and "CAP-3" for Group A is distinct from Group B due to using separate k-means models.
-
-        If no groups were specified during initialization of the ``CAP`` class, the resulting `"temporal_fraction"`
-        dataframe (assuming four CAPs were identified in the k-means model using all participants):
 
         **Without Groups**
 
@@ -1351,9 +1145,7 @@ class CAP(_CAPGetter):
         """
         Generate Heatmaps and Outer Product Plots for CAPs.
 
-        Plot CAPs as heatmaps or outer products at the node or region/network levels. This function produces a
-        ``seaborn.heatmap`` for each CAP. Note, if groups were given when the ``CAP`` class was initialized, separate
-        plots will be generated for all groups.
+        Plot CAPs as heatmaps or outer products at the node or region levels. Separate plots are generated for each group.
 
         Parameters
         ----------
@@ -1433,7 +1225,6 @@ class CAP(_CAPGetter):
 
         **Color Palettes**: Refer to `seaborn's Color Palettes <https://seaborn.pydata.org/tutorial/color_palettes.html>`_
         for valid pre-made palettes.
-
         """
         if self._parcel_approach is None:
             self._raise_error("_parcel_approach")
@@ -1958,11 +1749,7 @@ class CAP(_CAPGetter):
         """
         Generate Pearson Correlation Matrix for CAPs.
 
-        Produces a correlation matrix of all CAPs and visualizes it using ``seaborn.heatmap``. Can also produce
-        a pandas Dataframe of the correlation matrix where each element contains its uncorrected p-value in parenthesis,
-        with a single asterisk if < 0.05, a double asterisk if < 0.01, and a triple asterisk < 0.001. Note, if groups
-        were given when the ``CAP`` class was initialized, separate correlation matrices will be generated for all
-        groups.
+        Produces a correlation matrix of all CAPs. Separate correlation matrices are created for each group.
 
         Parameters
         ----------
@@ -2027,6 +1814,9 @@ class CAP(_CAPGetter):
         ----
         **Color Palettes**: Refer to `seaborn's Color Palettes <https://seaborn.pydata.org/tutorial/color_palettes.html>`_
         for valid pre-made palettes.
+
+        **Significance Values**: If ``return_df`` is True, each element will contain its uncorrected p-value in
+        parenthesis with a single asterisk if < 0.05, a double asterisk if < 0.01, and a triple asterisk < 0.001.
         """
         corr_dict = {group: None for group in self._groups} if return_df or save_df else None
 
@@ -2091,12 +1881,10 @@ class CAP(_CAPGetter):
         progress_bar: bool = False,
     ) -> Self:
         """
-        Standalone Method to Convert CAPs to NifTI Statistical Maps.
+        Convert CAPs to NifTI Statistical Maps.
 
-        Projects CAPs onto the parcellation in ``self.parcel_approach`` to create NifTI statistical maps by replacing
-        parcellation labels with their corresponding CAP (cluster centroid) values. Creates compressed NifTI (.nii.gz)
-        files. One image is generated per CAP. Note, if groups were given when the ``CAP`` class was initialized,
-        separate NifTI images will be generated per CAP for all groups.
+        Projects CAPs onto the parcellation in defined in ``parcel_approach`` to create compressed NifTI (.nii.gz)
+        statistical maps. One image is generated per CAP and separate images are generated per group.
 
         Parameters
         ----------
@@ -2135,20 +1923,6 @@ class CAP(_CAPGetter):
         ----
         **Assumption**: This function assumes that the background label for the parcellation is zero. Additionaly,
         the following approach is used to map each CAP onto the parcellation.
-
-        ::
-
-            atlas = nib.load(atlas_file)
-            atlas_fdata = atlas.get_fdata()
-            # Create array of zeroes with same dimensions as atlas
-            atlas_array = np.zeros_like(atlas_fdata)
-
-            # Get array containing all labels in parcellation in order
-            target_array = sorted(np.unique(atlas_fdata))
-
-            # Start at 1 to avoid assigment to the background label
-            for indx, value in enumerate(cap_vector, start=1):
-                atlas_array[atlas_fdata == target_array[indx]] = value
         """
         if self._parcel_approach is None:
             self._raise_error("_parcel_approach")
@@ -2233,14 +2007,9 @@ class CAP(_CAPGetter):
         """
         Project CAPs onto Surface Plots.
 
-        Plot CAPs on cortical surface in fsLR space. First, projects CAPs onto parcellation to create
-        NifTI statistical maps by replacing parcellation labels with their corresponding CAP (cluster centroid)
-        values. Then uses neuromap's ``transforms.mni152_to_fslr`` for coordinate system transformation and surfplot's
-        ``Plot`` for plotting. If CAPs where already converted to NifTI (``self.caps2niftis()``) and transformed to
-        fsLR GifTI files externally, these can be provided using the ``fslr_giftis_dict`` parameter and will be
-        converted to a suitable format for surfplot's ``Plot`` function by using neuromap's ``transforms.fslr_to_fslr``
-        function. Note, if groups were given when the ``CAP`` class was initialized, surface plots will be generated
-        per CAP for all groups.
+        Projects CAPs onto the parcellation defined in ``parcel_approach`` to create NifTI statistical maps. Then
+        tranforms from MNI volumetric space to fsLR surface space and plots. One surface plot image is
+        generated per CAP and separate images are produced per group.
 
         Parameters
         ----------
@@ -2259,7 +2028,7 @@ class CAP(_CAPGetter):
 
         fwhm: :obj:`float` or :obj:`None`, defualt=None
             Strength of spatial smoothing to apply (in millimeters) to the statistical map prior to interpolating
-            from MNI152 space to fsLR surface space. Uses Nilearn's ``image.smooth``.
+            from MNI152 space to fsLR surface space.
 
         fslr_density: {"4k", "8k", "32k", "164k"}, default="32k"
             Density of the fsLR surface when converting from MNI152 space to fsLR surface. Options are "32k" or
@@ -2275,23 +2044,12 @@ class CAP(_CAPGetter):
 
         fslr_giftis_dict: :obj:`dict` or :obj:`None`, default=None
             Dictionary specifying precomputed GifTI files in fsLR space for plotting statistical maps. This parameter
-            should be used if the statistical CAP NIfTI files (can be obtained using ``self.caps2niftis()``) were
-            converted to GifTI files using a tool such as Connectome Workbench. The dictionary structure is:
+            should be used if the statistical CAP NIfTI files were converted to GifTI files using a tool such as
+            Connectome Workbench. Example structure:
 
             ::
 
-                {
-                    "GroupName": {
-                        "CAP-Name": {
-                            "lh": "path/to/left_hemisphere_gifti",
-                            "rh": "path/to/right_hemisphere_gifti"
-                        }
-                    }
-                }
-
-            "GroupName" can be "All Subjects" or any specific group name. CAP-Name is the name of the CAP. This
-            parameter allows plotting without re-running the analysis. Initialize the CAP class and use this method
-            if using this parameter.
+                {"GroupName": {"CAP-Name": {"lh": "path/to/left_hemisphere_gifti", "rh": "path/to/right_hemisphere_gifti"}
 
         knn_dict: :obj:`dict[str, int | bool]`, default=None
             Use KNN (k-nearest neighbors) interpolation with reference atlas masking to fill in non-background
@@ -2350,20 +2108,6 @@ class CAP(_CAPGetter):
 
         **Assumptions**: This function assumes that the background label for the parcellation is zero and that is in
         MNI space. Additionally, the following approach is taken to map the each CAP onto the parcellation
-
-        ::
-
-            atlas = nib.load(atlas_file)
-            atlas_fdata = atlas.get_fdata()
-            # Create array of zeroes with same dimensions as atlas
-            atlas_array = np.zeros_like(atlas_fdata)
-
-            # Get array containing all labels in parcellation in order
-            target_array = sorted(np.unique(atlas_fdata))
-
-            # Start at 1 to avoid assigment to the background label
-            for indx, value in enumerate(cap_vector, start=1):
-                atlas_array[atlas_fdata == target_array[indx]] = value
         """
         if self._parcel_approach is None and fslr_giftis_dict is None:
             self._raise_error("_parcel_approach")
@@ -2521,12 +2265,14 @@ class CAP(_CAPGetter):
         Generate Radar Plots for CAPs using Cosine Similarity.
 
         Calculates the cosine similarity between the "High Amplitude" (positive/above the mean) and "Low Amplitude"
-        (negative/below the mean) activations of the CAP cluster centroid and each a-priori region or network in a
-        parcellation. This function assumes the mean for each ROI is 0 due to standardization.
+        (negative/below the mean) activations of the CAP cluster centroid and each a-priori region or network in the
+        parcellation defined by ``parcel_approach``. One image is generated per CAP and separate images are generated
+        for each group.
 
-        Cosine similarity is computed separately for high and low amplitudes by comparing them to the binary vector of
-        the a-priori region, representing the region or network of interest. This provides a measure of how closely
-        the CAP's positive and negative activation patterns align with each selected region.
+        .. important::
+
+          - This method assumes the mean for each ROI is 0 due to standardization.
+          - The absolute values of the negative activations are computed for visualization purposes.
 
         The process involves the following steps:
 
@@ -2536,10 +2282,10 @@ class CAP(_CAPGetter):
 
             2. Generate Binary Vectors:
 
-              - For each region create a binary vector (1 x ROI) where `1` indicates that the ROI is part of the\
-              specific region and `0` otherwise.
-              - In this example, the binary vector acts as a 1D mask to isolate ROIs in the Visual Network by setting\
-              the corresponding indices to `1`.
+              - For each region create a binary vector (1 x ROI) where `1` indicates that the ROI is part of the
+                specific region and `0` otherwise.
+              - In this example, the binary vector acts as a 1D mask to isolate ROIs in the Visual Network by setting
+                the corresponding indices to `1`.
 
                 ::
 
@@ -2554,31 +2300,26 @@ class CAP(_CAPGetter):
 
             3. Isolate Positive and Negative Activations in CAP Centroid:
 
-              - Positive activations are defined as the values in the CAP centroid that are greater than zero.\
-              These values represent the "High Amplitude" activations for that CAP.
-              - Negative activations are defined as the values in the CAP centroid that are less than zero.\
-              These values represent the "Low Amplitude" activations for that CAP.
-              - To simplify the comparison between positive and negative activations using cosine similarity,\
-              the negative activations are inverted (i.e., multiplied by -1). This inversion converts the negative\
-              values into positive ones, allowing the cosine similarity calculation to return a positive value.\
-              The positive similarity score represents how closely the a-priori region aligns with both the high and\
-              low amplitude aspects of the CAP.
+              - Positive activations are defined as the values in the CAP centroid that are greater than zero.
+                These values represent the "High Amplitude" activations for that CAP.
+              - Negative activations are defined as the values in the CAP centroid that are less than zero.
+                These values represent the "Low Amplitude" activations for that CAP.
 
                 ::
 
-                  # Example cluster centroid for CAP 1
-                  cap_1_cluster_centroid = np.array([-0.3, 1.5, 2.0, -0.2, 0.7, 1.3, -0.5, 0.4])
+                    # Example cluster centroid for CAP 1
+                    cap_1_cluster_centroid = np.array([-0.3, 1.5, 2.0, -0.2, 0.7, 1.3, -0.5, 0.4])
 
-                  # Assign values less than 0 as 0 to isolate the high amplitude activations
-                  high_amp = np.where(cap_1_cluster_centroid > 0, cap_1_cluster_centroid, 0)
+                    # Assign values less than 0 as 0 to isolate the high amplitude activations
+                    high_amp = np.where(cap_1_cluster_centroid > 0, cap_1_cluster_centroid, 0)
 
-                  # Assign values less than 0 as 0 to isolate the low amplitude activations; Also invert the sign
-                  low_amp = high_amp = np.where(cap_1_cluster_centroid < 0, -cap_1_cluster_centroid, 0)
+                    # Assign values less than 0 as 0 to isolate the low amplitude activations; Also invert the sign
+                    low_amp = high_amp = np.where(cap_1_cluster_centroid < 0, -cap_1_cluster_centroid, 0)
 
             4. Calculate Cosine Similarity:
 
-              - Normalize the dot product by the product of the Euclidean norms of the cluster centroid and the binary\
-              vector to obtain the cosine similarity:
+              - Normalize the dot product by the product of the Euclidean norms of the cluster centroid and the binary
+                vector to obtain the cosine similarity:
 
                 ::
 
@@ -2597,13 +2338,8 @@ class CAP(_CAPGetter):
 
             5. Generate Radar Plots of Each CAPs:
 
-              - Each radar plot visualizes the cosine similarity for both "High Amplitude" (positive) and\
-              "Low Amplitude" (negative) activations of the CAP. The cosine similarity values range from 0 to 1,\
-              representing how closely the a-priori region aligns with the positive and negative activations\
-              of the CAP centroid.
-
-            Note, if groups were given when the ``CAP`` class was initialized, separate radar plots will be generated
-            per CAP for all groups.
+              - Each radar plot visualizes the cosine similarity for both "High Amplitude" (positive) and
+                "Low Amplitude" (negative) activations of the CAP.
 
         Parameters
         ----------
@@ -2684,7 +2420,6 @@ class CAP(_CAPGetter):
         **Handling Division by Zero:** NumPy automatically handles division by zero errors. This may occur if the
         network or the "High Amplitude" or "Low Amplitude" vectors are all zeroes. In such cases, NumPy assigns `NaN`
         to the cosine similarity for the affected network(s), indicating that the similarity is undefined.
-        Plotly is capable of handling `NaN` values.
 
         **Parcellation Approach**: If using "Custom" for ``parcel_approach`` the "regions" subkey is required.
 

@@ -1,3 +1,5 @@
+"""Module containing custom types."""
+
 from typing import Literal, TypedDict, Union
 from typing_extensions import Required, NotRequired
 
@@ -15,15 +17,17 @@ SubjectTimeseries = dict[str, dict[str, NDArray[floating]]]
 
         subject_timeseries = {
                 "101": {
-                    "run-0": np.array([...]), # Shape: TRs x ROIs
-                    "run-1": np.array([...]), # Shape: TRs x ROIs
-                    "run-2": np.array([...]), # Shape: TRs x ROIs
+                    "run-0": np.array(shape=[TR, ROIs]),
+                    "run-1": np.array(shape=[TR, ROIs]),
+                    "run-2": np.array(shape=[TR, ROIs]),
                 },
                 "102": {
-                    "run-0": np.array([...]), # Shape: TRs x ROIs
-                    "run-1": np.array([...]), # Shape: TRs x ROIs
+                    "run-0": np.array(shape=[TR, ROIs]),
+                    "run-1": np.array(shape=[TR, ROIs]),
                 }
             }
+
+    .. versionadded:: 0.23.6
 """
 
 
@@ -36,11 +40,7 @@ class SchaeferParcelConfig(TypedDict):
 
     ::
 
-        {
-            "n_rois": 400,
-            "yeo_networks": 7,
-            "resolution_mm": 1
-        }
+        {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}
 
     .. versionadded:: 0.23.6
 
@@ -57,6 +57,11 @@ class SchaeferParcelConfig(TypedDict):
     --------
     ParcelConfig
         Type definition representing the configuration options and structure for the Schaefer and AAL parcellations.
+
+    Notes
+    -----
+    See `Nilearn's fetch Schaefer documentation\
+    <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_schaefer_2018.html>`_  for more information.
     """
 
     n_rois: NotRequired[int]
@@ -73,9 +78,7 @@ class AALParcelConfig(TypedDict):
 
     ::
 
-        {
-            "version": "SPM12"
-        }
+        {"version": "SPM12"}
 
     .. versionadded:: 0.23.6
 
@@ -89,6 +92,11 @@ class AALParcelConfig(TypedDict):
     --------
     ParcelConfig
         Type definition representing the configuration options and structure for the Schaefer and AAL parcellations.
+
+    Notes
+    -----
+    See `Nilearn's fetch AAL documentation\
+    <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_aal.html>`_ for more information.
     """
 
     version: NotRequired[str]
@@ -105,21 +113,20 @@ ParcelConfig = Union[dict[Literal["Schaefer"], SchaeferParcelConfig], dict[Liter
     ::
 
         # Structure of Schaefer
-        {
-            "Schaefer":
-            {
-                SchaeferConfig
-            }
-        }
+        {"Schaefer": SchaeferParcelConfig}
 
 
         # Structure of AAL
-        {
-            "AAL":
-            {
-                AALConfig
-            }
-        }
+        {"AAL": AALParcelConfig}
+
+    .. versionadded:: 0.23.6
+
+    See Also
+    --------
+    :class:`neurocaps.typing.SchaeferParcelConfig`
+        Type definition representing configuration options for the Schaefer parcellation.
+    :class:`neurocaps.typing.AALParcelConfig`
+        Type definition representing configuration options for the AAL parcellation.
 """
 
 
@@ -178,13 +185,11 @@ class AALParcelApproach(ParcelApproachBase):
 
         {
             "maps": "path/to/parcellation.nii.gz",
-            "nodes": ["LH_Vis1", "LH_SomSot1", "RH_Vis1", "RH_Somsot1"],
-            "regions": ["Vis", "SomSot"]
+            "nodes": ["Precentral_L", "Precentral_R", "Frontal_Sup", "Frontal_Sup_R"],
+            "regions": ["Precentral", "Frontal"]
         }
 
     .. versionadded:: 0.23.6
-
-
 
     Parameters
     ----------
@@ -215,18 +220,15 @@ class CustomRegionHemispheres(TypedDict):
 
     ::
 
-        {
-            "lh": [0, 1, 2],
-            "rh": [3, 4, 5, 6, 7]
-        }
+        {"lh": [0, 1, 2], "rh": [3, 4, 5, 6, 7]}
 
     Parameters
     ----------
     lh: :obj:`list[int] | range`
-       A list of integers or range representing the index positions of elements in the "nodes" list belonging to the
+       List of integers or range representing the index positions of elements in the "nodes" list belonging to the
        left hemisphere of a specific region.
     rh: :obj:`list[int] | range`
-       A list of integers or range representing the index positions of elements in the "nodes" list belonging to the
+       List of integers or range representing the index positions of elements in the "nodes" list belonging to the
        right hemisphere of a specific region.
 
     See Also
@@ -293,30 +295,24 @@ ParcelApproach = Union[
     ::
 
         # Structure of Schaefer
-        {
-            "Schaefer":
-            {
-                SchaeferParcelApproach
-            }
-        }
-
+        {"Schaefer": SchaeferParcelApproach}
 
         # Structure of AAL
-        {
-            "AAL":
-            {
-                AALParcelApproach
-            }
-        }
-
+        {"AAL": AALParcelApproach}
 
         # Structure of Custom
-        {
-            "Custom":
-            {
-                CustomParcelApproach
-            }
-        }
+        {"Custom": CustomParcelApproach}
+
+    .. versionadded:: 0.23.6
+
+    See Also
+    --------
+    :class:`neurocaps.typing.SchaeferParcelApproach`
+        Type definition representing the structure of the Schaefer parcellation approach.
+    :class:`neurocaps.typing.AALParcelApproach`
+        Type definition representing the structure of the AAL parcellation approach.
+    :class:`neurocaps.typing.CustomParcelApproach`
+        Type definition representing the structure of the Custom parcellation approach.
 """
 
 __all__ = [

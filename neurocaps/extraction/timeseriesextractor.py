@@ -31,60 +31,20 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     """
     Timeseries Extractor Class.
 
-    Performs timeseries denoising, extraction, serialization (pickling), and BOLD visualization.
+    Performs timeseries denoising, extraction, serialization (pickling), and visualization.
 
     Parameters
     ----------
     space: :obj:`str`, default="MNI152NLin2009cAsym"
-        The standard template space that the preprocessed bold data is registered to. Used for querying with PyBIDS
-        to locate preprocessed BOLD-related files.
+        The standard template space that the preprocessed bold data is registered to.
 
     parcel_approach: :obj:`ParcelConfig`, :obj:`ParcelApproach`, or :obj:`str`,\
                      default={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
-        The approach used to parcellate NifTI images into distinct regions-of-interests (ROIs).
-
-        To initialize a ``parcel_approach``, the configuration requires a nested dictionary with:
-
-          - First Level Key: The parcellation name ("Schaefer", "AAL", or "Custom").
-          - Second Level Keys: Parameters specific to each parcellation method.
-
-        Supported parcellation approaches and their parameters, includes:
-
-        - "Schaefer":
-
-            - "n_rois": Number of ROIs (Default=400). Options are 100, 200, 300, 400, 500, 600, 700, 800, 900, or 1000.
-            - "yeo_networks": Number of Yeo networks (Default=7). Options are 7 or 17.
-            - "resolution_mm": Spatial resolution in millimeters (Default=1). Options are 1 or 2.
-
-        - "AAL":
-
-            - "version": AAL parcellation version to use (Default="SPM12" if ``{"AAL": {}}`` is given). Options are\
-            "SPM5", "SPM8", "SPM12", or "3v2".
-
-        - "Custom" (user-defined):
-
-            - "maps": Directory path to the location of the parcellation file.
-            - "nodes": A list of node names in the order of the label IDs in the parcellation.
-            - "regions": The regions or networks in the parcellation.
-
-        *Notes*:
-
-        - Input can also be a pickle file containing a processed parcel approach with required keys
-          ("maps", "nodes", and "regions").
-        - For detailed parameter information, see:
-
-            - `Schaefer (Nilearn's Fetch Schaefer Documentation)\
-            <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_schaefer_2018.html>`_
-            - `AAL (Nilearn's Fetch AAL Documentation)\
-            <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_aal.html>`_
-            - Custom: See Notes section below for structure requirements.
+        Specifies the parcellation approach to use. Options: "Schaefer", "AAL", or "Custom".
+        Can be initialized with parameters, as a nested dictionary, or loaded from a pickle file.
 
     standardize: {"zscore_sample", "zscore", "psc", True, False}, default="zscore_sample"
         Standardizes the timeseries.
-
-        *Note*: Refer to `nilearn.maskers.NiftiLabelsMasker
-        <https://nilearn.github.io/stable/modules/generated/nilearn.maskers.NiftiLabelsMasker.html>`_ for an
-        explanation of each available option.
 
     detrend: :obj:`bool`, default=True
         Detrends the timeseries.
@@ -102,7 +62,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         If True, performs nuisance regression during timeseries extraction using the default or user-specified
         confounds in ``confound_names``.
 
-        *Note*: requires that confound tsv files to be in same directory as preprocessed BOLD images.
+        .. important:: Requires the confound tsv files to be in same directory as preprocessed BOLD images.
 
     confound_names: {"basic"}, :obj:`list[str]`, or :obj:`None`, default="basic"
         Names of confounds extracted from the confound tsv files if ``use_confounds=True``.
@@ -113,10 +73,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         - Six head-motion parameters and their first-order derivatives.
         - First six combined aCompcor components.
 
-        *Notes*:
-
-        - Confound names follow fMRIPrep's naming scheme (versions >= 1.2.0).
-        - Wildcards are supported: e.g., "cosine*" matches all confounds starting with "cosine".
+        .. important::
+            - Confound names follow fMRIPrep's naming scheme (versions >= 1.2.0).
+            - Wildcards are supported: e.g., "cosine*" matches all confounds starting with "cosine".
 
         .. versionchanged:: 0.23.0 Changed default from ``None`` to ``"basic"``. The ``"basic"`` option provides the
            same functionality that ``None`` did in previous versions.
@@ -129,51 +88,49 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             - "threshold": A float (Default=None). Removes volumes where FD > threshold.
             - "outlier_percentage": A float in interval [0,1] (Default=None). Removes entire runs where proportion of
-              censored volumes exceeds this threshold. Proportion calculated after dummy scan removal. Issues warning
-              when runs are flagged. If ``condition`` specified in ``self.get_bold()``, only considers volumes
-              associated with the condition.
-            - "n_before": An integer indicating the number of volumes to remove before each flagged volume
-              (Default=None). For instance, if volume 5 flagged and ``{"n_before": 2}``, then volumes 3,
-              4, and 5 are discarded.
-            - "n_after": An integer indicating the of volumes to remove after each flagged volume (Default=False). For
-              instance, if volume 5 flagged and ``{"n_after": 2}``, then volumes 5, 6, and 7 are discarded.
-            - "use_sample_mask": A boolean (Default=False). If True, censors before nuisance regression using Nilearn's
-              ``NiftiLabelsMasker``. Also, sets ``clean__extrapolate=False`` to prevent interpolation of end volumes.
-              If False, censors after nuisance regression.
-            - "interpolate": A boolean (Default=None). If True, uses scipy's ``CubicSpline`` function with
-              ``extrapolate=False`` to perform cubic spline interpolation on censored frames that are not at the ends
-              of the timeseries. For example, given a ``censor_mask=[0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0]`` where "0"
-              indicates censored volumes, only the volumes at index 3, 5, 6, and 8 would be interpolated. When False or
-              None (default behavior), no interpolation is performed and all censored frames are discarded.
+              censored volumes exceeds this threshold. Proportion calculated after dummy scan removal.
 
-              .. versionadded:: 0.22.3 "interpolate" key added.
+              .. note::
+                  - A warning is issued when a run is flagged.
+                  - If ``condition`` specified in ``self.get_bold()``, only considers volumes associated with the condition.
 
-        *Notes*:
+            - "n_before": An integer (Default=None). Indicates the number of volumes to remove before each flagged volume.
+            - "n_after": An integer (Default=None). Indicates the number of volumes to remove after each flagged volume.
+            - "use_sample_mask": A boolean (Default=False). Passes a sample mask to Nilearn's ``NiftiLabelsMasker``.\
+            Also, sets ``clean__extrapolate=False`` to prevent interpolation of end volumes. If False, only after nuisance regression.
+            - "interpolate": A boolean (Default=None). If True, uses scipy's ``CubicSpline`` function with\
+            ``extrapolate=False`` to perform cubic spline interpolation on censored frames.
 
-        - A column named "framewise_displacement" must be available in the confounds file.
-        - ``use_confounds`` must be set to True.
-        - Do not specify "framewise_displacement" in ``confound_names``.
-        - See Nilearn's documentation for details on censored volume handling:
+              .. note:: Interpolation is only performed on frames that are flanked by non-censored frames on both ends.
+                  For example, given a ``censor_mask=[0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0]`` where "0" indicates censored
+                  volumes, only the volumes at index 3, 5, 6, and 8 would be interpolated. If False or
 
-            - `Signal Clean <https://nilearn.github.io/stable/modules/generated/nilearn.signal.clean.html>`_
-            - `NiftiLabelsMasker <https://nilearn.github.io/stable/modules/generated/nilearn.maskers.NiftiLabelsMasker.html>`_
+            .. versionadded:: 0.22.3 "interpolate" key added.
 
-        - When ``{"use_sample_mask": False}`` and ``standardize=True``, applying an additional within-run
-          standardization (using ``neurocaps.analysis.standardize``) is recommended after outlier removal.
-        - If ``{"interpolation: True}``, then interpolation is only applied nuisance regression and parcellation steps
-          have been completed. It is also applied prior to the condition being extracted from the timeseries.
-        - See Scipy's documentation on their
-          `CubicSpline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicSpline.html>`_
-          function.
+        .. important::
+            - A column named "framewise_displacement" must be available in the confounds file.
+            - ``use_confounds`` must be set to True.
+            - Do not specify "framewise_displacement" in ``confound_names``.
+            - See Nilearn's documentation for details on censored volume handling when "use_sample_mask" is True:
+
+                - `Signal Clean <https://nilearn.github.io/stable/modules/generated/nilearn.signal.clean.html>`_
+                - `NiftiLabelsMasker <https://nilearn.github.io/stable/modules/generated/nilearn.maskers.NiftiLabelsMasker.html>`_
+
+            - When "use_sample_mask" is False and ``standardize`` is not False, applying an additional within-run\
+            standardization (using ``neurocaps.analysis.standardize``) is recommended after outlier removal.
+            - If "interpolate" is True, then interpolation is only applied nuisance regression and parcellation steps\
+            have been completed.
+            - See Scipy's documentation on their\
+            `CubicSpline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicSpline.html>`_ function.
 
     n_acompcor_separate: :obj:`int` or :obj:`None`, default=None
         Number of aCompCor components to extract separately from the white-matter (WM) and CSF masks. Uses first "n"
         components from each mask separately. For instance, if ``n_acompcor_separate=5``, then the the first 5 WM
         components and the first 5 CSF components (totaling 10 components) are regressed out.
 
-        *Notes*:
-        - ``use_confounds`` must be set to True.
-        - If specified, this parameter overrides any aCompCor components listed in ``confound_names``.
+        .. important::
+            - ``use_confounds`` must be set to True.
+            - If specified, this parameter overrides any aCompCor components listed in ``confound_names``.
 
     dummy_scans: :obj:`int`, :obj:`dict[str, bool | int]`, or :obj:`None`, default=None
         Number of initial volumes to remove before timeseries extraction.
@@ -181,92 +138,41 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         - *If int*, removes first "n" volumes.
         - *If dict*, the following keys are supported:
 
-            - "auto": A boolean (Default=None). If True, Automatically determines dummy scans from fMRIPrep confounds
-              file by counting the number of "non_steady_state_outlier_XX" columns in confounds.tsv file. For instance,
-              if two columns are found,then the first two columns are removed.
+            - "auto": A boolean (Default=None). If True, automatically determines dummy scans from fMRIPrep confounds
+              using the number of "non_steady_state_outlier_XX" columns in the confounds tsv file.
             - "min": An integer (Default=None). Minimum volumes to remove when auto is set to True. If "auto" finds 2
               outliers but ``{"min": 3}``, removes 3 volumes.
             - "max": An integer (Default=None). Maximum volumes to remove when auto=True. If "auto" finds 6 outliers but
               ``{"max": 5}``, removes 5 volumes.
 
-        *Note*: "min" and "max" keys only apply when "auto" is True.
+        .. important:: "min" and "max" keys only apply when "auto" is True.
 
     dtype: :obj:`str` or "auto", default=None
-        The NumPy dtype the NIfTI images are converted to when passed to Nilearn's ``load_img`` function.
+        The NumPy dtype to convert NIfTI images to.
 
 
     Properties
     ----------
     space: :obj:`str`
-        The standard template space that the preprocessed BOLD data is registered to. The space can also be set after
-        class initialization using ``self.space = "New Space"`` if the template space needs to be changed.
+        The standard template space that the preprocessed BOLD data is registered to.
 
     parcel_approach: :obj:`ParcelApproach`
-        A dictionary containing information about the parcellation. Can also be used as a setter, which accepts a
-        dictionary or a dictionary saved as pickle file. If "Schaefer" or "AAL" was specified during
-        initialization of the ``TimeseriesExtractor`` class, then ``nilearn.datasets.fetch_atlas_schaefer_2018``
-        and ``nilearn.datasets.fetch_atlas_aal`` will be used to obtain the "maps" and the "nodes". Then string
-        splitting is used on the "nodes" to obtain the "regions":
-
-        ::
-
-            # Structure of Schaefer
-            {
-                "Schaefer":
-                {
-                    "maps": "path/to/parcellation.nii.gz",
-                    "nodes": ["LH_Vis1", "LH_SomSot1", "RH_Vis1", "RH_Somsot1"],
-                    "regions": ["Vis", "SomSot"]
-                }
-            }
-
-            # Structure of AAL
-            {
-                "AAL":
-                {
-                    "maps": "path/to/parcellation.nii.gz",
-                    "nodes": ["Precentral_L", "Precentral_R", "Frontal_Sup_L", "Frontal_Sup_R"],
-                    "regions": ["Precentral", "Frontal"]
-                }
-            }
-
-        Refer to the example for "Custom" in the Note section below for the expected structure.
+        Parcellation information with "maps" (path to parcellation file), "nodes" (labels), and "regions" (anatomical regions or networks).
 
     signal_clean_info: :obj:`dict[str, bool | int | float | str]` or :obj:`None`
-        Dictionary containing parameters for signal cleaning specified during initialization of the
-        ``TimeseriesExtractor`` class. This information includes ``standardize``, ``detrend``, ``low_pass``,
-        ``high_pass``, ``fwhm``, ``dummy_scans``, ``use_confounds``, ``n_compcor_separate``, and ``fd_threshold``.
+        Dictionary containing signal cleaning parameters.
 
     task_info: :obj:`dict[str, str | int]` or :obj:`None`
-        If ``self.get_bold()`` ran, is a dictionary containing all task-related information such as ``task``,
-        ``condition``, ``session``, ``runs``, and ``tr`` (if specified) else None.
+        Dictionary containing all task-related information such.
 
     subject_ids: :obj:`list[str]` or :obj:`None`
-        A list containing all subject IDs that have retrieved from PyBIDS and subjected to timeseries
-        extraction.
+        A list containing all subject IDs that have retrieved from PyBIDS and subjected to timeseries extraction.
 
     n_cores: :obj:`int` or :obj:`None`
         Number of cores used for multiprocessing with Joblib.
 
     subject_timeseries: :obj:`SubjectTimeseries` or :obj:`None`
         A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a NumPy array.
-        Can also be a path to a pickle file containing this same structure. If this property needs to be deleted due
-        to memory issues, ``del self.subject_timeseries`` can be used to delete this property and only have it
-        return None. The structure is as follows:
-
-        ::
-
-            subject_timeseries = {
-                    "101": {
-                        "run-0": np.array([...]), # Shape: TRs x ROIs
-                        "run-1": np.array([...]), # Shape: TRs x ROIs
-                        "run-2": np.array([...]), # Shape: TRs x ROIs
-                    },
-                    "102": {
-                        "run-0": np.array([...]), # Shape: TRs x ROIs
-                        "run-1": np.array([...]), # Shape: TRs x ROIs
-                    }
-                }
 
     See Also
     --------
@@ -280,30 +186,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     Note
     ----
     **Passed Parameters**: ``standardize``, ``detrend``, ``low_pass``, ``high_pass``, ``fwhm``, and nuisance
-    regression (``confound_names``) uses ``nilearn.maskers.NiftiLabelsMasker``. The ``dtype`` parameter is used by
-    ``nilearn.image.load_img``. For framewise displacement, if the "use_sample_mask" key is set to True in the
-    ``fd_threshold`` dictionary, then a boolean sample mask is generated (setting indices corresponding to high motion
-    volumes as False) and is passed to the ``sample_mask`` parameter in ``nilearn.maskers.NiftiLabelsMasker``.
+    regressors (``confound_names``) uses ``nilearn.maskers.NiftiLabelsMasker``. The ``dtype`` parameter is used by
+    ``nilearn.image.load_img``.
 
-    **Custom Parcellations**: If using a "Custom" parcellation approach, ensure that the parcellation is
-    lateralized (where each region/network has nodes in the left and right hemisphere). This is due to certain
-    visualization functions assuming that each region consists of left and right hemisphere nodes. Additionally,
-    certain visualization functions in this class also assume that the background label is 0. Therefore, do not add a
-    background label in the "nodes" or "regions" keys.
-
-    The recognized subkeys for the "Custom" parcellation approach includes:
-
-    - "maps": Directory path containing the parcellation in a supported format (e.g., .nii or .nii.gz for NifTI).
-    - "nodes": A list or numpy array of all node labels arranged in ascending order based on their numerical IDs from
-      the parcellation. The 0th index should contain the label corresponding to the lowest, non-background numerical ID.
-    - "regions": A dictionary defining major brain regions or networks, with each region containing "lh"
-      (left hemisphere) and "rh" (right hemisphere) subkeys listing node indices.
-
-    Refer to the `NeuroCAPs' Parcellation Documentation <https://neurocaps.readthedocs.io/en/stable/parcellations.html>`_
-    for more detailed explanations and example structures for the "nodes" and "regions" subkeys.
-
-    **Note**: Different subkeys are required depending on the function used. Refer to the Note section under each
-    function for information regarding the subkeys required for that specific function.
+    **Custom Parcellations**: Refer to the `NeuroCAPs' Parcellation Documentation
+    <https://neurocaps.readthedocs.io/en/stable/parcellations.html>`_ for detailed explanations and example structures
+    for Custom parcellations.
     """
 
     def __init__(
@@ -456,18 +344,16 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         """
         Retrieve Preprocessed BOLD Data from BIDS Datasets.
 
-        This function uses PyBIDS for querying and requires the BOLD data directory (specified in ``bids_dir``) to be
-        BIDS-compliant, including a "dataset_description.json" file. It assumes the dataset contains a derivatives
-        folder with BOLD data preprocessed using a standard pipeline, specifically fMRIPrep. The pipeline directory
-        must also include a "dataset_description.json" file for proper querying.
+        Extracts the timeseries data from preprocessed BOLD images located in the derivatives folder of a
+        BIDS-compliant dataset. The timeseries data of all subjects are appended to a single dictionary
+        ``self.subject_timeseries``.
 
-        The timeseries data of all subjects are appended to a single dictionary ``self.subject_timeseries``. Additional
-        information regarding the structure of this dictionary can be found in the "Note" section.
-
-        **This pipeline is most optimized for BOLD data preprocessed by fMRIPrep.** Refer to
-        `NeuroCAPs' BIDS Structure and Entities Documentation <https://neurocaps.readthedocs.io/en/stable/bids.html>`_
-        for additional information on the expected directory structure and file naming scheme (entities) needed for
-        querying.
+        .. important::
+            - For proper querying, a "dataset_description.json" file must be located in the root of the BIDs directory\
+            and the pipeline directory (located in the derivatives folder).
+            - Refer to `NeuroCAPs' BIDS Structure and Entities Documentation <https://neurocaps.readthedocs.io/en/stable/bids.html>`_\
+            for additional information on the expected directory structure and file naming scheme (entities) needed for querying.
+            - This pipeline is most optimized for BOLD data preprocessed by fMRIPrep.
 
         Parameters
         ----------
@@ -479,18 +365,15 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Name of task to extract timeseries data from (i.e "rest", "n-back", etc).
 
         session: :obj:`int`, :obj:`str`, or :obj:`None`, default=None
-            The session ID to extract timeseries data from. Only a single session can be extracted at a time and an
-            error will be raised if more than one session is detected during querying. The value can be an integer
-            (e.g. ``session=2``) or a string (e.g. ``session="001"``).
+            The session ID to extract timeseries data from. Only a single session can be extracted at a time. The value
+            can be an integer (e.g. ``session=2``) or a string (e.g. ``session="001"``).
 
         runs: :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
-            List of run numbers to extract timeseries data from. Extracts all runs if unspecified. For instance,
-            to extract only "run-0" and "run-1", use ``runs=[0, 1]``. For non-integer run IDs, use strings:
-            ``runs=["000", "001"]``.
+            List of run numbers to extract timeseries data from (e.g. ``runs=["000", "001"]``). Extracts all runs if unspecified.
 
         condition: :obj:`str` or :obj:`None`, default=None
             Isolates the timeseries data corresponding to a specific condition (listed in the "trial_type" column of
-            the "events.tsv" file), only after the timeseries has been extracted and subjected to nuisance regression.
+            the "events.tsv" file) after the timeseries has been extracted and subjected to nuisance regression.
             Only a single condition can be extracted at a time.
 
         condition_tr_shift: :obj:`int`, default=0
@@ -507,8 +390,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         slice_time_ref: :obj:`int` or :obj:`float`, default=0.0
             The reference slice expressed as a fraction of the ``tr`` that is subtracted from the condition onset times
-            to adjust for slice time correction when ``condition`` is not None (``onset - slice_time_ref * tr``). Values
-            can range from 0 to 1.
+            to adjust for slice time correction when ``condition`` is not None. Values can range from 0 to 1. For more
+            details, see the "Extraction of Task Conditions" section below.
 
             .. versionadded:: 0.21.0
 
@@ -532,8 +415,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         parallel_log_config: :obj:`dict[str, multiprocessing.Manager.Queue | int]`
             Passes a user-defined managed queue and logging level to the internal timeseries extraction function
-            when parallel processing (``n_cores``) is used. Additionally, this parameter must be a dictionary
-            and the available keys are:
+            when parallel processing (``n_cores``) is used. Available dictionary keys are:
 
             - "queue": The instance of ``multiprocessing.Manager.Queue`` to pass to ``QueueHandler``. If not specified,
               all logs will output to ``sys.stdout``.
@@ -566,25 +448,16 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         BIDSQueryError
             Subject IDs were not found during querying.
 
+        See Also
+        --------
+        :data:`neurocaps.typing.SubjectTimeseries`
+            Type definition representing the structure of the subject timeseries.
+
         Note
         ----
         **Subject Timeseries Dictionary**: This method stores the extracted timeseries of all subjects
-        in ``self.subject_timeseries``. The structure is a dictionary mapping subject IDs to their run IDs and
-        their associated timeseries (TRs x ROIs) as a NumPy array:
-
-        ::
-
-            subject_timeseries = {
-                    "101": {
-                        "run-0": np.array([timeseries]), # Shape: TRs x ROIs
-                        "run-1": np.array([timeseries]), # Shape: TRs x ROIs
-                        "run-2": np.array([timeseries]), # Shape: TRs x ROIs
-                    },
-                    "102": {
-                        "run-0": np.array([timeseries]), # Shape: TRs x ROIs
-                        "run-1": np.array([timeseries]), # Shape: TRs x ROIs
-                    }
-                }
+        in the ``subject_timeseries`` property. The structure is a dictionary mapping subject IDs to their run IDs and
+        their associated timeseries (TRs x ROIs) as a NumPy array.
 
         **NifTI Files Without "run-" Entity**: By default, "run-0" will be used as a placeholder, if run IDs are not
         specified in the NifTI file.
@@ -1042,15 +915,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         """
         Save the Extracted Subject Timeseries.
 
-        Saves the extracted timeseries stored in the ``self.subject_timeseries`` dictionary (obtained from running
-        ``self.get_bold()``) as a pickle file. This allows for data persistence and easy conversion back into
-        dictionary form for later use.
+        Saves the extracted timeseries stored in the ``self.subject_timeseries`` dictionary as a pickle file.
 
         Parameters
         ----------
         output_dir: :obj:`str`
-            Directory to save ``self.subject_timeseries`` dictionary as a pickle file. The directory will be created if
-            it does not exist.
+            Directory to save a pickle file to. The directory will be created if it does not exist.
 
         filename: :obj:`str` or :obj:`None`, default=None
             Name of the file with or without the "pkl" extension.
@@ -1089,8 +959,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         """
         Plot the Extracted Subject Timeseries.
 
-        Uses the ``self.subject_timeseries`` to visualize the extracted BOLD timeseries data of  data Regions of
-        Interest (ROIs) or regions for a specific subject and run.
+        Visualize the extracted BOLD timeseries data of nodes (Region-of-Interests [ROIs]) or regions (anatomical
+        regions/networks) for a specific subject and run.
 
         Parameters
         ----------

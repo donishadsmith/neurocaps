@@ -21,8 +21,8 @@ def transition_matrix(
     """
     Generate and Visualize the Averaged Transition Probabilities.
 
-    Uses the "transition_probability" output from ``CAP.calculate_metrics`` to generate and visualize the averaged
-    transition probability matrix for all groups from the analysis.
+    Averages subject-level transition probabilities to produce a transition probability matrix. One matrix is
+    generated per group.
 
     Parameters
     ----------

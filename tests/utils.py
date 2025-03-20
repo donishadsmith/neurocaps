@@ -241,6 +241,17 @@ def predict_labels(timeseries, cap_analysis, standardize, group, runs=[1, 2, 3])
     return labels
 
 
+def get_first_subject(timeseries, cap_analysis, standardize=True, group="A", runs=[1]):
+    """Get the first subject from the timeseries data."""
+    first_subject_timeseries = {}
+    first_subject_timeseries.update({"0": timeseries["0"]})
+    first_subject_labels = (
+        predict_labels(first_subject_timeseries, cap_analysis, standardize=standardize, group=group, runs=runs) + 1
+    )
+
+    return first_subject_labels
+
+
 # Get segments
 def segments(target, timeseries):
     """
@@ -255,17 +266,6 @@ def segments(target, timeseries):
     n_segments = np.where(np.diff(target_indices, n=1) > 1, 1, 0).sum() + 1
 
     return binary_arr, n_segments
-
-
-def get_first_subject(timeseries, cap_analysis):
-    """Get the first subject from the timeseries data."""
-    first_subject_timeseries = {}
-    first_subject_timeseries.update({"0": timeseries["0"]})
-    first_subject_labels = (
-        predict_labels(first_subject_timeseries, cap_analysis, standardize=True, group="A", runs=[1]) + 1
-    )
-
-    return first_subject_labels
 
 
 def check_imgs(tmp_dir, values_dict, plot_type="map"):

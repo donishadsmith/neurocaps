@@ -45,21 +45,7 @@ def merge_dicts(
     subject_timeseries_list: :obj:`list[SubjectTimeseries]` or :obj:`list[str]`
         A list where each element consist of a dictionary mapping subject IDs to their run IDs and associated
         timeseries (TRs x ROIs) as a NumPy array. Can also be a list consisting of paths to pickle files
-        containing this same structure. The expected structure of each dictionary is as follows:
-
-        ::
-
-            subject_timeseries = {
-                    "101": {
-                        "run-0": np.array([...]), # Shape: TRs x ROIs
-                        "run-1": np.array([...]), # Shape: TRs x ROIs
-                        "run-2": np.array([...]), # Shape: TRs x ROIs
-                    },
-                    "102": {
-                        "run-0": np.array([...]), # Shape: TRs x ROIs
-                        "run-1": np.array([...]), # Shape: TRs x ROIs
-                    }
-                }
+        containing this same structure.
 
     return_merged_dict: :obj:`bool`, default=True
         If True, returns a single dictionary containing the merged dictionary under a key named "merged".
@@ -103,7 +89,7 @@ def merge_dicts(
     See Also
     --------
     :data:`neurocaps.typing.SubjectTimeseries`
-        The type definition for the subject timeseries dictionary structure.
+        Type definition for the subject timeseries dictionary structure.
 
     References
     ----------

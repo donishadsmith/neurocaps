@@ -1,6 +1,7 @@
 import copy, glob, math, os, re, sys
 
 import nibabel as nib, numpy as np, pandas as pd, pytest
+
 from kneed import KneeLocator
 
 from neurocaps.analysis import CAP
@@ -390,7 +391,7 @@ def test_temporal_fraction():
     timeseries = Parcellation.get_schaefer("timeseries")
 
     cap_analysis = CAP(groups={"A": [0, 1, 2, 4], "B": [3, 5, 6, 7, 8, 9, 6]})
-    cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=2)
+    cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=3)
 
     # Should ignore bad metric
     df_dict = cap_analysis.calculate_metrics(
@@ -405,11 +406,13 @@ def test_temporal_fraction():
     # Get first subject
     first_subject_labels = get_first_subject(timeseries, cap_analysis)
 
-    sorted_frequency_dict = {num: np.where(first_subject_labels == num, 1, 0).sum() for num in range(1, 3)}
+    sorted_frequency_dict = {num: np.where(first_subject_labels == num, 1, 0).sum() for num in range(1, 4)}
     proportion_dict = {num: value / len(first_subject_labels) for num, value in sorted_frequency_dict.items()}
     assert [x for x in list(proportion_dict.values()) if not math.isnan(x)] == [
         x for x in df.loc[0, :].values if not math.isnan(x)
     ]
+    # Temporal fractions should sum to 1
+    assert math.isclose(np.array(list(proportion_dict.values())).sum(), 1, abs_tol=0.0001)
 
 
 def test_counts():
@@ -419,7 +422,7 @@ def test_counts():
     timeseries = Parcellation.get_schaefer("timeseries")
 
     cap_analysis = CAP(groups={"A": [0, 1, 2, 4], "B": [3, 5, 6, 7, 8, 9, 6]})
-    cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=2)
+    cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=3)
 
     df_dict = cap_analysis.calculate_metrics(subject_timeseries=timeseries, return_df=True, metrics=["counts"])
 
@@ -431,7 +434,7 @@ def test_counts():
     first_subject_labels = get_first_subject(timeseries, cap_analysis)
 
     counts_dict = {}
-    for target in range(1, 3):
+    for target in range(1, 4):
         _, counts = segments(target, first_subject_labels)
         counts = counts if target in first_subject_labels else 0
         counts_dict.update({target: counts})
@@ -449,7 +452,7 @@ def test_persistence(tr):
     timeseries = Parcellation.get_schaefer("timeseries")
 
     cap_analysis = CAP(groups={"A": [0, 1, 2, 4], "B": [3, 5, 6, 7, 8, 9, 6]})
-    cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=2)
+    cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=3)
 
     df_dict = cap_analysis.calculate_metrics(
         subject_timeseries=timeseries, return_df=True, metrics=["persistence"], tr=tr
@@ -465,10 +468,12 @@ def test_persistence(tr):
 
     tr = tr
     persistence_dict = {}
-    for target in range(1, 3):
+    for target in range(1, 4):
         binary, counts = segments(target, first_subject_labels)
         persistence_dict.update({target: (binary.sum() / counts) * (tr if tr else 1)})
+        assert all(x in [0, 1] for x in binary)
 
+    # Assert that the external calculation is the same as internal
     assert [x for x in list(persistence_dict.values()) if not math.isnan(x)] == [
         x for x in df.loc[0, :].values if not math.isnan(x)
     ]
@@ -481,7 +486,7 @@ def test_transition_frequency():
     timeseries = Parcellation.get_schaefer("timeseries")
 
     cap_analysis = CAP(groups={"A": [0, 1, 2, 4], "B": [3, 5, 6, 7, 8, 9, 6]})
-    cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=2)
+    cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=3)
 
     df_dict = cap_analysis.calculate_metrics(
         subject_timeseries=timeseries, return_df=True, metrics=["transition_frequency"]
@@ -505,7 +510,7 @@ def test_transition_probability():
     timeseries = Parcellation.get_schaefer("timeseries")
 
     cap_analysis = CAP(groups={"A": [0, 1, 2, 4], "B": [3, 5, 6, 7, 8, 9, 6]})
-    cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=2)
+    cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=3)
 
     df_dict = cap_analysis.calculate_metrics(
         subject_timeseries=timeseries, return_df=True, metrics=["transition_probability"]
@@ -675,7 +680,7 @@ def test_parcel_setter():
 
     assert not cap_analysis.parcel_approach
 
-    # Set
+    # Set new parcel approach
     cap_analysis.parcel_approach = parcel_approach
     assert "Schaefer" in cap_analysis.parcel_approach
 
@@ -713,7 +718,8 @@ def test_get_caps_cluster_selection_plot(tmp_dir):
 def test_caps2plot(tmp_dir, timeseries, parcel_approach):
     """
     Ensures `caps2plot` produces the expected number of plots and that properties, which store the region means and
-    outer product information, have the expected shape based on the parcellation used.
+    outer product information, have the expected shape based on the parcellation used. May fail on occasion due
+    to  _tkinter.TclError.
     """
     cap_analysis = CAP(parcel_approach=parcel_approach)
     cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=2)
@@ -983,6 +989,8 @@ def test_method_chaining(tmp_dir):
 
     # Should not be None
     assert cap_analysis.cosine_similarity
+
+    check_imgs(tmp_dir, plot_type="nifti", values_dict={"nii.gz": 2})
 
 
 def test_check_raise_error():

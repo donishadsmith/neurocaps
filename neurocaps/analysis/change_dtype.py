@@ -19,30 +19,14 @@ def change_dtype(
     """
     Perform Participant-wise Dtype Conversion.
 
-    Changes the dtypes of each participants NumPy array. This function uses the ``.astype()`` method from NumPy.
-    This function can help reduce memory usage. For example, converting a NumPy array from "float64" to "float32" can
-    halve the memory required, which is particularly useful when analyzing large datasets on a local machine.
+    Changes the dtypes of each participants NumPy array.
 
     Parameters
     ----------
     subject_timeseries_list: :obj:`list[dict[str, dict[str, np.ndarray]]]` or :obj:`list[str]`
         A list where each element consist of a dictionary mapping subject IDs to their run IDs and associated
         timeseries (TRs x ROIs) as a NumPy array. Can also be a list consisting of paths to pickle files
-        containing this same structure. The expected structure of each dictionary is as follows:
-
-        ::
-
-            subject_timeseries = {
-                    "101": {
-                        "run-0": np.array([...]), # Shape: TRs x ROIs
-                        "run-1": np.array([...]), # Shape: TRs x ROIs
-                        "run-2": np.array([...]), # Shape: TRs x ROIs
-                    },
-                    "102": {
-                        "run-0": np.array([...]), # Shape: TRs x ROIs
-                        "run-1": np.array([...]), # Shape: TRs x ROIs
-                    }
-                }
+        containing this same structure.
 
     dtype: :obj:`bool` or :obj:`np.floating`
         Target data type (e.g "float32" or ``np.float32``) to convert each participant's NumPy arrays into.
@@ -69,7 +53,7 @@ def change_dtype(
     See Also
     --------
     :data:`neurocaps.typing.SubjectTimeseries`
-        The type definition for the subject timeseries dictionary structure.
+        Type definition for the subject timeseries dictionary structure.
 
     Warning
     -------

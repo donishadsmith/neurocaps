@@ -1,4 +1,4 @@
-"""Class to centralize plottting defaults."""
+"""Class to centralize plotting defaults."""
 
 
 class _PlotDefaults:
