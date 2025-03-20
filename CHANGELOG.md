@@ -13,6 +13,10 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.23.8.post1] - 2025-03-20
+### 📖 Documentation
+- Adds additional documentation clarity and emphasis.
+
 ## [0.23.8.post0] - 2025-03-20
 ### 📖 Documentation
 - Fixes improper documentation rendering in IDE's

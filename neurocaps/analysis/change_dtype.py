@@ -26,7 +26,8 @@ def change_dtype(
     subject_timeseries_list: :obj:`list[dict[str, dict[str, np.ndarray]]]` or :obj:`list[str]`
         A list where each element consist of a dictionary mapping subject IDs to their run IDs and associated
         timeseries (TRs x ROIs) as a NumPy array. Can also be a list consisting of paths to pickle files
-        containing this same structure.
+        containing this same structure. Refer to documentation for ``SubjectTimeseries`` in the "See Also" section for
+        an example structure.
 
     dtype: :obj:`bool` or :obj:`np.floating`
         Target data type (e.g "float32" or ``np.float32``) to convert each participant's NumPy arrays into.

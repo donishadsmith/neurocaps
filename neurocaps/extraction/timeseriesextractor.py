@@ -40,8 +40,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
     parcel_approach: :obj:`ParcelConfig`, :obj:`ParcelApproach`, or :obj:`str`,\
                      default={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
-        Specifies the parcellation approach to use. Options: "Schaefer", "AAL", or "Custom".
-        Can be initialized with parameters, as a nested dictionary, or loaded from a pickle file.
+        Specifies the parcellation approach to use. Options are "Schaefer", "AAL", or "Custom". Can be initialized with
+        parameters, as a nested dictionary, or loaded from a pickle file. For detailed documentation on the expected
+        structure, see the type definitions for ``ParcelConfig`` and ``ParcelApproach`` in the "See Also" section.
 
     standardize: {"zscore_sample", "zscore", "psc", True, False}, default="zscore_sample"
         Standardizes the timeseries.
@@ -453,11 +454,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         :data:`neurocaps.typing.SubjectTimeseries`
             Type definition representing the structure of the subject timeseries.
 
-        Note
-        ----
-        **Subject Timeseries Dictionary**: This method stores the extracted timeseries of all subjects
+        Important
+        ---------
+        **Subject Timeseries Dictionary**: This function stores the extracted timeseries of all subjects
         in the ``subject_timeseries`` property. The structure is a dictionary mapping subject IDs to their run IDs and
-        their associated timeseries (TRs x ROIs) as a NumPy array.
+        their associated timeseries (TRs x ROIs) as a NumPy array. Refer to documentation for ``SubjectTimeseries`` in
+        the "See Also" section for an example structure.
 
         **NifTI Files Without "run-" Entity**: By default, "run-0" will be used as a placeholder, if run IDs are not
         specified in the NifTI file.

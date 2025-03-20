@@ -35,7 +35,8 @@ def standardize(
     subject_timeseries_list: :obj:`list[SubjectTimeseries]` or :obj:`list[str]`
         A list where each element consist of a dictionary mapping subject IDs to their run IDs and associated
         timeseries (TRs x ROIs) as a NumPy array. Can also be a list consisting of paths to pickle files
-        containing this same structure.
+        containing this same structure. Refer to documentation for ``SubjectTimeseries`` in the "See Also" section for
+        an example structure.
 
     return_dicts: :obj:`bool`, default=True
         If True, returns a single dictionary containing the standardized input dictionaries. Keys are named "dict_{0}"

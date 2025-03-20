@@ -45,8 +45,9 @@ class CAP(_CAPGetter):
     Parameters
     ----------
     parcel_approach: :obj:`ParcelConfig`, :obj:`ParcelApproach`, or :obj:`str`, default=None
-        Specifies the parcellation approach to use. Options: "Schaefer", "AAL", or "Custom".
-        Can be initialized with parameters, as a nested dictionary, or loaded from a pickle file.
+        Specifies the parcellation approach to use. Options are "Schaefer", "AAL", or "Custom". Can be initialized with
+        parameters, as a nested dictionary, or loaded from a pickle file. For detailed documentation on the expected
+        structure, see the type definitions for ``ParcelConfig`` and ``ParcelApproach`` in the "See Also" section.
 
     groups: :obj:`dict[str, list[str]]` or :obj:`None`, default=None
         Optional mapping of group names to lists of subject IDs for group-specific analyses.
@@ -61,7 +62,7 @@ class CAP(_CAPGetter):
         Mapping of groups names to lists of subject IDs.
 
     subject_table: :obj:`dict[str, str]` or :obj:`None`
-        Lookup table mapping subject IDs to their groups.
+        Lookup table mapping subject IDs to their groups. Defined after running ``self.get_caps()``.
 
     n_clusters: :obj:`int`, :obj:`list[int]`, or :obj:`None`
         An integer or list of integers representing the number of clusters used for k-means.
@@ -135,7 +136,7 @@ class CAP(_CAPGetter):
             {"GroupName": float}
 
     region_means: :obj:`dict[str, dict[str, list[str] | np.array]]` or :obj:`None`
-        Region-averaged values used for visualization.
+        Region-averaged values used for visualization. Defined after running ``self.caps2plot()``.
 
         ::
 
@@ -145,14 +146,14 @@ class CAP(_CAPGetter):
         For backwards compatibility, ``region_caps``, which doesn't include the "Regions" key is still available.
 
     outer_products: :obj:`dict[str, dict[str, np.array]]` or :obj:`None`
-        Outer product matrices for visualization.
+        Outer product matrices for visualization. Defined after running ``self.caps2plot()``.
 
         ::
 
             {"GroupName": {"CAP-1": np.array(shape=[ROIs, ROIs]), "CAP-2": np.array(shape=[ROIs, ROIs])}}
 
     cosine_similarity: :obj:`dict[str, dict[str, list[str] | np.array]]` or :obj:`None`
-        Cosine similarities between CAPs and the regions specified in ``parcel_approach``.
+        Cosine similarities between CAPs and the regions specified in ``parcel_approach``. Defined after running ``self.caps2radar()``.
 
         ::
 
@@ -230,7 +231,8 @@ class CAP(_CAPGetter):
         ----------
         subject_timeseries: :obj:`SubjectTimeseries` or :obj:`str`
             A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a NumPy
-            array. Can also be a path to a pickle file containing this same structure.
+            array. Can also be a path to a pickle file containing this same structure. Refer to documentation for
+            ``SubjectTimeseries`` in the "See Also" section for an example structure.
 
         runs: :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
             Specific run IDs to perform the CAPs analysis with (e.g. ``runs=[0, 1]`` or ``runs=["01", "02"]``). If None,
@@ -625,7 +627,7 @@ class CAP(_CAPGetter):
 
         Computes the following temporal dynamic metrics (as described by Liu et al., 2018 and Yang et al., 2021):
 
-         - ``"temporal_fraction"``: The proportion of total volumes spent in a single CAP over all volumes in a run.
+         - ``"temporal_fraction"``: Proportion of total volumes spent in a single CAP over all volumes in a run.
 
            ::
 
@@ -633,7 +635,7 @@ class CAP(_CAPGetter):
                 target = 1
                 temporal_fraction = 4 / 6
 
-         - ``"persistence"``: The average time spent in a single CAP before transitioning to another CAP
+         - ``"persistence"``: Average time spent in a single CAP before transitioning to another CAP
            (average consecutive/uninterrupted time).
 
            ::
@@ -648,7 +650,7 @@ class CAP(_CAPGetter):
                 tr = 2
                 if tr: persistence = ((1 + 3) / 2) * 2
 
-         - ``"counts"``: The total number of initiations of a specific CAP across an entire run. An initiation is
+         - ``"counts"``: Total number of initiations of a specific CAP across an entire run. An initiation is
            defined as the first occurrence of a CAP. If the same CAP is maintained in contiguous segment
            (indicating stability), it is still counted as a single initiation.
 
@@ -660,7 +662,7 @@ class CAP(_CAPGetter):
                 # Initiations of CAP-1 occur at indices 0 and 2
                 counts = 2
 
-         - ``"transition_frequency"``: The total number of transitions to different CAPs across the entire run.
+         - ``"transition_frequency"``: Total number of transitions to different CAPs across the entire run.
 
            ::
 
@@ -669,7 +671,7 @@ class CAP(_CAPGetter):
                 # Transitions between unique CAPs occur at indices 0 -> 1, 1 -> 2, and 4 -> 5
                 transition_frequency = 3
 
-         - ``"transition_probability"``: The probability of transitioning from one CAP to another CAP (or the same CAP).
+         - ``"transition_probability"``: Probability of transitioning from one CAP to another CAP (or the same CAP).
            This is calculated as (Number of transitions from A to B) / (Total transitions from A). Note that the
            transition probability from CAP-A -> CAP-B is not the same as CAP-B -> CAP-A.
 
@@ -699,7 +701,8 @@ class CAP(_CAPGetter):
         ----------
         subject_timeseries: :obj:`SubjectTimeseries` or :obj:`str`
             A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a NumPy
-            array. Can also be a path to a pickle file containing this same structure.
+            array. Can also be a path to a pickle file containing this same structure. Refer to documentation for
+            ``SubjectTimeseries`` in the "See Also" section for an example structure.
 
         tr: :obj:`float` or :obj:`None`, default=None
             Repetition time (TR) in seconds. If provided, persistence will be calculated as the average
@@ -758,9 +761,12 @@ class CAP(_CAPGetter):
 
         Important
         ---------
-        **Scaling:** If standardizing was requested in ``self.get_caps``, then the columns/ROIs of the
-        ``subject_timeseries`` provided to this method will be scaled using the group-specific mean and sample
-        standard deviation derived from the concatenated data.
+        **Scaling:** If standardization was requested in ``self.get_caps()``, then the columns/ROIs of the
+        ``subject_timeseries`` provided to this method will be scaled using group-specific means and standard
+        deviations. These statistics are derived from the concatenated data of each group. This scaling ensures the
+        subject's data matches the distribution of the input data used for group-specific clustering, which is
+        needed for accurate predictions when using group-specific k-means models. The group assignment for each
+        subject is determined based on the ``self.subject_table`` property.
 
         **Group-Specific CAPs**: If groups were specified, then each group uses their respective k-means models to
         compute metrics. The inclusion of all groups within the same dataframe (for "temporal_fraction", "persistence",
@@ -1221,7 +1227,7 @@ class CAP(_CAPGetter):
         Note
         ----
         **Parcellation Approach**: the "nodes" and "regions" subkeys are required in ``parcel_approach`` for this
-        function.
+        method.
 
         **Color Palettes**: Refer to `seaborn's Color Palettes <https://seaborn.pydata.org/tutorial/color_palettes.html>`_
         for valid pre-made palettes.
@@ -1908,7 +1914,7 @@ class CAP(_CAPGetter):
             - "resolution_mm": An integer (Default=1). Spatial resolution of the Schaefer parcellation (in millimeters) (1 or 2).
             - "remove_labels": A list or array (Default=None). The label IDs as integers of the regions in the parcellation to not interpolate.
 
-            *Note*: This method is applied before the ``fwhm``.
+            .. note:: KNN interpolation is applied before ``fwhm``.
 
         progress_bar: :obj:`bool`, default=False
             If True, displays a progress bar.
@@ -1919,10 +1925,15 @@ class CAP(_CAPGetter):
         -------
         self
 
-        Note
-        ----
-        **Assumption**: This function assumes that the background label for the parcellation is zero. Additionaly,
-        the following approach is used to map each CAP onto the parcellation.
+        Important
+        ---------
+        **Parcellation Approach**: ``parcel_approach`` must have the "maps" subkey containing the path to th
+        NifTI file of the parcellation.
+
+        **Assumption**: This function assumes that the background label for the parcellation is zero. During extraction
+        of the numerical labels from the parcellation map, the first element (assumed to be zero/the background label
+        after sorting) is skipped. Then the remaining sorted labels are iterated over to map each element of the CAP
+        cluster centroid onto the corresponding non-zero label IDs in the parcellation.
         """
         if self._parcel_approach is None:
             self._raise_error("_parcel_approach")
@@ -2008,7 +2019,7 @@ class CAP(_CAPGetter):
         Project CAPs onto Surface Plots.
 
         Projects CAPs onto the parcellation defined in ``parcel_approach`` to create NifTI statistical maps. Then
-        tranforms from MNI volumetric space to fsLR surface space and plots. One surface plot image is
+        transforms these maps from volumetric to surface space and generates visualizations. One surface plot image is
         generated per CAP and separate images are produced per group.
 
         Parameters
@@ -2043,9 +2054,7 @@ class CAP(_CAPGetter):
             provided.
 
         fslr_giftis_dict: :obj:`dict` or :obj:`None`, default=None
-            Dictionary specifying precomputed GifTI files in fsLR space for plotting statistical maps. This parameter
-            should be used if the statistical CAP NIfTI files were converted to GifTI files using a tool such as
-            Connectome Workbench. Example structure:
+            Dictionary specifying precomputed GifTI files in fsLR space for plotting statistical maps.
 
             ::
 
@@ -2061,7 +2070,7 @@ class CAP(_CAPGetter):
             - "resolution_mm": An integer (Default=1). Spatial resolution of the Schaefer parcellation (in millimeters) (1 or 2).
             - "remove_labels": A list or array (Default=None). The label IDs as integers of the regions in the parcellation to not interpolate.
 
-            *Note*: This method is applied before the ``fwhm``.
+            .. note:: KNN interpolation is applied before ``fwhm``.
 
         progress_bar: :obj:`bool`, default=False
             If True, displays a progress bar.
@@ -2101,13 +2110,18 @@ class CAP(_CAPGetter):
         -------
         self
 
-        Note
-        ----
+        Important
+        ---------
         **Parcellation Approach**: ``parcel_approach`` must have the "maps" subkey containing the path to th
         NifTI file of the parcellation.
 
-        **Assumptions**: This function assumes that the background label for the parcellation is zero and that is in
-        MNI space. Additionally, the following approach is taken to map the each CAP onto the parcellation
+        **Assumptions**: This function assumes that the background label for the parcellation is zero. During extraction
+        of the numerical labels from the parcellation map, the first element (assumed to be zero/the background label
+        after sorting) is skipped. Then the remaining sorted labels are iterated over to map each element of the CAP
+        cluster centroid onto the corresponding non-zero label IDs in the parcellation.
+
+        Additionally, this funcition assumes that the parcellation map is in volumetric MNI space unless
+        ``fslr_giftis_dict`` is defined, then this function assumes the maps are in surface space.
         """
         if self._parcel_approach is None and fslr_giftis_dict is None:
             self._raise_error("_parcel_approach")
@@ -2271,7 +2285,7 @@ class CAP(_CAPGetter):
 
         .. important::
 
-          - This method assumes the mean for each ROI is 0 due to standardization.
+          - This function assumes the mean for each ROI is 0 due to standardization.
           - The absolute values of the negative activations are computed for visualization purposes.
 
         The process involves the following steps:
@@ -2423,8 +2437,8 @@ class CAP(_CAPGetter):
 
         **Parcellation Approach**: If using "Custom" for ``parcel_approach`` the "regions" subkey is required.
 
-        **Saving Plots**: By default, this function uses "kaleido" (which is also a dependency in this package)
-        to save plots. For other engines such as "orca", those packages must be installed seperately.
+        **Saving Plots**: By default, this function uses "kaleido" (a dependency of NeuroCAPs) to save plots. For
+        other engines such as "orca", those packages must be installed seperately.
 
         **Tick Values**: if the ``tickvals`` or  ``range`` subkeys in this code are not specified in the ``radialaxis``
         kwarg, then four values are shown - 0.25*(max value), 0.50*(max value), 0.75*(max value), and the max value.

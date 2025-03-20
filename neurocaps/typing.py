@@ -27,6 +27,8 @@ SubjectTimeseries = dict[str, dict[str, NDArray[floating]]]
                 }
             }
 
+    .. important:: The run IDs must be in the form "run-{0}" (e.g. "run-0" or "run-zero").
+
     .. versionadded:: 0.23.6
 """
 
@@ -220,7 +222,7 @@ class CustomRegionHemispheres(TypedDict):
 
     ::
 
-        {"lh": [0, 1, 2], "rh": [3, 4, 5, 6, 7]}
+        {"lh": [0, 1], "rh": [3, 4, 5]}
 
     Parameters
     ----------
@@ -252,7 +254,7 @@ class CustomParcelApproach(ParcelApproachBase):
 
         {
             "maps": "path/to/parcellation.nii.gz",
-            "nodes": ["LH_Vis1", "LH_Vis2", "LH_Hippocampus", "RH_Vis1", "RH_Vis2", "RH_Hippocampus"],
+            "nodes": ["LH_Vis1", "LH_Vis2", "LH_Hippocampus", "RH_Vis1", "RH_Vis2", "RH_Vis3", "RH_Hippocampus"],
             "regions": {
                 "Visual": CustomRegionHemispheres
                 "Hippocampus": CustomRegionHemispheres
