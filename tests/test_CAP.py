@@ -940,7 +940,9 @@ def test_caps2niftis(tmp_dir, timeseries, parcel_approach):
         check_imgs(tmp_dir, plot_type="nifti", values_dict={"nii.gz": 2})
 
 
-@pytest.mark.skipif(sys.platform != "linux", reason="VTK action only works for Linux")
+@pytest.mark.skipif(
+    os.getenv("GITHUB_ACTIONS") and sys.platform != "linux", reason="VTK Github coaction only works for Linux"
+)
 @pytest.mark.parametrize(
     "timeseries, parcel_approach",
     [
