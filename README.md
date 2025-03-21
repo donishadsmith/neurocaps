@@ -139,7 +139,7 @@ activations of each CAP and each a-priori regions in a parcellation [^3] [^4].
 
 **Additionally, the `neurocaps.analysis` submodule contains additional functions:**
 
-- `merge_dicts`: Merge the subject_timeseries dictionaries for overlapping subjects across tasks to identify similar CAPs across different tasks [^5]. The merged dictionary can be saved as a pickle file.
+- `merge_dicts`: Merge the subject timeseries dictionaries for overlapping subjects across tasks to identify similar CAPs across different tasks [^5]. The merged dictionary can be saved as a pickle file.
 - `standardize`: Standardizes each run independently for all subjects in the subject timeseries.
 - `change_dtype`: Changes the dtype of all subjects in the subject timeseries to help with memory usage.
 - `transition_matrix`: Uses the "transition_probability" output from ``CAP.calculate_metrics`` to generate and visualize the averaged transition probability matrix for all groups from the analysis.
