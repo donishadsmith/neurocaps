@@ -8,7 +8,7 @@ while !xset q &> /dev/null; do
     sleep 0.1
 done
 
-# If first arg after script is "notebook" then run jupyter
+# If first arg after script is "notebook" then run jupyter else bash shell
 if [ "$1" = "notebook" ]; then
     jupyter notebook --allow-root --no-browser --ip=0.0.0.0 --port=9999
 else

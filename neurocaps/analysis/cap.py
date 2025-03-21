@@ -94,7 +94,7 @@ class CAP(_CAPGetter):
             {"GroupName": np.array(shape=[1, ROIs])}
 
     concatenated_timeseries: :obj:`dict[str, np.array]` or :obj:`None`
-        Group-specific concatenated timeseries data.
+        Group-specific concatenated timeseries data. Can be deleted using ``del self.concatenated_timeseries``.
 
         ::
 

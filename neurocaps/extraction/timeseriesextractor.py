@@ -88,23 +88,37 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         - *If dict*, the following subkeys are available:
 
             - "threshold": A float (Default=None). Removes volumes where FD > threshold.
-            - "outlier_percentage": A float in interval [0,1] (Default=None). Removes entire runs where proportion of
+            - "outlier_percentage": A float in interval [0,1] (Default=None). Removes entire runs where proportion of\
               censored volumes exceeds this threshold. Proportion calculated after dummy scan removal.
 
-              .. note::
-                  - A warning is issued when a run is flagged.
-                  - If ``condition`` specified in ``self.get_bold()``, only considers volumes associated with the condition.
+            .. note::
+                - A warning is issued when a run is flagged.
+                - If ``condition`` specified for task-based data in ``self.get_bold()``, only considers volumes associated with the condition.
 
             - "n_before": An integer (Default=None). Indicates the number of volumes to remove before each flagged volume.
             - "n_after": An integer (Default=None). Indicates the number of volumes to remove after each flagged volume.
-            - "use_sample_mask": A boolean (Default=False). Passes a sample mask to Nilearn's ``NiftiLabelsMasker``.\
-            Also, sets ``clean__extrapolate=False`` to prevent interpolation of end volumes. If False, only after nuisance regression.
-            - "interpolate": A boolean (Default=None). If True, uses scipy's ``CubicSpline`` function with\
-            ``extrapolate=False`` to perform cubic spline interpolation on censored frames.
+            - "use_sample_mask": A boolean (Default=None). Controls when censoring is applied in the processing pipeline.
 
-              .. note:: Interpolation is only performed on frames that are flanked by non-censored frames on both ends.
-                  For example, given a ``censor_mask=[0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0]`` where "0" indicates censored
-                  volumes, only the volumes at index 3, 5, 6, and 8 would be interpolated. If False or
+            .. important::
+                - When True:
+
+                    - Passes a sample mask of censored volumes to Nilearn's ``NiftiLabelsMasker``.
+                    - Sets ``clean__extrapolate=False`` to prevent interpolation of end volumes.
+                    - Censoring is applied before nuisance regression.
+                    - If ``condition`` is specified for task-based data in ``self.get_bold()``, the timeseries is\
+                      temporarily padded to extract the correct frames.
+
+                - When False or None:
+
+                    - Full timeseries data is used during nuisance regression.
+                    - Censoring is applied after nuisance regression.
+
+            - "interpolate": A boolean (Default=None). If True, uses scipy's ``CubicSpline`` function with\
+              ``extrapolate=False`` to perform cubic spline interpolation on censored frames.
+
+            .. note:: Interpolation is only performed on frames that are flanked by non-censored frames on both ends.\
+                For example, given a ``censor_mask=[0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0]`` where "0" indicates censored\
+                volumes, only the volumes at index 3, 5, 6, and 8 would be interpolated. If False or
 
             .. versionadded:: 0.22.3 "interpolate" key added.
 
@@ -118,11 +132,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 - `NiftiLabelsMasker <https://nilearn.github.io/stable/modules/generated/nilearn.maskers.NiftiLabelsMasker.html>`_
 
             - When "use_sample_mask" is False and ``standardize`` is not False, applying an additional within-run\
-            standardization (using ``neurocaps.analysis.standardize``) is recommended after outlier removal.
+              standardization (using ``neurocaps.analysis.standardize``) is recommended after outlier removal.
             - If "interpolate" is True, then interpolation is only applied nuisance regression and parcellation steps\
-            have been completed.
-            - See Scipy's documentation on their\
-            `CubicSpline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicSpline.html>`_ function.
+              have been completed.
+            - See Scipy's `CubicSpline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicSpline.html>`_ documentation.
 
     n_acompcor_separate: :obj:`int` or :obj:`None`, default=None
         Number of aCompCor components to extract separately from the white-matter (WM) and CSF masks. Uses first "n"
@@ -139,11 +152,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         - *If int*, removes first "n" volumes.
         - *If dict*, the following keys are supported:
 
-            - "auto": A boolean (Default=None). If True, automatically determines dummy scans from fMRIPrep confounds
+            - "auto": A boolean (Default=None). If True, automatically determines dummy scans from fMRIPrep confounds\
               using the number of "non_steady_state_outlier_XX" columns in the confounds tsv file.
-            - "min": An integer (Default=None). Minimum volumes to remove when auto is set to True. If "auto" finds 2
+            - "min": An integer (Default=None). Minimum volumes to remove when auto is set to True. If "auto" finds 2\
               outliers but ``{"min": 3}``, removes 3 volumes.
-            - "max": An integer (Default=None). Maximum volumes to remove when auto=True. If "auto" finds 6 outliers but
+            - "max": An integer (Default=None). Maximum volumes to remove when auto=True. If "auto" finds 6 outliers but\
               ``{"max": 5}``, removes 5 volumes.
 
         .. important:: "min" and "max" keys only apply when "auto" is True.
@@ -174,6 +187,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
     subject_timeseries: :obj:`SubjectTimeseries` or :obj:`None`
         A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a NumPy array.
+        Can be deleted using ``del self.subject_timeseries``.
 
     See Also
     --------
