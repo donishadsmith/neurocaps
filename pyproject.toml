@@ -51,17 +51,17 @@ dependencies = [
     "nilearn>=0.10.1, !=0.10.3",
     "scikit-learn>=1.4.0",
     "scipy>=1.6.0",
-    "brainspace>=0.1.16",
+    "brainspace>=0.1.16", # Restrict version to above 0.1.16 due to a numpy > 2.0 compatibility issue; used by surfplot
     "surfplot>=0.2.0",
     "neuromaps>=0.0.5",
     "pybids>=0.16.2; platform_system != 'Windows'",
     "plotly>=4.9",
-    "nbformat>=4.2.0",
-    "kaleido==0.1.0.post1; platform_system == 'Windows'",
+    "nbformat>=4.2.0", # Needed for plotly figures to display in Jupyter Notebooks without errors
+    "kaleido==0.1.0.post1; platform_system == 'Windows'", # Used by plotly for saving plots; this version works with Windows
     "kaleido; platform_system != 'Windows'",
-    "setuptools; python_version>='3.12'",
+    "setuptools; python_version>='3.12'", # Results in installation errors if not included as dependency
     "typing_extensions; python_version<'3.11'",
-    "vtk<9.4.0",
+    "vtk<9.4.0", # Version 9.4.0 works for python 3.13 but causes an issue with brainspace due to abscense of "__vtkname__" in Pointset
     "tqdm>=4.65.0"
     ]
 
