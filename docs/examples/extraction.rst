@@ -10,14 +10,62 @@ and was obtained from the OpenfMRI database, accession number ds000031.
 
 Extracting Timeseries
 ---------------------
+Download test dataset used for Github Actions from Github.
+
+.. code-block:: python
+
+    import os, subprocess, sys
+
+    demo_dir = "neurocaps_demo"
+    os.makedirs(demo_dir, exist_ok=True)
+
+    if sys.platform != "win32":
+        cmd = """
+            cd neurocaps_demo
+            git clone --depth 1 --filter=blob:none --sparse https://github.com/donishadsmith/neurocaps.git
+            cd neurocaps
+            git sparse-checkout set tests/data/dset
+            """
+        os.system(cmd)
+    else:
+        repo_dir = os.path.join(demo_dir, "neurocaps")
+
+        # Enable git longpath
+        subprocess.run(
+            ["git", "config", "--global", "core.longpaths", "true"],
+            check=True,
+        )
+
+        subprocess.run(
+            [
+                "git",
+                "clone",
+                "--depth",
+                "1",
+                "--filter=blob:none",
+                "--sparse",
+                "https://github.com/donishadsmith/neurocaps.git",
+            ],
+            check=True,
+            cwd=demo_dir,
+        )
+
+        subprocess.run(
+            ["git", "sparse-checkout", "set", "tests/data/dset"],
+            check=True,
+            cwd=repo_dir,
+        )
+
+    # Rename folder
+    os.makedirs("neurocaps_demo/data", exist_ok=True)
+    os.rename("neurocaps_demo/neurocaps/tests/data/dset", "neurocaps_demo/data/dset")
+
 Note: when an asterisk (*) follows a name, all confounds that start with the preceding term will be automatically included.
 For example, placing an asterisk after cosine (cosine*) will utilize all parameters that begin with cosine.
 
 .. code-block:: python
 
     from neurocaps.extraction import TimeseriesExtractor
-
-    dir = os.path.dirname(__file__)
 
     confounds = ["cosine*", "a_comp_cor*", "rot*"]
 
@@ -34,16 +82,24 @@ For example, placing an asterisk after cosine (cosine*) will utilize all paramet
         confound_names=confounds,
     )
 
-    bids_dir = os.path.join(dir, "tests", "data", "dset")
-
     extractor.get_bold(
-        bids_dir=bids_dir,
+        bids_dir="neurocaps_demo/data/dset",
         session="002",
         task="rest",
         pipeline_name="fmriprep_1.0.0/fmriprep",
         tr=1.2,
         progress_bar=True,  # Parameter available in versions >= 0.21.5
     )
+
+.. rst-class:: sphx-glr-script-out
+
+    .. code-block:: none
+
+        2025-03-21 18:59:28,359 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: cosine*, a_comp_cor*, rot*.
+        2025-03-21 18:59:29,679 neurocaps.extraction.timeseriesextractor [INFO] BIDS Layout: ...demos\neurocaps_demo\data\dset | Subjects: 1 | Sessions: 1 | Runs: 1
+        2025-03-21 18:59:29,826 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] Preparing for Timeseries Extraction using [FILE: sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz].
+        2025-03-21 18:59:29,840 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] The following confounds will be used for nuisance regression: cosine_00, cosine_01, cosine_02, cosine_03, cosine_04, cosine_05, cosine_06, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05, rot_x, rot_y, rot_z.
+        Processing Subjects: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:05<00:00,  5.73s/it]
 
 ``print`` can be used to return a string representation of the ``TimeseriesExtractor`` class.
 
@@ -66,15 +122,6 @@ For example, placing an asterisk after cosine (cosine*) will utilize all paramet
         CPU Cores Used for Timeseries Extraction (Multiprocessing) : None
         Subject Timeseries Byte Size                               : 16184 bytes
 
-.. rst-class:: sphx-glr-script-out
-
-    .. code-block:: none
-
-        2025-03-09 08:24:10,432 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: cosine*, a_comp_cor*, rot*.
-        2025-03-09 08:24:10,470 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] Preparing for Timeseries Extraction using [FILE: sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz].
-        2025-03-09 08:24:10,482 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] The following confounds will be used for nuisance regression: cosine_00, cosine_01, cosine_02, cosine_03, cosine_04, cosine_05, cosine_06, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05, rot_x, rot_y, rot_z.
-        Processing Subjects: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:05<00:00,  5.73s/it]
-
 The extracted timeseries is stored as a nested dictionary and can be accessed using the ``subject_timeseries``
 property. The ``TimeseriesExtractor`` class has several
 `properties <https://neurocaps.readthedocs.io/en/stable/generated/neurocaps.extraction.TimeseriesExtractor.html#properties>`_.
@@ -82,39 +129,39 @@ property. The ``TimeseriesExtractor`` class has several
 
 .. code-block:: python
 
-    print(extraction.subject_timeseries)
+    print(extractor.subject_timeseries)
 
 .. rst-class:: sphx-glr-script-out
 
     .. code-block:: none
 
-        {'01': {'run-001': array([[-0.12410211, -0.746016  , -0.9138416 , ...,  0.12293668,
-        -0.3167036 , -0.4593077 ],
-       [-1.0730965 ,  0.88747275,  0.83726895, ..., -0.9314818 ,
-         0.5686499 ,  0.9783575 ],
-       [-0.5288149 ,  0.62266237,  0.6349383 , ..., -0.5331197 ,
-         0.5261529 ,  0.5858582 ],
-       ...,
-       [ 0.32443312, -0.42479128, -0.43596116, ...,  0.5425763 ,
-        -0.2863486 , -0.31798226],
-       [ 0.94420713, -0.7662241 , -0.6925075 , ...,  1.7636685 ,
-        -0.4194046 , -0.5691561 ],
-       [ 0.4901481 ,  0.33806482,  0.48850006, ..., -0.29197463,
-        -0.08600576, -0.08736482]], dtype=float32)}}
+        {'01': {'run-001': array([[ 1.2038397 , -1.4217342 , -1.352524  , ..., -0.01774308,
+                0.30273473, -0.60237604],
+            [-0.36782   ,  0.18963344,  0.2827883 , ..., -1.2160927 ,
+                1.0700601 ,  1.0484216 ],
+            [-0.32511464,  0.12289995,  0.18990105, ..., -1.0471789 ,
+                1.092423  ,  0.80453503],
+            ...,
+            [-0.07272357,  0.37041494,  0.27384868, ...,  1.3793082 ,
+                -1.2230965 , -0.6082778 ],
+            [ 0.13115329,  0.1551035 ,  0.06789544, ...,  2.4453828 ,
+                -1.2500157 , -0.67959505],
+            [-0.5520303 ,  0.65005803,  0.6004126 , ..., -0.55654204,
+                -0.2589798 ,  0.09717632]], shape=(40, 100), dtype=float32)}}
 
 
 Saving Timeseries
 -----------------
 .. code-block:: python
 
-    extractor.timeseries_to_pickle(output_dir=dir, filename="rest_Schaefer.pkl")
+    extractor.timeseries_to_pickle(output_dir=demo_dir, filename="rest_Schaefer.pkl")
 
 Visualizing Timeseries
 ----------------------
 .. code-block:: python
 
     # Visualizing a region
-    extractor.visualize_bold(subj_id="01", region="Vis")
+    extractor.visualize_bold(subj_id="01", run="001", region="Vis")
 
 .. image:: embed/visualize_timeseries_regions.png
     :width: 1000
@@ -125,7 +172,10 @@ Visualizing Timeseries
     extractor.visualize_bold(subj_id="01", run="001", roi_indx=[0, 1, 2])
     extractor.visualize_bold(subj_id="01", run="001", roi_indx=["LH_Vis_1", "LH_Vis_2", "LH_Vis_3"])
 
-.. image:: embed/visualize_timeseries_nodes.png
+.. image:: embed/visualize_timeseries_nodes-1.png
+    :width: 1000
+
+.. image:: embed/visualize_timeseries_nodes-2.png
     :width: 1000
 
 ==========

@@ -65,7 +65,7 @@ pip install git+https://github.com/donishadsmith/neurocaps.git
 
 ```bash
 
-git clone https://github.com/donishadsmith/neurocaps/
+git clone --depth 1 https://github.com/donishadsmith/neurocaps/
 cd neurocaps
 pip install -e .
 
@@ -76,7 +76,7 @@ To include PyBIDS when installing the development version on Windows, use:
 
 ```bash
 
-git clone https://github.com/donishadsmith/neurocaps/
+git clone --depth 1 https://github.com/donishadsmith/neurocaps/
 cd neurocaps
 pip install -e .[windows]
 ```

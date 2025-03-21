@@ -42,7 +42,7 @@ To install the latest development version from the source, there are two options
 
 .. code-block:: bash
 
-    git clone https://github.com/donishadsmith/neurocaps/
+    git clone --depth 1 https://github.com/donishadsmith/neurocaps/
     cd neurocaps
     pip install -e .
 
@@ -52,7 +52,7 @@ To include PyBIDS when installing the development version on Windows, use:
 
 .. code-block:: bash
 
-    git clone https://github.com/donishadsmith/neurocaps/
+    git clone --depth 1 https://github.com/donishadsmith/neurocaps/
     cd neurocaps
     pip install -e .[windows]
 
