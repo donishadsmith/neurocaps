@@ -92,8 +92,8 @@ def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
         parcel_dict["AAL"].update({"maps": fetched_aal.maps})
         parcel_dict["AAL"].update({"nodes": [label for label in fetched_aal.labels]})
 
-        # Get node networks
-        regions = _handle_aal(parcel_dict["AAL"]["nodes"])
+        # Get regions
+        regions = _collapse_aal_node_names(parcel_dict["AAL"]["nodes"])
         parcel_dict["AAL"].update({"regions": regions})
 
         # Clean keys
@@ -200,22 +200,25 @@ def _check_custom_hemisphere_dicts(regions):
     )
 
 
-# Special handling for region names in AAL "3v2"
-def _handle_aal(nodes, unique=True):
-    names = ["N_Acc", "Red_N", "OFC"]
+# Special handling for region names in AAL "3v2";
+# Collapse the names of the nodes (ex Frontal_Sup_2_L and Frontal_Inf_Oper_L will simply be -> Frontal)
+def _collapse_aal_node_names(nodes, return_unique_names=True):
+    # Names in "3v2" that don't split well .split("_")[0] or could be reduced more in the case of OFC, which
+    # has OFCmed, OFCant, OFCpos
+    special_names = ["N_Acc", "Red_N", "OFC"]
 
-    regions = []
+    collapsed_node_names = []
 
     for node in nodes:
-        bool_vec = [name in node for name in names]
+        bool_vec = [name in node for name in special_names]
 
         if not any(bool_vec):
-            regions.append(node.split("_")[0])
+            collapsed_node_names.append(node.split("_")[0])
         else:
             indx = bool_vec.index(True)
-            regions.append(names[indx])
+            collapsed_node_names.append(special_names[indx])
 
-    if unique:
-        regions = list(dict.fromkeys(regions))
+    if return_unique_names:
+        collapsed_node_names = list(dict.fromkeys(collapsed_node_names))
 
-    return regions
+    return collapsed_node_names

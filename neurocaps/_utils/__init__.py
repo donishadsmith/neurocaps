@@ -1,5 +1,5 @@
 from .check_kwargs import _check_kwargs
-from .check_parcel_approach import _check_parcel_approach, _handle_aal
+from .check_parcel_approach import _check_parcel_approach, _collapse_aal_node_names
 from .pickle_utils import _convert_pickle_to_dict, _dicts_to_pickles
 from .logger import _logger
 from .analysis import (

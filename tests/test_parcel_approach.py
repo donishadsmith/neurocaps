@@ -1,6 +1,6 @@
 import os
 
-import nibabel as nib, numpy as np
+import nibabel as nib, numpy as np, pytest
 from nilearn import datasets
 
 from neurocaps.extraction import TimeseriesExtractor
@@ -47,6 +47,13 @@ def test_3v2_AAL():
             assert len(extractor.parcel_approach["AAL"]["nodes"]) == 166
         else:
             assert len(extractor.parcel_approach["AAL"][i]) == 38
+
+
+@pytest.mark.parametrize("yeo_networks", [7, 17])
+def test_Schaefer(yeo_networks):
+    parcel_approach = {"Schaefer": {"yeo_networks": yeo_networks}}
+    extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
+    assert len(extractor.parcel_approach["Schaefer"]["regions"]) == (7 if yeo_networks == 7 else 17)
 
 
 def test_partial_parcel_approaches():

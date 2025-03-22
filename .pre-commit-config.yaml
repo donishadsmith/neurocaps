@@ -35,6 +35,7 @@ repos:
     rev: v0.8.5
     hooks:
         - id: ruff
+          # Ensure no print statements are in the codebase; only logging allowed
           entry: ruff check --select T201
           files: '^neurocaps/.*\.py$'
 
@@ -52,7 +53,9 @@ repos:
     hooks:
     -   id: grep
         name: grep
-        description: use grep to ensure that only private attributes are used in the files containing public classes
+        # Public classes the underscore prefix for attribute names. These attributes are accessed using private getter
+        # classes which allows access to these attributes via properties.
+        description: Uses grep to ensure all attributes in the TimeseriesExtractor and CAP classes have the underscore prefix
         types: [python]
         entry: python hooks/grep.py
         language: system

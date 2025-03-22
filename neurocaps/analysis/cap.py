@@ -26,7 +26,7 @@ from .._utils import (
     _create_display,
     _convert_pickle_to_dict,
     _check_parcel_approach,
-    _handle_aal,
+    _collapse_aal_node_names,
     _logger,
     _run_kmeans,
     _save_contents,
@@ -1309,28 +1309,14 @@ class CAP(_CAPGetter):
 
         for plot_option, scope, group in distributed_list:
             # Get correct labels depending on scope
-            if scope == "regions":
-                cap_dict = {
-                    group: {k: v for k, v in self._region_means[group].items() if k != "Regions"}
-                    for group in self._region_means.keys()
-                }
-                columns = list(self._parcel_approach[parcellation_name]["regions"])
-            elif scope == "nodes":
-                if parcellation_name in ["Schaefer", "AAL"]:
-                    cap_dict, columns = self._caps, self._parcel_approach[parcellation_name]["nodes"]
-                else:
-                    cap_dict = self._caps
-                    columns = [
-                        x[0] + " " + x[1]
-                        for x in list(itertools.product(["LH", "RH"], self._parcel_approach["Custom"]["regions"]))
-                    ]
+            cap_dict, labels = self._extract_scope_information(scope, parcellation_name)
 
             # Generate plot for each group
             input_keys = dict(
                 group=group,
                 plot_dict=plot_dict,
                 cap_dict=cap_dict,
-                columns=columns,
+                full_labels=labels,
                 output_dir=output_dir,
                 suffix_title=suffix_title,
                 suffix_filename=suffix_filename,
@@ -1380,12 +1366,33 @@ class CAP(_CAPGetter):
             self._region_means[group].update({"Regions": regions})
             self._region_means[group].update({cap: region_means})
 
+    def _extract_scope_information(self, scope, parcellation_name):
+        # Extracting region means if scope is "region" and the labels or extracting the full activation vector and labels
+        # if scope is "nodes"
+        if scope == "regions":
+            cap_dict = {
+                group: {k: v for k, v in self._region_means[group].items() if k != "Regions"}
+                for group in self._region_means
+            }
+            labels = list(self._parcel_approach[parcellation_name]["regions"])
+        elif scope == "nodes":
+            if parcellation_name in ["Schaefer", "AAL"]:
+                cap_dict, labels = self._caps, self._parcel_approach[parcellation_name]["nodes"]
+            else:
+                cap_dict = self._caps
+                labels = [
+                    x[0] + " " + x[1]
+                    for x in list(itertools.product(["LH", "RH"], self._parcel_approach["Custom"]["regions"]))
+                ]
+
+        return cap_dict, labels
+
     def _generate_outer_product_plots(
         self,
         group,
         plot_dict,
         cap_dict,
-        columns,
+        full_labels,
         subplots,
         output_dir,
         suffix_title,
@@ -1399,29 +1406,9 @@ class CAP(_CAPGetter):
 
         # Create base grid for subplots
         if subplots:
-            # Max five subplots per row for default
-            default_col = len(cap_dict[group]) if len(cap_dict[group]) <= 5 else 5
-            ncol = plot_dict["ncol"] if plot_dict["ncol"] is not None else default_col
-
-            if ncol > len(cap_dict[group]):
-                ncol = len(cap_dict[group])
-
-            # Pad nrow, since int will round down, padding is needed for cases
-            # where len(cap_dict[group])/ncol is a float. This will add the extra row needed
-            x_pad = 0 if len(cap_dict[group]) / ncol <= 1 else 1
-            nrow = plot_dict["nrow"] if plot_dict["nrow"] is not None else x_pad + int(len(cap_dict[group]) / ncol)
-            subplot_figsize = (8 * ncol, 6 * nrow) if plot_dict["figsize"] == (8, 6) else plot_dict["figsize"]
-            fig, axes = plt.subplots(nrow, ncol, sharex=False, sharey=plot_dict["sharey"], figsize=subplot_figsize)
-
-            suptitle = f"{group} {suffix_title}" if suffix_title else f"{group}"
-            fig.suptitle(suptitle, fontsize=plot_dict["suptitle_fontsize"])
-            fig.subplots_adjust(hspace=plot_dict["hspace"], wspace=plot_dict["wspace"])
-
-            if plot_dict["tight_layout"]:
-                fig.tight_layout(rect=plot_dict["rect"])
-
-            # Current subplot
-            axes_x, axes_y = [0, 0]
+            fig, axes, axes_x, axes_y, ncol, nrow = self._initialize_outer_product_subplot(
+                cap_dict, group, plot_dict, suffix_title
+            )
 
         # Iterate over CAPs
         for cap in cap_dict[group]:
@@ -1429,7 +1416,11 @@ class CAP(_CAPGetter):
             self._outer_products[group].update({cap: np.outer(cap_dict[group][cap], cap_dict[group][cap])})
             # Create labels if nodes requested for scope
             if scope == "nodes" and plot_dict["hemisphere_labels"] is False:
-                labels, _ = self._create_node_labels(parcellation_name, self._parcel_approach, columns)
+                reduced_labels, _ = self._collapse_node_labels(
+                    parcellation_name,
+                    self._parcel_approach,
+                    node_ids=full_labels if parcellation_name == "Custom" else None,
+                )
 
             if subplots:
                 ax = axes[axes_y] if nrow == 1 else axes[axes_x, axes_y]
@@ -1438,24 +1429,19 @@ class CAP(_CAPGetter):
                     display = seaborn.heatmap(
                         ax=ax,
                         data=self._outer_products[group][cap],
-                        xticklabels=columns,
-                        yticklabels=columns,
-                        **self._base_kwargs(plot_dict),
+                        xticklabels=full_labels,
+                        yticklabels=full_labels,
+                        **self._base_plot_kwargs(plot_dict),
                     )
                 else:
-                    if plot_dict["hemisphere_labels"] is False:
-                        display = seaborn.heatmap(
-                            ax=ax, data=self._outer_products[group][cap], **self._base_kwargs(plot_dict)
-                        )
-                    else:
-                        display = seaborn.heatmap(
-                            ax=ax,
-                            data=self._outer_products[group][cap],
-                            **self._base_kwargs(plot_dict, line=False, edge=False),
-                        )
+                    display = seaborn.heatmap(
+                        ax=ax,
+                        data=self._outer_products[group][cap],
+                        **self._base_plot_kwargs(plot_dict, *self._extra_plot_kwargs(plot_dict["hemisphere_labels"])),
+                    )
 
                     if plot_dict["hemisphere_labels"] is False:
-                        ax = self._set_ticks(ax, labels)
+                        ax = self._set_ticks(ax, reduced_labels)
                     else:
                         ax, division_line, plot_dict["linewidths"] = self._division_line(
                             ax, parcellation_name, plot_dict["linewidths"]
@@ -1469,19 +1455,18 @@ class CAP(_CAPGetter):
                     border_length = self._outer_products[group][cap].shape[0]
                     display = self._border(display, plot_dict, border_length)
 
-                # Modify label sizes
+                # Modify label sizes for x axis
                 display = self._label_size(display, plot_dict, set_x=True, set_y=False)
-                # Modify label sizes; if share_y, only set y for plots at axes == 0
+                # Modify label sizes for y axis; if share_y, only set y for plots at axes == 0
                 if plot_dict["sharey"]:
-                    if axes_y == 0:
-                        display = self._label_size(display, plot_dict, set_x=False, set_y=True)
+                    display = self._label_size(display, plot_dict, set_x=False, set_y=True) if axes_y == 0 else display
                 else:
                     display = self._label_size(display, plot_dict, set_x=False, set_y=True)
 
                 # Set title of subplot
                 ax.set_title(cap, fontsize=plot_dict["fontsize"])
 
-                # If modulus is zero, move onto the new column back to zero
+                # If modulus is zero, move onto the new column back (to zero index of new column)
                 if (axes_y % ncol == 0 and axes_y != 0) or axes_y == ncol - 1:
                     axes_x += 1
                     axes_y = 0
@@ -1494,28 +1479,20 @@ class CAP(_CAPGetter):
                 if scope == "regions":
                     display = seaborn.heatmap(
                         self._outer_products[group][cap],
-                        xticklabels=columns,
-                        yticklabels=columns,
-                        **self._base_kwargs(plot_dict),
+                        xticklabels=full_labels,
+                        yticklabels=full_labels,
+                        **self._base_plot_kwargs(plot_dict),
                     )
                 else:
-                    if plot_dict["hemisphere_labels"] is False:
-                        display = seaborn.heatmap(
-                            self._outer_products[group][cap],
-                            xticklabels=[],
-                            yticklabels=[],
-                            **self._base_kwargs(plot_dict),
-                        )
-                    else:
-                        display = seaborn.heatmap(
-                            self._outer_products[group][cap],
-                            xticklabels=[],
-                            yticklabels=[],
-                            **self._base_kwargs(plot_dict, line=False, edge=False),
-                        )
+                    display = seaborn.heatmap(
+                        self._outer_products[group][cap],
+                        xticklabels=[],
+                        yticklabels=[],
+                        **self._base_plot_kwargs(plot_dict, *self._extra_plot_kwargs(plot_dict["hemisphere_labels"])),
+                    )
 
                     if plot_dict["hemisphere_labels"] is False:
-                        display = self._set_ticks(display, labels)
+                        display = self._set_ticks(display, reduced_labels)
                     else:
                         display, division_line, plot_dict["linewidths"] = self._division_line(
                             display, parcellation_name, plot_dict["linewidths"]
@@ -1560,7 +1537,7 @@ class CAP(_CAPGetter):
         group,
         plot_dict,
         cap_dict,
-        columns,
+        full_labels,
         output_dir,
         suffix_title,
         suffix_filename,
@@ -1573,30 +1550,34 @@ class CAP(_CAPGetter):
 
         if scope == "regions":
             display = seaborn.heatmap(
-                pd.DataFrame(cap_dict[group], index=columns),
+                pd.DataFrame(cap_dict[group], index=full_labels),
                 xticklabels=True,
                 yticklabels=True,
-                **self._base_kwargs(plot_dict),
+                **self._base_plot_kwargs(plot_dict),
             )
         else:
             # Create Labels
             if plot_dict["hemisphere_labels"] is False:
-                labels, names_list = self._create_node_labels(parcellation_name, self._parcel_approach, columns)
+                reduced_labels, collapesed_node_names = self._collapse_node_labels(
+                    parcellation_name, self._parcel_approach, full_labels
+                )
 
                 display = seaborn.heatmap(
                     pd.DataFrame(cap_dict[group], columns=list(cap_dict[group])),
                     xticklabels=True,
                     yticklabels=True,
-                    **self._base_kwargs(plot_dict),
+                    **self._base_plot_kwargs(plot_dict),
                 )
 
-                plt.yticks(ticks=[pos for pos, label in enumerate(labels) if label], labels=names_list)
+                plt.yticks(
+                    ticks=[indx for indx, label in enumerate(reduced_labels) if label], labels=collapesed_node_names
+                )
             else:
                 display = seaborn.heatmap(
                     pd.DataFrame(cap_dict[group], columns=list(cap_dict[group])),
                     xticklabels=True,
                     yticklabels=True,
-                    **self._base_kwargs(plot_dict, line=False, edge=False),
+                    **self._base_plot_kwargs(plot_dict, line=False, edge=False),
                 )
 
                 display, division_line, plot_dict["linewidths"] = self._division_line(
@@ -1623,7 +1604,36 @@ class CAP(_CAPGetter):
         plt.show() if show_figs else plt.close()
 
     @staticmethod
-    def _base_kwargs(plot_dict, line=True, edge=True):
+    def _initialize_outer_product_subplot(cap_dict, group, plot_dict, suffix_title):
+        # Subplotting for outer_product
+        # Max five subplots per row for default
+        default_col = len(cap_dict[group]) if len(cap_dict[group]) <= 5 else 5
+        ncol = plot_dict["ncol"] if plot_dict["ncol"] is not None else default_col
+
+        if ncol > len(cap_dict[group]):
+            ncol = len(cap_dict[group])
+
+        # Pad nrow, since int will round down, padding is needed for cases
+        # where len(cap_dict[group])/ncol is a float. This will add the extra row needed
+        x_pad = 0 if len(cap_dict[group]) / ncol <= 1 else 1
+        nrow = plot_dict["nrow"] if plot_dict["nrow"] is not None else x_pad + int(len(cap_dict[group]) / ncol)
+        subplot_figsize = (8 * ncol, 6 * nrow) if plot_dict["figsize"] == (8, 6) else plot_dict["figsize"]
+        fig, axes = plt.subplots(nrow, ncol, sharex=False, sharey=plot_dict["sharey"], figsize=subplot_figsize)
+
+        suptitle = f"{group} {suffix_title}" if suffix_title else f"{group}"
+        fig.suptitle(suptitle, fontsize=plot_dict["suptitle_fontsize"])
+        fig.subplots_adjust(hspace=plot_dict["hspace"], wspace=plot_dict["wspace"])
+
+        if plot_dict["tight_layout"]:
+            fig.tight_layout(rect=plot_dict["rect"])
+
+        # Current subplot
+        axes_x, axes_y = [0, 0]
+
+        return fig, axes, axes_x, axes_y, ncol, nrow
+
+    @staticmethod
+    def _base_plot_kwargs(plot_dict, line=True, edge=True):
         kwargs = {
             "cmap": plot_dict["cmap"],
             "cbar_kws": {"shrink": plot_dict["shrink"]},
@@ -1643,44 +1653,54 @@ class CAP(_CAPGetter):
         return kwargs
 
     @staticmethod
-    def _create_node_labels(parcellation_name, parcel_approach, columns):
+    def _extra_plot_kwargs(hemisphere_labels):
+        # Determine whether to add line related and edge related kwargs to base kwargs
+        # determined by hemisphere_labels
+        return (False, False) if hemisphere_labels else (True, True)
+
+    @staticmethod
+    def _collapse_node_labels(parcellation_name, parcel_approach, node_ids=None):
         # Get frequency of each major hemisphere and region in Schaefer, AAL, or Custom atlas
         if parcellation_name == "Schaefer":
             nodes = parcel_approach[parcellation_name]["nodes"]
             # Retain only the hemisphere and primary Schaefer network
-            nodes = [node.split("_")[:2] for node in nodes]
-            frequency_dict = collections.Counter([" ".join(node) for node in nodes])
+            # Node string in form of {hemisphere}_{region}_{number} (e.g. LH_Cont_Par_1)
+            # Below code returns a list where each element is a list of [Hemisphere, Network] (e.g ["LH", "Vis"])
+            hemi_network_pairs = [node.split("_")[:2] for node in nodes]
+            frequency_dict = collections.Counter([" ".join(node) for node in hemi_network_pairs])
         elif parcellation_name == "AAL":
             nodes = parcel_approach[parcellation_name]["nodes"]
-            regions = _handle_aal(nodes, unique=False)
-            frequency_dict = collections.Counter(regions)
+            # AAL in the form of {region}_{hemisphere}_{number} or {region}_{hemisphere)
+            # (e.g. Frontal_Inf_Orb_2_R, Precentral_L); _collapse_aal_node_names would return these as Frontal and Pre
+            collapsed_aal_nodes = _collapse_aal_node_names(nodes, return_unique_names=False)
+            frequency_dict = collections.Counter(collapsed_aal_nodes)
         else:
             frequency_dict = {}
-            for names_id in columns:
-                # For custom, columns comes in the form of "Hemisphere Region"
-                hemisphere_id = "LH" if names_id.startswith("LH ") else "RH"
-                region_id = re.split("LH |RH ", names_id)[-1]
+            for node_id in node_ids:
+                # For custom, columns comes in the form of "{Hemisphere} {Region}"
+                hemisphere_id = "LH" if node_id.startswith("LH ") else "RH"
+                region_id = re.split("LH |RH ", node_id)[-1]
                 node_indices = parcel_approach["Custom"]["regions"][region_id][hemisphere_id.lower()]
-                frequency_dict.update({names_id: len(node_indices)})
+                frequency_dict.update({node_id: len(node_indices)})
 
         # Get the names, which indicate the hemisphere and region
         # Reverting Counter objects to list retains original ordering of nodes in list as of Python 3.7
-        names_list = list(frequency_dict)
-        labels = ["" for _ in range(0, len(parcel_approach[parcellation_name]["nodes"]))]
+        collapsed_node_labels = list(frequency_dict)
+        tick_labels = ["" for _ in range(0, len(parcel_approach[parcellation_name]["nodes"]))]
 
         starting_value = 0
 
         # Iterate through names_list and assign the starting indices corresponding to unique region and hemisphere key
-        for num, name in enumerate(names_list):
+        for num, collapsed_node_label in enumerate(collapsed_node_labels):
             if num == 0:
-                labels[0] = name
+                tick_labels[0] = collapsed_node_label
             else:
                 # Shifting to previous frequency of the preceding network to obtain the new starting value of
                 # the subsequent region and hemisphere pair
-                starting_value += frequency_dict[names_list[num - 1]]
-                labels[starting_value] = name
+                starting_value += frequency_dict[collapsed_node_labels[num - 1]]
+                tick_labels[starting_value] = collapsed_node_label
 
-        return labels, names_list
+        return tick_labels, collapsed_node_labels
 
     def _division_line(self, display, parcellation_name, linewidths, call="outer"):
         n_labels = len(self._parcel_approach[parcellation_name]["nodes"])
