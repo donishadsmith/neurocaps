@@ -1,5 +1,10 @@
+# Preference for not counting the Jupyter Notebooks tutorial in language stats
 *.ipynb linguist-detectable=false
+
+# Open source data used for testing; "nilearn_data" and "neuromaps-data" added to reduce fetching in Github Actions
 tests/data/nilearn_data/* linguist-vendored
 tests/data/neuromaps-data/* linguist-vendored
 tests/data/dset/* linguist-vendored
+
+# A python script that allows documentation code to be linked back to Github; sourced from scikit-learn
 docs/sphinxext/github_link.py linguist-vendored
