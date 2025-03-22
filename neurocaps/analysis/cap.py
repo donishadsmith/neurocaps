@@ -63,31 +63,35 @@ class CAP(_CAPGetter):
 
     subject_table: :obj:`dict[str, str]` or :obj:`None`
         Lookup table mapping subject IDs to their groups. Defined after running ``self.get_caps()``.
+        Defined after running ``self.get_caps()``.
 
     n_clusters: :obj:`int`, :obj:`list[int]`, or :obj:`None`
         An integer or list of integers representing the number of clusters used for k-means.
+        Defined after running ``self.get_caps()``.
 
     cluster_selection_method: :obj:`str` or :obj:`None`:
-        Method used to identify the optimal number of clusters.
+        Method used to identify the optimal number of clusters. Defined after running ``self.get_caps()``.
 
     n_cores: :obj:`int` or :obj:`None`
-        Number of cores specified used for multiprocessing with Joblib.
+        Number of cores specified used for multiprocessing with Joblib. Defined after running ``self.get_caps()``.
 
     runs: :obj:`int`, :obj:`list[int | str]`, or :obj:`None`
-        Run IDs specified in the analysis.
+        Run IDs specified in the analysis. Defined after running ``self.get_caps()``.
 
     standardize: :obj:`bool` or :obj:`None`
-        Whether region-of-interests (ROIs)/columns were standardized during analysis.
+        Whether region-of-interests (ROIs)/columns were standardized during analysis. Defined after running
+        ``self.get_caps()``.
 
     means: :obj:`dict[str, np.array]` or :obj:`None`
-        Group-specific feature means if standardization was applied.
+        Group-specific feature means if standardization was applied. Defined after running ``self.get_caps()``.
 
         ::
 
             {"GroupName": np.array(shape=[1, ROIs])}
 
     stdev: :obj:`dict[str, np.array]` or :obj:`None`
-        Group-specific feature standard deviations if standardization was applied.
+        Group-specific feature standard deviations if standardization was applied. Defined after running
+        ``self.get_caps()``.
 
         ::
 
@@ -95,41 +99,42 @@ class CAP(_CAPGetter):
 
     concatenated_timeseries: :obj:`dict[str, np.array]` or :obj:`None`
         Group-specific concatenated timeseries data. Can be deleted using ``del self.concatenated_timeseries``.
+        Defined after running ``self.get_caps()``.
 
         ::
 
             {"GroupName": np.array(shape=[(participants x TRs), ROIs])}
 
     kmeans: :obj:`dict[str, sklearn.cluster.KMeans]` or :obj:`None`
-        Group-specific k-means models.
+        Group-specific k-means models. Defined after running ``self.get_caps()``.
 
         ::
 
             {"GroupName": sklearn.cluster.KMeans}
 
     caps: :obj:`dict[str, dict[str, np.array]]` or :obj:`None`
-        Cluster centroids for each group and CAP.
+        Cluster centroids for each group and CAP. Defined after running ``self.get_caps()``.
 
         ::
 
             {"GroupName": {"CAP-1": np.array(shape=[1, ROIs]), "CAP-2": np.array(shape=[1, ROIs])}}
 
     cluster_scores: :obj:`dict[str, str | dict[str, float]]` or :obj:`None`
-        Scores for different cluster sizes by group.
+        Scores for different cluster sizes by group. Defined after running ``self.get_caps()``.
 
         ::
 
             {"Cluster_Selection_Method": str, "Scores": {"GroupName": {2: float, 3: float}}}
 
     optimal_n_clusters: :obj:`dict[str, int]` or :obj:`None`
-        Optimal number of clusters by group if cluster selection was used.
+        Optimal number of clusters by group if cluster selection was used. Defined after running ``self.get_caps()``.
 
         ::
 
             {"GroupName": int}
 
     variance_explained: :obj:`dict[str, float]` or :obj:`None`
-        Total variance explained by each group's model.
+        Total variance explained by each group's model. Defined after running ``self.get_caps()``.
 
         ::
 

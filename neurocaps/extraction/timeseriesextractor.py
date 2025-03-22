@@ -177,17 +177,18 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         Dictionary containing signal cleaning parameters.
 
     task_info: :obj:`dict[str, str | int]` or :obj:`None`
-        Dictionary containing all task-related information such.
+        Dictionary containing all task-related information such. Defined after running ``self.get_bold()``.
 
     subject_ids: :obj:`list[str]` or :obj:`None`
         A list containing all subject IDs that have retrieved from PyBIDS and subjected to timeseries extraction.
+        Defined after running ``self.get_bold()``.
 
     n_cores: :obj:`int` or :obj:`None`
-        Number of cores used for multiprocessing with Joblib.
+        Number of cores used for multiprocessing with Joblib. Defined after running ``self.get_bold()``.
 
     subject_timeseries: :obj:`SubjectTimeseries` or :obj:`None`
         A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a NumPy array.
-        Can be deleted using ``del self.subject_timeseries``.
+        Can be deleted using ``del self.subject_timeseries``. Defined after running ``self.get_bold()``.
 
     See Also
     --------
