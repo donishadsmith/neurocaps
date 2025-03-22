@@ -1,5 +1,11 @@
 Tutorial 1: Using ``TimeseriesExtractor``
 =========================================
+
+.. |colab| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/donishadsmith/neurocaps/blob/stable/docs/examples/notebooks/extraction.ipynb
+
+|colab|
+
 This module is designed to perform timeseries extraction, nuisance regression, and visualization. Additionally, it
 generates the necessary dictionary structure required for ``CAP``. If the BOLD images have not been preprocessed using
 fMRIPrep (or a similar pipeline), the dictionary structure can be manually created.
@@ -59,6 +65,7 @@ Download test dataset used for Github Actions from Github.
     # Rename folder
     os.makedirs("neurocaps_demo/data", exist_ok=True)
     os.rename("neurocaps_demo/neurocaps/tests/data/dset", "neurocaps_demo/data/dset")
+
 
 Note: when an asterisk (*) follows a name, all confounds that start with the preceding term will be automatically included.
 For example, placing an asterisk after cosine (cosine*) will utilize all parameters that begin with cosine.
@@ -177,6 +184,16 @@ Visualizing Timeseries
 
 .. image:: embed/visualize_timeseries_nodes-2.png
     :width: 1000
+
+
+.. only:: html
+
+  .. container:: sphx-glr-footer sphx-glr-footer-example
+
+    .. container:: sphx-glr-download sphx-glr-download-jupyter
+
+       :download:`Download Jupyter Notebook <notebooks/extraction.ipynb>`
+
 
 ==========
 

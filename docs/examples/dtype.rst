@@ -2,6 +2,11 @@ Tutorial 5: Changing Dtype With ``change_dtype``
 ===================================================================
 The dtype of the all participant's NumPy arrays can be changed to assist with memory usage.
 
+.. |colab| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/donishadsmith/neurocaps/blob/stable/docs/examples/notebooks/dtype.ipynb
+
+|colab|
+
 .. code-block:: python
 
     import numpy as np
@@ -41,3 +46,12 @@ The dtype of the all participant's NumPy arrays can be changed to assist with me
          subj-2; run-2:
          dtype before conversion float64
          dtype after conversion: float32
+
+
+.. only:: html
+
+  .. container:: sphx-glr-footer sphx-glr-footer-example
+
+    .. container:: sphx-glr-download sphx-glr-download-jupyter
+
+      :download:`Download Jupyter Notebook <notebooks/dtype.ipynb>`

@@ -1,5 +1,11 @@
 Tutorial 3: Merging Timeseries With ``merge_dicts``
 ======================================================================
+
+.. |colab| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/donishadsmith/neurocaps/blob/stable/docs/examples/notebooks/merge.ipynb
+
+|colab|
+
 ``merge_dicts()`` combines timeseries data from different tasks and sessions, enabling analyses
 that identify similar CAPs across these tasks, sessions, or both. This is only useful when the tasks and sessions
 includes the same subjects. This function produces a merged dictionary only containing subject IDs present across all
@@ -87,7 +93,7 @@ or tasks.
 
 .. code-block:: python
 
-    from neurocaps.analysis import CAPs
+    from neurocaps.analysis import CAP
 
     cap_analysis = CAP()
 
@@ -145,3 +151,11 @@ used to obtain the CAPs are also used to standardize each subject in the timeser
 .. csv-table::
    :file: embed/session-post-persistence.csv
    :header-rows: 1
+
+.. only:: html
+
+  .. container:: sphx-glr-footer sphx-glr-footer-example
+
+    .. container:: sphx-glr-download sphx-glr-download-jupyter
+
+      :download:`Download Jupyter Notebook <notebooks/merge.ipynb>`

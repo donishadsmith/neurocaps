@@ -1,5 +1,11 @@
 Tutorial 7: Using Lateralized Custom Parcellations
 ==================================================
+
+.. |colab| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/donishadsmith/neurocaps/blob/stable/docs/examples/notebooks/custom.ipynb
+
+|colab|
+
 While NeuroCAPs leverages Nilearn's fetch functions for the `Schaefer <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_schaefer_2018.html>`_
 and `AAL <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_aal.html>`_, additional
 lateralized parcellations can be manually defined. For custom parcellation approaches, three subkeys are
@@ -302,6 +308,14 @@ other subkeys are optional*.
 
 .. image:: embed/All_Subjects_CAP-2_surface_KNN.png
     :width: 1000
+
+.. only:: html
+
+  .. container:: sphx-glr-footer sphx-glr-footer-example
+
+    .. container:: sphx-glr-download sphx-glr-download-jupyter
+
+      :download:`Download Jupyter Notebook <notebooks/custom.ipynb>`
 
 ==========
 

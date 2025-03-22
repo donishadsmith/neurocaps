@@ -119,6 +119,8 @@ html_sidebars = {
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
+html_extra_path = ["examples/notebooks"]
+
 redirects = {
     "installation.html": "user_guide/installation.html",
     "bids.html": "user_guide/bids.html",

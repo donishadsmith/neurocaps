@@ -1,5 +1,11 @@
 Tutorial 2: Using ``CAP``
 =========================
+
+.. |colab| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/donishadsmith/neurocaps/blob/stable/docs/examples/notebooks/analysis.ipynb
+
+|colab|
+
 The ``CAP`` class is designed to perform CAPs analyses (on all subjects or group of subjects). It offers the flexibility
 to analyze data from all subjects or focus on specific groups, compute CAP-specific metrics, and generate visualizations
 to aid in the interpretation of results.
@@ -140,7 +146,7 @@ Plotting CAPs
 
     import seaborn as sns
 
-    cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
+    cap_analysis = CAP(parcel_approach={"Schaefer": {"n_rois": 100, "yeo_networks": 7, "resolution_mm": 1}})
 
     cap_analysis.get_caps(subject_timeseries=subject_timeseries, n_clusters=6)
 
@@ -262,7 +268,7 @@ Plotting CAPs to Radar
     colors = {"High Amplitude": "red", "Low Amplitude": "blue"}
 
     kwargs = {
-        "radialaxis": radial,
+        "radialaxis": radialaxis,
         "fill": "toself",
         "legend": legend,
         "color_discrete_map": colors,
@@ -276,3 +282,11 @@ Plotting CAPs to Radar
     :width: 800
 .. image:: embed/All_Subjects_CAP-2_radar.png
     :width: 800
+
+.. only:: html
+
+  .. container:: sphx-glr-footer sphx-glr-footer-example
+
+    .. container:: sphx-glr-download sphx-glr-download-jupyter
+
+      :download:`Download Jupyter Notebook <notebooks/analysis.ipynb>`

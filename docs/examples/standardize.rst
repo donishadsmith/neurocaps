@@ -1,5 +1,11 @@
 Tutorial 4: Standardizing Within Runs Using ``standardize``
 ===========================================================
+
+.. |colab| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/donishadsmith/neurocaps/blob/stable/docs/examples/notebooks/standardize.ipynb
+
+|colab|
+
 While standardizing the features/columns within runs can be done using the ``standardize`` parameter within the
 ``TimeseriesExtractor`` class, the ``standardize()`` function can be used to perform
 within-run standardization post-extraction.
@@ -35,3 +41,12 @@ within-run standardization post-extraction.
 
         True
         True
+
+
+.. only:: html
+
+  .. container:: sphx-glr-footer sphx-glr-footer-example
+
+    .. container:: sphx-glr-download sphx-glr-download-jupyter
+
+      :download:`Download Jupyter Notebook <notebooks/standardize.ipynb>`

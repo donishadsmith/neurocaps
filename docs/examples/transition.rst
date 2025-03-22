@@ -1,5 +1,11 @@
 Tutorial 6: Generating Transition Probability Matrices ``transition_matrix``
 ===============================================================================================
+
+.. |colab| image:: https://colab.research.google.com/assets/colab-badge.svg
+   :target: https://colab.research.google.com/github/donishadsmith/neurocaps/blob/stable/docs/examples/notebooks/transition.ipynb
+
+|colab|
+
 The ``CAP.calculate_metrics()`` function is designed to compute transition probabilities for all subjects and store these
 values into dataframes (one per group). These dataframes can subsequently be used as input for the ``transition_matrix()``
 function to generate visualizations of the average transition probabilities per group.
@@ -11,6 +17,8 @@ function to generate visualizations of the average transition probabilities per 
 
     # Simulate `subject_timeseries` structure
     subject_timeseries = {str(x): {f"run-{y}": np.random.rand(10, 100) for y in range(1, 4)} for x in range(1, 11)}
+
+    cap_analysis = CAP()
 
     cap_analysis.get_caps(
         subject_timeseries=subject_timeseries,
@@ -32,8 +40,6 @@ function to generate visualizations of the average transition probabilities per 
         return_df=True,
         metrics=["transition_probability"],
         continuous_runs=True,
-        output_dir=output_dir,
-        prefix_filename="All_Subjects_CAPs_metrics",
     )
 
     print(outputs["transition_probability"]["All Subjects"])
@@ -60,3 +66,11 @@ function to generate visualizations of the average transition probabilities per 
 .. csv-table::
    :file: embed/All_Subjects_CAPs_transition_probability_matrix.csv
    :header-rows: 1
+
+.. only:: html
+
+  .. container:: sphx-glr-footer sphx-glr-footer-example
+
+    .. container:: sphx-glr-download sphx-glr-download-jupyter
+
+      :download:`Download Jupyter Notebook <notebooks/transition.ipynb>`
