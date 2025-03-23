@@ -71,16 +71,17 @@ visualization, significantly streamlining the CAPs analysis process.
 
 **neurocaps.exceptions**
 
-This module contains a custom exception - `BIDSQueryError`. Since NeuroCAPs utilizes PyBIDS, a Python package for
-querying BIDS-compliant directories, this exception was created to guide users and provide potential fixes when no
-subject IDs are detected in the specified BIDS directories.
+This module contains a custom exception - `BIDSQueryError`. Since NeuroCAPs utilizes PyBIDS [@Yarkoni2019], a Python
+package for querying BIDS-compliant directories, this exception was created to guide users and provide potential
+fixes when no subject IDs are detected in the specified BIDS directories.
 
 **neurocaps.extraction**
 
 This module contains the `TimeseriesExtractor` class, which:
 
-- extracts resting-state and task-based data using Schaefer parcellation, AAL parcellation, or manually defined
-parcellations for spatial dimensionality reduction.
+- extracts both resting-state and task-based functional MRI data using lateralized brain parcellations
+(such as the Schaefer [@Schaefer2018], Automated Anatomical Labeling [@Tzourio-Mazoyer2002], and Human Connectome
+Project extended [@Huang2022] parcellations) for spatial dimensionality reduction.
 - leverages Nilearn's [@Nilearn] `NiftiLabelsMasker` to perform nuisance regression and censoring of high-motion
 volumes using fMRIPrep-derived regressors, and stores the extracted timeseries information in a dictionary mapping
 subject IDs to run IDs and their associated timeseries.
