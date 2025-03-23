@@ -1,0 +1,96 @@
+---
+name: Bug Report
+
+# Adapted from https://github.com/nilearn/nilearn/blob/main/.github/ISSUE_TEMPLATE/bug.yml
+# See the json schema to help you create / update this form
+# https://json.schemastore.org/github-issue-forms.json
+
+description: Template to report a bug.
+
+title: '[BUG]'
+
+labels: [bug]
+
+body:
+
+-   type: checkboxes
+    attributes:
+        label: Operating System (OS)
+        description: Select your OS (Linux is commonly used for High-Performance Computing [HPC] clusters).
+        options:
+        -   label: Linux (e.g. Ubuntu, CentOS, Rocky, etc)
+        -   label: Mac
+        -   label: Windows
+        -   label: Other
+
+-   type: textarea
+    attributes:
+        label: Operating System Version
+        value: |
+            Examples:
+            - Linux Ubuntu 24.10
+            - Mac OS Version 15 "Sequoia"
+            - Windows 11
+    validations:
+        required: false
+
+-   type: checkboxes
+    attributes:
+        label: Computing Environment
+        description: Select the computing environment you are using.
+        options:
+        -   label: High-Performance Computing (HPC) Cluster
+        -   label: Personal/Local Machine
+        -   label: Hosted Notebook Service (e.g., Google Colab)
+        -   label: Container (e.g., Docker, Singularity)
+        -   label: Other
+    validations:
+        required: true
+
+-   type: checkboxes
+    attributes:
+        label: Python Version
+        description: Select your Python version.
+        options:
+        -   label: '3.12'
+        -   label: '3.11'
+        -   label: '3.10'
+        -   label: '3.9'
+
+-   type: textarea
+    attributes:
+        label: NeuroCAPs Version
+        description: |
+            State the version of NeuroCAPs that you are using.
+
+            Use `python -c "import neurocaps; print(neurocaps.__version__)"` in your preferred terminal.
+    validations:
+        required: true
+
+-   type: textarea
+    attributes:
+        label: Code
+        description: |
+            Paste the code causing the issue below.
+
+        value: |
+            ```python
+            # Paste your code here
+
+
+            ```
+    validations:
+        required: false
+
+-   type: textarea
+    attributes:
+        label: Error Message
+        description: |
+            Describe what happened. If an error message occurred, paste the stack trace below. If the issue is related
+            to plotting, include an image.
+        value: |
+            ```bash
+            # Paste the error message here
+
+
+            ```
