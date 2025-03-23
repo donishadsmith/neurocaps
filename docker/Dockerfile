@@ -15,14 +15,9 @@ RUN apt-get update && apt-get install -y \
     python3.11-venv \
     git \
     libxrender1 \
-    libglib2.0-0 \
-    libosmesa6-dev \
-    libglu1-mesa-dev \
-    libxt-dev \
     xvfb \
     tar \
     gzip \
-    bzip2 \
     nano \
     vim \
     curl \
