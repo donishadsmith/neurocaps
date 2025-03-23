@@ -15,6 +15,7 @@ Module containing custom exceptions.
    :toctree: generated/
 
    BIDSQueryError
+   NoElbowDetectedError
 
 :mod:`neurocaps.extraction` - Timeseries Extraction
 ---------------------------------------------------

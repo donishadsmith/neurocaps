@@ -1,8 +1,11 @@
 [
     {
-        "name": "0.23.8.post1 (stable)",
-        "version": "0.23.8.post1",
+        "version": "stable",
         "url": "https://neurocaps.readthedocs.io/en/stable/"
+    },
+    {
+        "version": "latest",
+        "url": "https://neurocaps.readthedocs.io/en/latest/"
     },
     {
         "name": "0.23.8",

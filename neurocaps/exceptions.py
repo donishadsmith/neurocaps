@@ -19,3 +19,24 @@ class BIDSQueryError(Exception):
 
     def __init__(self, message: Any) -> None:
         super().__init__(message)
+
+
+class NoElbowDetectedError(Exception):
+    """
+    Elbow Method Failure Exception.
+
+    This exception occurs in ``CAP.get_caps()`` when ``cluster_selection_method`` is set to "elbow" but kneed's
+    ``KneeLocator`` fails to detect a point of maximum curvature in the elbow curve.
+
+    This error may occur due to:
+      - The range of tested cluster sizes (k) is too restrictive and should be expanded, as the elbow likely occurs at\
+      a larger cluster size.
+      - Multiple elbows existing; thus, the value of the sensitivity (``S``) parameter of ``KneeLocator`` should be\
+      increased to be more conservative.
+      - The data lacking a natural clustering structure (exceptionally rare for fMRI data).
+
+    .. versionadded:: 0.24.0
+    """
+
+    def __init__(self, message: Any) -> None:
+        super().__init__(message)

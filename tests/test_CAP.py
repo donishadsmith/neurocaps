@@ -158,55 +158,50 @@ def test_groups_without_cluster_selection(standardize):
     assert np.array_equal(labels, cap_analysis.kmeans["B"].labels_)
 
 
+@pytest.mark.flaky(reruns=5)
 @pytest.mark.parametrize(
     "groups, n_cores", [(["All Subjects"], None), ({"A": [0, 1, 2, 4], "B": [3, 5, 6, 7, 8, 9, 6]}, 2)]
 )
-@pytest.mark.enable_logs
-def test_elbow_method(logger, groups, n_cores):
+def test_elbow_method(groups, n_cores):
     """
     Tests the elbow method and that related information and the optimal cluster size is stored in properties. Sometimes
-    elbow is not found for randomly generated data.
+    elbow is not found for randomly generated data. Reruns if there is a failure as opposed to using a seed.
     """
     timeseries = Parcellation.get_schaefer("timeseries")
 
     cap_analysis = CAP(groups=None if isinstance(groups, list) else groups)
 
-    # Elbow sometimes does find the elbow with random data
-    try:
-        cap_analysis.get_caps(
-            subject_timeseries=timeseries,
-            n_clusters=list(range(2, 41)),
-            cluster_selection_method="elbow",
-            n_cores=n_cores,
+    cap_analysis.get_caps(
+        subject_timeseries=timeseries,
+        n_clusters=list(range(2, 41)),
+        cluster_selection_method="elbow",
+        n_cores=n_cores,
+    )
+
+    for group in groups:
+        assert all(elem >= 0 for elem in cap_analysis.cluster_scores["Scores"][group].values())
+
+        kneedle = KneeLocator(
+            x=list(cap_analysis.cluster_scores["Scores"][group]),
+            y=list(cap_analysis.cluster_scores["Scores"][group].values()),
+            curve="convex",
+            direction="decreasing",
         )
 
-        for group in groups:
-            assert all(elem >= 0 for elem in cap_analysis.cluster_scores["Scores"][group].values())
+        assert kneedle.elbow == cap_analysis.optimal_n_clusters[group]
+        assert cap_analysis.cluster_selection_method == "elbow"
+        assert cap_analysis.cluster_scores["Cluster_Selection_Method"] == "elbow"
+        assert (
+            cap_analysis.cluster_scores["Scores"][group][cap_analysis.optimal_n_clusters[group]]
+            == cap_analysis.kmeans[group].inertia_
+        )
 
-            kneedle = KneeLocator(
-                x=list(cap_analysis.cluster_scores["Scores"][group]),
-                y=list(cap_analysis.cluster_scores["Scores"][group].values()),
-                curve="convex",
-                direction="decreasing",
-            )
-
-            assert kneedle.elbow == cap_analysis.optimal_n_clusters[group]
-            assert cap_analysis.cluster_selection_method == "elbow"
-            assert cap_analysis.cluster_scores["Cluster_Selection_Method"] == "elbow"
-            assert (
-                cap_analysis.cluster_scores["Scores"][group][cap_analysis.optimal_n_clusters[group]]
-                == cap_analysis.kmeans[group].inertia_
-            )
-
-            # Slightly redundant assertion
-            assert (
-                len(cap_analysis.caps[group])
-                == len(np.unique(cap_analysis.kmeans[group].labels_))
-                == cap_analysis.optimal_n_clusters[group]
-            )
-    except:
-        logger.warning("Elbow could not be found for random data.")
-        pass
+        # Slightly redundant assertion
+        assert (
+            len(cap_analysis.caps[group])
+            == len(np.unique(cap_analysis.kmeans[group].labels_))
+            == cap_analysis.optimal_n_clusters[group]
+        )
 
 
 @pytest.mark.parametrize(

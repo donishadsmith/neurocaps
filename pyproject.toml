@@ -69,7 +69,7 @@ dependencies = [
 benchmark = ["asv", "virtualenv"]
 demo = ["ipywidgets", "openneuro-py"]
 development = ["pre-commit"]
-test = ["pytest", "pytest-cov"]
+test = ["pytest", "pytest-cov", "pytest-rerunfailures"]
 windows = ["pybids>=0.16.2"]
 
 [tool.setuptools.packages.find]

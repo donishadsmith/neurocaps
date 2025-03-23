@@ -13,6 +13,11 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.24.0] - Not Released Yet
+- Minor internal refactoring for private functions to improve readability.
+### 🚀 New/Added
+- Added ``NoElbowDetectedError`` for instances where elbow method fails to detect elbow.
+
 ## [0.23.8.post1] - 2025-03-20
 ### 📖 Documentation
 - Adds additional documentation clarity and emphasis.

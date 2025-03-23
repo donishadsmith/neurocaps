@@ -17,6 +17,7 @@ from neuromaps.datasets import fetch_fslr
 from scipy.stats import pearsonr
 from tqdm.auto import tqdm
 
+from ..exceptions import NoElbowDetectedError
 from ..typing import ParcelConfig, ParcelApproach, SubjectTimeseries
 from .._utils import (
     _CAPGetter,
@@ -519,7 +520,7 @@ class CAP(_CAPGetter):
                 self._optimal_n_clusters[group] = kneedle.elbow
 
                 if self._optimal_n_clusters[group] is None:
-                    raise ValueError(
+                    raise NoElbowDetectedError(
                         f"[GROUP: {group}] - No elbow detected. Try adjusting the sensitivity parameter, "
                         "`S`, to increase or decrease sensitivity (higher values are less sensitive), "
                         "expanding the list of `n_clusters` to test, or using another "
