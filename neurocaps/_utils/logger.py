@@ -1,5 +1,7 @@
-"""Internal logging function and class for flushing. Logger configured to respect user logging configuration
-prior to package import while defaulting to console logging if no configurations are provided."""
+"""
+Internal logging function and class for flushing. Logger configured to respect user logging configuration
+prior to package import while defaulting to console logging if no configurations are provided.
+"""
 
 import logging, sys
 from logging.handlers import QueueHandler

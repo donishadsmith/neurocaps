@@ -1,3 +1,5 @@
+"""Function for changing the dtype of timeseries data."""
+
 import copy
 from typing import Union, Optional
 

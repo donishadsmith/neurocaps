@@ -265,8 +265,8 @@ def _perform_extraction(data, LG):
     # Create the masker for extracting time series; strategy="mean" is the default for NiftiLabelsMasker,
     # added to make it clear in codebase that the mean is the default strategy used for reducing regions
     masker = NiftiLabelsMasker(
-        mask_img=data.files["mask"],
         labels_img=data.maps,
+        mask_img=data.files["mask"],
         resampling_target="data",
         strategy="mean",
         t_r=data.tr,

@@ -39,6 +39,7 @@ def test_3v2_AAL():
     assert "AAL" in extractor.parcel_approach
 
     assert all(key in extractor.parcel_approach["AAL"] for key in keys)
+    assert len(extractor.parcel_approach["AAL"]) == 3
 
     for i in extractor.parcel_approach["AAL"]:
         if i == "maps":
@@ -69,6 +70,7 @@ def test_partial_parcel_approaches():
     assert "AAL" in extractor.parcel_approach
 
     assert all(key in extractor.parcel_approach["AAL"] for key in keys)
+    assert len(extractor.parcel_approach["AAL"]) == 3
 
     for i in extractor.parcel_approach["AAL"]:
         if i == "maps":
@@ -82,8 +84,8 @@ def test_partial_parcel_approaches():
     extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
 
     assert "Schaefer" in extractor.parcel_approach
-
     assert all(key in extractor.parcel_approach["Schaefer"] for key in keys)
+    assert len(extractor.parcel_approach["Schaefer"]) == 3
 
     for i in extractor.parcel_approach["Schaefer"]:
         if i == "maps":

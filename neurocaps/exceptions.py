@@ -1,3 +1,5 @@
+"""Module containing custom exceptions."""
+
 from typing import Any
 
 

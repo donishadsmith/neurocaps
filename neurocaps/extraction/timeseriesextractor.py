@@ -1,3 +1,5 @@
+"""Contains the TimeseriesExtractor class for extracting timeseries"""
+
 import json, os, re, sys
 from functools import lru_cache
 from typing import Callable, Literal, Optional, Union
@@ -694,7 +696,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             # Generate a list of runs to iterate through based on runs in niftis
             check_runs = self._gen_runs(files["niftis"])
             if check_runs:
-                run_list = self._intersect_runs(check_runs, files)
+                run_list = self._filter_runs(check_runs, files)
 
                 # Skip subject if no run has all needed files present
                 if not run_list:
@@ -857,30 +859,30 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         return sorted(check_runs.intersection(requested_runs)) if requested_runs else sorted(check_runs)
 
-    def _intersect_runs(self, check_runs, files):
+    def _filter_runs(self, check_runs, files):
         run_list = []
 
         # Check if at least one run has all files present
         for run in check_runs:
-            curr_list = []
+            bool_list = []
 
             # Assess is any of these returns True
-            curr_list.append(any(f"{run}_" in file for file in files["niftis"]))
+            bool_list.append(any(f"{run}_" in file for file in files["niftis"]))
 
             if self._task_info["condition"]:
-                curr_list.append(any(f"{run}_" in file for file in files["events"]))
+                bool_list.append(any(f"{run}_" in file for file in files["events"]))
 
             if self._signal_clean_info["use_confounds"]:
-                curr_list.append(any(f"{run}_" in file for file in files["confounds"]))
+                bool_list.append(any(f"{run}_" in file for file in files["confounds"]))
 
                 if self._signal_clean_info["n_acompcor_separate"]:
-                    curr_list.append(any(f"{run}_" in file for file in files["confound_metas"]))
+                    bool_list.append(any(f"{run}_" in file for file in files["confound_metas"]))
 
             if files["masks"]:
-                curr_list.append(any(f"{run}_" in file for file in files["masks"]))
+                bool_list.append(any(f"{run}_" in file for file in files["masks"]))
 
             # Append runs that contain all needed files
-            if all(curr_list):
+            if all(bool_list):
                 run_list.append(run)
 
         return run_list

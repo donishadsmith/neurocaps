@@ -1,3 +1,5 @@
+"""Function for merging timeseries data across dictionaries"""
+
 import copy
 from typing import Union, Optional
 

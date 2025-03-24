@@ -1,3 +1,5 @@
+"""Contains the CAP class for performing co-activation patterns analyses"""
+
 import collections, copy, itertools, os, re, sys, tempfile
 from typing import Callable, Literal, Optional, Union
 
@@ -461,7 +463,8 @@ class CAP(_CAPGetter):
     @staticmethod
     def _get_runs(requested_runs, curr_runs):
         if requested_runs:
-            requested_runs = [f"run-{run}" for run in requested_runs]
+            requested_runs = [str(run) for run in requested_runs]
+            requested_runs = [f"run-{run.removeprefix('run-')}" for run in requested_runs]
 
         runs = [run for run in requested_runs if run in curr_runs] if requested_runs else curr_runs
         miss_runs = list(set(requested_runs) - set(runs)) if requested_runs else None
@@ -2531,7 +2534,6 @@ class CAP(_CAPGetter):
 
                     for i in ["High Amplitude", "Low Amplitude"]:
                         values = df[i].values
-
                         # Add traces
                         fig.add_trace(
                             go.Scatterpolar(

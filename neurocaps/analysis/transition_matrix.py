@@ -1,3 +1,5 @@
+"""Function for averaging subject-level transition probabilities and producing visualizations"""
+
 from typing import Optional, Union
 
 import matplotlib.pyplot as plt, pandas as pd
