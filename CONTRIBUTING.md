@@ -13,14 +13,13 @@ Labels
 ------
 Below are the current list of labels that can be used when opening an [issue](https://github.com/donishadsmith/neurocaps/issues):
 
-[![Bug](https://img.shields.io/badge/-bug-d73a4a.svg)](https://github.com/donishadsmith/neurocaps/labels/bug)
-- *These issues relate to unexpected behaviors.*
-Please provide a detailed report of any bugs encountered so that it may be replicated and properly addressed.
+[![bug](https://img.shields.io/badge/-bug-d73a4a.svg)](https://github.com/donishadsmith/neurocaps/labels/bug)
+- *These issues relate to unexpected behaviors or chrashes.*
 
-[![Documentation](https://img.shields.io/badge/-documentation-0075ca.svg)](https://github.com/donishadsmith/neurocaps/labels/bug)
+[![documentation](https://img.shields.io/badge/-documentation-0075ca.svg)](https://github.com/donishadsmith/neurocaps/labels/bug)
 - *These issues relate to improvements or enhancements to documentation.*
 
-[![Enhancement](https://img.shields.io/badge/-enhancement-0E8A16.svg)](https://github.com/donishadsmith/neurocaps/labels/bug)
+[![enhancement](https://img.shields.io/badge/-enhancement-0E8A16.svg)](https://github.com/donishadsmith/neurocaps/labels/bug)
 - *These issues relate to requested new features or improvements to existing ones.*
 
 Workflow for Making Changes
@@ -43,6 +42,4 @@ merging into the main codebase.
 Receiving Credit
 ----------------
 Please remember to add your credentials to the [zenodo](https://github.com/donishadsmith/neurocaps/blob/main/.zenodo.json)
-to receive proper recognition foy your contribution to neurocaps.
-
-Thank you for your contribution!
+to receive proper recognition for your contributions to NeuroCAPs!

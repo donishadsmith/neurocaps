@@ -1427,7 +1427,8 @@ def test_interpolate_with_condition(get_vars, use_sample_mask):
 ################################################# Setup Environment 3 #################################################
 def test_subjects_appending_in_dictionary(setup_environment_3, get_vars):
     """
-    Ensures subjects are appended to `subject_timeseries` correctly.
+    Ensures subjects are appended to `subject_timeseries` correctly. Checks error when plotting specified and multiple
+    runs exist.
     """
     bids_dir, pipeline_name = get_vars
 
@@ -1445,6 +1446,14 @@ def test_subjects_appending_in_dictionary(setup_environment_3, get_vars):
     assert not np.array_equal(
         extractor.subject_timeseries["02"]["run-001"], extractor.subject_timeseries["01"]["run-002"]
     )
+
+    msg = (
+        f"`run` must be specified when multiple runs exist. Runs available for sub-01: "
+        f"{', '.join(list(extractor.subject_timeseries['01']))}."
+    )
+
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        extractor.visualize_bold("01", roi_indx=0)
 
 
 def test_parallel_and_sequential_preprocessing_equivalence(get_vars):
@@ -1558,6 +1567,24 @@ def test_unnested_pipeline_folder(setup_environment_4, get_vars, pipeline_name):
     assert extractor.subject_timeseries
 
 
+def test_removal_of_run_desc(tmp_dir, get_vars):
+    """
+    Ensures that even though a subject has no run IDs, the default run label "run-0" is used to preserve
+    the structure of `subject_timeseries`.  Also test plotting without having to specify run for subjects with only a
+    single run.
+    """
+    bids_dir, _ = get_vars
+
+    extractor = TimeseriesExtractor()
+
+    extractor.get_bold(bids_dir=bids_dir, task="rest", tr=1.2)
+    assert extractor.subject_timeseries["01"]["run-0"].shape == (40, 400)
+
+    extractor.visualize_bold("01", roi_indx=0, output_dir=tmp_dir.name)
+    assert len(png_file := glob.glob(os.path.join(tmp_dir.name, "*.png"))) == 1
+    os.remove(png_file[0])
+
+
 def test_exclude_subjects(get_vars):
     """
     Tests the exclusion of subjects when using the `exclude_subjects` or `run_subjects` parameters.
@@ -1589,19 +1616,6 @@ def test_events_without_session_id_in_nifti_files(get_vars):
 
     extractor.get_bold(bids_dir=bids_dir, task="rest", tr=1.2, condition="active")
     assert extractor.subject_timeseries["01"]["run-0"].shape[0] == 20
-
-
-def test_removal_of_run_desc(get_vars):
-    """
-    Ensures that even though a subject has no run IDs, the default run label "run-0" is used to preserve
-    the structure of `subject_timeseries`.
-    """
-    bids_dir, _ = get_vars
-
-    extractor = TimeseriesExtractor()
-
-    extractor.get_bold(bids_dir=bids_dir, task="rest", tr=1.2)
-    assert extractor.subject_timeseries["01"]["run-0"].shape == (40, 400)
 
 
 @pytest.mark.parametrize("run", (0, ["005"]))

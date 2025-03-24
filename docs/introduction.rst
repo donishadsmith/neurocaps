@@ -55,35 +55,35 @@ This package contains two main classes: ``TimeseriesExtractor`` for extracting t
 
 Main features for ``TimeseriesExtractor`` includes:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-- **Timeseries Extraction:** Extract timeseries for resting-state or task data using Schaefer, AAL, or a lateralized Custom parcellation for spatial dimensionality reduction (``TimeseriesExtractor.get_bold()``).
-- **Parallel Processing:** Use parallel processing to speed up timeseries extraction.
-- **Saving Timeseries:** Save the nested dictionary containing timeseries as a pickle file (``TimeseriesExtractor.timeseries_to_pickle()``).
-- **Visualization:** Visualize the timeseries at the region or node level of the parcellation (``TimeseriesExtractor.visualize_bold()``).
+- **Timeseries Extraction:** Extract timeseries for resting-state or task data using Schaefer, AAL, or a lateralized Custom parcellations (which can be manually defined) for spatial dimensionality reduction.
+- **Parallel Processing:** Parallelize at the subject-level (one subject per CPU core) to speed up timeseries extraction.
+- **Saving Timeseries:** Save the nested dictionary containing timeseries (mapping subject id -> run id -> timeseries data) as a pickle file.
+- **Visualization:** Visualize the timeseries at the region or node level of the parcellation for a given subject and run.
 
 Main features for ``CAP`` includes:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 - **Grouping:** Perform CAPs analysis for entire sample or groups of subject IDs
-- **Optimal Cluster Size Identification:** Perform the Davies Bouldin, Silhouette, Elbow, or Variance Ratio criterions to identify the optimal cluster size and automatically save the optimal model as an attribute (``CAP.get_caps()``).
+- **Optimal Cluster Size Identification:** Perform the Davies Bouldin, Silhouette, Elbow, or Variance Ratio criterions to identify the optimal cluster size and automatically save the optimal model as an attribute.
 - **Parallel Processing:** Use parallel processing to speed up optimal cluster size identification.
-- **CAPs Visualization:** Visualize the CAPs as outer products or heatmaps at either the region or node level of the parcellation (``CAP.caps2plot()``).
-- **Save CAPs as NifTIs:** Convert the atlas used for parcellation to a statistical NifTI image (``CAP.caps2niftis()``).
-- **Surface Plot Visualization:** Project CAPs onto a surface plot (``CAP.caps2surf()``).
-- **Correlation Matrix Creation:** Create a correlation matrix from CAPs (``CAP.caps2corr()``).
-- **CAPs Metrics Calculation:** Calculate several CAPs metrics as described in `Liu et al., 2018 <https://doi.org/10.1016/j.neuroimage.2018.01.041>`_ [1]_ and `Yang et al., 2021 <https://doi.org/10.1016/j.neuroimage.2021.118193>`_ [2]_ (``CAP.calculate_metrics()``):
+- **CAPs Visualization:** Visualize the CAPs as outer products or heatmaps at either the region or node level of the parcellation.
+- **Save CAPs as NifTIs:** Convert the atlas used for parcellation to a statistical NifTI image.
+- **Surface Plot Visualization:** Project CAPs onto a surface plot.
+- **Correlation Matrix Creation:** Create a correlation matrix from CAPs.
+- **CAPs Metrics Calculation:** Calculate several CAPs metrics as described in `Liu et al., 2018 <https://doi.org/10.1016/j.neuroimage.2018.01.041>`_ [1]_ and `Yang et al., 2021 <https://doi.org/10.1016/j.neuroimage.2021.118193>`_ [2]_:
     - *Temporal Fraction:* The proportion of total volumes spent in a single CAP over all volumes in a run.
     - *Persistence:* The average time spent in a single CAP before transitioning to another CAP (average consecutive/uninterrupted time).
     - *Counts:* The total number of initiations of a specific CAP across an entire run. An initiation is
       defined as the first occurrence of a CAP.
     - *Transition Frequency:* The number of transitions between different CAPs across the entire run.
     - *Transition Probability* : The probability of transitioning from one CAP to another CAP (or the same CAP). This is calculated as (Number of transitions from A to B) / (Total transitions from A).
-- **Cosine Similarity Radar Plots:** Create radar plots showing the cosine similarity between positive and negative activations of each CAP and each a-priori regions in a parcellation [3]_ [4]_ (``CAP.caps2radar()``).
+- **Cosine Similarity Radar Plots:** Create radar plots showing the cosine similarity between positive and negative activations of each CAP and each a-priori regions in a parcellation [3]_ [4]_.
 
-**Additionally, the neurocaps.analysis submodule contains additional functions:**
+**Additional functions in the `neurocaps.analysis` module includes:**
 
 - ``merge_dicts()``: Merge the subject_timeseries dictionaries for overlapping subjects across tasks to identify similar CAPs across different tasks [5]_. The merged dictionary can be saved as a pickle file.
 - ``standardize()``: Standardizes each run independently for all subjects in the subject timeseries.
 - ``change_dtype()``: Changes the dtype of all subjects in the subject timeseries to help with memory usage.
-- ``transition_matrix()``: Uses the "transition_probability" output from ``CAP.calculate_metrics()`` to generate and visualize the averaged transition probability matrix for all groups from the analysis.
+- ``transition_matrix()``: Uses the subject-level transition probabilities outputted from the ``CAP`` class to generate and visualize the averaged transition probability matrix for all groups from the analysis.
 
 Please refer to the `demos <https://github.com/donishadsmith/neurocaps/tree/main/demos>`_ or `tutorials <https://neurocaps.readthedocs.io/en/latest/examples/examples.html>`_ for a more extensive demonstration of the features included in this package.
 

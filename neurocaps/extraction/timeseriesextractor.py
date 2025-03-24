@@ -970,11 +970,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     def visualize_bold(
         self,
         subj_id: Union[int, str],
-        run: Union[int, str],
-        roi_indx: Optional[Union[Union[int, str], Union[list[str], list[int]]]] = None,
+        run: Optional[Union[int, str]] = None,
+        roi_indx: Optional[Union[int, str, list[str], list[int]]] = None,
         region: Optional[str] = None,
         show_figs: bool = True,
-        output_dir: Optional[Union[str, str]] = None,
+        output_dir: Optional[str] = None,
         filename: Optional[str] = None,
         **kwargs,
     ) -> Self:
@@ -989,8 +989,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         subj_id: :obj:`str` or :obj:`int`
             The ID of the subject.
 
-        run: :obj:`int` or :obj:`str`
-            The run ID of the subject to plot.
+        run: :obj:`int`, :obj:`str`, or :obj:`None, default=None
+            The run ID of the subject to plot. Must be specified if multiple runs exist for a given subject.
+
+            .. versionchanged:: 0.24.0 ``run`` is now optional if the subject only has a single run ID.
 
         roi_indx: :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[int]` or :obj:`None`, default=None
             The indices of the parcellation nodes to plot. See "nodes" in ``self.parcel_approach`` for valid
@@ -1029,6 +1031,16 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         if not hasattr(self, "_subject_timeseries"):
             self._raise_error("Cannot plot bold data")
 
+        subj_id = str(subj_id).removeprefix("sub-")
+        if subj_id not in self._subject_timeseries:
+            raise KeyError(f"Subject {subj_id} is not available in `self._subject_timeseries`.")
+
+        if len(subject_runs := list(self._subject_timeseries[subj_id])) > 1:
+            raise ValueError(
+                f"`run` must be specified when multiple runs exist. Runs available for sub-{subj_id}: "
+                f"{', '.join(subject_runs)}."
+            )
+
         if roi_indx is None and region is None:
             raise ValueError("either `roi_indx` or `region` must be specified.")
 
@@ -1050,7 +1062,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         plt.figure(figsize=plot_dict["figsize"])
 
-        timeseries = self._subject_timeseries[str(subj_id)][f"run-{run}"]
+        run = subject_runs[0] if not run else f"run-{run.removeprefix('run-')}"
+        timeseries = self._subject_timeseries[subj_id][run]
         if roi_indx or roi_indx == 0:
             plt.plot(range(1, timeseries.shape[0] + 1), timeseries[:, plot_indxs])
 

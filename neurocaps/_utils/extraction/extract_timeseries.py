@@ -284,7 +284,7 @@ def _perform_extraction(data, LG):
     if data.dummy_vols:
         nifti_img = index_img(nifti_img, slice(data.dummy_vols, None))
         if confounds is not None:
-            confounds.drop(list(range(0, data.dummy_vols)), axis=0, inplace=True)
+            confounds.drop(list(range(data.dummy_vols)), axis=0, inplace=True)
 
     # Extract timeseries; Censor mask used only when `use_sample_mask` is set to True
     timeseries = masker.fit_transform(
@@ -422,7 +422,7 @@ def _get_condition(data, condition_df):
 
     # Adjust for dummy
     if data.dummy_vols:
-        scans = [scan - data.dummy_vols for scan in scans if scan not in range(0, data.dummy_vols)]
+        scans = [scan - data.dummy_vols for scan in scans if scan not in range(data.dummy_vols)]
 
     return scans
 
@@ -552,13 +552,16 @@ def _interpolate_volumes(timeseries, data):
     timeseries = _pad(timeseries, data) if data.use_sample_mask else timeseries
     sample_mask = copy.deepcopy(data.sample_mask)
     sample_mask = np.array(sample_mask, dtype="bool")
+
     # Get frame times
     frame_times = np.arange(data.max_len) * data.tr
+
     # Retain noncensored frames and timeseries data
     retained_frames = frame_times[data.censor_mask]
     retained_timeseries = timeseries[data.censor_mask, :]
-    cubic_spline_fitter = CubicSpline(retained_frames, retained_timeseries, extrapolate=False)
+
     # Create interpolated timeseries
+    cubic_spline_fitter = CubicSpline(retained_frames, retained_timeseries, extrapolate=False)
     timeseries_interpolated = cubic_spline_fitter(frame_times)
     # Only replace the high motion volumes with the interpolated data
     timeseries[~sample_mask, :] = timeseries_interpolated[~sample_mask, :]
@@ -621,4 +624,4 @@ def _check_indices(data, arr_shape, LG, warn=True):
             "indices for condition within the timeseries range will be extracted."
         )
 
-    return [scan for scan in data.scans if scan in range(0, arr_shape)]
+    return [scan for scan in data.scans if scan in range(arr_shape)]

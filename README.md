@@ -115,10 +115,10 @@ section of the documentation homepage.**
 **This package contains two main classes: `TimeseriesExtractor` for extracting the timeseries, and `CAP` for performing the CAPs analysis.**
 
 **Main features for `TimeseriesExtractor` includes:**
-- **Timeseries Extraction:** Extract timeseries for resting-state or task data using Schaefer, AAL, or a lateralized Custom parcellation for spatial dimensionality reduction.
-- **Parallel Processing:** Use parallel processing to speed up timeseries extraction.
-- **Saving Timeseries:** Save the nested dictionary containing timeseries as a pickle file.
-- **Visualization:** Visualize the timeseries at the region or node level of the parcellation.
+- **Timeseries Extraction:** Extract timeseries for resting-state or task data using Schaefer, AAL, or a lateralized Custom parcellations (which can be manually defined) for spatial dimensionality reduction.
+- **Parallel Processing:** Parallelize at the subject-level (one subject per CPU core) to speed up timeseries extraction.
+- **Saving Timeseries:** Save the nested dictionary containing timeseries (mapping subject id -> run id -> timeseries data) as a pickle file.
+- **Visualization:** Visualize the timeseries at the region or node level of the parcellation for a given subject and run.
 
 **Main features for `CAP` includes:**
 - **Grouping:** Perform CAPs analysis for entire sample or groups of subject IDs.
@@ -134,15 +134,14 @@ section of the documentation homepage.**
     - *Counts:* The total number of initiations of a specific CAP across an entire run. An initiation is defined as the first occurrence of a CAP.
     - *Transition Frequency:* The number of transitions between different CAPs across the entire run.
     - *Transition Probability:* The probability of transitioning from one CAP to another CAP (or the same CAP). This is calculated as (Number of transitions from A to B)/(Total transitions from A).
-- **Cosine Similarity Radar Plots:** Create radar plots showing the cosine similarity between positive and negative
-activations of each CAP and each a-priori regions in a parcellation [^3] [^4].
+- **Cosine Similarity Radar Plots:** Create radar plots showing the cosine similarity between positive and negative activations of each CAP and each a-priori regions in a parcellation [^3] [^4].
 
-**Additionally, the `neurocaps.analysis` submodule contains additional functions:**
+Additional functions in the `neurocaps.analysis` module includes:
 
 - `merge_dicts`: Merge the subject timeseries dictionaries for overlapping subjects across tasks to identify similar CAPs across different tasks [^5]. The merged dictionary can be saved as a pickle file.
 - `standardize`: Standardizes each run independently for all subjects in the subject timeseries.
 - `change_dtype`: Changes the dtype of all subjects in the subject timeseries to help with memory usage.
-- `transition_matrix`: Uses the "transition_probability" output from ``CAP.calculate_metrics`` to generate and visualize the averaged transition probability matrix for all groups from the analysis.
+- ``transition_matrix()``: Uses the subject-level transition probabilities outputted from the ``CAP`` class to generate and visualize the averaged transition probability matrix for all groups from the analysis.
 
 Refer to the [demos](https://github.com/donishadsmith/neurocaps/tree/main/demos) or
 the [tutorials](https://neurocaps.readthedocs.io/en/stable/examples/examples.html) on the documentation website
@@ -208,23 +207,25 @@ extractor = TimeseriesExtractor(
     detrend=True,
     low_pass=0.1,
     high_pass=None,
-    n_acompcor_separate=2,  # 2 acompcor from WM and CSF masks = 4 total
+    n_acompcor_separate=2,
     confound_names=confounds,
     fd_threshold={"threshold": 0.35, "outlier_percentage": 0.20, "n_before": 2, "n_after": 1, "use_sample_mask": True},
 )
 
-# Extract timeseries for subjects in the BIDS directory; Subject 0006 run-1 will be flagged and skipped
+# Extracting timeseries from the DET task (specifically for the "late" condittion) for subjects in the BIDS directory
+# Subject 0006 run-1 will be flagged and skipped
+# Then saving the extracted timeseries data by chaining operations
 extractor.get_bold(
     bids_dir="neurocaps_demo",
-    pipeline_name="fmriprep",  # Can specify if multiple pipelines exists in derivatives directory
+    pipeline_name="fmriprep",
     task="DET",
-    condition="late",  # Can extract a specific condition if events.tsv is available
-    condition_tr_shift=2,  # Account for hemodynamic lag
-    slice_time_ref=1,  # Adjust if last volume used as slice time reference when extracting condition
+    condition="late",
+    condition_tr_shift=2,
+    slice_time_ref=1,
     session="2",
     n_cores=None,
     verbose=True,
-    progress_bar=False,  # Parameter available in version >=0.21.5
+    progress_bar=False,
 ).timeseries_to_pickle("neurocaps_demo/derivatives", "timeseries.pkl")
 ```
 **Output:**
@@ -245,13 +246,14 @@ extractor.get_bold(
 ```
 
 **Note:** Refer to [NeuroCAPs' Logging Documentation](https://neurocaps.readthedocs.io/en/stable/logging.html) for
-additional information about logging.
+additional information about confuguring logging.
 
 ```python
 # Initialize CAP class
 cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
 
-# Pkl files can also be used as input for `subject_timeseries`; only 2 clusters for simplicity
+# Pickle files can also be used as input for `subject_timeseries`
+# Only using 2 clusters for simplicity
 cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, n_clusters=2, standardize=True)
 
 # `sharey` only applicable to outer product plots
@@ -280,10 +282,10 @@ cap_analysis.caps2plot(visual_scope="regions", plot_options=["heatmap"], suffix_
 <img src="assets/heatmap.png" width=70% height=70%>
 
 ```python
-# Get CAP metrics
+# Get CAP metrics and using `tr` to convert persistence from TR units to seconds
 outputs = cap_analysis.calculate_metrics(
     subject_timeseries=extractor.subject_timeseries,
-    tr=2.0,  # TR to convert persistence to time units
+    tr=2.0,
     return_df=True,
     metrics=["temporal_fraction", "persistence"],
     continuous_runs=True,
@@ -367,7 +369,7 @@ cap_analysis.caps2radar(**kwargs)
 <img src="assets/cap2radar.png" width=70% height=70%>
 
 ```python
-# Get transition probabilities for all participants in a dataframe, then convert to an averaged matrix
+# Get transition probabilities for all participants in a dataframe
 from neurocaps.analysis import transition_matrix
 
 # Optimal cluster sizes are saved automatically
@@ -401,6 +403,7 @@ kwargs = {
     "cbarlabels_size": 10,
 }
 
+# Creating an averaged transition matrix from the sub-level transition proabilities
 trans_outputs = transition_matrix(
     trans_dict=outputs["transition_probability"], show_figs=True, return_df=True, **kwargs
 )

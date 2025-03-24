@@ -1687,7 +1687,7 @@ class CAP(_CAPGetter):
         # Get the names, which indicate the hemisphere and region
         # Reverting Counter objects to list retains original ordering of nodes in list as of Python 3.7
         collapsed_node_labels = list(frequency_dict)
-        tick_labels = ["" for _ in range(0, len(parcel_approach[parcellation_name]["nodes"]))]
+        tick_labels = ["" for _ in range(len(parcel_approach[parcellation_name]["nodes"]))]
 
         starting_value = 0
 
