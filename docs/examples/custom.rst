@@ -65,7 +65,6 @@ preprocessed with `fMRIPrep <https://fmriprep.org/en/stable/>`_. Downloading dat
         "sub-0004/ses-2/func/*run-[12]*events*",
         "derivatives/fmriprep/sub-0004/fmriprep/sub-0004/ses-2/func/*run-[12]*confounds_timeseries*",
         "derivatives/fmriprep/sub-0004/fmriprep/sub-0004/ses-2/func/*run-[12]_space-MNI152NLin*preproc_bold*",
-        "derivatives/fmriprep/sub-0004/fmriprep/sub-0004/ses-2/func/*run-[12]_space-MNI152NLin*brain_mask*",
     ]
 
     download(
