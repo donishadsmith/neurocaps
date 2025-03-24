@@ -149,7 +149,6 @@ def _extract_timeseries(
         # Get files from specific run; Presence of confound metadata depends on if separate acompcor components requested
         data.files = {
             "nifti": _grab(run, prepped_files["niftis"]),
-            "mask": _grab(run, prepped_files["masks"]),
             "confound": _grab(run, prepped_files["confounds"]),
             "confound_meta": _grab(
                 run, prepped_files["confound_metas"] if prepped_files.get("confound_metas") else None
@@ -266,7 +265,6 @@ def _perform_extraction(data, LG):
     # added to make it clear in codebase that the mean is the default strategy used for reducing regions
     masker = NiftiLabelsMasker(
         labels_img=data.maps,
-        mask_img=data.files["mask"],
         resampling_target="data",
         strategy="mean",
         t_r=data.tr,

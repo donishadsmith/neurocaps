@@ -703,7 +703,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     if verbose:
                         LG.warning(
                             f"{subject_header}"
-                            "Timeseries Extraction Skipped: None of the necessary files (i.e NifTIs, masks, "
+                            "Timeseries Extraction Skipped: None of the necessary files (i.e NifTIs, "
                             "confound tsv files, confound json files, event files) are from the same run."
                         )
                     continue
@@ -768,7 +768,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     def _build_dict(self, base):
         files = {}
         files["niftis"] = self._get_files(**base, suffix="bold", extension="nii.gz")
-        files["masks"] = self._get_files(**base, suffix="mask", extension="nii.gz")
 
         files["bold_meta"] = self._get_files(**base, suffix="bold", extension="json")
         if not files["bold_meta"]:
@@ -805,9 +804,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 True,
                 "Timeseries Extraction Skipped: No NifTI files were found or all NifTI files were excluded.",
             )
-
-        if not files["masks"]:
-            skip, msg = False, "Missing mask file but timeseries extraction will continue."
 
         if self._signal_clean_info["use_confounds"]:
             if not files["confounds"]:
@@ -877,9 +873,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
                 if self._signal_clean_info["n_acompcor_separate"]:
                     bool_list.append(any(f"{run}_" in file for file in files["confound_metas"]))
-
-            if files["masks"]:
-                bool_list.append(any(f"{run}_" in file for file in files["masks"]))
 
             # Append runs that contain all needed files
             if all(bool_list):

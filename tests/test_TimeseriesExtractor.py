@@ -121,13 +121,9 @@ def setup_environment_4(setup_environment_3, get_vars):
                 if os.path.basename(folder).startswith("ses-"):
                     shutil.rmtree(folder, ignore_errors=True)
 
-            # Remove run 2 files and brain mask files
+            # Remove run 2 files
             for file in glob.glob(os.path.join(func_dir, "*run-002*")):
                 os.remove(file)
-            try:
-                [os.remove(x) for x in glob.glob(os.path.join(func_dir, "*brain_mask*"))]
-            except:
-                pass
 
             # Rename files by removing session id
             for file in glob.glob(os.path.join(func_dir, "*")):
@@ -144,9 +140,6 @@ def setup_environment_4(setup_environment_3, get_vars):
                 new_name = file.replace("ses-002_", "").replace("_run-001", "")
                 os.rename(file, new_name)
         else:
-            # Remove brain mask files
-            for file in glob.glob(os.path.join(func_dir, "*brain_mask*")):
-                os.remove(file)
             # Rename files
             for file in glob.glob(os.path.join(func_dir, f"sub-{i}_ses-002_task-rest_run-001_*")):
                 new_name = file.replace("ses-002_", "")
