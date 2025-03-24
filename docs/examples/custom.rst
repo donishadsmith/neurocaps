@@ -86,7 +86,7 @@ preprocessed with `fMRIPrep <https://fmriprep.org/en/stable/>`_. Downloading dat
 
         🌍 Preparing to download ds005381 …
 
-        📥 Retrieving up to 31 files (5 concurrent downloads).
+        📥 Retrieving up to 23 files (5 concurrent downloads).
         ✅ Finished downloading ds005381.
 
         🧠 Please enjoy your brains.
