@@ -71,9 +71,9 @@ visualization, significantly streamlining the CAPs analysis process.
 
 **neurocaps.exceptions**
 
-This module contains a custom exception - `BIDSQueryError`. Since NeuroCAPs utilizes PyBIDS [@Yarkoni2019], a Python
-package for querying BIDS-compliant directories, this exception was created to guide users and provide potential
-fixes when no subject IDs are detected in the specified BIDS directories.
+This module contains custom exceptions, one of which is `BIDSQueryError`. Since NeuroCAPs utilizes PyBIDS
+[@Yarkoni2019], a Python package for querying BIDS-compliant directories, this exception was created to guide users and
+provide potential fixes when no subject IDs are detected in the specified BIDS directories.
 
 **neurocaps.extraction**
 

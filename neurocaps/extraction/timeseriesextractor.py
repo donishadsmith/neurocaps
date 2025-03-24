@@ -349,9 +349,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         condition_tr_shift: int = 0,
         tr: Optional[Union[int, float]] = None,
         slice_time_ref: Union[int, float] = 0.0,
-        run_subjects: Optional[list[str]] = None,
-        exclude_subjects: Optional[list[str]] = None,
-        exclude_niftis: Optional[list[str]] = None,
+        run_subjects: Optional[Union[str, list[str]]] = None,
+        exclude_subjects: Optional[Union[str, list[str]]] = None,
+        exclude_niftis: Optional[Union[str, list[str]]] = None,
         pipeline_name: Optional[str] = None,
         n_cores: Optional[int] = None,
         parallel_log_config: Optional[dict[str, Union[Callable, int]]] = None,
@@ -413,15 +413,23 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             .. versionadded:: 0.21.0
 
-        run_subjects: :obj:`list[str]` or :obj:`None`, default=None
-            List of subject IDs to process (e.g. ``run_subjects=["01", "02"]``). Processes all subjects if None.
+        run_subjects: :obj:`str`, :obj:`list[str]` or :obj:`None`, default=None
+            A string (if single subject) or list of subject IDs to process (e.g. ``run_subjects=["01", "02"]``).
+            Processes all subjects if None.
 
-        exclude_subjects: :obj:`list[str]` or :obj:`None`, default=None
-            List of subject IDs to exclude (e.g. ``exclude_subjects=["01", "02"]``).
+            .. versionchanged:: 0.24.0 A string can be used if specifying a single subject.
 
-        exclude_niftis: :obj:`list[str]` or :obj:`None`, default=None
-            List of the specific preprocessed NIfTI files to exclude, preventing their timeseries data from being
-            extracted. Used if there are specific runs across different participants that need to be excluded.
+        exclude_subjects: :obj:`str`, :obj:`list[str]` or :obj:`None`, default=None
+            A string (if single subject) or list of subject IDs to exclude (e.g. ``exclude_subjects=["01", "02"]``).
+
+            .. versionchanged:: 0.24.0 A string can be used if specifying a single subject.
+
+        exclude_niftis: :obj:`str`, :obj:`list[str]` or :obj:`None`, default=None
+            A string (if single file) or List of the specific preprocessed NIfTI files to exclude, preventing their
+            timeseries data from being extracted. Used if there are specific runs across different participants that
+            need to be excluded.
+
+            .. versionchanged:: 0.24.0 A string can be used if specifying a single file.
 
         pipeline_name: :obj:`str` or :obj:`None`, default=None
             The name of the pipeline folder in the derivatives folder containing the preprocessed data. Used if
@@ -562,10 +570,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             raise BIDSQueryError(msg)
 
         if exclude_subjects:
-            subj_ids = sorted([subj_id for subj_id in subj_ids if subj_id not in map(str, exclude_subjects)])
+            exclude_subjects = exclude_subjects if isinstance(exclude_subjects, list) else [exclude_subjects]
+            exclude_subjects = [subj_id.removeprefix("sub-") for subj_id in map(str, exclude_subjects)]
+            subj_ids = sorted([subj_id for subj_id in subj_ids if subj_id not in exclude_subjects])
 
         if run_subjects:
-            subj_ids = sorted([subj_id for subj_id in subj_ids if subj_id in map(str, run_subjects)])
+            run_subjects = run_subjects if isinstance(run_subjects, list) else [run_subjects]
+            run_subjects = [subj_id.removeprefix("sub-") for subj_id in map(str, run_subjects)]
+            subj_ids = sorted([subj_id for subj_id in subj_ids if subj_id in run_subjects])
 
         # Setup extraction
         self._setup_extraction(layout, subj_ids, exclude_niftis, verbose)
@@ -787,6 +799,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
     @staticmethod
     def _exclude(niftis, exclude_niftis):
+        exclude_niftis = exclude_niftis if isinstance(exclude_niftis, list) else [exclude_niftis]
         return [nifti for nifti in niftis if os.path.basename(nifti) not in exclude_niftis]
 
     def _header(self, subj_id):
@@ -984,10 +997,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         subj_id: :obj:`str` or :obj:`int`
             The ID of the subject.
 
-        run: :obj:`int`, :obj:`str`, or :obj:`None, default=None
+        run: :obj:`int`, :obj:`str`, or :obj:`None`, default=None
             The run ID of the subject to plot. Must be specified if multiple runs exist for a given subject.
 
-            .. versionchanged:: 0.24.0 ``run`` is now optional if the subject only has a single run ID.
+            .. versionchanged:: 0.24.0 Now optional if the subject only has a single run ID.
 
         roi_indx: :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[int]` or :obj:`None`, default=None
             The indices of the parcellation nodes to plot. See "nodes" in ``self.parcel_approach`` for valid
@@ -1030,7 +1043,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         if subj_id not in self._subject_timeseries:
             raise KeyError(f"Subject {subj_id} is not available in `self._subject_timeseries`.")
 
-        if len(subject_runs := list(self._subject_timeseries[subj_id])) > 1:
+        if len(subject_runs := list(self._subject_timeseries[subj_id])) > 1 and not run:
             raise ValueError(
                 f"`run` must be specified when multiple runs exist. Runs available for sub-{subj_id}: "
                 f"{', '.join(subject_runs)}."
@@ -1057,6 +1070,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         plt.figure(figsize=plot_dict["figsize"])
 
+        run = None if not run else str(run)
         run = subject_runs[0] if not run else f"run-{run.removeprefix('run-')}"
         timeseries = self._subject_timeseries[subj_id][run]
         if roi_indx or roi_indx == 0:

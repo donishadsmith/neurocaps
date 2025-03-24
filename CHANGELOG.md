@@ -15,8 +15,15 @@ improvements/enhancements. All fixes and modifications are backwards compatible.
 
 ## [0.24.0] - Not Released Yet
 - Minor internal refactoring for private functions to improve readability.
+- Some general improvements for better use of this package by others.
 ### 🚀 New/Added
 - Added ``NoElbowDetectedError`` for instances where elbow method fails to detect elbow.
+### ♻ Changed
+- Uses default for `mask_img` for `NiftiLabelsMasker`, which is None, as opposed to using masks queried from data.
+This better aligns with standard usage of the class and the parcellation serves as a mask already and is redundant
+especially when atlas and data are registered to the same space.
+- In ``TimeseriesExtractor.visualize_bold()``, `run` no longer needs to be specified if the given subject only
+has a single run.
 
 ## [0.23.8.post1] - 2025-03-20
 ### 📖 Documentation

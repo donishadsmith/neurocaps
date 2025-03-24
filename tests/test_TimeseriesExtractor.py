@@ -1266,7 +1266,14 @@ def test_invalid_input_for_shift_parameters(get_vars):
         )
 
 
-def test_nifti_file_exclusion(get_vars):
+@pytest.mark.parametrize(
+    "exclude_niftis",
+    (
+        ["sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"],
+        "sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz",
+    ),
+)
+def test_nifti_file_exclusion(get_vars, exclude_niftis):
     """
     Tests the exclusion of certain files when requested.
     """
@@ -1278,7 +1285,7 @@ def test_nifti_file_exclusion(get_vars):
         bids_dir=bids_dir,
         task="rest",
         pipeline_name=pipeline_name,
-        exclude_niftis=["sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"],
+        exclude_niftis=exclude_niftis,
     )
     assert len(extractor.subject_timeseries) == 0
 
@@ -1578,7 +1585,8 @@ def test_removal_of_run_desc(tmp_dir, get_vars):
     os.remove(png_file[0])
 
 
-def test_exclude_subjects(get_vars):
+@pytest.mark.parametrize("run_subjects, exclude_subjects", (["01", "02"], ["sub-01", "sub-02"]))
+def test_exclude_subjects(get_vars, run_subjects, exclude_subjects):
     """
     Tests the exclusion of subjects when using the `exclude_subjects` or `run_subjects` parameters.
     """
@@ -1586,11 +1594,11 @@ def test_exclude_subjects(get_vars):
 
     extractor = TimeseriesExtractor()
 
-    extractor.get_bold(bids_dir=bids_dir, task="rest", exclude_subjects=["02"], tr=1.2)
+    extractor.get_bold(bids_dir=bids_dir, task="rest", exclude_subjects=exclude_subjects, tr=1.2)
     assert extractor.subject_timeseries["01"]["run-0"].shape == (40, 400)
     assert "02" not in list(extractor.subject_timeseries)
 
-    extractor.get_bold(bids_dir=bids_dir, task="rest", run_subjects=["01"], tr=1.2)
+    extractor.get_bold(bids_dir=bids_dir, task="rest", run_subjects=run_subjects, tr=1.2)
     assert extractor.subject_timeseries["01"]["run-0"].shape == (40, 400)
     assert "02" not in list(extractor.subject_timeseries)
 

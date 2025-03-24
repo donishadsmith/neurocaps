@@ -463,8 +463,8 @@ class CAP(_CAPGetter):
     @staticmethod
     def _get_runs(requested_runs, curr_runs):
         if requested_runs:
-            requested_runs = [str(run) for run in requested_runs]
-            requested_runs = [f"run-{run.removeprefix('run-')}" for run in requested_runs]
+            requested_runs = [str(run).removeprefix("run-") for run in requested_runs]
+            requested_runs = [f"run-{run}" for run in requested_runs]
 
         runs = [run for run in requested_runs if run in curr_runs] if requested_runs else curr_runs
         miss_runs = list(set(requested_runs) - set(runs)) if requested_runs else None

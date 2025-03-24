@@ -8,6 +8,11 @@
         "url": "https://neurocaps.readthedocs.io/en/latest/"
     },
     {
+        "name": "0.23.8.post1",
+        "version": "0.23.8.post1",
+        "url": "https://neurocaps.readthedocs.io/en/0.23.8.post1/"
+    },
+    {
         "name": "0.23.8",
         "version": "0.23.8",
         "url": "https://neurocaps.readthedocs.io/en/0.23.8/"

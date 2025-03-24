@@ -17,36 +17,30 @@ The dtype of the all participant's NumPy arrays can be changed to assist with me
     for subj_id in subject_timeseries:
         for run in subject_timeseries[subj_id]:
             print(
-                f"""
-                  subj-{subj_id}; {run}:
-                  dtype before conversion {subject_timeseries[subj_id][run].dtype}
-                  dtype after conversion: {converted_subject_timeseries["dict_0"][subj_id][run].dtype}
-                  """
+                f"subj-{subj_id}; {run}:\n"
+                f"dtype before conversion {subject_timeseries[subj_id][run].dtype}\n"
+                f"dtype after conversion: {converted_subject_timeseries['dict_0'][subj_id][run].dtype}\n"
             )
 
 .. rst-class:: sphx-glr-script-out
 
     .. code-block:: none
 
-         subj-1; run-1:
-         dtype before conversion float64
-         dtype after conversion: float32
+        subj-1; run-1:
+        dtype before conversion float64
+        dtype after conversion: float32
 
+        subj-1; run-2:
+        dtype before conversion float64
+        dtype after conversion: float32
 
-         subj-1; run-2:
-         dtype before conversion float64
-         dtype after conversion: float32
+        subj-2; run-1:
+        dtype before conversion float64
+        dtype after conversion: float32
 
-
-         subj-2; run-1:
-         dtype before conversion float64
-         dtype after conversion: float32
-
-
-         subj-2; run-2:
-         dtype before conversion float64
-         dtype after conversion: float32
-
+        subj-2; run-2:
+        dtype before conversion float64
+        dtype after conversion: float32
 
 .. only:: html
 

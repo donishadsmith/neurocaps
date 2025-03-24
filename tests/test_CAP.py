@@ -94,8 +94,8 @@ def test_subject_skipping():
     assert "2" not in df_dict["counts"]["Subject_ID"].values
 
 
-@pytest.mark.parametrize("standardize", [True, False])
-def test_groups_without_cluster_selection(standardize):
+@pytest.mark.parametrize("standardize, runs", ([True, [1, 2]], [False, ["run-1", "run-2"]]))
+def test_groups_without_cluster_selection(standardize, runs):
     """
     Tests case when the `group` parameter is used. Ensures duplicate IDs are ignored, the `subject_table`
     property which maps IDs to groups is properly constructed, the expected shape and order of the concatenated data
@@ -139,10 +139,13 @@ def test_groups_without_cluster_selection(standardize):
     assert np.array_equal(labels, cap_analysis.kmeans["B"].labels_)
 
     cap_analysis = CAP(groups={"A": [0, 1, 2, 4], "B": [3, 5, 6, 7, 8, 9, 6]})
-    cap_analysis.get_caps(subject_timeseries=timeseries, runs=[1, 2], standardize=standardize)
+    cap_analysis.get_caps(subject_timeseries=timeseries, runs=runs, standardize=standardize)
     cap_analysis.concatenated_timeseries["A"].shape == (800, 100)
     cap_analysis.concatenated_timeseries["A"].shape == (1200, 100)
-    concatenated_timeseries = concat_data(timeseries, cap_analysis.subject_table, standardize=standardize, runs=[1, 2])
+    run_nums = [int(y) for y in [str(x).removeprefix("run-") for x in runs]]
+    concatenated_timeseries = concat_data(
+        timeseries, cap_analysis.subject_table, standardize=standardize, runs=run_nums
+    )
 
     if standardize is False:
         assert np.array_equal(cap_analysis.concatenated_timeseries["A"], concatenated_timeseries["A"])
@@ -151,10 +154,10 @@ def test_groups_without_cluster_selection(standardize):
         assert np.allclose(cap_analysis.concatenated_timeseries["A"], concatenated_timeseries["A"])
         assert np.allclose(cap_analysis.concatenated_timeseries["B"], concatenated_timeseries["B"])
 
-    labels = predict_labels(timeseries, cap_analysis, standardize, "A", runs=[1, 2])
+    labels = predict_labels(timeseries, cap_analysis, standardize, "A", runs=run_nums)
     assert np.array_equal(labels, cap_analysis.kmeans["A"].labels_)
 
-    labels = predict_labels(timeseries, cap_analysis, standardize, "B", runs=[1, 2])
+    labels = predict_labels(timeseries, cap_analysis, standardize, "B", runs=run_nums)
     assert np.array_equal(labels, cap_analysis.kmeans["B"].labels_)
 
 
@@ -554,7 +557,7 @@ def test_runs():
     assert met1["persistence"].shape[0] / 3 == met2["persistence"].shape[0]
 
 
-@pytest.mark.parametrize("continuous_runs", [(False, True)])
+@pytest.mark.parametrize("continuous_runs", [False, True])
 def test_metrics_mathematical_relationship(continuous_runs):
     """
     Verifies the mathematical relationship between temporal fraction, persistence, and counts stated in the supplementary
