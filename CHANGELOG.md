@@ -13,7 +13,7 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
-## [0.24.0] - Not Released Yet
+## [0.24.0] - 2025-03-24
 - Minor internal refactoring for private functions to improve readability.
 - Some general improvements for better use of this package by others.
 ### 🚀 New/Added
