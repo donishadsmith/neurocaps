@@ -8,10 +8,10 @@ files = [os.path.join(basename, "analysis", "cap.py"), os.path.join(basename, "e
 for file in files:
     if not is_windows:
         # Pattern used two negative look behinds to ignore "self" preceded by a backtick or del + whitespace
-        # then a negative look ahead for "self" that is not followed by underscore. Essentially ignores docstrings
-        cmd = f"grep -P '(?<!`)(?<!del )self\.(?!_)' {file}"
+        # then a negative look ahead for "self" that is not followed by underscore, followed by word.
+        cmd = f"grep -P '(?<!`)(?<!del )self\.(?!_)(?=\w+)' {file}"
     else:
-        cmd = ["powershell", "-Command", f"Select-String -Path {file} -Pattern '(?<!`)(?<!del )self\.(?!_)'"]
+        cmd = ["powershell", "-Command", f"Select-String -Path {file} -Pattern '(?<!`)(?<!del )self\.(?!_)(?=\w+)'"]
 
     # Get std output
     output = subprocess.run(cmd, shell=not is_windows, capture_output=True, text=True)
