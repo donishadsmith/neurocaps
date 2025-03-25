@@ -3,7 +3,9 @@ name: Run Tests
 on:
   push:
     branches: [main, development]
-
+  pull_request:
+    branches:
+      - '*'
   # Run weekly on Monday
   schedule:
     - cron: 0 0 * * 1
