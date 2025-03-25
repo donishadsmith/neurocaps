@@ -15,7 +15,10 @@ BIDSMSG = (
     "Fix: Set correct template space using `self.space = 'TEMPLATE_SPACE'` (e.g. 'MNI152NLin6Asym')\n"
     "2. File names do not contain specific entities required for querying such as 'sub-', 'space-', "
     "'task-', or 'desc-' (e.g 'sub-01_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-preproc-bold.nii.gz')\n"
-    "3. Incorrect task name specified in `task` parameter."
+    "3. Incorrect task name specified in `task` parameter.\n"
+    "4. The cache may need to be cleared using ``TimeseriesExtractor._call_layout.cache_clear()`` if the "
+    "directory has been changed (e.g. new files added, file names changed, etc) during the current Python "
+    "session."
 )
 
 ELBOWMSG = (

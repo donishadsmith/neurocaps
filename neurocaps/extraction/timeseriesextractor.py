@@ -486,9 +486,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         their associated timeseries (TRs x ROIs) as a NumPy array. Refer to documentation for ``SubjectTimeseries`` in
         the "See Also" section for an example structure.
 
-        **Data/Property Persistence**: Each time a method this function is called, properties related to this method
-        such as ``self.subject_timeseries``, ``self.task_info``, etc, are automatically initialized/overwritten to
-        create a clean state for the subsequent analysis. To save, the subject timeseries dictionary,
+        **Data/Property Persistence**: Each time this function is called, it's associated properties such as
+        ``self.subject_timeseries``, ``self.task_info``, etc, are automatically initialized/overwritten to create a
+        clean state for the subsequent analysis. To save, the subject timeseries dictionary,
         ``self.timeseries_to_pickle()`` can be used.
 
         **NifTI Files Without "run-" Entity**: By default, "run-0" will be used as a placeholder, if run IDs are not
@@ -565,7 +565,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 "Fix: Set correct template space using `self.space = 'TEMPLATE_SPACE'` (e.g. 'MNI152NLin6Asym')\n"
                 "2. File names do not contain specific entities required for querying such as 'sub-', 'space-', "
                 "'task-', or 'desc-' (e.g 'sub-01_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-preproc-bold.nii.gz')\n"
-                "3. Incorrect task name specified in `task` parameter."
+                "3. Incorrect task name specified in `task` parameter.\n"
+                "4. The cache may need to be cleared using ``TimeseriesExtractor._call_layout.cache_clear()`` if the "
+                "directory has been changed (e.g. new files added, file names changed, etc) during the current Python "
+                "session."
             )
             raise BIDSQueryError(msg)
 

@@ -176,11 +176,12 @@ class CAP(_CAPGetter):
 
     Important
     ---------
-    **Data/Property Persistence**: Each time a function is called, properties related to that function are automatically
-    initialized/overwritten to create a clean state for the subsequent analysis. For instance, when ``self.get_caps()``
-    is ran, then properties such as ``self.caps``, ``self.kmeans``, ``self.concatenated_timeseries``, ``self.stdev``,
-    etc are automatically re-initialized to store the new results. The same occurs for ``self.cosine_similarity``,
-    when ``self.caps2radar()`` is ran and for other properties and their associated functions.
+    **Data/Property Persistence**: Each time certain functions are called, properties related to that function are
+    automatically initialized/overwritten to create a clean state for the subsequent analysis. For instance, when
+    ``self.get_caps()`` is ran, then properties such as ``self.caps``, ``self.kmeans``,
+    ``self.concatenated_timeseries``, ``self.stdev``, etc are automatically re-initialized to store the new results.
+    The same occurs for ``self.cosine_similarity``, when ``self.caps2radar()`` is ran and for other properties and their
+    associated functions.
 
     Note
     ----

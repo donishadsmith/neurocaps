@@ -1,0 +1,31 @@
+---
+name: Enhancement
+
+description: Template to suggest enhancements.
+
+title: '[ENH]'
+
+labels: [enhancement]
+
+body:
+
+-   type: textarea
+    attributes:
+        label: New Feature
+        description: Explain the feature that you would like to see added.
+    validations:
+        required: true
+
+-   type: textarea
+    attributes:
+        label: Use Case
+        description: Describe the problem this feature would solve or how it could improve NeuroCAPs.
+    validations:
+        required: false
+
+-   type: textarea
+    attributes:
+        label: Proposed Solution
+        description: If you have ideas on how to implement this feature, please share them below.
+    validations:
+        required: false

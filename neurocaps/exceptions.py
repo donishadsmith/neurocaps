@@ -14,6 +14,8 @@ class BIDSQueryError(Exception):
       - Incorrect template space (e.g. using the default "MNI152NLin2009cAsym" when a different space is used).
       - File naming issues where required entities (e.g. "sub-", "space-", "task-", "desc-") are missing.
       - An incorrect task name specified in the `task` parameter.
+      - The directory being changed during the current Python session (e.g. new files added, file names changed, etc),\
+      resulting in the cache needing to be cleared using ``TimeseriesExtractor._call_layout.cache_clear()``.
 
     Refer to `NeuroCAPs' BIDS Structure and Entities <https://neurocaps.readthedocs.io/en/stable/bids.html>`_ for
     additional information on the expected directory structure and entities needed for querying.

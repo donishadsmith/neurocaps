@@ -13,6 +13,13 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.24.1] - 2025-03-25
+### 🐛 Fixes
+- Update license field to comply with PEP 639 and avoid deprecation.
+- Upgraded to setuptools to 77.0.1, since this expression is supported in version 77.0.0 (which was yanked)
+### 📖 Documentation
+- Added some additional information in docs for user guiding.
+
 ## [0.24.0] - 2025-03-24
 - Minor internal refactoring for private functions to improve readability.
 - Some general improvements for better use of this package by others.
