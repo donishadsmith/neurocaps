@@ -454,7 +454,7 @@ class CAP(_CAPGetter):
             self._mean_vec[group] = np.mean(concatenated_timeseries[group], axis=0)
             self._stdev_vec[group] = np.std(concatenated_timeseries[group], ddof=1, axis=0)
             eps = np.finfo(self._stdev_vec[group].dtype).eps
-            # Taken from nilearn pipeline, used for numerical stability purposes to avoid numpy division error
+            # Used for numerical stability purposes to avoid numpy division error; References nilearn.signal_clean
             self._stdev_vec[group][self._stdev_vec[group] < eps] = 1.0
             diff = concatenated_timeseries[group] - self._mean_vec[group]
             concatenated_timeseries[group] = diff / self._stdev_vec[group]

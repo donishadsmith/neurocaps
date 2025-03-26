@@ -148,16 +148,16 @@ def _extract_timeseries(
 
         # Get files from specific run; Presence of confound metadata depends on if separate acompcor components requested
         data.files = {
-            "nifti": _grab(run, prepped_files["niftis"]),
-            "confound": _grab(run, prepped_files["confounds"]),
-            "confound_meta": _grab(
+            "nifti": _grab_files(run, prepped_files["niftis"]),
+            "confound": _grab_files(run, prepped_files["confounds"]),
+            "confound_meta": _grab_files(
                 run, prepped_files["confound_metas"] if prepped_files.get("confound_metas") else None
             ),
-            "event": _grab(run, prepped_files["events"]),
+            "event": _grab_files(run, prepped_files["events"]),
         }
 
         # Base message
-        data.head = _header(data, run_id.split("-")[-1], subj_id)
+        data.head = _subject_header(data, run_id.split("-")[-1], subj_id)
 
         if data.verbose:
             LG.info(
@@ -307,7 +307,7 @@ def _perform_extraction(data, LG):
 
 
 # Grab files
-def _grab(run, files):
+def _grab_files(run, files):
     if not files:
         return None
 
@@ -318,7 +318,7 @@ def _grab(run, files):
 
 
 # Create subject header
-def _header(data, run_id, subj_id):
+def _subject_header(data, run_id, subj_id):
     if data.session:
         sess_id = data.session
     else:
@@ -533,7 +533,7 @@ def _create_sample_mask(data):
 
 
 # Temporarily pad censored rows to correctly filter the condition
-def _pad(timeseries, data):
+def _pad_timeseries(timeseries, data):
     # Early return if no censoring
     if data.censor_mask is None:
         return timeseries
@@ -544,25 +544,18 @@ def _pad(timeseries, data):
     return padded_timeseries
 
 
-# Interpolate volumes; Based on nilearn's _interpolate_volumes
-def _interpolate_volumes(timeseries, data):
+# Replaces censored frames with values from cubic spline interpolation; References nilearn's _interpolate_volumes
+# approach from nilearn.signal clean and scipy's example docs
+def _interpolate_censored_volumes(timeseries, data):
     # Temporarily pad timeseries if sample mask used
-    timeseries = _pad(timeseries, data) if data.use_sample_mask else timeseries
-    sample_mask = copy.deepcopy(data.sample_mask)
-    sample_mask = np.array(sample_mask, dtype="bool")
+    timeseries = _pad_timeseries(timeseries, data) if data.use_sample_mask else timeseries
 
     # Get frame times
     frame_times = np.arange(data.max_len) * data.tr
-
-    # Retain noncensored frames and timeseries data
-    retained_frames = frame_times[data.censor_mask]
-    retained_timeseries = timeseries[data.censor_mask, :]
-
-    # Create interpolated timeseries
-    cubic_spline_fitter = CubicSpline(retained_frames, retained_timeseries, extrapolate=False)
-    timeseries_interpolated = cubic_spline_fitter(frame_times)
+    # Create interpolated timeseries; retain only good frame times and timeseries data
+    cubic_spline = CubicSpline(frame_times[data.censor_mask], timeseries[data.censor_mask, :], extrapolate=False)
     # Only replace the high motion volumes with the interpolated data
-    timeseries[~sample_mask, :] = timeseries_interpolated[~sample_mask, :]
+    timeseries[~data.censor_mask, :] = cubic_spline(frame_times)[~data.censor_mask, :]
 
     # Remove ends if not condition, condition already removes these volumes in the data.scans list
     if not data.condition:
@@ -599,11 +592,11 @@ def _get_contiguous_ends(data):
 # Interpolating, padding for future condition extraction, or deleting censored data from timeseries
 def _process_censored_timeseries(timeseries, data):
     if data.interpolate:
-        timeseries = _interpolate_volumes(timeseries, data)
+        timeseries = _interpolate_censored_volumes(timeseries, data)
     else:
         if data.use_sample_mask:
             # Temporarily pad timeseries for correct condition extraction since nilearn returns a truncated array
-            timeseries = _pad(timeseries, data) if data.condition else timeseries
+            timeseries = _pad_timeseries(timeseries, data) if data.condition else timeseries
         else:
             timeseries = np.delete(timeseries, data.censor_vols, axis=0) if not data.condition else timeseries
 

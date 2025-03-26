@@ -81,9 +81,8 @@ def standardize(
         for subj_id in curr_dict:
             for run in curr_dict[subj_id]:
                 std = np.std(curr_dict[subj_id][run], axis=0, ddof=1)
-                eps = np.finfo(std.dtype).eps
-                # Taken from nilearn pipeline, used for numerical stability purposes to avoid numpy division error
-                std[std < eps] = 1.0
+                # Used for numerical stability purposes to avoid numpy division error; References nilearn.signal_clean
+                std[std < np.finfo(std.dtype).eps] = 1.0
                 mean = np.mean(curr_dict[subj_id][run], axis=0)
                 curr_dict[subj_id][run] = (curr_dict[subj_id][run] - mean) / std
 
