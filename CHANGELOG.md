@@ -13,6 +13,11 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.24.2] - 2025-03-25
+- Some internal refactoring and name changes to internal functions for clarity
+### 🐛 Fixes
+- Removes wheel in requirements since it is no longer needed for bdist_wheel since setuptools v70.1.
+
 ## [0.24.1] - 2025-03-25
 ### 🐛 Fixes
 - Update license field to comply with PEP 639 and avoid deprecation.
