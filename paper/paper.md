@@ -73,7 +73,9 @@ visualization, significantly streamlining the CAPs analysis process.
 
 This module contains custom exceptions, one of which is `BIDSQueryError`. Since NeuroCAPs utilizes PyBIDS
 [@Yarkoni2019], a Python package for querying BIDS-compliant directories, this exception was created to guide users and
-provide potential fixes when no subject IDs are detected in the specified BIDS directories.
+provide potential fixes when no subject IDs are detected in the specified BIDS directories. The other exception,
+`NoElbowDetected`, was created to provide potential solutions in the event that the elbow method (implemented by
+``KneeLocator`` from the Kneed package [@Arvai_2023]) could not identify the optimal cluster size for k-means.
 
 **neurocaps.extraction**
 
@@ -82,7 +84,7 @@ This module contains the `TimeseriesExtractor` class, which:
 - extracts both resting-state and task-based functional MRI data using lateralized brain parcellations
 (such as the Schaefer [@Schaefer2018], Automated Anatomical Labeling [@Tzourio-Mazoyer2002], and Human Connectome
 Project extended [@Huang2022] parcellations) for spatial dimensionality reduction.
-- leverages Nilearn's [@Nilearn] `NiftiLabelsMasker` to perform nuisance regression and censoring of high-motion
+- leverages Nilearn's [@Nilearn] `NiftiLabelsMasker` to perform nuisance regression, censors high-motion
 volumes using fMRIPrep-derived regressors, and stores the extracted timeseries information in a dictionary mapping
 subject IDs to run IDs and their associated timeseries.
 - saves extracted timeseries data in a serialized pickle format.
@@ -93,9 +95,11 @@ subject IDs to run IDs and their associated timeseries.
 This module contains the `CAP` class, which:
 
 - allows group-specific analyses or analyses on all subjects (the default configuration).
-- performs k-means clustering for CAP identification, while supporting a single cluster size or a range of clusters in
-combination with a cluster selection method (i.e. elbow, silhouette, davies-boulden, and variance ratio) to determine
-the optimal cluster size.
+- performs k-means clustering (from Scikit-learn [@scikit-learn]) for CAP identification, while supporting a single
+cluster size or a range of clusters in combination with various cluster selection methods to determine the optimal
+cluster size, including:
+  - the elbow method (from Kneed package [@Arvai_2023])
+  - the silhouette score, davies-bouldin index, and variance ratio methods (all from Scikit-learn [@scikit-learn])
 - computes various temporal dynamics metrics (including counts/state initiation, temporal fraction, persistence,
 transition frequency, and transition probability) at the subject-level and exports data to a CSV file for downstream
 statistical analyses.
