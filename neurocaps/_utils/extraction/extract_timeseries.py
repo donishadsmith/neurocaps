@@ -148,12 +148,12 @@ def _extract_timeseries(
 
         # Get files from specific run; Presence of confound metadata depends on if separate acompcor components requested
         data.files = {
-            "nifti": _grab_files(run, prepped_files["niftis"]),
-            "confound": _grab_files(run, prepped_files["confounds"]),
-            "confound_meta": _grab_files(
+            "nifti": _grab_file(run, prepped_files["niftis"]),
+            "confound": _grab_file(run, prepped_files["confounds"]),
+            "confound_meta": _grab_file(
                 run, prepped_files["confound_metas"] if prepped_files.get("confound_metas") else None
             ),
-            "event": _grab_files(run, prepped_files["events"]),
+            "event": _grab_file(run, prepped_files["events"]),
         }
 
         # Base message
@@ -306,8 +306,8 @@ def _perform_extraction(data, LG):
     return timeseries
 
 
-# Grab files
-def _grab_files(run, files):
+# Grab single file
+def _grab_file(run, files):
     if not files:
         return None
 
