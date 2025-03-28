@@ -23,9 +23,10 @@ def _logger(name, flush=False, top_level=True, parallel_log_config=None):
     logger = logging.getLogger(name)
     parallel_module = "neurocaps._utils.extraction.extract_timeseries"
 
-    # Windows appears to assign stderr has the root handler after the top level loggers are assigned, which causes
-    # any loggers not assigned at top level to adopt this handler. Global variable used to assess if the base root
-    # handler is user defined or assigned by the system
+    # Note: Based on _logger from (commit: 08723e0 - Oct 6, 2024), Windows logging formatting issue likely due to
+    # due to a combination of only initializing module logger at function level and using hasHandlers() for child
+    # loggers to determine propogation and handler assignment, which resulted in no module handler and propogation to
+    # the root handler which defaults to standard error stream and has its own formatter
     if top_level is True:
         _USER_ROOT_HANDLER = logging.getLogger().hasHandlers()
         _USER_MODULE_HANDLERS[logger.name] = logger.handlers
@@ -50,7 +51,7 @@ def _logger(name, flush=False, top_level=True, parallel_log_config=None):
 
     # Add or messages will repeat several times due to multiple handlers if same name used
     if not default_handlers and not (parallel_log_config or logger.name == parallel_module and top_level):
-        # If no user specified default handler, any handler is assigned by OS and is cleared
+        # Safeguard; ensure a clean state for "extract_timeseries" since it is used in parallel and sequential contexts
         if logger.name == parallel_module:
             logger.handlers.clear()
 
