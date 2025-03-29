@@ -13,6 +13,13 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.24.3] - 2025-03-29
+- Internal refactoring
+### 🚀 New/Added
+- Added the `qc` property and the `report_qc` function in `TimeseriesExtractor`
+### 🐛 Fixes
+- Type hint for `output_dir` in `TimeseriesExtractor.timeseries_to_pickle`
+
 ## [0.24.2] - 2025-03-25
 - Some internal refactoring and name changes to internal functions for clarity
 ### 🐛 Fixes

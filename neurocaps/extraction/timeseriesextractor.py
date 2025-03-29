@@ -200,7 +200,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         number of frames scrubbed and interpolated.
         ::
 
-            {"subjID": {"run-ID": {"frames_scrubbed": int, "frames_interpolated": int}}}
+            {"subjectID": {"run-ID": {"frames_scrubbed": int, "frames_interpolated": int}}}
 
         .. versionadded:: 0.24.3
 
