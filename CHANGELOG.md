@@ -13,6 +13,10 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.24.4.post0] - 2025-03-29
+### 🐛 Fixes
+- Broken zenodo badge.
+
 ## [0.24.4] - 2025-03-29
 - Simply adds an additional conditional as a safeguard when passing sample mask to nilearn.
 
