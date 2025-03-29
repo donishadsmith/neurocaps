@@ -305,7 +305,9 @@ def _perform_extraction(data, LG):
 
     # Extract timeseries; Censor mask used only when `pass_mask_to_nilearn` is True
     timeseries = masker.fit_transform(
-        nifti_img, confounds=confounds, sample_mask=data.sample_mask if data.pass_mask_to_nilearn else None
+        nifti_img,
+        confounds=confounds,
+        sample_mask=data.sample_mask if (data.pass_mask_to_nilearn and data.censored_frames) else None,
     )
 
     # Process censored timeseries
