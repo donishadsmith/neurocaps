@@ -964,7 +964,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         else:
             raise AttributeError(f"{msg} since `self.qc` is None, run `self.get_bold()` first.")
 
-    def timeseries_to_pickle(self, output_dir: Union[str, str], filename: Optional[str] = None) -> Self:
+    def timeseries_to_pickle(self, output_dir: str, filename: Optional[str] = None) -> Self:
         """
         Save the Extracted Subject Timeseries.
 
@@ -991,7 +991,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         return self
 
-    def report_qc(self, output_dir=None, filename=None, return_df=True):
+    def report_qc(
+        self, output_dir: Optional[str] = None, filename: Optional[str] = None, return_df: bool = True
+    ) -> Union[DataFrame, None]:
         """
         Report Quality Control Information.
 
