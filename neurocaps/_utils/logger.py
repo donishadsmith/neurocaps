@@ -50,7 +50,7 @@ def _logger(name, flush=False, top_level=True, parallel_log_config=None):
     logger.propagate = False if _USER_MODULE_HANDLERS[logger.name] or not _USER_ROOT_HANDLER else True
 
     # Add or messages will repeat several times due to multiple handlers if same name used
-    if not default_handlers and not (parallel_log_config or logger.name == parallel_module and top_level):
+    if not default_handlers and not (parallel_log_config or (logger.name == parallel_module and top_level)):
         # Safeguard; ensure a clean state for "extract_timeseries" since it is used in parallel and sequential contexts
         if logger.name == parallel_module:
             logger.handlers.clear()

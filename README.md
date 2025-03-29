@@ -118,6 +118,7 @@ section of the documentation homepage.**
 - **Timeseries Extraction:** Extract timeseries for resting-state or task data using Schaefer, AAL, or a lateralized Custom parcellations (which can be manually defined) for spatial dimensionality reduction.
 - **Parallel Processing:** Parallelize at the subject-level (one subject per CPU core) to speed up timeseries extraction.
 - **Saving Timeseries:** Save the nested dictionary containing timeseries (mapping subject id -> run id -> timeseries data) as a pickle file.
+- **Reporting Quality Control:** Outputs per-subject, per-run quality control metrics (number of scrubbed and interpolated frames).
 - **Visualization:** Visualize the timeseries at the region or node level of the parcellation for a given subject and run.
 
 **Main features for `CAP` includes:**
@@ -245,6 +246,21 @@ extractor.get_bold(
 
 **Note:** Refer to [NeuroCAPs' Logging Documentation](https://neurocaps.readthedocs.io/en/stable/logging.html) for
 additional information about confuguring logging.
+
+```python
+# Get QC report
+df = extractor.report_qc()
+
+# Note run-2 for subject 006 is not in QC report due to being flagged
+print(df)
+```
+**DataFrame Output:**
+| Subject_ID | Run | Frames_Scrubbed | Frames_Interpolated |
+| --- | --- | --- | --- |
+| 0004 | run-1 | 2 | 0 |
+| 0004 | run-2 | 0 | 0 |
+| 0006 | run-2 | 2 | 0 |
+
 
 ```python
 # Initialize CAP class

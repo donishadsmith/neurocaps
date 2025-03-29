@@ -81,6 +81,10 @@ class _TimeseriesExtractorGetter:
     def subject_timeseries(self) -> None:
         del self._subject_timeseries
 
+    @property
+    def qc(self) -> Union[dict, None]:
+        return getattr(self, "_qc", None)
+
     @staticmethod
     def _validate_timeseries(subject_dict: SubjectTimeseries) -> None:
         error_msg = (

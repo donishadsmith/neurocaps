@@ -12,6 +12,7 @@ else:
 
 import matplotlib.pyplot as plt, numpy as np
 from joblib import Parallel, delayed, dump
+from pandas import DataFrame
 from tqdm.auto import tqdm
 
 from ..exceptions import BIDSQueryError
@@ -84,22 +85,23 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
            same functionality that ``None`` did in previous versions.
 
     fd_threshold: :obj:`float`, :obj:`dict[str, float | int]`, or :obj:`None`, default=None
-        Threshold for volume censoring based on framewise displacement (FD).
+        Threshold for volume censoring based on framewise displacement (FD). Computed only after dummy volumes are
+        removed.
 
         - *If float*, removes volumes where FD > threshold.
         - *If dict*, the following subkeys are available:
 
-            - "threshold": A float (Default=None). Removes volumes where FD > threshold.
-            - "outlier_percentage": A float in interval [0,1] (Default=None). Removes entire runs where proportion of\
-              censored volumes exceeds this threshold. Proportion calculated after dummy scan removal.
+            - "threshold": A float. Removes volumes where FD > threshold.
+            - "outlier_percentage": A float in interval [0,1]. Removes entire runs where proportion of censored volumes\
+              exceeds this threshold. Proportion calculated after dummy scan removal.
 
             .. note::
                 - A warning is issued when a run is flagged.
                 - If ``condition`` specified for task-based data in ``self.get_bold()``, only considers volumes associated with the condition.
 
-            - "n_before": An integer (Default=None). Indicates the number of volumes to remove before each flagged volume.
-            - "n_after": An integer (Default=None). Indicates the number of volumes to remove after each flagged volume.
-            - "use_sample_mask": A boolean (Default=None). Controls when censoring is applied in the processing pipeline.
+            - "n_before": An integer. Indicates the number of volumes to remove before each flagged volume.
+            - "n_after": An integer. Indicates the number of volumes to remove after each flagged volume.
+            - "use_sample_mask": A boolean. Controls when censoring is applied in the processing pipeline.
 
             .. important::
                 - When True:
@@ -115,12 +117,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     - Full timeseries data is used during nuisance regression.
                     - Censoring is applied after nuisance regression.
 
-            - "interpolate": A boolean (Default=None). If True, uses scipy's ``CubicSpline`` function with\
-              ``extrapolate=False`` to perform cubic spline interpolation on censored frames.
+            - "interpolate": A boolean. If True, uses scipy's ``CubicSpline`` function with ``extrapolate=False``\
+            to perform cubic spline interpolation on censored frames. **Only performs interpolation if True**.
 
             .. note:: Interpolation is only performed on frames that are flanked by non-censored frames on both ends.\
-                For example, given a ``censor_mask=[0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0]`` where "0" indicates censored\
-                volumes, only the volumes at index 3, 5, 6, and 8 would be interpolated. If False or
+                For example, given a ``censor_mask=[0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0]`` where "0" indicates censored,\
+                high motion volumes and "1" indicates non-censored, low motion volumes, only the volumes at index 3, 5,\
+                6, and 8 would be interpolated.
 
             .. versionadded:: 0.22.3 "interpolate" key added.
 
@@ -154,11 +157,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         - *If int*, removes first "n" volumes.
         - *If dict*, the following keys are supported:
 
-            - "auto": A boolean (Default=None). If True, automatically determines dummy scans from fMRIPrep confounds\
-              using the number of "non_steady_state_outlier_XX" columns in the confounds tsv file.
-            - "min": An integer (Default=None). Minimum volumes to remove when auto is set to True. If "auto" finds 2\
-              outliers but ``{"min": 3}``, removes 3 volumes.
-            - "max": An integer (Default=None). Maximum volumes to remove when auto=True. If "auto" finds 6 outliers but\
+            - "auto": A boolean. If True, automatically determines dummy scans from fMRIPrep confounds using the number\
+              of "non_steady_state_outlier_XX" columns in the confounds tsv file.
+            - "min": An integer. Minimum volumes to remove when auto is set to True. If "auto" finds 2 outliers but\
+              ``{"min": 3}``, removes 3 volumes.
+            - "max": An integer. Maximum volumes to remove when auto=True. If "auto" finds 6 outliers but\
               ``{"max": 5}``, removes 5 volumes.
 
         .. important:: "min" and "max" keys only apply when "auto" is True.
@@ -191,6 +194,15 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     subject_timeseries: :obj:`SubjectTimeseries` or :obj:`None`
         A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a NumPy array.
         Can be deleted using ``del self.subject_timeseries``. Defined after running ``self.get_bold()``.
+
+    qc: :obj:`dict` or :obj:`None`
+        A dictionary reporting quality control, which maps subject IDs to their run IDs and information related to the
+        number of frames scrubbed and interpolated.
+        ::
+
+            {"subjID": {"run-ID": {"frames_scrubbed": int, "frames_interpolated": int}}}
+
+        .. versionadded:: 0.24.3
 
     See Also
     --------
@@ -289,47 +301,46 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     @staticmethod
     def _validate_init_params(param, struct):
 
-        mandatory_keys = {"dummy_scans": {"auto": bool}, "fd_threshold": {"threshold": (float, int)}}
+        mandatory_keys = {"dummy_scans": {"auto": (bool,)}, "fd_threshold": {"threshold": (float, int)}}
 
         optional_keys = {
-            "dummy_scans": {"min": int, "max": int},
+            "dummy_scans": {"min": (int,), "max": (int,)},
             "fd_threshold": {
-                "n_before": int,
-                "n_after": int,
-                "outlier_percentage": float,
-                "use_sample_mask": bool,
-                "interpolate": bool,
+                "n_before": (int,),
+                "n_after": (int,),
+                "outlier_percentage": (float,),
+                "use_sample_mask": (bool,),
+                "interpolate": (bool,),
             },
         }
 
+        types2str = lambda t: t.__name__
+        str2text = lambda valid_types: ", ".join([types2str(t) for t in valid_types])
+
         valid_types = (dict, int) if param == "dummy_scans" else (dict, float, int)
-        error_msg = "dictionary or integer" if param == "dummy_scans" else "dictionary, float, or integer"
         if not isinstance(struct, valid_types):
-            raise TypeError(f"`{param}` must be a {error_msg}.")
+            raise TypeError(f"`{param}` must be one of the following types when not None: {str2text(valid_types)}.")
 
         if isinstance(struct, dict):
             # Check mandatory keys
             key = list(mandatory_keys[param].keys())[0]
             if key not in struct:
                 raise KeyError(f"'{key}' is a mandatory key when `{param}` is a dictionary.")
-
             if not isinstance(struct[key], mandatory_keys[param][key]):
-                raise TypeError(f"'{key}' must be a {'boolean' if key == 'auto' else 'float or integer'}.")
+                raise TypeError(
+                    f"'{key}' must be of one of the following types: {str2text(mandatory_keys[param][key])}."
+                )
 
             # Check optional keys
             for key in optional_keys[param]:
                 if key in struct:
-                    if not isinstance(struct[key], optional_keys[param][key]):
-                        type_msg = (
-                            "a boolean"
-                            if key == "use_sample_mask"
-                            else ("a float" if key == "outlier_percentage" else "an integer")
+                    if struct[key] is not None and not isinstance(struct[key], optional_keys[param][key]):
+                        raise TypeError(
+                            f"'{key}' must be either None or of type {str2text(optional_keys[param][key])}."
                         )
-                        raise TypeError(f"'{key}' must be {type_msg}.")
-
                     # Additional check for "outlier_percentage"
-                    if key == "outlier_percentage" and not 0 < struct[key] < 1:
-                        raise ValueError("'outlier_percentage' must be float between 0 and 1.")
+                    if key == "outlier_percentage" and not 0 < struct["outlier_percentage"] < 1:
+                        raise ValueError("'outlier_percentage' must be either None or a float between 0 and 1.")
 
             # Check invalid keys
             set_diff = set(struct) - set(optional_keys[param]) - set(mandatory_keys[param])
@@ -552,6 +563,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         # Initialize new attributes
         self._subject_ids = []
         self._subject_timeseries = {}
+        self._qc = {}
         self._subject_info = {}
         self._n_cores = n_cores
 
@@ -610,9 +622,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 total=len(args_list),
                 disable=not progress_bar,
             )
+
             for output in outputs:
-                if isinstance(output, dict):
-                    self._subject_timeseries.update(output)
+                subject_timeseries, qc = output
+                self._expand_dicts(subject_timeseries, qc)
         else:
             if parallel_log_config:
                 LG.warning(
@@ -622,7 +635,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 )
 
             for subj_id in tqdm(self._subject_ids, desc="Processing Subjects", disable=not progress_bar):
-                subject_timeseries = _extract_timeseries(
+                outputs = _extract_timeseries(
                     subj_id=subj_id,
                     **self._subject_info[subj_id],
                     parcel_approach=self._parcel_approach,
@@ -632,11 +645,15 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     flush=flush,
                 )
 
-                # Aggregate new timeseries
-                if isinstance(subject_timeseries, dict):
-                    self._subject_timeseries.update(subject_timeseries)
+                self._expand_dicts(*outputs)
 
         return self
+
+    def _expand_dicts(self, subject_timeseries, qc):
+        # Aggregate new timeseries dictionary and qc
+        if isinstance(subject_timeseries, dict):
+            self._subject_timeseries.update(subject_timeseries)
+            self._qc.update(qc)
 
     def _validate_get_bold_params(self):
         if self._task_info["condition_tr_shift"] != 0:
@@ -938,11 +955,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         return tr
 
     @staticmethod
-    def _raise_error(msg):
-        raise AttributeError(
-            f"{msg} since `self.subject_timeseries` is None, either run "
-            "`self.get_bold()` or assign a valid timeseries dictionary to `self.subject_timeseries`."
-        )
+    def _raise_error(prop_name, msg):
+        if prop_name == "_subject_timeseries":
+            raise AttributeError(
+                f"{msg} since `self.subject_timeseries` is None, either run `self.get_bold()` or assign a valid "
+                "timeseries dictionary to `self.subject_timeseries`."
+            )
+        else:
+            raise AttributeError(f"{msg} since `self.qc` is None, run `self.get_bold()` first.")
 
     def timeseries_to_pickle(self, output_dir: Union[str, str], filename: Optional[str] = None) -> Self:
         """
@@ -956,27 +976,99 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Directory to save a pickle file to. The directory will be created if it does not exist.
 
         filename: :obj:`str` or :obj:`None`, default=None
-            Name of the file with or without the "pkl" extension.
+            Name of the file with or without the "pkl" extension. If None, will use "subject_timeseries.pkl" as default.
 
         Returns
         -------
         self
         """
-        if not hasattr(self, "_subject_timeseries"):
-            self._raise_error("Cannot save pickle file")
-
-        if output_dir and not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-
-        if filename is None:
-            save_filename = "subject_timeseries.pkl"
-        else:
-            save_filename = f"{os.path.splitext(filename.rstrip())[0].rstrip()}.pkl"
+        save_filename = self._prepare_output_file(
+            output_dir, filename, prop_name="_subject_timeseries", call="timeseries_to_pickle"
+        )
 
         with open(os.path.join(output_dir, save_filename), "wb") as f:
             dump(self._subject_timeseries, f)
 
         return self
+
+    def report_qc(self, output_dir=None, filename=None, return_df=True):
+        """
+        Report Quality Control Information.
+
+        Converts per-subject, per-run quality control metrics (frame scrubbing and interpolation) stored in
+        ``self.qc`` dictionary to a pandas DataFrame for analysis and reporting.
+
+        .. versionadded:: 0.24.3
+
+        Parameters
+        ----------
+        output_dir: :obj:`str`, default=None
+            Directory to save a pickle file to. The directory will be created if it does not exist. File will not be
+            saved in an output directory is not provided.
+
+        filename: :obj:`str` or :obj:`None`, default=None
+            Name of the file with or without the "csv" extension.
+
+        return_df: :obj:`bool`, default=True
+            If True, returns the dataframe.
+
+        Returns
+        -------
+        pandas.Dataframe - Pandas dataframe containing the colums: "Subject_ID", "Run", "Frames_Scrubbed",
+        "Frames_Interpolated".
+
+        Important
+        ---------
+        **Censored & Interpolated Frames**: The frame counts reported exclude any dummy volumes, as they are calculated
+        after dummy volumes are removed from the analysis. If a ``condition`` was specified in ``self.get_bold``,
+        the reported values reflect only frames specific to that condition; otherwise, metrics represent the entire
+        timeseries (excluding dummy volumes).
+
+        The metrics for scrubbed frames and interpolated frames are independent. For instance, two scrubbed frames and
+        three interpolated frames means that three frames were interpolated while two were scrubbed due to excessive
+        motion. Note that only frames with valid data on both sides can be interpolated, while frames at the edges of
+        the timeseries (including frames that border censored edges) are always scrubbed.
+        """
+        save_filename = self._prepare_output_file(output_dir, filename, prop_name="_qc", call="report_qc")
+        assert self._qc, "No quality control information to report."
+
+        # Build df
+        df = DataFrame(columns=["Subject_ID", "Run", "Frames_Scrubbed", "Frames_Interpolated"])
+        for subject in self._qc:
+            for run in self._qc[subject]:
+                df.loc[len(df)] = [
+                    subject,
+                    run,
+                    self._qc[subject][run]["frames_scrubbed"],
+                    self._qc[subject][run]["frames_interpolated"],
+                ]
+
+        if output_dir:
+            df.to_csv(os.path.join(output_dir, save_filename), sep=",", index=0)
+
+        if return_df:
+            return df
+
+    def _prepare_output_file(self, output_dir, filename, prop_name, call):
+        if not hasattr(self, prop_name):
+            self._raise_error(
+                prop_name,
+                msg="Cannot save pickle file" if prop_name == "_subject_timeseries" else "Cannot save csv file",
+            )
+
+        if not output_dir:
+            return None
+        elif output_dir and not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        ext = "pkl" if call == "timeseries_to_pickle" else "csv"
+
+        if filename is None:
+            save_filename = "subject_timeseries.pkl" if call == "timeseries_to_pickle" else "report_qc.csv"
+        else:
+            save_filename = f"{os.path.splitext(filename.rstrip())[0].rstrip()}.{ext}"
+
+        return save_filename
 
     def visualize_bold(
         self,
@@ -1040,7 +1132,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         """
 
         if not hasattr(self, "_subject_timeseries"):
-            self._raise_error("Cannot plot bold data")
+            self._raise_error(prop_name="_subject_timeseries", msg="Cannot plot bold data")
 
         subj_id = str(subj_id).removeprefix("sub-")
         if subj_id not in self._subject_timeseries:

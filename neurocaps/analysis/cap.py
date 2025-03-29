@@ -494,7 +494,7 @@ class CAP(_CAPGetter):
                     model_dict.update(model)
             else:
                 parallel = Parallel(return_as="generator", n_jobs=self._n_cores, backend="loky")
-                output = tqdm(
+                outputs = tqdm(
                     parallel(
                         delayed(_run_kmeans)(n_cluster, configs, self._concatenated_timeseries[group], method)
                         for n_cluster in self._n_clusters
@@ -504,7 +504,7 @@ class CAP(_CAPGetter):
                     disable=not progress_bar,
                 )
 
-                output_scores, models = zip(*output)
+                output_scores, models = zip(*outputs)
                 for output in output_scores:
                     performance_dict[group].update(output)
                 for model in models:

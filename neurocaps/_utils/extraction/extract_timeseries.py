@@ -17,9 +17,10 @@ from ...typing import ParcelApproach
 LG = _logger(__name__)
 
 
-# data container
+# Data container
 @dataclass
 class _Data:
+    # Add defaults so no field are required when using this class for testing
     parcel_approach: ParcelApproach = field(default_factory=dict)
     signal_clean_info: dict = field(default_factory=dict)
     task_info: dict = field(default_factory=dict)
@@ -29,11 +30,14 @@ class _Data:
     files: dict[str, str] = field(default_factory=dict)
     fail_fast: bool = False
     dummy_vols: Union[int, None] = None
-    censor_vols: list[int] = field(default_factory=list)
-    sample_mask: Union[list, np.typing.NDArray[np.bool_]] = field(default_factory=list)
+    censored_frames: list[int] = field(default_factory=list)
+    sample_mask: Union[np.typing.NDArray[np.bool_], None] = None
+    censored_ends: list[int] = field(default_factory=list)
     max_len: Union[int, None] = None
-    # Event condition scan indices
+    # Event condition scan indices and qc information for condition
     scans: list[int] = field(default_factory=list)
+    n_censored_condition_indxs: int = 0
+    n_interpolated_condition_indxs: int = 0
     # Subject header
     head: Union[str, None] = None
     # Percentage of volumes that exceed fd threshold
@@ -94,18 +98,16 @@ class _Data:
             return self.signal_clean_info["fd_threshold"].get("n_after")
 
     @property
-    def use_sample_mask(self) -> Union[bool, None]:
+    def pass_mask_to_nilearn(self) -> Union[bool, None]:
         if isinstance(self.signal_clean_info["fd_threshold"], dict):
-            return self.signal_clean_info["fd_threshold"].get("use_sample_mask")
+            return True if self.signal_clean_info["fd_threshold"].get("use_sample_mask") is True else False
+        else:
+            return False
 
     @property
     def interpolate(self) -> Union[bool, None]:
         if isinstance(self.signal_clean_info["fd_threshold"], dict):
             return self.signal_clean_info["fd_threshold"].get("interpolate")
-
-    @property
-    def censor_mask(self) -> Union[np.typing.NDArray, None]:
-        return np.array(self.sample_mask) if len(self.sample_mask) > 0 else None
 
     @cached_property
     def confound_df(self) -> Union[pd.DataFrame, None]:
@@ -135,8 +137,9 @@ def _extract_timeseries(
 
     # Logger inside function to give logger to each child process if parallel processing is done
     LG = _logger(__name__, flush=flush, top_level=False, parallel_log_config=parallel_log_config)
-    # Initialize subject dictionary
+    # Initialize subject dictionary and quality control dictionary
     subject_timeseries = {subj_id: {}}
+    qc = {subj_id: {}}
 
     for run in run_list:
         # Initialize class; placing inside run loops allows re-initialization of defaults
@@ -171,12 +174,12 @@ def _extract_timeseries(
         # Assess framewise displacement
         if data.fd_thresh and data.files["confound"] and "framewise_displacement" in data.confound_df.columns:
             # Get censor volumes vector, outlier_limit, and threshold
-            data.max_len, data.censor_vols = _censor(data)
+            data.max_len, data.censored_frames = _censor(data)
 
-            if data.censor_vols and (data.n_before or data.n_after):
-                data.censor_vols = _extended_censor(data)
+            if data.censored_frames and (data.n_before or data.n_after):
+                data.censored_frames = _extended_censor(data)
 
-            if len(data.censor_vols) == data.max_len:
+            if len(data.censored_frames) == data.max_len:
                 LG.warning(
                     f"{data.head}" + "Timeseries Extraction Skipped: Timeseries will be empty due to "
                     f"all volumes exceeding a framewise displacement of {data.fd_thresh}."
@@ -184,12 +187,14 @@ def _extract_timeseries(
                 continue
 
             # Create sample mask
-            if data.censor_vols and (data.use_sample_mask or data.interpolate):
+            if data.censored_frames and (data.pass_mask_to_nilearn or data.interpolate):
                 data.sample_mask = _create_sample_mask(data)
 
             # Check if run fails fast due to percentage volumes exceeding user-specified out_percent
             if data.out_percent and not data.condition:
-                data.vols_exceed_percent, data.fail_fast = _flag(len(data.censor_vols), data.max_len, data.out_percent)
+                data.vols_exceed_percent, data.fail_fast = _flag(
+                    len(data.censored_frames), data.max_len, data.out_percent
+                )
 
         elif data.fd_thresh and data.files["confound"] and "framewise_displacement" not in data.confound_df.columns:
             LG.warning(
@@ -197,6 +202,10 @@ def _extract_timeseries(
                 "found in the confound tsv file. Removal of volumes after nuisance regression will not be "
                 "but timeseries extraction will continue."
             )
+
+        # Determines indxs of ends to be censored if interpolation of censored volumes are requested
+        if data.interpolate:
+            data.censored_ends = _get_contiguous_ends(data)
 
         # Get events
         if data.files["event"]:
@@ -211,12 +220,19 @@ def _extract_timeseries(
                 )
                 continue
 
-            # Get condition indices
+            # Get condition indices; removes any scans in dummy volumes
             data.scans = _get_condition(data, condition_df)
-            if data.censor_vols:
-                data.scans, n = _filter_condition(data, LG)
+            total_condition_frames = len(data.scans)
+
+            if data.censored_frames:
+                # Removing censored or non-interpolated scan indxs; n_censored_condition_indxs is all indxs flagged
+                # regardless if indx will be interpolated
+                data.scans, data.n_censored_condition_indxs, data.n_interpolated_condition_indxs = _filter_condition(
+                    data, LG
+                )
                 if data.out_percent:
-                    data.vols_exceed_percent, data.fail_fast = _flag(n - len(data.scans), n, data.out_percent)
+                    n = data.n_censored_condition_indxs
+                    data.vols_exceed_percent, data.fail_fast = _flag(n, total_condition_frames, data.out_percent)
 
             if not data.scans:
                 LG.warning(
@@ -248,12 +264,15 @@ def _extract_timeseries(
             )
         else:
             subject_timeseries[subj_id].update({run_id: timeseries})
+            # Report framewise displacement quality control
+            qc[subj_id].update({run_id: _report_qc(data)})
 
     if not subject_timeseries[subj_id]:
         LG.warning(f"{data.head.split(' | RUN:')[0]}] Timeseries Extraction Skipped: No runs were extracted.")
         subject_timeseries = None
+        qc = None
 
-    return subject_timeseries
+    return subject_timeseries, qc
 
 
 # Perform the timeseries extraction
@@ -284,13 +303,13 @@ def _perform_extraction(data, LG):
         if confounds is not None:
             confounds.drop(list(range(data.dummy_vols)), axis=0, inplace=True)
 
-    # Extract timeseries; Censor mask used only when `use_sample_mask` is set to True
+    # Extract timeseries; Censor mask used only when `pass_mask_to_nilearn` is True
     timeseries = masker.fit_transform(
-        nifti_img, confounds=confounds, sample_mask=data.censor_mask if data.use_sample_mask else None
+        nifti_img, confounds=confounds, sample_mask=data.sample_mask if data.pass_mask_to_nilearn else None
     )
 
     # Process censored timeseries
-    timeseries = _process_censored_timeseries(timeseries, data) if data.censor_vols else timeseries
+    timeseries = _process_censored_timeseries(timeseries, data) if data.censored_frames else timeseries
 
     if data.condition:
         # If any out of bound indices, remove them instead of getting indexing error.
@@ -375,11 +394,11 @@ def _censor(data):
     return fd_array.shape[0], censor_volumes
 
 
-# Created an extended censor_vols vector
+# Created an extended censored_frames vector
 def _extended_censor(data):
     ext_arr = []
 
-    for i in data.censor_vols:
+    for i in data.censored_frames:
         if data.n_before:
             ext_arr.extend(list(range(i - data.n_before, i)))
         if data.n_after:
@@ -389,7 +408,34 @@ def _extended_censor(data):
     filtered_ext_arr = [x for x in ext_arr if x >= 0 and x < data.max_len]
 
     # Return new list that is sorted and only contains unique indices
-    return sorted(list(set(data.censor_vols + filtered_ext_arr)))
+    return sorted(list(set(data.censored_frames + filtered_ext_arr)))
+
+
+# Determines the number of frames that were scrubbed and interpolated
+def _report_qc(data):
+    qc = {"frames_scrubbed": 0, "frames_interpolated": 0}
+
+    if not data.censored_frames:
+        return qc
+
+    n_interpolated_frames = 0
+    if not data.condition:
+        n_scrubbed_frames = len(data.censored_frames)
+        # Subtract interpolated frames from the number of censored_ends, which don't get interpolated
+        if data.interpolate:
+            n_interpolated_frames = (
+                n_scrubbed_frames - len(data.censored_ends) if data.censored_ends else n_scrubbed_frames
+            )
+
+        n_scrubbed_frames -= n_interpolated_frames
+    else:
+        n_scrubbed_frames = data.n_censored_condition_indxs
+        n_interpolated_frames = data.n_interpolated_condition_indxs
+
+    qc["frames_scrubbed"] = n_scrubbed_frames
+    qc["frames_interpolated"] = n_interpolated_frames
+
+    return qc
 
 
 # Determine if run fails fast; when condition is not specified
@@ -426,37 +472,35 @@ def _get_condition(data, condition_df):
 
 
 def _filter_condition(data, LG):
-    # New `scans` list always created
-    scans = data.scans
+    # New `scans` list always created; Now just add deepcopy to be explicit
+    scans = copy.deepcopy(data.scans)
     # Assess if any condition indices greater than fd array to not dilute outlier calculation
     if max(scans) > data.max_len - 1:
         scans = _check_indices(data, data.max_len, LG)
 
-    # Get length of scan list prior to assess outliers if requested
-    n_before_censor = len(scans)
-
-    # Remove all censored scans if no interpolation else only remove censored ends
-    if not data.interpolate:
-        scans = [volume for volume in scans if volume not in data.censor_vols]
-    else:
-        censor_ends = _get_contiguous_ends(data)
-        scans = [volume for volume in scans if volume not in censor_ends]
-
-    return scans, n_before_censor
+    # Remove all censored scans if no interpolation else only remove censored (contiguous) ends
+    scrubbing_approach = data.censored_frames if not data.interpolate else data.censored_ends
+    censored_indxs = set(scrubbing_approach).intersection(scans)
+    # Determine the number of frames that will be interpolated for qc report
+    # Get the intersection of scan indxs and the censored_frames, then filter out indxs not in censored_ends
+    n_interpolated_indxs = (
+        len(set(scans).intersection(data.censored_frames).difference(data.censored_ends)) if data.interpolate else 0
+    )
+    scans = [indx for indx in scans if indx not in censored_indxs]
+    return scans, len(censored_indxs), n_interpolated_indxs
 
 
 # Extract first "n" numbers of specified WM and CSF components
 def _get_separate_acompcor(data):
     confound_metadata_file = data.files["confound_meta"]
-    n = data.n_acompcor_separate
     components_list = []
 
     with open(confound_metadata_file, "r") as confounds_json:
         confound_metadata = json.load(confounds_json)
 
     acompcors = sorted([acompcor for acompcor in confound_metadata if "a_comp_cor" in acompcor])
-    CSF = [CSF for CSF in acompcors if confound_metadata[CSF]["Mask"] == "CSF"][0:n]
-    WM = [WM for WM in acompcors if confound_metadata[WM]["Mask"] == "WM"][0:n]
+    CSF = [CSF for CSF in acompcors if confound_metadata[CSF]["Mask"] == "CSF"][0 : data.n_acompcor_separate]
+    WM = [WM for WM in acompcors if confound_metadata[WM]["Mask"] == "WM"][0 : data.n_acompcor_separate]
     components_list.extend(CSF + WM)
 
     return components_list
@@ -524,22 +568,24 @@ def _extract_valid_confounds(data, confound_names, LG):
     return confounds
 
 
-# Create sample mask for censoring high motion volumes for nuisance regression
+# Create sample mask for censoring high motion volumes for nuisance regression or if not using for nuisance regression
+# used to determine frames to be interpolated. True for volumes kept and False for volumes censored
 def _create_sample_mask(data):
     sample_mask = np.ones(data.max_len, dtype="bool")
-    sample_mask[np.array(data.censor_vols)] = False
+    sample_mask[np.array(data.censored_frames)] = False
 
     return sample_mask
 
 
-# Temporarily pad censored rows to correctly filter the condition
+# If the sample mask was passed to NiftiLabelsMasker, temporarily pad the censored rows to either filter the correct
+# rows corresponding to condition or to interpolate the correct rows
 def _pad_timeseries(timeseries, data):
-    # Early return if no censoring
-    if data.censor_mask is None:
+    # Early return if the sample mask was not passed to nilearn
+    if not data.pass_mask_to_nilearn:
         return timeseries
 
     padded_timeseries = np.zeros((data.max_len, timeseries.shape[1]))
-    padded_timeseries[data.censor_mask, :] = timeseries
+    padded_timeseries[data.sample_mask, :] = timeseries
 
     return padded_timeseries
 
@@ -547,21 +593,16 @@ def _pad_timeseries(timeseries, data):
 # Replaces censored frames with values from cubic spline interpolation; References nilearn's _interpolate_volumes
 # approach from nilearn.signal clean and scipy's example docs
 def _interpolate_censored_volumes(timeseries, data):
-    # Temporarily pad timeseries if sample mask used
-    timeseries = _pad_timeseries(timeseries, data) if data.use_sample_mask else timeseries
-
     # Get frame times
     frame_times = np.arange(data.max_len) * data.tr
     # Create interpolated timeseries; retain only good frame times and timeseries data
-    cubic_spline = CubicSpline(frame_times[data.censor_mask], timeseries[data.censor_mask, :], extrapolate=False)
+    cubic_spline = CubicSpline(frame_times[data.sample_mask], timeseries[data.sample_mask, :], extrapolate=False)
     # Only replace the high motion volumes with the interpolated data
-    timeseries[~data.censor_mask, :] = cubic_spline(frame_times)[~data.censor_mask, :]
+    timeseries[~data.sample_mask, :] = cubic_spline(frame_times)[~data.sample_mask, :]
 
     # Remove ends if not condition, condition already removes these volumes in the data.scans list
     if not data.condition:
-        censor_ends = _get_contiguous_ends(data)
-        if censor_ends:
-            timeseries = np.delete(timeseries, censor_ends, axis=0)
+        timeseries = np.delete(timeseries, data.censored_ends, axis=0) if data.censored_ends else timeseries
 
     return timeseries
 
@@ -572,33 +613,27 @@ def _get_contiguous_ends(data):
     if np.all(data.sample_mask):
         return []
 
-    # Example sample mask: [0,0,1,1,0,0,1,1,0,0]; where 1 corresponds to the volume retained
-    sample_mask = np.array(data.sample_mask)
-    # Diff array of sample mask: [0,1,0,-1,0,1,0,-1,0]
-    # Indices not 0: [1,3,5,7]
-    # Since diff is one less the last indx of the original array, add + 1 to each element to obtain transition indxs
-    # from sample mask: [2,4,6,8]
-    split_indices = np.where(np.diff(sample_mask, n=1) != 0)[0] + 1
+    # Example sample mask: [0,0,1,1,0,0,1,1,0,0]; 1 = kept; Diff array of sample mask: [0,1,0,-1,0,1,0,-1,0]
+    # Indices not 0: [1,3,5,7]; Add + 1 to each element to obtain transition indxs from sample mask: [2,4,6,8]
+    split_indices = np.where(np.diff(data.sample_mask, n=1) != 0)[0] + 1
     # Split into groups of contiguous indices: ([0,1], [2,3], [4,5], [6,7], [8,9])
     contiguous_indices = np.split(np.arange(data.max_len), split_indices)
     # Check if first index in sample mask is 0
-    start_indices = contiguous_indices[0].tolist() if sample_mask[0] == 0 else []
+    start_indices = contiguous_indices[0].tolist() if data.sample_mask[0] == 0 else []
     # Check if last index in sample mask is 0
-    end_indices = contiguous_indices[-1].tolist() if sample_mask[-1] == 0 else []
+    end_indices = contiguous_indices[-1].tolist() if data.sample_mask[-1] == 0 else []
 
     return start_indices + end_indices
 
 
 # Interpolating, padding for future condition extraction, or deleting censored data from timeseries
 def _process_censored_timeseries(timeseries, data):
+    timeseries = _pad_timeseries(timeseries, data)
+
     if data.interpolate:
         timeseries = _interpolate_censored_volumes(timeseries, data)
     else:
-        if data.use_sample_mask:
-            # Temporarily pad timeseries for correct condition extraction since nilearn returns a truncated array
-            timeseries = _pad_timeseries(timeseries, data) if data.condition else timeseries
-        else:
-            timeseries = np.delete(timeseries, data.censor_vols, axis=0) if not data.condition else timeseries
+        timeseries = np.delete(timeseries, data.censored_frames, axis=0) if not data.condition else timeseries
 
     return timeseries
 
