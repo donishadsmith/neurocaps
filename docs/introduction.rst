@@ -58,6 +58,7 @@ Main features for ``TimeseriesExtractor`` includes:
 - **Timeseries Extraction:** Extract timeseries for resting-state or task data using Schaefer, AAL, or a lateralized Custom parcellations (which can be manually defined) for spatial dimensionality reduction.
 - **Parallel Processing:** Parallelize at the subject-level (one subject per CPU core) to speed up timeseries extraction.
 - **Saving Timeseries:** Save the nested dictionary containing timeseries (mapping subject id -> run id -> timeseries data) as a pickle file.
+- **Reporting Quality Control:** Outputs per-subject, per-run quality control metrics (number of scrubbed and interpolated frames).
 - **Visualization:** Visualize the timeseries at the region or node level of the parcellation for a given subject and run.
 
 Main features for ``CAP`` includes:

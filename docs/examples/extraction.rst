@@ -156,6 +156,15 @@ property. The ``TimeseriesExtractor`` class has several
             [-0.5520303 ,  0.65005803,  0.6004126 , ..., -0.55654204,
                 -0.2589798 ,  0.09717632]], shape=(40, 100), dtype=float32)}}
 
+Reporting Quality Control Metrics
+---------------------------------
+.. code-block:: python
+
+    extractor.report_qc(output_dir=demo_dir, filename="qc.csv", return_df=True)
+
+.. csv-table::
+   :file: embed/qc.csv
+   :header-rows: 1
 
 Saving Timeseries
 -----------------
