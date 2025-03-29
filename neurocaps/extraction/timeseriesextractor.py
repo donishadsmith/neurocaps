@@ -498,9 +498,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         the "See Also" section for an example structure.
 
         **Data/Property Persistence**: Each time this function is called, it's associated properties such as
-        ``self.subject_timeseries``, ``self.task_info``, etc, are automatically initialized/overwritten to create a
-        clean state for the subsequent analysis. To save, the subject timeseries dictionary,
-        ``self.timeseries_to_pickle()`` can be used.
+        ``self.subject_timeseries``, ``self.task_info``, ``self.qc``, etc, are automatically initialized/overwritten to
+        create a clean state for the subsequent analysis. To save, the subject timeseries dictionary,
+        ``self.timeseries_to_pickle()`` can be used. Additionally, to save the quality control dictionary,
+        ``self.report_qc()`` can be used.
 
         **NifTI Files Without "run-" Entity**: By default, "run-0" will be used as a placeholder, if run IDs are not
         specified in the NifTI file.

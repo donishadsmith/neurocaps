@@ -19,6 +19,8 @@ improvements/enhancements. All fixes and modifications are backwards compatible.
 - Added the `qc` property and the `report_qc` function in `TimeseriesExtractor`
 ### 🐛 Fixes
 - Type hint for `output_dir` in `TimeseriesExtractor.timeseries_to_pickle`
+### 📖 Documentation
+- Some docs cleaning.
 
 ## [0.24.2] - 2025-03-25
 - Some internal refactoring and name changes to internal functions for clarity
