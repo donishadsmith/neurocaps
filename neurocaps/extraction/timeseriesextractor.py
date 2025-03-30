@@ -946,12 +946,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             elif self._signal_clean_info["fd_threshold"].get("interpolate"):
                 raise ValueError("`tr` must be provided when interpolation of censored volumes is required.")
             else:
-                tr = None
-
                 if verbose:
                     LG.warning(
                         f"{subject_header}" f"{base_msg}" + " `tr` has been set to None but extraction will continue."
                     )
+                    tr = None
 
         return tr
 
