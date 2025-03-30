@@ -1458,7 +1458,8 @@ def test_interpolate_with_condition(get_vars, use_sample_mask):
 
     # fd[[0, 10, 11, 28, 29, 38, 39]] = 0.9
     # Only ends should not be interpolated, then should be shape 19 as only index 0 removed for this condition
-    # indices for active condition with no censoring: [0, 1, 2, 3, 4, 8, 9, 10, 11, 12, 16, 17, 18, 19, 20, 25, 26, 27, 28, 29]
+    # indices for active condition from the full timeseries (len of 40) with no censoring:
+    # [0, 1, 2, 3, 4, 8, 9, 10, 11, 12, 16, 17, 18, 19, 20, 25, 26, 27, 28, 29]
     # Interpolation uses the full timeseries and the end is considered to be index 39 not 29
     # Should be 4 interpolated indices: 10, 11, 28, 29
     assert extractor_censored.subject_timeseries["01"]["run-001"].shape == (19, 400)
@@ -1503,9 +1504,10 @@ def test_interpolate_with_condition(get_vars, use_sample_mask):
 
     # fd[[0, 10, 11, 28, 29, 38, 39]] = 0.9
     # The discarded indices are [0, 1]
-    # indices for active condition with no censoring: [0, 1, 2, 3, 4, 8, 9, 10, 11, 12, 16, 17, 18, 19, 20, 25, 26, 27, 28, 29]
+    # indices for active condition from the full timeseries (len of 40) with no censoring:
+    # [0, 1, 2, 3, 4, 8, 9, 10, 11, 12, 16, 17, 18, 19, 20, 25, 26, 27, 28, 29]
     # Interpolation uses the full timeseries and the end is considered to be index 39 not 29
-    # Should be 2 interpolated indices: 8, 9, 10, 11, 12, 26, 27, 28, 29
+    # Should be 9 interpolated indices: 8, 9, 10, 11, 12, 26, 27, 28, 29
     assert extractor_extended_censored.subject_timeseries["01"]["run-001"].shape == (18, 400)
     assert extractor_extended_censored.qc["01"]["run-001"]["frames_scrubbed"] == 2
     assert extractor_extended_censored.qc["01"]["run-001"]["frames_interpolated"] == 9
