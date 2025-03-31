@@ -325,9 +325,10 @@ class CAP(_CAPGetter):
 
         Raises
         ------
-        NoElbowDetectionError - Occurs when ``cluster_selection_method`` is set to elbow but kneed's ``KneeLocator``
-        does not detect an elbow in the convex curve. Refer to `NoElbowDetectionError documentation
-        <https://neurocaps.readthedocs.io/en/stable/generated/neurocaps.exceptions.NoElbowDetectedError.html>`_.
+        NoElbowDetectionError
+            Occurs when ``cluster_selection_method`` is set to elbow but kneed's ``KneeLocator``
+            does not detect an elbow in the convex curve. Refer to `NoElbowDetectionError documentation
+            <https://neurocaps.readthedocs.io/en/stable/generated/neurocaps.exceptions.NoElbowDetectedError.html>`_.
 
         Note
         ----

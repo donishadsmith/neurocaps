@@ -487,8 +487,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         Raises
         ------
-        BIDSQueryError - Occurs when subject IDs were not found during querying. Refer to `BIDSQueryError documentation
-        <https://neurocaps.readthedocs.io/en/stable/generated/neurocaps.exceptions.BIDSQueryError.html#neurocaps.exceptions.BIDSQueryError>`_.
+        BIDSQueryError
+            Occurs when subject IDs were not found during querying. Refer to `BIDSQueryError documentation
+            <https://neurocaps.readthedocs.io/en/stable/generated/neurocaps.exceptions.BIDSQueryError.html#neurocaps.exceptions.BIDSQueryError>`_.
 
         See Also
         --------
@@ -1030,8 +1031,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         Returns
         -------
-        pandas.Dataframe - Pandas dataframe containing the colums: "Subject_ID", "Run", "Frames_Scrubbed",
-        "Frames_Interpolated".
+        pandas.Dataframe
+            Pandas dataframe containing the colums: "Subject_ID", "Run", "Frames_Scrubbed", "Frames_Interpolated".
 
         Important
         ---------
