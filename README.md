@@ -245,10 +245,12 @@ extractor.get_bold(
 ```
 
 **Note:** Refer to [NeuroCAPs' Logging Documentation](https://neurocaps.readthedocs.io/en/stable/logging.html) for
-additional information about confuguring logging.
+additional information about configuring logging.
 
 ```python
 # Get QC report
+# Only censored frames with valid data on both sides are interpolated, while censored frames at the edge of the
+# timeseries (including frames that border censored edges) are always scrubbed and counted in "Frames_Scrubbed"
 df = extractor.report_qc()
 
 # Note run-2 for subject 006 is not in QC report due to being flagged

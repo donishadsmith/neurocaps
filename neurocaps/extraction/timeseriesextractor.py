@@ -75,7 +75,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         - All cosine-basis parameters.
         - Six head-motion parameters and their first-order derivatives.
-        - First six combined aCompcor components.
+        - First six combined aCompCor components.
 
         .. important::
             - Confound names follow fMRIPrep's naming scheme (versions >= 1.2.0).
@@ -384,7 +384,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         .. important::
             - For proper querying, a "dataset_description.json" file must be located in the root of the BIDs directory\
             and the pipeline directory (located in the derivatives folder).
-            - Refer to `NeuroCAPs' BIDS Structure and Entities Documentation <https://neurocaps.readthedocs.io/en/stable/bids.html>`_\
+            - Refer to `NeuroCAPs' BIDS Structure and Entities documentation <https://neurocaps.readthedocs.io/en/stable/bids.html>`_\
             for additional information on the expected directory structure and file naming scheme (entities) needed for querying.
             - This pipeline is most optimized for BOLD data preprocessed by fMRIPrep.
 
@@ -464,7 +464,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             - "level": The logging level (e.g. ``logging.INFO``, ``logging.WARNING``). If not specified, the default
               level is ``logging.INFO``.
 
-            Refer to the `NeuroCAPs' Logging Documentation <https://neurocaps.readthedocs.io/en/stable/logging.html>`_
+            Refer to the `NeuroCAPs' Logging documentation <https://neurocaps.readthedocs.io/en/stable/logging.html>`_
             for a detailed example of setting up this parameter.
 
         verbose: :obj:`bool`, default=True
@@ -492,7 +492,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         See Also
         --------
-        :data:`neurocaps.typing.SubjectTimeseries
+        :data:`neurocaps.typing.SubjectTimeseries`
             Type definition representing the structure of the subject timeseries. Refer to the `SubjectTimeseries
             documentation <https://neurocaps.readthedocs.io/en/stable/generated/neurocaps.typing.SubjectTimeseries.html#neurocaps.typing.SubjectTimeseries>`_.
 
@@ -1042,8 +1042,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         The metrics for scrubbed frames and interpolated frames are independent. For instance, two scrubbed frames and
         three interpolated frames means that three frames were interpolated while two were scrubbed due to excessive
-        motion. Note that only frames with valid data on both sides can be interpolated, while frames at the edges of
-        the timeseries (including frames that border censored edges) are always scrubbed.
+        motion. **Note** that only censored frames with valid data on both sides are interpolated, while censored frames
+        at the edge of the timeseries (including frames that border censored edges) are always scrubbed and counted in
+        "Frames_Scrubbed".
         """
         save_filename = self._prepare_output_file(output_dir, filename, prop_name="_qc", call="report_qc")
         assert self._qc, "No quality control information to report."

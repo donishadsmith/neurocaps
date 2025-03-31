@@ -1526,6 +1526,42 @@ def test_interpolate_with_condition(get_vars, use_sample_mask):
         assert not np.all(np.isnan(row))
 
 
+def test_outlier_exclusion_and_interpolation(get_vars):
+    """
+    Ensure exclusion of runs with high motion frames considers all high motion frames regardless of interpolation.
+    """
+    # fd[[0, 10, 11, 28, 29, 38, 39]] = 0.9
+    # Only contiguous ends should not be interpolated (0, 38, 39), leaving 10, 11, 28, 29 interpolated
+
+    bids_dir, pipeline_name = get_vars
+
+    # 7/40 = 0.175; use slightly less to flag = 0.174
+    fd_threshold = {"threshold": 0.89, "outlier_percentage": 0.174, "interpolate": True}
+
+    extractor_no_condition = TimeseriesExtractor(fd_threshold=fd_threshold)
+
+    extractor_no_condition.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+
+    assert "01" not in extractor_no_condition.subject_timeseries
+    assert "01" not in extractor_no_condition.qc
+
+    # Assess when using condition
+    # condition indices: [0, 1, 2, 3, 4, 8, 9, 10, 11, 12, 16, 17, 18, 19, 20, 25, 26, 27, 28, 29]
+    # Full timeseries considered so only (0, 38, 39) not interpolated, leaving 10, 11, 28, 29 interpolated
+    # 5/20 = 0.25; 20 is the length of condition; use slightly less to flag = 0.24
+
+    fd_threshold = {"threshold": 0.89, "outlier_percentage": 0.24, "interpolate": True}
+
+    extractor_no_condition = TimeseriesExtractor(fd_threshold=fd_threshold)
+
+    extractor_no_condition.get_bold(
+        bids_dir=bids_dir, task="rest", condition="active", pipeline_name=pipeline_name, tr=1.2
+    )
+
+    assert "01" not in extractor_no_condition.subject_timeseries
+    assert "01" not in extractor_no_condition.qc
+
+
 ################################################# Setup Environment 3 #################################################
 def test_subjects_appending_in_dictionary(setup_environment_3, get_vars):
     """

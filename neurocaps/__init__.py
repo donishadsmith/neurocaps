@@ -1,6 +1,7 @@
 from . import analysis, extraction, exceptions
 
+# Don't include "typing"
 __all__ = ["analysis", "extraction", "exceptions"]
 
 # Version in single place
-__version__ = "0.24.4.post0"
+__version__ = "0.24.5"

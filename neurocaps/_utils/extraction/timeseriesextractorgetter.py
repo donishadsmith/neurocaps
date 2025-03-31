@@ -1,7 +1,4 @@
-"""
-A class which is responsible for accessing all ``TimeseriesExtractorGetter`` and to keep track of all attributes in
-``TimeSeriesExtractor``.
-"""
+"""A class which is responsible for accessing attributes in ``TimeSeriesExtractor``."""
 
 import copy, sys
 from typing import Union

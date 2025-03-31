@@ -13,6 +13,19 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.24.5] - 2025-03-30
+- Cleanest version for JOSS consideration.
+- Some Internal refactoring done to clean code
+- Adds __all__ to exceptions module for star import
+### 🐛 Fixes
+- Issue introduced in 0.24.3 specifically for condition, where if interpolation is requested and outlier percentage is
+used, the computation would only consider frames not being interpolated instead of all frames flagged for high motion.
+Added test too test suite to confirm behavior.
+### 📖 Documentation
+- Adds clarifications in documentation
+- Adds links to docs for the type hints
+- Adds basic docstring for many internal functions in _utils
+
 ## [0.24.4.post0] - 2025-03-29
 ### 🐛 Fixes
 - Broken zenodo badge.
