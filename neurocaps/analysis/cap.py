@@ -1631,10 +1631,8 @@ class CAP(_CAPGetter):
         if ncol > len(cap_dict[group]):
             ncol = len(cap_dict[group])
 
-        # Pad nrow, since int will round down, padding is needed for cases
-        # where len(cap_dict[group])/ncol is a float. This will add the extra row needed
-        x_pad = 0 if len(cap_dict[group]) / ncol <= 1 else 1
-        nrow = plot_dict["nrow"] if plot_dict["nrow"] is not None else x_pad + int(len(cap_dict[group]) / ncol)
+        # Determine number of rows needed based on ceiling if not specified
+        nrow = plot_dict["nrow"] if plot_dict["nrow"] is not None else int(np.ceil(len(cap_dict[group]) / ncol))
         subplot_figsize = (8 * ncol, 6 * nrow) if plot_dict["figsize"] == (8, 6) else plot_dict["figsize"]
         fig, axes = plt.subplots(nrow, ncol, sharex=False, sharey=plot_dict["sharey"], figsize=subplot_figsize)
 
