@@ -1,4 +1,4 @@
-"""Internal function to check kwargs"""
+"""Internal function to check kwargs for the ``CAP`` and ``TimeseriesExtractor`` classes."""
 
 from .logger import _logger
 

@@ -170,9 +170,11 @@ class CAP(_CAPGetter):
     See Also
     --------
     :class:`neurocaps.typing.ParcelConfig`
-        Type definition representing the configuration options and structure for the Schaefer and AAL parcellations.
+        Type definition representing the configuration options and structure for the Schaefer and AAL parcellations.\
+        Refer to `ParcelConfig documentation <https://neurocaps.readthedocs.io/en/stable/generated/neurocaps.typing.ParcelConfig.html>`_.
     :class:`neurocaps.typing.ParcelApproach`
-        Type definition representing the structure of the Schaefer, AAL, and Custom parcellation approaches.
+        Type definition representing the structure of the Schaefer, AAL, and Custom parcellation approaches. Refer to\
+        `ParcelApproach documentation <https://neurocaps.readthedocs.io/en/stable/generated/neurocaps.typing.ParcelApproach.html>`_.
 
     Important
     ---------
@@ -304,19 +306,28 @@ class CAP(_CAPGetter):
         **kwargs:
             Additional keyword arguments when ``cluster_selection_method`` is specified:
 
-            - S: :obj:`int`, default=1 -- Adjusts the sensitivity of finding the elbow. Larger values are more\
+            - S: :obj:`int`, default=1 -- Adjusts the sensitivity of finding the elbow. Larger values are more \
                 conservative and less sensitive to small fluctuations. Passed to ``KneeLocator`` from the kneed package.
             - dpi: :obj:`int`, default=300 -- Dots per inch for the figure.
             - figsize: :obj:`tuple`, default=(8, 6) -- Adjusts the size of the plots.
             - bbox_inches: :obj:`str` or :obj:`None`, default="tight" -- Alters size of the whitespace in the saved image.
             - step: :obj:`int`, default=None -- An integer value that controls the progression of the x-axis in plots.
+
         See Also
         --------
         :data:`neurocaps.typing.SubjectTimeseries`
+            Type definition for the subject timeseries dictionary structure. Refer to the `SubjectTimeseries
+            documentation <https://neurocaps.readthedocs.io/en/stable/generated/neurocaps.typing.SubjectTimeseries.html#neurocaps.typing.SubjectTimeseries>`_.
 
         Returns
         -------
         self
+
+        Raises
+        ------
+        NoElbowDetectionError - Occurs when ``cluster_selection_method`` is set to elbow but kneed's ``KneeLocator``
+        does not detect an elbow in the convex curve. Refer to `NoElbowDetectionError documentation
+        <https://neurocaps.readthedocs.io/en/stable/generated/neurocaps.exceptions.NoElbowDetectedError.html>`_.
 
         Note
         ----
@@ -645,7 +656,7 @@ class CAP(_CAPGetter):
 
         Computes the following temporal dynamic metrics (as described by Liu et al., 2018 and Yang et al., 2021):
 
-         - ``"temporal_fraction"``: Proportion of total volumes spent in a single CAP over all volumes in a run.
+         - "temporal_fraction": Proportion of total volumes spent in a single CAP over all volumes in a run.
 
            ::
 
@@ -653,7 +664,7 @@ class CAP(_CAPGetter):
                 target = 1
                 temporal_fraction = 4 / 6
 
-         - ``"persistence"``: Average time spent in a single CAP before transitioning to another CAP
+         - "persistence": Average time spent in a single CAP before transitioning to another CAP
            (average consecutive/uninterrupted time).
 
            ::
@@ -668,7 +679,7 @@ class CAP(_CAPGetter):
                 tr = 2
                 if tr: persistence = ((1 + 3) / 2) * 2
 
-         - ``"counts"``: Total number of initiations of a specific CAP across an entire run. An initiation is
+         - "counts": Total number of initiations of a specific CAP across an entire run. An initiation is
            defined as the first occurrence of a CAP. If the same CAP is maintained in contiguous segment
            (indicating stability), it is still counted as a single initiation.
 
@@ -680,7 +691,7 @@ class CAP(_CAPGetter):
                 # Initiations of CAP-1 occur at indices 0 and 2
                 counts = 2
 
-         - ``"transition_frequency"``: Total number of transitions to different CAPs across the entire run.
+         - "transition_frequency": Total number of transitions to different CAPs across the entire run.
 
            ::
 
@@ -689,7 +700,7 @@ class CAP(_CAPGetter):
                 # Transitions between unique CAPs occur at indices 0 -> 1, 1 -> 2, and 4 -> 5
                 transition_frequency = 3
 
-         - ``"transition_probability"``: Probability of transitioning from one CAP to another CAP (or the same CAP).
+         - "transition_probability": Probability of transitioning from one CAP to another CAP (or the same CAP).
            This is calculated as (Number of transitions from A to B) / (Total transitions from A). Note that the
            transition probability from CAP-A -> CAP-B is not the same as CAP-B -> CAP-A.
 
@@ -712,8 +723,8 @@ class CAP(_CAPGetter):
 
             .. note::
                 In the supplementary material for Yang et al., the mathematical relationship between temporal fraction,
-                counts, and persistence is ``temporal fraction = (persistence * counts)/total volumes``. If persistence
-                has been converted into time units (seconds), then ``temporal fraction = (persistence * counts) / (total volumes * TR)``.
+                counts, and persistence is ``temporal_fraction = (persistence * counts)/total_volumes``. If persistence
+                has been converted into time units (seconds), then ``temporal_fraction = (persistence * counts) / (total_volumes * tr)``.
 
         Parameters
         ----------
@@ -767,7 +778,8 @@ class CAP(_CAPGetter):
         See Also
         --------
         :data:`neurocaps.typing.SubjectTimeseries`
-            Type definition for the subject timeseries dictionary structure.
+            Type definition for the subject timeseries dictionary structure. Refer to the `SubjectTimeseries
+            documentation <https://neurocaps.readthedocs.io/en/stable/generated/neurocaps.typing.SubjectTimeseries.html#neurocaps.typing.SubjectTimeseries>`_.
 
         Returns
         -------

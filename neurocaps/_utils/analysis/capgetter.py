@@ -1,4 +1,4 @@
-"""A class which is responsible for accessing all CAP metadata and to keep track of all attributes in CAP"""
+"""A class which is responsible for accessing all CAP metadata and to keep track of all attributes in CAP."""
 
 import copy, sys
 from typing import Union

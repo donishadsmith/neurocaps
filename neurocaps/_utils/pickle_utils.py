@@ -1,6 +1,6 @@
 """
 Internal functions for unpickling with joblib and saving dictionaries with joblib (for the `merge_dicts`,
-`standardize`, and `change_dtypes` function)
+`standardize`, and `change_dtypes` function).
 """
 
 import copy, os

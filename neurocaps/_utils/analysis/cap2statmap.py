@@ -8,6 +8,14 @@ from scipy.spatial import KDTree
 
 
 def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
+    """
+    Projects cluster centroids (CAPs) on to the parcellation map. Also if specified, performs k-nearest neighbors
+    and spatial smoothing on the NifTI image.
+
+    Important
+    ---------
+    Assumes the first label, extracted from the parcellation, is the background label and skips it.
+    """
     atlas = nib.load(atlas_file)
     atlas_fdata = atlas.get_fdata()
     # Create array of zeroes with same dimensions as atlas
@@ -68,6 +76,7 @@ def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
 
 @lru_cache(maxsize=2)
 def _build_tree(atlas_file):
+    """Uses scipy's ``KDTree`` to optimize k-nearest neighbors interpolation."""
     atlas = nib.load(atlas_file)
     non_zero_indices = np.array(np.where(atlas.get_fdata() != 0)).T
     kdtree = KDTree(non_zero_indices)
@@ -76,6 +85,7 @@ def _build_tree(atlas_file):
 
 
 def _get_remove_indices(atlas_file, remove_labels):
+    """If requested, gets the coordinates containing a specified label to be removed."""
     atlas = nib.load(atlas_file)
     remove_indxs = np.where(np.isin(atlas.get_fdata(), remove_labels))
 
@@ -84,6 +94,10 @@ def _get_remove_indices(atlas_file, remove_labels):
 
 @lru_cache(maxsize=4)
 def _get_target_indices(atlas_file, reference_atlas, resolution_mm, remove_labels):
+    """
+    Uses a reference atlas ("Schaefer" or "AAL") as a mask to identify non-background coordinates to use for
+    k-nearest neighbors interpolation.
+    """
     atlas = nib.load(atlas_file)
 
     if reference_atlas == "Schaefer":

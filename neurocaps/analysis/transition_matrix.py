@@ -1,4 +1,4 @@
-"""Function for averaging subject-level transition probabilities and producing visualizations"""
+"""Function for averaging subject-level transition probabilities and producing visualizations."""
 
 from typing import Optional, Union
 

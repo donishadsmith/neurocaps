@@ -13,7 +13,7 @@ from scipy.interpolate import CubicSpline
 from ..logger import _logger
 from ...typing import ParcelApproach
 
-# Logger initialization to check if any user-defined loggers where created prior to package import
+# Logger initialization to check if any user-defined loggers where created prior to package import. No variable assignment needed.
 _logger(__name__)
 
 
@@ -122,7 +122,6 @@ class _Data:
         return self.parcel_approach[list(self.parcel_approach)[0]]["maps"]
 
 
-# Entry point for timeseries extraction
 def _extract_timeseries(
     subj_id,
     prepped_files,
@@ -285,7 +284,6 @@ def _extract_timeseries(
     return subject_timeseries, qc
 
 
-# Perform the timeseries extraction
 def _perform_extraction(data, LG):
     """
     Pipeline to get the confounds passed to ``NiftiLabelsMasker`` for nuisance regression, extract the timeseries,
@@ -311,7 +309,7 @@ def _perform_extraction(data, LG):
     if data.dummy_vols:
         nifti_img = index_img(nifti_img, slice(data.dummy_vols, None))
         if confounds is not None:
-            confounds.drop(list(range(data.dummy_vols)), axis=0, inplace=True)
+            confounds.drop(range(data.dummy_vols), axis=0, inplace=True)
 
     # Extract timeseries; Censor mask used only when `pass_mask_to_nilearn` is True
     timeseries = masker.fit_transform(
@@ -351,7 +349,6 @@ def _grab_file(run, files):
         return files[0]
 
 
-# Create subject header
 def _subject_header(data, run_id, subj_id):
     """Creates the subject header to use in verbose logging, indicating the subject, session, task, and run."""
     if data.session:
@@ -366,7 +363,6 @@ def _subject_header(data, run_id, subj_id):
     return f"{sub_head} "
 
 
-# Get dummy scan number
 def _get_dummy(data, LG):
     """Gets the number of dummy scans to remove."""
     info = data.signal_clean_info["dummy_scans"]
@@ -398,7 +394,6 @@ def _get_dummy(data, LG):
     return n if isinstance(info, dict) else info
 
 
-# Create censor vector
 def _basic_censor(data):
     """Finds the indices that exceed a certain framewise displacement threshold."""
     fd_array = data.confound_df["framewise_displacement"].fillna(0).values
@@ -412,7 +407,6 @@ def _basic_censor(data):
     return censor_volumes, fd_array.shape[0]
 
 
-# Created an extended censored_frames vector
 def _extended_censor(data):
     """
     Iterates through each element in ``data.censored_frames`` and computes the indices of the frames before ``i`` to
@@ -422,9 +416,9 @@ def _extended_censor(data):
 
     for i in data.censored_frames:
         if data.n_before:
-            ext_arr.extend(list(range(i - data.n_before, i)))
+            ext_arr.extend(range(i - data.n_before, i))
         if data.n_after:
-            ext_arr.extend(list(range(i + 1, i + data.n_after + 1)))
+            ext_arr.extend(range(i + 1, i + data.n_after + 1))
 
     # Filter; ensure no index is below zero to prevent backwards indexing and not above max to prevent error
     filtered_ext_arr = [x for x in ext_arr if x >= 0 and x < data.max_len]
@@ -481,7 +475,7 @@ def _get_condition_indices(data, condition_df):
         # Int is always the floor for positive floats
         onset_scan = int(adjusted_onset / data.tr) + data.tr_shift
         end_scan = math.ceil((adjusted_onset + condition_df.loc[i, "duration"]) / data.tr) + data.tr_shift
-        scans.extend(list(range(onset_scan, end_scan)))
+        scans.extend(range(onset_scan, end_scan))
 
     # Get unique scans to not duplicate information
     scans = sorted(list(set(scans)))

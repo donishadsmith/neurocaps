@@ -1,4 +1,4 @@
-"""Function to standardize timeseries within subject runs"""
+"""Function to standardize timeseries within subject runs."""
 
 import copy
 from typing import Union, Optional
@@ -60,7 +60,8 @@ def standardize(
     See Also
     --------
     :data:`neurocaps.typing.SubjectTimeseries`
-        Type definition for the subject timeseries dictionary structure.
+        Type definition for the subject timeseries dictionary structure. Refer to the `SubjectTimeseries
+        documentation <https://neurocaps.readthedocs.io/en/stable/generated/neurocaps.typing.SubjectTimeseries.html#neurocaps.typing.SubjectTimeseries>`_.
     """
     assert (
         isinstance(subject_timeseries_list, list) and len(subject_timeseries_list) > 0

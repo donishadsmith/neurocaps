@@ -6,6 +6,10 @@ LG = _logger(__name__)
 
 
 def _check_confound_names(high_pass, user_confounds, n_acompcor_separate):
+    """
+    Pipeline for checking confound names. The default confound names ("basic") depend on whether high-pass filtering
+    is specified.
+    """
     if user_confounds == "basic":
         if high_pass:
             # Do not use cosine or acompcor regressor if high-pass filtering is not None.
@@ -51,7 +55,7 @@ def _check_confound_names(high_pass, user_confounds, n_acompcor_separate):
         confound_names = user_confounds
 
     if n_acompcor_separate:
-        confound_names = _acompcor_check(confound_names, user_confounds, n_acompcor_separate)
+        confound_names = _remove_a_comp_cor(confound_names, user_confounds, n_acompcor_separate)
 
     _check_regressors(confound_names, n_acompcor_separate)
 
@@ -60,7 +64,11 @@ def _check_confound_names(high_pass, user_confounds, n_acompcor_separate):
     return confound_names
 
 
-def _acompcor_check(confound_names, user_confounds, n):
+def _remove_a_comp_cor(confound_names, user_confounds, n):
+    """
+    Removes all "a_comp_cor" regressors in ``confound_names`` if separate components for the white matter and
+    cerebrospinal fluid masks are requested.
+    """
     check_confounds = [confound for confound in confound_names if "a_comp_cor" not in confound]
     if len(confound_names) > len(check_confounds):
         removed_confounds = [element for element in confound_names if element not in check_confounds]
@@ -76,6 +84,10 @@ def _acompcor_check(confound_names, user_confounds, n):
 
 
 def _check_regressors(confound_names, n):
+    """
+    Performs a basic check to see if at least one "cosine" regressor is specified if "a_comp_cor" and "t_comp_cor"
+    are detected in ``confound_names``.
+    """
     cosine = any(i.startswith("cosine") for i in confound_names)
     acompcor = any(i.startswith("a_comp_cor") for i in confound_names) if not n else n
     tcompcor = any(i.startswith("t_comp_cor") for i in confound_names)

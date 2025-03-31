@@ -22,6 +22,10 @@ VALID_DICT_STUCTURES = {
 
 
 def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
+    """
+    Pipeline to ensure ``parcel_approach`` is valid and process the ``parcel_approach`` if certain initialization
+    keys are used.
+    """
     if isinstance(parcel_approach, str) and parcel_approach.endswith(".pkl"):
         parcel_dict = _convert_pickle_to_dict(parcel_approach)
     else:
@@ -55,12 +59,20 @@ def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
 
 
 def _check_keys(parcel_dict):
+    """
+    Checks if the all required keys are in ``parcel_approach`` to skip processing of the ``parcel_approach``
+    for "Schaefer" and "AAL".
+    """
     required_keys = ["maps", "nodes", "regions"]
 
     return all(key in parcel_dict[list(parcel_dict)[0]] for key in required_keys)
 
 
 def _process_aal(parcel_dict):
+    """
+    Converts a ``parcel_approach`` containing initialization keys for "AAL" the the final processed version.
+    Uses nilearn to fetch the parcellation map and labels.
+    """
     if "version" not in parcel_dict["AAL"]:
         LG.warning("'version' not specified in `parcel_approach`. Defaulting to 'SPM12'.")
         parcel_dict["AAL"].update({"version": "SPM12"})
@@ -84,6 +96,10 @@ def _process_aal(parcel_dict):
 
 
 def _process_custom(parcel_dict, call):
+    """
+    Ensures that "Custom" parcel approaches have the necessary keys. Performs basic validation before passing to
+    ``_check_custom_structure``.
+    """
     custom_example = {"Custom": VALID_DICT_STUCTURES["Custom"]}
 
     if call == "TimeseriesExtractor" and "maps" not in parcel_dict["Custom"]:
@@ -120,6 +136,10 @@ def _process_custom(parcel_dict, call):
 
 
 def _process_schaefer(parcel_dict):
+    """
+    Converts a ``parcel_approach`` containing initialization keys for "Schafer" the the final processed version.
+    Uses nilearn to fetch the parcellation map and labels.
+    """
     if "n_rois" not in parcel_dict["Schaefer"]:
         LG.warning("'n_rois' not specified in `parcel_approach`. Defaulting to 400 ROIs.")
         parcel_dict["Schaefer"].update({"n_rois": 400})
@@ -153,8 +173,8 @@ def _process_schaefer(parcel_dict):
     return parcel_dict
 
 
-# Checks the structure of nodes and regions
 def _check_custom_structure(custom_parcel, custom_example):
+    """Validates the structure of the "nodes" and "regions" subkeys for user-defined ("Custom") parcel approaches."""
     example_msg = f"Refer to example: {custom_example}"
 
     if "nodes" in custom_parcel:
@@ -194,8 +214,8 @@ def _check_custom_structure(custom_parcel, custom_example):
             )
 
 
-# Ensures the proper structure for the hemisphere dictionary
 def _check_custom_hemisphere_dicts(regions):
+    """Ensures that the "Custom" parcel approach has the proper structure for the hemisphere dictionary."""
     # For the left and right hemisphere subkeys, check that they contain a list or range
     # Only check if each element of a list is an integer since range is guaranteed to be a sequence of integers already
     return all(
@@ -206,9 +226,11 @@ def _check_custom_hemisphere_dicts(regions):
     )
 
 
-# Special handling for region names in AAL "3v2";
-# Collapse the names of the nodes (ex Frontal_Sup_2_L and Frontal_Inf_Oper_L will simply be -> Frontal)
 def _collapse_aal_node_names(nodes, return_unique_names=True):
+    """
+    Creates general regions/networks from AAL labels (e.g. Frontal_Sup_2_L and Frontal_Inf_Oper_L -> Frontal) with
+    special consideration for version "3v2".
+    """
     # Names in "3v2" that don't split well .split("_")[0] or could be reduced more in the case of OFC, which
     # has OFCmed, OFCant, OFCpos
     special_names = ["N_Acc", "Red_N", "OFC"]

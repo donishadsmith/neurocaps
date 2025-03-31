@@ -118,7 +118,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     - Censoring is applied after nuisance regression.
 
             - "interpolate": A boolean. If True, uses scipy's ``CubicSpline`` function with ``extrapolate=False``\
-            to perform cubic spline interpolation on censored frames. **Only performs interpolation if True**.
+            to perform cubic spline interpolation only on censored frames. **Only performs interpolation if True**.
 
             .. note:: Interpolation is only performed on frames that are flanked by non-censored frames on both ends.\
                 For example, given a ``censor_mask=[0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0]`` where "0" indicates censored,\
@@ -198,6 +198,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     qc: :obj:`dict` or :obj:`None`
         A dictionary reporting quality control, which maps subject IDs to their run IDs and information related to the
         number of frames scrubbed and interpolated.
+
         ::
 
             {"subjectID": {"run-ID": {"frames_scrubbed": int, "frames_interpolated": int}}}
@@ -207,11 +208,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     See Also
     --------
     :class:`neurocaps.typing.ParcelConfig`
-        Type definition representing the configuration options and structure for the Schaefer and AAL parcellations.
+        Type definition representing the configuration options and structure for the Schaefer and AAL parcellations.\
+        Refer to `ParcelConfig documentation <https://neurocaps.readthedocs.io/en/stable/generated/neurocaps.typing.ParcelConfig.html>`_.
     :class:`neurocaps.typing.ParcelApproach`
-        Type definition representing the structure of the Schaefer, AAL, and Custom parcellation approaches.
+        Type definition representing the structure of the Schaefer, AAL, and Custom parcellation approaches. Refer to\
+        `ParcelApproach documentation <https://neurocaps.readthedocs.io/en/stable/generated/neurocaps.typing.ParcelApproach.html>`_.
     :data:`neurocaps.typing.SubjectTimeseries`
-        Type definition representing the structure of the subject timeseries.
+        Type definition representing the structure of the subject timeseries. Refer to the `SubjectTimeseries\
+        documentation <https://neurocaps.readthedocs.io/en/stable/generated/neurocaps.typing.SubjectTimeseries.html#neurocaps.typing.SubjectTimeseries>`_.
 
     Note
     ----
@@ -406,9 +410,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Only a single condition can be extracted at a time.
 
         condition_tr_shift: :obj:`int`, default=0
-            Number of TR units to units to offset both the start and end scan indices of a condition. This parameter
-            only applies when a ``condition`` is specified. For more details about how this offset affects the
-            calculation of task conditions, see the "Extraction of Task Conditions" section below.
+            Number of TR units to units to offset both the start and end scan indices of a condition to account for
+            a fixed hemodynamic delay. This parameter only applies when a ``condition`` is specified. For more details
+            about how this offset affects the calculation of task conditions, see the "Extraction of Task Conditions"
+            section below.
 
             .. versionadded:: 0.20.0
 
@@ -482,13 +487,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         Raises
         ------
-        BIDSQueryError
-            Subject IDs were not found during querying.
+        BIDSQueryError - Occurs when subject IDs were not found during querying. Refer to `BIDSQueryError documentation
+        <https://neurocaps.readthedocs.io/en/stable/generated/neurocaps.exceptions.BIDSQueryError.html#neurocaps.exceptions.BIDSQueryError>`_.
 
         See Also
         --------
-        :data:`neurocaps.typing.SubjectTimeseries`
-            Type definition representing the structure of the subject timeseries.
+        :data:`neurocaps.typing.SubjectTimeseries
+            Type definition representing the structure of the subject timeseries. Refer to the `SubjectTimeseries
+            documentation <https://neurocaps.readthedocs.io/en/stable/generated/neurocaps.typing.SubjectTimeseries.html#neurocaps.typing.SubjectTimeseries>`_.
 
         Important
         ---------
@@ -524,7 +530,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             adjusted_onset = adjusted_onset if adjusted_onset >= 0 else 0
             start_scan = int(adjusted_onset / tr) + condition_tr_shift
             end_scan = math.ceil((adjusted_onset + duration) / tr) + condition_tr_shift
-            scans.extend(list(range(onset_scan, end_scan)))
+            scans.extend(range(onset_scan, end_scan))
             scans = sorted(list(set(scans)))
 
         When partial scans are computed, ``int`` is used to round down for the beginning scan index and ``math.ceil``
@@ -536,13 +542,21 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             start_scan = int(onset / tr)
             end_scan = math.ceil((onset + duration) / tr)
-            scans.extend(list(range(onset_scan, end_scan)))
+            scans.extend(range(onset_scan, end_scan))
             scans = sorted(list(set(scans)))
 
-        Filtering a specific condition from the timeseries is done after nuisance regression and the indices are used
-        to extract the TRs corresponding to the condition from the timeseries. Additionally, if the "use_sample_mask"
-        key in the ``fd_threshold`` dictionary is set to True, then the truncated 2D timeseries is temporarily padded
-        to ensure the correct rows corresponding to the condition are obtained.
+        Filtering a specific condition from the timeseries is done after nuisance regression. The indices corresponding
+        to the condition are used to extract the TRs (the timepoints that fall within the the event window(s)
+        adjusted by the slice timing reference (``slice_time_ref``) and a fixed hemodynamic delay
+        (``condition_tr_shift``) if specified) from the timeseries.
+
+        If the "use_sample_mask" key in the ``fd_threshold`` dictionary is set to True, the truncated 2D timeseries
+        is temporarily padded to ensure the correct rows corresponding to the condition are obtained.
+
+        If the "interpolate" key in the ``fd_threshold`` dictionary is set to True, interpolation is performed using
+        the full timeseries data (excluding dummy volumes) to replace only the censored (high-motion) volumes. Then,
+        the indices corresponding to the condition are extracted from the timeseries, excluding any frames that do not
+        have non-censored data at both edges.
         """
         if runs and not isinstance(runs, list):
             runs = [runs]

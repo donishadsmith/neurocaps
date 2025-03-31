@@ -1,4 +1,7 @@
-"""Utils for generating heatmaps and saving content for correlation matrix and transition probability matrix."""
+"""
+Utils for generating heatmaps and saving content for correlation matrix (``CAP.caps2corr``) and transition probability
+matrix.
+"""
 
 import os
 

@@ -5,6 +5,10 @@ from sklearn.metrics import davies_bouldin_score, calinski_harabasz_score, silho
 
 
 def _run_kmeans(n_cluster, configs, concatenated_timeseries, method):
+    """
+    Uses scikit-learn to perform k-means clustering on concatenated timeseries data in both sequential and parallel
+    contexts. Also uses scikit-learn to provide cluster performance metrics.
+    """
     model = KMeans(n_clusters=n_cluster, **configs, verbose=0).fit(concatenated_timeseries)
 
     # Only return model when no cluster selection chosen
