@@ -30,7 +30,7 @@ class _Data:
     verbose: bool = False
     # Run-specific attributes
     files: dict[str, str] = field(default_factory=dict)
-    skip_run: bool = False
+    head: Union[str, None] = None
     dummy_vols: Union[int, None] = None
     censored_frames: list[int] = field(default_factory=list)
     sample_mask: Union[np.typing.NDArray[np.bool_], None] = None
@@ -38,10 +38,11 @@ class _Data:
     fd_array_len: Union[int, None] = None
     # Event condition scan indices and qc information for condition
     scans: list[int] = field(default_factory=list)
-    n_censored_condition_indxs: int = 0
-    n_interpolated_condition_indxs: int = 0
-    # Subject header
-    head: Union[str, None] = None
+    n_total_scans: Union[int, None] = None
+    n_censored_scans: int = 0
+    n_interpolated_scans: int = 0
+    # Avoid timeseries extraction
+    skip_run: bool = False
     # Percentage of volumes that exceed fd threshold
     vols_exceed_percent: Union[float, None] = None
 
@@ -88,6 +89,14 @@ class _Data:
     def out_percent(self) -> Union[float, None]:
         if isinstance(self.signal_clean_info["fd_threshold"], dict):
             return self.signal_clean_info["fd_threshold"].get("outlier_percentage")
+
+    @property
+    def censored_vals(self) -> tuple[int, int]:
+        return (
+            (self.n_censored_scans, self.n_total_scans)
+            if self.condition
+            else (len(self.censored_frames), self.fd_array_len)
+        )
 
     @property
     def n_before(self) -> Union[int, None]:
@@ -157,56 +166,22 @@ def _extract_timeseries(
         # Initialize class; placing inside run loops allows re-initialization of defaults
         data = _Data(parcel_approach, signal_clean_info, task_info, tr, verbose)
 
-        # Due to prior checking in _setup_extraction within TimeseriesExtractor, run_list = [None] is assumed to be a
-        # single file without the run- description
-        run_id = "run-0" if run is None else run
-
-        # Get files from specific run; Presence of confound metadata depends on if separate acompcor components requested
-        data.files = {
-            "nifti": _grab_file(run, prepped_files["niftis"]),
-            "confound": _grab_file(run, prepped_files["confounds"]),
-            "confound_meta": _grab_file(
-                run, prepped_files["confound_metas"] if prepped_files.get("confound_metas") else None
-            ),
-            "event": _grab_file(run, prepped_files["events"]),
-        }
-
-        # Base message
-        data.head = _subject_header(data, run_id.split("-")[-1], subj_id)
-
-        if data.verbose:
-            LG.info(
-                f"{data.head}" + f"Preparing for Timeseries Extraction using "
-                f"[FILE: {os.path.basename(data.files['nifti'])}]."
-            )
+        run_id, data.files, data.head = _get_subject_data(subj_id, run, prepped_files, data, LG)
 
         # Get dummy volumes
         data.dummy_vols = _get_dummy(data, LG)
 
         # Assess framewise displacement
         if data.fd_thresh and data.files["confound"] and "framewise_displacement" in data.confound_df.columns:
-            # Get censor volumes vector, outlier_limit, and threshold
-            data.censored_frames, data.fd_array_len = _basic_censor(data)
+            data.censored_frames, data.fd_array_len, data.skip_run = _compute_censored_frames(data, LG)
 
-            if data.censored_frames and (data.n_before or data.n_after):
-                data.censored_frames = _extended_censor(data)
-
-            if len(data.censored_frames) == data.fd_array_len:
-                LG.warning(
-                    f"{data.head}" + "Timeseries Extraction Skipped: Timeseries will be empty due to "
-                    f"all volumes exceeding a framewise displacement of {data.fd_thresh}."
-                )
+            # All frames exceed threshold
+            if data.skip_run:
                 continue
 
             # Create sample mask
             if data.censored_frames and (data.pass_mask_to_nilearn or data.interpolate):
                 data.sample_mask = _create_sample_mask(data)
-
-            # Check if run fails fast due to percentage volumes exceeding user-specified out_percent
-            if data.out_percent and not data.condition:
-                data.vols_exceed_percent, data.skip_run = _flag_run(
-                    len(data.censored_frames), data.fd_array_len, data.out_percent
-                )
         elif data.fd_thresh and data.files["confound"] and "framewise_displacement" not in data.confound_df.columns:
             LG.warning(
                 f"{data.head}" + "`fd_threshold` specified but 'framewise_displacement' column not "
@@ -220,31 +195,19 @@ def _extract_timeseries(
 
         # Get events
         if data.files["event"]:
-            event_df = pd.read_csv(data.files["event"], sep="\t")
-            # Get specific timing information for specific condition
-            condition_df = event_df[event_df["trial_type"] == data.condition]
+            condition_df, data.skip_run = _get_condition_df(data, LG)
 
-            if condition_df.empty:
-                LG.warning(
-                    f"{data.head}" + f"[CONDITION: {data.condition}] Timeseries Extraction Skipped: The "
-                    "requested condition does not exist in the 'trial_type' column of the event file."
-                )
+            # Condition df is empty
+            if data.skip_run:
                 continue
 
             # Get condition indices; removes any scans in dummy volumes
-            data.scans = _get_condition_indices(data, condition_df)
-            total_condition_frames = len(data.scans)
+            data.scans, data.n_total_scans = _get_condition_indices(data, condition_df)
 
             if data.censored_frames:
                 # Removing censored or non-interpolated scan indxs; n_censored_condition_indxs is all indxs flagged
                 # regardless if indx will be interpolated
-                data.scans, n_total_censored, n_final_censored, n_interpolated = filter_censored_scan_indices(data, LG)
-                data.n_censored_condition_indxs, data.n_interpolated_condition_indxs = n_final_censored, n_interpolated
-
-                if data.out_percent:
-                    data.vols_exceed_percent, data.skip_run = _flag_run(
-                        n_total_censored, total_condition_frames, data.out_percent
-                    )
+                data.scans, data.n_censored_scans, data.n_interpolated_scans = filter_censored_scan_indices(data, LG)
 
             if not data.scans:
                 LG.warning(
@@ -255,24 +218,27 @@ def _extract_timeseries(
                 )
                 continue
 
-        if data.skip_run:
-            percent_msg = f"Percentage of volumes exceeding the threshold limit is {data.vols_exceed_percent * 100}%"
-            if data.condition:
-                percent_msg = f"{percent_msg} for [CONDITION: {data.condition}]"
+        # Compute number of volumes exceeding outlier percentage
+        if data.censored_frames and data.out_percent:
+            data.vols_exceed_percent, data.skip_run = _flag_run(data)
 
-            LG.warning(
-                f"{data.head}" + f"Timeseries Extraction Skipped: Run flagged due to more than "
-                f"{data.out_percent * 100}% of the volumes exceeding the framewise displacement threshold of "
-                f"{data.fd_thresh}. {percent_msg}."
-            )
-            continue
+            if data.skip_run:
+                msg = f"Percentage of volumes exceeding the threshold limit is {data.vols_exceed_percent * 100}%"
+                if data.condition:
+                    msg += f" for [CONDITION: {data.condition}]"
+
+                LG.warning(
+                    f"{data.head}" + f"Timeseries Extraction Skipped: Run flagged due to more than "
+                    f"{data.out_percent * 100}% of the volumes exceeding the framewise displacement threshold of "
+                    f"{data.fd_thresh}. {msg}."
+                )
+                continue
 
         # Continue extraction if the continue keyword isn't hit when assessing the fd threshold or events
         timeseries = _perform_extraction(data, LG)
         if timeseries.shape[0] == 0:
             LG.warning(
-                f"{data.head}" + f"Timeseries is empty and will not be appended to the "
-                "`subject_timeseries` dictionary."
+                f"{data.head}" + f"Timeseries is empty and will not be appended to the `subject_timeseries` dictionary."
             )
         else:
             subject_timeseries[subj_id].update({run_id: timeseries})
@@ -284,6 +250,278 @@ def _extract_timeseries(
         subject_timeseries, qc = None, None
 
     return subject_timeseries, qc
+
+
+def _get_subject_data(subj_id, run, prepped_files, data, LG):
+    """Gets subject-related data."""
+    # Due to prior checking in _setup_extraction within TimeseriesExtractor, run_list = [None] is assumed to be a
+    # single file without the run- description
+    run_id = "run-0" if run is None else run
+
+    # Get files from specific run; Presence of confound metadata depends on if separate acompcor components requested
+    files = {
+        "nifti": _grab_file(run, prepped_files["niftis"]),
+        "confound": _grab_file(run, prepped_files["confounds"]),
+        "confound_meta": _grab_file(
+            run, prepped_files["confound_metas"] if prepped_files.get("confound_metas") else None
+        ),
+        "event": _grab_file(run, prepped_files["events"]),
+    }
+
+    # Base message containing subject header information for logging
+    head = _subject_header(data, run_id.split("-")[-1], subj_id, files["nifti"])
+
+    if data.verbose:
+        LG.info(f"{head}" + f"Preparing for Timeseries Extraction using [FILE: {os.path.basename(files['nifti'])}].")
+
+    return run_id, files, head
+
+
+def _grab_file(run, files):
+    """
+    Grabs a single from a list of files. If ``files`` is not None, then the file corresponding to the run ID is
+    returned. If ``run`` is None, it's assumed that their is only a single run in ``files``.
+    """
+    if not files:
+        return None
+
+    if run:
+        return [file for file in files if f"{run}_" in os.path.basename(file)][0]
+    else:
+        return files[0]
+
+
+def _subject_header(data, run_id, subj_id, nifti):
+    """Creates the subject header to use in verbose logging, indicating the subject, session, task, and run."""
+    if data.session:
+        sess_id = data.session
+    else:
+        base_filename = os.path.basename(nifti)
+        sess = re.search("ses-(\\S+?)[-_]", base_filename)[0][:-1] if "ses-" in base_filename else None
+        sess_id = sess.split("-")[-1] if sess else None
+
+    sub_head = f"[SUBJECT: {subj_id} | SESSION: {sess_id} | TASK: {data.task} | RUN: {run_id}]"
+
+    return f"{sub_head} "
+
+
+def _get_dummy(data, LG):
+    """Gets the number of dummy scans to remove."""
+    info = data.signal_clean_info["dummy_scans"]
+
+    if isinstance(info, dict) and info.get("auto"):
+        # If n=0, it will simply be treated as False
+        n, flag = len([col for col in data.confound_df.columns if "non_steady_state" in col]), "auto"
+
+        if info.get("min") and n < info["min"]:
+            n, flag = info["min"], "min"
+        if info.get("max") and n > info["max"]:
+            n, flag = info["max"], "max"
+
+        if data.verbose:
+            if flag == "auto":
+                if n:
+                    LG.info(
+                        f"{data.head}" + "Number of dummy scans to be removed based on "
+                        f"'non_steady_state_outlier_XX' columns: {n}."
+                    )
+                else:
+                    LG.info(
+                        f"{data.head}" + "No 'non_steady_state_outlier_XX' columns were found so 0 "
+                        "dummy scans will be removed."
+                    )
+            else:
+                LG.info(f"{data.head}" + f"Default dummy scans set by '{flag}' will be used: {n}.")
+
+    return n if isinstance(info, dict) else info
+
+
+def _compute_censored_frames(data, LG):
+    """Determines the corresponding indices that exceed a specific fd threshold."""
+    skip_run = False
+
+    # Get censored frames and length of fd array (minus dummy volumes)
+    censored_frames, fd_array_len = _basic_censor(data)
+
+    if censored_frames and (data.n_before or data.n_after):
+        censored_frames = _extended_censor(censored_frames, fd_array_len, data)
+
+    if len(censored_frames) == fd_array_len:
+        LG.warning(
+            f"{data.head}" + "Timeseries Extraction Skipped: Timeseries will be empty due to "
+            f"all volumes exceeding a framewise displacement of {data.fd_thresh}."
+        )
+        skip_run = True
+
+    return censored_frames, fd_array_len, skip_run
+
+
+def _basic_censor(data):
+    """Finds the indices that exceed a certain framewise displacement threshold."""
+    fd_array = data.confound_df["framewise_displacement"].fillna(0).values
+
+    # Truncate fd_array if dummy scans
+    if data.dummy_vols:
+        fd_array = fd_array[data.dummy_vols :]
+
+    censor_volumes = sorted(list(np.where(fd_array > data.fd_thresh)[0]))
+
+    return censor_volumes, fd_array.shape[0]
+
+
+def _extended_censor(censored_frames, fd_array_len, data):
+    """
+    Iterates through each element in ``data.censored_frames`` and computes the indices of the frames before ``i`` to
+    also censor ("n_before") as well as the indices after ``i`` to censor.
+    """
+    ext_arr = []
+
+    for i in censored_frames:
+        if data.n_before:
+            ext_arr.extend(range(i - data.n_before, i))
+        if data.n_after:
+            ext_arr.extend(range(i + 1, i + data.n_after + 1))
+
+    # Filter; ensure no index is below zero to prevent backwards indexing and not above max to prevent error
+    filtered_ext_arr = [x for x in ext_arr if x >= 0 and x < fd_array_len]
+
+    # Return new list that is sorted and only contains unique indices
+    return sorted(list(set(censored_frames + filtered_ext_arr)))
+
+
+def _create_sample_mask(data):
+    """
+    Creates a boolean using ``data.fd_array_len``, which is the length of the ``fd_array`` once dummy volumes are
+    removed, to generate the correct length and ``data.censored_frames`` to set the indices corresponding to the
+    censored . In this mask, False (0) are the censored volumes and True (1) are the retained volumes.
+    """
+    sample_mask = np.ones(data.fd_array_len, dtype="bool")
+    sample_mask[np.array(data.censored_frames)] = False
+
+    return sample_mask
+
+
+def _get_contiguous_ends(data):
+    """
+    . Assumes dummy scans have already been filtered out (reflected in ``data.fd_array_len``) by the time
+    ``data.sample_mask`` is created. Determines if the edges of a timeseries
+    """
+    # If all volumes are retained, then early return
+    if np.all(data.sample_mask):
+        return []
+
+    # Example sample mask: [0,0,1,1,0,0,1,1,0,0]; 1 = kept; Diff array of sample mask: [0,1,0,-1,0,1,0,-1,0]
+    # Indices not 0: [1,3,5,7]; Add + 1 to each element to obtain transition indxs from sample mask: [2,4,6,8]
+    split_indices = np.where(np.diff(data.sample_mask, n=1) != 0)[0] + 1
+    # Split into groups of contiguous indices: ([0,1], [2,3], [4,5], [6,7], [8,9])
+    contiguous_indices = np.split(np.arange(data.fd_array_len), split_indices)
+    # Check if first index in sample mask is 0
+    start_indices = contiguous_indices[0].tolist() if data.sample_mask[0] == 0 else []
+    # Check if last index in sample mask is 0
+    end_indices = contiguous_indices[-1].tolist() if data.sample_mask[-1] == 0 else []
+
+    return start_indices + end_indices
+
+
+def _get_condition_df(data, LG):
+    """Obtains a dataframe only containing information for a specific condition specified in "trail type."""
+    skip_run = False
+
+    event_df = pd.read_csv(data.files["event"], sep="\t")
+    # Get specific timing information for specific condition
+    condition_df = event_df[event_df["trial_type"] == data.condition]
+
+    if condition_df.empty:
+        LG.warning(
+            f"{data.head}" + f"[CONDITION: {data.condition}] Timeseries Extraction Skipped: The "
+            "requested condition does not exist in the 'trial_type' column of the event file."
+        )
+        skip_run = True
+
+    return condition_df, skip_run
+
+
+def _get_condition_indices(data, condition_df):
+    """
+    Converts condition event timing to TR units to be extracted from the timeseries. Adjusts these TRs based on
+    slice timing (if specified, to adjust the onset time back) and a tr shift (if specified, to adjust for hemodynamic
+    lag). Also makes an adjustment for dummy volumes (if specified).
+    """
+    scans = []
+
+    # Convert times into scan numbers to obtain the scans taken when the participant was exposed to the
+    # condition of interest; include partial scans
+    for i in condition_df.index:
+        adjusted_onset = condition_df.loc[i, "onset"] - data.slice_ref * data.tr
+        # Avoid accidental negative indexing
+        adjusted_onset = adjusted_onset if adjusted_onset >= 0 else 0
+        # Int is always the floor for positive floats
+        onset_scan = int(adjusted_onset / data.tr) + data.tr_shift
+        end_scan = math.ceil((adjusted_onset + condition_df.loc[i, "duration"]) / data.tr) + data.tr_shift
+        scans.extend(range(onset_scan, end_scan))
+
+    # Get unique scans to not duplicate information
+    scans = sorted(list(set(scans)))
+
+    # Adjust for dummy
+    if data.dummy_vols:
+        scans = [scan - data.dummy_vols for scan in scans if scan not in range(data.dummy_vols)]
+
+    return scans, len(scans)
+
+
+def filter_censored_scan_indices(data, LG):
+    """
+    Removes condition indices, stored in ``data.scans``, that exceed the length of the ``fd_array``, which corresponds
+    to the timeseries length. Also removed any indices that are censored and provides the number of indices to be
+    scrubbed or interpolated.
+    """
+    # Assess if any condition indices greater than fd array to not dilute outlier calculation; caused by tr shift
+    scans = _validate_scan_bounds(data, data.fd_array_len, LG)
+    scans = set(data.scans)
+
+    all_censored_indxs = scans.intersection(data.censored_frames)
+    # Determine the number of frames that will be interpolated for qc report
+    # Get the intersection of condition scan indxs and the censored_frames, then get indxs not in censored_ends
+    n_interpolated_scans = len(all_censored_indxs.difference(data.censored_ends)) if data.interpolate else 0
+    # Remove all censored scans if no interpolation else only remove censored (contiguous) ends
+    scrubbing_approach = data.censored_frames if not data.interpolate else data.censored_ends
+    final_censored_indxs = scans.intersection(scrubbing_approach)
+    scans = scans.difference(final_censored_indxs)
+
+    return sorted(list(scans)), len(all_censored_indxs), n_interpolated_scans
+
+
+def _validate_scan_bounds(data, arr_len, LG=None, warn=False):
+    """
+    Checks if indices in ``data.scans`` (which are the indices for the event condition) are within the timeseries
+    boundaries.
+    """
+    if max(data.scans) <= arr_len - 1:
+        return data.scans
+
+    # Warn is false in instances were shift is used to prevent unnecessary logging, the warning is specifically
+    # for instances related to misalignment such as potentially incorrect onsets and durations
+    if warn:
+        LG.warning(
+            f"{data.head}" + f"[CONDITION: {data.condition}] Max scan index exceeds timeseries max index. "
+            f"Max condition index is {max(data.scans)}, while max timeseries index is {arr_len - 1}. Timing may "
+            "be misaligned or specified repetition time incorrect. If intentional, ignore warning. Only "
+            "indices for condition within the timeseries range will be extracted."
+        )
+
+    return [scan for scan in data.scans if scan in range(arr_len)]
+
+
+def _flag_run(data):
+    """
+    Determines if a run is flagged due to exceeding a certain threshold percentage specified by "outlier_percentage".
+    """
+    n_censor, n = data.censored_vals
+    vols_exceed_percent = n_censor / n
+    skip_run = True if vols_exceed_percent > data.out_percent else False
+
+    return vols_exceed_percent, skip_run
 
 
 def _perform_extraction(data, LG):
@@ -335,180 +573,6 @@ def _perform_extraction(data, LG):
         timeseries = timeseries[data.scans, :]
 
     return timeseries
-
-
-def _grab_file(run, files):
-    """
-    Grabs a single from a list of files. If ``files`` is not None, then the file corresponding to the run ID is
-    returned. If ``run`` is None, it's assumed that their is only a single run in ``files``.
-    """
-    if not files:
-        return None
-
-    if run:
-        return [file for file in files if f"{run}_" in os.path.basename(file)][0]
-    else:
-        return files[0]
-
-
-def _subject_header(data, run_id, subj_id):
-    """Creates the subject header to use in verbose logging, indicating the subject, session, task, and run."""
-    if data.session:
-        sess_id = data.session
-    else:
-        base_filename = os.path.basename(data.files["nifti"])
-        sess = re.search("ses-(\\S+?)[-_]", base_filename)[0][:-1] if "ses-" in base_filename else None
-        sess_id = sess.split("-")[-1] if sess else None
-
-    sub_head = f"[SUBJECT: {subj_id} | SESSION: {sess_id} | TASK: {data.task} | RUN: {run_id}]"
-
-    return f"{sub_head} "
-
-
-def _get_dummy(data, LG):
-    """Gets the number of dummy scans to remove."""
-    info = data.signal_clean_info["dummy_scans"]
-
-    if isinstance(info, dict) and info.get("auto"):
-        # If n=0, it will simply be treated as False
-        n, flag = len([col for col in data.confound_df.columns if "non_steady_state" in col]), "auto"
-
-        if info.get("min") and n < info["min"]:
-            n, flag = info["min"], "min"
-        if info.get("max") and n > info["max"]:
-            n, flag = info["max"], "max"
-
-        if data.verbose:
-            if flag == "auto":
-                if n:
-                    LG.info(
-                        f"{data.head}" + "Number of dummy scans to be removed based on "
-                        f"'non_steady_state_outlier_XX' columns: {n}."
-                    )
-                else:
-                    LG.info(
-                        f"{data.head}" + "No 'non_steady_state_outlier_XX' columns were found so 0 "
-                        "dummy scans will be removed."
-                    )
-            else:
-                LG.info(f"{data.head}" + f"Default dummy scans set by '{flag}' will be used: {n}.")
-
-    return n if isinstance(info, dict) else info
-
-
-def _basic_censor(data):
-    """Finds the indices that exceed a certain framewise displacement threshold."""
-    fd_array = data.confound_df["framewise_displacement"].fillna(0).values
-
-    # Truncate fd_array if dummy scans
-    if data.dummy_vols:
-        fd_array = fd_array[data.dummy_vols :]
-
-    censor_volumes = sorted(list(np.where(fd_array > data.fd_thresh)[0]))
-
-    return censor_volumes, fd_array.shape[0]
-
-
-def _extended_censor(data):
-    """
-    Iterates through each element in ``data.censored_frames`` and computes the indices of the frames before ``i`` to
-    also censor ("n_before") as well as the indices after ``i`` to censor.
-    """
-    ext_arr = []
-
-    for i in data.censored_frames:
-        if data.n_before:
-            ext_arr.extend(range(i - data.n_before, i))
-        if data.n_after:
-            ext_arr.extend(range(i + 1, i + data.n_after + 1))
-
-    # Filter; ensure no index is below zero to prevent backwards indexing and not above max to prevent error
-    filtered_ext_arr = [x for x in ext_arr if x >= 0 and x < data.fd_array_len]
-
-    # Return new list that is sorted and only contains unique indices
-    return sorted(list(set(data.censored_frames + filtered_ext_arr)))
-
-
-def _report_qc(data):
-    """Determined the number of frames that were scrubbed or interpolated."""
-    qc = {"frames_scrubbed": 0, "frames_interpolated": 0}
-
-    if not data.censored_frames:
-        return qc
-
-    if not data.condition:
-        n_scrubbed_frames = len(data.censored_frames)
-        n_interpolated_frames = n_scrubbed_frames - len(data.censored_ends) if data.interpolate else 0
-        n_scrubbed_frames -= n_interpolated_frames
-    else:
-        n_scrubbed_frames = data.n_censored_condition_indxs
-        n_interpolated_frames = data.n_interpolated_condition_indxs
-
-    qc["frames_scrubbed"] = n_scrubbed_frames
-    qc["frames_interpolated"] = n_interpolated_frames
-
-    return qc
-
-
-def _flag_run(n_censor, n, out_percent):
-    """
-    Determines if a run is flagged due to exceeding a certain threshold percentage specified by "outlier_percentage".
-    """
-    vols_exceed_percent = n_censor / n
-    skip_run = True if vols_exceed_percent > out_percent else False
-
-    return vols_exceed_percent, skip_run
-
-
-def _get_condition_indices(data, condition_df):
-    """
-    Converts condition event timing to TR units to be extracted from the timeseries. Adjusts these TRs based on
-    slice timing (if specified, to adjust the onset time back) and a tr shift (if specified, to adjust for hemodynamic
-    lag). Also makes an adjustment for dummy volumes (if specified).
-    """
-    scans = []
-
-    # Convert times into scan numbers to obtain the scans taken when the participant was exposed to the
-    # condition of interest; include partial scans
-    for i in condition_df.index:
-        adjusted_onset = condition_df.loc[i, "onset"] - data.slice_ref * data.tr
-        # Avoid accidental negative indexing
-        adjusted_onset = adjusted_onset if adjusted_onset >= 0 else 0
-        # Int is always the floor for positive floats
-        onset_scan = int(adjusted_onset / data.tr) + data.tr_shift
-        end_scan = math.ceil((adjusted_onset + condition_df.loc[i, "duration"]) / data.tr) + data.tr_shift
-        scans.extend(range(onset_scan, end_scan))
-
-    # Get unique scans to not duplicate information
-    scans = sorted(list(set(scans)))
-
-    # Adjust for dummy
-    if data.dummy_vols:
-        scans = [scan - data.dummy_vols for scan in scans if scan not in range(data.dummy_vols)]
-
-    return scans
-
-
-def filter_censored_scan_indices(data, LG):
-    """
-    Removes condition indices, stored in ``data.scans``, that exceed the length of the ``fd_array``, which corresponds
-    to the timeseries length. Also removed any indices that are censored and provides the number of indices to be
-    scrubbed or interpolated.
-    """
-    # Assess if any condition indices greater than fd array to not dilute outlier calculation; caused by tr shift
-    scans = _validate_scan_bounds(data, data.fd_array_len, LG)
-    scans = set(data.scans)
-
-    all_censored_indxs = scans.intersection(data.censored_frames)
-    # Determine the number of frames that will be interpolated for qc report
-    # Get the intersection of condition scan indxs and the censored_frames, then get indxs not in censored_ends
-    n_interpolated_indxs = len(all_censored_indxs.difference(data.censored_ends)) if data.interpolate else 0
-    # Remove all censored scans if no interpolation else only remove censored (contiguous) ends
-    scrubbing_approach = data.censored_frames if not data.interpolate else data.censored_ends
-    final_censored_indxs = scans.intersection(scrubbing_approach)
-    scans = scans.difference(final_censored_indxs)
-
-    return sorted(list(scans)), len(all_censored_indxs), len(final_censored_indxs), n_interpolated_indxs
 
 
 def _process_confounds(data, LG):
@@ -597,58 +661,6 @@ def _extract_valid_confounds(data, confound_names, LG):
     return confounds
 
 
-def _create_sample_mask(data):
-    """
-    Creates a boolean using ``data.fd_array_len``, which is the length of the ``fd_array`` once dummy volumes are
-    removed, to generate the correct length and ``data.censored_frames`` to set the indices corresponding to the
-    censored . In this mask, False (0) are the censored volumes and True (1) are the retained volumes.
-    """
-    sample_mask = np.ones(data.fd_array_len, dtype="bool")
-    sample_mask[np.array(data.censored_frames)] = False
-
-    return sample_mask
-
-
-def _interpolate_censored_frames(timeseries, data):
-    """
-    Replaces censored frames in the timeseries using cubic spline interpolation using scipy's ``CubicSpline``.
-    Removes any censored frames that are not neighbored by non-censored data on its left or right.
-
-    References `nilearn's _interpolate_volumes <https://github.com/nilearn/nilearn/blob/f74c4c5c0/nilearn/signal.py#L894>`_
-    """
-    # Get frame times
-    frame_times = np.arange(data.fd_array_len) * data.tr
-    # Create interpolated timeseries; retain only good frame times and timeseries data
-    cubic_spline = CubicSpline(frame_times[data.sample_mask], timeseries[data.sample_mask, :], extrapolate=False)
-    # Only replace the high motion volumes with the interpolated data
-    timeseries[~data.sample_mask, :] = cubic_spline(frame_times)[~data.sample_mask, :]
-
-    # Remove ends if not condition, condition already removes these volumes in the data.scans list
-    return _remove_censored_frames(timeseries, data.condition, data.censored_ends)
-
-
-def _get_contiguous_ends(data):
-    """
-    . Assumes dummy scans have already been filtered out (reflected in ``data.fd_array_len``) by the time
-    ``data.sample_mask`` is created. Determines if the edges of a timeseries
-    """
-    # If all volumes are retained, then early return
-    if np.all(data.sample_mask):
-        return []
-
-    # Example sample mask: [0,0,1,1,0,0,1,1,0,0]; 1 = kept; Diff array of sample mask: [0,1,0,-1,0,1,0,-1,0]
-    # Indices not 0: [1,3,5,7]; Add + 1 to each element to obtain transition indxs from sample mask: [2,4,6,8]
-    split_indices = np.where(np.diff(data.sample_mask, n=1) != 0)[0] + 1
-    # Split into groups of contiguous indices: ([0,1], [2,3], [4,5], [6,7], [8,9])
-    contiguous_indices = np.split(np.arange(data.fd_array_len), split_indices)
-    # Check if first index in sample mask is 0
-    start_indices = contiguous_indices[0].tolist() if data.sample_mask[0] == 0 else []
-    # Check if last index in sample mask is 0
-    end_indices = contiguous_indices[-1].tolist() if data.sample_mask[-1] == 0 else []
-
-    return start_indices + end_indices
-
-
 def _process_timeseries(timeseries, data):
     """Processes the timeseries by performing padding, interpolation, or removal of censored frames."""
     timeseries = _pad_timeseries(timeseries, data)
@@ -676,6 +688,24 @@ def _pad_timeseries(timeseries, data):
     return padded_timeseries
 
 
+def _interpolate_censored_frames(timeseries, data):
+    """
+    Replaces censored frames in the timeseries using cubic spline interpolation using scipy's ``CubicSpline``.
+    Removes any censored frames that are not neighbored by non-censored data on its left or right.
+
+    References `nilearn's _interpolate_volumes <https://github.com/nilearn/nilearn/blob/f74c4c5c0/nilearn/signal.py#L894>`_
+    """
+    # Get frame times
+    frame_times = np.arange(data.fd_array_len) * data.tr
+    # Create interpolated timeseries; retain only good frame times and timeseries data
+    cubic_spline = CubicSpline(frame_times[data.sample_mask], timeseries[data.sample_mask, :], extrapolate=False)
+    # Only replace the high motion volumes with the interpolated data
+    timeseries[~data.sample_mask, :] = cubic_spline(frame_times)[~data.sample_mask, :]
+
+    # Remove ends if not condition, condition already removes these volumes in the data.scans list
+    return _remove_censored_frames(timeseries, data.condition, data.censored_ends)
+
+
 def _remove_censored_frames(timeseries, condition, removed_frames):
     """
     Removes censored frames from the timeseries if no condition is specified since data.scans already ignores
@@ -687,22 +717,22 @@ def _remove_censored_frames(timeseries, condition, removed_frames):
         return np.delete(timeseries, removed_frames, axis=0)
 
 
-def _validate_scan_bounds(data, arr_len, LG=None, warn=False):
-    """
-    Checks if indices in ``data.scans`` (which are the indices for the event condition) are within the timeseries
-    boundaries.
-    """
-    if max(data.scans) <= arr_len - 1:
-        return data.scans
+def _report_qc(data):
+    """Determined the number of frames that were scrubbed or interpolated."""
+    qc = {"frames_scrubbed": 0, "frames_interpolated": 0}
 
-    # Warn is false in instances were shift is used to prevent unnecessary logging, the warning is specifically
-    # for instances related to misalignment such as potentially incorrect onsets and durations
-    if warn:
-        LG.warning(
-            f"{data.head}" + f"[CONDITION: {data.condition}] Max scan index exceeds timeseries max index. "
-            f"Max condition index is {max(data.scans)}, while max timeseries index is {arr_len - 1}. Timing may "
-            "be misaligned or specified repetition time incorrect. If intentional, ignore warning. Only "
-            "indices for condition within the timeseries range will be extracted."
-        )
+    if not data.censored_frames:
+        return qc
 
-    return [scan for scan in data.scans if scan in range(arr_len)]
+    if not data.condition:
+        n_scrubbed_frames = len(data.censored_frames)
+        n_interpolated_frames = n_scrubbed_frames - len(data.censored_ends) if data.interpolate else 0
+        n_scrubbed_frames -= n_interpolated_frames
+    else:
+        n_scrubbed_frames = data.n_censored_scans - data.n_interpolated_scans
+        n_interpolated_frames = data.n_interpolated_scans
+
+    qc["frames_scrubbed"] = n_scrubbed_frames
+    qc["frames_interpolated"] = n_interpolated_frames
+
+    return qc
