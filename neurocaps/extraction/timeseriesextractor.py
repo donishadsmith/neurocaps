@@ -198,7 +198,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     qc: :obj:`dict` or :obj:`None`
         A dictionary reporting quality control, which maps subject IDs to their run IDs and information related to the
         number of frames scrubbed and interpolated as well as the mean and standard deviation of continuous high
-        motion segments.
+        motion segments. Statistics for each subject's run are only reported when ``fd_threshold`` is specified, a valid
+        confound tsv file containing the "framewise_displacement" column is found, and the run is not skipped.
 
         ::
 
@@ -1039,7 +1040,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         Important
         ---------
-        **FD Threshold**: The values of each statistic are specific to the threshold specified by ``fd_threshold``.
+        **Reporting**: Statistics for each subject's run are only reported when ``fd_threshold`` is specified, a valid
+        confound tsv file containing the "framewise_displacement" column is found, and the run is not skipped.
+
+        **FD Threshold**: The value of each statistic are specific to the threshold specified by ``fd_threshold``.
 
         **Censored & Interpolated Frames**: The frame counts reported exclude any dummy volumes, as they are calculated
         after dummy volumes are removed from the analysis. If a ``condition`` was specified in ``self.get_bold``,
@@ -1054,9 +1058,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         **High Motion Length Computation**: "Mean_High_Motion_Length" and "Std_High_Motion_Length" represent the average
         length and population standard deviation of contiguous segments of frames flagged for high-motion frames,
-        respectively. When ``condition` is specified in ``self.get_bold``, only frames associated with that condition
-        are included in these calculations and are treated as a continuous block for computational simplicity. The
-        computation remains the same regardles if these flagged frames are interpolated.
+        respectively. When ``condition`` is specified in ``self.get_bold``, only frames associated with that condition
+        are included in these calculations and are treated as a continuous block (per run) for computational simplicity.
+        The computation remains the same regardles if these flagged frames are interpolated.
         """
         save_filename = self._prepare_output_file(output_dir, filename, prop_name="_qc", call="report_qc")
         assert self._qc, "No quality control information to report."

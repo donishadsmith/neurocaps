@@ -88,7 +88,7 @@ Project extended [@Huang2022] parcellations) for spatial dimensionality reductio
 volumes using fMRIPrep-derived regressors, and stores the extracted timeseries information in a dictionary mapping
 subject IDs to run IDs and their associated timeseries.
 - saves extracted timeseries data in a serialized pickle format.
-- reports the number of censored or interpolated frames for each subject.
+- reports the number of censored frames, interpolated frames, and mean and standard deviation of continuous high motion segments for each subject.
 - visualizes timeseries data for a specific subject's run.
 
 **neurocaps.analysis**
