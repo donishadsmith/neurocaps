@@ -43,6 +43,11 @@ class _Data:
     n_interpolated_scans: int = 0
     # Avoid timeseries extraction
     skip_run: bool = False
+    # Stats for qc
+    high_motion_len_mean: int = 0
+    high_motion_len_std: int = 0
+    # Report QC
+    produce_report_qc: bool = False
     # Percentage of volumes that exceed fd threshold
     vols_exceed_percent: Union[float, None] = None
 
@@ -172,7 +177,8 @@ def _extract_timeseries(
         data.dummy_vols = _get_dummy(data, LG)
 
         # Assess framewise displacement
-        if data.fd_thresh and data.files["confound"] and "framewise_displacement" in data.confound_df.columns:
+        col_name = "framewise_displacement"
+        if data.fd_thresh is not None and data.files["confound"] and col_name in data.confound_df.columns:
             data.censored_frames, data.fd_array_len, data.skip_run = _compute_censored_frames(data, LG)
 
             # All frames exceed threshold
@@ -180,9 +186,14 @@ def _extract_timeseries(
                 continue
 
             # Create sample mask
-            if data.censored_frames and (data.pass_mask_to_nilearn or data.interpolate):
-                data.sample_mask = _create_sample_mask(data)
-        elif data.fd_thresh and data.files["confound"] and "framewise_displacement" not in data.confound_df.columns:
+            data.sample_mask = _create_sample_mask(data)
+
+            if not data.condition:
+                data.high_motion_len_mean, data.high_motion_len_std = _get_high_motion_stats(data)
+
+            # Flag to produce qc report
+            data.produce_report_qc = True
+        elif data.fd_thresh is not None and data.files["confound"] and col_name not in data.confound_df.columns:
             LG.warning(
                 f"{data.head}" + "`fd_threshold` specified but 'framewise_displacement' column not "
                 "found in the confound tsv file. Removal of volumes after nuisance regression will not be "
@@ -191,7 +202,7 @@ def _extract_timeseries(
 
         # Determines indxs of ends to be censored if interpolation of censored volumes are requested
         if data.interpolate:
-            data.censored_ends = _get_contiguous_ends(data)
+            data.censored_ends = _get_contiguous_ends(data.sample_mask)
 
         # Get events
         if data.files["event"]:
@@ -205,9 +216,13 @@ def _extract_timeseries(
             data.scans, data.n_total_scans = _get_condition_indices(data, condition_df)
 
             if data.censored_frames:
+                # Use fd array length to determine that an index is not out of bounds due to tr shift
+                data.scans = _validate_scan_bounds(data, data.fd_array_len, LG)
+                # Get stats
+                data.high_motion_len_mean, data.high_motion_len_std = _get_high_motion_stats(data)
                 # Removing censored or non-interpolated scan indxs; n_censored_condition_indxs is all indxs flagged
                 # regardless if indx will be interpolated
-                data.scans, data.n_censored_scans, data.n_interpolated_scans = filter_censored_scan_indices(data, LG)
+                data.scans, data.n_censored_scans, data.n_interpolated_scans = filter_censored_scan_indices(data)
 
             if not data.scans:
                 LG.warning(
@@ -219,7 +234,7 @@ def _extract_timeseries(
                 continue
 
         # Compute number of volumes exceeding outlier percentage
-        if data.censored_frames and data.out_percent:
+        if data.censored_frames and data.out_percent is not None:
             data.vols_exceed_percent, data.skip_run = _flag_run(data)
 
             if data.skip_run:
@@ -243,11 +258,15 @@ def _extract_timeseries(
         else:
             subject_timeseries[subj_id].update({run_id: timeseries})
             # Report framewise displacement quality control
-            qc[subj_id].update({run_id: _report_qc(data)})
+            if data.produce_report_qc:
+                qc[subj_id].update({run_id: _report_qc(data)})
 
     if not subject_timeseries[subj_id]:
         LG.warning(f"{data.head.split(' | RUN:')[0]}] Timeseries Extraction Skipped: No runs were extracted.")
         subject_timeseries, qc = None, None
+
+    if not qc[subj_id]:
+        qc = None
 
     return subject_timeseries, qc
 
@@ -357,7 +376,7 @@ def _compute_censored_frames(data, LG):
 
 
 def _basic_censor(data):
-    """Finds the indices that exceed a certain framewise displacement threshold."""
+    """Finds the indices that exceed a certain framewise displacement threshold after dummy volumes are removed."""
     fd_array = data.confound_df["framewise_displacement"].fillna(0).values
 
     # Truncate fd_array if dummy scans
@@ -371,8 +390,8 @@ def _basic_censor(data):
 
 def _extended_censor(censored_frames, fd_array_len, data):
     """
-    Iterates through each element in ``data.censored_frames`` and computes the indices of the frames before ``i`` to
-    also censor ("n_before") as well as the indices after ``i`` to censor.
+    Iterates through each element in ``censored_frames`` (representing a high motion index) and computes the indices of
+    the frames before ``i`` to also censor ("n_before") as well as the indices after ``i`` to censor.
     """
     ext_arr = []
 
@@ -396,35 +415,71 @@ def _create_sample_mask(data):
     censored . In this mask, False (0) are the censored volumes and True (1) are the retained volumes.
     """
     sample_mask = np.ones(data.fd_array_len, dtype="bool")
-    sample_mask[np.array(data.censored_frames)] = False
+    if data.censored_frames:
+        sample_mask[np.array(data.censored_frames)] = False
 
     return sample_mask
 
 
-def _get_contiguous_ends(data):
+def _get_contiguous_ends(sample_mask):
     """
-    . Assumes dummy scans have already been filtered out (reflected in ``data.fd_array_len``) by the time
-    ``data.sample_mask`` is created. Determines if the edges of a timeseries
+    Assumes dummy scans have already been filtered out of ``sample_mask`` by the time``sample_mask`` is created.
+    Determines if the contiguous edges of the full timeseries have been flagged.
     """
     # If all volumes are retained, then early return
-    if np.all(data.sample_mask):
+    if np.all(sample_mask):
         return []
 
-    # Example sample mask: [0,0,1,1,0,0,1,1,0,0]; 1 = kept; Diff array of sample mask: [0,1,0,-1,0,1,0,-1,0]
-    # Indices not 0: [1,3,5,7]; Add + 1 to each element to obtain transition indxs from sample mask: [2,4,6,8]
-    split_indices = np.where(np.diff(data.sample_mask, n=1) != 0)[0] + 1
-    # Split into groups of contiguous indices: ([0,1], [2,3], [4,5], [6,7], [8,9])
-    contiguous_indices = np.split(np.arange(data.fd_array_len), split_indices)
+    contiguous_indices = _get_contiguous_segments(sample_mask)
     # Check if first index in sample mask is 0
-    start_indices = contiguous_indices[0].tolist() if data.sample_mask[0] == 0 else []
+    start_indices = contiguous_indices[0].tolist() if sample_mask[0] == 0 else []
     # Check if last index in sample mask is 0
-    end_indices = contiguous_indices[-1].tolist() if data.sample_mask[-1] == 0 else []
+    end_indices = contiguous_indices[-1].tolist() if sample_mask[-1] == 0 else []
 
     return start_indices + end_indices
 
 
+def _get_contiguous_segments(sample_mask, splice="indices"):
+    """
+    Get contiguous segments of high motion data for the indices of high motion segments or sample mask (boolean)
+    of high motion segments.
+    """
+    # Example sample mask: [0,0,1,1,0,0,1,1,0,0]; 1 = kept; Diff array of sample mask: [0,1,0,-1,0,1,0,-1,0]
+    # Indices not 0: [1,3,5,7]; Add + 1 to each element to obtain transition indxs from sample mask: [2,4,6,8]
+    split_indices = np.where(np.diff(sample_mask, n=1) != 0)[0] + 1
+    arr = np.arange(sample_mask.shape[0]) if splice == "indices" else sample_mask
+    # Split into groups of contiguous indices: ([0,1], [2,3], [4,5], [6,7], [8,9]) or
+    # Split into groups of binaries: ([0,0], [1,1], [0,0], [1,1], [0,0])
+    segments = np.split(arr, split_indices)
+
+    return segments
+
+
+def _get_high_motion_stats(data):
+    """
+    Get mean and standard deviation of the average flagged frames, regardless if frames are to be interpolated or
+    scrubbed.
+
+    Note
+    ----
+    For computational simplicity, scan indices are treated as the true, continuous length of the timeseries so
+    gaps between event windows are not considered.
+    """
+    sample_mask = data.sample_mask[data.scans,] if data.condition else data.sample_mask
+
+    # Early return if all frames are retained
+    if np.all(sample_mask):
+        return 0, 0
+
+    high_motion_segments = _get_contiguous_segments(sample_mask, splice="sample_mask")
+    high_motion_segment_counts = [len(segment) for segment in high_motion_segments if segment[0] == 0]
+
+    # Don't use Bessel's correction for stdev
+    return np.mean(high_motion_segment_counts), np.std(high_motion_segment_counts)
+
+
 def _get_condition_df(data, LG):
-    """Obtains a dataframe only containing information for a specific condition specified in "trail type."""
+    """Obtains a dataframe only containing information for a specific condition specified in "trail type"."""
     skip_run = False
 
     event_df = pd.read_csv(data.files["event"], sep="\t")
@@ -470,14 +525,12 @@ def _get_condition_indices(data, condition_df):
     return scans, len(scans)
 
 
-def filter_censored_scan_indices(data, LG):
+def filter_censored_scan_indices(data):
     """
     Removes condition indices, stored in ``data.scans``, that exceed the length of the ``fd_array``, which corresponds
     to the timeseries length. Also removed any indices that are censored and provides the number of indices to be
     scrubbed or interpolated.
     """
-    # Assess if any condition indices greater than fd array to not dilute outlier calculation; caused by tr shift
-    scans = _validate_scan_bounds(data, data.fd_array_len, LG)
     scans = set(data.scans)
 
     all_censored_indxs = scans.intersection(data.censored_frames)
@@ -718,8 +771,13 @@ def _remove_censored_frames(timeseries, condition, removed_frames):
 
 
 def _report_qc(data):
-    """Determined the number of frames that were scrubbed or interpolated."""
-    qc = {"frames_scrubbed": 0, "frames_interpolated": 0}
+    """Determines the number of frames that were scrubbed or interpolated and includes the stats of flagged frames."""
+    qc = {
+        "frames_scrubbed": 0,
+        "frames_interpolated": 0,
+        "mean_high_motion_length": data.high_motion_len_mean,
+        "std_high_motion_length": data.high_motion_len_std,
+    }
 
     if not data.censored_frames:
         return qc

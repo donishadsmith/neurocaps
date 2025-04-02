@@ -197,11 +197,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
     qc: :obj:`dict` or :obj:`None`
         A dictionary reporting quality control, which maps subject IDs to their run IDs and information related to the
-        number of frames scrubbed and interpolated.
+        number of frames scrubbed and interpolated as well as the mean and standard deviation of continuous high
+        motion segments.
 
         ::
 
-            {"subjectID": {"run-ID": {"frames_scrubbed": int, "frames_interpolated": int}}}
+            {"subjectID": {"run-ID": {"frames_scrubbed": int, "frames_interpolated": int, "mean_high_motion_length": float, "std_high_motion_length": float}}}
 
         .. versionadded:: 0.24.3
 
@@ -669,7 +670,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         # Aggregate new timeseries dictionary and qc
         if isinstance(subject_timeseries, dict):
             self._subject_timeseries.update(subject_timeseries)
-            self._qc.update(qc)
+            if qc:
+                self._qc.update(qc)
 
     def _validate_get_bold_params(self):
         if self._task_info["condition_tr_shift"] != 0:
@@ -1032,10 +1034,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         Returns
         -------
         pandas.Dataframe
-            Pandas dataframe containing the colums: "Subject_ID", "Run", "Frames_Scrubbed", "Frames_Interpolated".
+            Pandas dataframe containing the colums: "Subject_ID", "Run", "Frames_Scrubbed", "Frames_Interpolated",
+            "Mean_High_Motion_Length", and "STD_High_Motion_Length".
 
         Important
         ---------
+        **FD Threshold**: The values of each statistic are specific to the threshold specified by ``fd_threshold``.
+
         **Censored & Interpolated Frames**: The frame counts reported exclude any dummy volumes, as they are calculated
         after dummy volumes are removed from the analysis. If a ``condition`` was specified in ``self.get_bold``,
         the reported values reflect only frames specific to that condition; otherwise, metrics represent the entire
@@ -1046,12 +1051,27 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         motion. **Note** that only censored frames with valid data on both sides are interpolated, while censored frames
         at the edge of the timeseries (including frames that border censored edges) are always scrubbed and counted in
         "Frames_Scrubbed".
+
+        **High Motion Length Computation**: "Mean_High_Motion_Length" and "STD_High_Motion_Length" represent the average
+        length and population standard deviation of contiguous segments of frames flagged for high-motion frames,
+        respectively. When ``condition` is specified in ``self.get_bold``, only frames associated with that condition
+        are included in these calculations and are treated as a continuous block for computational simplicity. The
+        computation remains the same regardles if these flagged frames are interpolated.
         """
         save_filename = self._prepare_output_file(output_dir, filename, prop_name="_qc", call="report_qc")
         assert self._qc, "No quality control information to report."
 
         # Build df
-        df = DataFrame(columns=["Subject_ID", "Run", "Frames_Scrubbed", "Frames_Interpolated"])
+        df = DataFrame(
+            columns=[
+                "Subject_ID",
+                "Run",
+                "Frames_Scrubbed",
+                "Frames_Interpolated",
+                "Mean_High_Motion_Length",
+                "STD_High_Motion_Length",
+            ]
+        )
         for subject in self._qc:
             for run in self._qc[subject]:
                 df.loc[len(df)] = [
@@ -1059,6 +1079,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     run,
                     self._qc[subject][run]["frames_scrubbed"],
                     self._qc[subject][run]["frames_interpolated"],
+                    self._qc[subject][run]["mean_high_motion_length"],
+                    self._qc[subject][run]["std_high_motion_length"],
                 ]
 
         if output_dir:
