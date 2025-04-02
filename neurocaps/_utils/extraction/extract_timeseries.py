@@ -265,7 +265,7 @@ def _extract_timeseries(
         LG.warning(f"{data.head.split(' | RUN:')[0]}] Timeseries Extraction Skipped: No runs were extracted.")
         subject_timeseries, qc = None, None
 
-    if not qc[subj_id]:
+    if qc is not None and not qc[subj_id]:
         qc = None
 
     return subject_timeseries, qc

@@ -1035,7 +1035,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         -------
         pandas.Dataframe
             Pandas dataframe containing the colums: "Subject_ID", "Run", "Frames_Scrubbed", "Frames_Interpolated",
-            "Mean_High_Motion_Length", and "STD_High_Motion_Length".
+            "Mean_High_Motion_Length", and "Std_High_Motion_Length".
 
         Important
         ---------
@@ -1052,7 +1052,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         at the edge of the timeseries (including frames that border censored edges) are always scrubbed and counted in
         "Frames_Scrubbed".
 
-        **High Motion Length Computation**: "Mean_High_Motion_Length" and "STD_High_Motion_Length" represent the average
+        **High Motion Length Computation**: "Mean_High_Motion_Length" and "Std_High_Motion_Length" represent the average
         length and population standard deviation of contiguous segments of frames flagged for high-motion frames,
         respectively. When ``condition` is specified in ``self.get_bold``, only frames associated with that condition
         are included in these calculations and are treated as a continuous block for computational simplicity. The
@@ -1069,7 +1069,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 "Frames_Scrubbed",
                 "Frames_Interpolated",
                 "Mean_High_Motion_Length",
-                "STD_High_Motion_Length",
+                "Std_High_Motion_Length",
             ]
         )
         for subject in self._qc:

@@ -1,2 +1,2 @@
-Subject_ID,Run,Frames_Scrubbed,Frames_Interpolated
-01,run-001,0,0
+Subject_ID,Run,Frames_Scrubbed,Frames_Interpolated,Mean_High_Motion_Length,Std_High_Motion_Length
+01,run-001,1,0,1.0,0.0

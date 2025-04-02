@@ -1232,15 +1232,9 @@ def test_extended_censoring(get_vars, fd_threshold):
     """
     bids_dir, pipeline_name = get_vars
 
-    extractor_censored = TimeseriesExtractor(fd_threshold=fd_threshold)
-    extractor_censored.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
-
     extractor_not_censored = TimeseriesExtractor()
     extractor_not_censored.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
-    assert extractor_not_censored.qc["01"]["run-001"]["frames_scrubbed"] == 0
-    assert extractor_not_censored.qc["01"]["run-001"]["frames_interpolated"] == 0
-    assert extractor_not_censored.qc["01"]["run-001"]["mean_high_motion_length"] == 0
-    assert extractor_not_censored.qc["01"]["run-001"]["std_high_motion_length"] == 0
+    assert not extractor_not_censored.qc
 
     if fd_threshold["threshold"] == 0.35:
         expected_shape = 37
@@ -1254,6 +1248,8 @@ def test_extended_censoring(get_vars, fd_threshold):
         non_condition_stats = (5, 0)
         condition_stats = (5, 0)
 
+    extractor_censored = TimeseriesExtractor(fd_threshold=fd_threshold)
+    extractor_censored.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
     assert extractor_censored.subject_timeseries["01"]["run-001"].shape[0] == expected_shape
     # 40 is the length of the full timeseries
     assert extractor_censored.qc["01"]["run-001"]["frames_scrubbed"] == 40 - expected_shape
