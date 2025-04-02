@@ -56,7 +56,8 @@ Low_ADHD_CAP-2_surface.png
 ## Exceptions to the Default Naming Scheme
 
 Certain methods do not follow the default naming convention. This pertains to `TimeseriesExtractor.visualize_bold`,
-`TimeseriesExtractor.timeseries_to_pickle`. `CAP.calculate_metrics`, `merge_dicts`, `standardize`, and `change_dtype`.
+`TimeseriesExtractor.report_qc`, `TimeseriesExtractor.timeseries_to_pickle`. `CAP.calculate_metrics`, `merge_dicts`,
+`standardize`, and `change_dtype`.
 
 - `TimeseriesExtractor.visualize_bold` - The default name format is as follows (but can be overwritten using the
 `filename` parameter):
@@ -70,6 +71,13 @@ subject-[subj_id]_run-[run_id]_timeseries.png
 
 ```
 subject_timeseries.pkl
+```
+
+- `TimeseriesExtractor.report_qc` - The default name format is as follows (but can be overwritten using the
+`filename` parameter):
+
+```
+report_qc.csv
 ```
 
 - `CAP.calculate_metrics` - The naming format generally includes only the metric name (e.g. [metric_name].csv).
