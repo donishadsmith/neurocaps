@@ -138,8 +138,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             - When "use_sample_mask" is False and ``standardize`` is not False, applying an additional within-run\
               standardization (using ``neurocaps.analysis.standardize``) is recommended after outlier removal.
-            - If "interpolate" is True, then interpolation is only applied nuisance regression and parcellation steps\
-              have been completed.
+            - If "interpolate" is True, then interpolation is only applied after the nuisance regression and\
+              parcellation steps have been completed.
             - See Scipy's `CubicSpline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicSpline.html>`_ documentation.
 
     n_acompcor_separate: :obj:`int` or :obj:`None`, default=None
