@@ -60,7 +60,7 @@ dependencies = [
     "kaleido; platform_system != 'Windows'",
     "setuptools>=77.0.1; python_version>='3.12'", # Results in installation errors if not included as dependency
     "typing_extensions; python_version<'3.11'",
-    "vtk<9.4.0", # Version >= 9.4.0 works for 3.13 but incompatible with brainspace due no  "__vtkname__" in Pointset
+    "vtk<9.4.3", # Version >= 9.4.0 works for 3.13 but incompatible with brainspace due no  "__vtkname__" in Pointset
     "tqdm>=4.65.0"
     ]
 
