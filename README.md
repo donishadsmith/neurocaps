@@ -142,7 +142,7 @@ Additional functions in the `neurocaps.analysis` module includes:
 - `merge_dicts`: Merge the subject timeseries dictionaries for overlapping subjects across tasks to identify similar CAPs across different tasks [^5]. The merged dictionary can be saved as a pickle file.
 - `standardize`: Standardizes each run independently for all subjects in the subject timeseries.
 - `change_dtype`: Changes the dtype of all subjects in the subject timeseries to help with memory usage.
-- ``transition_matrix()``: Uses the subject-level transition probabilities outputted from the ``CAP`` class to generate and visualize the averaged transition probability matrix for all groups from the analysis.
+- ``transition_matrix``: Uses the subject-level transition probabilities outputted from the ``CAP`` class to generate and visualize the averaged transition probability matrix for all groups from the analysis.
 
 Refer to the [demos](https://github.com/donishadsmith/neurocaps/tree/main/demos) or
 the [tutorials](https://neurocaps.readthedocs.io/en/stable/examples/examples.html) on the documentation website
