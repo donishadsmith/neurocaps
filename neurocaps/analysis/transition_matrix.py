@@ -132,8 +132,8 @@ def transition_matrix(
 
         display = _create_display(trans_mat, plot_dict, suffix_title, group, "trans")
 
-        # Store df in dict
         trans_mat_dict[group] = trans_mat
+
         # Save figure & dataframe
         if output_dir:
             _save_contents(

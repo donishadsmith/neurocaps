@@ -202,7 +202,7 @@ def _extract_timeseries(
 
         # Determines indxs of ends to be censored if interpolation of censored volumes are requested
         if data.interpolate:
-            data.censored_ends = _get_contiguous_ends(data.sample_mask)
+            data.censored_ends = _get_contiguous_censored_ends(data.sample_mask)
 
         # Get events
         if data.files["event"]:
@@ -328,31 +328,35 @@ def _get_dummy(data, LG):
     """Gets the number of dummy scans to remove."""
     info = data.signal_clean_info["dummy_scans"]
 
-    if isinstance(info, dict) and info.get("auto"):
+    use_auto = True if info == "auto" or (isinstance(info, dict) and info.get("auto")) else False
+    if use_auto:
         # If n=0, it will simply be treated as False
-        n, flag = len([col for col in data.confound_df.columns if "non_steady_state" in col]), "auto"
+        n, flag = int(data.confound_df.columns.str.startswith("non_steady_state").sum()), "auto"
+    else:
+        n, flag = data.signal_clean_info["dummy_scans"], None
 
+    if use_auto and isinstance(info, dict):
         if info.get("min") and n < info["min"]:
             n, flag = info["min"], "min"
         if info.get("max") and n > info["max"]:
             n, flag = info["max"], "max"
 
-        if data.verbose:
-            if flag == "auto":
-                if n:
-                    LG.info(
-                        f"{data.head}" + "Number of dummy scans to be removed based on "
-                        f"'non_steady_state_outlier_XX' columns: {n}."
-                    )
-                else:
-                    LG.info(
-                        f"{data.head}" + "No 'non_steady_state_outlier_XX' columns were found so 0 "
-                        "dummy scans will be removed."
-                    )
+    if all([use_auto, flag, data.verbose]):
+        if flag == "auto":
+            if n:
+                LG.info(
+                    f"{data.head}" + "Number of dummy scans to be removed based on "
+                    f"'non_steady_state_outlier_XX' columns: {n}."
+                )
             else:
-                LG.info(f"{data.head}" + f"Default dummy scans set by '{flag}' will be used: {n}.")
+                LG.info(
+                    f"{data.head}" + "No 'non_steady_state_outlier_XX' columns were found so 0 "
+                    "dummy scans will be removed."
+                )
+        else:
+            LG.info(f"{data.head}" + f"Default dummy scans set by '{flag}' will be used: {n}.")
 
-    return n if isinstance(info, dict) else info
+    return n
 
 
 def _compute_censored_frames(data, LG):
@@ -421,7 +425,7 @@ def _create_sample_mask(data):
     return sample_mask
 
 
-def _get_contiguous_ends(sample_mask):
+def _get_contiguous_censored_ends(sample_mask):
     """
     Assumes dummy scans have already been filtered out of ``sample_mask`` by the time``sample_mask`` is created.
     Determines if the contiguous edges of the full timeseries have been flagged.
@@ -441,8 +445,7 @@ def _get_contiguous_ends(sample_mask):
 
 def _get_contiguous_segments(sample_mask, splice="indices"):
     """
-    Get contiguous segments of high motion data for the indices of high motion segments or sample mask (boolean)
-    of high motion segments.
+    Get contiguous segments of high motion and low motion data for the sample mask and return as indices or booleans
     """
     # Example sample mask: [0,0,1,1,0,0,1,1,0,0]; 1 = kept; Diff array of sample mask: [0,1,0,-1,0,1,0,-1,0]
     # Indices not 0: [1,3,5,7]; Add + 1 to each element to obtain transition indxs from sample mask: [2,4,6,8]
@@ -563,7 +566,9 @@ def _validate_scan_bounds(data, arr_len, LG=None, warn=False):
             "indices for condition within the timeseries range will be extracted."
         )
 
-    return [scan for scan in data.scans if scan in range(arr_len)]
+    scans = set(data.scans).intersection(range(arr_len))
+
+    return sorted(list(scans))
 
 
 def _flag_run(data):
@@ -679,13 +684,14 @@ def _extract_valid_confounds(data, confound_names, LG):
     """
     valid_confounds = []
     invalid_confounds = []
+    col_names = data.confound_df.columns
 
     for confound_name in confound_names:
         if "*" in confound_name:
             prefix = confound_name.split("*")[0]
-            confounds_list = [col for col in data.confound_df.columns if col.startswith(prefix)]
+            confounds_list = list(col_names[col_names.str.startswith(prefix)])
         else:
-            confounds_list = [col for col in data.confound_df.columns if col == confound_name]
+            confounds_list = [confound_name] if confound_name in col_names else None
 
         if confounds_list:
             valid_confounds.extend(confounds_list)

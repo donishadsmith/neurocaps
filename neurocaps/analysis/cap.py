@@ -393,10 +393,8 @@ class CAP(_CAPGetter):
                     self._n_clusters, configs, self._concatenated_timeseries[group], method=None
                 )
 
-        # Create variance explained dict
         self._var_explained()
 
-        # Create states dict
         self._create_caps_dict()
 
         return self
@@ -485,7 +483,6 @@ class CAP(_CAPGetter):
         return runs, miss_runs
 
     def _select_optimal_clusters(self, configs, show_figs, output_dir, progress_bar, **kwargs):
-        # Initialize attributes
         self._cluster_scores = {}
         self._optimal_n_clusters = {}
         self._kmeans = {}
@@ -496,7 +493,6 @@ class CAP(_CAPGetter):
 
         for group in self._groups:
             performance_dict[group] = {}
-            # Don't want to store model dict for all groups; re-initialize for each group
             model_dict = {}
 
             if self._n_cores is None:
@@ -554,7 +550,6 @@ class CAP(_CAPGetter):
 
             LG.info(f"[GROUP: {group} | METHOD: {method}] Optimal cluster size is {self._optimal_n_clusters[group]}.")
 
-            # Plot
             if show_figs or output_dir is not None:
                 self._plot_method(method, performance_dict, group, show_figs, output_dir, **kwargs)
 
@@ -572,7 +567,6 @@ class CAP(_CAPGetter):
         # Create plot dictionary
         plot_dict = _check_kwargs(_PlotDefaults.get_caps(), **kwargs)
 
-        # Create visualization for method
         plt.figure(figsize=plot_dict["figsize"])
 
         y_values = [y for _, y in performance_dict[group].items()]
@@ -592,9 +586,7 @@ class CAP(_CAPGetter):
             plt.vlines(self._optimal_n_clusters[group], plt.ylim()[0], plt.ylim()[1], linestyles="--", label="elbow")
 
         if output_dir:
-            if not os.path.exists(output_dir):
-                os.makedirs(output_dir)
-
+            self._makedir(output_dir)
             save_name = f"{group.replace(' ', '_')}_{self._cluster_selection_method}.png"
             plt.savefig(os.path.join(output_dir, save_name), dpi=plot_dict["dpi"], bbox_inches=plot_dict["bbox_inches"])
 
@@ -610,7 +602,6 @@ class CAP(_CAPGetter):
             self._variance_explained[group] = explained_var
 
     def _create_caps_dict(self):
-        # Initialize dictionary
         self._caps = {}
 
         for group in self._groups:
@@ -624,16 +615,31 @@ class CAP(_CAPGetter):
             )
 
     @staticmethod
+    def _makedir(output_dir):
+        if output_dir and not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+    @staticmethod
     def _raise_error(attr_name):
         if attr_name == "_caps":
             raise AttributeError("Cannot plot caps since `self.caps` is None. Run `self.get_caps()` first.")
         elif attr_name == "_parcel_approach":
             raise AttributeError(
                 "`self.parcel_approach` is None. Add `parcel_approach` using "
-                "`self.parcel_approach=parcel_approach` to use this method."
+                "`self.parcel_approach=parcel_approach` to use this function."
             )
         else:
             raise AttributeError("Cannot calculate metrics since `self.kmeans` is None. Run `self.get_caps()` first.")
+
+    def _check_required_attrs(self, attr_names):
+        for attr_name in attr_names:
+            if getattr(self, attr_name, None) is None:
+                self._raise_error(attr_name)
+
+    @staticmethod
+    def _issue_file_warning(param_name, param, output_dir):
+        if param is not None and output_dir is None:
+            LG.warning(f"`{param_name}` supplied but no `output_dir` specified. Files will not be saved.")
 
     def calculate_metrics(
         self,
@@ -881,11 +887,9 @@ class CAP(_CAPGetter):
         patterns of functional brain networks reveal the aberrant dynamic state transition in schizophrenia.
         NeuroImage, 237, 118193. https://doi.org/10.1016/j.neuroimage.2021.118193
         """
-        if not hasattr(self, "_kmeans"):
-            self._raise_error("_kmeans")
+        self._check_required_attrs(["_kmeans"])
 
-        if prefix_filename is not None and output_dir is None:
-            LG.warning("`prefix_filename` supplied but no `output_dir` specified. Files will not be saved.")
+        self._issue_file_warning("prefix_filename", prefix_filename, output_dir)
 
         if runs and not isinstance(runs, list):
             runs = [runs]
@@ -897,8 +901,7 @@ class CAP(_CAPGetter):
         # Assign each subject's frame to a CAP
         predicted_subject_timeseries = self._build_prediction_dict(subject_timeseries, runs, continuous_runs)
 
-        # Get CAP information
-        cap_names, cap_numbers, group_cap_counts = self._cap_info()
+        cap_names, cap_numbers, group_cap_counts = self._get_caps_info()
 
         # Get combination of transitions in addition to building the base dataframe dictionary
         if "transition_probability" in metrics:
@@ -927,7 +930,6 @@ class CAP(_CAPGetter):
                             for key, value in frequency_dict.items()
                         }
 
-                        # Populate Dataframe
                         new_row = [subj_id, group, curr_run] + [items for items in proportion_dict.values()]
                         df_dict["temporal_fraction"].loc[len(df_dict["temporal_fraction"])] = new_row
 
@@ -945,7 +947,6 @@ class CAP(_CAPGetter):
 
                     self._update_dict(cap_numbers, group_cap_counts[group], count_dict)
 
-                    # Populate Dataframe
                     new_row = [subj_id, group, curr_run] + [items for items in count_dict.values()]
                     df_dict["counts"].loc[len(df_dict["counts"])] = new_row
 
@@ -963,7 +964,6 @@ class CAP(_CAPGetter):
 
                     self._update_dict(cap_numbers, group_cap_counts[group], persistence_dict)
 
-                    # Populate Dataframe
                     new_row = [subj_id, group, curr_run] + [items for _, items in persistence_dict.items()]
                     df_dict["persistence"].loc[len(df_dict["persistence"])] = new_row
 
@@ -974,7 +974,6 @@ class CAP(_CAPGetter):
                         np.diff(predicted_subject_timeseries[subj_id][curr_run], n=1) != 0, 1, 0
                     ).sum()
 
-                    # Populate DataFrame
                     new_row = [subj_id, group, curr_run, transition_frequency]
                     df_dict["transition_frequency"].loc[len(df_dict["transition_frequency"])] = new_row
 
@@ -1011,7 +1010,6 @@ class CAP(_CAPGetter):
     @staticmethod
     def _filter_metrics(metrics):
         metrics = [metrics] if isinstance(metrics, str) else metrics
-        # Change metrics to set
         metrics = set(metrics)
         valid_metrics = {"temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"}
         set_diff = metrics - valid_metrics
@@ -1027,7 +1025,7 @@ class CAP(_CAPGetter):
 
         return metrics
 
-    def _cap_info(self):
+    def _get_caps_info(self):
         group_cap_counts = {}
 
         for group in self._groups:
@@ -1042,7 +1040,6 @@ class CAP(_CAPGetter):
 
     def _build_prediction_dict(self, subject_timeseries, runs, continuous_runs):
         for subj_id, group in self._subject_table.items():
-            # Initialize predicted timeseries dictionary if it does not exist
             if "predicted_subject_timeseries" not in locals():
                 predicted_subject_timeseries = {}
 
@@ -1065,8 +1062,8 @@ class CAP(_CAPGetter):
                 else:
                     timeseries = subject_timeseries[subj_id][curr_run]
 
-                # Set run_id
                 run_id = curr_run if not continuous_runs or len(subject_runs) == 1 else "run-continuous"
+
                 # Add 1 to the prediction vector since labels start at 0, ensures that the labels map onto the caps
                 prediction_vector = self._kmeans[group].predict(timeseries) + 1
                 if run_id != "run-continuous":
@@ -1145,8 +1142,7 @@ class CAP(_CAPGetter):
         return binary_arr, n_segments
 
     def _save_metrics(self, output_dir, df_dict, prefix_filename):
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+        self._makedir(output_dir)
 
         for metric in df_dict:
             if prefix_filename:
@@ -1263,14 +1259,7 @@ class CAP(_CAPGetter):
         **Color Palettes**: Refer to `seaborn's Color Palettes <https://seaborn.pydata.org/tutorial/color_palettes.html>`_
         for valid pre-made palettes.
         """
-        if self._parcel_approach is None:
-            self._raise_error("_parcel_approach")
-
-        if not hasattr(self, "_caps"):
-            self._raise_error("_caps")
-
-        if suffix_filename is not None and output_dir is None:
-            LG.warning("`suffix_filename` supplied but no `output_dir` specified. Files will not be saved.")
+        self._check_required_attrs(["_parcel_approach", "_caps"])
 
         # Check if parcellation_approach is custom
         if "Custom" in self._parcel_approach and any(
@@ -1288,10 +1277,9 @@ class CAP(_CAPGetter):
                 "Number of nodes used for CAPs does not equal the number of nodes specified in `parcel_approach`."
             )
 
-        if output_dir and not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+        self._makedir(output_dir)
+        self._issue_file_warning("suffix_filename", suffix_filename, output_dir)
 
-        # Convert to list
         if isinstance(plot_options, str):
             plot_options = [plot_options]
         if isinstance(visual_scope, str):
@@ -1419,7 +1407,6 @@ class CAP(_CAPGetter):
         scope,
         parcellation_name,
     ):
-        # Nested dictionary for group
         self._outer_products[group] = {}
 
         # Create base grid for subplots
@@ -1428,7 +1415,6 @@ class CAP(_CAPGetter):
                 cap_dict, group, plot_dict, suffix_title
             )
 
-        # Iterate over CAPs
         for cap in cap_dict[group]:
             # Calculate outer product
             self._outer_products[group].update({cap: np.outer(cap_dict[group][cap], cap_dict[group][cap])})
@@ -1547,7 +1533,6 @@ class CAP(_CAPGetter):
                 display, scope, partial_filename, suffix_filename, plot_dict, output_dir, call="outer_product"
             )
 
-        # Display figures
         plt.show() if show_figs else plt.close()
 
     def _generate_heatmap_plots(
@@ -1563,7 +1548,6 @@ class CAP(_CAPGetter):
         scope,
         parcellation_name,
     ):
-        # Initialize new grid
         plt.figure(figsize=plot_dict["figsize"])
 
         if scope == "regions":
@@ -1613,7 +1597,6 @@ class CAP(_CAPGetter):
         plot_title = f"{group} CAPs {suffix_title}" if suffix_title else f"{group} CAPs"
         display.set_title(plot_title, fontdict={"fontsize": plot_dict["fontsize"]})
 
-        # Save plots
         if output_dir:
             partial_filename = f"{group}_CAPs"
             self._save_heatmap(display, scope, partial_filename, suffix_filename, plot_dict, output_dir, call="heatmap")
@@ -1873,13 +1856,11 @@ class CAP(_CAPGetter):
         **Significance Values**: If ``return_df`` is True, each element will contain its uncorrected p-value in
         parenthesis with a single asterisk if < 0.05, a double asterisk if < 0.01, and a triple asterisk < 0.001.
         """
+        self._check_required_attrs(["_caps"])
+
+        self._issue_file_warning("suffix_filename", suffix_filename, output_dir)
+
         corr_dict = {group: None for group in self._groups} if return_df or save_df else None
-
-        if not hasattr(self, "_caps"):
-            self._raise_error("_caps")
-
-        if suffix_filename is not None and output_dir is None:
-            LG.warning("`suffix_filename` supplied but no `output_dir` specified. Files will not be saved.")
 
         # Create plot dictionary
         plot_dict = _check_kwargs(_PlotDefaults.caps2corr(), **kwargs)
@@ -1902,13 +1883,11 @@ class CAP(_CAPGetter):
                 # Add the p-values to the correlation matrix
                 corr_dict[group] = corr_df.map(lambda x: f'{format(x, plot_dict["fmt"])}') + " " + pval_df
 
-            # Save figure
             if output_dir:
                 _save_contents(
                     output_dir, suffix_filename, group, corr_dict, plot_dict, save_plots, save_df, display, call="corr"
                 )
 
-            # Display figures
             plt.show() if show_figs else plt.close()
 
         if return_df:
@@ -1984,18 +1963,12 @@ class CAP(_CAPGetter):
         after sorting) is skipped. Then the remaining sorted labels are iterated over to map each element of the CAP
         cluster centroid onto the corresponding non-zero label IDs in the parcellation.
         """
-        if self._parcel_approach is None:
-            self._raise_error("_parcel_approach")
+        self._check_required_attrs(["_parcel_approach", "_caps"])
 
-        if not hasattr(self, "_caps"):
-            self._raise_error("_caps")
-
-        # Check `knn_dict`
         if knn_dict:
             knn_dict = self._validate_knn_dict(knn_dict)
 
-        if output_dir and not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+        self._makedir(output_dir)
 
         parcellation_name = list(self._parcel_approach)[0]
         for group in self._groups:
@@ -2172,21 +2145,15 @@ class CAP(_CAPGetter):
         Additionally, this funcition assumes that the parcellation map is in volumetric MNI space unless
         ``fslr_giftis_dict`` is defined, then this function assumes the maps are in surface space.
         """
-        if self._parcel_approach is None and fslr_giftis_dict is None:
-            self._raise_error("_parcel_approach")
+        check_params = ["_parcel_approach", "_caps"] if fslr_giftis_dict is None else ["_caps"]
+        self._check_required_attrs(check_params)
 
-        if not hasattr(self, "_caps") and fslr_giftis_dict is None:
-            self._raise_error("_caps")
+        self._issue_file_warning("suffix_filename", suffix_filename, output_dir)
 
-        if suffix_filename is not None and output_dir is None:
-            LG.warning("`suffix_filename` supplied but no `output_dir` specified. Files will not be saved.")
-
-        # Check `knn_dict`
         if knn_dict:
             knn_dict = self._validate_knn_dict(knn_dict)
 
-        if output_dir and not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+        self._makedir(output_dir)
 
         # Create plot dictionary
         plot_dict = _check_kwargs(_PlotDefaults.caps2surf(), **kwargs)
@@ -2212,18 +2179,7 @@ class CAP(_CAPGetter):
                     try:
                         gii_lh, gii_rh = mni152_to_fslr(stat_map, method=method, fslr_density=fslr_density)
                     except TypeError:
-                        # Create temp
-                        temp_nifti = tempfile.NamedTemporaryFile(delete=False, suffix=".nii.gz")
-                        LG.warning(
-                            "TypeError raised by neuromaps due to changes in pathlib.py in Python 3.12 "
-                            "Converting NifTI image into a temporary nii.gz file (which will be "
-                            f"automatically deleted afterwards) [TEMP FILE: {temp_nifti.name}]"
-                        )
-
-                        # Ensure file is closed
-                        temp_nifti.close()
-                        # Save temporary nifti to temp file
-                        nib.save(stat_map, temp_nifti.name)
+                        temp_nifti = self._create_temp_nifti(stat_map)
                         gii_lh, gii_rh = mni152_to_fslr(temp_nifti.name, method=method, fslr_density=fslr_density)
                         # Delete
                         os.unlink(temp_nifti.name)
@@ -2243,7 +2199,6 @@ class CAP(_CAPGetter):
                         os.path.join(output_dir, filename), dpi=plot_dict["dpi"], bbox_inches=plot_dict["bbox_inches"]
                     )
 
-                    # Save stat map
                     if save_stat_maps:
                         stat_map_name = filename.split("_surface")[0] + ".nii.gz"
                         nib.save(stat_map, os.path.join(output_dir, stat_map_name))
@@ -2254,6 +2209,23 @@ class CAP(_CAPGetter):
                     plt.show() if show_figs else plt.close()
 
         return self
+
+    @staticmethod
+    def _create_temp_nifti(stat_map):
+        # Create temp file
+        temp_nifti = tempfile.NamedTemporaryFile(delete=False, suffix=".nii.gz")
+        LG.warning(
+            "TypeError raised by neuromaps due to changes in pathlib.py in Python 3.12 "
+            "Converting NifTI image into a temporary nii.gz file (which will be "
+            f"automatically deleted afterwards) [TEMP FILE: {temp_nifti.name}]"
+        )
+
+        # Ensure file is closed
+        temp_nifti.close()
+        # Save temporary nifti to temp file
+        nib.save(stat_map, temp_nifti.name)
+
+        return temp_nifti
 
     @staticmethod
     def _generate_surface_plot(plot_dict, gii_lh, gii_rh, group, cap, suffix_title):
@@ -2283,10 +2255,9 @@ class CAP(_CAPGetter):
             views=plot_dict["views"],
             brightness=plot_dict["brightness"],
         )
+
         # Add base layer
         p.add_layer({"left": sulc_lh, "right": sulc_rh}, cmap="binary_r", cbar=False)
-
-        # Check cmap
         cmap = _cmap_d[plot_dict["cmap"]] if isinstance(plot_dict["cmap"], str) else plot_dict["cmap"]
         # Add stat map layer
         p.add_layer(
@@ -2505,11 +2476,9 @@ class CAP(_CAPGetter):
         occupancy in the presence of cerebral small vessel disease — A pre-registered replication analysis of the
         Hamburg City Health Study. Imaging Neuroscience, 2, 1–17. https://doi.org/10.1162/imag_a_00122
         """
-        if self._parcel_approach is None:
-            self._raise_error("_parcel_approach")
+        self._check_required_attrs(["_parcel_approach", "_caps"])
 
-        if not hasattr(self, "_caps"):
-            self._raise_error("_caps")
+        self._issue_file_warning("suffix_filename", suffix_filename, output_dir)
 
         if not self._standardize:
             LG.warning(
@@ -2518,13 +2487,9 @@ class CAP(_CAPGetter):
                 "represents activation or de-activation relative to the mean."
             )
 
-        if suffix_filename is not None and output_dir is None:
-            LG.warning("`suffix_filename` supplied but no `output_dir` specified. Files will not be saved.")
-
         # Create plot dictionary
         plot_dict = _check_kwargs(_PlotDefaults.caps2radar(), **kwargs)
 
-        # Initialize cosine_similarity attribute
         self._cosine_similarity = {}
 
         parcellation_name = list(self._parcel_approach)[0]
@@ -2546,7 +2511,6 @@ class CAP(_CAPGetter):
 
                     for i in ["High Amplitude", "Low Amplitude"]:
                         values = df[i].values
-                        # Add traces
                         fig.add_trace(
                             go.Scatterpolar(
                                 r=list(values),
@@ -2560,7 +2524,6 @@ class CAP(_CAPGetter):
                         )
                 else:
                     n = len(radar_dict["Regions"])
-                    # Create dataframe
                     df = pd.DataFrame(
                         {
                             "Regions": radar_dict["Regions"] * 2,
@@ -2600,7 +2563,7 @@ class CAP(_CAPGetter):
 
                 title_text = f"{group} {cap} {suffix_title}" if suffix_title else f"{group} {cap}"
 
-                # Customize
+                # Add additional customization
                 fig.update_layout(
                     title=dict(text=title_text, font=plot_dict["title_font"]),
                     title_x=plot_dict["title_x"],
@@ -2622,8 +2585,7 @@ class CAP(_CAPGetter):
                         pyo.plot(fig, auto_open=True)
 
                 if output_dir:
-                    if not os.path.exists(output_dir):
-                        os.makedirs(output_dir)
+                    self._makedir(output_dir)
 
                     filename = self._basename(group, cap, "radar", suffix_filename, "png")
                     if not as_html:
@@ -2653,7 +2615,6 @@ class CAP(_CAPGetter):
                 high_amp_cosine = self._compute_cosine_similarity(high_amp_vector, region_mask)
                 low_amp_cosine = self._compute_cosine_similarity(low_amp_vector, region_mask)
 
-                # Store value in dict
                 radar_dict[cap]["High Amplitude"].append(high_amp_cosine)
                 radar_dict[cap]["Low Amplitude"].append(low_amp_cosine)
 

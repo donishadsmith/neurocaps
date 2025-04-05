@@ -1001,7 +1001,7 @@ def test_check_raise_error():
         "_caps": "Cannot plot caps since `self.caps` is None. Run `self.get_caps()` first.",
         "_parcel_approach": (
             "`self.parcel_approach` is None. Add `parcel_approach` using "
-            "`self.parcel_approach=parcel_approach` to use this method."
+            "`self.parcel_approach=parcel_approach` to use this function."
         ),
         "_kmeans": ("Cannot calculate metrics since `self.kmeans` is None. Run " "`self.get_caps()` first."),
     }
@@ -1019,7 +1019,7 @@ def test_raise_error_methods():
         "_caps": ("Cannot plot caps since `self.caps` is None. Run `self.get_caps()` first."),
         "_parcel_approach": (
             "`self.parcel_approach` is None. Add `parcel_approach` using "
-            "`self.parcel_approach=parcel_approach` to use this method."
+            "`self.parcel_approach=parcel_approach` to use this function."
         ),
         "_kmeans": ("Cannot calculate metrics since `self.kmeans` is None. Run `self.get_caps()` first."),
     }

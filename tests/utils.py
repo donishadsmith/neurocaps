@@ -135,6 +135,19 @@ def add_non_steady(bids_dir, pipeline_name, n):
     confound_df.to_csv(confounds_file, sep="\t", index=None)
 
 
+def reset_non_steady(bids_dir, pipeline_name):
+    """Reset the non-steady columns to 0"""
+    confounds_file = glob.glob(
+        os.path.join(bids_dir, "derivatives", pipeline_name, "sub-01", "ses-002", "func", "*confounds*.tsv")
+    )[0]
+
+    confound_df = pd.read_csv(confounds_file, sep="\t")
+
+    confound_df = confound_df.loc[:, ~confound_df.columns.str.startswith("non_steady_state_outlier_")]
+
+    confound_df.to_csv(confounds_file, sep="\t", index=None)
+
+
 def get_scans(
     bids_dir,
     condition,

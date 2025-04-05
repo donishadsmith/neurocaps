@@ -13,6 +13,11 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.24.6] - 2025-04-05
+- Minor refactoring
+### 🚀 New/Added
+- dummy_scans now accepts "auto" for convenience so that {"auto": True} does not need to be used.
+
 ## [0.24.6] - 2025-04-02
 ### 🚀 New/Added
 - Added "Mean_High_Motion_Length" and "Std_High_Motion_Length" to qc report.
