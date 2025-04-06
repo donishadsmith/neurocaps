@@ -1125,11 +1125,11 @@ class CAP(_CAPGetter):
 
         return distributed_dict
 
-    # Replace zeros with nan for groups with less caps than the group with the max caps
+    # Replace zeros with nan for groups with less caps than the group with the max caps (cap_numbers)
     @staticmethod
-    def _update_dict(cap_numbers, group_cap_counts, curr_dict):
-        if max(cap_numbers) > group_cap_counts:
-            for i in range(group_cap_counts + 1, max(cap_numbers) + 1):
+    def _update_dict(cap_numbers, n_group_caps, curr_dict):
+        if max(cap_numbers) > n_group_caps:
+            for i in range(n_group_caps + 1, max(cap_numbers) + 1):
                 curr_dict.update({i: float("nan")})
 
     @staticmethod
