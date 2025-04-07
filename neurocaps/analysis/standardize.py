@@ -5,7 +5,7 @@ from typing import Union, Optional
 
 import numpy as np
 
-from .._utils import _convert_pickle_to_dict, _dicts_to_pickles, _logger
+from .._utils import _convert_pickle_to_dict, _dicts_to_pickles, _logger, _standardize
 from ..typing import SubjectTimeseries
 
 LG = _logger(__name__)
@@ -21,14 +21,10 @@ def standardize(
     Perform Participant-wise Timeseries Standardization Within Runs.
 
     Standardizes the columns/ROIs of each run independently for all subjects in the subject timeseries. Uses sample
-    standard deviation with Bessel's correction (`n-1` in denominator).
+    standard deviation with Bessel's correction (`n-1` in denominator). Primarily to be used when standardizing was not
+    done in ``TimeseriesExtractor``.
 
-    This function serves two main purposes:
-
-    - When standardizing was not done in ``TimeseriesExtractor``
-    - When re-standardizing is needed because all of the following occurred in ``TimeseriesExtractor``:
-        - High-motion volumes were removed using ``fd_threshold`` without setting the "use_sample_mask" key to True.
-        - ``standardize`` was not set to False.
+    .. note:: Standard deviations below ``np.finfo(std.dtype).eps`` are replaced with 1 for numerical stability.
 
     Parameters
     ----------
@@ -80,11 +76,7 @@ def standardize(
 
         for subj_id in curr_dict:
             for run in curr_dict[subj_id]:
-                std = np.std(curr_dict[subj_id][run], axis=0, ddof=1)
-                # Used for numerical stability purposes to avoid numpy division error; References nilearn.signal_clean
-                std[std < np.finfo(std.dtype).eps] = 1.0
-                mean = np.mean(curr_dict[subj_id][run], axis=0)
-                curr_dict[subj_id][run] = (curr_dict[subj_id][run] - mean) / std
+                curr_dict[subj_id][run] = _standardize(curr_dict[subj_id][run])
 
         standardized_dicts[f"dict_{indx}"] = curr_dict
 

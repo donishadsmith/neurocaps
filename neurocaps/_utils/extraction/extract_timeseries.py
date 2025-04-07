@@ -616,6 +616,8 @@ def _perform_extraction(data, LG):
         sample_mask=data.sample_mask if (data.pass_mask_to_nilearn and data.censored_frames) else None,
     )
 
+    del nifti_img
+
     # Process timeseries if censoring done;
     timeseries = _process_timeseries(timeseries, data) if data.censored_frames else timeseries
 
@@ -630,7 +632,7 @@ def _perform_extraction(data, LG):
         # Extract condition
         timeseries = timeseries[data.scans, :]
 
-    return timeseries
+    return _standardize(timeseries) if data.signal_clean_info.get("standardize") else timeseries
 
 
 def _process_confounds(data, LG):
@@ -770,10 +772,20 @@ def _remove_censored_frames(timeseries, condition, removed_frames):
     Removes censored frames from the timeseries if no condition is specified since data.scans already ignores
     censored frames.
     """
-    if condition:
-        return timeseries
-    else:
-        return np.delete(timeseries, removed_frames, axis=0)
+    return timeseries if condition else np.delete(timeseries, removed_frames, axis=0)
+
+
+def _standardize(timeseries, return_parameters=False):
+    """
+    Standardizes ROIs of timeseries if censoring or condition extraction occurs. Uses Bessel's correction (n-1).
+    Standard deviations below ``np.finfo(std.dtype).eps`` are replaced with 1 for numerical stability.
+    """
+    mean = np.mean(timeseries, axis=0)
+    std = np.std(timeseries, axis=0, ddof=1)
+    std[std < np.finfo(std.dtype).eps] = 1.0
+    timeseries = (timeseries - mean) / std
+
+    return timeseries if not return_parameters else (timeseries, mean, std)
 
 
 def _report_qc(data):

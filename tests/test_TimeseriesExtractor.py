@@ -2,6 +2,7 @@ import copy, glob, os, re, shutil, sys
 import joblib, pytest, numpy as np, pandas as pd
 
 from neurocaps.extraction import TimeseriesExtractor
+from neurocaps._utils import _standardize
 
 from .utils import (
     Parcellation,
@@ -666,9 +667,9 @@ def test_condition_extraction(get_vars):
     active_condition = copy.deepcopy(extractor.subject_timeseries["01"]["run-001"])
 
     scan_list = get_scans(bids_dir, "rest")
-    assert np.array_equal(timeseries[scan_list, :], rest_condition)
+    assert np.allclose(_standardize(timeseries[scan_list, :]), rest_condition, atol=0.00001)
     scan_list = get_scans(bids_dir, "active")
-    assert np.array_equal(timeseries[scan_list, :], active_condition)
+    assert np.allclose(_standardize(timeseries[scan_list, :]), active_condition, atol=0.00001)
 
 
 @pytest.mark.parametrize("confound_type", [None, "testing_confounds"])
@@ -929,8 +930,15 @@ def test_fd_censoring(get_vars):
     assert extractor_fd_float.qc["01"]["run-001"]["mean_high_motion_length"] == 1
     assert extractor_fd_float.qc["01"]["run-001"]["std_high_motion_length"] == 0
 
-    assert np.array_equal(
-        extractor_fd_dict.subject_timeseries["01"]["run-001"], extractor_fd_float.subject_timeseries["01"]["run-001"]
+    # Get non censored
+    extractor_no_censor = TimeseriesExtractor()
+    extractor_no_censor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+
+    assert np.allclose(
+        extractor_fd_dict.subject_timeseries["01"]["run-001"],
+        extractor_fd_float.subject_timeseries["01"]["run-001"],
+        _standardize(np.delete(extractor_no_censor.subject_timeseries["01"]["run-001"], 39, axis=0)),
+        atol=0.00001,
     )
     # Test Conditions only "rest" condition should have scan censored
     no_condition_timeseries = copy.deepcopy(extractor_fd_dict.subject_timeseries["01"]["run-001"])
@@ -941,7 +949,11 @@ def test_fd_censoring(get_vars):
     assert extractor_fd_dict.qc["01"]["run-001"]["frames_interpolated"] == 0
     assert extractor_fd_dict.qc["01"]["run-001"]["mean_high_motion_length"] == 1
     assert extractor_fd_dict.qc["01"]["run-001"]["std_high_motion_length"] == 0
-    assert np.array_equal(no_condition_timeseries[scan_list, :], extractor_fd_dict.subject_timeseries["01"]["run-001"])
+    assert np.allclose(
+        _standardize(no_condition_timeseries[scan_list, :]),
+        extractor_fd_dict.subject_timeseries["01"]["run-001"],
+        atol=0.00001,
+    )
 
     scan_list = get_scans(bids_dir, "active", fd=True)
     extractor_fd_dict.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, condition="active")
@@ -950,7 +962,11 @@ def test_fd_censoring(get_vars):
     assert extractor_fd_dict.qc["01"]["run-001"]["frames_interpolated"] == 0
     assert extractor_fd_dict.qc["01"]["run-001"]["mean_high_motion_length"] == 0
     assert extractor_fd_dict.qc["01"]["run-001"]["std_high_motion_length"] == 0
-    assert np.array_equal(no_condition_timeseries[scan_list, :], extractor_fd_dict.subject_timeseries["01"]["run-001"])
+    assert np.allclose(
+        _standardize(no_condition_timeseries[scan_list, :]),
+        extractor_fd_dict.subject_timeseries["01"]["run-001"],
+        atol=0.00001,
+    )
 
 
 def test_censoring_with_sample_mask(get_vars):
@@ -964,7 +980,7 @@ def test_censoring_with_sample_mask(get_vars):
 
     # Flags 2, 12, 39
     extractor_with_sample_mask = TimeseriesExtractor(
-        fd_threshold={"threshold": 0.30, "outlier_percentage": 0.30, "use_sample_mask": True},
+        fd_threshold={"threshold": 0.30, "outlier_percentage": 0.30, "use_sample_mask": True}, standardize=False
     )
 
     extractor_with_sample_mask.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
@@ -975,7 +991,7 @@ def test_censoring_with_sample_mask(get_vars):
     assert extractor_with_sample_mask.qc["01"]["run-001"]["std_high_motion_length"] == 0
 
     extractor_without_sample_mask = TimeseriesExtractor(
-        fd_threshold={"threshold": 0.30, "outlier_percentage": 0.30, "use_sample_mask": False},
+        fd_threshold={"threshold": 0.30, "outlier_percentage": 0.30, "use_sample_mask": False}
     )
 
     extractor_without_sample_mask.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
@@ -1030,9 +1046,10 @@ def test_censoring_with_sample_mask(get_vars):
     assert extractor_with_sample_mask_condition.qc["01"]["run-001"]["std_high_motion_length"] == 0
 
     scan_list = get_scans(bids_dir, condition="active", fd=True)
-    assert np.array_equal(
+    assert np.allclose(
         extractor_with_sample_mask_condition.subject_timeseries["01"]["run-001"],
-        timeseries_with_sample_mask["01"]["run-001"][scan_list,],
+        _standardize(timeseries_with_sample_mask["01"]["run-001"][scan_list,]),
+        atol=0.00001,
     )
 
     # Second condition
@@ -1046,9 +1063,10 @@ def test_censoring_with_sample_mask(get_vars):
     assert extractor_with_sample_mask_condition.qc["01"]["run-001"]["std_high_motion_length"] == 0
 
     scan_list = get_scans(bids_dir, condition="rest", fd=True)
-    assert np.array_equal(
+    assert np.allclose(
         extractor_with_sample_mask_condition.subject_timeseries["01"]["run-001"],
-        timeseries_with_sample_mask["01"]["run-001"][scan_list,],
+        _standardize(timeseries_with_sample_mask["01"]["run-001"][scan_list,]),
+        atol=0.00001,
     )
 
 
@@ -1092,7 +1110,7 @@ def test_dummy_scans(get_vars, use_confounds):
     condition_timeseries = copy.deepcopy(extractor.subject_timeseries["01"]["run-001"])
     scan_list = get_scans(bids_dir, condition="rest", dummy_scans=5)
     # check if extracted from correct indices to ensure offsetting _extract_timeseries is correct
-    assert np.array_equal(no_condition[scan_list, :], condition_timeseries)
+    assert np.allclose(_standardize(no_condition[scan_list, :]), condition_timeseries, atol=0.00001)
     # No fd censoring was done so everything should be None
     assert not extractor.qc
     assert not extractor.qc
@@ -1186,9 +1204,10 @@ def test_dummy_scans_with_fd_censoring(get_vars):
 
     extractor_dummy_only_censor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
 
-    assert np.array_equal(
+    assert np.allclose(
         extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"],
-        extractor_dummy_only_censor.subject_timeseries["01"]["run-001"][:34, :],
+        _standardize(extractor_dummy_only_censor.subject_timeseries["01"]["run-001"][:34, :]),
+        atol=0.00001,
     )
 
     no_condition = copy.deepcopy(extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"])
@@ -1205,7 +1224,11 @@ def test_dummy_scans_with_fd_censoring(get_vars):
     assert extractor_fd_and_dummy_censor.qc["01"]["run-001"]["frames_interpolated"] == 0
     assert extractor_fd_and_dummy_censor.qc["01"]["run-001"]["mean_high_motion_length"] == 1
     assert extractor_fd_and_dummy_censor.qc["01"]["run-001"]["std_high_motion_length"] == 0
-    assert np.array_equal(no_condition[scan_list, :], extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"])
+    assert np.allclose(
+        _standardize(no_condition[scan_list, :]),
+        extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"],
+        atol=0.00001,
+    )
 
     # Check for active condition
     scan_list = get_scans(bids_dir, "active", dummy_scans=5, fd=True)
@@ -1222,7 +1245,11 @@ def test_dummy_scans_with_fd_censoring(get_vars):
     assert extractor_fd_and_dummy_censor.qc["01"]["run-001"]["frames_interpolated"] == 0
     assert extractor_fd_and_dummy_censor.qc["01"]["run-001"]["mean_high_motion_length"] == 0
     assert extractor_fd_and_dummy_censor.qc["01"]["run-001"]["std_high_motion_length"] == 0
-    assert np.array_equal(no_condition[scan_list, :], extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"])
+    assert np.allclose(
+        _standardize(no_condition[scan_list, :]),
+        extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"],
+        atol=0.00001,
+    )
 
 
 @pytest.mark.parametrize(
@@ -1265,9 +1292,10 @@ def test_extended_censoring(get_vars, fd_threshold):
     assert extractor_censored.qc["01"]["run-001"]["mean_high_motion_length"] == non_condition_stats[0]
     assert extractor_censored.qc["01"]["run-001"]["std_high_motion_length"] == non_condition_stats[1]
 
-    assert np.array_equal(
+    assert np.allclose(
         extractor_censored.subject_timeseries["01"]["run-001"],
-        np.delete(extractor_not_censored.subject_timeseries["01"]["run-001"], expected_removal, axis=0),
+        _standardize(np.delete(extractor_not_censored.subject_timeseries["01"]["run-001"], expected_removal, axis=0)),
+        atol=0.00001,
     )
 
     extractor_censored.get_bold(bids_dir=bids_dir, task="rest", condition="active", pipeline_name=pipeline_name)
@@ -1279,9 +1307,10 @@ def test_extended_censoring(get_vars, fd_threshold):
     assert extractor_censored.qc["01"]["run-001"]["frames_interpolated"] == 0
     assert extractor_censored.qc["01"]["run-001"]["mean_high_motion_length"] == condition_stats[0]
     assert extractor_censored.qc["01"]["run-001"]["std_high_motion_length"] == condition_stats[1]
-    assert np.array_equal(
+    assert np.allclose(
         extractor_censored.subject_timeseries["01"]["run-001"],
-        extractor_not_censored.subject_timeseries["01"]["run-001"][scan_list, :],
+        _standardize(extractor_not_censored.subject_timeseries["01"]["run-001"][scan_list, :]),
+        atol=0.00001,
     )
 
 
@@ -1311,9 +1340,10 @@ def test_extended_censor_with_dummy_scans(get_vars):
     extractor_non_censored.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
     # Shift back by three
     expected_removal = np.array([35, 36, 37, 38, 39]) - dummy_scans
-    np.array_equal(
+    np.allclose(
         censored_data["01"]["run-001"],
-        np.delete(extractor_non_censored.subject_timeseries["01"]["run-001"], expected_removal, axis=0),
+        _standardize(np.delete(extractor_non_censored.subject_timeseries["01"]["run-001"], expected_removal, axis=0)),
+        atol=0.00001,
     )
 
 
@@ -1326,7 +1356,7 @@ def test_condition_tr_shift(get_vars, onset):
     """
     bids_dir, pipeline_name = get_vars
 
-    extractor = TimeseriesExtractor()
+    extractor = TimeseriesExtractor(standardize=False)
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
     timeseries = copy.deepcopy(extractor.subject_timeseries)
     # Get condition for rest
@@ -1353,7 +1383,7 @@ def test_slice_time_shift(get_vars, shift):
     """
     bids_dir, pipeline_name = get_vars
 
-    extractor = TimeseriesExtractor()
+    extractor = TimeseriesExtractor(standardize=False)
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
     timeseries = copy.deepcopy(extractor.subject_timeseries)
     # Get condition for rest
@@ -1435,7 +1465,7 @@ def test_interpolate_without_condition(setup_environment_2, get_vars, use_sample
     # No condition
     fd_threshold = {"threshold": 0.89, "use_sample_mask": use_sample_mask, "interpolate": True}
 
-    extractor_censored = TimeseriesExtractor(fd_threshold=fd_threshold)
+    extractor_censored = TimeseriesExtractor(fd_threshold=fd_threshold, standardize=False)
 
     extractor_censored.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
     # fd[[0, 10, 11, 28, 29, 38, 39]] = 0.9
@@ -1447,7 +1477,7 @@ def test_interpolate_without_condition(setup_environment_2, get_vars, use_sample
     assert extractor_censored.qc["01"]["run-001"]["std_high_motion_length"] == np.std([1, 2, 2, 2])
 
     # No censoring
-    extractor_no_censoring = TimeseriesExtractor()
+    extractor_no_censoring = TimeseriesExtractor(standardize=False)
 
     extractor_no_censoring.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
 
@@ -1473,7 +1503,7 @@ def test_interpolate_without_condition(setup_environment_2, get_vars, use_sample
         "use_sample_mask": use_sample_mask,
         "interpolate": True,
     }
-    extractor_extended_censor = TimeseriesExtractor(fd_threshold=fd_threshold)
+    extractor_extended_censor = TimeseriesExtractor(fd_threshold=fd_threshold, standardize=False)
 
     extractor_extended_censor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
     # fd[[0, 10, 11, 28, 29, 38, 39]] = 0.9
@@ -1510,7 +1540,7 @@ def test_interpolate_with_condition(get_vars, use_sample_mask):
     # No condition
     fd_threshold = {"threshold": 0.89, "use_sample_mask": use_sample_mask, "interpolate": True}
 
-    extractor_censored = TimeseriesExtractor(fd_threshold=fd_threshold)
+    extractor_censored = TimeseriesExtractor(fd_threshold=fd_threshold, standardize=False)
 
     extractor_censored.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, condition="active", tr=1.2)
 
@@ -1531,7 +1561,7 @@ def test_interpolate_with_condition(get_vars, use_sample_mask):
     assert extractor_censored.qc["01"]["run-001"]["std_high_motion_length"] == np.std([1, 2, 2])
 
     # No censoring
-    extractor_no_censoring = TimeseriesExtractor()
+    extractor_no_censoring = TimeseriesExtractor(standardize=False)
 
     extractor_no_censoring.get_bold(
         bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, condition="active", tr=1.2
@@ -1560,7 +1590,7 @@ def test_interpolate_with_condition(get_vars, use_sample_mask):
         "interpolate": True,
     }
 
-    extractor_extended_censored = TimeseriesExtractor(fd_threshold=fd_threshold)
+    extractor_extended_censored = TimeseriesExtractor(fd_threshold=fd_threshold, standardize=False)
 
     extractor_extended_censored.get_bold(
         bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, condition="active", tr=1.2

@@ -13,7 +13,15 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
-## [0.24.6] - 2025-04-05
+## [0.25.0] - 2025-04-07
+### ♻ Changed
+- For ``TimeseriesExtractor``, ``standardize`` is no longer passed to Nilearn. Since standardizing is the final
+step in signal cleaning, it is now done within this package. Only standardizing using Bessel's correction (sample
+standard deviation) is used. This removes having to do external standardizing with ``neurocaps.analysis.standardize``
+when censoring or extracting conditions and standardizing is True.
+- For ``CAP``, tqdm progress bar is now also displayed for the concatenation step when ``progress_bar`` is True.
+
+## [0.24.7] - 2025-04-05
 - Minor refactoring
 ### 🚀 New/Added
 - dummy_scans now accepts "auto" for convenience so that {"auto": True} does not need to be used.

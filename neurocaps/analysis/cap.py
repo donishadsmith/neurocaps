@@ -33,6 +33,7 @@ from .._utils import (
     _logger,
     _run_kmeans,
     _save_contents,
+    _standardize,
 )
 
 LG = _logger(__name__)
@@ -100,6 +101,8 @@ class CAP(_CAPGetter):
 
             {"GroupName": np.array(shape=[1, ROIs])}
 
+        .. note:: Standard deviations below ``np.finfo(std.dtype).eps`` are replaced with 1 for numerical stability.
+
     concatenated_timeseries: :obj:`dict[str, np.array]` or :obj:`None`
         Group-specific concatenated timeseries data. Can be deleted using ``del self.concatenated_timeseries``.
         Defined after running ``self.get_caps()``.
@@ -108,7 +111,7 @@ class CAP(_CAPGetter):
 
             {"GroupName": np.array(shape=[(participants x TRs), ROIs])}
 
-        .. note:: For versions >= 0.24.8, subject IDs are sorted lexicographically prior to concatenation and the order\
+        .. note:: For versions >= 0.25.0, subject IDs are sorted lexicographically prior to concatenation and the order\
         is determined by ``self.groups``.
 
     kmeans: :obj:`dict[str, sklearn.cluster.KMeans]` or :obj:`None`
@@ -289,6 +292,8 @@ class CAP(_CAPGetter):
 
         standardize: :obj:`bool`, default=True
             Standardizes the columns (ROIs) of the concatenated timeseries data. Uses sample standard deviation (`n-1`).
+
+            .. note:: Standard deviations below ``np.finfo(std.dtype).eps`` are replaced with 1 for numerical stability.
 
         n_cores: :obj:`int` or :obj:`None`, default=None
             Number of cores to use for multiprocessing, with Joblib, to run multiple k-means models if
@@ -475,13 +480,9 @@ class CAP(_CAPGetter):
 
     def _scale(self, concatenated_timeseries):
         for group in self._groups:
-            self._mean_vec[group] = np.mean(concatenated_timeseries[group], axis=0)
-            self._stdev_vec[group] = np.std(concatenated_timeseries[group], ddof=1, axis=0)
-            eps = np.finfo(self._stdev_vec[group].dtype).eps
-            # Used for numerical stability purposes to avoid numpy division error; References nilearn.signal_clean
-            self._stdev_vec[group][self._stdev_vec[group] < eps] = 1.0
-            diff = concatenated_timeseries[group] - self._mean_vec[group]
-            concatenated_timeseries[group] = diff / self._stdev_vec[group]
+            concatenated_timeseries[group], self._mean_vec[group], self._stdev_vec[group] = _standardize(
+                concatenated_timeseries[group], return_parameters=True
+            )
 
         return concatenated_timeseries
 

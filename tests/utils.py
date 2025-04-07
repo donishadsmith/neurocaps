@@ -4,6 +4,7 @@ from functools import lru_cache
 import numpy as np, pandas as pd, joblib
 
 from neurocaps.extraction import TimeseriesExtractor
+from neurocaps._utils import _standardize
 
 
 class Parcellation:
@@ -206,7 +207,6 @@ def concat_data(timeseries, subject_table, standardize, runs=[1, 2, 3]):
     expected and if the subject table being generated in the CAP class is correct.
     """
     concatenated_timeseries = {group: None for group in set(subject_table.values())}
-    std = {group: None for group in set(subject_table.values())}
 
     for sub, group in subject_table.items():
         for run in timeseries[sub]:
@@ -218,13 +218,7 @@ def concat_data(timeseries, subject_table, standardize, runs=[1, 2, 3]):
 
     if standardize:
         for _, group in subject_table.items():
-            # Recalculating means and stdev, will cause minor floating point differences so use np.allclose
-            concatenated_timeseries[group] -= np.mean(concatenated_timeseries[group], axis=0)
-            std[group] = np.std(concatenated_timeseries[group], ddof=1, axis=0)
-            eps = np.finfo(std[group].dtype).eps
-            # Taken from nilearn pipeline, used for numerical stability purposes to avoid numpy division error
-            std[group][std[group] < eps] = 1.0
-            concatenated_timeseries[group] /= std[group]
+            concatenated_timeseries[group] = _standardize(concatenated_timeseries[group])
 
     return concatenated_timeseries
 

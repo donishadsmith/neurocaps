@@ -47,8 +47,16 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         parameters, as a nested dictionary, or loaded from a pickle file. For detailed documentation on the expected
         structure, see the type definitions for ``ParcelConfig`` and ``ParcelApproach`` in the "See Also" section.
 
-    standardize: {"zscore_sample", "zscore", "psc", True, False}, default="zscore_sample"
-        Standardizes the timeseries.
+    standardize: :obj:`bool` or None, default=True
+        Standardizes the timeseries (zero mean and unit variance using sample standard deviation). Always the
+        final step in the pipeline.
+
+        .. versionchanged:: 0.25.0 No longer passed to Nilearn's ``NiftiLabelsMasker`` and only performs standardization\
+        using sample standard deviation. Default behavior of standardizing using sample standard deviation is the same;\
+        however, when not None or False, standardizing is always done at the end of the pipeline to prevent any
+        external standardization from needing to be done when censoring or extracting condition.
+
+        .. note:: Standard deviations below ``np.finfo(std.dtype).eps`` are replaced with 1 for numerical stability.
 
     detrend: :obj:`bool`, default=True
         Detrends the timeseries.
@@ -136,8 +144,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 - `Signal Clean <https://nilearn.github.io/stable/modules/generated/nilearn.signal.clean.html>`_
                 - `NiftiLabelsMasker <https://nilearn.github.io/stable/modules/generated/nilearn.maskers.NiftiLabelsMasker.html>`_
 
-            - When "use_sample_mask" is False and ``standardize`` is not False, applying an additional within-run\
-              standardization (using ``neurocaps.analysis.standardize``) is recommended after outlier removal.
             - If "interpolate" is True, then interpolation is only applied after the nuisance regression and\
               parcellation steps have been completed.
             - See Scipy's `CubicSpline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicSpline.html>`_ documentation.
@@ -226,8 +232,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
     Note
     ----
-    **Passed Parameters**: ``standardize``, ``detrend``, ``low_pass``, ``high_pass``, ``fwhm``, and nuisance
-    regressors (``confound_names``) uses ``nilearn.maskers.NiftiLabelsMasker``. The ``dtype`` parameter is used by
+    **Passed Parameters**: ``detrend``, ``low_pass``, ``high_pass``, ``fwhm``, and nuisance regressors
+    (``confound_names``) uses ``nilearn.maskers.NiftiLabelsMasker``. The ``dtype`` parameter is used by
     ``nilearn.image.load_img``.
 
     **Custom Parcellations**: Refer to the `NeuroCAPs' Parcellation Documentation
@@ -241,7 +247,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         parcel_approach: Union[ParcelConfig, ParcelApproach, str] = {
             "Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}
         },
-        standardize: Union[bool, Literal["zscore_sample", "zscore", "psc"]] = "zscore_sample",
+        standardize: bool = True,
         detrend: bool = True,
         low_pass: Optional[Union[float, int]] = None,
         high_pass: Optional[Union[float, int]] = None,
@@ -295,12 +301,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         self._signal_clean_info = {
             "masker_init": {
-                "standardize": standardize,
                 "detrend": detrend,
                 "low_pass": low_pass,
                 "high_pass": high_pass,
                 "smoothing_fwhm": fwhm,
             },
+            "standardize": standardize,
             "use_confounds": use_confounds,
             "confound_names": confound_names,
             "n_acompcor_separate": n_acompcor_separate,
