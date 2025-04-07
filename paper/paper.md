@@ -114,9 +114,10 @@ This module provides custom type definitions compatible with static type checker
 dictionary structures for parcellations or timeseries data when manual creation is necessary.
 
 # Example Application
-NeuroCAPs was originally developed (and later refined for broader use) to facilitate the analysis in @Smith2025 by the
-same author. In this manuscript, NeuroCAPs was used to extract timeseries data, cluster and identify CAPs using the
-elbow method, and produce visualizations for CAPs (i.e., heatmap, surface plots, correlation matrix, and radar plots)
+NeuroCAPs was originally developed (and later refined for broader use) to facilitate the analysis in @Smith2025,
+which has been submitted for peer review by the same author. In this manuscript, NeuroCAPs was used to extract
+timeseries data, cluster and identify CAPs using the elbow method, compute temporal metrics for downstream statistical
+analyses, and produce visualizations for CAPs (i.e., heatmap, surface plots, correlation matrix, and radar plots).
 
 # Acknowledgements
 Funding provided by the Dissertation Year Fellowship (DYF) Program at Florida International University (FIU), assisted
