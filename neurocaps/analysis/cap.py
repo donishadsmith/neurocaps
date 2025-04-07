@@ -379,7 +379,7 @@ class CAP(_CAPGetter):
         self._standardize = standardize
 
         subject_timeseries = self._process_subject_timeseries(subject_timeseries)
-        self._concatenated_timeseries = self._concatenate_timeseries(subject_timeseries, runs)
+        self._concatenated_timeseries = self._concatenate_timeseries(subject_timeseries, runs, progress_bar)
 
         if self._cluster_selection_method is not None:
             valid_methods = ["elbow", "davies_bouldin", "silhouette", "variance_ratio"]
@@ -426,11 +426,14 @@ class CAP(_CAPGetter):
                 else:
                     self._subject_table.update({subj_id: group})
 
-    def _concatenate_timeseries(self, subject_timeseries, runs):
+    def _concatenate_timeseries(self, subject_timeseries, runs, progress_bar):
         # Create dictionary for "All Subjects" if no groups are specified to reuse the same loop instead of having to
         # create logic for grouped and non-grouped version of the same code
         if not self._groups:
-            self._groups = {"All Subjects": [subject for subject in subject_timeseries]}
+            self._groups = {"All Subjects": list(subject_timeseries)}
+
+        # Sort Ids lexicographically (also done in `TimeseriesExtractor`)
+        self._groups = {group: sorted(self._groups[group]) for group in self._groups}
 
         concatenated_timeseries = {group: None for group in self._groups}
 
@@ -439,23 +442,31 @@ class CAP(_CAPGetter):
         self._mean_vec = {group: None for group in self._groups}
         self._stdev_vec = {group: None for group in self._groups}
 
-        for subj_id, group in self._subject_table.items():
-            subject_runs, miss_runs = self._get_runs(runs, list(subject_timeseries[subj_id]))
+        # Intersect subjects in subjects table and the groups for tqdm
+        group_map = {
+            group: sorted(set(self._subject_table).intersection(self._groups[group])) for group in self._groups
+        }
 
-            if miss_runs:
-                LG.warning(f"[SUBJECT: {subj_id}] Does not have the requested runs: {', '.join(miss_runs)}.")
+        for group in group_map:
+            for subj_id in tqdm(
+                group_map[group], desc=f"Concatenating Subjects [GROUP: {group}]", disable=not progress_bar
+            ):
+                subject_runs, miss_runs = self._get_runs(runs, list(subject_timeseries[subj_id]))
 
-            if not subject_runs:
-                LG.warning(f"[SUBJECT: {subj_id}] Excluded from the concatenated timeseries due to having no runs.")
-                continue
+                if miss_runs:
+                    LG.warning(f"[SUBJECT: {subj_id}] Does not have the requested runs: {', '.join(miss_runs)}.")
 
-            for curr_run in subject_runs:
-                if concatenated_timeseries[group] is None:
-                    concatenated_timeseries[group] = subject_timeseries[subj_id][curr_run]
-                else:
-                    concatenated_timeseries[group] = np.vstack(
-                        [concatenated_timeseries[group], subject_timeseries[subj_id][curr_run]]
-                    )
+                if not subject_runs:
+                    LG.warning(f"[SUBJECT: {subj_id}] Excluded from the concatenated timeseries due to having no runs.")
+                    continue
+
+                for curr_run in subject_runs:
+                    if concatenated_timeseries[group] is None:
+                        concatenated_timeseries[group] = subject_timeseries[subj_id][curr_run]
+                    else:
+                        concatenated_timeseries[group] = np.vstack(
+                            [concatenated_timeseries[group], subject_timeseries[subj_id][curr_run]]
+                        )
 
         if self._standardize:
             concatenated_timeseries = self._scale(concatenated_timeseries)
