@@ -47,13 +47,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         parameters, as a nested dictionary, or loaded from a pickle file. For detailed documentation on the expected
         structure, see the type definitions for ``ParcelConfig`` and ``ParcelApproach`` in the "See Also" section.
 
-    standardize: :obj:`bool` or None, default=True
+    standardize: :obj:`bool` or or :obj:`None`, default=True
         Standardizes the timeseries (zero mean and unit variance using sample standard deviation). Always the
         final step in the pipeline.
 
         .. versionchanged:: 0.25.0 No longer passed to Nilearn's ``NiftiLabelsMasker`` and only performs standardization\
         using sample standard deviation. Default behavior of standardizing using sample standard deviation is the same;\
-        however, when not None or False, standardizing is always done at the end of the pipeline to prevent any
+        however, when not None or False, standardizing is always done at the end of the pipeline to prevent any\
         external standardization from needing to be done when censoring or extracting condition.
 
         .. note:: Standard deviations below ``np.finfo(std.dtype).eps`` are replaced with 1 for numerical stability.

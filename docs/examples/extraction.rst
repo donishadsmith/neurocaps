@@ -81,7 +81,7 @@ For example, placing an asterisk after cosine (cosine*) will utilize all paramet
     extractor = TimeseriesExtractor(
         space="MNI152NLin2009cAsym",
         parcel_approach=parcel_approach,
-        standardize="zscore_sample",
+        standardize=True,
         use_confounds=True,
         detrend=True,
         low_pass=0.15,
@@ -102,10 +102,10 @@ For example, placing an asterisk after cosine (cosine*) will utilize all paramet
 
     .. code-block:: none
 
-        2025-03-21 18:59:28,359 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: cosine*, a_comp_cor*, rot*.
-        2025-03-21 18:59:29,679 neurocaps.extraction.timeseriesextractor [INFO] BIDS Layout: ...demos\neurocaps_demo\data\dset | Subjects: 1 | Sessions: 1 | Runs: 1
-        2025-03-21 18:59:29,826 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] Preparing for Timeseries Extraction using [FILE: sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz].
-        2025-03-21 18:59:29,840 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] The following confounds will be used for nuisance regression: cosine_00, cosine_01, cosine_02, cosine_03, cosine_04, cosine_05, cosine_06, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05, rot_x, rot_y, rot_z.
+        2025-04-07 18:02:15,929 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: cosine*, a_comp_cor*, rot*.
+        2025-04-07 18:02:17,442 neurocaps.extraction.timeseriesextractor [INFO] BIDS Layout: ...books\neurocaps_demo\data\dset | Subjects: 1 | Sessions: 1 | Runs: 1
+        2025-04-07 18:02:17,499 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] Preparing for Timeseries Extraction using [FILE: sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz].
+        2025-04-07 18:02:17,516 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] The following confounds will be used for nuisance regression: cosine_00, cosine_01, cosine_02, cosine_03, cosine_04, cosine_05, cosine_06, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05, rot_x, rot_y, rot_z.
         Processing Subjects: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:05<00:00,  5.73s/it]
 
 ``print`` can be used to return a string representation of the ``TimeseriesExtractor`` class.
@@ -122,12 +122,11 @@ For example, placing an asterisk after cosine (cosine*) will utilize all paramet
         ===========================================================
         Preprocessed Bold Template Space                           : MNI152NLin2009cAsym
         Parcellation Approach                                      : Schaefer
-        Signal Clean Information                                   : {'masker_init': {'standardize': 'zscore_sample', 'detrend': True, 'low_pass': 0.15, 'high_pass': None, 'smoothing_fwhm': None}, 'use_confounds': True, 'confound_names': ['cosine*', 'a_comp_cor*', 'rot*'],
-        'n_acompcor_separate': None, 'dummy_scans': None, 'fd_threshold': None, 'dtype': None}
+        Signal Clean Information                                   : {'masker_init': {'detrend': True, 'low_pass': 0.15, 'high_pass': None, 'smoothing_fwhm': None}, 'standardize': True, 'use_confounds': True, 'confound_names': ['cosine*', 'a_comp_cor*', 'rot*'], 'n_acompcor_separate': None, 'dummy_scans': None, 'fd_threshold': 0.35, 'dtype': None}
         Task Information                                           : {'task': 'rest', 'session': '002', 'runs': None, 'condition': None, 'condition_tr_shift': 0, 'tr': 1.2, 'slice_time_ref': 0.0}
         Number of Subjects                                         : 1
         CPU Cores Used for Timeseries Extraction (Multiprocessing) : None
-        Subject Timeseries Byte Size                               : 16184 bytes
+        Subject Timeseries Byte Size                               : 15784 bytes
 
 The extracted timeseries is stored as a nested dictionary and can be accessed using the ``subject_timeseries``
 property. The ``TimeseriesExtractor`` class has several
@@ -142,19 +141,20 @@ property. The ``TimeseriesExtractor`` class has several
 
     .. code-block:: none
 
-        {'01': {'run-001': array([[ 1.2038397 , -1.4217342 , -1.352524  , ..., -0.01774308,
-                0.30273473, -0.60237604],
-            [-0.36782   ,  0.18963344,  0.2827883 , ..., -1.2160927 ,
-                1.0700601 ,  1.0484216 ],
-            [-0.32511464,  0.12289995,  0.18990105, ..., -1.0471789 ,
-                1.092423  ,  0.80453503],
+        {'01': {'run-001': array([[ 1.2457781 , -1.4010013 , -1.3261763 , ..., -0.0317299 ,
+                0.29253158, -0.5922172 ],
+            [-0.2922811 ,  0.20549732,  0.29574102, ..., -1.2194637 ,
+                1.0506244 ,  1.0374814 ],
+            [-0.267829  ,  0.13577425,  0.20361462, ..., -1.0520463 ,
+                1.0727181 ,  0.79671204],
             ...,
-            [-0.07272357,  0.37041494,  0.27384868, ...,  1.3793082 ,
-                -1.2230965 , -0.6082778 ],
-            [ 0.13115329,  0.1551035 ,  0.06789544, ...,  2.4453828 ,
-                -1.2500157 , -0.67959505],
-            [-0.5520303 ,  0.65005803,  0.6004126 , ..., -0.55654204,
-                -0.2589798 ,  0.09717632]], shape=(40, 100), dtype=float32)}}
+            [-0.80556077,  0.8536277 ,  0.7908673 , ..., -1.2783923 ,
+                -0.2399488 ,  0.17115258],
+            [-0.18354839,  0.38922104,  0.28687462, ...,  1.3529453 ,
+                -1.2149405 , -0.59804344],
+            [ 0.03272336,  0.17512657,  0.08260839, ...,  2.4095764 ,
+                -1.241536  , -0.66844916]], shape=(39, 100), dtype=float32)}}
+
 
 Reporting Quality Control Metrics
 ---------------------------------
