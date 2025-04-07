@@ -108,6 +108,9 @@ class CAP(_CAPGetter):
 
             {"GroupName": np.array(shape=[(participants x TRs), ROIs])}
 
+        .. note:: For versions >= 0.24.8, subject IDs are sorted lexicographically prior to concatenation and the order\
+        is determined by ``self.groups``.
+
     kmeans: :obj:`dict[str, sklearn.cluster.KMeans]` or :obj:`None`
         Group-specific k-means models. Defined after running ``self.get_caps()``.
 
