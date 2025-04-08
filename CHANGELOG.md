@@ -13,6 +13,10 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.25.1] - 2025-04-08
+- Simple internal change, to explicitly change scaling to False for ``NiftiLabelsMasker``, in case the scaling approach
+changes in a future version or has been changed in a past version.
+
 ## [0.25.0.post1] - 2025-04-07
 ### 📖 Documentation
 - Added documentation note

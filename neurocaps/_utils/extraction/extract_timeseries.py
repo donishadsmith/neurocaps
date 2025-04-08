@@ -596,6 +596,7 @@ def _perform_extraction(data, LG):
         labels_img=data.maps,
         resampling_target="data",
         strategy="mean",
+        standardize=False,
         t_r=data.tr,
         **data.signal_clean_info["masker_init"],
         clean__extrapolate=False,
