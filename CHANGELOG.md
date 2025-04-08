@@ -13,6 +13,10 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.25.0.post1] - 2025-04-07
+### 📖 Documentation
+- Added documentation note
+
 ## [0.25.0] - 2025-04-07
 ### ♻ Changed
 - For ``TimeseriesExtractor``, ``standardize`` is no longer passed to Nilearn. Since standardizing is the final

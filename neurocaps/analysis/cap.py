@@ -346,6 +346,11 @@ class CAP(_CAPGetter):
 
         The ``n_clusters``, ``random_state``, ``init``, ``n_init``, ``max_iter``, ``tol``, and ``algorithm`` parameters
         are passed to ``sklearn.cluster.KMeans``.
+
+        **Default Group Naming:** When ``group`` is None during initialization of the ``CAP`` class initialization,
+        then "All Subjects" is the default group name. Additionally, the subject IDs in ``subject_timeseries`` will be
+        automatically detected and stored in ``self.group`` on the first call of this function. To clear this, either
+        re-initialize the ``CAP`` class or set ``self._group`` to None.
         """
         self._n_cores = n_cores
         # Ensure all unique values if n_clusters is a list
