@@ -791,16 +791,15 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                         f"{', '.join(requested_runs)}"
                     )
                     continue
-
             else:
                 # Allows for nifti files that do not have the run- description
                 run_list = [None]
 
-            # Add subject list to subject attribute. These are subjects that will be ran
-            self._subject_ids.append(subj_id)
-
             # Get repetition time for the subject
             tr = self._get_tr(files["bold_meta"], subject_header, verbose)
+
+            # Add subject list to subject attribute. These are subjects that will be ran
+            self._subject_ids.append(subj_id)
 
             # Store subject specific information
             self._subject_info[subj_id] = {"prepped_files": files, "tr": tr, "run_list": run_list}

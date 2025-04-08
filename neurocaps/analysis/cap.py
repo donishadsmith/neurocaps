@@ -401,7 +401,6 @@ class CAP(_CAPGetter):
         else:
             self._kmeans = {}
             for group in self._groups:
-                self._kmeans[group] = {}
                 self._kmeans[group] = _run_kmeans(
                     self._n_clusters, configs, self._concatenated_timeseries[group], method=None
                 )
@@ -1546,12 +1545,11 @@ class CAP(_CAPGetter):
         if subplots:
             [fig.delaxes(ax) for ax in axes.flatten() if not ax.has_data()]
 
-        # Save subplot
-        if subplots and output_dir:
-            partial_filename = f"{group}_CAPs"
-            self._save_heatmap(
-                display, scope, partial_filename, suffix_filename, plot_dict, output_dir, call="outer_product"
-            )
+            if output_dir:
+                partial_filename = f"{group}_CAPs"
+                self._save_heatmap(
+                    display, scope, partial_filename, suffix_filename, plot_dict, output_dir, call="outer_product"
+                )
 
         plt.show() if show_figs else plt.close()
 

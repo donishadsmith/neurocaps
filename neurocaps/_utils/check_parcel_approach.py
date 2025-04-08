@@ -178,7 +178,6 @@ def _check_custom_structure(custom_parcel, custom_example):
     example_msg = f"Refer to example: {custom_example}"
 
     if "nodes" in custom_parcel:
-        "numpy.ndarray"
         if not (isinstance(custom_parcel.get("nodes"), (list, np.ndarray)) and list(custom_parcel.get("nodes"))):
             raise TypeError(
                 "The 'nodes' subkey must be a non-empty list or numpy array containing the node labels. "
