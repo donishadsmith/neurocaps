@@ -772,7 +772,7 @@ def test_caps2plot(tmp_dir, timeseries, parcel_approach):
         regions_dim = (23,)
 
     assert cap_analysis.outer_products["All Subjects"]["CAP-1"].shape == nodes_dim
-    assert cap_analysis.region_caps["All Subjects"]["CAP-1"].shape == regions_dim
+    assert cap_analysis.region_means["All Subjects"]["CAP-1"].shape == regions_dim
 
 
 def test_caps2corr(tmp_dir):

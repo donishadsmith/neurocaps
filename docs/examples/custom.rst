@@ -128,10 +128,9 @@ For ``TimeseriesExtractor.get_bold``, only the "maps" subkey (the location of th
         standardize=True,
         use_confounds=True,
         confound_names="basic",
-        detrend=True,
         low_pass=0.15,
         high_pass=None,
-        dummy_scans=5,
+        dummy_scans="auto",
         fd_threshold={"threshold": 0.5, "outlier_percentage": 0.30, "use_sample_mask": True, "interpolate": False},
     )
 

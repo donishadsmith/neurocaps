@@ -92,9 +92,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             - Confound names follow fMRIPrep's naming scheme (versions >= 1.2.0).
             - Wildcards are supported: e.g., "cosine*" matches all confounds starting with "cosine".
 
-        .. versionchanged:: 0.23.0 Changed default from ``None`` to ``"basic"``. The ``"basic"`` option provides the
-           same functionality that ``None`` did in previous versions.
-
     fd_threshold: :obj:`float`, :obj:`dict[str, float | int]`, or :obj:`None`, default=None
         Threshold for volume censoring based on framewise displacement (FD). Computed only after dummy volumes are
         removed.
@@ -136,8 +133,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 censored high motion volumes and "1" indicates non-censored, low motion volumes, only the volumes at\
                 index 3, 5, 6, 7, and 9 would be interpolated.
 
-            .. versionadded:: 0.22.3 "interpolate" key added.
-
         .. important::
             - A column named "framewise_displacement" must be available in the confounds file.
             - ``use_confounds`` must be set to True.
@@ -178,8 +173,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             be present in the confounds tsv file.
             - "min" and "max" keys only apply when "auto" is True.
 
-        .. versionadded:: 0.24.7 Can now use "auto" instead of ``{"auto": True}`` for automatic dummy volume detection.
-
     dtype: :obj:`str` or "auto", default=None
         The NumPy dtype to convert NIfTI images to.
 
@@ -218,8 +211,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         ::
 
             {"subjectID": {"run-ID": {"frames_scrubbed": int, "frames_interpolated": int, "mean_high_motion_length": float, "std_high_motion_length": float}}}
-
-        .. versionadded:: 0.24.3
 
     See Also
     --------
@@ -434,8 +425,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             about how this offset affects the calculation of task conditions, see the "Extraction of Task Conditions"
             section below.
 
-            .. versionadded:: 0.20.0
-
         tr: :obj:`int`, :obj:`float` or :obj:`None`, default=None
             Repetition time (TR), in seconds, for the specified task. If not provided, the TR will be automatically
             extracted from the first BOLD metadata file found for the task, searching first in the pipeline directory,
@@ -446,25 +435,17 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             to adjust for slice time correction when ``condition`` is not None. Values can range from 0 to 1. For more
             details, see the "Extraction of Task Conditions" section below.
 
-            .. versionadded:: 0.21.0
-
         run_subjects: :obj:`str`, :obj:`list[str]` or :obj:`None`, default=None
             A string (if single subject) or list of subject IDs to process (e.g. ``run_subjects=["01", "02"]``).
             Processes all subjects if None.
 
-            .. versionchanged:: 0.24.0 A string can be used if specifying a single subject.
-
         exclude_subjects: :obj:`str`, :obj:`list[str]` or :obj:`None`, default=None
             A string (if single subject) or list of subject IDs to exclude (e.g. ``exclude_subjects=["01", "02"]``).
-
-            .. versionchanged:: 0.24.0 A string can be used if specifying a single subject.
 
         exclude_niftis: :obj:`str`, :obj:`list[str]` or :obj:`None`, default=None
             A string (if single file) or List of the specific preprocessed NIfTI files to exclude, preventing their
             timeseries data from being extracted. Used if there are specific runs across different participants that
             need to be excluded.
-
-            .. versionchanged:: 0.24.0 A string can be used if specifying a single file.
 
         pipeline_name: :obj:`str` or :obj:`None`, default=None
             The name of the pipeline folder in the derivatives folder containing the preprocessed data. Used if
@@ -498,8 +479,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         progress_bar: :obj:`bool`, default=False
             If True, displays a progress bar.
 
-            .. versionadded:: 0.21.5
-
         Returns
         -------
         self
@@ -519,9 +498,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         Important
         ---------
         **Subject Timeseries Dictionary**: This function stores the extracted timeseries of all subjects
-        in the ``subject_timeseries`` property. The structure is a dictionary mapping subject IDs to their run IDs and
-        their associated timeseries (TRs x ROIs) as a NumPy array. Refer to documentation for ``SubjectTimeseries`` in
-        the "See Also" section for an example structure.
+        in the ``subject_timeseries`` property and can be deleted using ``del self.subject_timeseries`` (Note that
+        ``self.timeseries_to_pickle()`` and ``self.visualize_bold()`` need this property in order to be used). The
+        structure is a dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as
+        NumPy array. Refer to documentation for ``SubjectTimeseries`` in the "See Also" section for an example structure.
 
         **Data/Property Persistence**: Each time this function is called, it's associated properties such as
         ``self.subject_timeseries``, ``self.task_info``, ``self.qc``, etc, are automatically initialized/overwritten to
@@ -1034,8 +1014,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         Converts per-subject, per-run quality control metrics (frame scrubbing and interpolation) stored in
         ``self.qc`` dictionary to a pandas DataFrame for analysis and reporting.
 
-        .. versionadded:: 0.24.3
-
         Parameters
         ----------
         output_dir: :obj:`str`, default=None
@@ -1154,8 +1132,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         run: :obj:`int`, :obj:`str`, or :obj:`None`, default=None
             The run ID of the subject to plot. Must be specified if multiple runs exist for a given subject.
-
-            .. versionchanged:: 0.24.0 Now optional if the subject only has a single run ID.
 
         roi_indx: :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[int]` or :obj:`None`, default=None
             The indices of the parcellation nodes to plot. See "nodes" in ``self.parcel_approach`` for valid

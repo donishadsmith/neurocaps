@@ -83,7 +83,6 @@ For example, placing an asterisk after cosine (cosine*) will utilize all paramet
         parcel_approach=parcel_approach,
         standardize=True,
         use_confounds=True,
-        detrend=True,
         low_pass=0.15,
         high_pass=None,
         confound_names=confounds,
@@ -122,7 +121,7 @@ For example, placing an asterisk after cosine (cosine*) will utilize all paramet
         ===========================================================
         Preprocessed Bold Template Space                           : MNI152NLin2009cAsym
         Parcellation Approach                                      : Schaefer
-        Signal Clean Information                                   : {'masker_init': {'detrend': True, 'low_pass': 0.15, 'high_pass': None, 'smoothing_fwhm': None}, 'standardize': True, 'use_confounds': True, 'confound_names': ['cosine*', 'a_comp_cor*', 'rot*'], 'n_acompcor_separate': None, 'dummy_scans': None, 'fd_threshold': 0.35, 'dtype': None}
+        Signal Clean Information                                   : {'masker_init': {'detrend': False, 'low_pass': 0.15, 'high_pass': None, 'smoothing_fwhm': None}, 'standardize': True, 'use_confounds': True, 'confound_names': ['cosine*', 'a_comp_cor*', 'rot*'], 'n_acompcor_separate': None, 'dummy_scans': None, 'fd_threshold': 0.35, 'dtype': None}
         Task Information                                           : {'task': 'rest', 'session': '002', 'runs': None, 'condition': None, 'condition_tr_shift': 0, 'tr': 1.2, 'slice_time_ref': 0.0}
         Number of Subjects                                         : 1
         CPU Cores Used for Timeseries Extraction (Multiprocessing) : None
@@ -141,20 +140,19 @@ property. The ``TimeseriesExtractor`` class has several
 
     .. code-block:: none
 
-        {'01': {'run-001': array([[ 1.2457781 , -1.4010013 , -1.3261763 , ..., -0.0317299 ,
-                0.29253158, -0.5922172 ],
-            [-0.2922811 ,  0.20549732,  0.29574102, ..., -1.2194637 ,
-                1.0506244 ,  1.0374814 ],
-            [-0.267829  ,  0.13577425,  0.20361462, ..., -1.0520463 ,
-                1.0727181 ,  0.79671204],
+        {'01': {'run-001': array([[ 1.2033961 , -1.2330143 , -1.2266738 , ...,  0.79417294,
+                0.03897883, -1.2275234 ],
+            [-0.41716266,  0.18100384,  0.17953618, ..., -0.7285049 ,
+                0.46337456,  0.232506  ],
+            [-0.6353623 ,  0.52065367,  0.51416904, ..., -0.6392374 ,
+                0.30418062,  0.5296185 ],
             ...,
-            [-0.80556077,  0.8536277 ,  0.7908673 , ..., -1.2783923 ,
-                -0.2399488 ,  0.17115258],
-            [-0.18354839,  0.38922104,  0.28687462, ...,  1.3529453 ,
-                -1.2149405 , -0.59804344],
-            [ 0.03272336,  0.17512657,  0.08260839, ...,  2.4095764 ,
-                -1.241536  , -0.66844916]], shape=(39, 100), dtype=float32)}}
-
+            [-0.00439697, -0.33513063, -0.344346  , ..., -1.7402033 ,
+                0.6538972 , -0.48667648],
+            [-0.21270348,  0.5142317 ,  0.5091558 , ...,  0.5407353 ,
+                -0.7391407 ,  0.4986693 ],
+            [-0.13190913,  0.53207046,  0.53672856, ...,  1.6365708 ,
+                -0.83822703,  0.65070736]], shape=(39, 100), dtype=float32)}}
 
 Reporting Quality Control Metrics
 ---------------------------------

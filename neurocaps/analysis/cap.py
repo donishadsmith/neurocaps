@@ -156,9 +156,6 @@ class CAP(_CAPGetter):
 
             {"GroupName": {"Regions": [...], "CAP-1": np.array(shape=[1, Regions]), "CAP-2": np.array(shape=[1, Regions])}}
 
-        .. versionchanged:: 0.23.4 Replaces ``region_caps`` and adds the "Regions" key for each group.\
-        For backwards compatibility, ``region_caps``, which doesn't include the "Regions" key is still available.
-
     outer_products: :obj:`dict[str, dict[str, np.array]]` or :obj:`None`
         Outer product matrices for visualization. Defined after running ``self.caps2plot()``.
 
@@ -309,8 +306,6 @@ class CAP(_CAPGetter):
         progress_bar: :obj:`bool`, default=False
             If True and ``cluster_selection_method`` is not None, displays a progress bar.
 
-            .. versionadded:: 0.21.5
-
         **kwargs:
             Additional keyword arguments when ``cluster_selection_method`` is specified:
 
@@ -345,12 +340,18 @@ class CAP(_CAPGetter):
         about the ``KMeans`` algorithm used in this method.
 
         The ``n_clusters``, ``random_state``, ``init``, ``n_init``, ``max_iter``, ``tol``, and ``algorithm`` parameters
-        are passed to ``sklearn.cluster.KMeans``.
+        are passed to ``sklearn.cluster.KMeans``. Only ``n_clusters`` differs from scikit-learn's default value,
+        changing from 8 to 5.
 
         **Default Group Naming:** When ``group`` is None during initialization of the ``CAP`` class initialization,
         then "All Subjects" is the default group name. Additionally, the subject IDs in ``subject_timeseries`` will be
         automatically detected and stored in ``self.group`` on the first call of this function. To clear this, either
         re-initialize the ``CAP`` class or set ``self._group`` to None.
+
+        **Concatenated Timeseries**: The concatenated timeseries is stored in ``self.concatenated_timeseries`` for
+        user convenience and can be deleted using ``del self.concatenated_timeseries`` without disruption to the any
+        other function. Additionally, for versions >= 0.25.0, the concatenation of subjects is performed
+        lexicographically based on their subject IDs.
         """
         self._n_cores = n_cores
         # Ensure all unique values if n_clusters is a list
@@ -798,8 +799,6 @@ class CAP(_CAPGetter):
 
         progress_bar: :obj:`bool`, default=False
             If True, displays a progress bar.
-
-            .. versionadded:: 0.21.5
 
         See Also
         --------
@@ -1965,8 +1964,6 @@ class CAP(_CAPGetter):
         progress_bar: :obj:`bool`, default=False
             If True, displays a progress bar.
 
-            .. versionadded:: 0.21.5
-
         Returns
         -------
         self
@@ -2114,8 +2111,6 @@ class CAP(_CAPGetter):
 
         progress_bar: :obj:`bool`, default=False
             If True, displays a progress bar.
-
-            .. versionadded:: 0.21.5
 
         **kwargs
             Additional parameters to pass to modify certain plot parameters. Options include:
