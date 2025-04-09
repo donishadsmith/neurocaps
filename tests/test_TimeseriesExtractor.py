@@ -647,7 +647,7 @@ def test_condition_extraction(get_vars):
     """
     bids_dir, pipeline_name = get_vars
 
-    extractor = TimeseriesExtractor()
+    extractor = TimeseriesExtractor(detrend=True)
 
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
     timeseries = copy.deepcopy(extractor.subject_timeseries["01"]["run-001"])
@@ -874,7 +874,7 @@ def test_fd_censoring(get_vars):
     bids_dir, pipeline_name = get_vars
 
     # Should censor; use_confounds is True by default
-    extractor_censor = TimeseriesExtractor(fd_threshold=0.35)
+    extractor_censor = TimeseriesExtractor(fd_threshold=0.35, detrend=True)
 
     extractor_censor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
     assert extractor_censor.subject_timeseries["01"]["run-001"].shape == (39, 400)
@@ -885,7 +885,7 @@ def test_fd_censoring(get_vars):
 
     # Check "outlier_percentage"
     extractor_low_outlier_threshold = TimeseriesExtractor(
-        fd_threshold={"threshold": 0.35, "outlier_percentage": 0.0001},
+        fd_threshold={"threshold": 0.35, "outlier_percentage": 0.0001}, detrend=True
     )
 
     extractor_low_outlier_threshold.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
@@ -911,9 +911,7 @@ def test_fd_censoring(get_vars):
     assert extractor_low_outlier_threshold.qc == {}
 
     # Test that dictionary fd_threshold and float are the same
-    extractor_fd_dict = TimeseriesExtractor(
-        fd_threshold={"threshold": 0.35, "outlier_percentage": 0.30},
-    )
+    extractor_fd_dict = TimeseriesExtractor(fd_threshold={"threshold": 0.35, "outlier_percentage": 0.30}, detrend=True)
 
     extractor_fd_dict.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
     assert extractor_fd_dict.subject_timeseries["01"]["run-001"].shape == (39, 400)
@@ -922,7 +920,7 @@ def test_fd_censoring(get_vars):
     assert extractor_fd_dict.qc["01"]["run-001"]["mean_high_motion_length"] == 1
     assert extractor_fd_dict.qc["01"]["run-001"]["std_high_motion_length"] == 0
 
-    extractor_fd_float = TimeseriesExtractor(fd_threshold=0.35)
+    extractor_fd_float = TimeseriesExtractor(fd_threshold=0.35, detrend=True)
 
     extractor_fd_float.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
     assert extractor_fd_float.qc["01"]["run-001"]["frames_scrubbed"] == 1
@@ -931,7 +929,7 @@ def test_fd_censoring(get_vars):
     assert extractor_fd_float.qc["01"]["run-001"]["std_high_motion_length"] == 0
 
     # Get non censored
-    extractor_no_censor = TimeseriesExtractor()
+    extractor_no_censor = TimeseriesExtractor(detrend=True)
     extractor_no_censor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
 
     assert np.allclose(
@@ -1028,13 +1026,13 @@ def test_censoring_with_sample_mask(get_vars):
 
     # First get no condition data
     extractor_with_sample_mask = TimeseriesExtractor(
-        fd_threshold={"threshold": 0.35, "outlier_percentage": 0.30, "use_sample_mask": True},
+        fd_threshold={"threshold": 0.35, "outlier_percentage": 0.30, "use_sample_mask": True}, detrend=True
     )
     extractor_with_sample_mask.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
     timeseries_with_sample_mask = copy.deepcopy(extractor_with_sample_mask.subject_timeseries)
 
     extractor_with_sample_mask_condition = TimeseriesExtractor(
-        fd_threshold={"threshold": 0.35, "outlier_percentage": 0.30, "use_sample_mask": True},
+        fd_threshold={"threshold": 0.35, "outlier_percentage": 0.30, "use_sample_mask": True}, detrend=True
     )
     extractor_with_sample_mask_condition.get_bold(
         bids_dir=bids_dir, task="rest", condition="active", pipeline_name=pipeline_name, tr=1.2
@@ -1094,7 +1092,7 @@ def test_dummy_scans(get_vars, use_confounds):
     """
     bids_dir, pipeline_name = get_vars
 
-    extractor = TimeseriesExtractor(use_confounds=use_confounds, dummy_scans=5)
+    extractor = TimeseriesExtractor(use_confounds=use_confounds, dummy_scans=5, detrend=True)
 
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
     assert extractor.subject_timeseries["01"]["run-001"].shape == (35, 400)
@@ -1191,7 +1189,7 @@ def test_dummy_scans_with_fd_censoring(get_vars):
     bids_dir, pipeline_name = get_vars
 
     # No volumes should meet the fd threshold
-    extractor_fd_and_dummy_censor = TimeseriesExtractor(dummy_scans=5, fd_threshold=0.35)
+    extractor_fd_and_dummy_censor = TimeseriesExtractor(dummy_scans=5, fd_threshold=0.35, detrend=True)
 
     extractor_fd_and_dummy_censor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
     assert extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"].shape == (34, 400)
@@ -1200,7 +1198,7 @@ def test_dummy_scans_with_fd_censoring(get_vars):
     assert extractor_fd_and_dummy_censor.qc["01"]["run-001"]["mean_high_motion_length"] == 1
     assert extractor_fd_and_dummy_censor.qc["01"]["run-001"]["std_high_motion_length"] == 0
 
-    extractor_dummy_only_censor = TimeseriesExtractor(dummy_scans=5)
+    extractor_dummy_only_censor = TimeseriesExtractor(dummy_scans=5, detrend=True)
 
     extractor_dummy_only_censor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
 
@@ -1267,7 +1265,7 @@ def test_extended_censoring(get_vars, fd_threshold):
     """
     bids_dir, pipeline_name = get_vars
 
-    extractor_not_censored = TimeseriesExtractor()
+    extractor_not_censored = TimeseriesExtractor(detrend=True)
     extractor_not_censored.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
     assert not extractor_not_censored.qc
 
@@ -1283,7 +1281,7 @@ def test_extended_censoring(get_vars, fd_threshold):
         non_condition_stats = (5, 0)
         condition_stats = (5, 0)
 
-    extractor_censored = TimeseriesExtractor(fd_threshold=fd_threshold)
+    extractor_censored = TimeseriesExtractor(fd_threshold=fd_threshold, detrend=True)
     extractor_censored.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
     assert extractor_censored.subject_timeseries["01"]["run-001"].shape[0] == expected_shape
     # 40 is the length of the full timeseries
@@ -1323,7 +1321,7 @@ def test_extended_censor_with_dummy_scans(get_vars):
     fd_threshold = {"threshold": 0.31, "n_before": 4, "n_after": 2}
     dummy_scans = 3
 
-    extractor_censored = TimeseriesExtractor(fd_threshold=fd_threshold, dummy_scans=dummy_scans)
+    extractor_censored = TimeseriesExtractor(fd_threshold=fd_threshold, dummy_scans=dummy_scans, detrend=True)
     extractor_censored.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
 
     # dummy vols = [0, 1, 2]

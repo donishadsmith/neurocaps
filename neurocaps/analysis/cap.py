@@ -2428,7 +2428,7 @@ class CAP(_CAPGetter):
             - fill: :obj:`str`, default="toself" -- If "toself" the are of the dots and within the boundaries of the\
               line will be filled.
 
-              .. versionchanged:: 0.26.0 Changed from "none" to "toself".
+              .. versionchanged:: 0.26.0 Default changed from "none" to "toself".
 
             - mode: :obj:`str`, default="markers+lines" -- Determines how the trace is drawn. Can include "lines",\
                 "markers", "lines+markers", "lines+markers+text".

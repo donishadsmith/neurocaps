@@ -61,8 +61,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     detrend: :obj:`bool`, default=False
         Detrends the timeseries.
 
-        .. versionchanged:: 0.26.0 Changed from True to False due to the redundancy of detrending when cosine-basis\
-        regressors are used, which is included in the "basic" option for ``confound_names``.
+        .. versionchanged:: 0.26.0 Default changed from True to False due to the redundancy of detrending when\
+        discrete cosine-basis regressors are used, which is included in the "basic" option for ``confound_names``.
 
     low_pass: :obj:`float`, :obj:`int`, or :obj:`None`, default=None
         Filters out signals above the specified cutoff frequency.
@@ -84,7 +84,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         If "basic", the following confounds are used by default:
 
-        - All cosine-basis parameters.
+        - All discrete cosine-basis regressors.
         - Six head-motion parameters and their first-order derivatives.
         - First six combined aCompCor components.
 

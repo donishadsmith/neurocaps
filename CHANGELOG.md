@@ -13,6 +13,19 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.26.0] - 2025-04-09
+- Full source repository now archived on Zenodo, instead of just the pure source code
+### ♻ Changed
+- In, ``TimeseriesExtractor``, default for ``detrend`` changed from True to False to avoid redundancy since the
+default behavior for ``confound_names`` includes the cosine-basis regressors. This is also the default for
+``NiftiLabelsMasker``.
+- For ``CAP.caps2radar``, the default for ``fill`` changed from "none" to "toself" so that the traces of the
+radar plot are always filled in by default.
+- For ``CAP``, the ``region_means`` property now fully replaces the ``region_caps`` property. The only difference
+is that ``region_means`` includes the region names themselves and better describes what it represents.
+- Version directives under 0.25.0 have been removed to clean the docs. These directives can still be viewed
+on [0.25.1](https://neurocaps.readthedocs.io/en/0.25.1/") documentation.
+
 ## [0.25.1] - 2025-04-08
 - Simple internal change, to explicitly change scaling to False for ``NiftiLabelsMasker``, in case the scaling approach
 changes in a future version or has been changed in a past version.
