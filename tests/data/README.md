@@ -10,7 +10,7 @@ Modifications to the OpenfMRI data included:
 - Only including session 002 data.
 - Adding a dataset_description.json file to the fMRIPrep folder.
 - Excluding the nii.gz file in the root BIDS folder.
-- Retaining only the mask, truncated preprocessed BOLD file, and truncated confounds file in the fMRIPrep folder.
+- Truncated preprocessed BOLD file and confounds file in the fMRIPrep folder.
 - Slightly changing the naming style of the mask, preprocessed BOLD file, and confounds file in the fMRIPrep folder to
 conform with the naming conventions of modern fMRIPrep outputs.
 - Changing confound names to their modern counterpart (fMRIPrep version >= 1.2.0).
