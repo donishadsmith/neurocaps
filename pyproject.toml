@@ -80,8 +80,7 @@ show_missing = true
 exclude_also = [
     "raise .*",
     "LG\\.warning",
-    "os\\.makedirs",
-    "self\\._raise_error"
+    "os\\.makedirs"
 ]
 
 [tool.coverage.run]

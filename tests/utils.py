@@ -115,6 +115,22 @@ def simulate_confounds(bids_dir, pipeline_name):
     confounds_df.to_csv(confounds_file, sep="\t", index=None)
 
 
+def get_confound_data(bids_dir, pipeline_name, return_df=False):
+    """Retrieve the path for the confound file"""
+
+    confound_file = os.path.join(
+        bids_dir,
+        "derivatives",
+        pipeline_name,
+        "sub-01",
+        "ses-002",
+        "func",
+        "sub-01_ses-002_task-rest_run-001_desc-confounds_timeseries.tsv",
+    )
+
+    return confound_file if not return_df else pd.read_csv(confound_file, sep="\t")
+
+
 def add_non_steady(bids_dir, pipeline_name, n):
     """Add non-steady state outlier columns."""
     mask_names = ["CSF"] * 2 + ["WM"] * 3

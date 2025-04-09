@@ -183,7 +183,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         The standard template space that the preprocessed BOLD data is registered to.
 
     parcel_approach: :obj:`ParcelApproach`
-        Parcellation information with "maps" (path to parcellation file), "nodes" (labels), and "regions" (anatomical regions or networks).
+        Parcellation information with "maps" (path to parcellation file), "nodes" (labels), and "regions"
+        (anatomical regions or networks).
 
     signal_clean_info: :obj:`dict[str, bool | int | float | str]` or :obj:`None`
         Dictionary containing signal cleaning parameters.
@@ -210,7 +211,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         ::
 
-            {"subjectID": {"run-ID": {"frames_scrubbed": int, "frames_interpolated": int, "mean_high_motion_length": float, "std_high_motion_length": float}}}
+            {"subjectID": {"run-ID": {"mean_fd": float, "std_fd": float, ...}}}
 
     See Also
     --------
@@ -664,13 +665,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         return self
 
-    def _expand_dicts(self, subject_timeseries, qc):
-        # Aggregate new timeseries dictionary and qc
-        if isinstance(subject_timeseries, dict):
-            self._subject_timeseries.update(subject_timeseries)
-            if qc:
-                self._qc.update(qc)
-
     def _validate_get_bold_params(self):
         if self._task_info["condition_tr_shift"] != 0:
             if not isinstance(self._task_info["condition_tr_shift"], int) or self._task_info["condition_tr_shift"] < 0:
@@ -968,6 +962,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         return tr
 
+    def _expand_dicts(self, subject_timeseries, qc):
+        # Aggregate new timeseries dictionary and qc
+        if isinstance(subject_timeseries, dict):
+            self._subject_timeseries.update(subject_timeseries)
+            if qc:
+                self._qc.update(qc)
+
     @staticmethod
     def _raise_error(prop_name, msg):
         if prop_name == "_subject_timeseries":
@@ -1030,31 +1031,37 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         -------
         pandas.Dataframe
             Pandas dataframe containing the colums: "Subject_ID", "Run", "Frames_Scrubbed", "Frames_Interpolated",
-            "Mean_High_Motion_Length", and "Std_High_Motion_Length".
+            "Mean_High_Motion_Length", "Std_High_Motion_Length", "Mean_FD", "Std_FD",
 
         Important
         ---------
         **Reporting**: Statistics for each subject's run are only reported when ``fd_threshold`` is specified, a valid
         confound tsv file containing the "framewise_displacement" column is found, and the run is not skipped.
+        Additionally, all reported statistics exclude any dummy volumes, as they are calculated after dummy volumes are
+        removed from the analysis.
 
-        **FD Threshold**: The value of each statistic are specific to the threshold specified by ``fd_threshold``.
+        **Note** that if a ``condition`` was specified in ``self.get_bold()``, all the reported statistics are specific
+        to the frames assigned to the condition (as determined by the equation in "Extraction of Task Conditions"
+        in the documentation of ``self.get_bold()``), which are treated as one continuous event window for computational
+        simplicity.
 
-        **Censored & Interpolated Frames**: The frame counts reported exclude any dummy volumes, as they are calculated
-        after dummy volumes are removed from the analysis. If a ``condition`` was specified in ``self.get_bold``,
-        the reported values reflect only frames specific to that condition; otherwise, metrics represent the entire
-        timeseries (excluding dummy volumes).
+        **Mean & Standard Deviation of Framewise Displacement:** "Mean_FD" and "Std_FD" represent the statistics prior
+        to scrubbing or interpolating.
 
-        The metrics for scrubbed frames and interpolated frames are independent. For instance, two scrubbed frames and
-        three interpolated frames means that three frames were interpolated while two were scrubbed due to excessive
-        motion. **Note** that only censored frames with valid data on both sides are interpolated, while censored frames
+        **Censored & Interpolated Frames**: The metrics for scrubbed frames and interpolated frames are independent. For
+        instance, two scrubbed frames and three interpolated frames means that three frames were interpolated while two
+        were scrubbed due to excessive motion.
+
+        **Note** that only censored frames with valid data on both sides are interpolated, while censored frames
         at the edge of the timeseries (including frames that border censored edges) are always scrubbed and counted in
-        "Frames_Scrubbed".
+        "Frames_Scrubbed". For instance, if the full sample mask is computed as ``[0, 0, 1, 0, 0, 1, 0]`` where
+        "0" are censored and "1" is not censored, then when no interpolation is requested, then "Frames_Scrubbed" will
+        be 5 and "Frames_Interpolated" will be 0. If interpolation is requested, then "Frames_Scrubbed" would be 3
+        and "Frames_Interpolated" would be 2 (indexes 3 and 4).
 
         **High Motion Length Computation**: "Mean_High_Motion_Length" and "Std_High_Motion_Length" represent the average
         length and population standard deviation of contiguous segments of frames flagged for high-motion frames,
-        respectively. When ``condition`` is specified in ``self.get_bold``, only frames associated with that condition
-        are included in these calculations and are treated as a continuous block (per run) for computational simplicity.
-        The computation remains the same regardles if these flagged frames are interpolated.
+        respectively.
         """
         save_filename = self._prepare_output_file(output_dir, filename, prop_name="_qc", call="report_qc")
         assert self._qc, "No quality control information to report."
@@ -1064,6 +1071,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             columns=[
                 "Subject_ID",
                 "Run",
+                "Mean_FD",
+                "Std_FD",
                 "Frames_Scrubbed",
                 "Frames_Interpolated",
                 "Mean_High_Motion_Length",
@@ -1075,6 +1084,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 df.loc[len(df)] = [
                     subject,
                     run,
+                    self._qc[subject][run]["mean_fd"],
+                    self._qc[subject][run]["std_fd"],
                     self._qc[subject][run]["frames_scrubbed"],
                     self._qc[subject][run]["frames_interpolated"],
                     self._qc[subject][run]["mean_high_motion_length"],

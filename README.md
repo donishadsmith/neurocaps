@@ -118,7 +118,7 @@ section of the documentation homepage.**
 - **Timeseries Extraction:** Extract timeseries for resting-state or task data using Schaefer, AAL, or a lateralized Custom parcellations (which can be manually defined) for spatial dimensionality reduction.
 - **Parallel Processing:** Parallelize at the subject-level (one subject per CPU core) to speed up timeseries extraction.
 - **Saving Timeseries:** Save the nested dictionary containing timeseries (mapping subject id -> run id -> timeseries data) as a pickle file.
-- **Reporting Quality Control:** Outputs per-subject, per-run quality control metrics (number of scrubbed an interpolated frames including mean and standard deviation of continuous high motion segments).
+- **Reporting Quality Control:** Reports framewise displacement statistics per-subject.
 - **Visualization:** Visualize the timeseries at the region or node level of the parcellation for a given subject and run.
 
 **Main features for `CAP` includes:**
@@ -211,7 +211,7 @@ extractor = TimeseriesExtractor(
     fd_threshold={"threshold": 0.35, "outlier_percentage": 0.20, "n_before": 2, "n_after": 1, "use_sample_mask": True},
 )
 
-# Extracting timeseries from the DET task (specifically for the "late" condittion) for subjects in the BIDS directory
+# Extracting timeseries from the DET task (specifically for the "late" condition) for subjects in the BIDS directory
 # Subject 0006 run-1 will be flagged and skipped
 # Then saving the extracted timeseries data by chaining operations
 extractor.get_bold(
@@ -254,14 +254,15 @@ additional information about configuring logging.
 df = extractor.report_qc()
 
 # Note run-2 for subject 006 is not in QC report due to being flagged
+# Also, when condition is specified, the QC report is specific to the condition
 print(df)
 ```
 **DataFrame Output:**
-| Subject_ID | Run | Frames_Scrubbed | Frames_Interpolated | Mean_High_Motion_Length | Std_High_Motion_Length |
-| --- | --- | --- | --- | --- | --- |
-| 0004 | run-1 | 2 | 0 | 2.0 | 0.0 |
-| 0004 | run-2 | 0 | 0 | 0.0 | 0.0 |
-| 0006 | run-2 | 2 | 0 | 1.0 | 0.0 |
+| Subject_ID | Run | Mean_FD | Std_FD | Frames_Scrubbed | Frames_Interpolated | Mean_High_Motion_Length | Std_High_Motion_Length |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 0004 | run-1 | 0.101492 | 0.056535 | 2 | 0 | 2.0 | 0.0 |
+| 0004 | run-2 | 0.103347 | 0.073092 | 0 | 0 | 0.0 | 0.0 |
+| 0006 | run-2 | 0.160510 | 0.084528 | 2 | 0 | 1.0 | 0.0 |
 
 
 ```python
