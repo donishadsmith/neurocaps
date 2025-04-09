@@ -169,7 +169,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
               ``{"max": 5}``, removes 5 volumes.
 
         .. important::
-            - "auto" and dictionary option requires ``use_confounds`` to be True and "non_steady_state_outlier_XX" to
+            - "auto" and dictionary option requires ``use_confounds`` to be True and "non_steady_state_outlier_XX" to\
             be present in the confounds tsv file.
             - "min" and "max" keys only apply when "auto" is True.
 
