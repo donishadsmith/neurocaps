@@ -102,7 +102,7 @@ class _PlotDefaults:
             "width": 1200,
             "line_close": True,
             "bgcolor": "white",
-            "fill": "none",
+            "fill": "toself",
             "scattersize": 8,
             "connectgaps": True,
             "opacity": 0.5,

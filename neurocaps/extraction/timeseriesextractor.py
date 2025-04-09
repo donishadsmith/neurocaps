@@ -58,8 +58,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         .. note:: Standard deviations below ``np.finfo(std.dtype).eps`` are replaced with 1 for numerical stability.
 
-    detrend: :obj:`bool`, default=True
+    detrend: :obj:`bool`, default=False
         Detrends the timeseries.
+
+        .. versionchanged:: 0.26.0 Changed from True to False due to the redundancy of detrending when cosine-basis\
+        regressors are used, which is included in the "basic" option for ``confound_names``.
 
     low_pass: :obj:`float`, :obj:`int`, or :obj:`None`, default=None
         Filters out signals above the specified cutoff frequency.
@@ -248,7 +251,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             "Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}
         },
         standardize: bool = True,
-        detrend: bool = True,
+        detrend: bool = False,
         low_pass: Optional[Union[float, int]] = None,
         high_pass: Optional[Union[float, int]] = None,
         fwhm: Optional[Union[float, int]] = None,

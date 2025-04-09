@@ -2430,8 +2430,11 @@ class CAP(_CAPGetter):
             - connectgaps: :obj:`bool`, default=True -- If ``use_scatterpolar=True``, controls if missing values are connected.
             - linewidth: :obj:`int`, default = 2 -- The width of the line connecting the values if ``use_scatterpolar=True``.
             - opacity: :obj:`float`, default=0.5 -- If ``use_scatterpolar=True``, sets the opacity of the trace.
-            - fill: :obj:`str`, default="none" -- If "toself" the are of the dots and within the boundaries of the\
-                line will be filled.
+            - fill: :obj:`str`, default="toself" -- If "toself" the are of the dots and within the boundaries of the\
+              line will be filled.
+
+              .. versionchanged:: 0.26.0 Changed from "none" to "toself".
+
             - mode: :obj:`str`, default="markers+lines" -- Determines how the trace is drawn. Can include "lines",\
                 "markers", "lines+markers", "lines+markers+text".
             - radialaxis: :obj:`dict`, default={"showline": False, "linewidth": 2, \
