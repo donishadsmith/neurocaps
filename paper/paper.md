@@ -81,8 +81,7 @@ Labeling [@Tzourio-Mazoyer2002], and Human Connectome Project extended [@Huang20
 dimensionality reduction.
 - censors high-motion volumes using fMRIPrep-derived framewise displacement values and stores the extracted timeseries
 information in a dictionary mapping subject IDs to run IDs and their associated timeseries.
-- reports the number of censored frames, interpolated frames, and mean and standard deviation of continuous high motion
-segments for each subject.
+- reports quality control information for framewise displacement.
 - saves extracted timeseries data as a pickle file.
 - visualizes timeseries data for a specific subject's run.
 

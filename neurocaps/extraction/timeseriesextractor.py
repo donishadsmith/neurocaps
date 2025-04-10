@@ -1049,14 +1049,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         to scrubbing or interpolating.
 
         **Censored & Interpolated Frames**: The metrics for scrubbed frames and interpolated frames are independent. For
-        instance, two scrubbed frames and three interpolated frames means that three frames were interpolated while two
-        were scrubbed due to excessive motion.
+        instance, 2 scrubbed frames and 3 interpolated frames means that 3 frames were interpolated while 2 were
+        scrubbed due to excessive motion.
 
-        **Note** that only censored frames with valid data on both sides are interpolated, while censored frames
-        at the edge of the timeseries (including frames that border censored edges) are always scrubbed and counted in
-        "Frames_Scrubbed". For instance, if the full sample mask is computed as ``[0, 0, 1, 0, 0, 1, 0]`` where
-        "0" are censored and "1" is not censored, then when no interpolation is requested, then "Frames_Scrubbed" will
-        be 5 and "Frames_Interpolated" will be 0. If interpolation is requested, then "Frames_Scrubbed" would be 3
+        **Note** that only censored frames with bounded by non-censored frames on both sides are interpolated, while
+        censored frames at the edge of the timeseries (including frames that border censored edges) are always scrubbed
+        and counted in "Frames_Scrubbed". For instance, if the full sample mask is computed as ``[0, 0, 1, 0, 0, 1, 0]``
+        where "0" are censored and "1" is not censored, then when no interpolation is requested, then "Frames_Scrubbed"
+        will be 5 and "Frames_Interpolated" will be 0. If interpolation is requested, then "Frames_Scrubbed" would be 3
         and "Frames_Interpolated" would be 2 (indexes 3 and 4).
 
         **High Motion Length Computation**: "Mean_High_Motion_Length" and "Std_High_Motion_Length" represent the average

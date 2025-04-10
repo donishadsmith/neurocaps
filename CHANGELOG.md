@@ -13,7 +13,7 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
-## [0.26.0] - 2025-04-09
+## [0.26.0] - 2025-04-10
 - Full source repository now archived on Zenodo, instead of just the pure source code
 ### 🚀 New/Added
 - Added mean and standard deviation of framewise displacement of QC report, which are added at the beginning of the
