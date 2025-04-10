@@ -254,7 +254,11 @@ def _extract_timeseries(
                 continue
 
         # Continue extraction if the continue keyword isn't hit when assessing the fd threshold or events
-        timeseries = _perform_extraction(data, LG)
+        # May still be skipped prior to extraction if there are more confound regressors than timeseries row
+        timeseries, skip_run = _perform_extraction(data, LG)
+        if skip_run:
+            continue
+
         if timeseries.shape[0] == 0:
             LG.warning(
                 f"{data.head}" + f"Timeseries is empty and will not be appended to the `subject_timeseries` dictionary."
@@ -605,6 +609,10 @@ def _perform_extraction(data, LG):
     # Extract confound information of interest and ensure confound file does not contain NAs
     confounds = _process_confounds(data, LG)
 
+    # Ensure number of confounds not greater than timeseries shape
+    if skip_run := _check_dimensions(data, confounds, LG):
+        return None, skip_run
+
     # Create the masker for extracting time series; strategy="mean" is the default for NiftiLabelsMasker,
     # added to make it clear in codebase that the mean is the default strategy used for reducing regions
     masker = NiftiLabelsMasker(
@@ -648,7 +656,7 @@ def _perform_extraction(data, LG):
         # Extract condition
         timeseries = timeseries[data.scans, :]
 
-    return _standardize(timeseries) if data.signal_clean_info.get("standardize") else timeseries
+    return _standardize(timeseries) if data.signal_clean_info.get("standardize") else timeseries, skip_run
 
 
 def _process_confounds(data, LG):
@@ -736,6 +744,32 @@ def _extract_valid_confounds(data, confound_names, LG):
             )
 
     return confounds
+
+
+def _check_dimensions(data, confounds, LG):
+    """
+    Prior to nuisance regression, Check if there are more regressors than volumes/frames (underdetermined) or if they
+    are equal (exactly determined). Avoid case of zeroed out timeseries due to meeting one of these conditions.
+    Does not consider linear dependence; however, meeting these criteria should be relatively rare.
+    """
+    if confounds is None:
+        return False
+
+    # Use the length of the fd_array for signal shape; Already accounts for dummy volume
+    if data.pass_mask_to_nilearn and data.censored_frames:
+        # Nilearn censors before removing signal variance associated with confounds
+        signal_shape = data.fd_array_len - len(data.censored_frames)
+    else:
+        signal_shape = confounds.shape[0] - (0 if not data.dummy_vols else data.dummy_vols)
+
+    if confounds.shape[1] >= signal_shape:
+        LG.warning(
+            f"{data.head}" + "Timeseries Extraction Skipped: The number of confound regressors "
+            f"(n={confounds.shape[1]}) is equal to or greater than the timeseries shape (n={signal_shape})."
+        )
+        return True
+    else:
+        return False
 
 
 def _process_timeseries(timeseries, data):

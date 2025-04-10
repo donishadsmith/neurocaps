@@ -125,8 +125,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     - Full timeseries data is used during nuisance regression.
                     - Censoring is applied after nuisance regression.
 
-            - "interpolate": A boolean. If True, uses scipy's ``CubicSpline`` function with ``extrapolate=False``\
-            to perform cubic spline interpolation only on censored frames. **Only performs interpolation if True**.
+            - "interpolate": A boolean. If True, uses scipy's ``CubicSpline`` function` to perform cubic spline\
+            interpolation only on censored frames. **Only performs interpolation if True**.
 
             .. note:: Interpolation is only performed on frames that are bounded by non-censored frames on both ends.\
                 For example, given a ``censor_mask=[0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0]`` where "0" indicates\

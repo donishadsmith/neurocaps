@@ -1164,6 +1164,8 @@ def test_dummy_scans_auto(get_vars, dummy_scans):
     extractor.get_bold(bids_dir=bids_dir, task="rest", condition="rest", pipeline_name=pipeline_name, tr=1.2)
     assert extractor.subject_timeseries["01"]["run-001"].shape == (24, 400)
 
+    reset_non_steady(bids_dir, pipeline_name)
+
 
 def test_dummy_scans_using_auto_with_min_and_max(get_vars):
     """
@@ -1171,8 +1173,6 @@ def test_dummy_scans_using_auto_with_min_and_max(get_vars):
     with a "min" or "max" for dummy_scans.
     """
     bids_dir, pipeline_name = get_vars
-
-    reset_non_steady(bids_dir, pipeline_name)
 
     # Check min
     add_non_steady(bids_dir, pipeline_name, 1)
@@ -1483,13 +1483,41 @@ def test_nifti_file_exclusion(get_vars, exclude_niftis):
 
     extractor = TimeseriesExtractor()
 
-    extractor.get_bold(
-        bids_dir=bids_dir,
-        task="rest",
-        pipeline_name=pipeline_name,
-        exclude_niftis=exclude_niftis,
-    )
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, exclude_niftis=exclude_niftis)
     assert len(extractor.subject_timeseries) == 0
+
+
+def test_skip_when_underdetermined_or_saturated(get_vars):
+    """
+    Check expected skipping if number of confound regressors greater than the length of timeseries.
+    """
+    bids_dir, pipeline_name = get_vars
+
+    # Exactly equal
+    add_non_steady(bids_dir, pipeline_name, 40)
+
+    extractor = TimeseriesExtractor(confound_names=["non_steady*"])
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
+
+    assert not extractor.subject_timeseries
+
+    reset_non_steady(bids_dir, pipeline_name)
+
+    # Should pass since censorind done after regression
+    add_non_steady(bids_dir, pipeline_name, 39)
+    extractor = TimeseriesExtractor(confound_names=["non_steady*"], fd_threshold=0.35)
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
+
+    assert extractor.subject_timeseries
+
+    # Check for case of using sample mask where nilearn censors before regression
+    extractor = TimeseriesExtractor(
+        confound_names=["non_steady*"], fd_threshold={"threshold": 0.35, "use_sample_mask": True}
+    )
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
+    assert not extractor.subject_timeseries
+
+    reset_non_steady(bids_dir, pipeline_name)
 
 
 ################################################# Setup Environment 2 #################################################
