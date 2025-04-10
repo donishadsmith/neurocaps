@@ -60,14 +60,15 @@ class CAP(_CAPGetter):
     Properties
     ----------
     parcel_approach: :obj:`ParcelApproach`
-        Parcellation information with "maps" (path to parcellation file), "nodes" (labels), and "regions" (anatomical regions or networks).
+        Parcellation information with "maps" (path to parcellation file), "nodes" (labels), and "regions"
+        (anatomical regions or networks). This property is also settable.
 
     groups: :obj:`dict[str, list[str]]` or :obj:`None`:
         Mapping of groups names to lists of subject IDs.
 
     subject_table: :obj:`dict[str, str]` or :obj:`None`
         Lookup table mapping subject IDs to their groups. Defined after running ``self.get_caps()``.
-        Defined after running ``self.get_caps()``.
+        Defined after running ``self.get_caps()``. This property is also settable.
 
     n_clusters: :obj:`int`, :obj:`list[int]`, or :obj:`None`
         An integer or list of integers representing the number of clusters used for k-means.
@@ -164,7 +165,8 @@ class CAP(_CAPGetter):
             {"GroupName": {"CAP-1": np.array(shape=[ROIs, ROIs]), "CAP-2": np.array(shape=[ROIs, ROIs])}}
 
     cosine_similarity: :obj:`dict[str, dict[str, list[str] | np.array]]` or :obj:`None`
-        Cosine similarities between CAPs and the regions specified in ``parcel_approach``. Defined after running ``self.caps2radar()``.
+        Cosine similarities between CAPs and the regions specified in ``parcel_approach``. Defined after running
+        ``self.caps2radar()``.
 
         ::
 

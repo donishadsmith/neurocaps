@@ -180,7 +180,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     Properties
     ----------
     space: :obj:`str`
-        The standard template space that the preprocessed BOLD data is registered to.
+        The standard template space that the preprocessed BOLD data is registered to. This property is also settable.
 
     parcel_approach: :obj:`ParcelApproach`
         Parcellation information with "maps" (path to parcellation file), "nodes" (labels), and "regions"
@@ -202,6 +202,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     subject_timeseries: :obj:`SubjectTimeseries` or :obj:`None`
         A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a NumPy array.
         Can be deleted using ``del self.subject_timeseries``. Defined after running ``self.get_bold()``.
+        This property is also settable.
 
     qc: :obj:`dict` or :obj:`None`
         A dictionary reporting quality control, which maps subject IDs to their run IDs and information related to the
