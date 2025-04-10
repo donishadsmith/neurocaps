@@ -28,8 +28,6 @@ SubjectTimeseries = dict[str, dict[str, NDArray[floating]]]
             }
 
     .. important:: The run IDs must be in the form "run-{0}" (e.g. "run-0" or "run-zero").
-
-    .. versionadded:: 0.23.6
 """
 
 
@@ -43,8 +41,6 @@ class SchaeferParcelConfig(TypedDict):
     ::
 
         {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}
-
-    .. versionadded:: 0.23.6
 
     Parameters
     ----------
@@ -81,8 +77,6 @@ class AALParcelConfig(TypedDict):
     ::
 
         {"version": "SPM12"}
-
-    .. versionadded:: 0.23.6
 
     Parameters
     ----------
@@ -121,8 +115,6 @@ ParcelConfig = Union[dict[Literal["Schaefer"], SchaeferParcelConfig], dict[Liter
         # Structure of AAL
         {"AAL": AALParcelConfig}
 
-    .. versionadded:: 0.23.6
-
     See Also
     --------
     :class:`neurocaps.typing.SchaeferParcelConfig`
@@ -152,8 +144,6 @@ class SchaeferParcelApproach(ParcelApproachBase):
             "nodes": ["LH_Vis1", "LH_SomSot1", "RH_Vis1", "RH_Somsot1"],
             "regions": ["Vis", "SomSot"]
         }
-
-    .. versionadded:: 0.23.6
 
     Parameters
     ----------
@@ -190,8 +180,6 @@ class AALParcelApproach(ParcelApproachBase):
             "nodes": ["Precentral_L", "Precentral_R", "Frontal_Sup", "Frontal_Sup_R"],
             "regions": ["Precentral", "Frontal"]
         }
-
-    .. versionadded:: 0.23.6
 
     Parameters
     ----------
@@ -261,8 +249,6 @@ class CustomParcelApproach(ParcelApproachBase):
             }
         }
 
-    .. versionadded:: 0.23.6
-
     Parameters
     ----------
     maps: :obj:`str`
@@ -304,8 +290,6 @@ ParcelApproach = Union[
 
         # Structure of Custom
         {"Custom": CustomParcelApproach}
-
-    .. versionadded:: 0.23.6
 
     See Also
     --------

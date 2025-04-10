@@ -15,10 +15,15 @@ improvements/enhancements. All fixes and modifications are backwards compatible.
 
 ## [0.26.0] - 2025-04-09
 - Full source repository now archived on Zenodo, instead of just the pure source code
+### 🚀 New/Added
+- Added mean and standard deviation of framewise displacement of QC report, which are added at the beginning of the
+QC report.
 ### ♻ Changed
 - In, ``TimeseriesExtractor``, default for ``detrend`` changed from True to False to avoid redundancy since the
 default behavior for ``confound_names`` includes the cosine-basis regressors. This is also the default for
 ``NiftiLabelsMasker``.
+- Now skips timeseries extraction if the number of confound regressors are equal to or greater than the length of
+the timeseries.
 - For ``CAP.caps2radar``, the default for ``fill`` changed from "none" to "toself" so that the traces of the
 radar plot are always filled in by default.
 - For ``CAP``, the ``region_means`` property now fully replaces the ``region_caps`` property. The only difference

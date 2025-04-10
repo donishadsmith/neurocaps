@@ -38,8 +38,6 @@ class NoElbowDetectedError(Exception):
       - Multiple elbows existing; thus, the value of the sensitivity (``S``) parameter of ``KneeLocator`` should be\
       increased to be more conservative.
       - The data lacking a natural clustering structure (exceptionally rare for fMRI data).
-
-    .. versionadded:: 0.24.0
     """
 
     def __init__(self, message: Any) -> None:

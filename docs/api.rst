@@ -5,8 +5,6 @@ API
 ----------------------------------------
 Module containing custom exceptions.
 
-.. versionadded:: 0.22.2
-
 .. currentmodule:: neurocaps.exceptions
 
 .. autosummary::
@@ -60,8 +58,6 @@ participant-wise transition probabilities dataframes created by ``CAP.calculate_
 :mod:`neurocaps.typing` - Types
 --------------------------------
 Module containing custom types.
-
-.. versionadded:: 0.23.6
 
 .. currentmodule:: neurocaps.typing
 
