@@ -356,10 +356,32 @@ class CAP(_CAPGetter):
         other function. Additionally, for versions >= 0.25.0, the concatenation of subjects is performed
         lexicographically based on their subject IDs.
         """
-        self._n_cores = n_cores
         # Ensure all unique values if n_clusters is a list
-        self._n_clusters = n_clusters if isinstance(n_clusters, int) else sorted(list(set(n_clusters)))
+        n_clusters = n_clusters if isinstance(n_clusters, int) else sorted(list(set(n_clusters)))
+
+        if isinstance(n_clusters, list):
+            n_clusters = n_clusters[0] if all([isinstance(n_clusters, list), len(n_clusters) == 1]) else n_clusters
+            # Raise error if n_clusters is a list and no cluster selection method is specified
+            if len(n_clusters) > 1 and not cluster_selection_method:
+                raise ValueError("`cluster_selection_method` must be specified  since `n_clusters` is a list.")
+
+        self._n_clusters = n_clusters
+
+        valid_methods = ["elbow", "davies_bouldin", "silhouette", "variance_ratio"]
+        if cluster_selection_method and cluster_selection_method not in valid_methods:
+            formatted_string = ", ".join(["'{a}'".format(a=x) for x in valid_methods])
+            raise ValueError(f"Options for `cluster_selection_method` are: {formatted_string}.")
+
+        # Raise error if silhouette_method is requested when n_clusters is an integer
+        if cluster_selection_method and isinstance(self._n_clusters, int):
+            raise ValueError("`cluster_selection_method` only valid if `n_clusters` is a range of unique integers.")
+
         self._cluster_selection_method = cluster_selection_method
+
+        if not self._cluster_selection_method and n_cores:
+            raise ValueError("Parallel processing will not run since `cluster_selection_method` is None.")
+
+        self._n_cores = n_cores
         configs = {
             "random_state": random_state,
             "init": init,
@@ -368,23 +390,6 @@ class CAP(_CAPGetter):
             "tol": tol,
             "algorithm": algorithm,
         }
-
-        if isinstance(n_clusters, list):
-            self._n_clusters = (
-                self._n_clusters[0]
-                if all([isinstance(self._n_clusters, list), len(self._n_clusters) == 1])
-                else self._n_clusters
-            )
-            # Raise error if n_clusters is a list and no cluster selection method is specified
-            if all([len(n_clusters) > 1, self._cluster_selection_method is None]):
-                raise ValueError("`cluster_selection_method` cannot be None since `n_clusters` is a list.")
-
-        # Raise error if silhouette_method is requested when n_clusters is an integer
-        if all([self._cluster_selection_method is not None, isinstance(self._n_clusters, int)]):
-            raise ValueError("`cluster_selection_method` only valid if `n_clusters` is a range of unique integers.")
-
-        if self._n_cores and self._cluster_selection_method is None:
-            raise ValueError("Parallel processing will not run since `cluster_selection_method` is None.")
 
         if runs and not isinstance(runs, list):
             runs = [runs]
@@ -395,13 +400,8 @@ class CAP(_CAPGetter):
         subject_timeseries = self._process_subject_timeseries(subject_timeseries)
         self._concatenated_timeseries = self._concatenate_timeseries(subject_timeseries, runs, progress_bar)
 
-        if self._cluster_selection_method is not None:
-            valid_methods = ["elbow", "davies_bouldin", "silhouette", "variance_ratio"]
-            if self._cluster_selection_method not in valid_methods:
-                formatted_string = ", ".join(["'{a}'".format(a=x) for x in valid_methods])
-                raise ValueError(f"Options for `cluster_selection_method` are - {formatted_string}.")
-            else:
-                self._select_optimal_clusters(configs, show_figs, output_dir, progress_bar, **kwargs)
+        if self._cluster_selection_method:
+            self._select_optimal_clusters(configs, show_figs, output_dir, progress_bar, **kwargs)
         else:
             self._kmeans = {}
             for group in self._groups:
@@ -1044,7 +1044,7 @@ class CAP(_CAPGetter):
 
         if not metrics:
             formatted_string = ", ".join(["'{a}'".format(a=x) for x in valid_metrics])
-            raise ValueError(f"No valid metrics in `metrics` list. Valid metrics are {formatted_string}.")
+            raise ValueError(f"No valid metrics in `metrics` list. Valid metrics are: {formatted_string}.")
 
         return metrics
 

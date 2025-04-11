@@ -161,6 +161,25 @@ def test_groups_without_cluster_selection(standardize, runs):
     assert np.array_equal(labels, cap_analysis.kmeans["B"].labels_)
 
 
+def test_no_mutability():
+    """
+    Ensure no mutability when only single timeseries data.
+    """
+    subject_timeseries = {str(x): {f"run-{y}": np.random.rand(50, 100) for y in range(1)} for x in range(1)}
+
+    original_timeseries = copy.deepcopy(subject_timeseries)
+
+    cap_analysis = CAP()
+
+    cap_analysis.get_caps(subject_timeseries=subject_timeseries, standardize=True)
+
+    assert np.array_equal(subject_timeseries["0"]["run-0"], original_timeseries["0"]["run-0"])
+
+    cap_analysis.calculate_metrics(subject_timeseries=subject_timeseries)
+
+    assert np.array_equal(subject_timeseries["0"]["run-0"], original_timeseries["0"]["run-0"])
+
+
 @pytest.mark.flaky(reruns=5)
 @pytest.mark.parametrize(
     "groups, n_cores", [(["All Subjects"], None), ({"A": [0, 1, 2, 4], "B": [3, 5, 6, 7, 8, 9, 6]}, 2)]

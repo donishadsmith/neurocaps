@@ -14,9 +14,13 @@ improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
 ## [0.26.1] - 2025-04-11
+- Updates for ``CAP``
 ### 🐛 Fixes
 - Fixed performance bottleneck when stacking large timeseries by only calling NumPy's `vstack` once per group
-instead of once per subject and run pair.
+instead of once per subject and run pair. Consequently, updates to the progress bar were made to reflect this.
+- If an invalid cluster selection method is called, the error now comes before concatenation instead of after.
+- The mean and stdev properties now return None unless standardized is True or truthy instead of returning empty
+dictionaries when standardization is False.
 
 ## [0.26.0] - 2025-04-10
 - Full source repository now archived on Zenodo, instead of just the pure source code
