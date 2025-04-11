@@ -1,4 +1,4 @@
-import copy, glob, json, math, os, re, sys
+import copy, glob, json, os, re, sys
 from functools import lru_cache
 
 import numpy as np, pandas as pd, joblib
@@ -175,7 +175,10 @@ def get_scans(
     condition_tr_shift=0,
     slice_time_ref=0.0,
 ):
-    """Get the expected scan indices for a specific condition based on different properties."""
+    """
+    Get the expected scan indices for a specific condition based on different properties. A slightly different
+    re-implementation to validate internal logic with.
+    """
     if remove_ses_id:
         event_df = pd.read_csv(os.path.join(bids_dir, "sub-01", "func", "sub-01_task-rest_events.tsv"), sep="\t")
     else:
@@ -188,19 +191,25 @@ def get_scans(
 
     for i in condition_df.index:
         adjusted_onset = condition_df.loc[i, "onset"] - slice_time_ref * tr
-        adjusted_onset = adjusted_onset if adjusted_onset >= 0 else 0
+        adjusted_onset = max([0, adjusted_onset])
         start = int(adjusted_onset / tr) + condition_tr_shift
-        end = math.ceil((adjusted_onset + condition_df.loc[i, "duration"]) / tr) + condition_tr_shift
+        end_convert = (adjusted_onset + condition_df.loc[i, "duration"]) / tr
+        # Conditional instead of math.ceil
+        end = int(end_convert) if end_convert == int(end_convert) else int(end_convert) + 1
+        end += condition_tr_shift
         scan_list.extend(list(range(start, end)))
 
-    assert min(scan_list) >= 0
     scan_list = sorted(list(set(scan_list)))
+    assert min(scan_list) >= 0
 
     if fd and condition == "rest":
         scan_list.remove(39)  # 39 is the scan with high FD
 
     if dummy_scans:
-        scan_list = [scan - dummy_scans for scan in scan_list if scan not in range(dummy_scans)]
+        scan_list = list(set(scan_list).difference(range(dummy_scans)))
+        scan_list = list(np.array(scan_list) - dummy_scans)
+
+    assert min(scan_list) >= 0
 
     return scan_list
 
@@ -275,10 +284,37 @@ def get_first_subject(timeseries, cap_analysis, standardize=True, group="A", run
     return first_subject_labels
 
 
-# Get segments
 def segments(target, timeseries):
     """
-    Get the segments of a specific CAP target from the timeseries.
+    Get the segments of a specific CAP target from the timeseries. Uses a different method with explicit looping
+    and conditional logic to obtain persistence and counts to avoid pure re-implementation of internal logic.
+    """
+    tracker = 0
+    segments_list = []
+
+    if target not in timeseries:
+        return [0], 0
+
+    for i in timeseries:
+        if i == target:
+            tracker += 1
+        else:
+            if tracker != 0:
+                segments_list.append(tracker)
+                tracker = 0
+
+    # End of timeseries check
+    if tracker != 0:
+        segments_list.append(tracker)
+
+    return segments_list, len(segments_list)
+
+
+def segments_mirrored(target, timeseries):
+    """
+    Get the segments of a specific CAP target from the timeseries. Mirrors internal implementation.
+    Note, ``n_segments`` always returns a minimum of 1 to avoid dividing by 0, which returns "nan" in NumPy.
+    For counts, an explicit check is done internally to see if the target is in target is in the timeseries.
     """
     # Binary representation of numpy array - if [1,2,1,1,1,3] and target is 1, then it is [1,0,1,1,1,0]
     binary_arr = np.where(timeseries == target, 1, 0)

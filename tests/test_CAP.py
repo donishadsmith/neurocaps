@@ -5,7 +5,7 @@ import nibabel as nib, numpy as np, pandas as pd, pytest
 from kneed import KneeLocator
 
 from neurocaps.analysis import CAP
-from .utils import Parcellation, check_imgs, concat_data, get_first_subject, segments, predict_labels
+from .utils import Parcellation, check_imgs, concat_data, get_first_subject, segments, segments_mirrored, predict_labels
 
 
 @pytest.fixture(autouse=False, scope="module")
@@ -431,11 +431,18 @@ def test_counts():
     # Get first subject
     first_subject_labels = get_first_subject(timeseries, cap_analysis)
 
-    counts_dict = {}
+    counts_reimplemented_dict = {}
     for target in range(1, 4):
         _, counts = segments(target, first_subject_labels)
+        counts_reimplemented_dict.update({target: counts})
+
+    counts_dict = {}
+    for target in range(1, 4):
+        _, counts = segments_mirrored(target, first_subject_labels)
         counts = counts if target in first_subject_labels else 0
         counts_dict.update({target: counts})
+
+    assert all([counts_reimplemented_dict[target] == counts_dict[target] for target in range(1, 4)])
 
     assert [x for x in list(counts_dict.values()) if not math.isnan(x)] == [
         x for x in df.loc[0, :].values if not math.isnan(x)
@@ -465,11 +472,22 @@ def test_persistence(tr):
     first_subject_labels = get_first_subject(timeseries, cap_analysis)
 
     tr = tr
+
+    persistence_reimplemented_dict = {}
+    for target in range(1, 4):
+        seg_list, counts = segments(target, first_subject_labels)
+        val = sum(seg_list) / len(seg_list) if counts != 0 else 0
+        persistence_reimplemented_dict.update({target: val * (tr if tr else 1)})
+
     persistence_dict = {}
     for target in range(1, 4):
-        binary, counts = segments(target, first_subject_labels)
+        binary, counts = segments_mirrored(target, first_subject_labels)
         persistence_dict.update({target: (binary.sum() / counts) * (tr if tr else 1)})
         assert all(x in [0, 1] for x in binary)
+
+    arr1, arr2 = np.array(list(persistence_reimplemented_dict.values())), np.array(list(persistence_dict.values()))
+
+    assert np.allclose(arr1, arr2, atol=0.0001)
 
     # Assert that the external calculation is the same as internal
     assert [x for x in list(persistence_dict.values()) if not math.isnan(x)] == [
@@ -497,7 +515,12 @@ def test_transition_frequency():
     # Get first subject
     first_subject_labels = get_first_subject(timeseries, cap_analysis)
 
-    transition_frequency = np.where(np.diff(first_subject_labels, n=1) != 0, 1, 0).sum()
+    # Different from internal implementation
+    transition_frequency = 0
+    for indx in range(1, len(first_subject_labels)):
+        if first_subject_labels[indx - 1] != first_subject_labels[indx]:
+            transition_frequency += 1
+
     assert df.iloc[0, 3] == transition_frequency
 
 
