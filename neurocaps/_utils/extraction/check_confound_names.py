@@ -77,7 +77,7 @@ def _remove_a_comp_cor(confound_names, user_confounds, n):
                 "Since `n_acompcor_separate` has been specified, acompcor components in "
                 f"`confound_names` will be disregarded and replaced with the first {n} "
                 "components of the white matter and cerebrospinal fluid masks for each participant. "
-                f"The following components will not be used {', '.join(removed_confounds)}."
+                f"The following components will not be used: {', '.join(removed_confounds)}."
             )
 
     return check_confounds

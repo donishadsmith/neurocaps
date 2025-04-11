@@ -287,7 +287,7 @@ def test_default_confounds():
     assert extractor.signal_clean_info["confound_names"] is None
 
 
-def test_delete_property(get_vars):
+def test_delete_property(get_vars, caplog):
     """
     Ensures deleter property works.
     """
@@ -424,9 +424,10 @@ def test_check_raise_error():
         (Parcellation.get_custom("parcellation"), False, "Custom"),
     ],
 )
-@pytest.mark.enable_logs
-def test_basic_extraction(get_vars, parcel_approach, use_confounds, name):
+def test_basic_extraction(get_vars, parcel_approach, use_confounds, name, caplog):
     """Tests basic extraction/basic use case."""
+    import logging
+
     bids_dir, pipeline_name = get_vars
 
     shape_dict = {"Schaefer": 100, "AAL": 116, "Custom": 426}
@@ -434,7 +435,7 @@ def test_basic_extraction(get_vars, parcel_approach, use_confounds, name):
 
     extractor = TimeseriesExtractor(
         parcel_approach=parcel_approach,
-        standardize="zscore_sample",
+        standardize=True,
         use_confounds=use_confounds,
         detrend=True,
         low_pass=0.15,
@@ -446,6 +447,21 @@ def test_basic_extraction(get_vars, parcel_approach, use_confounds, name):
     print(extractor)
 
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+
+    with caplog.at_level(logging.INFO):
+        extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+
+    assert "Preparing for Timeseries Extraction using [FILE:" in caplog.text
+
+    msg = (
+        "The following confounds will be used for nuisance regression: cosine_00, cosine_01, cosine_02, cosine_03, "
+        "cosine_04, cosine_05, cosine_06, rot_x, rot_y, rot_z."
+    )
+
+    if use_confounds:
+        assert msg in caplog.text
+    else:
+        assert not msg in caplog.text
 
     # No error; Testing __str__
     print(extractor)
@@ -738,11 +754,13 @@ def test_confounds(get_vars, confound_type):
         all(i in returned_confounds for i in correct_confounds)
 
 
-def test_acompcor_separate(get_vars):
+def test_acompcor_separate(get_vars, caplog):
     """
-    Ensures acompcor componenets specified in `confound_names` are removed due to `n_acompcor_separate`
+    Ensures acompcor components specified in `confound_names` are removed due to `n_acompcor_separate`
     being specified.
     """
+    import logging
+
     bids_dir, pipeline_name = get_vars
 
     confounds = ["cosine*", "rot*", "a_comp_cor_01", "a_comp_cor_02", "a_comp_cor*"]
@@ -750,10 +768,27 @@ def test_acompcor_separate(get_vars):
     extractor_with_confounds = TimeseriesExtractor(
         use_confounds=True,
         confound_names=confounds,
-        n_acompcor_separate=3,
+        n_acompcor_separate=1,
     )
 
-    extractor_with_confounds.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+    with caplog.at_level(logging.INFO):
+        extractor_with_confounds.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+
+    # Possibly change language when only 1 component used
+    msg1 = (
+        "Since `n_acompcor_separate` has been specified, acompcor components in `confound_names` will be "
+        "disregarded and replaced with the first 1 components of the white matter and cerebrospinal fluid masks "
+        "for each participant. The following components will not be used: a_comp_cor_01, a_comp_cor_02, a_comp_cor*."
+    )
+
+    msg2 = (
+        "The following confounds will be used for nuisance regression: cosine_00, cosine_01, cosine_02, cosine_03, "
+        "cosine_04, cosine_05, cosine_06, rot_x, rot_y, rot_z, a_comp_cor_00, a_comp_cor_02."
+    )
+
+    assert msg1 in caplog.text
+    assert msg2 in caplog.text
+
     # `n_acomp_cor` extracts the names of the regressors from the json files, user-specified "a_comp_cor" should be
     # removed from the confounds list
     assert all("a_comp_cor" not in x for x in extractor_with_confounds.signal_clean_info["confound_names"])
@@ -1210,7 +1245,7 @@ def test_dummy_scans_with_fd_censoring(get_vars):
 
     fd_array = get_confound_data(bids_dir, pipeline_name, True)["framewise_displacement"].fillna(0).values
 
-    # No volumes should meet the fd threshold
+    # Only one volume should meet the fd threshold
     extractor_fd_and_dummy_censor = TimeseriesExtractor(dummy_scans=5, fd_threshold=0.35, detrend=True)
 
     extractor_fd_and_dummy_censor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
@@ -1487,18 +1522,23 @@ def test_nifti_file_exclusion(get_vars, exclude_niftis):
     assert len(extractor.subject_timeseries) == 0
 
 
-def test_skip_when_underdetermined_or_saturated(get_vars):
+def test_skip_when_underdetermined_or_saturated(get_vars, caplog):
     """
     Check expected skipping if number of confound regressors greater than the length of timeseries.
     """
+    import logging
+
     bids_dir, pipeline_name = get_vars
 
     # Exactly equal
     add_non_steady(bids_dir, pipeline_name, 40)
 
     extractor = TimeseriesExtractor(confound_names=["non_steady*"])
-    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
 
+    with caplog.at_level(logging.WARNING):
+        extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
+
+    assert "(n=40) is equal to or greater than the timeseries shape (n=40)." in caplog.text
     assert not extractor.subject_timeseries
 
     reset_non_steady(bids_dir, pipeline_name)
@@ -1514,7 +1554,11 @@ def test_skip_when_underdetermined_or_saturated(get_vars):
     extractor = TimeseriesExtractor(
         confound_names=["non_steady*"], fd_threshold={"threshold": 0.35, "use_sample_mask": True}
     )
-    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
+
+    with caplog.at_level(logging.WARNING):
+        extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
+
+    assert "(n=39) is equal to or greater than the timeseries shape (n=39)." in caplog.text
     assert not extractor.subject_timeseries
 
     reset_non_steady(bids_dir, pipeline_name)
@@ -1708,10 +1752,12 @@ def test_interpolate_with_condition(get_vars, use_sample_mask):
         assert not np.all(np.isnan(row))
 
 
-def test_outlier_exclusion_and_interpolation(get_vars):
+def test_outlier_exclusion_and_interpolation(get_vars, caplog):
     """
     Ensure exclusion of runs with high motion frames considers all high motion frames regardless of interpolation.
     """
+    import logging
+
     # fd[[0, 10, 11, 28, 29, 38, 39]] = 0.9
     # Only contiguous ends should not be interpolated (0, 38, 39), leaving 10, 11, 28, 29 interpolated
 
@@ -1722,8 +1768,14 @@ def test_outlier_exclusion_and_interpolation(get_vars):
 
     extractor_no_condition = TimeseriesExtractor(fd_threshold=fd_threshold)
 
-    extractor_no_condition.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+    with caplog.at_level(logging.WARNING):
+        extractor_no_condition.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
 
+    msg = (
+        "Run flagged due to more than 17.4% of the volumes exceeding the framewise displacement threshold of 0.89. "
+        "Percentage of volumes exceeding the threshold limit is 17.5%."
+    )
+    assert msg in caplog.text
     assert "01" not in extractor_no_condition.subject_timeseries
     assert "01" not in extractor_no_condition.qc
 
@@ -1736,9 +1788,16 @@ def test_outlier_exclusion_and_interpolation(get_vars):
 
     extractor_no_condition = TimeseriesExtractor(fd_threshold=fd_threshold)
 
-    extractor_no_condition.get_bold(
-        bids_dir=bids_dir, task="rest", condition="active", pipeline_name=pipeline_name, tr=1.2
+    with caplog.at_level(logging.WARNING):
+        extractor_no_condition.get_bold(
+            bids_dir=bids_dir, task="rest", condition="active", pipeline_name=pipeline_name, tr=1.2
+        )
+
+    msg = (
+        "Run flagged due to more than 24.0% of the volumes exceeding the framewise displacement threshold of 0.89. "
+        "Percentage of volumes exceeding the threshold limit is 25.0% for [CONDITION: active]"
     )
+    assert msg in caplog.text
 
     assert "01" not in extractor_no_condition.subject_timeseries
     assert "01" not in extractor_no_condition.qc
@@ -1940,14 +1999,19 @@ def test_events_without_session_id_in_nifti_files(get_vars):
 
 
 @pytest.mark.parametrize("run", (0, ["005"]))
-def test_subject_skipping_when_no_matching_run_id(get_vars, run):
+def test_subject_skipping_when_no_matching_run_id(get_vars, run, caplog):
     """Tests exclusion of all subjects that dont have a matching run ID."""
+    import logging
+
     bids_dir, _ = get_vars
 
     extractor = TimeseriesExtractor()
 
     # No files have run id
-    extractor.get_bold(bids_dir=bids_dir, task="rest", runs=[run], tr=1.2)
+    with caplog.at_level(logging.WARNING):
+        extractor.get_bold(bids_dir=bids_dir, task="rest", runs=[run], tr=1.2)
+
+    assert "Timeseries Extraction Skipped: Subject does not have any of the requested run" in caplog.text
     assert extractor.subject_timeseries == {}
 
 
@@ -1986,6 +2050,21 @@ def test_append_subjects_with_different_run_ids(get_vars):
 
     assert extractor.subject_timeseries["01"]["run-0"].shape == (40, 400)
     assert extractor.subject_timeseries["02"]["run-001"].shape == (40, 400)
+
+
+def test_flush(get_vars, caplog):
+    """Ensures flush produces logs."""
+    import logging
+
+    bids_dir, _ = get_vars
+
+    extractor = TimeseriesExtractor()
+
+    with caplog.at_level(logging.INFO):
+        extractor.get_bold(bids_dir=bids_dir, task="rest", tr=1.2, flush=True)
+
+    assert "Preparing for Timeseries Extraction using [FILE:" in caplog.text
+    assert "The following confounds will be used for nuisance regression:" in caplog.text
 
 
 def test_logging_redirection_sequential(get_vars, tmp_dir):
