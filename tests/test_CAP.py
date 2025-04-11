@@ -169,6 +169,8 @@ def test_no_mutability():
 
     original_timeseries = copy.deepcopy(subject_timeseries)
 
+    assert id(subject_timeseries) != id(original_timeseries)
+
     cap_analysis = CAP()
 
     cap_analysis.get_caps(subject_timeseries=subject_timeseries, standardize=True)

@@ -207,7 +207,7 @@ def get_scans(
 
     if dummy_scans:
         scan_list = list(set(scan_list).difference(range(dummy_scans)))
-        scan_list = list(np.array(scan_list) - dummy_scans)
+        scan_list = sorted(list(np.array(scan_list) - dummy_scans))
 
     assert min(scan_list) >= 0
 
