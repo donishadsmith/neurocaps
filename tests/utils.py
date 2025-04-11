@@ -191,7 +191,7 @@ def get_scans(
 
     for i in condition_df.index:
         adjusted_onset = condition_df.loc[i, "onset"] - slice_time_ref * tr
-        adjusted_onset = max([0, adjusted_onset])
+        adjusted_onset = adjusted_onset if adjusted_onset >= 0 else 0
         start = int(adjusted_onset / tr) + condition_tr_shift
         end_convert = (adjusted_onset + condition_df.loc[i, "duration"]) / tr
         # Conditional instead of math.ceil

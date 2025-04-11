@@ -529,7 +529,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         ::
 
             adjusted_onset = onset - slice_time_ref * tr
-            adjusted_onset = adjusted_onset if adjusted_onset >= 0 else 0
+            adjusted_onset = max([0, adjusted_onset])
             start_scan = int(adjusted_onset / tr) + condition_tr_shift
             end_scan = math.ceil((adjusted_onset + duration) / tr) + condition_tr_shift
             scans.extend(range(onset_scan, end_scan))

@@ -1,6 +1,7 @@
 """Contains the CAP class for performing co-activation patterns analyses"""
 
-import collections, copy, itertools, os, re, sys, tempfile
+import collections, itertools, os, re, sys, tempfile
+from operator import itemgetter
 from typing import Callable, Literal, Optional, Union
 
 # Conditional import based on major and minor version of Python
@@ -418,10 +419,6 @@ class CAP(_CAPGetter):
     def _process_subject_timeseries(subject_timeseries):
         if isinstance(subject_timeseries, str) and subject_timeseries.endswith(".pkl"):
             subject_timeseries = _convert_pickle_to_dict(subject_timeseries)
-        elif isinstance(subject_timeseries, dict) and len(list(subject_timeseries)) == 1:
-            # Potential mutability issue if only a single subject in dictionary potentially due to the variable
-            # for the concatenated data being set to the subject timeseries if concatenated data is empty.
-            subject_timeseries = copy.deepcopy(subject_timeseries)
 
         return subject_timeseries
 
@@ -444,24 +441,21 @@ class CAP(_CAPGetter):
         if not self._groups:
             self._groups = {"All Subjects": list(subject_timeseries)}
 
-        # Sort Ids lexicographically (also done in `TimeseriesExtractor`)
+        # Sort IDs lexicographically (also done in `TimeseriesExtractor`)
         self._groups = {group: sorted(self._groups[group]) for group in self._groups}
 
-        concatenated_timeseries = {group: None for group in self._groups}
-
         self._generate_lookup_table()
-
-        self._mean_vec = {group: None for group in self._groups}
-        self._stdev_vec = {group: None for group in self._groups}
 
         # Intersect subjects in subjects table and the groups for tqdm
         group_map = {
             group: sorted(set(self._subject_table).intersection(self._groups[group])) for group in self._groups
         }
 
+        # Collect timeseries data in lists
+        group_arrays = {group: [] for group in self._groups}
         for group in group_map:
             for subj_id in tqdm(
-                group_map[group], desc=f"Concatenating Subjects [GROUP: {group}]", disable=not progress_bar
+                group_map[group], desc=f"Collecting Subject Timeseries Data [GROUP: {group}]", disable=not progress_bar
             ):
                 subject_runs, miss_runs = self._get_runs(runs, list(subject_timeseries[subj_id]))
 
@@ -472,15 +466,24 @@ class CAP(_CAPGetter):
                     LG.warning(f"[SUBJECT: {subj_id}] Excluded from the concatenated timeseries due to having no runs.")
                     continue
 
-                for curr_run in subject_runs:
-                    if concatenated_timeseries[group] is None:
-                        concatenated_timeseries[group] = subject_timeseries[subj_id][curr_run]
-                    else:
-                        concatenated_timeseries[group] = np.vstack(
-                            [concatenated_timeseries[group], subject_timeseries[subj_id][curr_run]]
-                        )
+                subj_arrays = itemgetter(*subject_runs)(subject_timeseries[subj_id])
+
+                if len(subject_runs) == 1:
+                    subj_arrays = [subj_arrays]
+
+                group_arrays[group].extend(subj_arrays)
+
+        # Only stack once per group; avoid bottleneck due to repeated calls on large data
+        concatenated_timeseries = {group: None for group in self._groups}
+        for group in tqdm(group_arrays, desc="Concatenating Timeseries Data Per Group", disable=not progress_bar):
+            concatenated_timeseries[group] = np.vstack(group_arrays[group])
+
+        del group_arrays
 
         if self._standardize:
+            self._mean_vec = {group: None for group in self._groups}
+            self._stdev_vec = {group: None for group in self._groups}
+
             concatenated_timeseries = self._scale(concatenated_timeseries)
 
         return concatenated_timeseries
@@ -1073,6 +1076,7 @@ class CAP(_CAPGetter):
                 LG.warning(f"[SUBJECT: {subj_id}] Excluded from the concatenated timeseries due to having no runs.")
                 continue
 
+            prediction_dict = {}
             for curr_run in subject_runs:
                 # Standardize or not
                 if self._standardize:
@@ -1082,23 +1086,16 @@ class CAP(_CAPGetter):
                 else:
                     timeseries = subject_timeseries[subj_id][curr_run]
 
-                run_id = curr_run if not continuous_runs or len(subject_runs) == 1 else "run-continuous"
-
                 # Add 1 to the prediction vector since labels start at 0, ensures that the labels map onto the caps
-                prediction_vector = self._kmeans[group].predict(timeseries) + 1
-                if run_id != "run-continuous":
-                    predicted_subject_timeseries[subj_id].update({run_id: prediction_vector})
-                else:
-                    # Horizontally stack predicted runs
-                    if curr_run == subject_runs[0]:
-                        predicted_continuous_timeseries = prediction_vector
-                    else:
-                        predicted_continuous_timeseries = np.hstack(
-                            [predicted_continuous_timeseries, prediction_vector]
-                        )
+                prediction_dict.update({curr_run: self._kmeans[group].predict(timeseries) + 1})
 
-            if run_id == "run-continuous":
-                predicted_subject_timeseries[subj_id].update({run_id: predicted_continuous_timeseries})
+            if len(prediction_dict) > 1 and continuous_runs:
+                # Horizontally stack predicted runs
+                predicted_subject_timeseries[subj_id].update(
+                    {"run-continuous": np.hstack(itemgetter(*subject_runs)(prediction_dict))}
+                )
+            else:
+                predicted_subject_timeseries[subj_id].update(prediction_dict)
 
         return predicted_subject_timeseries
 

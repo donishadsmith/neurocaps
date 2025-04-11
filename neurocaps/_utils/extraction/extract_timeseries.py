@@ -531,7 +531,7 @@ def _get_condition_indices(data, condition_df):
     for i in condition_df.index:
         adjusted_onset = condition_df.loc[i, "onset"] - data.slice_ref * data.tr
         # Avoid accidental negative indexing
-        adjusted_onset = adjusted_onset if adjusted_onset >= 0 else 0
+        adjusted_onset = max([0, adjusted_onset])
         # Int is always the floor for positive floats
         onset_scan = int(adjusted_onset / data.tr) + data.tr_shift
         end_scan = math.ceil((adjusted_onset + condition_df.loc[i, "duration"]) / data.tr) + data.tr_shift
