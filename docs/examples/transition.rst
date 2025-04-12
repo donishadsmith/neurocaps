@@ -15,8 +15,9 @@ function to generate visualizations of the average transition probabilities per 
     import numpy as np
     from neurocaps.analysis import CAP, transition_matrix
 
-    # Simulate `subject_timeseries` structure
-    subject_timeseries = {str(x): {f"run-{y}": np.random.rand(10, 100) for y in range(1, 4)} for x in range(1, 11)}
+    # Simulate `subject_timeseries` structure; Subject IDs will be sorted lexicographically
+    sub_ids = [f"0{x}" if x < 10 else x for x in range(1, 11)]
+    subject_timeseries = {str(x): {f"run-{y}": np.random.rand(10, 100) for y in range(1, 4)} for x in sub_ids}
 
     cap_analysis = CAP()
 

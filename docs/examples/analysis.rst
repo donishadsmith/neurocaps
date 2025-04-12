@@ -25,8 +25,9 @@ in the ``CAP`` class and this information is used by all methods in the class. T
     # Extracting timseries
     parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7, "resolution_mm": 2}}
 
-    # Simulate data for example
-    subject_timeseries = {str(x): {f"run-{y}": np.random.rand(100, 100) for y in range(1, 4)} for x in range(1, 11)}
+    # Simulate data for example; Subject IDs will be sorted lexicographically
+    sub_ids = [f"0{x}" if x < 10 else x for x in range(1, 11)]
+    subject_timeseries = {str(x): {f"run-{y}": np.random.rand(100, 100) for y in range(1, 4)} for x in sub_ids}
 
     # Initialize CAP class
     cap_analysis = CAP(parcel_approach=parcel_approach)
@@ -82,7 +83,7 @@ Performing CAPs on Groups
 -------------------------
 .. code-block:: python
 
-    cap_analysis = CAP(groups={"A": ["1", "2", "3", "5"], "B": ["4", "6", "7", "8", "9", "10"]})
+    cap_analysis = CAP(groups={"A": ["01", "02", "03", "05"], "B": ["04", "06", "07", "08", "09", "10"]})
 
     cap_analysis.get_caps(
         subject_timeseries=subject_timeseries,
