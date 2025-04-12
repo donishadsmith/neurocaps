@@ -3,8 +3,6 @@
 import copy
 from typing import Union, Optional
 
-import numpy as np
-
 from .._utils import _convert_pickle_to_dict, _dicts_to_pickles, _logger, _standardize
 from ..typing import SubjectTimeseries
 
