@@ -77,7 +77,7 @@ def test_without_groups_and_without_cluster_selection(standardize):
 
 def test_subject_skipping():
     """
-    Tests that a subject is properly skipped in both `get_caps` and `calculate_metrics` if they do not have any
+    Tests that a subject is properly skipped in both ``get_caps`` and ``calculate_metrics`` if they do not have any
     requested runs.
     """
     timeseries = Parcellation.get_schaefer("timeseries")
@@ -92,6 +92,27 @@ def test_subject_skipping():
 
     df_dict = cap_analysis.calculate_metrics(subject_timeseries=subject_timeseries, runs=1, metrics="counts")
     assert "2" not in df_dict["counts"]["Subject_ID"].values
+
+
+def test_mean_std_clear():
+    """
+    Ensures mean and standard deviation properties are reset for each ``get_caps`` call. Protects against specific case
+    where ``get_caps`` is first called with standardize set to True (default) then called again with standardize
+    set to False without re-initializing the ``CAP`` class since  ``calculate_metrics`` uses these properties for
+    scaling to correctly assign CAPs.
+    """
+    timeseries = Parcellation.get_schaefer("timeseries")
+
+    cap_analysis = CAP()
+    cap_analysis.get_caps(subject_timeseries=timeseries, runs=1, n_clusters=2, standardize=True)
+
+    assert cap_analysis.means["All Subjects"] is not None
+    assert cap_analysis.stdev["All Subjects"] is not None
+
+    cap_analysis.get_caps(subject_timeseries=timeseries, runs=1, n_clusters=2, standardize=False)
+
+    assert cap_analysis.means["All Subjects"] is None
+    assert cap_analysis.stdev["All Subjects"] is None
 
 
 @pytest.mark.parametrize("standardize, runs", ([True, [1, 2]], [False, ["run-1", "run-2"]]))
