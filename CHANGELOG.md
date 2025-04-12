@@ -19,7 +19,7 @@ improvements/enhancements. All fixes and modifications are backwards compatible.
 - Reverse the mean and standardize properties returning None unless standardized to allow them to be cleared
 any time ``CAP.get_caps`` function is called since this can be an issue if standardizing is first requested, then
 ``CAP.get_caps`` is ran again without standardizing and then the CAP metrics are computed. This would result in
-incorrect scaling for predicting CAP assignment for that particular scenario.
+incorrect scaling for predicting CAP assignment for that particular scenario. Affected version 0.26.1.
 
 ## [0.26.1] - 2025-04-11
 - Updates for ``CAP``
