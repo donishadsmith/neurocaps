@@ -13,6 +13,14 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.26.2] - 2025-04-11
+- Updates for ``CAP``
+### 🐛 Fixes
+- Reverse the mean and standardize properties returning None unless standardized to allow them to be cleared
+any time ``CAP.get_caps`` function is called since this can be an issue if standardizing is first requested, then
+``CAP.get_caps`` is ran again without standardizing and then the CAP metrics are computed. This would result in
+incorrect scaling for predicting CAP assignment for that particular scenario.
+
 ## [0.26.1] - 2025-04-11
 - Updates for ``CAP``
 ### 🐛 Fixes

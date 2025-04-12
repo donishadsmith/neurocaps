@@ -480,10 +480,9 @@ class CAP(_CAPGetter):
 
         del group_arrays
 
+        self._mean_vec = {group: None for group in self._groups}
+        self._stdev_vec = {group: None for group in self._groups}
         if self._standardize:
-            self._mean_vec = {group: None for group in self._groups}
-            self._stdev_vec = {group: None for group in self._groups}
-
             concatenated_timeseries = self._scale(concatenated_timeseries)
 
         return concatenated_timeseries
