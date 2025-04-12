@@ -86,7 +86,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         - All discrete cosine-basis regressors.
         - Six head-motion parameters and their first-order derivatives.
-        - First six combined aCompCor components.
+        - First six principal aCompCor components.
 
         .. important::
             - Confound names follow fMRIPrep's naming scheme (versions >= 1.2.0).
