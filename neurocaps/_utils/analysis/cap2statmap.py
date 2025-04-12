@@ -1,5 +1,6 @@
 """Internal function for turning CAPs into NifTI Statistical Maps"""
 
+import inspect
 from functools import lru_cache
 
 import nibabel as nib, numpy as np
@@ -106,9 +107,18 @@ def _get_target_indices(atlas_file, reference_atlas, resolution_mm, remove_label
         reference_atlas_map = datasets.fetch_atlas_aal(verbose=0)["maps"]
 
     # Resample schaefer to atlas file using nearest interpolation to retain labels
-    resampled_reference_atlas = image.resample_to_img(
-        reference_atlas_map, atlas, interpolation="nearest", force_resample=True, copy_header=True
-    )
+    kwargs = {
+        "source_img": reference_atlas_map,
+        "target_img": atlas,
+        "interpolation": "nearest",
+        "force_resample": True,
+    }
+
+    if "copy_header" in inspect.signature(image.resample_to_img).parameters.keys():
+        kwargs["copy_header"] = True
+
+    resampled_reference_atlas = image.resample_to_img(**kwargs)
+
     # Get indices that equal zero in schaefer atlas to avoid interpolating background values
     reference_background_indices = set(zip(*np.where(resampled_reference_atlas.get_fdata() == 0)))
 

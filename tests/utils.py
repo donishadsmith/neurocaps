@@ -1,10 +1,14 @@
 import copy, glob, json, os, re, sys
 from functools import lru_cache
+from packaging import version
 
-import numpy as np, pandas as pd, joblib
+import nilearn, numpy as np, pandas as pd, joblib
 
 from neurocaps.extraction import TimeseriesExtractor
 from neurocaps._utils import _standardize
+
+# Only available in Nilearn >= 0.11.0
+NILEARN_VERSION_WITH_AAL_3V2 = version.parse(nilearn.__version__) >= version.parse("0.11.0")
 
 
 class Parcellation:
@@ -13,6 +17,9 @@ class Parcellation:
     @staticmethod
     @lru_cache(maxsize=4)
     def get_aal(object, version, n_subs=10):
+        if version == "3v2" and not NILEARN_VERSION_WITH_AAL_3V2:
+            return None
+
         n_rois = 166 if version == "3v2" else 116
 
         if object == "parcellation":

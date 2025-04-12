@@ -13,6 +13,15 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.26.3] - 2025-04-13
+- Dependency fixes
+### 🐛 Fixes
+- Updates minimum dependencies in pyproject toml for functions to work
+- Fixes error if using `knn_dict` with nilearn version < 0.11.0 due to using a parameter introduced in that version
+- Accounts for upcoming nilearn changes that add "Background" to the labels list to ensure proper plotting
+- Accounts for future deprecation in ``NiftiLabelsMasker`` that will transition from using kwargs to clean_args
+in order to use `clean__extrapolate=False`
+
 ## [0.26.2] - 2025-04-11
 - Updates for ``CAP``
 ### 🐛 Fixes

@@ -1,6 +1,6 @@
 """Internal functions for extracting timeseries with or without joblib."""
 
-import copy, json, math, os, re
+import copy, json, inspect, math, os, re
 from dataclasses import dataclass, field
 from functools import cached_property
 from typing import Union
@@ -622,7 +622,7 @@ def _perform_extraction(data, LG):
         standardize=False,
         t_r=data.tr,
         **data.signal_clean_info["masker_init"],
-        clean__extrapolate=False,
+        **_clean_param(),
     )
 
     # Load and discard volumes if needed
@@ -770,6 +770,20 @@ def _check_dimensions(data, confounds, LG):
         return True
     else:
         return False
+
+
+def _clean_param():
+    """
+    Account for deprecation and eventual replacement of kwargs in nilearn versions greater than 0.11.1 for
+    ``clean_args``. Ensures that extrapolation is set to False when a sample mask is passed to nilearn since
+    interpolation is done to deal with gaps when the Butterworth filter is used.
+    """
+    kwarg = {"clean__extrapolate": False}
+
+    if "clean_args" in inspect.signature(NiftiLabelsMasker).parameters.keys():
+        kwarg = {"clean_args": kwarg}
+
+    return kwarg
 
 
 def _process_timeseries(timeseries, data):

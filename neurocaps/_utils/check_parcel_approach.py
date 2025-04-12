@@ -84,6 +84,9 @@ def _process_aal(parcel_dict):
     # Get nodes
     parcel_dict["AAL"].update({"nodes": list(fetched_aal.labels)})
 
+    # Remove background
+    parcel_dict["AAL"]["nodes"] = _remove_background(parcel_dict["AAL"]["nodes"])
+
     # Get regions
     regions = _collapse_aal_node_names(parcel_dict["AAL"]["nodes"])
     parcel_dict["AAL"].update({"regions": regions})
@@ -157,10 +160,16 @@ def _process_schaefer(parcel_dict):
     parcel_dict["Schaefer"].update({"maps": fetched_schaefer.maps})
     network_name = "7Networks_" if parcel_dict["Schaefer"]["yeo_networks"] == 7 else "17Networks_"
 
-    # Get nodes
-    parcel_dict["Schaefer"].update(
-        {"nodes": [label.decode().split(network_name)[-1] for label in fetched_schaefer.labels]}
-    )
+    # Get nodes; decoding needed in nilearn version =< 0.11.1
+    try:
+        parcel_dict["Schaefer"].update(
+            {"nodes": [label.decode().split(network_name)[-1] for label in fetched_schaefer.labels]}
+        )
+    except AttributeError:
+        parcel_dict["Schaefer"].update({"nodes": [label.split(network_name)[-1] for label in fetched_schaefer.labels]})
+
+    # Remove background label
+    parcel_dict["Schaefer"]["nodes"] = _remove_background(parcel_dict["Schaefer"]["nodes"])
 
     # Get regions
     regions = dict.fromkeys([re.split("LH_|RH_", node)[-1].split("_")[0] for node in parcel_dict["Schaefer"]["nodes"]])
@@ -223,6 +232,11 @@ def _check_custom_hemisphere_dicts(regions):
         for item in regions
         for key in ["lh", "rh"]
     )
+
+
+def _remove_background(nodes):
+    """Removes the background label in the labels that are added in nilearn version > 0.11.1."""
+    return nodes if nodes[0] != "Background" else nodes[1:]
 
 
 def _collapse_aal_node_names(nodes, return_unique_names=True):

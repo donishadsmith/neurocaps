@@ -1,11 +1,20 @@
 import copy, glob, math, os, re, sys
 
-import nibabel as nib, numpy as np, pandas as pd, pytest
+import nibabel as nib, nilearn, numpy as np, pandas as pd, pytest
 
 from kneed import KneeLocator
 
 from neurocaps.analysis import CAP
-from .utils import Parcellation, check_imgs, concat_data, get_first_subject, segments, segments_mirrored, predict_labels
+from .utils import (
+    NILEARN_VERSION_WITH_AAL_3V2,
+    Parcellation,
+    check_imgs,
+    concat_data,
+    get_first_subject,
+    segments,
+    segments_mirrored,
+    predict_labels,
+)
 
 
 @pytest.fixture(autouse=False, scope="module")
@@ -773,7 +782,13 @@ def test_get_caps_cluster_selection_plot(tmp_dir):
     "timeseries, parcel_approach",
     [
         (Parcellation.get_aal("timeseries", "SPM8"), Parcellation.get_aal("parcellation", "SPM8")),
-        (Parcellation.get_aal("timeseries", "3v2"), Parcellation.get_aal("parcellation", "3v2")),
+        pytest.param(
+            Parcellation.get_aal("timeseries", "3v2"),
+            Parcellation.get_aal("parcellation", "3v2"),
+            marks=pytest.mark.skipif(
+                not NILEARN_VERSION_WITH_AAL_3V2, reason="3v2 only available in Nilearn >= 0.11.0"
+            ),
+        ),
         (Parcellation.get_schaefer("timeseries"), Parcellation.get_schaefer("parcellation")),
         (Parcellation.get_custom("timeseries"), Parcellation.get_custom("parcellation")),
     ],
@@ -875,7 +890,13 @@ def test_caps2corr(tmp_dir):
         (Parcellation.get_schaefer("timeseries"), Parcellation.get_schaefer("parcellation")),
         (Parcellation.get_custom("timeseries"), Parcellation.get_custom("parcellation")),
         (Parcellation.get_aal("timeseries", "SPM8"), Parcellation.get_aal("parcellation", "SPM8")),
-        (Parcellation.get_aal("timeseries", "3v2"), Parcellation.get_aal("parcellation", "3v2")),
+        pytest.param(
+            Parcellation.get_aal("timeseries", "3v2"),
+            Parcellation.get_aal("parcellation", "3v2"),
+            marks=pytest.mark.skipif(
+                not NILEARN_VERSION_WITH_AAL_3V2, reason="3v2 only available in Nilearn >= 0.11.0"
+            ),
+        ),
     ],
 )
 def test_caps2radar(tmp_dir, timeseries, parcel_approach):
@@ -927,7 +948,13 @@ def test_caps2radar(tmp_dir, timeseries, parcel_approach):
         (Parcellation.get_schaefer("timeseries"), Parcellation.get_schaefer("parcellation")),
         (Parcellation.get_custom("timeseries"), Parcellation.get_custom("parcellation")),
         (Parcellation.get_aal("timeseries", "SPM8"), Parcellation.get_aal("parcellation", "SPM8")),
-        (Parcellation.get_aal("timeseries", "3v2"), Parcellation.get_aal("parcellation", "3v2")),
+        pytest.param(
+            Parcellation.get_aal("timeseries", "3v2"),
+            Parcellation.get_aal("parcellation", "3v2"),
+            marks=pytest.mark.skipif(
+                not NILEARN_VERSION_WITH_AAL_3V2, reason="3v2 only available in Nilearn >= 0.11.0"
+            ),
+        ),
     ],
 )
 def test_caps2niftis(tmp_dir, timeseries, parcel_approach):
@@ -1012,7 +1039,13 @@ def test_caps2niftis(tmp_dir, timeseries, parcel_approach):
         (Parcellation.get_schaefer("timeseries"), Parcellation.get_schaefer("parcellation")),
         (Parcellation.get_custom("timeseries"), Parcellation.get_custom("parcellation")),
         (Parcellation.get_aal("timeseries", "SPM8"), Parcellation.get_aal("parcellation", "SPM8")),
-        (Parcellation.get_aal("timeseries", "3v2"), Parcellation.get_aal("parcellation", "3v2")),
+        pytest.param(
+            Parcellation.get_aal("timeseries", "3v2"),
+            Parcellation.get_aal("parcellation", "3v2"),
+            marks=pytest.mark.skipif(
+                not NILEARN_VERSION_WITH_AAL_3V2, reason="3v2 only available in Nilearn >= 0.11.0"
+            ),
+        ),
     ],
 )
 def test_caps2surf(tmp_dir, remove_files, timeseries, parcel_approach):

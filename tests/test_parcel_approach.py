@@ -5,6 +5,8 @@ from nilearn import datasets
 
 from neurocaps.extraction import TimeseriesExtractor
 
+from .utils import NILEARN_VERSION_WITH_AAL_3V2
+
 
 def test_aal_indices_ordering():
     """Checks that AAL indices are sorted from lowest -> highest"""
@@ -21,12 +23,16 @@ def test_aal_indices_ordering():
         assert np.array_equal(np.array(nums), labels)
 
     # Check label ordering in each version
-    versions = ["3v2", "SPM12", "SPM8", "SPM5"]
+    versions = ["SPM12", "SPM8", "SPM5"]
+
+    if NILEARN_VERSION_WITH_AAL_3V2:
+        versions += ["3v2"]
 
     for version in versions:
         check_aal_node_order(version)
 
 
+@pytest.mark.skipif(not NILEARN_VERSION_WITH_AAL_3V2, reason="3v2 only available in Nilearn >= 0.11.0")
 def test_3v2_AAL():
     """
     Test that the AAL produces the correct shape

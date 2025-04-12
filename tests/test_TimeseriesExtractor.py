@@ -907,7 +907,7 @@ def test_fd_censoring(get_vars):
 
     # Check "outlier_percentage"
     extractor_low_outlier_threshold = TimeseriesExtractor(
-        fd_threshold={"threshold": 0.35, "outlier_percentage": 0.0001}, detrend=True
+        fd_threshold={"threshold": 0.35, "outlier_percentage": 0.00001}, detrend=True
     )
 
     extractor_low_outlier_threshold.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
@@ -963,9 +963,12 @@ def test_fd_censoring(get_vars):
 
     assert np.allclose(
         extractor_fd_dict.subject_timeseries["01"]["run-001"],
-        extractor_fd_float.subject_timeseries["01"]["run-001"],
         _standardize(np.delete(extractor_no_censor.subject_timeseries["01"]["run-001"], 39, axis=0)),
         atol=0.00001,
+    )
+    assert np.allclose(
+        extractor_fd_dict.subject_timeseries["01"]["run-001"],
+        extractor_fd_float.subject_timeseries["01"]["run-001"],
     )
     # Test Conditions only "rest" condition should have scan censored
     no_condition_timeseries = copy.deepcopy(extractor_fd_dict.subject_timeseries["01"]["run-001"])

@@ -9,7 +9,7 @@
    :alt: Python Versions
 
 .. image:: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal
-   :target: https://doi.org/10.5281/zenodo.15200608
+   :target: https://doi.org/10.5281/zenodo.15205287
    :alt: DOI
 
 .. image:: https://img.shields.io/badge/Source%20Code-neurocaps-purple
@@ -47,7 +47,7 @@ Citing
 ------
 ::
 
-  Smith, D. (2024). NeuroCAPs. Zenodo. https://doi.org/10.5281/zenodo.15200608
+  Smith, D. (2024). NeuroCAPs. Zenodo. https://doi.org/10.5281/zenodo.15205287
 
 Usage
 -----
@@ -95,27 +95,27 @@ NeuroCAPs relies on several packages:
 ::
 
    dependencies = [
-      "numpy>=1.22.0",
-      "pandas>=2.0.0",
+      "numpy>=1.26.3",
+      "pandas>=2.1.0",
       "joblib>=1.3.0",
       "matplotlib>=3.6.0",
       "seaborn>=0.11.0",
-      "kneed>=0.8.0",
-      "nibabel>=3.2.0",
-      "nilearn>=0.10.1, !=0.10.3",
+      "kneed>=0.8.5",
+      "nibabel>=5.0.0",
+      "nilearn>=0.10.4",
       "scikit-learn>=1.4.0",
-      "scipy>=1.6.0",
+      "scipy>=1.10.0",
       "brainspace>=0.1.16",
       "surfplot>=0.2.0",
       "neuromaps>=0.0.5",
-      "pybids>=0.16.2; platform_system != 'Windows'",
-      "plotly>=4.9",
-      "nbformat>=4.2.0",
+      "pybids>=0.16.5; platform_system != 'Windows'",
+      "plotly>=5.19.0",
+      "nbformat>=5.10.0",
       "kaleido==0.1.0.post1; platform_system == 'Windows'",
-      "kaleido; platform_system != 'Windows'",
-      "setuptools; python_version>='3.12'",
-      "typing_extensions; python_version<'3.11'",
-      "vtk<9.4.0",
+      "kaleido>=0.2.0; platform_system != 'Windows'",
+      "setuptools>=77.0.1; python_version>='3.12'",
+      "typing_extensions>=4.10.0; python_version<'3.11'",
+      "vtk>=9.2.0, <9.4.0",
       "tqdm>=4.65.0"
       ]
 
