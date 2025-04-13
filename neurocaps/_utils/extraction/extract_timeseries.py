@@ -778,10 +778,11 @@ def _clean_param():
     ``clean_args``. Ensures that extrapolation is set to False when a sample mask is passed to nilearn since
     interpolation is done to deal with gaps when the Butterworth filter is used.
     """
-    kwarg = {"clean__extrapolate": False}
 
     if "clean_args" in inspect.signature(NiftiLabelsMasker).parameters.keys():
-        kwarg = {"clean_args": kwarg}
+        kwarg = {"clean_args": {"extrapolate": False}}
+    else:
+        kwarg = {"clean__extrapolate": False}
 
     return kwarg
 
