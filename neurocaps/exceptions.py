@@ -44,4 +44,15 @@ class NoElbowDetectedError(Exception):
         super().__init__(message)
 
 
-__all__ = ["BIDSQueryError", "NoElbowDetectedError"]
+class UnsupportedFileExtensionError(Exception):
+    """
+    Unsupported File Extension Exception
+
+    This exception occurs when attempting to unpickle a file that does not have a supported extension (i.e. ".pkl",
+    ".pickle", and ".joblib").
+
+    .. versionadded:: 0.26.5
+    """
+
+
+__all__ = ["BIDSQueryError", "NoElbowDetectedError", "UnsupportedFileExtensionError"]

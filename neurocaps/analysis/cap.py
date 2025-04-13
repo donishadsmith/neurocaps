@@ -32,6 +32,7 @@ from .._utils import (
     _check_parcel_approach,
     _collapse_aal_node_names,
     _logger,
+    _pickle_object,
     _run_kmeans,
     _save_contents,
     _standardize,
@@ -244,6 +245,7 @@ class CAP(_CAPGetter):
         show_figs: bool = False,
         output_dir: Optional[str] = None,
         progress_bar: bool = False,
+        as_pickle: bool = False,
         **kwargs,
     ) -> Self:
         """
@@ -308,6 +310,12 @@ class CAP(_CAPGetter):
 
         progress_bar: :obj:`bool`, default=False
             If True and ``cluster_selection_method`` is not None, displays a progress bar.
+
+        as_pickle: :obj:`bool`, default=False
+            When ``output_dir`` and ``cluster_selection_method`` is specified, plots are saved as pickle filess, which
+            can be further modified, instead of png images.
+
+            .. versionadded:: 0.26.5
 
         **kwargs:
             Additional keyword arguments when ``cluster_selection_method`` is specified:
@@ -401,7 +409,7 @@ class CAP(_CAPGetter):
         self._concatenated_timeseries = self._concatenate_timeseries(subject_timeseries, runs, progress_bar)
 
         if self._cluster_selection_method:
-            self._select_optimal_clusters(configs, show_figs, output_dir, progress_bar, **kwargs)
+            self._select_optimal_clusters(configs, show_figs, output_dir, progress_bar, as_pickle, **kwargs)
         else:
             self._kmeans = {}
             for group in self._groups:
@@ -417,7 +425,7 @@ class CAP(_CAPGetter):
 
     @staticmethod
     def _process_subject_timeseries(subject_timeseries):
-        if isinstance(subject_timeseries, str) and subject_timeseries.endswith(".pkl"):
+        if isinstance(subject_timeseries, str):
             subject_timeseries = _convert_pickle_to_dict(subject_timeseries)
 
         return subject_timeseries
@@ -506,7 +514,7 @@ class CAP(_CAPGetter):
 
         return runs, miss_runs
 
-    def _select_optimal_clusters(self, configs, show_figs, output_dir, progress_bar, **kwargs):
+    def _select_optimal_clusters(self, configs, show_figs, output_dir, progress_bar, as_pickle, **kwargs):
         self._cluster_scores = {}
         self._optimal_n_clusters = {}
         self._kmeans = {}
@@ -575,12 +583,12 @@ class CAP(_CAPGetter):
             LG.info(f"[GROUP: {group} | METHOD: {method}] Optimal cluster size is {self._optimal_n_clusters[group]}.")
 
             if show_figs or output_dir is not None:
-                self._plot_method(method, performance_dict, group, show_figs, output_dir, **kwargs)
+                self._plot_method(method, performance_dict, group, show_figs, output_dir, as_pickle, **kwargs)
 
         self._cluster_scores = {"Cluster_Selection_Method": method}
         self._cluster_scores.update({"Scores": performance_dict})
 
-    def _plot_method(self, method, performance_dict, group, show_figs, output_dir, **kwargs):
+    def _plot_method(self, method, performance_dict, group, show_figs, output_dir, as_pickle, **kwargs):
         y_titles = {
             "elbow": "Inertia",
             "davies_bouldin": "Davies Bouldin Score",
@@ -612,7 +620,13 @@ class CAP(_CAPGetter):
         if output_dir:
             self._makedir(output_dir)
             save_name = f"{group.replace(' ', '_')}_{self._cluster_selection_method}.png"
-            plt.savefig(os.path.join(output_dir, save_name), dpi=plot_dict["dpi"], bbox_inches=plot_dict["bbox_inches"])
+
+            if as_pickle:
+                _pickle_object(plt.gcf(), output_dir, save_name.replace(".png", ".pkl"))
+            else:
+                plt.savefig(
+                    os.path.join(output_dir, save_name), dpi=plot_dict["dpi"], bbox_inches=plot_dict["bbox_inches"]
+                )
 
         plt.show() if show_figs else plt.close()
 
@@ -1189,6 +1203,7 @@ class CAP(_CAPGetter):
         visual_scope: Union[Literal["regions", "nodes"], list[Literal["regions", "nodes"]]] = "regions",
         show_figs: bool = True,
         subplots: bool = False,
+        as_pickle: bool = False,
         **kwargs,
     ) -> Self:
         """
@@ -1221,6 +1236,12 @@ class CAP(_CAPGetter):
 
         subplots: :obj:`bool`, default=True
             Produce subplots for outer product plots, combining all plots into a single figure.
+
+        as_pickle: :obj:`bool`, default=False
+            When ``output_dir`` is specified, plots are saved as pickle files, which can be further modified, instead of
+            png images.
+
+            .. versionadded:: 0.26.5
 
         **kwargs:
             Keyword arguments used when saving figures. Valid keywords include:
@@ -1343,6 +1364,7 @@ class CAP(_CAPGetter):
                 suffix_title=suffix_title,
                 suffix_filename=suffix_filename,
                 show_figs=show_figs,
+                as_pickle=as_pickle,
                 scope=scope,
                 parcellation_name=parcellation_name,
             )
@@ -1420,6 +1442,7 @@ class CAP(_CAPGetter):
         suffix_title,
         suffix_filename,
         show_figs,
+        as_pickle,
         scope,
         parcellation_name,
     ):
@@ -1535,7 +1558,14 @@ class CAP(_CAPGetter):
                 if output_dir:
                     partial_filename = f"{group}_{cap}"
                     self._save_heatmap(
-                        display, scope, partial_filename, suffix_filename, plot_dict, output_dir, call="outer_product"
+                        display,
+                        scope,
+                        partial_filename,
+                        suffix_filename,
+                        plot_dict,
+                        output_dir,
+                        as_pickle,
+                        call="outer_product",
                     )
 
         # Remove subplots with no data
@@ -1545,7 +1575,14 @@ class CAP(_CAPGetter):
             if output_dir:
                 partial_filename = f"{group}_CAPs"
                 self._save_heatmap(
-                    display, scope, partial_filename, suffix_filename, plot_dict, output_dir, call="outer_product"
+                    display,
+                    scope,
+                    partial_filename,
+                    suffix_filename,
+                    plot_dict,
+                    output_dir,
+                    as_pickle,
+                    call="outer_product",
                 )
 
         plt.show() if show_figs else plt.close()
@@ -1560,6 +1597,7 @@ class CAP(_CAPGetter):
         suffix_title,
         suffix_filename,
         show_figs,
+        as_pickle,
         scope,
         parcellation_name,
     ):
@@ -1614,7 +1652,9 @@ class CAP(_CAPGetter):
 
         if output_dir:
             partial_filename = f"{group}_CAPs"
-            self._save_heatmap(display, scope, partial_filename, suffix_filename, plot_dict, output_dir, call="heatmap")
+            self._save_heatmap(
+                display, scope, partial_filename, suffix_filename, plot_dict, output_dir, as_pickle, call="heatmap"
+            )
 
         # Display figures
         plt.show() if show_figs else plt.close()
@@ -1777,16 +1817,21 @@ class CAP(_CAPGetter):
 
     # Function to save plots for outer_product and heatmap called by caps2plot
     @staticmethod
-    def _save_heatmap(display, scope, partial, suffix, plot_dict, output_dir, call):
+    def _save_heatmap(display, scope, partial, suffix, plot_dict, output_dir, as_pickle, call):
         full_filename = partial + f"_{call}-{scope}"
 
         if suffix:
-            full_filename += f"_{suffix}".replace(" ", "_")
+            full_filename += f"_{suffix}"
 
-        full_filename += ".png"
-        display.get_figure().savefig(
-            os.path.join(output_dir, full_filename), dpi=plot_dict["dpi"], bbox_inches=plot_dict["bbox_inches"]
-        )
+        full_filename = full_filename.replace(" ", "_")
+        full_filename += ".png" if not as_pickle else ".pkl"
+
+        if full_filename.endswith(".pkl"):
+            _pickle_object(display, output_dir, full_filename)
+        else:
+            display.get_figure().savefig(
+                os.path.join(output_dir, full_filename), dpi=plot_dict["dpi"], bbox_inches=plot_dict["bbox_inches"]
+            )
 
     def caps2corr(
         self,
@@ -1797,6 +1842,7 @@ class CAP(_CAPGetter):
         save_plots: bool = True,
         return_df: bool = False,
         save_df: bool = False,
+        as_pickle: bool = False,
         **kwargs,
     ) -> Union[dict[str, pd.DataFrame], None]:
         """
@@ -1828,6 +1874,12 @@ class CAP(_CAPGetter):
         save_df: :obj:`bool`, default=False,
             If True, saves the correlation matrix contained in the DataFrames as csv files. For this to be used,
             ``output_dir`` must be specified.
+
+        as_pickle: :obj:`bool`, default=False
+            When ``output_dir`` is specified, plots are saved as pickle files, which can be further modified, instead of
+            png images.
+
+            .. versionadded:: 0.26.5
 
         **kwargs
             Keyword arguments used when modifying figures. Valid keywords include:
@@ -1900,7 +1952,16 @@ class CAP(_CAPGetter):
 
             if output_dir:
                 _save_contents(
-                    output_dir, suffix_filename, group, corr_dict, plot_dict, save_plots, save_df, display, call="corr"
+                    output_dir,
+                    suffix_filename,
+                    group,
+                    corr_dict,
+                    plot_dict,
+                    save_plots,
+                    save_df,
+                    display,
+                    as_pickle,
+                    call="corr",
                 )
 
             plt.show() if show_figs else plt.close()
@@ -2048,6 +2109,7 @@ class CAP(_CAPGetter):
         fslr_giftis_dict: Optional[dict] = None,
         knn_dict: Optional[dict[str, Union[int, list[int], np.typing.NDArray[np.integer]]]] = None,
         progress_bar: bool = False,
+        as_pickle: bool = False,
         **kwargs,
     ) -> Self:
         """
@@ -2109,6 +2171,12 @@ class CAP(_CAPGetter):
 
         progress_bar: :obj:`bool`, default=False
             If True, displays a progress bar.
+
+        as_pickle: :obj:`bool`, default=False
+            When ``output_dir`` is specified, plots are saved as pickle files, which can be further modified, instead of
+            png images.
+
+            .. versionadded:: 0.26.5
 
         **kwargs
             Additional parameters to pass to modify certain plot parameters. Options include:
@@ -2206,9 +2274,14 @@ class CAP(_CAPGetter):
                 if output_dir:
                     filename = self._basename(group, cap, "surface", suffix_filename, "png")
 
-                    fig.savefig(
-                        os.path.join(output_dir, filename), dpi=plot_dict["dpi"], bbox_inches=plot_dict["bbox_inches"]
-                    )
+                    if as_pickle:
+                        _pickle_object(fig, output_dir, filename.replace(".png", ".pkl"))
+                    else:
+                        fig.savefig(
+                            os.path.join(output_dir, filename),
+                            dpi=plot_dict["dpi"],
+                            bbox_inches=plot_dict["bbox_inches"],
+                        )
 
                     if save_stat_maps:
                         stat_map_name = filename.split("_surface")[0] + ".nii.gz"
@@ -2304,6 +2377,7 @@ class CAP(_CAPGetter):
         show_figs: bool = True,
         use_scatterpolar: bool = False,
         as_html: bool = False,
+        as_json: bool = False,
         **kwargs,
     ) -> Self:
         """
@@ -2406,7 +2480,13 @@ class CAP(_CAPGetter):
             Uses ``plotly.graph_objects.Scatterpolar`` instead of ``plotly.express.line_polar``.
 
         as_html: :obj:`bool`, default=False
-            When ``output_dir`` is specified, plots are saved as html images instead of png images.
+            When ``output_dir`` is specified, plots are saved as html file instead of png images.
+
+        as_json: :obj:`bool`, default=False
+            When ``output_dir`` is specified, plots are saved as json file, which can be further modified, instead of
+            png images.
+
+            .. versionadded:: 0.26.5
 
         **kwargs:
             Additional parameters to pass to modify certain plot parameters. Options include:
@@ -2602,13 +2682,14 @@ class CAP(_CAPGetter):
                     self._makedir(output_dir)
 
                     filename = self._basename(group, cap, "radar", suffix_filename, "png")
-                    if not as_html:
+                    if as_html:
+                        fig.write_html(os.path.join(output_dir, filename.replace(".png", ".html")))
+                    elif as_json:
+                        fig.write_json(os.path.join(output_dir, filename.replace(".png", ".json")))
+                    else:
                         fig.write_image(
                             os.path.join(output_dir, filename), scale=plot_dict["scale"], engine=plot_dict["engine"]
                         )
-                    else:
-                        filename = filename.replace(".png", ".html")
-                        fig.write_html(os.path.join(output_dir, filename))
 
         return self
 

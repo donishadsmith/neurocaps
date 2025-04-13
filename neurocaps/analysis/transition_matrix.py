@@ -18,6 +18,7 @@ def transition_matrix(
     save_plots: bool = True,
     return_df: bool = True,
     save_df: bool = True,
+    as_pickle: bool = False,
     **kwargs,
 ) -> Union[pd.DataFrame, None]:
     """
@@ -56,6 +57,12 @@ def transition_matrix(
     save_df: :obj:`bool`, default=False,
         If True, saves the transition probability matrix contained in the DataFrames as csv files. For this to be used,
         ``output_dir`` must be specified.
+
+    as_pickle: :obj:`bool`, default=False
+        When ``output_dir`` is specified, plots are saved as pickle files, which can be further modified, instead of png
+        images.
+
+        .. versionadded:: 0.26.5
 
     **kwargs
         Keyword arguments used when modifying figures. Valid keywords include:
@@ -145,6 +152,7 @@ def transition_matrix(
                 save_plots,
                 save_df,
                 display,
+                as_pickle,
                 call="trans",
             )
 

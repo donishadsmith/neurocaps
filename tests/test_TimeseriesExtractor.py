@@ -13,6 +13,7 @@ from .utils import (
     simulate_confounds,
     simulate_event_data,
     get_confound_data,
+    check_outputs,
 )
 
 
@@ -573,6 +574,17 @@ def test_visualize_bold(get_vars, tmp_dir, parcel_approach, name):
     png_files = glob.glob(os.path.join(tmp_dir.name, "*testing_save*.png"))
     assert len(png_files) == 3
     [os.remove(x) for x in png_files]
+
+    extractor.visualize_bold(
+        subj_id="01",
+        run="001",
+        roi_indx=[0, 1, 2],
+        show_figs=False,
+        output_dir=tmp_dir.name,
+        as_pickle=True,
+        filename="testing_save_nodes_multiple",
+    )
+    check_outputs(tmp_dir, {"pkl": 1}, plot_type="pickle", plot_name="testing_save_nodes_multiple")
 
     if "Custom" in parcel_approach:
         extractor.visualize_bold(

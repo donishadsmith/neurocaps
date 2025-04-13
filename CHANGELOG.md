@@ -13,6 +13,22 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.26.5] - 2025-04-13
+- Updates related to plotting and pickling
+
+### 🚀 New/Added
+- Several functions now include a ``as_pickle`` parameter to save figures as pickle files. For ``CAP.cas2radar``,
+an ``as_json`` file is added to saved plotly files in json format as opposed to pickle. This allows for further
+modifications of the plots outside of the functions.
+### ♻ Changed
+- For parameters that except files as strings such as ``subject_timeseries`` and ``parcel_approach``, recognized
+extensions are now ".pkl", ".pickle", and ".joblib", instead of just ".pkl".
+### 🐛 Fixes
+- For file names in ``TimeseriesExtractor.visualize_bold``, the default file name saved with an additional "run-",
+this has been removed.
+- For file names in ``CAP.caps2plot``, groups with spaces saved with whitespace, now this whitespace is replaced with
+underscores ("_").
+
 ## [0.26.4] - 2025-04-13
 ### 🐛 Fixes
 - Fix for upcoming use of clean_args in ``NiftiLabelsMasker``.

@@ -1,6 +1,6 @@
 import copy, glob, math, os, re, sys
 
-import nibabel as nib, nilearn, numpy as np, pandas as pd, pytest
+import nibabel as nib, nilearn, numpy as np, pandas as pd, plotly, pytest
 
 from kneed import KneeLocator
 
@@ -8,7 +8,7 @@ from neurocaps.analysis import CAP
 from .utils import (
     NILEARN_VERSION_WITH_AAL_3V2,
     Parcellation,
-    check_imgs,
+    check_outputs,
     concat_data,
     get_first_subject,
     segments,
@@ -772,10 +772,19 @@ def test_get_caps_cluster_selection_plot(tmp_dir):
         step=2,
         show_figs=False,
     )
-
     files = glob.glob(os.path.join(tmp_dir.name, "*.png"))
     assert files
     [os.remove(file) for file in files]
+
+    cap_analysis.get_caps(
+        subject_timeseries=timeseries,
+        n_clusters=[2, 3, 4, 5],
+        cluster_selection_method="silhouette",
+        output_dir=tmp_dir.name,
+        show_figs=False,
+        as_pickle=True,
+    )
+    check_outputs(tmp_dir, {"pkl": 1}, plot_type="pickle", plot_name="silhouette")
 
 
 @pytest.mark.parametrize(
@@ -822,25 +831,27 @@ def test_caps2plot(tmp_dir, timeseries, parcel_approach):
     )
 
     cap_analysis.caps2plot(**kwargs)
-    check_imgs(tmp_dir, values_dict={"heatmap": 2, "outer": 4})
+    check_outputs(tmp_dir, values_dict={"heatmap": 2, "outer": 4})
+    cap_analysis.caps2plot(**kwargs, as_pickle=True)
+    check_outputs(tmp_dir, plot_type="pickle", values_dict={"pkl": 6})
 
     # Assess hemisphere labels
     if "AAL" not in parcel_approach:
         kwargs["hemisphere_labels"] = True
         cap_analysis.caps2plot(**kwargs)
-        check_imgs(tmp_dir, values_dict={"heatmap": 2, "outer": 4})
+        check_outputs(tmp_dir, values_dict={"heatmap": 2, "outer": 4})
 
     # Subplots set to True
     kwargs["subplots"] = True
     kwargs["hemisphere_labels"] = False
     kwargs["share_y"] = True
     cap_analysis.caps2plot(**kwargs)
-    check_imgs(tmp_dir, values_dict={"heatmap": 2, "outer": 2})
+    check_outputs(tmp_dir, values_dict={"heatmap": 2, "outer": 2})
 
     if "AAL" not in parcel_approach:
         kwargs["hemisphere_labels"] = True
         cap_analysis.caps2plot(**kwargs)
-        check_imgs(tmp_dir, values_dict={"heatmap": 2, "outer": 2})
+        check_outputs(tmp_dir, values_dict={"heatmap": 2, "outer": 2})
 
     parcel_name = list(parcel_approach.keys())[0]
     if parcel_name != "Custom":
@@ -876,12 +887,10 @@ def test_caps2corr(tmp_dir):
     assert isinstance(df["All Subjects"], pd.DataFrame)
     assert len(list(df)) == 1
 
-    png_file = glob.glob(os.path.join(tmp_dir.name, "*correlation_matrix*.png"))
-    csv_file = glob.glob(os.path.join(tmp_dir.name, "*correlation_matrix*.csv"))
-    assert png_file
-    assert csv_file
-    assert os.path.getsize(csv_file[0]) > 0
-    [os.remove(file) for file in png_file + csv_file]
+    check_outputs(tmp_dir, {"csv": 1, "png": 1}, plot_type="corr")
+
+    df = cap_analysis.caps2corr(output_dir=tmp_dir.name, show_figs=False, save_df=False, as_pickle=True)
+    check_outputs(tmp_dir, {"pkl": 1}, plot_type="pickle")
 
 
 @pytest.mark.parametrize(
@@ -919,16 +928,16 @@ def test_caps2radar(tmp_dir, timeseries, parcel_approach):
 
     # Radar plotting functions
     cap_analysis.caps2radar(output_dir=tmp_dir.name, show_figs=False, suffix_filename="suffix_name")
-    check_imgs(tmp_dir, plot_type="radar", values_dict={"png": 2})
-    cap_analysis.caps2radar(
-        radialaxis=radialaxis, fill="toself", show_figs=False, as_html=True, output_dir=tmp_dir.name
-    )
-    check_imgs(tmp_dir, plot_type="radar", values_dict={"html": 2})
+    check_outputs(tmp_dir, plot_type="radar", values_dict={"png": 2})
 
-    cap_analysis.caps2radar(
-        radialaxis=radialaxis, fill="toself", show_figs=False, as_html=False, output_dir=tmp_dir.name
-    )
-    check_imgs(tmp_dir, plot_type="radar", values_dict={"png": 2})
+    cap_analysis.caps2radar(radialaxis=radialaxis, show_figs=False, as_html=True, output_dir=tmp_dir.name)
+    check_outputs(tmp_dir, plot_type="radar", values_dict={"html": 2})
+
+    cap_analysis.caps2radar(radialaxis=radialaxis, show_figs=False, as_json=True, output_dir=tmp_dir.name)
+    check_outputs(tmp_dir, plot_type="radar", values_dict={"json": 2})
+
+    cap_analysis.caps2radar(radialaxis=radialaxis, show_figs=False, as_html=False, output_dir=tmp_dir.name)
+    check_outputs(tmp_dir, plot_type="radar", values_dict={"png": 2})
 
     cap_analysis.caps2radar(
         radialaxis=radialaxis,
@@ -939,7 +948,7 @@ def test_caps2radar(tmp_dir, timeseries, parcel_approach):
         as_html=True,
         output_dir=tmp_dir.name,
     )
-    check_imgs(tmp_dir, plot_type="radar", values_dict={"html": 2})
+    check_outputs(tmp_dir, plot_type="radar", values_dict={"html": 2})
 
 
 @pytest.mark.parametrize(
@@ -985,7 +994,7 @@ def test_caps2niftis(tmp_dir, timeseries, parcel_approach):
         np.array_equal(cap_analysis.caps["All Subjects"][f"CAP-{indx}"], np.array(act_values))
 
     # Check files
-    check_imgs(tmp_dir, plot_type="nifti", values_dict={"nii.gz": 2})
+    check_outputs(tmp_dir, plot_type="nifti", values_dict={"nii.gz": 2})
 
     if "Custom" in parcel_approach:
         # Assess that knn interpolation works
@@ -1015,7 +1024,7 @@ def test_caps2niftis(tmp_dir, timeseries, parcel_approach):
             assert not np.array_equal(original_nifti[original_nifti == 0], interpolated_nifti[original_nifti == 0])
 
         # Check files
-        check_imgs(tmp_dir, plot_type="nifti", values_dict={"nii.gz": 2})
+        check_outputs(tmp_dir, plot_type="nifti", values_dict={"nii.gz": 2})
 
         cap_analysis.caps2niftis(
             output_dir=tmp_dir.name, suffix_filename="AAL_ref", knn_dict={"k": 3, "reference_atlas": "AAL"}
@@ -1027,7 +1036,7 @@ def test_caps2niftis(tmp_dir, timeseries, parcel_approach):
             assert not np.array_equal(original_nifti[original_nifti == 0], interpolated_nifti[original_nifti == 0])
 
         # Check files
-        check_imgs(tmp_dir, plot_type="nifti", values_dict={"nii.gz": 2})
+        check_outputs(tmp_dir, plot_type="nifti", values_dict={"nii.gz": 2})
 
 
 @pytest.mark.skipif(
@@ -1064,14 +1073,17 @@ def test_caps2surf(tmp_dir, remove_files, timeseries, parcel_approach):
         suffix_title="placeholder",
         show_figs=False,
     )
-    check_imgs(tmp_dir, plot_type="surface", values_dict={"png": 2})
-    check_imgs(tmp_dir, plot_type="nifti", values_dict={"nii.gz": 2})
+    check_outputs(tmp_dir, plot_type="surface", values_dict={"png": 2})
+    check_outputs(tmp_dir, plot_type="nifti", values_dict={"nii.gz": 2})
+
+    cap_analysis.caps2surf(output_dir=tmp_dir.name, show_figs=False, as_pickle=True)
+    check_outputs(tmp_dir, plot_type="pickle", values_dict={"pkl": 2})
 
     cap_analysis.caps2surf(
         method="linear", fwhm=1, save_stat_maps=False, output_dir=tmp_dir.name, as_outline=True, show_figs=False
     )
-    check_imgs(tmp_dir, plot_type="surface", values_dict={"png": 2})
-    check_imgs(tmp_dir, plot_type="nifti", values_dict={"nii.gz": 0})
+    check_outputs(tmp_dir, plot_type="surface", values_dict={"png": 2})
+    check_outputs(tmp_dir, plot_type="nifti", values_dict={"nii.gz": 0})
 
 
 def test_method_chaining(tmp_dir):
@@ -1088,7 +1100,7 @@ def test_method_chaining(tmp_dir):
     # Should not be None
     assert cap_analysis.cosine_similarity
 
-    check_imgs(tmp_dir, plot_type="nifti", values_dict={"nii.gz": 2})
+    check_outputs(tmp_dir, plot_type="nifti", values_dict={"nii.gz": 2})
 
 
 def test_check_raise_error():

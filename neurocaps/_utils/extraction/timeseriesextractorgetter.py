@@ -63,7 +63,7 @@ class _TimeseriesExtractorGetter:
     def subject_timeseries(self, subject_dict: Union[SubjectTimeseries, str]) -> None:
         need_deepcopy = True
 
-        if isinstance(subject_dict, str) and subject_dict.endswith(".pkl"):
+        if isinstance(subject_dict, str):
             subject_dict = _convert_pickle_to_dict(subject_dict)
             need_deepcopy = False
 

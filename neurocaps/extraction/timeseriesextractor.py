@@ -11,7 +11,7 @@ else:
     from typing import Self
 
 import matplotlib.pyplot as plt, numpy as np
-from joblib import Parallel, delayed, dump
+from joblib import Parallel, delayed
 from pandas import DataFrame
 from tqdm.auto import tqdm
 
@@ -25,6 +25,7 @@ from .._utils import (
     _check_parcel_approach,
     _extract_timeseries,
     _logger,
+    _pickle_object,
 )
 
 LG = _logger(__name__)
@@ -984,7 +985,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         """
         Save the Extracted Subject Timeseries.
 
-        Saves the extracted timeseries stored in the ``self.subject_timeseries`` dictionary as a pickle file.
+        Saves the extracted timeseries stored in the ``self.subject_timeseries`` dictionary as a pickle file with
+        Joblib.
 
         Parameters
         ----------
@@ -1002,8 +1004,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             output_dir, filename, prop_name="_subject_timeseries", call="timeseries_to_pickle"
         )
 
-        with open(os.path.join(output_dir, save_filename), "wb") as f:
-            dump(self._subject_timeseries, f)
+        _pickle_object(self._subject_timeseries, output_dir, save_filename)
 
         return self
 
@@ -1129,6 +1130,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         show_figs: bool = True,
         output_dir: Optional[str] = None,
         filename: Optional[str] = None,
+        as_pickle: bool = False,
         **kwargs,
     ) -> Self:
         """
@@ -1162,6 +1164,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         filename: :obj:`str` or :obj:`None`, default=None
             Name of the file without the extension.
+
+        as_pickle: :obj:`bool`, default=False
+            When ``output_dir`` is specified, plots are saved as pickle file, which can be further modified, instead of
+            png images.
+
+            .. versionadded:: 0.26.5
 
         **kwargs:
             Keyword arguments used when saving figures. Valid keywords include:
@@ -1239,11 +1247,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             if filename:
                 save_filename = f"{os.path.splitext(filename.rstrip())[0].rstrip()}.png"
             else:
-                save_filename = f"subject-{subj_id}_run-{run}_timeseries.png"
+                save_filename = f"subject-{subj_id}_{run}_timeseries.png"
 
-            plt.savefig(
-                os.path.join(output_dir, save_filename), dpi=plot_dict["dpi"], bbox_inches=plot_dict["bbox_inches"]
-            )
+            if not as_pickle:
+                plt.savefig(
+                    os.path.join(output_dir, save_filename), dpi=plot_dict["dpi"], bbox_inches=plot_dict["bbox_inches"]
+                )
+            else:
+                _pickle_object(plt.gcf(), output_dir, save_filename.replace(".png", ".pkl"))
 
         plt.show() if show_figs else plt.close()
 

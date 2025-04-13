@@ -66,10 +66,10 @@ metric computation and visualization capabilities.
 
 **neurocaps.exceptions**
 
-This module contains two custom exceptions: `BIDSQueryError` and `NoElbowDetected`. `BIDSQueryError` supports NeuroCAPs'
-integration with PyBIDS [@Yarkoni2019], a tool for querying BIDs-compliant directories, providing user support guidance
-when subject IDs cannot be detected in BIDS directories. `NoElbowDetected` offers solutions when the elbow method
-(implemented via `KneeLocator` from Kneed [@Arvai2023]) fails to identify the optimal cluster size for k-means.
+This module contains custom exceptions. These include `BIDSQueryError`, which supports NeuroCAPs' integration with
+PyBIDS [@Yarkoni2019] by providing guidance when issues arise with BIDS directories; `NoElbowDetectedError`, which
+offers solutions when optimal cluster determination fails using the elbow method implemented via Kneed [@Arvai2023];
+and ``UnsupportedFileExtensionError``, which handles cases when pickled inputs have unsupported file extensions.
 
 **neurocaps.extraction**
 

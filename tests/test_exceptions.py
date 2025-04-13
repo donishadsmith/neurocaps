@@ -3,7 +3,9 @@ import pytest
 
 from neurocaps.extraction import TimeseriesExtractor
 from neurocaps.analysis import CAP
-from neurocaps.exceptions import BIDSQueryError, NoElbowDetectedError
+from neurocaps.exceptions import BIDSQueryError, NoElbowDetectedError, UnsupportedFileExtensionError
+from neurocaps._utils import _convert_pickle_to_dict
+
 from .utils import Parcellation
 
 # Activate fixture to copy dataset to temporary directory
@@ -74,3 +76,10 @@ def test_elbow_error():
 
     with pytest.raises(NoElbowDetectedError, match=re.escape(ELBOWMSG)):
         cap_analysis.get_caps(subject_timeseries, n_clusters=range(2, 4), cluster_selection_method="elbow")
+
+
+def test_unsupported_serialized_file_error():
+    msg = "Serialized files must end with one of the following extensions: '.pkl', '.pickle', '.joblib'."
+
+    with pytest.raises(UnsupportedFileExtensionError, match=re.escape(msg)):
+        _convert_pickle_to_dict("placeholder.txt")

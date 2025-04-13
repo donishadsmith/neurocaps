@@ -3,6 +3,8 @@ import numpy as np, pytest
 
 from neurocaps.analysis import CAP, transition_matrix
 
+from .utils import check_outputs
+
 
 @pytest.mark.parametrize(
     "group, suffix_title, suffix_filename",
@@ -38,10 +40,10 @@ def test_transition_matrix(tmp_dir, group, suffix_title, suffix_filename):
         assert output["transition_probability"][group].loc[:, "1.2"].mean() == trans_output[group].loc["CAP-1", "CAP-2"]
         assert output["transition_probability"][group].loc[:, "2.1"].mean() == trans_output[group].loc["CAP-2", "CAP-1"]
 
-    png_files = glob.glob(os.path.join(tmp_dir.name, "*transition_probability*.png"))
-    assert len(png_files) == len(groups)
-    csv_files = glob.glob(os.path.join(tmp_dir.name, "*transition_probability*.csv"))
-    assert all(os.path.getsize(file) > 0 for file in csv_files)
-    assert len(csv_files) == len(groups)
+    check_outputs(tmp_dir, {"csv": len(groups), "png": len(groups)}, plot_type="trans")
 
-    [os.remove(x) for x in png_files + csv_files]
+    trans_output = transition_matrix(
+        output["transition_probability"], output_dir=tmp_dir.name, show_figs=False, save_df=False, as_pickle=True
+    )
+
+    check_outputs(tmp_dir, {"pkl": len(groups)}, plot_type="pickle")

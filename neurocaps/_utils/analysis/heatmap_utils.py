@@ -7,6 +7,8 @@ import os
 
 import matplotlib.pyplot as plt, seaborn
 
+from ..pickle_utils import _pickle_object
+
 
 def _create_display(df, plot_dict, suffix_title, group, call):
     # Refresh grid for each iteration
@@ -65,7 +67,9 @@ def _create_display(df, plot_dict, suffix_title, group, call):
     return display
 
 
-def _save_contents(output_dir, suffix_filename, group, curr_dict, plot_dict, save_plots, save_df, display, call):
+def _save_contents(
+    output_dir, suffix_filename, group, curr_dict, plot_dict, save_plots, save_df, display, as_pickle, call
+):
     # Save figure
     if output_dir:
         if not os.path.exists(output_dir):
@@ -78,9 +82,12 @@ def _save_contents(output_dir, suffix_filename, group, curr_dict, plot_dict, sav
             full_filename = f"{group.replace(' ', '_')}_CAPs_{base_name}.png"
 
         if save_plots:
-            display.get_figure().savefig(
-                os.path.join(output_dir, full_filename), dpi=plot_dict["dpi"], bbox_inches=plot_dict["bbox_inches"]
-            )
+            if not as_pickle:
+                display.get_figure().savefig(
+                    os.path.join(output_dir, full_filename), dpi=plot_dict["dpi"], bbox_inches=plot_dict["bbox_inches"]
+                )
+            else:
+                _pickle_object(display, output_dir, full_filename.replace(".png", ".pkl"))
 
         if save_df:
             full_filename = full_filename.replace(".png", ".csv")

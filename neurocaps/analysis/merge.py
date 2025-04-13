@@ -5,8 +5,8 @@ from typing import Union, Optional
 
 import numpy as np
 
-from .._utils import _convert_pickle_to_dict, _dicts_to_pickles, _logger
 from ..typing import SubjectTimeseries
+from .._utils import _convert_pickle_to_dict, _dicts_to_pickles, _logger
 
 LG = _logger(__name__)
 
@@ -117,7 +117,7 @@ def merge_dicts(
     subject_set = {}
 
     for curr_dict in subject_timeseries_list:
-        if isinstance(curr_dict, str) and curr_dict.endswith(".pkl"):
+        if isinstance(curr_dict, str):
             curr_dict = _convert_pickle_to_dict(curr_dict)
 
         if not subject_set:
@@ -131,7 +131,7 @@ def merge_dicts(
     subject_timeseries_merged = {}
 
     for curr_dict in subject_timeseries_list:
-        if isinstance(curr_dict, str) and curr_dict.endswith(".pkl"):
+        if isinstance(curr_dict, str):
             curr_dict = _convert_pickle_to_dict(curr_dict)
 
         for subj_id in intersect_subjects:

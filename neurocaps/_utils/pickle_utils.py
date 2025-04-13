@@ -1,21 +1,39 @@
-"""
-Internal functions for unpickling with joblib and saving dictionaries with joblib (for the `merge_dicts`,
-`standardize`, and `change_dtypes` function).
-"""
+"""Internal functions for pickling (with Joblib or pickle) and unpickling (with Joblib)."""
 
-import copy, os
+import copy, os, pickle
 
 import joblib
 
+from ..exceptions import UnsupportedFileExtensionError
+
+
+def _pickle_object(obj, output_dir, save_filename):
+    """
+    Saves Matplotlib figures as pickles. Uses standard pickle to allow compatibility with opening with either
+    Joblib or pickle.
+    """
+    with open(os.path.join(output_dir, save_filename), "wb") as f:
+        pickle.dump(obj, f)
+
 
 def _convert_pickle_to_dict(pickle_file):
-    with open(pickle_file, "rb") as f:
-        subject_timeseries = joblib.load(f)
+    """Opens pickled objects such as ``subject_timeseries`` or ``parcel_approach``."""
+    if pickle_file.endswith((".pkl", ".pickle", ".joblib")):
+        with open(pickle_file, "rb") as f:
+            obj = joblib.load(f)
+    else:
+        raise UnsupportedFileExtensionError(
+            "Serialized files must end with one of the following extensions: '.pkl', '.pickle', '.joblib'."
+        )
 
-    return subject_timeseries
+    return obj
 
 
 def _dicts_to_pickles(output_dir, dict_list, call, filenames=None, message=None, save_reduced_dicts=False):
+    """
+    Saves dictionaries containing NumPy arrays as pickles for the ``merge_dicts``, ``standardize``, and
+    ``change_dtypes`` functions.
+    """
     if not filenames:
         saved_filenames = _create_default_filenames(dict_list, call, save_reduced_dicts)
     else:
@@ -39,6 +57,10 @@ def _dicts_to_pickles(output_dir, dict_list, call, filenames=None, message=None,
 
 
 def _create_default_filenames(dict_list, call, save_reduced_dicts):
+    """
+    Generates default names for dictionaries created by the  ``merge_dicts``, ``standardize``, and ``change_dtypes``
+    functions.
+    """
     if call == "merge":
         if save_reduced_dicts:
             default_filenames = [

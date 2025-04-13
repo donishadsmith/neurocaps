@@ -14,6 +14,7 @@ Module containing custom exceptions.
 
    BIDSQueryError
    NoElbowDetectedError
+   UnsupportedFileExtensionError
 
 :mod:`neurocaps.extraction` - Timeseries Extraction
 ---------------------------------------------------

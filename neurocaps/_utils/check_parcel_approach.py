@@ -26,7 +26,7 @@ def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
     Pipeline to ensure ``parcel_approach`` is valid and process the ``parcel_approach`` if certain initialization
     keys are used.
     """
-    if isinstance(parcel_approach, str) and parcel_approach.endswith(".pkl"):
+    if isinstance(parcel_approach, str):
         parcel_dict = _convert_pickle_to_dict(parcel_approach)
     else:
         parcel_dict = copy.deepcopy(parcel_approach)

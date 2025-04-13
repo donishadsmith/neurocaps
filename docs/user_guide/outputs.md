@@ -4,7 +4,7 @@ In NeuroCAPs, functions that produce NifTI images, plots, or dataframes have an 
 where files should be saved. The file types includes:
 
 - NifTI images: saved as "nii.gz".
-- Matplotlib, Plotly, & Seaborn plots: saved as "png", and also as "html" if the `as_html=True` in `CAP.caps2radar`
+- Matplotlib, Plotly, & Seaborn plots: saved as "png" or "pkl", and also as "html" or "json" in `CAP.caps2radar`
 (which uses Plotly).
 - Pandas Dataframes: saved as "csv".
 - Pickles: saved as "pkl".
@@ -64,6 +64,7 @@ Certain methods do not follow the default naming convention. This pertains to `T
 
 ```
 subject-[subj_id]_run-[run_id]_timeseries.png
+subject-[subj_id]_run-[run_id]_timeseries.pkl
 ```
 
 - `TimeseriesExtractor.timeseries_to_pickle` - The default name format is as follows (but can be overwritten using the
