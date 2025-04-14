@@ -18,7 +18,10 @@ def test_aal_indices_ordering():
         atlas_fdata = atlas.get_fdata()
         labels = sorted(np.unique(atlas_fdata)[1:])
 
+        # For upcoming nilearn release, remove the added 0
         nums = [int(x) for x in aal.indices]
+        if nums[0] == 0:
+            nums = nums[1:]
         assert all([nums[i] < nums[i + 1] for i in range(len(nums) - 1)])
         assert np.array_equal(np.array(nums), labels)
 

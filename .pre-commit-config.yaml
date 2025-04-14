@@ -37,7 +37,8 @@ repos:
         - id: ruff
           # Ensure no print statements are in the codebase; only logging allowed
           entry: ruff check --select T201
-          files: '^neurocaps/.*\.py$'
+          files: '(^neurocaps/.*\.py$|.*^tests.*\.py$)'
+          exclude: '(test_TimeseriesExtractor.py$|test_CAP.py$)'
 
 -   repo: local
     hooks:

@@ -1,6 +1,6 @@
 import copy, glob, math, os, re, sys
 
-import nibabel as nib, nilearn, numpy as np, pandas as pd, plotly, pytest
+import nibabel as nib, nilearn, numpy as np, pandas as pd, pytest
 
 from kneed import KneeLocator
 
