@@ -46,7 +46,7 @@ class NoElbowDetectedError(Exception):
 
 class UnsupportedFileExtensionError(Exception):
     """
-    Unsupported File Extension Exception
+    Unsupported File Extension Exception.
 
     This exception occurs when attempting to unpickle a file that does not have a supported extension (i.e. ".pkl",
     ".pickle", and ".joblib").
