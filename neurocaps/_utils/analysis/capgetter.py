@@ -123,26 +123,58 @@ class _CAPGetter:
         return f"{total_bytes} bytes"
 
     def __str__(self) -> str:
-        parcellation_name = list(self.parcel_approach.keys())[0] if self.parcel_approach else None
+        """
+        Print Current Object State.
+
+        Provides a formatted summary of the ``CAP`` configuration when called with ``print(self)``. Returns a string
+        containing the following information:
+
+        - Parcellation approach used
+        - Group definitions
+        - Clustering configuration (e.g, number of clusters, selection method, etc)
+        - Optimal number of clusters  per group (if a range of clusters were provided)
+        - Number of CPU cores used for clustering (multiprocessing)
+        - Run identifiers used in analysis
+        - Estimated memory usage estimate for ``concatenated_timeseries`` (in bytes)
+        - Standardization applied prior to clustering
+        - Co-Activation Patterns (CAPs) per group
+        - Variance explained by clustering
+
+        Returns
+        -------
+        str
+            A formatted string containing information about the object's current state.
+
+        Examples
+        --------
+
+        >>> cap_analysis = CAP()
+        >>> print(cap_analysis)
+        Current Object State:
+        =====================
+        Parcellation Approach                                       : None
+        ...
+        """
+        parcellation_name = list(self.parcel_approach)[0] if self.parcel_approach else None
         # Get group names
-        groups_names = ", ".join(f"{k}" for k in self.groups.keys()) if self.groups else None
+        groups_names = ", ".join(f"{k}" for k in self.groups) if self.groups else None
         # Get total CAPs per group
         group_caps = {k: len(v) for k, v in self.caps.items()} if self.caps else None
 
         object_properties = (
-            f"Parcellation Approach                           : {parcellation_name}\n"
-            f"Groups                                          : {groups_names}\n"
-            f"Number of Clusters                              : {self.n_clusters}\n"
-            f"Cluster Selection Method                        : {self.cluster_selection_method}\n"
-            f"Optimal Number of Clusters                      : {self.optimal_n_clusters}\n"
-            f"CPU Cores Used for Clustering (Multiprocessing) : {self.n_cores}\n"
-            f"User-Specified Runs IDs Used for Clustering     : {self.runs}\n"
-            f"Concatenated Timeseries Bytes                   : {self._concatenated_timeseries_size()}\n"
-            f"Standardized Concatenated Timeseries            : {self.standardize}\n"
-            f"Co-Activation Patterns (CAPs)                   : {group_caps}\n"
-            f"Variance Explained by Clustering                : {self.variance_explained}"
+            f"Parcellation Approach                                       : {parcellation_name}\n"
+            f"Groups                                                      : {groups_names}\n"
+            f"Number of Clusters                                          : {self.n_clusters}\n"
+            f"Cluster Selection Method                                    : {self.cluster_selection_method}\n"
+            f"Optimal Number of Clusters (if Range of Clusters Provided)  : {self.optimal_n_clusters}\n"
+            f"CPU Cores Used for Clustering (Multiprocessing)             : {self.n_cores}\n"
+            f"User-Specified Runs IDs Used for Clustering                 : {self.runs}\n"
+            f"Concatenated Timeseries Bytes                               : {self._concatenated_timeseries_size()}\n"
+            f"Standardized Concatenated Timeseries                        : {self.standardize}\n"
+            f"Co-Activation Patterns (CAPs)                               : {group_caps}\n"
+            f"Variance Explained by Clustering                            : {self.variance_explained}"
         )
 
         sep = "=" * len(object_properties.rsplit(": ")[0])
 
-        return "Metadata:\n" + sep + f"\n{object_properties}"
+        return "Current Object State:\n" + sep + f"\n{object_properties}"

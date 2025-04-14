@@ -56,7 +56,9 @@ class CAP(_CAPGetter):
         structure, see the type definitions for ``ParcelConfig`` and ``ParcelApproach`` in the "See Also" section.
 
     groups: :obj:`dict[str, list[str]]` or :obj:`None`, default=None
-        Optional mapping of group names to lists of subject IDs for group-specific analyses.
+        Optional mapping of group names to lists of subject IDs for group-specific analyses. If None, on the first call
+        of ``self.get_caps()``, "All Subjects" will be set as the default group name and be populated with the subject
+        IDs in ``subject_timeseries``. Groups remain fixed for the entire instance of the class.
 
 
     Properties
@@ -69,8 +71,9 @@ class CAP(_CAPGetter):
         Mapping of groups names to lists of subject IDs.
 
     subject_table: :obj:`dict[str, str]` or :obj:`None`
-        Lookup table mapping subject IDs to their groups. Defined after running ``self.get_caps()``.
-        Defined after running ``self.get_caps()``. This property is also settable.
+        Lookup table mapping subject IDs to their groups. Derived from ``self.groups`` each time ``self.get_caps()``
+        is ran. While this property can be modified using its setter, any changes will be overwritten based on
+        ``self.groups`` on the subsequent call to ``self.get_caps()``.
 
     n_clusters: :obj:`int`, :obj:`list[int]`, or :obj:`None`
         An integer or list of integers representing the number of clusters used for k-means.
@@ -185,12 +188,12 @@ class CAP(_CAPGetter):
 
     Important
     ---------
-    **Data/Property Persistence**: Each time certain functions are called, properties related to that function are
-    automatically initialized/overwritten to create a clean state for the subsequent analysis. For instance, when
+    **Data/Property Persistence**: Each time certain functions are called, properties related to that function
+    are automatically initialized/overwritten to create a clean state for the subsequent analysis. For instance, when
     ``self.get_caps()`` is ran, then properties such as ``self.caps``, ``self.kmeans``,
     ``self.concatenated_timeseries``, ``self.stdev``, etc are automatically re-initialized to store the new results.
-    The same occurs for ``self.cosine_similarity``, when ``self.caps2radar()`` is ran and for other properties and their
-    associated functions.
+    The same occurs for ``self.cosine_similarity``, when ``self.caps2radar()`` is ran and for other
+    properties and their associated functions.
 
     Note
     ----
@@ -344,8 +347,8 @@ class CAP(_CAPGetter):
             does not detect an elbow in the convex curve. Refer to `NoElbowDetectionError documentation
             <https://neurocaps.readthedocs.io/en/stable/generated/neurocaps.exceptions.NoElbowDetectedError.html>`_.
 
-        Note
-        ----
+        Notes
+        -----
         **KMeans Algorithm:** Refer to `scikit-learn's Documentation
         <https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html>`_ for additional information
         about the ``KMeans`` algorithm used in this method.
@@ -354,10 +357,10 @@ class CAP(_CAPGetter):
         are passed to ``sklearn.cluster.KMeans``. Only ``n_clusters`` differs from scikit-learn's default value,
         changing from 8 to 5.
 
-        **Default Group Naming:** When ``group`` is None during initialization of the ``CAP`` class initialization,
-        then "All Subjects" is the default group name. Additionally, the subject IDs in ``subject_timeseries`` will be
-        automatically detected and stored in ``self.group`` on the first call of this function. To clear this, either
-        re-initialize the ``CAP`` class or set ``self._group`` to None.
+        **Default Group Naming:** When ``group`` is None during initialization of the ``CAP`` class, then "All Subjects"
+        is the default group name. On the first call of this function, the subject IDs in ``subject_timeseries`` will be
+        automatically detected and stored in ``self.group``. This mapping persists until the ``CAP`` class is
+        re-initialized.
 
         **Concatenated Timeseries**: The concatenated timeseries is stored in ``self.concatenated_timeseries`` for
         user convenience and can be deleted using ``del self.concatenated_timeseries`` without disruption to the any
@@ -447,6 +450,11 @@ class CAP(_CAPGetter):
         # Create dictionary for "All Subjects" if no groups are specified to reuse the same loop instead of having to
         # create logic for grouped and non-grouped version of the same code
         if not self._groups:
+            LG.info(
+                "No groups specified. Using default group 'All Subjects' containing all subject IDs from "
+                "`subject_timeseries`. The `self.groups` dictionary will remain fixed unless the `CAP` class is "
+                "re-initialized."
+            )
             self._groups = {"All Subjects": list(subject_timeseries)}
 
         # Sort IDs lexicographically (also done in `TimeseriesExtractor`)

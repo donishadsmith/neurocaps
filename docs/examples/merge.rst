@@ -105,8 +105,8 @@ or tasks.
 .. rst-class:: sphx-glr-script-out
 
     .. code-block:: none
-
-        2025-03-09 03:55:14,420 neurocaps.analysis.cap [INFO] [GROUP: All Subjects | METHOD: davies_bouldin] Optimal cluster size is 7.
+        2025-04-15 03:55:14,000 neurocaps.analysis.cap [INFO] No groups specified. Using default group 'All Subjects' containing all subject IDs from `subject_timeseries`. The `self.groups` dictionary will remain fixed unless the `CAP` class is re-initialized.
+        2025-04-15 03:55:14,420 neurocaps.analysis.cap [INFO] [GROUP: All Subjects | METHOD: davies_bouldin] Optimal cluster size is 7.
 
 
 .. image:: embed/davies_boldin_merged.png

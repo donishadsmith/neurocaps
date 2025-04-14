@@ -13,6 +13,17 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.26.6] - 2025-04-15
+### ♻ Changed
+- For __str__ method, changed "Metadata" to "Current Object State" and made other minor tweaks.
+### 🐛 Fixes
+- Fixed a logged warning about condition event windows being out of bounds when ``condition_tr_shift`` is not used.
+Previously, the log message would never actually be logged.
+### 📖 Documentation
+- Improved documentation about how the default class in `CAP` is handles and added a logged message about this
+behavior.
+- Added doc string to __str__ method.
+
 ## [0.26.5] - 2025-04-13
 - Updates related to plotting and pickling
 

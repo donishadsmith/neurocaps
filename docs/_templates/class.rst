@@ -10,8 +10,12 @@
 
    .. autosummary::
       :toctree:
+      :nosignatures:
+
+      ~{{ objname }}.__str__
+
    {% for item in methods %}
-      {% if item != "__init__" %} ~{{ name }}.{{ item }}
+      {%  if not item.startswith('_') %} ~{{ name }}.{{ item }}
       {%- endif %}
    {%- endfor %}
    {% endblock %}

@@ -101,10 +101,10 @@ For example, placing an asterisk after cosine (cosine*) will utilize all paramet
 
     .. code-block:: none
 
-        2025-04-07 18:02:15,929 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: cosine*, a_comp_cor*, rot*.
-        2025-04-07 18:02:17,442 neurocaps.extraction.timeseriesextractor [INFO] BIDS Layout: ...books\neurocaps_demo\data\dset | Subjects: 1 | Sessions: 1 | Runs: 1
-        2025-04-07 18:02:17,499 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] Preparing for Timeseries Extraction using [FILE: sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz].
-        2025-04-07 18:02:17,516 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] The following confounds will be used for nuisance regression: cosine_00, cosine_01, cosine_02, cosine_03, cosine_04, cosine_05, cosine_06, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05, rot_x, rot_y, rot_z.
+        2025-04-15 18:02:15,929 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: cosine*, a_comp_cor*, rot*.
+        2025-04-15 18:02:17,442 neurocaps.extraction.timeseriesextractor [INFO] BIDS Layout: ...books\neurocaps_demo\data\dset | Subjects: 1 | Sessions: 1 | Runs: 1
+        2025-04-15 18:02:17,499 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] Preparing for Timeseries Extraction using [FILE: sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz].
+        2025-04-15 18:02:17,516 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] The following confounds will be used for nuisance regression: cosine_00, cosine_01, cosine_02, cosine_03, cosine_04, cosine_05, cosine_06, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05, rot_x, rot_y, rot_z.
         Processing Subjects: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:05<00:00,  5.73s/it]
 
 ``print`` can be used to return a string representation of the ``TimeseriesExtractor`` class.
@@ -117,11 +117,11 @@ For example, placing an asterisk after cosine (cosine*) will utilize all paramet
 
     .. code-block:: none
 
-        Metadata:
+        Current Object State:
         ===========================================================
-        Preprocessed Bold Template Space                           : MNI152NLin2009cAsym
+        Preprocessed BOLD Template Space                           : MNI152NLin2009cAsym
         Parcellation Approach                                      : Schaefer
-        Signal Clean Information                                   : {'masker_init': {'detrend': False, 'low_pass': 0.15, 'high_pass': None, 'smoothing_fwhm': None}, 'standardize': True, 'use_confounds': True, 'confound_names': ['cosine*', 'a_comp_cor*', 'rot*'], 'n_acompcor_separate': None, 'dummy_scans': None, 'fd_threshold': 0.35, 'dtype': None}
+        Signal Clean Parameters                                    : {'masker_init': {'detrend': False, 'low_pass': 0.15, 'high_pass': None, 'smoothing_fwhm': None}, 'standardize': True, 'use_confounds': True, 'confound_names': ['cosine*', 'a_comp_cor*', 'rot*'], 'n_acompcor_separate': None, 'dummy_scans': None, 'fd_threshold': 0.35, 'dtype': None}
         Task Information                                           : {'task': 'rest', 'session': '002', 'runs': None, 'condition': None, 'condition_tr_shift': 0, 'tr': 1.2, 'slice_time_ref': 0.0}
         Number of Subjects                                         : 1
         CPU Cores Used for Timeseries Extraction (Multiprocessing) : None

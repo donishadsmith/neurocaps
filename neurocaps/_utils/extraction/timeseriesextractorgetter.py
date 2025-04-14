@@ -125,12 +125,41 @@ class _TimeseriesExtractorGetter:
         return f"{total_bytes} bytes"
 
     def __str__(self) -> str:
+        """
+        Print Current Object State.
+
+        Provides a formatted summary of the ``TimeseriesExtractor`` configuration when called with ``print(self)``.
+        Returns a string containing the following information:
+
+        - Preprocessed BOLD template space
+        - Parcellation approach used
+        - Signal cleaning parameters applied
+        - Task information
+        - Number of subjects in ``subject_timeseries``
+        - Number of CPU cores used for extraction (multiprocessing)
+        - Estimated memory usage estimate for ``subject_timeseries`` (in bytes)
+
+        Returns
+        -------
+        str
+            A formatted string containing information about the object's current state.
+
+        Examples
+        --------
+        >>> from neurocaps.extraction import TimeseriesExtractor
+        >>> extractor = TimeseriesExtractor()
+        >>> print(extractor)
+            Current Object State:
+            =====================
+            Preprocessed BOLD Template Space                           : "MNI152NLin2009cAsym"
+            ...
+        """
         n_subjects = len(self.subject_ids) if self.subject_ids else None
 
         object_properties = (
-            f"Preprocessed Bold Template Space                           : {self.space}\n"
-            f"Parcellation Approach                                      : {list(self.parcel_approach.keys())[0]}\n"
-            f"Signal Clean Information                                   : {self.signal_clean_info}\n"
+            f"Preprocessed BOLD Template Space                           : {self.space}\n"
+            f"Parcellation Approach                                      : {list(self.parcel_approach)[0]}\n"
+            f"Signal Cleaning Parameters                                 : {self.signal_clean_info}\n"
             f"Task Information                                           : {self.task_info}\n"
             f"Number of Subjects                                         : {n_subjects}\n"
             f"CPU Cores Used for Timeseries Extraction (Multiprocessing) : {self.n_cores}\n"
@@ -139,4 +168,4 @@ class _TimeseriesExtractorGetter:
 
         sep = "=" * len(object_properties.rsplit(": ")[0])
 
-        return "Metadata:\n" + sep + f"\n{object_properties}"
+        return "Current Object State:\n" + sep + f"\n{object_properties}"

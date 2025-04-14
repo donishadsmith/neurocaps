@@ -256,6 +256,7 @@ def _extract_timeseries(
         # Continue extraction if the continue keyword isn't hit when assessing the fd threshold or events
         # May still be skipped prior to extraction if there are more confound regressors than timeseries row
         timeseries, skip_run = _perform_extraction(data, LG)
+
         if skip_run:
             continue
 
@@ -265,6 +266,7 @@ def _extract_timeseries(
             )
         else:
             subject_timeseries[subj_id].update({run_id: timeseries})
+
             # Report framewise displacement quality control
             if data.produce_qc_report:
                 qc[subj_id].update({run_id: _report_qc(data)})
@@ -567,7 +569,7 @@ def filter_censored_scan_indices(data):
     return sorted(list(scans)), len(all_censored_indxs), n_interpolated_scans
 
 
-def _validate_scan_bounds(data, arr_len, LG=None, warn=False):
+def _validate_scan_bounds(data, arr_len, LG=None):
     """
     Checks if indices in ``data.scans`` (which are the indices for the event condition) are within the timeseries
     boundaries.
@@ -575,9 +577,9 @@ def _validate_scan_bounds(data, arr_len, LG=None, warn=False):
     if max(data.scans) <= arr_len - 1:
         return data.scans
 
-    # Warn is false in instances were shift is used to prevent unnecessary logging, the warning is specifically
-    # for instances related to misalignment such as potentially incorrect onsets and durations
-    if warn:
+    # Warn if tr_shift was not done, the warning is specifically for instances related to misalignment such as
+    # potentially incorrect onsets and durations
+    if not data.tr_shift:
         LG.warning(
             f"{data.head}" + f"[CONDITION: {data.condition}] Max scan index exceeds timeseries max index. "
             f"Max condition index is {max(data.scans)}, while max timeseries index is {arr_len - 1}. Timing may "
@@ -608,6 +610,12 @@ def _perform_extraction(data, LG):
     """
     # Extract confound information of interest and ensure confound file does not contain NAs
     confounds = _process_confounds(data, LG)
+
+    if data.use_confounds and (data.confound_names and confounds is None):
+        LG.warning(
+            f"{data.head}" + "None of the requested confounds were found. Nuisance regression will not be done but "
+            "timeseries extraction will continue."
+        )
 
     # Ensure number of confounds not greater than timeseries shape
     if skip_run := _check_dimensions(data, confounds, LG):
@@ -646,9 +654,9 @@ def _perform_extraction(data, LG):
     timeseries = _process_timeseries(timeseries, data) if data.censored_frames else timeseries
 
     if data.condition:
-        # Ensure condition indices don't exceed timeseries due to tr shift; filter_censored_scan_indices only called
-        # when censoring is done
-        data.scans = _validate_scan_bounds(data, timeseries.shape[0], warn=False)
+        # Ensure condition indices don't exceed timeseries due to tr shift; filter_censored_scan_indices only being
+        # called when censoring is done
+        data.scans = _validate_scan_bounds(data, timeseries.shape[0], LG)
 
         if data.verbose:
             LG.info(data.head + f"Nuisance regression completed; extracting [CONDITION: {data.condition}].")
@@ -665,22 +673,22 @@ def _process_confounds(data, LG):
     requested, then this function obtains a filtered version of the confound dataframe containing columns that will be
     used for nuisance regression.
     """
-    if not data.use_confounds:
+    if not data.use_confounds or (data.use_confounds and data.confound_df.empty):
         return None
-    else:
-        confound_names = copy.deepcopy(data.signal_clean_info["confound_names"]) if data.confound_names else []
 
-        # Extract first "n" numbers of specified WM and CSF components and extend confound_names list
-        components_list = []
-        if data.files["confound_meta"]:
-            components_list = _get_separate_acompcor(data)
+    confound_names = copy.deepcopy(data.signal_clean_info["confound_names"]) if data.confound_names else []
 
-        # Extend confounds
-        if components_list:
-            confound_names.extend(components_list)
+    # Extract first "n" numbers of specified WM and CSF components and extend confound_names list
+    components_list = []
+    if data.files["confound_meta"]:
+        components_list = _get_separate_acompcor(data)
 
-        # Get confounds
-        confounds = _extract_valid_confounds(data, confound_names, LG) if confound_names else None
+    # Extend confounds
+    if components_list:
+        confound_names.extend(components_list)
+
+    # Get confounds
+    confounds = _extract_valid_confounds(data, confound_names, LG) if confound_names else None
 
     return confounds
 
@@ -697,8 +705,8 @@ def _get_separate_acompcor(data):
         confound_metadata = json.load(confounds_json)
 
     acompcors = sorted([acompcor for acompcor in confound_metadata if "a_comp_cor" in acompcor])
-    CSF = [CSF for CSF in acompcors if confound_metadata[CSF]["Mask"] == "CSF"][0 : data.n_acompcor_separate]
-    WM = [WM for WM in acompcors if confound_metadata[WM]["Mask"] == "WM"][0 : data.n_acompcor_separate]
+    CSF = [CSF for CSF in acompcors if confound_metadata[CSF]["Mask"] == "CSF"][: data.n_acompcor_separate]
+    WM = [WM for WM in acompcors if confound_metadata[WM]["Mask"] == "WM"][: data.n_acompcor_separate]
     components_list.extend(CSF + WM)
 
     return components_list
@@ -728,20 +736,14 @@ def _extract_valid_confounds(data, confound_names, LG):
     confounds = data.confound_df[valid_confounds].fillna(0)
     confounds = None if confounds.empty else confounds
 
-    if data.verbose:
-        if confounds is not None:
-            if invalid_confounds:
-                LG.warning(f"{data.head}" + f"The following confounds were not found: {', '.join(invalid_confounds)}.")
+    if data.verbose and confounds is not None:
+        if invalid_confounds:
+            LG.warning(f"{data.head}" + f"The following confounds were not found: {', '.join(invalid_confounds)}.")
 
-            LG.info(
-                f"{data.head}" + "The following confounds will be used for nuisance regression: "
-                f"{', '.join(list(confounds.columns))}."
-            )
-        else:
-            LG.warning(
-                f"{data.head}" + "None of the requested confounds were found so nuisance regression will not "
-                "be done."
-            )
+        LG.info(
+            f"{data.head}" + "The following confounds will be used for nuisance regression: "
+            f"{', '.join(list(confounds.columns))}."
+        )
 
     return confounds
 
