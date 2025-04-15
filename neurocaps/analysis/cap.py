@@ -190,10 +190,9 @@ class CAP(_CAPGetter):
     ---------
     **Data/Property Persistence**: Each time certain functions are called, properties related to that function
     are automatically initialized/overwritten to create a clean state for the subsequent analysis. For instance, when
-    ``self.get_caps()`` is ran, then properties such as ``self.caps``, ``self.kmeans``,
-    ``self.concatenated_timeseries``, ``self.stdev``, etc are automatically re-initialized to store the new results.
-    The same occurs for ``self.cosine_similarity``, when ``self.caps2radar()`` is ran and for other
-    properties and their associated functions.
+    ``self.get_caps()`` is ran, then properties such as ``self.caps``, ``self.kmeans``, ``self.concatenated_timeseries``,
+    ``self.stdev``, etc are automatically re-initialized to store the new results. The same occurs for
+    ``self.cosine_similarity``, when ``self.caps2radar()`` is ran and for other properties and their associated functions.
 
     Note
     ----
@@ -793,7 +792,7 @@ class CAP(_CAPGetter):
 
         runs: :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
             The run IDs to calculate CAP metrics for (e.g. ``runs=[0, 1]`` or ``runs=["01", "02"]``). If None, CAP
-            metrics will be calculated for each run.
+            metrics will be calculated for each run, even if only specific runs were used during ``self.get_caps()``.
 
         continuous_runs: :obj:`bool`, default=False
             If True, all runs will be treated as a single, uninterrupted run.
@@ -806,6 +805,12 @@ class CAP(_CAPGetter):
 
                 # Computation of each CAP metric will be conducted on the combined vector
                 continuous_runs = [0, 1, 1, 2, 3, 3]
+
+            .. note::
+                - This parameter can be used together with ``runs`` to filter the runs to combine.
+                - The run-ID in the dataframe will be converted to run-continuous to denote that runs were combined.
+                - If only a single run available for a subject, the original run ID (as opposed to "run-continuous")\
+                will be used.
 
         metrics: {"temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"} \
                  or :obj:`list["temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"]`, \
