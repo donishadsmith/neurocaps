@@ -3,3 +3,7 @@ bids.rst user_guide/bids.rst
 parcellations.rst user_guide/parcellations.rst
 logging.rst user_guide/logging.rst
 outputs.rst user_guide/outputs.rst
+api.rst api/api.rst
+generated/neurocaps.typing.SubjectTimeseries.rst api/generated/neurocaps.typing.SubjectTimeseries.rst
+generated/neurocaps.typing.ParcelConfig.rst api/generated/neurocaps.typing.ParcelConfig.rst
+generated/neurocaps.typing.ParcelApproach.rst api/generated/neurocaps.typing.ParcelApproach.rst

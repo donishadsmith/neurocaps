@@ -1,4 +1,4 @@
-:mod:`{{module}}`.{{objname}}
+{{objname}}
 {{ underline }}==============
 
 .. currentmodule:: {{ module }}
@@ -11,6 +11,7 @@
    .. autosummary::
       :toctree:
       :nosignatures:
+      :template: classmethod.rst
 
       ~{{ objname }}.__str__
 

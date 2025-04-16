@@ -14,7 +14,7 @@ Performing CAPs on All Subjects
 -------------------------------
 All information pertaining to CAPs (k-means models, activation vectors/cluster centroids, etc) are stored as attributes
 in the ``CAP`` class and this information is used by all methods in the class. These attributes are accessible via
-`properties <https://neurocaps.readthedocs.io/en/stable/generated/neurocaps.analysis.CAP.html#properties>`_.
+`properties <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.analysis.CAP.html#properties>`_.
 **Some properties can also be used as setters.**
 
 .. code-block:: python

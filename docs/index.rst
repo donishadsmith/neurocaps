@@ -5,7 +5,7 @@
    :maxdepth: 2
 
    user_guide
-   api
+   api/api
    examples/examples
    contributing
    changelog

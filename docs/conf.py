@@ -58,7 +58,7 @@ autodoc_member_order = "bysource"
 autodoc_typehints = "none"
 
 # Remove module name in signature
-add_module_names = False
+add_module_names = True
 
 napoleon_google_docstring = False
 napoleon_numpy_docstring = True
@@ -120,14 +120,6 @@ html_sidebars = {
 html_static_path = ["_static"]
 
 html_extra_path = ["examples/notebooks"]
-
-redirects = {
-    "installation.html": "user_guide/installation.html",
-    "bids.html": "user_guide/bids.html",
-    "parcellations.html": "user_guide/parcellations.html",
-    "logging.html": "user_guide/logging.html",
-    "outputs.html": "user_guide/outputs.html",
-}
 
 redirects_file = "redirects"
 

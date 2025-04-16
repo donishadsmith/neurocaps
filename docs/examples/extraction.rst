@@ -129,7 +129,7 @@ For example, placing an asterisk after cosine (cosine*) will utilize all paramet
 
 The extracted timeseries is stored as a nested dictionary and can be accessed using the ``subject_timeseries``
 property. The ``TimeseriesExtractor`` class has several
-`properties <https://neurocaps.readthedocs.io/en/stable/generated/neurocaps.extraction.TimeseriesExtractor.html#properties>`_.
+`properties <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.extraction.TimeseriesExtractor.html#properties>`_.
 **Some properties can also be used as setters.**
 
 .. code-block:: python

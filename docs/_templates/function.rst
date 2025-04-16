@@ -1,9 +1,9 @@
-:mod:`{{module}}`.{{objname}}
+{{objname}}
 {{ underline }}====================
 
 .. currentmodule:: {{ module }}
 
-.. autoclass:: {{ objname }}
+.. autofunction:: {{ objname }}
 
 .. raw:: html
 
