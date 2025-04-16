@@ -13,6 +13,10 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.26.7] - 2025-04-16
+### 🐛 Fixes
+- Adds the py.typed file
+
 ## [0.26.6] - 2025-04-15
 ### ♻ Changed
 - For __str__ method, changed "Metadata" to "Current Object State" and made other minor tweaks.
