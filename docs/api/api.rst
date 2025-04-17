@@ -1,7 +1,7 @@
 API
 ===
 
-Publicly available classes and functions within NeuroCAPs.
+Publicly available classes, functions, exceptions, and types within NeuroCAPs.
 
 .. toctree::
    :hidden:
