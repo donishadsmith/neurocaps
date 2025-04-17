@@ -1020,8 +1020,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         Parameters
         ----------
         output_dir: :obj:`str`, default=None
-            Directory to save a pickle file to. The directory will be created if it does not exist. File will not be
-            saved in an output directory is not provided.
+            Directory to save a pickle file to. The directory will be created if it does not exist. The file will not be
+            saved if an output directory is not provided.
 
         filename: :obj:`str` or :obj:`None`, default=None
             Name of the file with or without the "csv" extension.
