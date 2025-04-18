@@ -22,7 +22,7 @@ bibliography: paper.bib
 
 # Summary
 Co-Activation Patterns (CAPs) is a dynamic functional connectivity technique that clusters similar spatial distributions
-of brain activity. To make this analytical technique more accessible to neuroimaging researchers, NeuroCAPs [@zenodo],
+of brain activity. To make this analytical technique more accessible to neuroimaging researchers, NeuroCAPs,
 an open source Python package, was developed. This package performs end-to-end CAPs analyses on preprocessed resting-state
 or task-based functional magnetic resonance imaging (fMRI) data, and is most optimized for data preprocessed with
 fMRIPrep, a robust preprocessing pipeline designed to minimize manual user input and enhance reproducibility

@@ -13,6 +13,14 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.26.7] - 2025-04-18
+### ♻ Changed
+- Exceptions no longer require message
+### 🐛 Fixes
+- In the `merge_dicts` function, fixes issue a mutability issue where if a subject only has a single run, the memory
+address of the numpy array in the merged dict would be the same as the original input dict. Now deepcopy used
+to safeguard against any unintended side effects to the original input dictionaries.
+
 ## [0.26.7] - 2025-04-16
 ### 🐛 Fixes
 - Adds the py.typed file

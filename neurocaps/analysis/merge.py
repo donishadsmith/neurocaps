@@ -133,6 +133,9 @@ def merge_dicts(
     for curr_dict in subject_timeseries_list:
         if isinstance(curr_dict, str):
             curr_dict = _convert_pickle_to_dict(curr_dict)
+            deepcopy = False
+        else:
+            deepcopy = True
 
         for subj_id in intersect_subjects:
             if subj_id not in subject_timeseries_merged:
@@ -146,7 +149,8 @@ def merge_dicts(
                         [subject_timeseries_merged[subj_id][curr_run], curr_dict[subj_id][curr_run]]
                     )
                 else:
-                    subject_timeseries_merged[subj_id].update({curr_run: curr_dict[subj_id][curr_run]})
+                    arr = copy.deepcopy(curr_dict[subj_id][curr_run]) if deepcopy else curr_dict[subj_id][curr_run]
+                    subject_timeseries_merged[subj_id].update({curr_run: arr})
 
             # Sort runs lexicographically
             if list(subject_timeseries_merged[subj_id]) != sorted(subject_timeseries_merged[subj_id].keys()):
