@@ -1,7 +1,5 @@
 """Module containing custom exceptions."""
 
-from typing import Any
-
 
 class BIDSQueryError(Exception):
     """
@@ -21,9 +19,6 @@ class BIDSQueryError(Exception):
     additional information on the expected directory structure and entities needed for querying.
     """
 
-    def __init__(self, message: Any) -> None:
-        super().__init__(message)
-
 
 class NoElbowDetectedError(Exception):
     """
@@ -39,9 +34,6 @@ class NoElbowDetectedError(Exception):
       increased to be more conservative.
       - The data lacking a natural clustering structure (exceptionally rare for fMRI data).
     """
-
-    def __init__(self, message: Any) -> None:
-        super().__init__(message)
 
 
 class UnsupportedFileExtensionError(Exception):
