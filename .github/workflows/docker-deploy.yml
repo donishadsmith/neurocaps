@@ -20,5 +20,5 @@ jobs:
 
       - name: Build image and push to Docker Hub
         run: |
-          docker build -t ${{ vars.DOCKER_USERNAME }}/neurocaps:${{  github.ref_name }} -f docker/Dockerfile . &&
-          docker push ${{ vars.DOCKER_USERNAME }}/neurocaps:${{  github.ref_name }}
+          docker build -t ${{ vars.DOCKER_USERNAME }}/neurocaps:${{ github.ref_name }} -f docker/Dockerfile . &&
+          docker push ${{ vars.DOCKER_USERNAME }}/neurocaps:${{ github.ref_name }}
