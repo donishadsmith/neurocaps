@@ -1,0 +1,21 @@
+name: Check Environmental Variables
+
+on:
+  push:
+    branches: [workflow-test]
+    tags:
+      - "*"
+
+jobs:
+  test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check substitution
+        run: echo ${{ github.ref_name }}
+
+      - name: Check substitution with whitespace
+        run: echo ${{  github.ref_name }}
