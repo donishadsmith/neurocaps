@@ -17,6 +17,7 @@ Publicly available classes, functions, exceptions, and types within NeuroCAPs.
 
    neurocaps.exceptions.BIDSQueryError
    neurocaps.exceptions.NoElbowDetectedError
+   neurocaps.exceptions.UnsupportedFileExtensionError
    neurocaps.extraction.TimeseriesExtractor
    neurocaps.analysis.CAP
    neurocaps.analysis.change_dtype
