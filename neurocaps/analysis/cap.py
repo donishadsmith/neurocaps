@@ -65,15 +65,16 @@ class CAP(_CAPGetter):
     ----------
     parcel_approach: :obj:`ParcelApproach`
         Parcellation information with "maps" (path to parcellation file), "nodes" (labels), and "regions"
-        (anatomical regions or networks). This property is also settable.
+        (anatomical regions or networks). This property is also settable (accepts a dictionary or pickle file).
+        Returns a deep copy.
 
     groups: :obj:`dict[str, list[str]]` or :obj:`None`:
-        Mapping of groups names to lists of subject IDs.
+        Mapping of groups names to lists of subject IDs. Returns a deep copy.
 
     subject_table: :obj:`dict[str, str]` or :obj:`None`
         Lookup table mapping subject IDs to their groups. Derived from ``self.groups`` each time ``self.get_caps()``
         is ran. While this property can be modified using its setter, any changes will be overwritten based on
-        ``self.groups`` on the subsequent call to ``self.get_caps()``.
+        ``self.groups`` on the subsequent call to ``self.get_caps()``. Returns a deep copy.
 
     n_clusters: :obj:`int`, :obj:`list[int]`, or :obj:`None`
         An integer or list of integers representing the number of clusters used for k-means.
@@ -94,6 +95,7 @@ class CAP(_CAPGetter):
 
     means: :obj:`dict[str, np.array]` or :obj:`None`
         Group-specific feature means if standardization was applied. Defined after running ``self.get_caps()``.
+        Returns a deep copy.
 
         ::
 
@@ -101,7 +103,7 @@ class CAP(_CAPGetter):
 
     stdev: :obj:`dict[str, np.array]` or :obj:`None`
         Group-specific feature standard deviations if standardization was applied. Defined after running
-        ``self.get_caps()``.
+        ``self.get_caps()``. Returns a deep copy.
 
         ::
 
@@ -121,14 +123,14 @@ class CAP(_CAPGetter):
         is determined by ``self.groups``.
 
     kmeans: :obj:`dict[str, sklearn.cluster.KMeans]` or :obj:`None`
-        Group-specific k-means models. Defined after running ``self.get_caps()``.
+        Group-specific k-means models. Defined after running ``self.get_caps()``. Returns a deep copy.
 
         ::
 
             {"GroupName": sklearn.cluster.KMeans}
 
     caps: :obj:`dict[str, dict[str, np.array]]` or :obj:`None`
-        Cluster centroids for each group and CAP. Defined after running ``self.get_caps()``.
+        Cluster centroids for each group and CAP. Defined after running ``self.get_caps()``. Returns a deep copy.
 
         ::
 
@@ -218,11 +220,11 @@ class CAP(_CAPGetter):
             if not isinstance(groups, dict):
                 raise TypeError(
                     "`groups` must be a dictionary where the keys are the group names and the items "
-                    "correspond to subject ids in the groups."
+                    "correspond to subject IDs in the groups."
                 )
 
             for group_name in groups:
-                assert groups[group_name], f"{group_name} has zero subject ids."
+                assert groups[group_name], f"{group_name} has zero subject IDs."
 
             # Convert ids to strings
             for group in set(groups):

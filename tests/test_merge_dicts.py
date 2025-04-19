@@ -23,6 +23,7 @@ def test_merge_dicts(return_reduced_dicts, return_merged_dicts):
         assert subject_timeseries_merged["merged"]["0"]["run-3"].shape == (100, 100)
         assert len(subject_timeseries_merged["merged"]["1"].keys()) == 3
         assert list(subject_timeseries_merged["merged"]["1"].keys()) == ["run-1", "run-2", "run-3"]
+        assert id(subject_timeseries_merged["merged"]["1"]["run-3"]) != id(subject_timeseries["1"]["run-3"])
 
     all_dicts = merge_dicts(
         [subject_timeseries, subject_timeseries_2],
