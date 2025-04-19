@@ -13,6 +13,13 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.26.9] - 2025-04-19
+### ✨ Enhancement
+- Improves stacking in `merge_dicts` to make less memory intensive for larger datasets.
+- IO operations when pickles are given in `subject_timeseries_list` for `merge_dicts` is only done once per call.
+Consequently, fixes issue if strings are given in `subject_timeseries_list` but doesn't have the "pkl" extension
+since ".pkl", ".pickle", and ".joblib" are recognized.
+
 ## [0.26.8] - 2025-04-18
 ### ♻ Changed
 - Exceptions no longer require message

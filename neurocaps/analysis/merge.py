@@ -1,6 +1,5 @@
 """Function for merging timeseries data across dictionaries."""
 
-import copy
 from typing import Union, Optional
 
 import numpy as np
@@ -105,21 +104,20 @@ def merge_dicts(
     assert isinstance(subject_timeseries_list, list), "`subject_timeseries_list` must be a list."
     assert len(subject_timeseries_list) > 1, "Merging cannot be done with less than two dictionaries or files."
 
-    if filenames is not None and output_dir is None:
+    if filenames and not output_dir:
         LG.warning("`filenames` supplied but no `output_dir` specified. Files will not be saved.")
 
-    if isinstance(subject_timeseries_list[0], dict):
-        subject_timeseries_merged = subject_timeseries_list[0]
-    else:
-        subject_timeseries_merged = _convert_pickle_to_dict(subject_timeseries_list[0])
-
-    # Get common subject ids
-    subject_set = {}
-
+    # Only perform IO operation once
+    new_timeseries_list = []
     for curr_dict in subject_timeseries_list:
         if isinstance(curr_dict, str):
             curr_dict = _convert_pickle_to_dict(curr_dict)
 
+        new_timeseries_list.append(curr_dict)
+
+    # Get common subject ids
+    subject_set = {}
+    for curr_dict in new_timeseries_list:
         if not subject_set:
             subject_set = set(curr_dict)
 
@@ -128,51 +126,48 @@ def merge_dicts(
     # Order subjects
     intersect_subjects = sorted(list(subject_set))
 
-    subject_timeseries_merged = {}
-
-    for curr_dict in subject_timeseries_list:
-        if isinstance(curr_dict, str):
-            curr_dict = _convert_pickle_to_dict(curr_dict)
-            deepcopy = False
-        else:
-            deepcopy = True
-
+    # Collect timeseries array in a temporary dictionary as lists to reduce repeated np.vstack calls
+    temp_dict = {}
+    for curr_dict in new_timeseries_list:
         for subj_id in intersect_subjects:
-            if subj_id not in subject_timeseries_merged:
-                subject_timeseries_merged.update({subj_id: {}})
+            if subj_id not in temp_dict:
+                temp_dict[subj_id] = {}
 
-            # Get run names in the current iteration
-            for curr_run in curr_dict[subj_id]:
-                # If run is in merged dict, stack. If not, add
-                if curr_run in subject_timeseries_merged[subj_id]:
-                    subject_timeseries_merged[subj_id][curr_run] = np.vstack(
-                        [subject_timeseries_merged[subj_id][curr_run], curr_dict[subj_id][curr_run]]
-                    )
+            for curr_run, arr in curr_dict[subj_id].items():
+                if curr_run not in temp_dict[subj_id]:
+                    temp_dict[subj_id][curr_run] = [arr]
                 else:
-                    arr = copy.deepcopy(curr_dict[subj_id][curr_run]) if deepcopy else curr_dict[subj_id][curr_run]
-                    subject_timeseries_merged[subj_id].update({curr_run: arr})
+                    temp_dict[subj_id][curr_run].append(arr)
 
-            # Sort runs lexicographically
-            if list(subject_timeseries_merged[subj_id]) != sorted(subject_timeseries_merged[subj_id].keys()):
-                subject_timeseries_merged[subj_id] = {
-                    run_id: subject_timeseries_merged[subj_id][run_id]
-                    for run_id in sorted(subject_timeseries_merged[subj_id].keys())
-                }
+    # Now use temporary dict to create the final merged dictionary
+    subject_timeseries_merged = {}
+    for subj_id, runs_dict in temp_dict.items():
+        subject_timeseries_merged[subj_id] = {}
+        for curr_run, arr_list in runs_dict.items():
+            # Ensure memory address of numpy array is different when only a single array
+            if len(arr_list) == 1:
+                subject_timeseries_merged[subj_id][curr_run] = arr_list[0].copy()
+            else:
+                subject_timeseries_merged[subj_id][curr_run] = np.vstack(arr_list)
+
+        # Sort runs lexicographically
+        if list(subject_timeseries_merged[subj_id]) != sorted(subject_timeseries_merged[subj_id].keys()):
+            subject_timeseries_merged[subj_id] = {
+                run_id: subject_timeseries_merged[subj_id][run_id]
+                for run_id in sorted(subject_timeseries_merged[subj_id].keys())
+            }
+
+    del temp_dict
 
     modified_dicts = {}
-
+    # Obtain the reduced dictionaries
     if return_reduced_dicts or (save_reduced_dicts and output_dir):
-        for indx, curr_dict in enumerate(subject_timeseries_list):
-            if "pkl" in curr_dict:
-                curr_dict = _convert_pickle_to_dict(curr_dict)
-            else:
-                curr_dict = copy.deepcopy(curr_dict)
+        for indx, curr_dict in enumerate(new_timeseries_list):
+            modified_dicts[f"dict_{indx}"] = {}
 
-            if any([elem in subject_timeseries_merged for elem in curr_dict]):
-                modified_dicts[f"dict_{indx}"] = {}
-                for subj_id in subject_timeseries_merged:
-                    if subj_id in curr_dict:
-                        modified_dicts[f"dict_{indx}"].update({subj_id: curr_dict[subj_id]})
+            for subj_id in subject_timeseries_merged:
+                # Diff memory address from original array
+                modified_dicts[f"dict_{indx}"].update({subj_id: curr_dict[subj_id].copy()})
 
     if return_merged_dict or output_dir:
         modified_dicts["merged"] = subject_timeseries_merged
