@@ -43,7 +43,7 @@ def setup_environment_1(data_dir, get_vars):
 
 
 @pytest.fixture(autouse=False, scope="module")
-def setup_environment_2(setup_environment_1, get_vars):
+def setup_environment_2(get_vars):
     """Modifies the confound files."""
     bids_dir, _ = get_vars
     derivatives_dir = os.path.join(bids_dir, "derivatives")
@@ -61,9 +61,11 @@ def setup_environment_2(setup_environment_1, get_vars):
 
 
 @pytest.fixture(autouse=False, scope="module")
-def setup_environment_3(setup_environment_1, get_vars):
+def setup_environment_3(get_vars):
     """Creates a second subject and creates an additional session for the first."""
     bids_dir, pipeline_name = get_vars
+
+    simulate_confounds(bids_dir, pipeline_name)
 
     # Clear cache
     TimeseriesExtractor._call_layout.cache_clear()
@@ -88,7 +90,8 @@ def setup_environment_3(setup_environment_1, get_vars):
     for file in glob.glob(os.path.join(work_dir, "sub-01", "ses-002", "func", "*")):
         shutil.copyfile(file, file.replace("run-001", "run-002"))
 
-    # Modify confound data
+    # Modify confound data of sub-01 run-002 and sub-02 run-001
+    # Note: setup_environment_2 results in sub-01, run-001 to have fd_array[[0, 10, 11, 28, 29, 38, 39]] = 0.9
     confound_files = glob.glob(
         os.path.join(work_dir, "sub-01", "ses-002", "func", "*run-002*confounds_timeseries.tsv")
     ) + glob.glob(os.path.join(work_dir, "sub-02", "ses-002", "func", "*run-001*confounds_timeseries.tsv"))
@@ -96,12 +99,13 @@ def setup_environment_3(setup_environment_1, get_vars):
     for file in confound_files:
         confound_df = pd.read_csv(file, sep="\t")
         confound_df["cosine_00"] = np.random.rand(40)
+        confound_df["framewise_displacement"] = [0.95] * 10 + [0] * 30
         confound_df.to_csv(file, sep="\t", index=None)
 
 
 # Change directory structure by removing the session ID
 @pytest.fixture(autouse=False, scope="module")
-def setup_environment_4(setup_environment_3, get_vars):
+def setup_environment_4(get_vars):
     """
     Removes session directory, session ID from files, and brain masks. Also removes nested fmriprep directory
     by moving the directory up one level.
@@ -229,6 +233,22 @@ def test_validate_init_params():
     fd_threshold["outlier_percentage"] = 0.5
     fd_threshold.update({"invalid_key": None})
     TimeseriesExtractor._validate_init_params("fd_threshold", fd_threshold)
+
+
+def test_init_mutability():
+    """
+    Ensures mutable objects passed into TimeseriesExtractor initializer cannot be changed, which would skip
+    validation.
+    """
+    confounds = ["cosine*"]
+    fd_threshold = {"threshold": 0.35}
+    dummy_scans = {"auto": True}
+
+    extractor = TimeseriesExtractor(confound_names=confounds, fd_threshold=fd_threshold, dummy_scans=dummy_scans)
+
+    assert not id(confounds) == id(extractor._signal_clean_info["confound_names"])
+    assert not id(fd_threshold) == id(extractor._signal_clean_info["fd_threshold"])
+    assert not id(dummy_scans) == id(extractor._signal_clean_info["dummy_scans"])
 
 
 def test_default_confounds():
@@ -1856,19 +1876,19 @@ def test_subjects_appending_in_dictionary(setup_environment_3, get_vars):
     """
     bids_dir, pipeline_name = get_vars
 
-    extractor = TimeseriesExtractor()
+    extractor = TimeseriesExtractor(fd_threshold=0.94)
 
     extractor.get_bold(bids_dir=bids_dir, task="rest", session="002", pipeline_name=pipeline_name, tr=1.2)
     assert extractor.subject_timeseries["01"]["run-001"].shape == (40, 400)
-    assert extractor.subject_timeseries["01"]["run-002"].shape == (40, 400)
-    assert extractor.subject_timeseries["02"]["run-001"].shape == (40, 400)
+    assert extractor.subject_timeseries["01"]["run-002"].shape == (30, 400)
+    assert extractor.subject_timeseries["02"]["run-001"].shape == (30, 400)
     assert ["run-001", "run-002"] == list(extractor.subject_timeseries["01"])
     assert ["run-001"] == list(extractor.subject_timeseries["02"])
-    assert not np.array_equal(
-        extractor.subject_timeseries["01"]["run-001"], extractor.subject_timeseries["01"]["run-002"]
+    assert not np.allclose(
+        extractor.subject_timeseries["01"]["run-001"][10:], extractor.subject_timeseries["01"]["run-002"], atol=0.0001
     )
-    assert not np.array_equal(
-        extractor.subject_timeseries["02"]["run-001"], extractor.subject_timeseries["01"]["run-002"]
+    assert not np.allclose(
+        extractor.subject_timeseries["02"]["run-001"], extractor.subject_timeseries["01"]["run-002"], atol=0.0001
     )
 
     msg = (
@@ -1915,18 +1935,20 @@ def test_runs(get_vars, runs):
     # Check run with just the "maps" defined
     parcel_approach = {"Custom": {"maps": os.path.join(os.path.dirname(__file__), "data", "HCPex.nii.gz")}}
 
-    extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
+    extractor = TimeseriesExtractor(parcel_approach=parcel_approach, fd_threshold=0.94)
 
     extractor.get_bold(bids_dir=bids_dir, task="rest", session="002", runs=runs, pipeline_name=pipeline_name, tr=1.2)
 
     if runs == "001":
         assert ["01", "02"] == list(extractor.subject_timeseries)
         assert extractor.subject_timeseries["01"]["run-001"].shape == (40, 426)
-        assert extractor.subject_timeseries["02"]["run-001"].shape == (40, 426)
+        assert extractor.subject_timeseries["02"]["run-001"].shape == (30, 426)
         assert ["run-001"] == list(extractor.subject_timeseries["01"])
         assert ["run-001"] == list(extractor.subject_timeseries["02"])
-        assert not np.array_equal(
-            extractor.subject_timeseries["02"]["run-001"], extractor.subject_timeseries["01"]["run-001"]
+        assert not np.allclose(
+            extractor.subject_timeseries["02"]["run-001"],
+            extractor.subject_timeseries["01"]["run-001"][10:],
+            atol=0.0001,
         )
     else:
         assert ["01"] == list(extractor.subject_timeseries)

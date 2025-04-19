@@ -61,7 +61,7 @@ def _check_confound_names(high_pass, user_confounds, n_acompcor_separate):
 
     LG.info(f"Confound regressors to be used if available: {', '.join(confound_names)}.")
 
-    return confound_names
+    return confound_names.copy()
 
 
 def _remove_a_comp_cor(confound_names, user_confounds, n):

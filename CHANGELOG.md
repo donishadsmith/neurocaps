@@ -13,6 +13,16 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.26.10] - 2025-04-19
+- Final round to address mutability
+
+### ♻ Changed
+- For `TimeseriesExtractor`, certain mutable parameters such as `confound_names`, `fd_threshold`, and `dummy_scans` are
+copied to prevent un-intentional user changes that mutate these parameters without validation.
+- Also for `TimeseriesExtractor` and `CAP` certain properties return a deep copy. However, large properties such as
+`subject_timeseries` and `concatenated_timeseries` return just a reference to prevent excessive memory usage.
+
+
 ## [0.26.9] - 2025-04-19
 ### ✨ Enhancement
 - Improves stacking in `merge_dicts` to make less memory intensive for larger datasets.

@@ -27,7 +27,7 @@ class _TimeseriesExtractorGetter:
 
     @property
     def parcel_approach(self) -> ParcelApproach:
-        return self._parcel_approach
+        return copy.deepcopy(self._parcel_approach)
 
     @parcel_approach.setter
     def parcel_approach(self, parcel_dict: Union[ParcelConfig, ParcelApproach, str]) -> None:
@@ -35,7 +35,7 @@ class _TimeseriesExtractorGetter:
 
     @property
     def signal_clean_info(self) -> Union[dict[str, Union[bool, int, float, str]], None]:
-        return self._signal_clean_info
+        return copy.deepcopy(self._signal_clean_info)
 
     ### Does not exists upon initialization of Timeseries Extractor
 
@@ -55,6 +55,7 @@ class _TimeseriesExtractorGetter:
 
     # Gets initialized in TimeSeriesExtractor.get_bold(), gets populated when
     # TimeseriesExtractor._timeseries_aggregator gets called in TimeseriesExtractor._extract_timeseries
+    # Just return the reference since deepcopy could result in high memory usage
     @property
     def subject_timeseries(self) -> Union[SubjectTimeseries, None]:
         return getattr(self, "_subject_timeseries", None)
@@ -78,6 +79,7 @@ class _TimeseriesExtractorGetter:
     def subject_timeseries(self) -> None:
         del self._subject_timeseries
 
+    # Return reference
     @property
     def qc(self) -> Union[dict, None]:
         return getattr(self, "_qc", None)

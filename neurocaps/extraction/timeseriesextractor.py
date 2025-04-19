@@ -185,10 +185,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
     parcel_approach: :obj:`ParcelApproach`
         Parcellation information with "maps" (path to parcellation file), "nodes" (labels), and "regions"
-        (anatomical regions or networks).
+        (anatomical regions or networks). Returns a deep copy.
 
     signal_clean_info: :obj:`dict[str, bool | int | float | str]` or :obj:`None`
-        Dictionary containing signal cleaning parameters.
+        Dictionary containing signal cleaning parameters. Returns a deep copy.
 
     task_info: :obj:`dict[str, str | int]` or :obj:`None`
         Dictionary containing all task-related information such. Defined after running ``self.get_bold()``.
@@ -203,7 +203,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     subject_timeseries: :obj:`SubjectTimeseries` or :obj:`None`
         A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a NumPy array.
         Can be deleted using ``del self.subject_timeseries``. Defined after running ``self.get_bold()``.
-        This property is also settable.
+        This property is also settable (accepts a dictionary or pickle file).
 
     qc: :obj:`dict` or :obj:`None`
         A dictionary reporting quality control, which maps subject IDs to their run IDs and information related to the
@@ -307,8 +307,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             "use_confounds": use_confounds,
             "confound_names": confound_names,
             "n_acompcor_separate": n_acompcor_separate,
-            "dummy_scans": dummy_scans,
-            "fd_threshold": fd_threshold,
+            "dummy_scans": dummy_scans.copy() if isinstance(dummy_scans, dict) else dummy_scans,
+            "fd_threshold": fd_threshold.copy() if isinstance(fd_threshold, dict) else fd_threshold,
             "dtype": dtype,
         }
 

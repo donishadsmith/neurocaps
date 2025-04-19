@@ -26,12 +26,12 @@ class _CAPGetter:
 
     @property
     def groups(self) -> Union[dict[str, list[str]], None]:
-        return self._groups
+        return copy.deepcopy(self._groups)
 
     ### Attributes exist when CAP.get_caps() used
     @property
     def subject_table(self) -> Union[dict[str, str], None]:
-        return getattr(self, "_subject_table", None)
+        return copy.deepcopy(getattr(self, "_subject_table", None))
 
     @subject_table.setter
     def subject_table(self, subject_dict: dict[str, str]) -> None:
@@ -65,11 +65,11 @@ class _CAPGetter:
 
     @property
     def means(self) -> Union[dict[str, NDArray[np.floating]], None]:
-        return getattr(self, "_mean_vec", None)
+        return copy.deepcopy(getattr(self, "_mean_vec", None))
 
     @property
     def stdev(self) -> Union[dict[str, NDArray[np.floating]], None]:
-        return getattr(self, "_stdev_vec", None)
+        return copy.deepcopy(getattr(self, "_stdev_vec", None))
 
     @property
     def concatenated_timeseries(self) -> Union[dict[str, NDArray[np.floating]], None]:
@@ -81,11 +81,11 @@ class _CAPGetter:
 
     @property
     def kmeans(self) -> Union[dict[str, KMeans], None]:
-        return getattr(self, "_kmeans", None)
+        return copy.deepcopy(getattr(self, "_kmeans", None))
 
     @property
     def caps(self) -> Union[dict[str, dict[str, NDArray[np.floating]]], None]:
-        return getattr(self, "_caps", None)
+        return copy.deepcopy(getattr(self, "_caps", None))
 
     @property
     def cluster_scores(self) -> Union[dict[str, Union[str, dict[str, float]]], None]:

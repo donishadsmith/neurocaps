@@ -32,6 +32,18 @@ def remove_files(tmp_dir):
     [os.remove(x) for x in nii_files]
 
 
+def test_init_mutability():
+    """
+    Verifies that group is immutable since the initializer in CAP should create a new list.
+    """
+
+    groups = {"A": ["1"], "B": ["2"]}
+
+    cap_analysis = CAP(groups=groups)
+
+    assert not id(cap_analysis._groups) != id(groups)
+
+
 @pytest.mark.parametrize("standardize", [True, False])
 def test_without_groups_and_without_cluster_selection(standardize):
     """
