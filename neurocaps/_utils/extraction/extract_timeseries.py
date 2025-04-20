@@ -39,17 +39,15 @@ class _Data:
     # Event condition scan indices and qc information for condition
     scans: list[int] = field(default_factory=list)
     n_total_scans: Union[int, None] = None
-    n_censored_scans: int = 0
-    n_interpolated_scans: int = 0
+    n_censored_scans: Union[int, None] = None
+    n_interpolated_scans: Union[int, None] = None
     # Avoid timeseries extraction
     skip_run: bool = False
     # Stats for qc
     mean_fd: Union[int, None] = None
     std_fd: Union[int, None] = None
-    high_motion_len_mean: int = 0
-    high_motion_len_std: int = 0
-    # Report QC
-    produce_qc_report: bool = False
+    high_motion_len_mean: Union[float, None] = None
+    high_motion_len_std: Union[float, None] = None
     # Percentage of volumes that exceed fd threshold
     vols_exceed_percent: Union[float, None] = None
 
@@ -180,7 +178,7 @@ def _extract_timeseries(
 
         # Assess framewise displacement
         col_name = "framewise_displacement"
-        if data.fd_thresh is not None and data.files["confound"] and col_name in data.confound_df.columns:
+        if data.fd_thresh and data.files["confound"] and col_name in data.confound_df.columns:
             data.censored_frames, data.fd_array_len, data.skip_run = _compute_censored_frames(data, LG)
 
             # All frames exceed threshold
@@ -193,9 +191,7 @@ def _extract_timeseries(
             if not data.condition:
                 data.mean_fd, data.std_fd, data.high_motion_len_mean, data.high_motion_len_std = _get_motion_stats(data)
 
-            # Flag to produce qc report
-            data.produce_qc_report = True
-        elif data.fd_thresh is not None and data.files["confound"] and col_name not in data.confound_df.columns:
+        elif data.fd_thresh and data.files["confound"] and col_name not in data.confound_df.columns:
             LG.warning(
                 f"{data.head}" + "`fd_threshold` specified but 'framewise_displacement' column not "
                 "found in the confound tsv file. Removal of volumes after nuisance regression will not be "
@@ -217,7 +213,7 @@ def _extract_timeseries(
             # Get condition indices; removes any scans in dummy volumes
             data.scans, data.n_total_scans = _get_condition_indices(data, condition_df)
 
-            if data.censored_frames or data.produce_qc_report:
+            if data.censored_frames or data.fd_thresh:
                 # Use fd array length to determine that an index is not out of bounds due to tr shift
                 data.scans = _validate_scan_bounds(data, data.fd_array_len, LG)
                 # Get stats
@@ -227,6 +223,8 @@ def _extract_timeseries(
                     # Removing censored or non-interpolated scan indxs; n_censored_condition_indxs is all indxs flagged
                     # regardless if indx will be interpolated
                     data.scans, data.n_censored_scans, data.n_interpolated_scans = filter_censored_scan_indices(data)
+                else:
+                    data.n_censored_scans, data.n_interpolated_scans = 0, 0
 
             if not data.scans:
                 LG.warning(
@@ -267,9 +265,7 @@ def _extract_timeseries(
         else:
             subject_timeseries[subj_id].update({run_id: timeseries})
 
-            # Report framewise displacement quality control
-            if data.produce_qc_report:
-                qc[subj_id].update({run_id: _report_qc(data)})
+            qc[subj_id].update({run_id: _report_qc(data)})
 
     if not subject_timeseries[subj_id]:
         LG.warning(f"{data.head.split(' | RUN:')[0]}] Timeseries Extraction Skipped: No runs were extracted.")
@@ -857,18 +853,22 @@ def _standardize(timeseries, return_parameters=False):
 
 def _report_qc(data):
     """Determines the number of frames that were scrubbed or interpolated and includes the stats of flagged frames."""
+    report_val = lambda val: val if val is not None else math.nan
+
     qc = {
-        "mean_fd": data.mean_fd,
-        "std_fd": data.std_fd,
-        "frames_scrubbed": 0,
-        "frames_interpolated": 0,
-        "mean_high_motion_length": data.high_motion_len_mean,
-        "std_high_motion_length": data.high_motion_len_std,
+        "mean_fd": report_val(data.mean_fd),
+        "std_fd": report_val(data.std_fd),
+        "frames_scrubbed": report_val(data.std_fd),
+        "frames_interpolated": report_val(data.std_fd),
+        "mean_high_motion_length": report_val(data.high_motion_len_mean),
+        "std_high_motion_length": report_val(data.high_motion_len_std),
+        "n_dummy_scans": data.dummy_vols if data.signal_clean_info["dummy_scans"] else math.nan,
     }
 
-    if not data.censored_frames:
+    if not data.fd_thresh:
         return qc
 
+    # QC report specific to the frames censored in the condition instead of overall censored frames
     if not data.condition:
         n_scrubbed_frames = len(data.censored_frames)
         n_interpolated_frames = n_scrubbed_frames - len(data.censored_ends) if data.interpolate else 0

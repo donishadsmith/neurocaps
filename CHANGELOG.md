@@ -13,6 +13,13 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.27.0] - 2025-04-20
+### 🚀 New/Added
+- To the QC report, added the number of dummy volumes, which is useful if the "auto" option is used
+### ♻ Changed
+- To the QC report, if either ``fd_threshold`` or ``dummy_scans`` is None
+- 0 is now treated as Falsy for ``fd_threshold`` since this is an impractical value anyway
+
 ## [0.26.10] - 2025-04-19
 - Final round to address mutability
 
@@ -21,7 +28,6 @@ improvements/enhancements. All fixes and modifications are backwards compatible.
 copied to prevent un-intentional user changes that mutate these parameters without validation.
 - Also for `TimeseriesExtractor` and `CAP` certain properties return a deep copy. However, large properties such as
 `subject_timeseries` and `concatenated_timeseries` return just a reference to prevent excessive memory usage.
-
 
 ## [0.26.9] - 2025-04-19
 ### ✨ Enhancement

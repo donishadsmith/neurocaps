@@ -156,7 +156,7 @@ property. The ``TimeseriesExtractor`` class has several
 
 Reporting Quality Control Metrics
 ---------------------------------
-Only censored frames with valid data on both sides are interpolated, while censored frames at the edge of the
+**Note:** Only censored frames with valid data on both sides are interpolated, while censored frames at the edge of the
 timeseries (including frames that border censored edges) are always scrubbed and counted in "Frames_Scrubbed".
 Additionally, `scipy's Cubic Spline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicSpline.html>`_
 is used to only interpolate censored frames.

@@ -775,10 +775,9 @@ class CAP(_CAPGetter):
                 # There is only one 1 -> 2 transition
                 transition_probability = 1 / 3
 
-            .. note::
-                In the supplementary material for Yang et al., the mathematical relationship between temporal fraction,
-                counts, and persistence is ``temporal_fraction = (persistence * counts)/total_volumes``. If persistence
-                has been converted into time units (seconds), then ``temporal_fraction = (persistence * counts) / (total_volumes * tr)``.
+        .. note:: In the supplementary material for Yang et al., the mathematical relationship between temporal fraction,\
+        counts, and persistence is ``temporal_fraction = (persistence * counts)/total_volumes``. If persistence\
+        has been converted into time units (seconds), then ``temporal_fraction = (persistence * counts) / (total_volumes * tr)``.
 
         Parameters
         ----------
@@ -898,13 +897,13 @@ class CAP(_CAPGetter):
         | ...        | ...          | ...   | ...   | ...   | ...   | ...   |
         +------------+--------------+-------+-------+-------+-------+-------+
 
-        **Transition Probability:** For `"transition_probability"`, each group has a separate dataframe to containing
+        **Transition Probability:** For "transition_probability", each group has a separate dataframe to containing
         the CAP transitions for each group.
 
         - **Group A Transition Probability:** Stored in ``df_dict["transition_probability"]["A"]``
         - **Group B Transition Probability:** Stored in ``df_dict["transition_probability"]["B"]``
 
-        **The resulting `"transition_probability"` for Group A**:
+        **The resulting "transition_probability" for Group A**:
 
         +------------+---------+-------+-------+-------+-------+-------+-------+
         | Subject_ID | Group   | Run   |  1.1  |  1.2  |  1.3  | 2.1   | ...   |
@@ -914,7 +913,7 @@ class CAP(_CAPGetter):
         | ...        | ...     | ...   | ...   | ...   | ...   | ...   | ...   |
         +------------+---------+-------+-------+-------+-------+-------+-------+
 
-        **The resulting `"transition_probability"` for Group B**:
+        **The resulting "transition_probability" for Group B**:
 
         +------------+---------+-------+-------+-------+-------+-------+
         | Subject_ID | Group   | Run   |  1.1  |  1.2  |  2.1  | ...   |

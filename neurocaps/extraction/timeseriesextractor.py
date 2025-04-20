@@ -206,10 +206,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         This property is also settable (accepts a dictionary or pickle file).
 
     qc: :obj:`dict` or :obj:`None`
-        A dictionary reporting quality control, which maps subject IDs to their run IDs and information related to the
-        number of frames scrubbed and interpolated as well as the mean and standard deviation of continuous high
-        motion segments. Statistics for each subject's run are only reported when ``fd_threshold`` is specified, a valid
-        confound tsv file containing the "framewise_displacement" column is found, and the run is not skipped.
+        A dictionary reporting quality control, which maps subject IDs to their run IDs and information related to
+        framewise displacement and dummy scans.
 
         ::
 
@@ -1014,8 +1012,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         """
         Report Quality Control Information.
 
-        Converts per-subject, per-run quality control metrics (frame scrubbing and interpolation) stored in
-        ``self.qc`` dictionary to a pandas DataFrame for analysis and reporting.
+        Converts per-subject, per-run quality control metrics (related to framewise displacement and dummy volumes)
+        stored in ``self.qc`` dictionary to a pandas DataFrame for analysis and reporting.
+
+        .. note:: In versions >= 0.27.0, "NaN" is used to denote a value is not applicable.
 
         Parameters
         ----------
@@ -1033,19 +1033,19 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         -------
         pandas.Dataframe
             Pandas dataframe containing the colums: "Subject_ID", "Run", "Frames_Scrubbed", "Frames_Interpolated",
-            "Mean_High_Motion_Length", "Std_High_Motion_Length", "Mean_FD", "Std_FD",
+            "Mean_High_Motion_Length", "Std_High_Motion_Length", "Mean_FD", "Std_FD", and "N_Dummy_Scans".
 
         Important
         ---------
-        **Reporting**: Statistics for each subject's run are only reported when ``fd_threshold`` is specified, a valid
-        confound tsv file containing the "framewise_displacement" column is found, and the run is not skipped.
-        Additionally, all reported statistics exclude any dummy volumes, as they are calculated after dummy volumes are
-        removed from the analysis.
+        **Reporting**: Statistics for each subject's run are specific to the specified ``fd_threshold`` and
+        ``dummy_scans``. Additionally, all reported statistics for framewise displacement are specific to steady-state
+        volumes (if ``dummy_scans`` is not None), as they are only computed after accounting for dummy volumes.
 
-        **Note** that if a ``condition`` was specified in ``self.get_bold()``, all the reported statistics are specific
-        to the frames assigned to the condition (as determined by the equation in "Extraction of Task Conditions"
-        in the documentation of ``self.get_bold()``), which are treated as one continuous event window for computational
-        simplicity.
+        **Note:** If ``condition`` was specified in ``self.get_bold()``, all the reported statistics related to
+        framewise displacement are specific to the frames assigned to the condition (as determined by the equation in
+        "Extraction of Task Conditions" in the documentation of ``self.get_bold()``), which are treated as one
+        continuous event window for computational simplicity. The number of reported dummy volumes is not adjusted
+        for the condition.
 
         **Mean & Standard Deviation of Framewise Displacement:** "Mean_FD" and "Std_FD" represent the statistics prior
         to scrubbing or interpolating.
@@ -1054,7 +1054,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         instance, 2 scrubbed frames and 3 interpolated frames means that 3 frames were interpolated while 2 were
         scrubbed due to excessive motion.
 
-        **Note** that only censored frames with bounded by non-censored frames on both sides are interpolated, while
+        **Note:** Only censored frames with bounded by non-censored frames on both sides are interpolated, while
         censored frames at the edge of the timeseries (including frames that border censored edges) are always scrubbed
         and counted in "Frames_Scrubbed". For instance, if the full sample mask is computed as ``[0, 0, 1, 0, 0, 1, 0]``
         where "0" are censored and "1" is not censored, then when no interpolation is requested, then "Frames_Scrubbed"
@@ -1062,8 +1062,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         and "Frames_Interpolated" would be 2 (indexes 3 and 4).
 
         **High Motion Length Computation**: "Mean_High_Motion_Length" and "Std_High_Motion_Length" represent the average
-        length and population standard deviation of contiguous segments of frames flagged for high-motion frames,
-        respectively.
+        length and population standard deviation of consecutive frames flagged for high-motion frames, respectively.
         """
         save_filename = self._prepare_output_file(output_dir, filename, prop_name="_qc", call="report_qc")
         assert self._qc, "No quality control information to report."
@@ -1079,6 +1078,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 "Frames_Interpolated",
                 "Mean_High_Motion_Length",
                 "Std_High_Motion_Length",
+                "N_Dummy_Scans",
             ]
         )
         for subject in self._qc:
@@ -1092,6 +1092,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                     self._qc[subject][run]["frames_interpolated"],
                     self._qc[subject][run]["mean_high_motion_length"],
                     self._qc[subject][run]["std_high_motion_length"],
+                    self._qc[subject][run]["n_dummy_scans"],
                 ]
 
         if output_dir:

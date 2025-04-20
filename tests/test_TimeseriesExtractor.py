@@ -1,4 +1,4 @@
-import copy, glob, os, re, shutil, sys
+import copy, glob, math, os, re, shutil, sys
 import joblib, pytest, numpy as np, pandas as pd
 
 from neurocaps.extraction import TimeseriesExtractor
@@ -482,6 +482,9 @@ def test_basic_extraction(get_vars, parcel_approach, use_confounds, name, caplog
     else:
         assert not msg in caplog.text
 
+    for i in extractor.qc["01"]["run-001"]:
+        assert math.isnan(extractor.qc["01"]["run-001"][i])
+
     # No error; Testing __str__
     print(extractor)
 
@@ -495,6 +498,9 @@ def test_basic_extraction(get_vars, parcel_approach, use_confounds, name, caplog
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, condition="rest")
     assert extractor.subject_timeseries["01"]["run-001"].shape == (26, shape)
 
+    for i in extractor.qc["01"]["run-001"]:
+        assert math.isnan(extractor.qc["01"]["run-001"][i])
+
     # Task condition won't issue warning
     extractor.get_bold(
         bids_dir=bids_dir,
@@ -504,6 +510,9 @@ def test_basic_extraction(get_vars, parcel_approach, use_confounds, name, caplog
         condition="active",
     )
     assert extractor.subject_timeseries["01"]["run-001"].shape == (20, shape)
+
+    for i in extractor.qc["01"]["run-001"]:
+        assert math.isnan(extractor.qc["01"]["run-001"][i])
 
 
 def test_missing_confound_messages(get_vars, caplog):
@@ -557,17 +566,33 @@ def test_report_qc(tmp_dir, get_vars):
     assert extractor.qc["01"]["run-001"]["frames_interpolated"] == 0
     assert extractor.qc["01"]["run-001"]["mean_high_motion_length"] == 0
     assert extractor.qc["01"]["run-001"]["std_high_motion_length"] == 0
+    assert math.isnan(extractor.qc["01"]["run-001"]["n_dummy_scans"])
 
     extractor.report_qc(tmp_dir.name, "test_qc_report.csv")
     filename = os.path.join(tmp_dir.name, "test_qc_report.csv")
-    assert os.path.exists(filename)
 
     os.remove(filename)
 
-    # No report when fd_threshold is None
-    extractor = TimeseriesExtractor(fd_threshold=None)
+    # Nan when None
+    extractor = TimeseriesExtractor(fd_threshold=None, dummy_scans=None)
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
-    assert not extractor.qc
+
+    for i in extractor.qc["01"]["run-001"]:
+        assert math.isnan(extractor.qc["01"]["run-001"][i])
+
+    # Nan when 0
+    extractor = TimeseriesExtractor(fd_threshold=0, dummy_scans=0)
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
+
+    for i in extractor.qc["01"]["run-001"]:
+        assert math.isnan(extractor.qc["01"]["run-001"][i])
+
+    # Nan when False
+    extractor = TimeseriesExtractor(fd_threshold=False, dummy_scans=False)
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
+
+    for i in extractor.qc["01"]["run-001"]:
+        assert math.isnan(extractor.qc["01"]["run-001"][i])
 
 
 def test_dtype(get_vars):
@@ -1216,22 +1241,28 @@ def test_dummy_scans(get_vars, use_confounds):
 
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
     assert extractor.subject_timeseries["01"]["run-001"].shape == (35, 400)
+    assert extractor.qc["01"]["run-001"]["n_dummy_scans"] == 5
+
     # No fd censoring was done so everything should be None
-    assert not extractor.qc
-    assert not extractor.qc
+    for i in extractor.qc["01"]["run-001"]:
+        if i != "n_dummy_scans":
+            assert math.isnan(extractor.qc["01"]["run-001"][i])
 
     no_condition = copy.deepcopy(extractor.subject_timeseries["01"]["run-001"])
     # Task condition
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, condition="rest")
     assert extractor.subject_timeseries["01"]["run-001"].shape == (25, 400)
+    assert extractor.qc["01"]["run-001"]["n_dummy_scans"] == 5
+
+    # No fd censoring was done so everything should be None
+    for i in extractor.qc["01"]["run-001"]:
+        if i != "n_dummy_scans":
+            assert math.isnan(extractor.qc["01"]["run-001"][i])
 
     condition_timeseries = copy.deepcopy(extractor.subject_timeseries["01"]["run-001"])
     scan_list = get_scans(bids_dir, condition="rest", dummy_scans=5)
     # check if extracted from correct indices to ensure offsetting _extract_timeseries is correct
     assert np.allclose(_standardize(no_condition[scan_list, :]), condition_timeseries, atol=0.00001)
-    # No fd censoring was done so everything should be None
-    assert not extractor.qc
-    assert not extractor.qc
 
 
 @pytest.mark.parametrize("dummy_scans", [{"auto": True}, "auto"])
@@ -1248,6 +1279,7 @@ def test_dummy_scans_auto(get_vars, dummy_scans):
 
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
     assert extractor.subject_timeseries["01"]["run-001"].shape == (40, 400)
+    assert extractor.qc["01"]["run-001"]["n_dummy_scans"] == 0
 
     add_non_steady(bids_dir, pipeline_name, 3)
 
@@ -1255,6 +1287,7 @@ def test_dummy_scans_auto(get_vars, dummy_scans):
 
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
     assert extractor.subject_timeseries["01"]["run-001"].shape == (37, 400)
+    assert extractor.qc["01"]["run-001"]["n_dummy_scans"] == 3
 
     reset_non_steady(bids_dir, pipeline_name)
 
@@ -1263,6 +1296,7 @@ def test_dummy_scans_auto(get_vars, dummy_scans):
     # Task condition
     extractor.get_bold(bids_dir=bids_dir, task="rest", condition="rest", pipeline_name=pipeline_name, tr=1.2)
     assert extractor.subject_timeseries["01"]["run-001"].shape == (24, 400)
+    assert extractor.qc["01"]["run-001"]["n_dummy_scans"] == 6
 
     reset_non_steady(bids_dir, pipeline_name)
 
@@ -1280,6 +1314,7 @@ def test_dummy_scans_using_auto_with_min_and_max(get_vars):
 
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
     assert extractor.subject_timeseries["01"]["run-001"].shape == (36, 400)
+    assert extractor.qc["01"]["run-001"]["n_dummy_scans"] == 4
 
     reset_non_steady(bids_dir, pipeline_name)
 
@@ -1289,6 +1324,7 @@ def test_dummy_scans_using_auto_with_min_and_max(get_vars):
 
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
     assert extractor.subject_timeseries["01"]["run-001"].shape == (34, 400)
+    assert extractor.qc["01"]["run-001"]["n_dummy_scans"] == 6
 
     reset_non_steady(bids_dir, pipeline_name)
 
@@ -1297,6 +1333,7 @@ def test_dummy_scans_using_auto_with_min_and_max(get_vars):
 
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
     assert extractor.subject_timeseries["01"]["run-001"].shape == (36, 400)
+    assert extractor.qc["01"]["run-001"]["n_dummy_scans"] == 4
 
     reset_non_steady(bids_dir, pipeline_name)
 
@@ -1321,6 +1358,7 @@ def test_dummy_scans_with_fd_censoring(get_vars):
     assert extractor_fd_and_dummy_censor.qc["01"]["run-001"]["frames_interpolated"] == 0
     assert extractor_fd_and_dummy_censor.qc["01"]["run-001"]["mean_high_motion_length"] == 1
     assert extractor_fd_and_dummy_censor.qc["01"]["run-001"]["std_high_motion_length"] == 0
+    assert extractor_fd_and_dummy_censor.qc["01"]["run-001"]["n_dummy_scans"] == 5
 
     extractor_dummy_only = TimeseriesExtractor(dummy_scans=5, detrend=True)
 
@@ -1348,6 +1386,7 @@ def test_dummy_scans_with_fd_censoring(get_vars):
     assert extractor_fd_and_dummy_censor.qc["01"]["run-001"]["frames_interpolated"] == 0
     assert extractor_fd_and_dummy_censor.qc["01"]["run-001"]["mean_high_motion_length"] == 1
     assert extractor_fd_and_dummy_censor.qc["01"]["run-001"]["std_high_motion_length"] == 0
+    assert extractor_fd_and_dummy_censor.qc["01"]["run-001"]["n_dummy_scans"] == 5
 
     scan_list = get_scans(bids_dir, "rest", dummy_scans=5, fd=True)
     assert np.allclose(
@@ -1373,6 +1412,7 @@ def test_dummy_scans_with_fd_censoring(get_vars):
     assert extractor_fd_and_dummy_censor.qc["01"]["run-001"]["frames_interpolated"] == 0
     assert extractor_fd_and_dummy_censor.qc["01"]["run-001"]["mean_high_motion_length"] == 0
     assert extractor_fd_and_dummy_censor.qc["01"]["run-001"]["std_high_motion_length"] == 0
+    assert extractor_fd_and_dummy_censor.qc["01"]["run-001"]["n_dummy_scans"] == 5
 
     scan_list = get_scans(bids_dir, "active", dummy_scans=5, fd=True)
     assert np.allclose(
@@ -1401,7 +1441,10 @@ def test_extended_censoring(get_vars, fd_threshold):
 
     extractor_not_censored = TimeseriesExtractor(detrend=True)
     extractor_not_censored.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
-    assert not extractor_not_censored.qc
+
+    for i in extractor_not_censored.qc["01"]["run-001"]:
+        if i != "n_dummy_scans":
+            assert math.isnan(extractor_not_censored.qc["01"]["run-001"][i])
 
     if fd_threshold["threshold"] == 0.35:
         expected_shape = 37
@@ -1472,6 +1515,8 @@ def test_extended_censor_with_dummy_scans(get_vars):
     assert extractor_censored.qc["01"]["run-001"]["frames_interpolated"] == 0
     assert extractor_censored.qc["01"]["run-001"]["mean_high_motion_length"] == 5
     assert extractor_censored.qc["01"]["run-001"]["std_high_motion_length"] == 0
+    assert extractor_censored.qc["01"]["run-001"]["n_dummy_scans"] == 3
+
     censored_data = copy.deepcopy(extractor_censored.subject_timeseries)
 
     # Remove dummy scans to ensure nuisance regression is the same

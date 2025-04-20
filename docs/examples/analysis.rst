@@ -46,11 +46,11 @@ in the ``CAP`` class and this information is used by all methods in the class. T
 
     .. code-block:: none
 
-        2025-04-15 18:14:40,114 neurocaps.analysis.cap [INFO] No groups specified. Using default group 'All Subjects' containing all subject IDs from `subject_timeseries`. The `self.groups` dictionary will remain fixed unless the `CAP` class is re-initialized.
+        2025-04-20 18:14:40,114 neurocaps.analysis.cap [INFO] No groups specified. Using default group 'All Subjects' containing all subject IDs from `subject_timeseries`. The `self.groups` dictionary will remain fixed unless the `CAP` class is re-initialized.
         Collecting Subject Timeseries Data [GROUP: All Subjects]: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10/10 [00:01<00:00, 668.15it/s]
         Concatenating Timeseries Data Per Group: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10/10 [00:01<00:00, 178.01it/s]
         Clustering [GROUP: All Subjects]: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 9/9 [00:00<00:00, 20.38it/s]
-        2025-04-15 18:15:07,367 neurocaps.analysis.cap [INFO] [GROUP: All Subjects | METHOD: elbow] Optimal cluster size is 5.
+        2025-04-20 18:15:07,367 neurocaps.analysis.cap [INFO] [GROUP: All Subjects | METHOD: elbow] Optimal cluster size is 5.
 
 .. image:: embed/All_Subjects_elbow.png
     :width: 600
@@ -108,7 +108,7 @@ Performing CAPs on Groups
     .. code-block:: none
 
         Clustering [GROUP: A]: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 19/19 [00:01<00:00, 18.71it/s]
-        2025-04-15 18:15:53,981 neurocaps.analysis.cap [INFO] [GROUP: A | METHOD: silhouette] Optimal cluster size is 2.
+        2025-04-20 18:15:53,981 neurocaps.analysis.cap [INFO] [GROUP: A | METHOD: silhouette] Optimal cluster size is 2.
 
 .. image:: embed/A_silhouette.png
     :width: 600
@@ -118,7 +118,7 @@ Performing CAPs on Groups
     .. code-block:: none
 
         Clustering [GROUP: B]: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 19/19 [00:01<00:00, 12.48it/s]
-        2025-04-15 18:15:55,236 neurocaps.analysis.cap [INFO] [GROUP: B | METHOD: silhouette] Optimal cluster size is 2.
+        2025-04-20 18:15:55,236 neurocaps.analysis.cap [INFO] [GROUP: B | METHOD: silhouette] Optimal cluster size is 2.
 
 .. image:: embed/B_silhouette.png
     :width: 600
@@ -183,7 +183,7 @@ Plotting CAPs
 
     .. code-block:: none
 
-        2025-04-15 18:16:21,487 neurocaps.analysis.cap [INFO] No groups specified. Using default group 'All Subjects' containing all subject IDs from `subject_timeseries`. The `self.groups` dictionary will remain fixed unless the `CAP` class is re-initialized.
+        2025-04-20 18:16:21,487 neurocaps.analysis.cap [INFO] No groups specified. Using default group 'All Subjects' containing all subject IDs from `subject_timeseries`. The `self.groups` dictionary will remain fixed unless the `CAP` class is re-initialized.
 
 
 .. image:: embed/All_Subjects_CAPs_outer_product_heatmap-regions.png
