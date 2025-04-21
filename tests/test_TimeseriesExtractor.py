@@ -1,6 +1,7 @@
 import copy, glob, math, os, re, shutil, sys
 import joblib, pytest, numpy as np, pandas as pd
 
+import neurocaps._utils.extraction.extract_timeseries as et
 from neurocaps.extraction import TimeseriesExtractor
 from neurocaps._utils import _standardize
 
@@ -813,11 +814,10 @@ def test_confounds(get_vars, confound_type):
         )
 
     if confound_type == "testing_confounds":
-        from neurocaps._utils.extraction.extract_timeseries import _Data, _extract_valid_confounds
 
         confound_file = get_confound_data(bids_dir, pipeline_name)
 
-        data = _Data(files={"confound": confound_file}, verbose=False)
+        data = et._Data(files={"confound": confound_file}, verbose=False)
 
         correct_confounds = [
             "cosine_00",
@@ -832,7 +832,7 @@ def test_confounds(get_vars, confound_type):
             "rot_z",
         ]
 
-        returned_confounds = _extract_valid_confounds(data, confound_names, None)
+        returned_confounds = et._extract_valid_confounds(data, confound_names, None)
         assert isinstance(returned_confounds, pd.DataFrame)
         assert not returned_confounds.empty
         assert len(returned_confounds.columns) == len(correct_confounds)
@@ -888,17 +888,15 @@ def test_get_acompcor_separate(get_vars, n):
     "acompcor" components are extracted for nuisance regression when `n_acompcor_separate` are specified and not
     specified.
     """
-    from neurocaps._utils.extraction.extract_timeseries import _Data, _process_confounds
-
     bids_dir, pipeline_name = get_vars
     confound_file = get_confound_data(bids_dir, pipeline_name)
     confound_json = confound_file.replace(".tsv", ".json")
     correct_confounds = ["a_comp_cor_00", "a_comp_cor_01", "a_comp_cor_02", "a_comp_cor_03"]
 
-    data = _Data(files={"confound": confound_file, "confound_meta": confound_json}, verbose=False)
+    data = et._Data(files={"confound": confound_file, "confound_meta": confound_json}, verbose=False)
     data.signal_clean_info = {"n_acompcor_separate": n, "use_confounds": True, "confound_names": None}
 
-    confounds = _process_confounds(data, None)
+    confounds = et._process_confounds(data, None)
     assert isinstance(confounds, pd.DataFrame)
     assert len(correct_confounds) == len(confounds.columns) == 4
     assert confounds.shape == (40, 4)
@@ -906,14 +904,14 @@ def test_get_acompcor_separate(get_vars, n):
 
     data.signal_clean_info["confound_names"] = ["rot_x"]
     correct_confounds += ["rot_x"]
-    confounds = _process_confounds(data, None)
+    confounds = et._process_confounds(data, None)
     assert isinstance(confounds, pd.DataFrame)
     assert len(correct_confounds) == len(confounds.columns) == 5
     assert confounds.shape == (40, 5)
     assert all(i in correct_confounds for i in confounds.columns)
 
     data.signal_clean_info["use_confounds"] = False
-    confounds = _process_confounds(data, None)
+    confounds = et._process_confounds(data, None)
     assert not confounds
 
 
@@ -969,6 +967,22 @@ def test_non_censor_error():
             use_confounds=False,
             fd_threshold=0.35,
         )
+
+
+def test_filter_censored_scan_indices_unit():
+    """
+    Redundant unit test before integration test for ``filter_censored_scan_indices``.
+
+    Note: Change to ``_filter_censored_scan_indices`` in future release.
+    """
+    data = et._Data(
+        censored_frames=[0, 1, 10], scans=[0, 1, 2, 3, 4, 5], signal_clean_info={"fd_threshold": {"interpolate": False}}
+    )
+    scans, n_censored, n_interpolated = et.filter_censored_scan_indices(data)
+
+    assert len(scans) == 4
+    assert n_censored == 2
+    assert n_interpolated == 0
 
 
 def test_fd_censoring(get_vars):
@@ -1094,6 +1108,38 @@ def test_fd_censoring(get_vars):
         extractor_fd_dict.subject_timeseries["01"]["run-001"],
         atol=0.00001,
     )
+
+
+def test_create_sample_mask_unit():
+    """
+    Redundant unit test for ``_create_sample_mask`` before the integration tests.
+    """
+    expected_mask = np.array([0, 0, 1, 1, 0, 0, 1, 1, 0, 1], dtype="bool")
+
+    data = et._Data(fd_array_len=10, censored_frames=[0, 1, 4, 5, 8])
+
+    sample_mask = et._create_sample_mask(data)
+
+    assert np.array_equal(expected_mask, sample_mask)
+
+
+def test_pad_timeseries_unit():
+    """
+    Redundant unit test for ``_pad_timeseries`` before the integration tests.
+    """
+    data = et._Data(
+        signal_clean_info={"fd_threshold": {"use_sample_mask": True}},
+        fd_array_len=10,
+        sample_mask=np.array([0, 0, 1, 1, 0, 0, 1, 1, 0, 1], dtype="bool"),
+    )
+    timeseries = np.random.rand(5, 20)
+
+    padded_timeseries = et._pad_timeseries(copy.deepcopy(timeseries), data)
+
+    assert np.all(padded_timeseries[data.sample_mask == 0, :] == 0)
+    assert not np.all(padded_timeseries[data.sample_mask == 1, :] == 0)
+    assert id(timeseries) != id(padded_timeseries)
+    assert np.array_equal(timeseries, padded_timeseries[data.sample_mask == 1, :])
 
 
 def test_censoring_with_sample_mask(get_vars):
@@ -1422,6 +1468,21 @@ def test_dummy_scans_with_fd_censoring(get_vars):
     )
 
 
+def test_extended_censoring_unit():
+    """
+    Redundant unit test for ``_extended_censor`` before integration tests.
+    """
+    data = et._Data(
+        censored_frames=[0, 1, 2, 4], fd_array_len=5, signal_clean_info={"fd_threshold": {"n_before": 2, "n_after": 2}}
+    )
+
+    censored_indices = et._extended_censor(data.censored_frames, data.fd_array_len, data)
+
+    assert min(censored_indices) >= 0
+    assert max(censored_indices) < 5
+    assert (censored_indices) == [0, 1, 2, 3, 4]
+
+
 @pytest.mark.parametrize(
     "fd_threshold",
     [
@@ -1430,7 +1491,7 @@ def test_dummy_scans_with_fd_censoring(get_vars):
         {"threshold": 0.31, "n_before": 4, "n_after": 2},
     ],
 )
-def test_extended_censoring(get_vars, fd_threshold):
+def test_extended_censoring_integration(get_vars, fd_threshold):
     """
     Ensures the expected shape and frames are removed when using extended censoring. Assess when not specifying a
     condition and when specifying a condition.
@@ -1559,6 +1620,33 @@ def test_condition_tr_shift(get_vars, onset):
     assert np.array_equal(timeseries["01"]["run-001"][scan_arr, :], extractor.subject_timeseries["01"]["run-001"])
 
 
+@pytest.mark.parametrize("shift", [0, 10])
+def test_scan_bounds_unit(shift, caplog, logger):
+    """
+    Simple unit test for scan bounds.
+    """
+    import logging
+
+    data = et._Data(task_info={"condition": "placeholder", "condition_tr_shift": shift}, scans=[0, 10], head="[]")
+
+    msg = (
+        f"{data.head}" + f"[CONDITION: {data.condition}] Max scan index exceeds timeseries max index. "
+        f"Max condition index is {max(data.scans)}, while max timeseries index is 4. Timing may "
+        "be misaligned or specified repetition time incorrect. If intentional, ignore warning. Only "
+        "indices for condition within the timeseries range will be extracted."
+    )
+
+    with caplog.at_level(logging.WARNING):
+        scans = et._validate_scan_bounds(data, 5, logger)
+
+        if shift == 0:
+            assert msg in caplog.text
+        else:
+            assert msg not in caplog.text
+
+        assert scans == [0]
+
+
 @pytest.mark.parametrize("shift", [0.5, 1])
 def test_slice_time_shift(get_vars, shift):
     """
@@ -1675,6 +1763,92 @@ def test_skip_when_underdetermined_or_saturated(get_vars, caplog):
 
 
 ################################################# Setup Environment 2 #################################################
+def test_get_contiguous_segments_unit():
+    """
+    Redundant unit test for ``_get_contiguous_segments`` before the integration tests.
+    """
+    sample_mask = np.array([0, 0, 1, 1, 0, 0, 1, 1, 0, 0], dtype="bool")
+
+    expected_indices = [np.array(x) for x in ([0, 1], [2, 3], [4, 5], [6, 7], [8, 9])]
+    expected_binary = [np.array(x, dtype="bool") for x in ([0, 0], [1, 1], [0, 0], [1, 1], [0, 0])]
+
+    segments_indices = et._get_contiguous_segments(sample_mask, splice="indices")
+    assert len(segments_indices) == 5
+    assert all(np.array_equal(segments_indices[indx], expected_indices[indx]) for indx in range(5))
+
+    segments_binary = et._get_contiguous_segments(sample_mask, splice="binary")
+    assert len(segments_binary) == 5
+    assert all(np.array_equal(segments_binary[indx], expected_binary[indx]) for indx in range(5))
+
+
+def test_censored_ends_unit():
+    """
+    Redundant unit tests for ``_get_contiguous_censored_ends`` before the integration tests.
+    """
+    sample_mask = np.array([0, 0, 1, 1, 0, 0, 1, 1, 0, 1], dtype="bool")
+    censored_ends = et._get_contiguous_censored_ends(sample_mask)
+    assert censored_ends == [0, 1]
+
+    sample_mask = np.array([1, 0, 1, 1, 0, 0, 1, 1, 0, 1], dtype="bool")
+    censored_ends = et._get_contiguous_censored_ends(sample_mask)
+    assert not censored_ends
+
+    sample_mask = np.array([0, 0, 1, 1, 0, 0, 1, 1, 0, 0], dtype="bool")
+    censored_ends = et._get_contiguous_censored_ends(sample_mask)
+    assert censored_ends == [0, 1, 8, 9]
+
+    sample_mask = np.array([1, 0, 1, 1, 0, 0, 1, 1, 0, 0], dtype="bool")
+    censored_ends = et._get_contiguous_censored_ends(sample_mask)
+    assert censored_ends == [8, 9]
+
+
+def test_filter_censored_scan_indices_interpolate_unit():
+    """
+    Redundant unit test before integration test for ``_filter_censored_scan_indices``.
+
+    Note: Change to ``_filter_censored_scan_indices`` in future release.
+    """
+    data = et._Data(
+        censored_frames=[0, 1, 3, 7, 8],
+        censored_ends=[0, 1, 7, 8],
+        scans=[0, 1, 2, 3, 4, 5, 6, 7, 8],
+        signal_clean_info={"fd_threshold": {"interpolate": True}},
+    )
+    scans, n_censored, n_interpolated = et.filter_censored_scan_indices(data)
+
+    assert len(scans) == 5
+    # True number of censored scans which subtracts from the interpolated number in _report qc
+    assert n_censored == 5
+    assert n_interpolated == 1
+
+
+@pytest.mark.parametrize("condition", [None, "placeholder"])
+def test_interpolate_censored_frames_unit(condition):
+    """
+    Redundant unit test for ``_interpolate_censored_frames`` before the integration tests.
+    """
+    timeseries = np.random.rand(10, 20)
+
+    data = et._Data(
+        censored_ends=[0, 1],
+        tr=1.2,
+        task_info={"condition": condition},
+        sample_mask=np.array([0, 0, 1, 1, 0, 0, 1, 1, 0, 1], dtype="bool"),
+        fd_array_len=10,
+    )
+
+    new_timeseries = et._interpolate_censored_frames(copy.deepcopy(timeseries), data)
+
+    assert id(timeseries) != id(new_timeseries)
+
+    if condition:
+        assert new_timeseries.shape == (10, 20)
+        np.array_equal(timeseries[[2, 3, 6, 7, 8, 9]], new_timeseries[[2, 3, 6, 7, 8, 9]])
+    else:
+        assert new_timeseries.shape == (8, 20)
+        np.array_equal(timeseries[[0, 1, 4, 5, 7]], new_timeseries[[0, 1, 4, 5, 7]])
+
+
 @pytest.mark.parametrize("use_sample_mask", [True, False])
 def test_interpolate_without_condition(setup_environment_2, get_vars, use_sample_mask):
     """
