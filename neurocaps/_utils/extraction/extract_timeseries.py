@@ -44,8 +44,8 @@ class _Data:
     # Avoid timeseries extraction
     skip_run: bool = False
     # Stats for qc
-    mean_fd: Union[int, None] = None
-    std_fd: Union[int, None] = None
+    mean_fd: Union[float, None] = None
+    std_fd: Union[float, None] = None
     high_motion_len_mean: Union[float, None] = None
     high_motion_len_std: Union[float, None] = None
     # Percentage of volumes that exceed fd threshold
