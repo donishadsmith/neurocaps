@@ -23,7 +23,7 @@ def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
     atlas_array = np.zeros_like(atlas_fdata)
 
     # Get array containing all labels in atlas to avoid issue if the first non-zero atlas label is not 1
-    target_array = sorted(np.unique(atlas_fdata))
+    target_array = np.unique(atlas_fdata)
 
     # Start at 1 to avoid assigment to the background label
     for indx, value in enumerate(cap_vector, start=1):

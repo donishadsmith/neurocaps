@@ -432,6 +432,7 @@ def _create_sample_mask(data):
     censored . In this mask, False (0) are the censored volumes and True (1) are the retained volumes.
     """
     sample_mask = np.ones(data.fd_array_len, dtype="bool")
+
     if data.censored_frames:
         sample_mask[np.array(data.censored_frames)] = False
 

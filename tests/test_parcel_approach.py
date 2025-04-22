@@ -16,7 +16,9 @@ def test_aal_indices_ordering():
         # Get atlas labels
         atlas = nib.load(aal["maps"])
         atlas_fdata = atlas.get_fdata()
-        labels = sorted(np.unique(atlas_fdata)[1:])
+        labels = np.unique(atlas_fdata)[1:]
+
+        assert np.array_equal(labels, sorted(labels))
 
         # For upcoming nilearn release, remove the added 0
         nums = [int(x) for x in aal.indices]
@@ -103,3 +105,34 @@ def test_partial_parcel_approaches():
             assert len(extractor.parcel_approach["Schaefer"]["nodes"]) == 400
         else:
             assert len(extractor.parcel_approach["Schaefer"][i]) == 7
+
+
+@pytest.mark.parametrize("data", ["Schaefer", "AAL"])
+def test_masker_label_ordering(data, tmp_dir, data_dir):
+    """
+    Use attribute ``region_ids_`` in ``NiftiLabelsMasker``, introduces in 0.10.3, to always affirm ordering.
+    """
+    from operator import itemgetter
+
+    from nilearn.maskers import NiftiLabelsMasker
+
+    if data == "Schaefer":
+        atlas = datasets.fetch_atlas_schaefer_2018()
+    else:
+        atlas = datasets.fetch_atlas_aal(version="SPM12")
+
+    label_img = nib.load(atlas["maps"])
+    labels = np.unique(nib.load(atlas["maps"]).get_fdata())[1:]
+    assert np.array_equal(labels, sorted(labels))
+    masker = NiftiLabelsMasker(label_img)
+
+    img = nib.Nifti1Image(np.random.rand(*label_img.shape, 40), label_img.affine)
+    timeseries = masker.fit_transform(img)
+    shape = 400 if data == "Schaefer" else 116
+    assert timeseries.shape[1] == shape
+
+    if "background" in masker.region_ids_:
+        masker.region_ids_.pop("background")
+
+    masker_labels = itemgetter(*list(masker.region_ids_))(masker.region_ids_)
+    assert np.array_equal(labels, masker_labels)
