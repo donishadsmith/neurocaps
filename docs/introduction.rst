@@ -9,7 +9,7 @@
    :alt: Python Versions
 
 .. image:: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal
-   :target: https://doi.org/10.5281/zenodo.15253208
+   :target: https://doi.org/10.5281/zenodo.15264830
    :alt: DOI
 
 .. image:: https://img.shields.io/badge/Source%20Code-neurocaps-purple
@@ -47,7 +47,7 @@ Citing
 ------
 ::
 
-  Smith, D. (2024). NeuroCAPs. Zenodo. https://doi.org/10.5281/zenodo.15253208
+  Smith, D. (2024). NeuroCAPs. Zenodo. https://doi.org/10.5281/zenodo.15264830
 
 Usage
 -----
@@ -114,7 +114,7 @@ NeuroCAPs relies on several packages:
       "kaleido==0.1.0.post1; platform_system == 'Windows'",
       "kaleido>=0.2.0; platform_system != 'Windows'",
       "setuptools>=77.0.1; python_version>='3.12'",
-      "typing_extensions>=4.10.0; python_version<'3.11'",
+      "typing_extensions>=4.10.0",
       "vtk>=9.2.0, <9.4.0",
       "tqdm>=4.65.0"
       ]

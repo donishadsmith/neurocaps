@@ -1,14 +1,9 @@
 """Contains the TimeseriesExtractor class for extracting timeseries"""
 
-import json, os, re, sys
+import json, os, re
 from functools import lru_cache
 from typing import Callable, Literal, Optional, Union
-
-# Conditional import based on major and minor version of Python
-if sys.version_info < (3, 11):
-    from typing_extensions import Self
-else:
-    from typing import Self
+from typing_extensions import Self
 
 import matplotlib.pyplot as plt, numpy as np
 from joblib import Parallel, delayed
@@ -42,11 +37,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     space: :obj:`str`, default="MNI152NLin2009cAsym"
         The standard template space that the preprocessed bold data is registered to.
 
-    parcel_approach: :obj:`ParcelConfig`, :obj:`ParcelApproach`, or :obj:`str`,\
-                     default={"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
+    parcel_approach: :obj:`ParcelConfig`, :obj:`ParcelApproach`, :obj:`str`, or :obj:`None`, default=None
         Specifies the parcellation approach to use. Options are "Schaefer", "AAL", or "Custom". Can be initialized with
         parameters, as a nested dictionary, or loaded from a pickle file. For detailed documentation on the expected
         structure, see the type definitions for ``ParcelConfig`` and ``ParcelApproach`` in the "See Also" section.
+        Defaults to ``{"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}`` if None.
+
+        .. versionchanged:: 0.28.0 Default changed to None; however, the same default dictionary configuration remains\
+        the same and is backwards compatible.
 
     standardize: :obj:`bool` or or :obj:`None`, default=True
         Standardizes the timeseries (zero mean and unit variance using sample standard deviation). Always the
@@ -239,9 +237,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     def __init__(
         self,
         space: str = "MNI152NLin2009cAsym",
-        parcel_approach: Union[ParcelConfig, ParcelApproach, str] = {
-            "Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}
-        },
+        parcel_approach: Union[ParcelConfig, ParcelApproach, str, None] = None,
         standardize: bool = True,
         detrend: bool = False,
         low_pass: Optional[Union[float, int]] = None,

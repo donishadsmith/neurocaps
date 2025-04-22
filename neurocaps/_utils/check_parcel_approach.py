@@ -31,11 +31,17 @@ def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
     else:
         parcel_dict = copy.deepcopy(parcel_approach)
 
+    if parcel_dict is None and call == "TimeseriesExtractor":
+        parcel_dict = {"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
+
+        LG.warning("`parcel_approach` is None, defaulting to 'Schaefer'.")
+
     if not isinstance(parcel_dict, dict) or not list(parcel_dict)[0] in list(VALID_DICT_STUCTURES):
         error_message = (
             "Please include a valid `parcel_approach` in one of the following dictionary formats for "
             f"'Schaefer', 'AAL', or 'Custom': {VALID_DICT_STUCTURES}"
         )
+
         if not isinstance(parcel_dict, dict):
             raise TypeError(error_message)
         else:

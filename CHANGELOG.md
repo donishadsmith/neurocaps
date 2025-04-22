@@ -13,6 +13,17 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.28.0] - 2025-04-22
+### ♻ Changed
+- Backwards compatible default changes (same default behavior):
+    - Changed default of `parcel_approach` to None in `TimeseriesExtractor`, which defaults to Schaefer when None
+    - Changed default of `metrics` in `CAP.calculate_metrics` to None, which computes the transition frequency, temporal
+    fraction, counts, and persistence when None
+- In pyproject.toml:
+    - The typing_extension package is no longer restricted to versions less than 3.11
+    - Python version restricted to 3.9 to 3.12 for now since only VTK >= 9.4 works with Python 3.13 and above and
+    brainspace is currently only compatible with VTK < 9.4.
+
 ## [0.27.0] - 2025-04-20
 ### 🚀 New/Added
 - To the QC report, added the number of dummy volumes, which is useful if the "auto" option is used

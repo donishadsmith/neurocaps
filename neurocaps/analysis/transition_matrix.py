@@ -127,7 +127,7 @@ def transition_matrix(
         # Get indices and averaged probabilities
         indices, averaged_probabilities = df.iloc[:, 3:].mean().index, df.iloc[:, 3:].mean().values
         # Get the maximum CAP
-        max_cap = str(max([float(i) for i in indices])).split(".")[0]
+        max_cap = str(max(float(i) for i in indices)).split(".")[0]
         cap_names = [f"CAP-{num}" for num in range(1, int(max_cap) + 1)]
         trans_mat = pd.DataFrame(index=cap_names, columns=cap_names, dtype="float64")
         # Add name to index
@@ -144,15 +144,15 @@ def transition_matrix(
         # Save figure & dataframe
         if output_dir:
             _save_contents(
-                output_dir,
-                suffix_filename,
-                group,
-                trans_mat_dict,
-                plot_dict,
-                save_plots,
-                save_df,
-                display,
-                as_pickle,
+                output_dir=output_dir,
+                suffix_filename=suffix_filename,
+                group=group,
+                curr_dict=trans_mat_dict,
+                plot_dict=plot_dict,
+                save_plots=save_plots,
+                save_df=save_df,
+                display=display,
+                as_pickle=as_pickle,
                 call="trans",
             )
 

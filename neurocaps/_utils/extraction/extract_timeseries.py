@@ -222,7 +222,7 @@ def _extract_timeseries(
                 if data.censored_frames:
                     # Removing censored or non-interpolated scan indxs; n_censored_condition_indxs is all indxs flagged
                     # regardless if indx will be interpolated
-                    data.scans, data.n_censored_scans, data.n_interpolated_scans = filter_censored_scan_indices(data)
+                    data.scans, data.n_censored_scans, data.n_interpolated_scans = _filter_censored_scan_indices(data)
                 else:
                     data.n_censored_scans, data.n_interpolated_scans = 0, 0
 
@@ -334,7 +334,7 @@ def _get_dummy(data, LG):
     """Gets the number of dummy scans to remove."""
     info = data.signal_clean_info["dummy_scans"]
 
-    use_auto = True if info == "auto" or (isinstance(info, dict) and info.get("auto")) else False
+    use_auto = info == "auto" or (isinstance(info, dict) and info.get("auto"))
     if use_auto:
         # If n=0, it will simply be treated as False
         n, flag = int(data.confound_df.columns.str.startswith("non_steady_state").sum()), "auto"
@@ -546,7 +546,7 @@ def _get_condition_indices(data, condition_df):
     return scans, len(scans)
 
 
-def filter_censored_scan_indices(data):
+def _filter_censored_scan_indices(data):
     """
     Removes condition indices, stored in ``data.scans``, that exceed the length of the ``fd_array``, which corresponds
     to the timeseries length. Also removed any indices that are censored and provides the number of indices to be
@@ -595,7 +595,7 @@ def _flag_run(data):
     """
     n_censor, n = data.censored_vals
     vols_exceed_percent = n_censor / n
-    skip_run = True if vols_exceed_percent > data.out_percent else False
+    skip_run = vols_exceed_percent > data.out_percent
 
     return vols_exceed_percent, skip_run
 
@@ -651,7 +651,7 @@ def _perform_extraction(data, LG):
     timeseries = _process_timeseries(timeseries, data) if data.censored_frames else timeseries
 
     if data.condition:
-        # Ensure condition indices don't exceed timeseries due to tr shift; filter_censored_scan_indices only being
+        # Ensure condition indices don't exceed timeseries due to tr shift; _filter_censored_scan_indices only being
         # called when censoring is done
         data.scans = _validate_scan_bounds(data, timeseries.shape[0], LG)
 

@@ -12,7 +12,7 @@ license = "MIT"
 authors = [{name = "Donisha Smith", email = "donishasmith@outlook.com"}]
 description = "Co-activation Patterns (CAPs) Python package"
 readme = "README.md"
-requires-python = ">=3.9.0"
+requires-python = ">=3.9.0, <3.13"
 
 keywords = [
     "python",
@@ -59,7 +59,7 @@ dependencies = [
     "kaleido==0.1.0.post1; platform_system == 'Windows'", # Used by plotly for saving plots
     "kaleido>=0.2.0; platform_system != 'Windows'",
     "setuptools>=77.0.1; python_version>='3.12'", # Results in installation errors if not included as dependency
-    "typing_extensions>=4.10.0; python_version<'3.11'",
+    "typing_extensions>=4.10.0",
     "vtk>=9.2.0, <9.4.0", # Version >= 9.4.0 works for 3.13 but incompatible with brainspace due no  "__vtkname__" in Pointset
     "tqdm>=4.65.0"
     ]

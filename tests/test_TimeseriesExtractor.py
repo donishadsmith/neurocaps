@@ -236,6 +236,13 @@ def test_validate_init_params():
     TimeseriesExtractor._validate_init_params("fd_threshold", fd_threshold)
 
 
+def test_default_arg():
+    """Ensure default for ``parcel_approach`` is Schaefer."""
+    extractor = TimeseriesExtractor()
+
+    assert "Schaefer" in extractor.parcel_approach
+
+
 def test_init_mutability():
     """
     Ensures mutable objects passed into TimeseriesExtractor initializer cannot be changed, which would skip
@@ -971,14 +978,12 @@ def test_non_censor_error():
 
 def test_filter_censored_scan_indices_unit():
     """
-    Redundant unit test before integration test for ``filter_censored_scan_indices``.
-
-    Note: Change to ``_filter_censored_scan_indices`` in future release.
+    Redundant unit test before integration test for ``_filter_censored_scan_indices``.
     """
     data = et._Data(
         censored_frames=[0, 1, 10], scans=[0, 1, 2, 3, 4, 5], signal_clean_info={"fd_threshold": {"interpolate": False}}
     )
-    scans, n_censored, n_interpolated = et.filter_censored_scan_indices(data)
+    scans, n_censored, n_interpolated = et._filter_censored_scan_indices(data)
 
     assert len(scans) == 4
     assert n_censored == 2
@@ -1805,8 +1810,6 @@ def test_censored_ends_unit():
 def test_filter_censored_scan_indices_interpolate_unit():
     """
     Redundant unit test before integration test for ``_filter_censored_scan_indices``.
-
-    Note: Change to ``_filter_censored_scan_indices`` in future release.
     """
     data = et._Data(
         censored_frames=[0, 1, 3, 7, 8],
@@ -1814,7 +1817,7 @@ def test_filter_censored_scan_indices_interpolate_unit():
         scans=[0, 1, 2, 3, 4, 5, 6, 7, 8],
         signal_clean_info={"fd_threshold": {"interpolate": True}},
     )
-    scans, n_censored, n_interpolated = et.filter_censored_scan_indices(data)
+    scans, n_censored, n_interpolated = et._filter_censored_scan_indices(data)
 
     assert len(scans) == 5
     # True number of censored scans which subtracts from the interpolated number in _report qc

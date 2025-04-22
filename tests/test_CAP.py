@@ -44,6 +44,15 @@ def test_init_mutability():
     assert not id(cap_analysis._groups) != id(groups)
 
 
+def test_default_arg():
+    """
+    Ensures that ``parcel_approach`` remains None as default after initialization.
+    """
+    cap_analysis = CAP()
+
+    assert not cap_analysis.parcel_approach
+
+
 @pytest.mark.parametrize("standardize", [True, False])
 def test_without_groups_and_without_cluster_selection(standardize):
     """

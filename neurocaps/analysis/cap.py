@@ -3,12 +3,7 @@
 import collections, itertools, os, re, sys, tempfile
 from operator import itemgetter
 from typing import Callable, Literal, Optional, Union
-
-# Conditional import based on major and minor version of Python
-if sys.version_info < (3, 11):
-    from typing_extensions import Self
-else:
-    from typing import Self
+from typing_extensions import Self
 
 import nibabel as nib, numpy as np, matplotlib.pyplot as plt, pandas as pd, seaborn, surfplot
 import plotly.express as px, plotly.graph_objects as go, plotly.offline as pyo
@@ -699,7 +694,8 @@ class CAP(_CAPGetter):
             list[
                 Literal["temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"]
             ],
-        ] = ["temporal_fraction", "persistence", "counts", "transition_frequency"],
+            None,
+        ] = None,
         return_df: bool = True,
         output_dir: Optional[str] = None,
         prefix_filename: Optional[str] = None,
@@ -813,11 +809,15 @@ class CAP(_CAPGetter):
                 - If only a single run available for a subject, the original run ID (as opposed to "run-continuous")\
                 will be used.
 
-        metrics: {"temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"} \
-                 or :obj:`list["temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"]`, \
-                 default=["temporal_fraction", "persistence", "counts", "transition_frequency"]
-            The metrics to calculate. Available options include "temporal_fraction", "persistence",
-            "counts", "transition_frequency", and "transition_probability".
+        metrics: {"temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"}, \
+                 :obj:`list["temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"]`, \
+                 or :obj:`None`, default=None
+            The metrics to calculate. Available options include "temporal_fraction", "persistence", "counts",
+            "transition_frequency", and "transition_probability". Defaults to
+            ``["temporal_fraction", "persistence", "counts", "transition_frequency"]`` if None.
+
+            .. versionchanged:: 0.28.0 Default changed to None; however, the default metrics remains the same and is\
+            backwards compatible.
 
         return_df: :obj:`str`, default=True
             If True, returns ``pandas.DataFrame`` inside a dictionary`, mapping each dataframe to their metric.
@@ -1059,6 +1059,7 @@ class CAP(_CAPGetter):
 
     @staticmethod
     def _filter_metrics(metrics):
+        metrics = ["temporal_fraction", "persistence", "counts", "transition_frequency"] if metrics is None else metrics
         metrics = [metrics] if isinstance(metrics, str) else metrics
         metrics = set(metrics)
         valid_metrics = {"temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"}
@@ -1572,13 +1573,13 @@ class CAP(_CAPGetter):
                 if output_dir:
                     partial_filename = f"{group}_{cap}"
                     self._save_heatmap(
-                        display,
-                        scope,
-                        partial_filename,
-                        suffix_filename,
-                        plot_dict,
-                        output_dir,
-                        as_pickle,
+                        display=display,
+                        scope=scope,
+                        partial=partial_filename,
+                        suffix=suffix_filename,
+                        plot_dict=plot_dict,
+                        output_dir=output_dir,
+                        as_pickle=as_pickle,
                         call="outer_product",
                     )
 
@@ -1589,13 +1590,13 @@ class CAP(_CAPGetter):
             if output_dir:
                 partial_filename = f"{group}_CAPs"
                 self._save_heatmap(
-                    display,
-                    scope,
-                    partial_filename,
-                    suffix_filename,
-                    plot_dict,
-                    output_dir,
-                    as_pickle,
+                    display=display,
+                    scope=scope,
+                    partial=partial_filename,
+                    suffix=suffix_filename,
+                    plot_dict=plot_dict,
+                    output_dir=output_dir,
+                    as_pickle=as_pickle,
                     call="outer_product",
                 )
 
@@ -1679,9 +1680,7 @@ class CAP(_CAPGetter):
         # Max five subplots per row for default
         default_col = len(cap_dict[group]) if len(cap_dict[group]) <= 5 else 5
         ncol = plot_dict["ncol"] if plot_dict["ncol"] is not None else default_col
-
-        if ncol > len(cap_dict[group]):
-            ncol = len(cap_dict[group])
+        ncol = min(ncol, len(cap_dict[group]))
 
         # Determine number of rows needed based on ceiling if not specified
         nrow = plot_dict["nrow"] if plot_dict["nrow"] is not None else int(np.ceil(len(cap_dict[group]) / ncol))
@@ -1966,15 +1965,15 @@ class CAP(_CAPGetter):
 
             if output_dir:
                 _save_contents(
-                    output_dir,
-                    suffix_filename,
-                    group,
-                    corr_dict,
-                    plot_dict,
-                    save_plots,
-                    save_df,
-                    display,
-                    as_pickle,
+                    output_dir=output_dir,
+                    suffix_filename=suffix_filename,
+                    group=group,
+                    curr_dict=corr_dict,
+                    plot_dict=plot_dict,
+                    save_plots=save_plots,
+                    save_df=save_df,
+                    display=display,
+                    as_pickle=as_pickle,
                     call="corr",
                 )
 
@@ -2676,7 +2675,7 @@ class CAP(_CAPGetter):
                     title=dict(text=title_text, font=plot_dict["title_font"]),
                     title_x=plot_dict["title_x"],
                     title_y=plot_dict["title_y"],
-                    showlegend=True if plot_dict["legend"] else False,
+                    showlegend=bool(plot_dict["legend"]),
                     legend=plot_dict["legend"],
                     legend_title_text="Cosine Similarity",
                     polar=dict(

@@ -1,5 +1,7 @@
 import glob, os
+
 import numpy as np, pytest
+
 from neurocaps.analysis import merge_dicts
 
 

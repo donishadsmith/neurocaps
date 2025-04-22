@@ -1,5 +1,7 @@
 import glob, os
+
 import numpy as np
+
 from neurocaps.analysis import change_dtype
 
 
