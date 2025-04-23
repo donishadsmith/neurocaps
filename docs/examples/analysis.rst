@@ -95,6 +95,11 @@ Performing CAPs on Groups
         progress_bar=True,
     )
 
+    # The concatenated data can be safely deleted since only the kmeans models and any standardization parameters are
+    # used for computing temporal metrics.
+
+    del cap_analysis.concatenated_timeseries
+
 .. rst-class:: sphx-glr-script-out
 
     .. code-block:: none
