@@ -76,7 +76,16 @@ def get_paths(tmp_dir):
 
 
 def simulate_event_data(bids_dir):
-    """Simulate event data."""
+    """
+    Simulate event data.
+
+    Notes
+    -----
+    When testing TR = 1.2:
+    - Simulated condition indices for "rest": [4, 5, 6, 7, 8, 12, 13, 14, 15, 16, 20, 21, 22, 23, 24, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39]
+    - Simulated condition indices for "active": [0, 1, 2, 3, 4, 8, 9, 10, 11, 12, 16, 17, 18, 19, 20, 25, 26, 27, 28, 29]
+    - Overlapping indices; [4, 8, 12, 16, 20, 29]
+    """
     event_df = pd.DataFrame(
         {"onset": list(range(0, 39, 5)), "duration": [5] * 7 + [13], "trial_type": ["active", "rest"] * 4}
     )
