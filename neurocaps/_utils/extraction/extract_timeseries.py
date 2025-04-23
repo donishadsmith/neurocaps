@@ -160,9 +160,9 @@ def _extract_timeseries(
     ----
     A default id of "run-0" is given to data where there is no run ID.
     """
-
     # Logger inside function to give logger to each child process if parallel processing is done
     LG = _logger(__name__, flush=flush, top_level=False, parallel_log_config=parallel_log_config)
+
     # Initialize subject dictionary and quality control dictionary
     subject_timeseries = {subj_id: {}}
     qc = {subj_id: {}}

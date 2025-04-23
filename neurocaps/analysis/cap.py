@@ -462,7 +462,6 @@ class CAP(_CAPGetter):
         group_map = {
             group: sorted(set(self._subject_table).intersection(self._groups[group])) for group in self._groups
         }
-
         # Collect timeseries data in lists
         group_arrays = {group: [] for group in self._groups}
         for group in group_map:
@@ -951,105 +950,47 @@ class CAP(_CAPGetter):
         # Assign each subject's frame to a CAP
         predicted_subject_timeseries = self._build_prediction_dict(subject_timeseries, runs, continuous_runs)
 
-        cap_names, cap_numbers, group_cap_counts = self._get_caps_info()
+        cap_names, max_cap, group_cap_counts = self._get_caps_info()
 
         # Get combination of transitions in addition to building the base dataframe dictionary
-        if "transition_probability" in metrics:
-            cap_pairs = self._get_pairs()
-            df_dict, temp_dict = self._build_df(metrics, cap_names, cap_pairs)
-        else:
-            df_dict = self._build_df(metrics, cap_names)
+        cap_pairs = self._get_pairs() if "transition_probability" in metrics else None
+        df_dict = self._build_df(metrics, cap_names, cap_pairs)
+
+        # Create function map
+        metric_map = {
+            "temporal_fraction": self._compute_temporal_fraction,
+            "counts": self._compute_counts,
+            "persistence": self._compute_persistence,
+            "transition_frequency": self._compute_transition_frequency,
+            "transition_probability": self._compute_transition_probability,
+        }
 
         # Generate list for iteration
         distributed_dict = self._distribute(predicted_subject_timeseries)
 
         for subj_id in tqdm(distributed_dict, desc="Computing Metrics for Subjects", disable=not progress_bar):
             for group, curr_run in distributed_dict[subj_id]:
-                if "temporal_fraction" in metrics:
-                    # Get frequency
-                    frequency_dict = {
-                        key: np.where(predicted_subject_timeseries[subj_id][curr_run] == key, 1, 0).sum()
-                        for key in range(1, group_cap_counts[group] + 1)
-                    }
+                for metric in metrics:
+                    sub_info = [subj_id, group, curr_run]
 
-                    self._update_dict(cap_numbers, group_cap_counts[group], frequency_dict)
+                    df = df_dict[metric] if metric != "transition_probability" else df_dict[metric][group]
 
-                    if "temporal_fraction" in metrics:
-                        proportion_dict = {
-                            key: value / (len(predicted_subject_timeseries[subj_id][curr_run]))
-                            for key, value in frequency_dict.items()
-                        }
+                    # Common base arguments for all functions
+                    args = [predicted_subject_timeseries[subj_id][curr_run], sub_info, df]
 
-                        new_row = [subj_id, group, curr_run] + [items for items in proportion_dict.values()]
-                        df_dict["temporal_fraction"].loc[len(df_dict["temporal_fraction"])] = new_row
+                    if metric in ["temporal_fraction", "counts", "persistence"]:
+                        args.extend([group_cap_counts[group], max_cap])
+                        args += [tr] if metric == "persistence" else []
 
-                if "counts" in metrics:
-                    count_dict = {}
-                    for target in cap_numbers:
-                        # + 1 is always added to segments to handle the + 1 needed to account for transitions and to avoid
-                        # a NaN for persistence. This ensures counts is 0 if target not present
-                        if target in predicted_subject_timeseries[subj_id][curr_run]:
-                            _, counts = self._segments(target, predicted_subject_timeseries[subj_id][curr_run])
-                        else:
-                            counts = 0
+                    if metric == "transition_probability":
+                        args += [cap_pairs[group]]
 
-                        count_dict.update({target: counts})
+                    df = metric_map[metric](*args)
 
-                    self._update_dict(cap_numbers, group_cap_counts[group], count_dict)
-
-                    new_row = [subj_id, group, curr_run] + [items for items in count_dict.values()]
-                    df_dict["counts"].loc[len(df_dict["counts"])] = new_row
-
-                if "persistence" in metrics:
-                    # Initialize variable
-                    persistence_dict = {}
-
-                    # Iterate through caps
-                    for target in cap_numbers:
-                        binary_arr, n_segments = self._segments(target, predicted_subject_timeseries[subj_id][curr_run])
-                        # Sum of ones in the binary array divided by segments, then multiplied by 1 or the tr; segment is
-                        # always 1 at minimum due to + 1; binary_arr.sum() is 0 when empty or the condition isn't met;
-                        # thus, persistence is 0 instead of NaN in this case
-                        persistence_dict.update({target: (binary_arr.sum() / n_segments) * (tr if tr else 1)})
-
-                    self._update_dict(cap_numbers, group_cap_counts[group], persistence_dict)
-
-                    new_row = [subj_id, group, curr_run] + [items for _, items in persistence_dict.items()]
-                    df_dict["persistence"].loc[len(df_dict["persistence"])] = new_row
-
-                if "transition_frequency" in metrics:
-                    # Sum the differences that are not zero - [1, 2, 1, 1, 1, 3] becomes [1, -1, 0, 0, 2]
-                    # binary representation for values not zero is [1, 1, 0, 0, 1] = 3 transitions
-                    transition_frequency = np.where(
-                        np.diff(predicted_subject_timeseries[subj_id][curr_run], n=1) != 0, 1, 0
-                    ).sum()
-
-                    new_row = [subj_id, group, curr_run, transition_frequency]
-                    df_dict["transition_frequency"].loc[len(df_dict["transition_frequency"])] = new_row
-
-                if "transition_probability" in metrics:
-                    base_row = [subj_id, group, curr_run] + [0.0] * (temp_dict[group].shape[-1] - 3)
-                    temp_dict[group].loc[len(temp_dict[group])] = base_row
-
-                    # Arrays for transitioning from and to element
-                    trans_from = predicted_subject_timeseries[subj_id][curr_run][:-1]
-                    trans_to = predicted_subject_timeseries[subj_id][curr_run][1:]
-
-                    indx = temp_dict[group].index[-1]
-
-                    # Iterate through pairs and calculate probability
-                    for e1, e2 in cap_pairs[group]:
-                        # Get total number of possible transitions for first element
-                        total_trans = np.sum(trans_from == e1)
-                        column = f"{e1}.{e2}"
-                        # Compute sum of adjacent pairs of A -> B and divide
-                        temp_dict[group].loc[indx, column] = (
-                            np.sum((trans_from == e1) & (trans_to == e2)) / total_trans if total_trans > 0 else 0
-                        )
-
-        # Add temporary dict for transition probability to `df_dict`
-        if "transition_probability" in metrics:
-            df_dict["transition_probability"] = temp_dict
+                    if metric == "transition_probability":
+                        df_dict[metric][group] = df
+                    else:
+                        df_dict[metric] = df
 
         if output_dir:
             self._save_metrics(output_dir, df_dict, prefix_filename)
@@ -1061,20 +1002,23 @@ class CAP(_CAPGetter):
     def _filter_metrics(metrics):
         metrics = ["temporal_fraction", "persistence", "counts", "transition_frequency"] if metrics is None else metrics
         metrics = [metrics] if isinstance(metrics, str) else metrics
-        metrics = set(metrics)
+        metrics_set = set(metrics)
+
         valid_metrics = {"temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"}
-        set_diff = metrics - valid_metrics
-        metrics = metrics.intersection(valid_metrics)
+        set_diff = metrics_set - valid_metrics
+        metrics_set = metrics_set.intersection(valid_metrics)
+        # Ensure original order maintained
+        ordered_metrics = [metric for metric in metrics if metric in metrics_set]
 
         if set_diff:
             formatted_string = ", ".join(["'{a}'".format(a=x) for x in set_diff])
             LG.warning(f"The following invalid metrics will be ignored: {formatted_string}.")
 
-        if not metrics:
+        if not ordered_metrics:
             formatted_string = ", ".join(["'{a}'".format(a=x) for x in valid_metrics])
             raise ValueError(f"No valid metrics in `metrics` list. Valid metrics are: {formatted_string}.")
 
-        return metrics
+        return ordered_metrics
 
     def _get_caps_info(self):
         group_cap_counts = {}
@@ -1085,9 +1029,9 @@ class CAP(_CAPGetter):
 
         # CAP names based on groups with the most CAPs
         cap_names = list(self._caps[max(group_cap_counts, key=group_cap_counts.get)])
-        cap_numbers = [int(name.split("-")[-1]) for name in cap_names]
+        max_cap = max([int(name.split("-")[-1]) for name in cap_names])
 
-        return cap_names, cap_numbers, group_cap_counts
+        return cap_names, max_cap, group_cap_counts
 
     def _build_prediction_dict(self, subject_timeseries, runs, continuous_runs):
         for subj_id, group in self._subject_table.items():
@@ -1138,7 +1082,7 @@ class CAP(_CAPGetter):
 
         return all_pairs
 
-    def _build_df(self, metrics, cap_names, pairs=None):
+    def _build_df(self, metrics, cap_names, pairs):
         df_dict = {}
         base_cols = ["Subject_ID", "Group", "Run"]
 
@@ -1146,16 +1090,14 @@ class CAP(_CAPGetter):
             if metric not in ["transition_frequency", "transition_probability"]:
                 df_dict.update({metric: pd.DataFrame(columns=base_cols + list(cap_names))})
             elif metric == "transition_probability":
-                temp_dict = {}
+                df_dict["transition_probability"] = {}
                 for group in self._groups:
-                    temp_dict.update({group: pd.DataFrame(columns=base_cols + [f"{x}.{y}" for x, y in pairs[group]])})
+                    col_names = base_cols + [f"{x}.{y}" for x, y in pairs[group]]
+                    df_dict["transition_probability"].update({group: pd.DataFrame(columns=col_names)})
             else:
                 df_dict.update({metric: pd.DataFrame(columns=base_cols + ["Transition_Frequency"])})
 
-        if "transition_probability" in metrics:
-            return df_dict, temp_dict
-        else:
-            return df_dict
+        return df_dict
 
     def _distribute(self, predicted_subject_timeseries):
         distributed_dict = {}
@@ -1167,12 +1109,46 @@ class CAP(_CAPGetter):
 
         return distributed_dict
 
-    # Replace zeros with nan for groups with less caps than the group with the max caps (cap_numbers)
-    @staticmethod
-    def _update_dict(cap_numbers, n_group_caps, curr_dict):
-        if max(cap_numbers) > n_group_caps:
-            for i in range(n_group_caps + 1, max(cap_numbers) + 1):
-                curr_dict.update({i: float("nan")})
+    def _compute_temporal_fraction(self, arr, sub_info, df, n_group_caps, max_cap):
+        # Get frequency
+        frequency_dict = {key: np.where(arr == key, 1, 0).sum() for key in range(1, n_group_caps + 1)}
+
+        self._update_dict(max_cap, n_group_caps, frequency_dict)
+
+        proportion_dict = {key: value / (len(arr)) for key, value in frequency_dict.items()}
+
+        return self._append_df(df, proportion_dict, sub_info)
+
+    def _compute_counts(self, arr, sub_info, df, n_group_caps, max_cap):
+        count_dict = {}
+        for target in range(1, n_group_caps + 1):
+            # + 1 is always added to segments to handle the + 1 needed to account for transitions and to avoid
+            # a NaN for persistence. This ensures counts is 0 if target not present
+            if target in arr:
+                _, counts = self._segments(target, arr)
+                count_dict.update({target: counts})
+            else:
+                count_dict.update({target: 0})
+
+        self._update_dict(max_cap, n_group_caps, count_dict)
+
+        return self._append_df(df, count_dict, sub_info)
+
+    def _compute_persistence(self, arr, sub_info, df, n_group_caps, max_cap, tr):
+        # Initialize variable
+        persistence_dict = {}
+
+        # Iterate through caps
+        for target in range(1, n_group_caps + 1):
+            binary_arr, n_segments = self._segments(target, arr)
+            # Sum of ones in the binary array divided by segments, then multiplied by 1 or the tr; segment is
+            # always 1 at minimum due to + 1; binary_arr.sum() is 0 when empty or the condition isn't met;
+            # thus, persistence is 0 instead of NaN in this case
+            persistence_dict.update({target: (binary_arr.sum() / n_segments) * (tr if tr else 1)})
+
+        self._update_dict(max_cap, n_group_caps, persistence_dict)
+
+        return self._append_df(df, persistence_dict, sub_info)
 
     @staticmethod
     def _segments(target, timeseries):
@@ -1185,6 +1161,48 @@ class CAP(_CAPGetter):
         n_segments = np.where(np.diff(target_indices, n=1) > 1, 1, 0).sum() + 1
 
         return binary_arr, n_segments
+
+    # Replace zeros with nan for groups with less caps than the group with the max caps across groups
+    @staticmethod
+    def _update_dict(max_cap, n_group_caps, curr_dict):
+        if max_cap > n_group_caps:
+            for i in range(n_group_caps + 1, max_cap + 1):
+                curr_dict.update({i: float("nan")})
+
+    @staticmethod
+    def _compute_transition_frequency(arr, sub_info, df):
+        # Sum the differences that are not zero - [1, 2, 1, 1, 1, 3] becomes [1, -1, 0, 0, 2]
+        # binary representation for values not zero is [1, 1, 0, 0, 1] = 3 transitions
+        transition_frequency = np.where(np.diff(arr, n=1) != 0, 1, 0).sum()
+
+        df.loc[len(df)] = sub_info + [transition_frequency]
+
+        return df
+
+    @staticmethod
+    def _compute_transition_probability(arr, sub_info, df, cap_pairs):
+        df.loc[len(df)] = sub_info + [0.0] * (df.shape[-1] - 3)
+
+        # Arrays for transitioning from and to element
+        trans_from = arr[:-1]
+        trans_to = arr[1:]
+
+        # Iterate through pairs and calculate probability
+        for e1, e2 in cap_pairs:
+            # Get total number of possible transitions for first element
+            total_trans = np.sum(trans_from == e1)
+            column = f"{e1}.{e2}"
+            # Compute sum of adjacent pairs of A -> B and divide
+            df.loc[df.index[-1], column] = (
+                np.sum((trans_from == e1) & (trans_to == e2)) / total_trans if total_trans > 0 else 0
+            )
+
+        return df
+
+    @staticmethod
+    def _append_df(df, metric_dict, sub_info):
+        df.loc[len(df)] = sub_info + [items for items in metric_dict.values()]
+        return df
 
     def _save_metrics(self, output_dir, df_dict, prefix_filename):
         self._makedir(output_dir)
@@ -1583,8 +1601,8 @@ class CAP(_CAPGetter):
                         call="outer_product",
                     )
 
-        # Remove subplots with no data
         if subplots:
+            # Remove subplots with no data
             [fig.delaxes(ax) for ax in axes.flatten() if not ax.has_data()]
 
             if output_dir:
@@ -2607,83 +2625,7 @@ class CAP(_CAPGetter):
             self._cosine_similarity[group] = radar_dict
 
             for cap in self._caps[group]:
-                if use_scatterpolar:
-                    # Create dataframe
-                    df = pd.DataFrame({"Regions": radar_dict["Regions"]})
-                    df = pd.concat([df, pd.DataFrame(radar_dict[cap])], axis=1)
-                    regions = df["Regions"].values
-
-                    # Initialize figure
-                    fig = go.Figure(layout=go.Layout(width=plot_dict["width"], height=plot_dict["height"]))
-
-                    for i in ["High Amplitude", "Low Amplitude"]:
-                        values = df[i].values
-                        fig.add_trace(
-                            go.Scatterpolar(
-                                r=list(values),
-                                theta=regions,
-                                connectgaps=plot_dict["connectgaps"],
-                                name=i,
-                                opacity=plot_dict["opacity"],
-                                marker=dict(color=plot_dict["color_discrete_map"][i], size=plot_dict["scattersize"]),
-                                line=dict(color=plot_dict["color_discrete_map"][i], width=plot_dict["linewidth"]),
-                            )
-                        )
-                else:
-                    n = len(radar_dict["Regions"])
-                    df = pd.DataFrame(
-                        {
-                            "Regions": radar_dict["Regions"] * 2,
-                            "Amp": radar_dict[cap]["High Amplitude"] + radar_dict[cap]["Low Amplitude"],
-                        }
-                    )
-                    df["Groups"] = ["High Amplitude"] * n + ["Low Amplitude"] * n
-
-                    fig = px.line_polar(
-                        df,
-                        r=df["Amp"].values,
-                        theta="Regions",
-                        line_close=plot_dict["line_close"],
-                        color=df["Groups"].values,
-                        width=plot_dict["width"],
-                        height=plot_dict["height"],
-                        category_orders={"Regions": df["Regions"]},
-                        color_discrete_map=plot_dict["color_discrete_map"],
-                    )
-
-                if use_scatterpolar:
-                    fig.update_traces(fill=plot_dict["fill"], mode=plot_dict["mode"])
-                else:
-                    fig.update_traces(
-                        fill=plot_dict["fill"], mode=plot_dict["mode"], marker=dict(size=plot_dict["scattersize"])
-                    )
-
-                # Set max value
-                if "tickvals" not in plot_dict["radialaxis"] and "range" not in plot_dict["radialaxis"]:
-                    if use_scatterpolar:
-                        max_value = max(df[["High Amplitude", "Low Amplitude"]].max())
-                    else:
-                        max_value = df["Amp"].max()
-
-                    default_ticks = [max_value / 4, max_value / 2, 3 * max_value / 4, max_value]
-                    plot_dict["radialaxis"]["tickvals"] = [round(x, 2) for x in default_ticks]
-
-                title_text = f"{group} {cap} {suffix_title}" if suffix_title else f"{group} {cap}"
-
-                # Add additional customization
-                fig.update_layout(
-                    title=dict(text=title_text, font=plot_dict["title_font"]),
-                    title_x=plot_dict["title_x"],
-                    title_y=plot_dict["title_y"],
-                    showlegend=bool(plot_dict["legend"]),
-                    legend=plot_dict["legend"],
-                    legend_title_text="Cosine Similarity",
-                    polar=dict(
-                        bgcolor=plot_dict["bgcolor"],
-                        radialaxis=plot_dict["radialaxis"],
-                        angularaxis=plot_dict["angularaxis"],
-                    ),
-                )
+                fig = self._generate_radar_plot(use_scatterpolar, radar_dict, cap, plot_dict, group, suffix_title)
 
                 if show_figs:
                     if bool(getattr(sys, "ps1", sys.flags.interactive)):
@@ -2755,3 +2697,85 @@ class CAP(_CAPGetter):
         cosine_similarity = dot_product / (norm_amp_vector * norm_region_mask)
 
         return cosine_similarity
+
+    @staticmethod
+    def _generate_radar_plot(use_scatterpolar, radar_dict, cap, plot_dict, group, suffix_title):
+        if use_scatterpolar:
+            # Create dataframe
+            df = pd.DataFrame({"Regions": radar_dict["Regions"]})
+            df = pd.concat([df, pd.DataFrame(radar_dict[cap])], axis=1)
+            regions = df["Regions"].values
+
+            # Initialize figure
+            fig = go.Figure(layout=go.Layout(width=plot_dict["width"], height=plot_dict["height"]))
+
+            for i in ["High Amplitude", "Low Amplitude"]:
+                values = df[i].values
+                fig.add_trace(
+                    go.Scatterpolar(
+                        r=list(values),
+                        theta=regions,
+                        connectgaps=plot_dict["connectgaps"],
+                        name=i,
+                        opacity=plot_dict["opacity"],
+                        marker=dict(color=plot_dict["color_discrete_map"][i], size=plot_dict["scattersize"]),
+                        line=dict(color=plot_dict["color_discrete_map"][i], width=plot_dict["linewidth"]),
+                    )
+                )
+        else:
+            n = len(radar_dict["Regions"])
+            df = pd.DataFrame(
+                {
+                    "Regions": radar_dict["Regions"] * 2,
+                    "Amp": radar_dict[cap]["High Amplitude"] + radar_dict[cap]["Low Amplitude"],
+                }
+            )
+            df["Groups"] = ["High Amplitude"] * n + ["Low Amplitude"] * n
+
+            fig = px.line_polar(
+                df,
+                r=df["Amp"].values,
+                theta="Regions",
+                line_close=plot_dict["line_close"],
+                color=df["Groups"].values,
+                width=plot_dict["width"],
+                height=plot_dict["height"],
+                category_orders={"Regions": df["Regions"]},
+                color_discrete_map=plot_dict["color_discrete_map"],
+            )
+
+        if use_scatterpolar:
+            fig.update_traces(fill=plot_dict["fill"], mode=plot_dict["mode"])
+        else:
+            fig.update_traces(
+                fill=plot_dict["fill"], mode=plot_dict["mode"], marker=dict(size=plot_dict["scattersize"])
+            )
+
+        # Set max value
+        if "tickvals" not in plot_dict["radialaxis"] and "range" not in plot_dict["radialaxis"]:
+            if use_scatterpolar:
+                max_value = max(df[["High Amplitude", "Low Amplitude"]].max())
+            else:
+                max_value = df["Amp"].max()
+
+            default_ticks = [max_value / 4, max_value / 2, 3 * max_value / 4, max_value]
+            plot_dict["radialaxis"]["tickvals"] = [round(x, 2) for x in default_ticks]
+
+        title_text = f"{group} {cap} {suffix_title}" if suffix_title else f"{group} {cap}"
+
+        # Add additional customization
+        fig.update_layout(
+            title=dict(text=title_text, font=plot_dict["title_font"]),
+            title_x=plot_dict["title_x"],
+            title_y=plot_dict["title_y"],
+            showlegend=bool(plot_dict["legend"]),
+            legend=plot_dict["legend"],
+            legend_title_text="Cosine Similarity",
+            polar=dict(
+                bgcolor=plot_dict["bgcolor"],
+                radialaxis=plot_dict["radialaxis"],
+                angularaxis=plot_dict["angularaxis"],
+            ),
+        )
+
+        return fig
