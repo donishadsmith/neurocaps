@@ -13,6 +13,13 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.28.1] - 2025-04-23
+- Primarily refactoring to improve readability. Also includes internal functions that can be used independently
+for implementation purposes or unit testing.
+### 🐛 Fixes
+- Guarantees the returned dictionary from ``CAP.calculate_metrics``, will have keys in the same order as listed in
+`metrics`.
+
 ## [0.28.0] - 2025-04-22
 ### ♻ Changed
 - Backwards compatible default changes (same default behavior):

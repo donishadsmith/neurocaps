@@ -1170,6 +1170,11 @@ class CAP(_CAPGetter):
                 curr_dict.update({i: float("nan")})
 
     @staticmethod
+    def _append_df(df, metric_dict, sub_info):
+        df.loc[len(df)] = sub_info + [items for items in metric_dict.values()]
+        return df
+
+    @staticmethod
     def _compute_transition_frequency(arr, sub_info, df):
         # Sum the differences that are not zero - [1, 2, 1, 1, 1, 3] becomes [1, -1, 0, 0, 2]
         # binary representation for values not zero is [1, 1, 0, 0, 1] = 3 transitions
@@ -1197,11 +1202,6 @@ class CAP(_CAPGetter):
                 np.sum((trans_from == e1) & (trans_to == e2)) / total_trans if total_trans > 0 else 0
             )
 
-        return df
-
-    @staticmethod
-    def _append_df(df, metric_dict, sub_info):
-        df.loc[len(df)] = sub_info + [items for items in metric_dict.values()]
         return df
 
     def _save_metrics(self, output_dir, df_dict, prefix_filename):
