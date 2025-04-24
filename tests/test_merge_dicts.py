@@ -53,15 +53,15 @@ def test_merge_dicts(return_reduced_dicts, return_merged_dicts):
 @pytest.mark.parametrize(
     "return_reduced_dicts, return_merged_dicts", [(True, True), (False, False), (True, False), (False, True)]
 )
-def test_merge_dicts_pkl(tmp_dir, return_reduced_dicts, return_merged_dicts):
+def test_merge_dicts_pkl(data_dir, tmp_dir, return_reduced_dicts, return_merged_dicts):
     """
     Ensures the expected shape of the merged dictionaries are produced and proper files are saved. Assesses when
     pickles are used as input.
     """
     subject_timeseries_merged = merge_dicts(
         [
-            os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"),
-            os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"),
+            os.path.join(tmp_dir.name, "data", "sample_timeseries.pkl"),
+            os.path.join(tmp_dir.name, "data", "sample_timeseries.pkl"),
         ],
         return_reduced_dicts=return_reduced_dicts,
         return_merged_dict=return_merged_dicts,
@@ -76,8 +76,8 @@ def test_merge_dicts_pkl(tmp_dir, return_reduced_dicts, return_merged_dicts):
 
     all_dicts = merge_dicts(
         [
-            os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"),
-            os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"),
+            os.path.join(tmp_dir.name, "data", "sample_timeseries.pkl"),
+            os.path.join(tmp_dir.name, "data", "sample_timeseries.pkl"),
         ],
         return_reduced_dicts=return_reduced_dicts,
         return_merged_dict=return_merged_dicts,
@@ -88,8 +88,8 @@ def test_merge_dicts_pkl(tmp_dir, return_reduced_dicts, return_merged_dicts):
 
     all_dicts = merge_dicts(
         [
-            os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"),
-            os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"),
+            os.path.join(tmp_dir.name, "data", "sample_timeseries.pkl"),
+            os.path.join(tmp_dir.name, "data", "sample_timeseries.pkl"),
         ],
         return_reduced_dicts=return_reduced_dicts,
         return_merged_dict=return_merged_dicts,
@@ -101,8 +101,8 @@ def test_merge_dicts_pkl(tmp_dir, return_reduced_dicts, return_merged_dicts):
     if return_reduced_dicts:
         all_dicts = merge_dicts(
             [
-                os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"),
-                os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"),
+                os.path.join(tmp_dir.name, "data", "sample_timeseries.pkl"),
+                os.path.join(tmp_dir.name, "data", "sample_timeseries.pkl"),
             ],
             return_reduced_dicts=True,
             return_merged_dict=True,
@@ -122,8 +122,8 @@ def test_merge_dicts_pkl(tmp_dir, return_reduced_dicts, return_merged_dicts):
 
         all_dicts = merge_dicts(
             [
-                os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"),
-                os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"),
+                os.path.join(tmp_dir.name, "data", "sample_timeseries.pkl"),
+                os.path.join(tmp_dir.name, "data", "sample_timeseries.pkl"),
             ],
             return_reduced_dicts=False,
             return_merged_dict=False,
@@ -145,8 +145,8 @@ def test_merge_dicts_pkl(tmp_dir, return_reduced_dicts, return_merged_dicts):
         if return_merged_dicts:
             all_dicts = merge_dicts(
                 [
-                    os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"),
-                    os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"),
+                    os.path.join(tmp_dir.name, "data", "sample_timeseries.pkl"),
+                    os.path.join(tmp_dir.name, "data", "sample_timeseries.pkl"),
                 ],
                 return_reduced_dicts=False,
                 return_merged_dict=True,
@@ -168,8 +168,8 @@ def test_merge_dicts_pkl(tmp_dir, return_reduced_dicts, return_merged_dicts):
             # Use no name to check default name
             all_dicts = merge_dicts(
                 [
-                    os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"),
-                    os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"),
+                    os.path.join(tmp_dir.name, "data", "sample_timeseries.pkl"),
+                    os.path.join(tmp_dir.name, "data", "sample_timeseries.pkl"),
                 ],
                 return_reduced_dicts=False,
                 return_merged_dict=True,

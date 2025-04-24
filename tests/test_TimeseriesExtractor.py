@@ -18,7 +18,7 @@ from .utils import (
 )
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(autouse=False, scope="function")
 def bold_json(tmp_dir):
     """Creates a temporary json file."""
     import json
@@ -34,8 +34,25 @@ def bold_json(tmp_dir):
     os.remove(filename)
 
 
-@pytest.fixture(autouse=True, scope="module")
-def setup_environment_1(data_dir, get_vars):
+@pytest.fixture(autouse=False, scope="function")
+def dset_dir(tmp_dir):
+    """
+    Copies the test dset to the temporary directory, then removes the "dset" folder, while leaving the
+    temporary directory to minimize cross-test contamination.
+    """
+    work_dir = os.path.dirname(__file__)
+
+    # Copy test data to temporary directory
+    shutil.copytree(os.path.join(work_dir, "data", "dset"), os.path.join(tmp_dir.name, "data", "dset"))
+
+    yield
+
+    # Remove sub directory "dset"
+    shutil.rmtree(os.path.join(tmp_dir.name, "data", "dset"))
+
+
+@pytest.fixture(autouse=False, scope="function")
+def setup_environment_1(dset_dir, get_vars):
     """Creates the confounds and events files."""
     bids_dir, pipeline_name = get_vars
 
@@ -43,8 +60,8 @@ def setup_environment_1(data_dir, get_vars):
     simulate_event_data(bids_dir)
 
 
-@pytest.fixture(autouse=False, scope="module")
-def setup_environment_2(get_vars):
+@pytest.fixture(autouse=False, scope="function")
+def setup_environment_2(setup_environment_1, get_vars):
     """Modifies the confound files."""
     bids_dir, _ = get_vars
     derivatives_dir = os.path.join(bids_dir, "derivatives")
@@ -61,15 +78,16 @@ def setup_environment_2(get_vars):
     confound_df.to_csv(confound_file, sep="\t", index=None)
 
 
-@pytest.fixture(autouse=False, scope="module")
-def setup_environment_3(get_vars):
+@pytest.fixture(autouse=False, scope="function")
+def clear_cache():
+    """Clear cache for ``call_layout`` when BIDs directory structure changes."""
+    TimeseriesExtractor._call_layout.cache_clear()
+
+
+@pytest.fixture(autouse=False, scope="function")
+def setup_environment_3(setup_environment_1, get_vars):
     """Creates a second subject and creates an additional session for the first."""
     bids_dir, pipeline_name = get_vars
-
-    simulate_confounds(bids_dir, pipeline_name)
-
-    # Clear cache
-    TimeseriesExtractor._call_layout.cache_clear()
 
     work_dir = os.path.join(bids_dir, "derivatives", pipeline_name)
 
@@ -91,8 +109,14 @@ def setup_environment_3(get_vars):
     for file in glob.glob(os.path.join(work_dir, "sub-01", "ses-002", "func", "*")):
         shutil.copyfile(file, file.replace("run-001", "run-002"))
 
-    # Modify confound data of sub-01 run-002 and sub-02 run-001
-    # Note: setup_environment_2 results in sub-01, run-001 to have fd_array[[0, 10, 11, 28, 29, 38, 39]] = 0.9
+
+@pytest.fixture(autouse=False, scope="function")
+def modify_confounds(get_vars):
+    """Modifies the confounds for sub-01, run-002 and sub-02, run-001. Used for ``setup_environment_3``."""
+    bids_dir, pipeline_name = get_vars
+
+    work_dir = os.path.join(bids_dir, "derivatives", pipeline_name)
+
     confound_files = glob.glob(
         os.path.join(work_dir, "sub-01", "ses-002", "func", "*run-002*confounds_timeseries.tsv")
     ) + glob.glob(os.path.join(work_dir, "sub-02", "ses-002", "func", "*run-001*confounds_timeseries.tsv"))
@@ -104,17 +128,13 @@ def setup_environment_3(get_vars):
         confound_df.to_csv(file, sep="\t", index=None)
 
 
-# Change directory structure by removing the session ID
-@pytest.fixture(autouse=False, scope="module")
-def setup_environment_4(get_vars):
+@pytest.fixture(autouse=False, scope="function")
+def setup_environment_4(setup_environment_3, get_vars):
     """
     Removes session directory, session ID from files, and brain masks. Also removes nested fmriprep directory
     by moving the directory up one level.
     """
     bids_dir, _ = get_vars
-
-    # Clear cache
-    TimeseriesExtractor._call_layout.cache_clear()
 
     work_dir = os.path.join(bids_dir, "derivatives", "fmriprep_1.0.0", "fmriprep")
 
@@ -316,7 +336,7 @@ def test_default_confounds():
     assert extractor.signal_clean_info["confound_names"] is None
 
 
-def test_delete_property(get_vars):
+def test_delete_property(setup_environment_1, get_vars):
     """
     Ensures deleter property works.
     """
@@ -375,7 +395,7 @@ def test_validate_timeseries_setter():
             extractor.subject_timeseries = arr
 
 
-def test_subject_timeseries_setter_with_pickle(tmp_dir):
+def test_subject_timeseries_setter_with_pickle(setup_environment_1, tmp_dir):
     """Tests setting of `subject_timeseries` with pickle."""
     extractor = TimeseriesExtractor()
     # Check subject timeseries setting using pickle
@@ -390,7 +410,7 @@ def test_subject_timeseries_setter_with_pickle(tmp_dir):
     os.remove(os.path.join(tmp_dir.name, "saved_timeseries.pkl"))
 
 
-def test_parcel_setter(tmp_dir):
+def test_parcel_setter(setup_environment_1, tmp_dir):
     """Ensures `parcel_approach` setter works properly."""
     extractor = TimeseriesExtractor(parcel_approach={"AAL": {}})
     extractor2 = TimeseriesExtractor()
@@ -453,7 +473,7 @@ def test_check_raise_error():
         (Parcellation.get_custom("parcellation"), False, "Custom"),
     ],
 )
-def test_basic_extraction(get_vars, parcel_approach, use_confounds, name, caplog):
+def test_basic_extraction(setup_environment_1, caplog, get_vars, parcel_approach, use_confounds, name):
     """Tests basic extraction/basic use case."""
     import logging
 
@@ -466,7 +486,6 @@ def test_basic_extraction(get_vars, parcel_approach, use_confounds, name, caplog
         parcel_approach=parcel_approach,
         standardize=True,
         use_confounds=use_confounds,
-        detrend=True,
         low_pass=0.15,
         high_pass=0.008,
         confound_names=["cosine*", "rot*"],
@@ -523,7 +542,7 @@ def test_basic_extraction(get_vars, parcel_approach, use_confounds, name, caplog
         assert math.isnan(extractor.qc["01"]["run-001"][i])
 
 
-def test_missing_confound_messages(get_vars, caplog):
+def test_missing_confound_messages(setup_environment_1, get_vars, caplog):
     """Test warnings issued for all or some confounds missing."""
     import logging
 
@@ -555,7 +574,7 @@ def test_missing_confound_messages(get_vars, caplog):
         assert not msg in caplog.text
 
 
-def test_report_qc(tmp_dir, get_vars):
+def test_report_qc(setup_environment_1, tmp_dir, get_vars):
     """Smoke test for `report_qc` to ensure it returns a dataframe and saves."""
     extractor = TimeseriesExtractor(fd_threshold=1)
 
@@ -603,7 +622,7 @@ def test_report_qc(tmp_dir, get_vars):
         assert math.isnan(extractor.qc["01"]["run-001"][i])
 
 
-def test_dtype(get_vars):
+def test_dtype(setup_environment_1, get_vars):
     """
     Test dtype conversion.
     """
@@ -622,7 +641,7 @@ def test_dtype(get_vars):
         (Parcellation.get_custom("parcellation"), "Custom"),
     ],
 )
-def test_visualize_bold(get_vars, tmp_dir, parcel_approach, name):
+def test_visualize_bold(setup_environment_1, get_vars, tmp_dir, parcel_approach, name):
     """
     Test `visualize_bold` method and ensure files are saved.
     """
@@ -702,7 +721,7 @@ def test_visualize_bold(get_vars, tmp_dir, parcel_approach, name):
         [os.remove(x) for x in png_files]
 
 
-def test_timeseries_to_pickle(get_vars, tmp_dir):
+def test_timeseries_to_pickle(setup_environment_1, get_vars, tmp_dir):
     """Test timeseries is properly converted to pickle file."""
     bids_dir, pipeline_name = get_vars
 
@@ -715,7 +734,7 @@ def test_timeseries_to_pickle(get_vars, tmp_dir):
     os.remove(file)
 
 
-def test_method_chaining(get_vars, tmp_dir):
+def test_method_chaining(setup_environment_1, get_vars, tmp_dir):
     """Tests method chaining."""
     bids_dir, pipeline_name = get_vars
 
@@ -733,7 +752,7 @@ def test_method_chaining(get_vars, tmp_dir):
 
 
 @pytest.mark.parametrize("high_pass, low_pass", [(None, None), (0.08, None), (None, 0.1), (0.08, 0.1)])
-def test_tr_with_and_without_bandpass(bold_json, get_vars, high_pass, low_pass):
+def test_tr_with_and_without_bandpass(setup_environment_1, bold_json, get_vars, high_pass, low_pass):
     """Ensures error raised when `high_pass` or `low_pass` is used without tr."""
 
     bids_dir, pipeline_name = get_vars
@@ -752,10 +771,40 @@ def test_tr_with_and_without_bandpass(bold_json, get_vars, high_pass, low_pass):
             extractor._get_tr(bold_json, None, None)
 
 
-# Ensure correct indices are extracted
-def test_condition_extraction(get_vars):
+def test_condition_extraction(setup_environment_1, get_vars):
     """
     Ensures correct frames are selected when condition specified.
+    """
+    bids_dir, pipeline_name = get_vars
+
+    extractor = TimeseriesExtractor(standardize=False)
+
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
+    timeseries = copy.deepcopy(extractor.subject_timeseries["01"]["run-001"])
+
+    extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, condition="rest")
+
+    rest_condition = copy.deepcopy(extractor.subject_timeseries["01"]["run-001"])
+
+    extractor.get_bold(
+        bids_dir=bids_dir,
+        task="rest",
+        pipeline_name=pipeline_name,
+        tr=1.2,
+        condition="active",
+    )
+
+    active_condition = copy.deepcopy(extractor.subject_timeseries["01"]["run-001"])
+
+    scan_list = get_scans(bids_dir, "rest")
+    assert np.array_equal(timeseries[scan_list, :], rest_condition)
+    scan_list = get_scans(bids_dir, "active")
+    assert np.array_equal(timeseries[scan_list, :], active_condition)
+
+
+def test_standardize(setup_environment_1, get_vars):
+    """
+    Tests that standardizing done at the end of the pipeline. Detrending mitigates some floating point differences.
     """
     bids_dir, pipeline_name = get_vars
 
@@ -785,9 +834,9 @@ def test_condition_extraction(get_vars):
 
 
 @pytest.mark.parametrize("confound_type", [None, "testing_confounds"])
-def test_confounds(get_vars, confound_type):
+def test_confounds(setup_environment_1, get_vars, confound_type):
     """
-    Ensures `use_confounds` and `confound_names` works to perform or not perform nuisance regression.
+    Ensures ``use_confounds`` and ``confound_names`` works to perform or not perform nuisance regression.
     """
     bids_dir, pipeline_name = get_vars
 
@@ -848,7 +897,7 @@ def test_confounds(get_vars, confound_type):
         all(i in returned_confounds for i in correct_confounds)
 
 
-def test_acompcor_separate(get_vars, caplog):
+def test_acompcor_separate(setup_environment_1, caplog, get_vars):
     """
     Ensures acompcor components specified in `confound_names` are removed due to `n_acompcor_separate`
     being specified.
@@ -889,7 +938,7 @@ def test_acompcor_separate(get_vars, caplog):
 
 
 @pytest.mark.parametrize("n", (None, 2))
-def test_get_acompcor_separate(get_vars, n):
+def test_get_acompcor_separate(setup_environment_1, get_vars, n):
     """
     Ensures "n_acompcor_separate" functions properly. Assesses an internal function to ensure that the correct
     "acompcor" components are extracted for nuisance regression when `n_acompcor_separate` are specified and not
@@ -936,7 +985,7 @@ def test_n_acompcor_separate_error():
         TimeseriesExtractor(use_confounds=False, n_acompcor_separate=2)
 
 
-def test_nested_pipeline_name(get_vars):
+def test_nested_pipeline_name(setup_environment_1, get_vars):
     """
     Ensures `pipeline_name` functions even when additional separators are used.
     """
@@ -990,7 +1039,7 @@ def test_filter_censored_scan_indices_unit():
     assert n_interpolated == 0
 
 
-def test_fd_censoring(get_vars):
+def test_fd_censoring(setup_environment_1, get_vars):
     """
     Ensures the correct frames are censored. Assesses for when a condition is specified and when a condition is not
     specified. Not using Nilearn's censor mask is the default behavior.
@@ -1000,7 +1049,7 @@ def test_fd_censoring(get_vars):
     fd_array = get_confound_data(bids_dir, pipeline_name, True)["framewise_displacement"].fillna(0).values
 
     # Should censor; use_confounds is True by default
-    extractor_censor = TimeseriesExtractor(fd_threshold=0.35, detrend=True)
+    extractor_censor = TimeseriesExtractor(fd_threshold=0.35, standardize=False)
 
     extractor_censor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
     assert extractor_censor.subject_timeseries["01"]["run-001"].shape == (39, 400)
@@ -1013,7 +1062,8 @@ def test_fd_censoring(get_vars):
 
     # Check "outlier_percentage"
     extractor_low_outlier_threshold = TimeseriesExtractor(
-        fd_threshold={"threshold": 0.35, "outlier_percentage": 0.00001}, detrend=True
+        fd_threshold={"threshold": 0.35, "outlier_percentage": 0.00001},
+        standardize=False,
     )
 
     extractor_low_outlier_threshold.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
@@ -1042,7 +1092,9 @@ def test_fd_censoring(get_vars):
     assert extractor_low_outlier_threshold.qc == {}
 
     # Test that dictionary fd_threshold and float are the same
-    extractor_fd_dict = TimeseriesExtractor(fd_threshold={"threshold": 0.35, "outlier_percentage": 0.30}, detrend=True)
+    extractor_fd_dict = TimeseriesExtractor(
+        fd_threshold={"threshold": 0.35, "outlier_percentage": 0.30}, standardize=False
+    )
 
     extractor_fd_dict.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
     assert extractor_fd_dict.subject_timeseries["01"]["run-001"].shape == (39, 400)
@@ -1053,7 +1105,7 @@ def test_fd_censoring(get_vars):
     assert extractor_fd_dict.qc["01"]["run-001"]["mean_high_motion_length"] == 1
     assert extractor_fd_dict.qc["01"]["run-001"]["std_high_motion_length"] == 0
 
-    extractor_fd_float = TimeseriesExtractor(fd_threshold=0.35, detrend=True)
+    extractor_fd_float = TimeseriesExtractor(fd_threshold=0.35, standardize=False)
 
     extractor_fd_float.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
     assert extractor_fd_float.qc["01"]["run-001"]["mean_fd"] == np.mean(fd_array)
@@ -1064,15 +1116,14 @@ def test_fd_censoring(get_vars):
     assert extractor_fd_float.qc["01"]["run-001"]["std_high_motion_length"] == 0
 
     # Get non censored
-    extractor_no_censor = TimeseriesExtractor(detrend=True)
+    extractor_no_censor = TimeseriesExtractor(standardize=False)
     extractor_no_censor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
 
-    assert np.allclose(
+    assert np.array_equal(
         extractor_fd_dict.subject_timeseries["01"]["run-001"],
-        _standardize(np.delete(extractor_no_censor.subject_timeseries["01"]["run-001"], 39, axis=0)),
-        atol=0.00001,
+        np.delete(extractor_no_censor.subject_timeseries["01"]["run-001"], 39, axis=0),
     )
-    assert np.allclose(
+    assert np.array_equal(
         extractor_fd_dict.subject_timeseries["01"]["run-001"],
         extractor_fd_float.subject_timeseries["01"]["run-001"],
     )
@@ -1090,11 +1141,7 @@ def test_fd_censoring(get_vars):
     assert extractor_fd_dict.qc["01"]["run-001"]["std_high_motion_length"] == 0
 
     scan_list = get_scans(bids_dir, "rest", fd=True)
-    assert np.allclose(
-        _standardize(no_condition_timeseries[scan_list, :]),
-        extractor_fd_dict.subject_timeseries["01"]["run-001"],
-        atol=0.00001,
-    )
+    assert np.array_equal(no_condition_timeseries[scan_list, :], extractor_fd_dict.subject_timeseries["01"]["run-001"])
 
     extractor_fd_dict.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2, condition="active")
     assert extractor_fd_dict.subject_timeseries["01"]["run-001"].shape == (20, 400)
@@ -1108,11 +1155,7 @@ def test_fd_censoring(get_vars):
     assert extractor_fd_dict.qc["01"]["run-001"]["std_high_motion_length"] == 0
 
     scan_list = get_scans(bids_dir, "active", fd=True)
-    assert np.allclose(
-        _standardize(no_condition_timeseries[scan_list, :]),
-        extractor_fd_dict.subject_timeseries["01"]["run-001"],
-        atol=0.00001,
-    )
+    assert np.array_equal(no_condition_timeseries[scan_list, :], extractor_fd_dict.subject_timeseries["01"]["run-001"])
 
 
 def test_create_sample_mask_unit():
@@ -1147,7 +1190,7 @@ def test_pad_timeseries_unit():
     assert np.array_equal(timeseries, padded_timeseries[data.sample_mask == 1, :])
 
 
-def test_censoring_with_sample_mask(get_vars):
+def test_censoring_with_sample_mask(setup_environment_1, get_vars):
     """
     Ensures the correct shape when "use_sample_mask" is True. Nilearn returns a truncated timeseries that
     excludes the censored frames. To compensate for this and ensure the correct indices are selected when specifying
@@ -1214,13 +1257,13 @@ def test_censoring_with_sample_mask(get_vars):
 
     # First get no condition data
     extractor_with_sample_mask = TimeseriesExtractor(
-        fd_threshold={"threshold": 0.35, "outlier_percentage": 0.30, "use_sample_mask": True}, detrend=True
+        fd_threshold={"threshold": 0.35, "outlier_percentage": 0.30, "use_sample_mask": True}, standardize=False
     )
     extractor_with_sample_mask.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
     timeseries_with_sample_mask = copy.deepcopy(extractor_with_sample_mask.subject_timeseries)
 
     extractor_with_sample_mask_condition = TimeseriesExtractor(
-        fd_threshold={"threshold": 0.35, "outlier_percentage": 0.30, "use_sample_mask": True}, detrend=True
+        fd_threshold={"threshold": 0.35, "outlier_percentage": 0.30, "use_sample_mask": True}, standardize=False
     )
     extractor_with_sample_mask_condition.get_bold(
         bids_dir=bids_dir, task="rest", condition="active", pipeline_name=pipeline_name, tr=1.2
@@ -1236,10 +1279,9 @@ def test_censoring_with_sample_mask(get_vars):
     assert extractor_with_sample_mask_condition.qc["01"]["run-001"]["std_high_motion_length"] == 0
 
     scan_list = get_scans(bids_dir, condition="active", fd=True)
-    assert np.allclose(
+    assert np.array_equal(
         extractor_with_sample_mask_condition.subject_timeseries["01"]["run-001"],
-        _standardize(timeseries_with_sample_mask["01"]["run-001"][scan_list,]),
-        atol=0.00001,
+        timeseries_with_sample_mask["01"]["run-001"][scan_list,],
     )
 
     # Second condition
@@ -1257,10 +1299,9 @@ def test_censoring_with_sample_mask(get_vars):
     assert extractor_with_sample_mask_condition.qc["01"]["run-001"]["std_high_motion_length"] == 0
 
     scan_list = get_scans(bids_dir, condition="rest", fd=True)
-    assert np.allclose(
+    assert np.array_equal(
         extractor_with_sample_mask_condition.subject_timeseries["01"]["run-001"],
-        _standardize(timeseries_with_sample_mask["01"]["run-001"][scan_list,]),
-        atol=0.00001,
+        timeseries_with_sample_mask["01"]["run-001"][scan_list,],
     )
 
 
@@ -1279,7 +1320,7 @@ def test_dummy_dict_error():
 
 
 @pytest.mark.parametrize("use_confounds", [True, False])
-def test_dummy_scans(get_vars, use_confounds):
+def test_dummy_scans(setup_environment_1, get_vars, use_confounds):
     """
     Ensures the correct shape is produced when dummy scans. Also ensures, the correct scans are selected when
     a condition is specified, since condition indices must be shifted backwards when beginning scans are removed.
@@ -1288,7 +1329,7 @@ def test_dummy_scans(get_vars, use_confounds):
     """
     bids_dir, pipeline_name = get_vars
 
-    extractor = TimeseriesExtractor(use_confounds=use_confounds, dummy_scans=5, detrend=True)
+    extractor = TimeseriesExtractor(use_confounds=use_confounds, dummy_scans=5, standardize=False)
 
     extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
     assert extractor.subject_timeseries["01"]["run-001"].shape == (35, 400)
@@ -1313,11 +1354,11 @@ def test_dummy_scans(get_vars, use_confounds):
     condition_timeseries = copy.deepcopy(extractor.subject_timeseries["01"]["run-001"])
     scan_list = get_scans(bids_dir, condition="rest", dummy_scans=5)
     # check if extracted from correct indices to ensure offsetting _extract_timeseries is correct
-    assert np.allclose(_standardize(no_condition[scan_list, :]), condition_timeseries, atol=0.00001)
+    assert np.array_equal(no_condition[scan_list, :], condition_timeseries)
 
 
 @pytest.mark.parametrize("dummy_scans", [{"auto": True}, "auto"])
-def test_dummy_scans_auto(get_vars, dummy_scans):
+def test_dummy_scans_auto(setup_environment_1, get_vars, dummy_scans):
     """
     Ensures the correct shape is produced when using "auto" (which detects the number of non-steady-state scans)
     used for dummy_scans.
@@ -1352,7 +1393,7 @@ def test_dummy_scans_auto(get_vars, dummy_scans):
     reset_non_steady(bids_dir, pipeline_name)
 
 
-def test_dummy_scans_using_auto_with_min_and_max(get_vars):
+def test_dummy_scans_using_auto_with_min_and_max(setup_environment_1, get_vars):
     """
     Ensures the correct shape is produced when using "auto" (which detects the number of non-steady-state scans)
     with a "min" or "max" for dummy_scans.
@@ -1389,7 +1430,7 @@ def test_dummy_scans_using_auto_with_min_and_max(get_vars):
     reset_non_steady(bids_dir, pipeline_name)
 
 
-def test_dummy_scans_with_fd_censoring(get_vars):
+def test_dummy_scans_with_fd_censoring(setup_environment_1, get_vars):
     """
     Ensures that using dummy scans and fd censoring together removes the expected frames. Assess for when condition
     is specified and when condition is not specified.
@@ -1399,7 +1440,7 @@ def test_dummy_scans_with_fd_censoring(get_vars):
     fd_array = get_confound_data(bids_dir, pipeline_name, True)["framewise_displacement"].fillna(0).values
 
     # Only one volume should meet the fd threshold
-    extractor_fd_and_dummy_censor = TimeseriesExtractor(dummy_scans=5, fd_threshold=0.35, detrend=True)
+    extractor_fd_and_dummy_censor = TimeseriesExtractor(dummy_scans=5, fd_threshold=0.35, standardize=False)
 
     extractor_fd_and_dummy_censor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
     assert extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"].shape == (34, 400)
@@ -1411,14 +1452,13 @@ def test_dummy_scans_with_fd_censoring(get_vars):
     assert extractor_fd_and_dummy_censor.qc["01"]["run-001"]["std_high_motion_length"] == 0
     assert extractor_fd_and_dummy_censor.qc["01"]["run-001"]["n_dummy_scans"] == 5
 
-    extractor_dummy_only = TimeseriesExtractor(dummy_scans=5, detrend=True)
+    extractor_dummy_only = TimeseriesExtractor(dummy_scans=5, standardize=False)
 
     extractor_dummy_only.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2)
 
-    assert np.allclose(
+    assert np.array_equal(
         extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"],
-        _standardize(extractor_dummy_only.subject_timeseries["01"]["run-001"][:34, :]),
-        atol=0.00001,
+        extractor_dummy_only.subject_timeseries["01"]["run-001"][:34, :],
     )
 
     no_condition = copy.deepcopy(extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"])
@@ -1440,11 +1480,7 @@ def test_dummy_scans_with_fd_censoring(get_vars):
     assert extractor_fd_and_dummy_censor.qc["01"]["run-001"]["n_dummy_scans"] == 5
 
     scan_list = get_scans(bids_dir, "rest", dummy_scans=5, fd=True)
-    assert np.allclose(
-        _standardize(no_condition[scan_list, :]),
-        extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"],
-        atol=0.00001,
-    )
+    assert np.array_equal(no_condition[scan_list, :], extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"])
 
     # Check for active condition
     extractor_fd_and_dummy_censor.get_bold(
@@ -1466,11 +1502,7 @@ def test_dummy_scans_with_fd_censoring(get_vars):
     assert extractor_fd_and_dummy_censor.qc["01"]["run-001"]["n_dummy_scans"] == 5
 
     scan_list = get_scans(bids_dir, "active", dummy_scans=5, fd=True)
-    assert np.allclose(
-        _standardize(no_condition[scan_list, :]),
-        extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"],
-        atol=0.00001,
-    )
+    assert np.array_equal(no_condition[scan_list, :], extractor_fd_and_dummy_censor.subject_timeseries["01"]["run-001"])
 
 
 def test_extended_censoring_unit():
@@ -1496,7 +1528,7 @@ def test_extended_censoring_unit():
         {"threshold": 0.31, "n_before": 4, "n_after": 2},
     ],
 )
-def test_extended_censoring_integration(get_vars, fd_threshold):
+def test_extended_censoring_integration(setup_environment_1, get_vars, fd_threshold):
     """
     Ensures the expected shape and frames are removed when using extended censoring. Assess when not specifying a
     condition and when specifying a condition.
@@ -1505,7 +1537,7 @@ def test_extended_censoring_integration(get_vars, fd_threshold):
 
     fd_array = get_confound_data(bids_dir, pipeline_name, True)["framewise_displacement"].fillna(0).values
 
-    extractor_not_censored = TimeseriesExtractor(detrend=True)
+    extractor_not_censored = TimeseriesExtractor(standardize=False)
     extractor_not_censored.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
 
     for i in extractor_not_censored.qc["01"]["run-001"]:
@@ -1524,7 +1556,7 @@ def test_extended_censoring_integration(get_vars, fd_threshold):
         non_condition_stats = (5, 0)
         condition_stats = (5, 0)
 
-    extractor_censored = TimeseriesExtractor(fd_threshold=fd_threshold, detrend=True)
+    extractor_censored = TimeseriesExtractor(fd_threshold=fd_threshold, standardize=False)
     extractor_censored.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
     assert extractor_censored.subject_timeseries["01"]["run-001"].shape[0] == expected_shape
     # 40 is the length of the full timeseries
@@ -1535,10 +1567,9 @@ def test_extended_censoring_integration(get_vars, fd_threshold):
     assert extractor_censored.qc["01"]["run-001"]["mean_high_motion_length"] == non_condition_stats[0]
     assert extractor_censored.qc["01"]["run-001"]["std_high_motion_length"] == non_condition_stats[1]
 
-    assert np.allclose(
+    assert np.array_equal(
         extractor_censored.subject_timeseries["01"]["run-001"],
-        _standardize(np.delete(extractor_not_censored.subject_timeseries["01"]["run-001"], expected_removal, axis=0)),
-        atol=0.00001,
+        np.delete(extractor_not_censored.subject_timeseries["01"]["run-001"], expected_removal, axis=0),
     )
 
     extractor_censored.get_bold(bids_dir=bids_dir, task="rest", condition="active", pipeline_name=pipeline_name)
@@ -1551,14 +1582,13 @@ def test_extended_censoring_integration(get_vars, fd_threshold):
     assert extractor_censored.qc["01"]["run-001"]["frames_interpolated"] == 0
     assert extractor_censored.qc["01"]["run-001"]["mean_high_motion_length"] == condition_stats[0]
     assert extractor_censored.qc["01"]["run-001"]["std_high_motion_length"] == condition_stats[1]
-    assert np.allclose(
+    assert np.array_equal(
         extractor_censored.subject_timeseries["01"]["run-001"],
-        _standardize(extractor_not_censored.subject_timeseries["01"]["run-001"][scan_list, :]),
-        atol=0.00001,
+        extractor_not_censored.subject_timeseries["01"]["run-001"][scan_list, :],
     )
 
 
-def test_extended_censor_with_dummy_scans(get_vars):
+def test_extended_censor_with_dummy_scans(setup_environment_1, get_vars):
     """
     Ensures the expected shape is produced when dummy scans are and extended censoring are used together.
     """
@@ -1569,7 +1599,7 @@ def test_extended_censor_with_dummy_scans(get_vars):
     fd_threshold = {"threshold": 0.31, "n_before": 4, "n_after": 2}
     dummy_scans = 3
 
-    extractor_censored = TimeseriesExtractor(fd_threshold=fd_threshold, dummy_scans=dummy_scans, detrend=True)
+    extractor_censored = TimeseriesExtractor(fd_threshold=fd_threshold, dummy_scans=dummy_scans, standardize=False)
     extractor_censored.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
 
     # dummy vols = [0, 1, 2]
@@ -1590,15 +1620,14 @@ def test_extended_censor_with_dummy_scans(get_vars):
     extractor_non_censored.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
     # Shift back by three
     expected_removal = np.array([35, 36, 37, 38, 39]) - dummy_scans
-    np.allclose(
+    np.array_equal(
         censored_data["01"]["run-001"],
-        _standardize(np.delete(extractor_non_censored.subject_timeseries["01"]["run-001"], expected_removal, axis=0)),
-        atol=0.00001,
+        np.delete(extractor_non_censored.subject_timeseries["01"]["run-001"], expected_removal, axis=0),
     )
 
 
 @pytest.mark.parametrize("onset", [2, 3, 4, 10])
-def test_condition_tr_shift(get_vars, onset):
+def test_condition_tr_shift(setup_environment_1, get_vars, onset):
     """
     Ensures the correct frames are selected when forward shift using `condition_tr_shift` is applied. Also ensures
     that there is no error when the shift results in out of bound indices as these indices should be identified
@@ -1653,7 +1682,7 @@ def test_scan_bounds_unit(shift, caplog, logger):
 
 
 @pytest.mark.parametrize("shift", [0.5, 1])
-def test_slice_time_shift(get_vars, shift):
+def test_slice_time_shift(setup_environment_1, get_vars, shift):
     """
     Ensures the correct frames are not negative due to backward shift from `slice_time_ref` and that the
     expected frames are selected.
@@ -1679,7 +1708,7 @@ def test_slice_time_shift(get_vars, shift):
     assert np.array_equal(timeseries["01"]["run-001"][scan_arr, :], extractor.subject_timeseries["01"]["run-001"])
 
 
-def test_invalid_input_for_shift_parameters(get_vars):
+def test_invalid_input_for_shift_parameters(setup_environment_1, get_vars):
     """
     Tests that the appropriate errors are raised when invalid ranges are used for `condition_tr_shift` and
     `slice_time_ref`.
@@ -1713,7 +1742,7 @@ def test_invalid_input_for_shift_parameters(get_vars):
         "sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz",
     ),
 )
-def test_nifti_file_exclusion(get_vars, exclude_niftis):
+def test_nifti_file_exclusion(setup_environment_1, get_vars, exclude_niftis):
     """
     Tests the exclusion of certain files when requested.
     """
@@ -1725,7 +1754,7 @@ def test_nifti_file_exclusion(get_vars, exclude_niftis):
     assert len(extractor.subject_timeseries) == 0
 
 
-def test_skip_when_underdetermined_or_saturated(get_vars, caplog):
+def test_skip_when_underdetermined_or_saturated(setup_environment_1, get_vars, caplog):
     """
     Check expected skipping if number of confound regressors greater than the length of timeseries.
     """
@@ -1935,7 +1964,7 @@ def test_interpolate_without_condition(setup_environment_2, get_vars, use_sample
 
 
 @pytest.mark.parametrize("use_sample_mask", [True, False])
-def test_interpolate_with_condition(get_vars, use_sample_mask):
+def test_interpolate_with_condition(setup_environment_2, get_vars, use_sample_mask):
     """
     Ensures the correct censored frames (due to exceeding fd threshold) are interpolated and missing frames at the ends
     (contiguous ends) are excluded from being interpolated when a specific condition is extracted.
@@ -2039,7 +2068,7 @@ def test_interpolate_with_condition(get_vars, use_sample_mask):
         assert not np.all(np.isnan(row))
 
 
-def test_outlier_exclusion_and_interpolation(get_vars, caplog):
+def test_outlier_exclusion_and_interpolation(setup_environment_2, get_vars, caplog):
     """
     Ensure exclusion of runs with high motion frames considers all high motion frames regardless of interpolation.
     """
@@ -2091,14 +2120,14 @@ def test_outlier_exclusion_and_interpolation(get_vars, caplog):
 
 
 ################################################# Setup Environment 3 #################################################
-def test_subjects_appending_in_dictionary(setup_environment_3, get_vars):
+def test_subjects_appending_in_dictionary(setup_environment_3, clear_cache, get_vars, modify_confounds):
     """
     Ensures subjects are appended to `subject_timeseries` correctly. Checks error when plotting specified and multiple
     runs exist.
     """
     bids_dir, pipeline_name = get_vars
 
-    extractor = TimeseriesExtractor(fd_threshold=0.94)
+    extractor = TimeseriesExtractor(fd_threshold=0.89)
 
     extractor.get_bold(bids_dir=bids_dir, task="rest", session="002", pipeline_name=pipeline_name, tr=1.2)
     assert extractor.subject_timeseries["01"]["run-001"].shape == (40, 400)
@@ -2122,7 +2151,7 @@ def test_subjects_appending_in_dictionary(setup_environment_3, get_vars):
         extractor.visualize_bold("01", roi_indx=0)
 
 
-def test_parallel_and_sequential_preprocessing_equivalence(get_vars):
+def test_parallel_and_sequential_preprocessing_equivalence(setup_environment_3, get_vars):
     """
     Ensures parallel and sequential processing produces the same output.
     """
@@ -2147,7 +2176,7 @@ def test_parallel_and_sequential_preprocessing_equivalence(get_vars):
 
 
 @pytest.mark.parametrize("runs", ["001", ["002"]])
-def test_runs(get_vars, runs):
+def test_runs(setup_environment_3, get_vars, modify_confounds, runs):
     """
     Ensures only the specified run IDs are extracted when all subjects have "run-" entities.
     """
@@ -2177,7 +2206,7 @@ def test_runs(get_vars, runs):
         assert ["run-002"] == list(extractor.subject_timeseries["01"])
 
 
-def test_session(get_vars):
+def test_session(setup_environment_3, get_vars):
     """
     Tests the extraction of the correct session when `session` is specified.
     """
@@ -2220,7 +2249,7 @@ def test_session_error(get_vars):
 
 ################################################# Setup Environment 4 #################################################
 @pytest.mark.parametrize("pipeline_name", [None, "fmriprep_1.0.0"])
-def test_unnested_pipeline_folder(setup_environment_4, get_vars, pipeline_name):
+def test_unnested_pipeline_folder(setup_environment_4, clear_cache, get_vars, pipeline_name):
     """
     Setup environment 4 converts the pipeline name from "fmriprep/fmriprep_1.0.0" -> fmriprep_1.0.0.
     This test ensures that in the case of unnested pipelines extraction occurs when `pipeline_name` specifies
@@ -2235,7 +2264,7 @@ def test_unnested_pipeline_folder(setup_environment_4, get_vars, pipeline_name):
     assert extractor.subject_timeseries
 
 
-def test_removal_of_run_desc(tmp_dir, get_vars):
+def test_removal_of_run_desc(setup_environment_4, tmp_dir, get_vars):
     """
     Ensures that even though a subject has no run IDs, the default run label "run-0" is used to preserve
     the structure of `subject_timeseries`.  Also test plotting without having to specify run for subjects with only a
@@ -2249,12 +2278,11 @@ def test_removal_of_run_desc(tmp_dir, get_vars):
     assert extractor.subject_timeseries["01"]["run-0"].shape == (40, 400)
 
     extractor.visualize_bold("01", roi_indx=0, output_dir=tmp_dir.name)
-    assert len(png_file := glob.glob(os.path.join(tmp_dir.name, "*.png"))) == 1
-    os.remove(png_file[0])
+    assert len(glob.glob(os.path.join(tmp_dir.name, "*.png"))) == 1
 
 
 @pytest.mark.parametrize("run_subjects, exclude_subjects", (["01", "02"], ["sub-01", "sub-02"]))
-def test_exclude_subjects(get_vars, run_subjects, exclude_subjects):
+def test_exclude_subjects(setup_environment_4, get_vars, run_subjects, exclude_subjects):
     """
     Tests the exclusion of subjects when using the `exclude_subjects` or `run_subjects` parameters.
     """
@@ -2271,7 +2299,7 @@ def test_exclude_subjects(get_vars, run_subjects, exclude_subjects):
     assert "02" not in list(extractor.subject_timeseries)
 
 
-def test_events_without_session_id_in_nifti_files(get_vars):
+def test_events_without_session_id_in_nifti_files(setup_environment_4, get_vars):
     """
     Setup environment 4 removes session IDs of all subjects. This test ensures that extraction
     occurs when there are no session IDs since it assumes that no session ID means that the data only has a single
@@ -2288,7 +2316,7 @@ def test_events_without_session_id_in_nifti_files(get_vars):
 
 
 @pytest.mark.parametrize("run", (0, ["005"]))
-def test_subject_skipping_when_no_matching_run_id(get_vars, run, caplog):
+def test_subject_skipping_when_no_matching_run_id(setup_environment_4, get_vars, run, caplog):
     """Tests exclusion of all subjects that dont have a matching run ID."""
     import logging
 
@@ -2305,7 +2333,7 @@ def test_subject_skipping_when_no_matching_run_id(get_vars, run, caplog):
 
 
 @pytest.mark.parametrize("run", ("001", ["001", "002"]))
-def test_matching_run_id(get_vars, run):
+def test_matching_run_id(setup_environment_4, get_vars, run):
     """
     Ensures only subjects with requested run IDs are appended to `subject_timeseries`. This checks that
     even if a subject has no "run-" entity (), they are still excluded if a specific run ID is requested.
@@ -2329,7 +2357,7 @@ def test_matching_run_id(get_vars, run):
         assert "run-002" not in run_list
 
 
-def test_append_subjects_with_different_run_ids(get_vars):
+def test_append_subjects_with_different_run_ids(setup_environment_4, get_vars):
     """Ensures subjects with different runs are still appended to `subject_timeseries`."""
     bids_dir, _ = get_vars
 
@@ -2341,7 +2369,7 @@ def test_append_subjects_with_different_run_ids(get_vars):
     assert extractor.subject_timeseries["02"]["run-001"].shape == (40, 400)
 
 
-def test_flush(get_vars, caplog):
+def test_flush(setup_environment_4, get_vars, caplog):
     """Ensures flush produces logs."""
     import logging
 
@@ -2356,7 +2384,7 @@ def test_flush(get_vars, caplog):
     assert "The following confounds will be used for nuisance regression:" in caplog.text
 
 
-def test_logging_redirection_sequential(get_vars, tmp_dir):
+def test_logging_redirection_sequential(setup_environment_4, get_vars, tmp_dir):
     """Tests redirection of logs in sequential processing contexts."""
     import logging
 
@@ -2390,7 +2418,7 @@ def test_logging_redirection_sequential(get_vars, tmp_dir):
     check_logs(log_file, phrase, ["01", "02"])
 
 
-def test_logging_redirection_parallel(get_vars, tmp_dir):
+def test_logging_redirection_parallel(setup_environment_4, get_vars, tmp_dir):
     """
     Tests redirection of logs in parallel processing contexts. Ensures the managed queue + queuehandler + queuelistener
     method works.

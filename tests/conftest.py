@@ -19,13 +19,21 @@ def tmp_dir():
     temp_dir.cleanup()
 
 
-@pytest.fixture(autouse=False, scope="module")
+@pytest.fixture(autouse=False, scope="function")
 def data_dir(tmp_dir):
-    """Copies the test dataset to the temporary directory."""
+    """
+    Copies the test data to the temporary directory, then removes the "data" folder, while leaving the
+    temporary directory to minimize cross-test contamination.
+    """
     work_dir = os.path.dirname(__file__)
 
     # Copy test data to temporary directory
-    shutil.copytree(os.path.join(work_dir, "data", "dset"), os.path.join(tmp_dir.name, "data", "dset"))
+    shutil.copytree(os.path.join(work_dir, "data"), os.path.join(tmp_dir.name, "data"))
+
+    yield
+
+    # Remove sub directory
+    shutil.rmtree(os.path.join(tmp_dir.name, "data"))
 
 
 @pytest.fixture(autouse=False, scope="module")

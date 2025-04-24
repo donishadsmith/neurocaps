@@ -24,16 +24,16 @@ def test_standardize(tmp_dir):
     assert "10" in standardized_subject_timeseries["dict_0"] and "10" not in standardized_subject_timeseries["dict_1"]
 
 
-def test_standardize_w_pickle(tmp_dir):
+def test_standardize_w_pickle(data_dir, tmp_dir):
     """
     Tests standardization is performed properly when using pickle file as input and that standardized data is
     saved properly.
     """
-    with open(os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"), "rb") as f:
+    with open(os.path.join(tmp_dir.name, "data", "sample_timeseries.pkl"), "rb") as f:
         subject_timeseries = joblib.load(f)
 
     standardized_subject_timeseries = standardize(
-        subject_timeseries_list=[os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl")],
+        subject_timeseries_list=[os.path.join(tmp_dir.name, "data", "sample_timeseries.pkl")],
         output_dir=tmp_dir.name,
         return_dicts=True,
     )
@@ -42,7 +42,7 @@ def test_standardize_w_pickle(tmp_dir):
     assert standardized_subject_timeseries["dict_0"]["1"]["run-1"].std() != prior_std
 
     standardized_subject_timeseries = standardize(
-        subject_timeseries_list=[os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl")],
+        subject_timeseries_list=[os.path.join(tmp_dir.name, "data", "sample_timeseries.pkl")],
         output_dir=tmp_dir.name,
         filenames=["test_standardized"],
     )
@@ -54,4 +54,3 @@ def test_standardize_w_pickle(tmp_dir):
     assert "subject_timeseries_0_standardized.pkl" in files_basename
     assert "test_standardized.pkl" in files_basename
     assert all(os.path.getsize(file) > 0 for file in files)
-    [os.remove(x) for x in files]

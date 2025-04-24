@@ -41,23 +41,21 @@ jobs:
           pip install .[windows,test]
         shell: cmd
 
-      - name: Run tests with coverage for Ubuntu on python 3.12
+      - name: Run tests with coverage for Ubuntu on Python 3.12
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-ver == '3.12' }}
         uses: coactions/setup-xvfb@v1
         with:
           options: -screen 0 1600x1200x24
           run: |
             pytest --cov=neurocaps
-          shell: bash
 
-      - name: Run test without coverage for Ubuntu from 3.9 to 3.11
+      - name: Run test without coverage for Ubuntu from Python 3.9 to 3.11
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-ver != '3.12' }}
         uses: coactions/setup-xvfb@v1
         with:
           options: -screen 0 1600x1200x24
           run: |
             pytest .
-          shell: bash
           working-directory: tests
 
       - name: Run tests without coverage for Mac for all version

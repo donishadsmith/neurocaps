@@ -21,12 +21,12 @@ def test_change_dtype():
     assert "10" in changed_subject_timeseries["dict_0"] and "10" not in changed_subject_timeseries["dict_1"]
 
 
-def test_change_dtype_w_pickle(tmp_dir):
+def test_change_dtype_w_pickle(data_dir, tmp_dir):
     """
     Tests dtype change when using pickle as input.
     """
     changed_subject_timeseries = change_dtype(
-        subject_timeseries_list=[os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl")],
+        subject_timeseries_list=[os.path.join(tmp_dir.name, "data", "sample_timeseries.pkl")],
         output_dir=tmp_dir.name,
         dtype=np.float16,
         return_dicts=True,
@@ -34,7 +34,7 @@ def test_change_dtype_w_pickle(tmp_dir):
     assert changed_subject_timeseries["dict_0"]["1"]["run-1"].dtype == "float16"
 
     changed_subject_timeseries = change_dtype(
-        subject_timeseries_list=[os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl")],
+        subject_timeseries_list=[os.path.join(tmp_dir.name, "data", "sample_timeseries.pkl")],
         output_dir=tmp_dir.name,
         filenames=["test_dtype"],
         dtype="float16",
@@ -48,5 +48,3 @@ def test_change_dtype_w_pickle(tmp_dir):
     assert "subject_timeseries_0_dtype-float16.pkl" in files_basename
     assert "test_dtype.pkl" in files_basename
     assert all(os.path.getsize(file) > 0 for file in files)
-
-    [os.remove(x) for x in files]

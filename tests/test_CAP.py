@@ -428,26 +428,22 @@ def test_var_explained():
     assert cap_analysis.variance_explained["All Subjects"] == 1
 
 
-def test_no_groups_using_pickle():
+def test_no_groups_using_pickle(data_dir, tmp_dir):
     """
     Verifies that pickles can be used as input in `get_caps`.
     """
     cap_analysis = CAP()
-    cap_analysis.get_caps(
-        subject_timeseries=os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"), n_clusters=2
-    )
+    cap_analysis.get_caps(subject_timeseries=os.path.join(tmp_dir.name, "data", "sample_timeseries.pkl"), n_clusters=2)
     assert cap_analysis.caps["All Subjects"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["All Subjects"]["CAP-2"].shape == (100,)
 
 
-def test_groups_using_pickle():
+def test_groups_using_pickle(data_dir, tmp_dir):
     """
     Verifies that pickles can be used as input in `get_caps`.
     """
     cap_analysis = CAP(groups={"A": [0, 1, 2, 4], "B": [3, 5, 6, 7, 8, 9, 6]})
-    cap_analysis.get_caps(
-        subject_timeseries=os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"), n_clusters=2
-    )
+    cap_analysis.get_caps(subject_timeseries=os.path.join(tmp_dir.name, "data", "sample_timeseries.pkl"), n_clusters=2)
     assert cap_analysis.caps["A"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["A"]["CAP-2"].shape == (100,)
     assert cap_analysis.caps["B"]["CAP-1"].shape == (100,)
@@ -702,7 +698,7 @@ def test_metrics_mathematical_relationship(continuous_runs):
                 assert counts.loc[i, cap] == 0 and temp.loc[i, cap] == 0
 
 
-def test_calculate_metrics_using_pickle(tmp_dir):
+def test_calculate_metrics_using_pickle(data_dir, tmp_dir):
     """
     Ensure that pickles can be used as input for `calculate_metrics`.
     """
@@ -714,7 +710,7 @@ def test_calculate_metrics_using_pickle(tmp_dir):
     metrics = ["temporal_fraction", "counts", "transition_frequency", "persistence", "transition_probability"]
 
     cap_analysis.calculate_metrics(
-        subject_timeseries=os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"),
+        subject_timeseries=os.path.join(tmp_dir.name, "data", "sample_timeseries.pkl"),
         metrics=metrics,
         output_dir=tmp_dir.name,
     )
@@ -728,7 +724,7 @@ def test_calculate_metrics_using_pickle(tmp_dir):
     [os.remove(x) for x in csv_files]
 
 
-def test_subject_setter():
+def test_subject_setter(data_dir, tmp_dir):
     """
     Tests the `subject_setter` setter property. Ensures that `calculate_metrics` respects when a subject is added
     to this property.
@@ -741,7 +737,7 @@ def test_subject_setter():
     metrics = ["temporal_fraction"]
 
     df_shape = cap_analysis.calculate_metrics(
-        subject_timeseries=os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"),
+        subject_timeseries=os.path.join(tmp_dir.name, "data", "sample_timeseries.pkl"),
         metrics=metrics,
         continuous_runs=True,
     )["temporal_fraction"].shape
@@ -1142,7 +1138,7 @@ def test_check_raise_error():
             CAP._raise_error(i)
 
 
-def test_raise_error_methods():
+def test_raise_error_methods(data_dir, tmp_dir):
     """
     Tests that the proper error messages are being produced when using functions.
     """
@@ -1164,7 +1160,7 @@ def test_raise_error_methods():
         cap_analysis.caps2plot()
 
     with pytest.raises(AttributeError, match=re.escape(error_msg["_kmeans"])):
-        cap_analysis.calculate_metrics(os.path.join(os.path.dirname(__file__), "data", "sample_timeseries.pkl"))
+        cap_analysis.calculate_metrics(os.path.join(tmp_dir.name, "data", "sample_timeseries.pkl"))
 
 
 def test_compute_cosine_similarity():
