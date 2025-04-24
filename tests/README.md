@@ -13,6 +13,12 @@ pip install -e neurocaps[tests]
 ```bash
 pip install -e neurocaps[windows, tests]
 ```
+### Get Test Data
+If submodules were not cloned with the repo, then at the root, run the following command:
+
+```bash
+git submodule update --init
+```
 
 ## Run pytest
 ```bash

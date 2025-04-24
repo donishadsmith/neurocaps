@@ -26,12 +26,13 @@ Download test dataset used for Github Actions from Github.
     os.makedirs(demo_dir, exist_ok=True)
 
     if sys.platform != "win32":
-        cmd = """
-            cd neurocaps_demo
-            git clone --depth 1 --filter=blob:none --sparse https://github.com/donishadsmith/neurocaps.git
-            cd neurocaps
-            git sparse-checkout set tests/data/dset
-            """
+        cmd = (
+            "cd neurocaps_demo && "
+            "git clone --depth 1 --filter=blob:none --sparse https://github.com/donishadsmith/neurocaps.git && "
+            "cd neurocaps && "
+            "git sparse-checkout set tests/data/dset &&"
+            "git submodule update --init --depth 1 -- tests/data"
+        )
         os.system(cmd)
     else:
         repo_dir = os.path.join(demo_dir, "neurocaps")
@@ -57,7 +58,7 @@ Download test dataset used for Github Actions from Github.
         )
 
         subprocess.run(
-            ["git", "sparse-checkout", "set", "tests/data/dset"],
+            ["git", "submodule", "update", "--init", "--depth", "1", "--", "tests/data"],
             check=True,
             cwd=repo_dir,
         )
@@ -65,7 +66,6 @@ Download test dataset used for Github Actions from Github.
     # Rename folder
     os.makedirs("neurocaps_demo/data", exist_ok=True)
     os.rename("neurocaps_demo/neurocaps/tests/data/dset", "neurocaps_demo/data/dset")
-
 
 Note: when an asterisk (*) follows a name, all confounds that start with the preceding term will be automatically included.
 For example, placing an asterisk after cosine (cosine*) will utilize all parameters that begin with cosine.
