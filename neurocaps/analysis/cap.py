@@ -1,7 +1,6 @@
 """Contains the CAP class for performing co-activation patterns analyses"""
 
 import collections, itertools, os, re, sys, tempfile
-from operator import itemgetter
 from typing import Callable, Literal, Optional, Union
 from typing_extensions import Self
 
@@ -477,11 +476,7 @@ class CAP(_CAPGetter):
                     LG.warning(f"[SUBJECT: {subj_id}] Excluded from the concatenated timeseries due to having no runs.")
                     continue
 
-                subj_arrays = itemgetter(*subject_runs)(subject_timeseries[subj_id])
-
-                if len(subject_runs) == 1:
-                    subj_arrays = [subj_arrays]
-
+                subj_arrays = [subject_timeseries[subj_id][run_id] for run_id in subject_runs]
                 group_arrays[group].extend(subj_arrays)
 
         # Only stack once per group; avoid bottleneck due to repeated calls on large data
@@ -1064,7 +1059,7 @@ class CAP(_CAPGetter):
             if len(prediction_dict) > 1 and continuous_runs:
                 # Horizontally stack predicted runs
                 predicted_subject_timeseries[subj_id].update(
-                    {"run-continuous": np.hstack(itemgetter(*subject_runs)(prediction_dict))}
+                    {"run-continuous": np.hstack([prediction_dict[run_id] for run_id in subject_runs])}
                 )
             else:
                 predicted_subject_timeseries[subj_id].update(prediction_dict)
