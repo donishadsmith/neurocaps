@@ -48,10 +48,6 @@ class _CAPGetter:
         return getattr(self, "_n_clusters", None)
 
     @property
-    def cluster_selection_method(self) -> Union[str, None]:
-        return getattr(self, "_cluster_selection_method", None)
-
-    @property
     def n_cores(self) -> Union[int, None]:
         return getattr(self, "_n_cores", None)
 
@@ -64,20 +60,20 @@ class _CAPGetter:
         return getattr(self, "_standardize", None)
 
     @property
-    def means(self) -> Union[dict[str, NDArray[np.floating]], None]:
-        return copy.deepcopy(getattr(self, "_mean_vec", None))
-
-    @property
-    def stdev(self) -> Union[dict[str, NDArray[np.floating]], None]:
-        return copy.deepcopy(getattr(self, "_stdev_vec", None))
-
-    @property
     def concatenated_timeseries(self) -> Union[dict[str, NDArray[np.floating]], None]:
         return getattr(self, "_concatenated_timeseries", None)
 
     @concatenated_timeseries.deleter
     def concatenated_timeseries(self) -> None:
         del self._concatenated_timeseries
+
+    @property
+    def means(self) -> Union[dict[str, NDArray[np.floating]], None]:
+        return copy.deepcopy(getattr(self, "_mean_vec", None))
+
+    @property
+    def stdev(self) -> Union[dict[str, NDArray[np.floating]], None]:
+        return copy.deepcopy(getattr(self, "_stdev_vec", None))
 
     @property
     def kmeans(self) -> Union[dict[str, KMeans], None]:
@@ -90,6 +86,15 @@ class _CAPGetter:
     @property
     def cluster_scores(self) -> Union[dict[str, Union[str, dict[str, float]]], None]:
         return getattr(self, "_cluster_scores", None)
+
+    @property
+    def cluster_selection_method(self) -> Union[str, None]:
+        attr = getattr(self, "_cluster_scores", None)
+
+        if attr:
+            return attr["Cluster_Selection_Method"]
+        else:
+            return attr
 
     @property
     def optimal_n_clusters(self) -> Union[dict[str, int], None]:

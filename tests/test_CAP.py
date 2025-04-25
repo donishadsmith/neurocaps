@@ -265,7 +265,6 @@ def test_elbow_method(groups, n_cores):
 
         assert kneedle.elbow == cap_analysis.optimal_n_clusters[group]
         assert cap_analysis.cluster_selection_method == "elbow"
-        assert cap_analysis.cluster_scores["Cluster_Selection_Method"] == "elbow"
         assert (
             cap_analysis.cluster_scores["Scores"][group][cap_analysis.optimal_n_clusters[group]]
             == cap_analysis.kmeans[group].inertia_
@@ -301,7 +300,6 @@ def test_silhouette_method(groups, n_cores):
         assert all(elem > 0 or elem < 0 for elem in cap_analysis.cluster_scores["Scores"][group].values())
         assert all(-1 <= elem <= 1 for elem in cap_analysis.cluster_scores["Scores"][group].values())
         assert cap_analysis.cluster_selection_method == "silhouette"
-        assert cap_analysis.cluster_scores["Cluster_Selection_Method"] == "silhouette"
         # Maximum value most optimal
         assert (
             max(cap_analysis.cluster_scores["Scores"][group], key=cap_analysis.cluster_scores["Scores"][group].get)
@@ -336,7 +334,6 @@ def test_davies_bouldin_method(groups, n_cores):
 
     for group in groups:
         assert cap_analysis.cluster_selection_method == "davies_bouldin"
-        assert cap_analysis.cluster_scores["Cluster_Selection_Method"] == "davies_bouldin"
         # Minimum value most optimal
         assert (
             min(cap_analysis.cluster_scores["Scores"][group], key=cap_analysis.cluster_scores["Scores"][group].get)
@@ -371,7 +368,6 @@ def test_variance_ratio_method(groups, n_cores):
 
     for group in groups:
         assert cap_analysis.cluster_selection_method == "variance_ratio"
-        assert cap_analysis.cluster_scores["Cluster_Selection_Method"] == "variance_ratio"
         # Maximum value most optimal
         assert (
             max(cap_analysis.cluster_scores["Scores"][group], key=cap_analysis.cluster_scores["Scores"][group].get)

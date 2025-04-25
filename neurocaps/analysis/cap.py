@@ -382,9 +382,7 @@ class CAP(_CAPGetter):
         if cluster_selection_method and isinstance(self._n_clusters, int):
             raise ValueError("`cluster_selection_method` only valid if `n_clusters` is a range of unique integers.")
 
-        self._cluster_selection_method = cluster_selection_method
-
-        if not self._cluster_selection_method and n_cores:
+        if not cluster_selection_method and n_cores:
             raise ValueError("Parallel processing will not run since `cluster_selection_method` is None.")
 
         self._n_cores = n_cores
@@ -406,8 +404,10 @@ class CAP(_CAPGetter):
         subject_timeseries = self._process_subject_timeseries(subject_timeseries)
         self._concatenated_timeseries = self._concatenate_timeseries(subject_timeseries, runs, progress_bar)
 
-        if self._cluster_selection_method:
-            self._select_optimal_clusters(configs, show_figs, output_dir, progress_bar, as_pickle, **kwargs)
+        if cluster_selection_method:
+            self._select_optimal_clusters(
+                cluster_selection_method, configs, show_figs, output_dir, progress_bar, as_pickle, **kwargs
+            )
         else:
             self._kmeans = {}
             for group in self._groups:
@@ -512,14 +512,11 @@ class CAP(_CAPGetter):
 
         return runs, miss_runs
 
-    def _select_optimal_clusters(self, configs, show_figs, output_dir, progress_bar, as_pickle, **kwargs):
+    def _select_optimal_clusters(self, method, configs, show_figs, output_dir, progress_bar, as_pickle, **kwargs):
         self._cluster_scores = {}
         self._optimal_n_clusters = {}
         self._kmeans = {}
-        self._cluster_metric = {}
         performance_dict = {}
-
-        method = self._cluster_selection_method
 
         for group in self._groups:
             performance_dict[group] = {}
@@ -617,7 +614,7 @@ class CAP(_CAPGetter):
 
         if output_dir:
             self._makedir(output_dir)
-            save_name = f"{group.replace(' ', '_')}_{self._cluster_selection_method}.png"
+            save_name = f"{group.replace(' ', '_')}_{method}.png"
 
             if as_pickle:
                 _pickle_object(plt.gcf(), output_dir, save_name.replace(".png", ".pkl"))
