@@ -4,14 +4,14 @@ To ensure all necessary software is installed for testing, use the following com
 
 ### Ubuntu & Mac
 ```bash
-pip install -e neurocaps[tests]
+pip install .[test]
 ```
 
 ### Windows
 **Windows Long Path support must be enabled.**
 
 ```bash
-pip install -e neurocaps[windows, tests]
+pip install .[windows, test]
 ```
 ### Get Test Data
 If submodules were not cloned with the repo, then at the root, run the following command:
