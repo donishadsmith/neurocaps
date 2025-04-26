@@ -402,7 +402,7 @@ def check_outputs(tmp_dir, values_dict, plot_type="map", plot_name=None):
 
         with open(pickle_files[0], "rb") as f:
             fig = joblib.load(f)
-            assert isinstance(fig, matplotlib.axes._axes.Axes) or isinstance(fig, matplotlib.figure.Figure)
+            assert isinstance(fig, matplotlib.axes.Axes) or isinstance(fig, matplotlib.figure.Figure)
 
         [os.remove(file) for file in pickle_files]
     else:

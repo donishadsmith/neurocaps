@@ -5,9 +5,7 @@ from typing import Union, Optional
 import numpy as np
 
 from ..typing import SubjectTimeseries
-from .._utils import _convert_pickle_to_dict, _dicts_to_pickles, _logger
-
-LG = _logger(__name__)
+from .._utils import _IO
 
 
 def merge_dicts(
@@ -104,15 +102,12 @@ def merge_dicts(
     assert isinstance(subject_timeseries_list, list), "`subject_timeseries_list` must be a list."
     assert len(subject_timeseries_list) > 1, "Merging cannot be done with less than two dictionaries or files."
 
-    if filenames and not output_dir:
-        LG.warning("`filenames` supplied but no `output_dir` specified. Files will not be saved.")
+    _IO.issue_file_warning("filenames", filenames, output_dir)
 
     # Only perform IO operation once
     new_timeseries_list = []
     for curr_dict in subject_timeseries_list:
-        if isinstance(curr_dict, str):
-            curr_dict = _convert_pickle_to_dict(curr_dict)
-
+        curr_dict = _IO.get_obj(curr_dict, needs_deepcopy=False)
         new_timeseries_list.append(curr_dict)
 
     # Get common subject ids
@@ -182,7 +177,7 @@ def merge_dicts(
         if isinstance(filenames, str):
             filenames = [filenames]
 
-        _dicts_to_pickles(
+        _IO.dicts_to_pickles(
             output_dir=output_dir,
             dict_list=modified_dicts,
             call="merge",

@@ -1,11 +1,11 @@
 """Internal function for checking the validity of parcel_approach."""
 
-import copy, os, re
+import os, re
 
 import numpy as np
 from nilearn import datasets
 
-from .pickle_utils import _convert_pickle_to_dict
+from .io import _IO
 from .logger import _logger
 
 LG = _logger(__name__)
@@ -26,10 +26,7 @@ def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
     Pipeline to ensure ``parcel_approach`` is valid and process the ``parcel_approach`` if certain initialization
     keys are used.
     """
-    if isinstance(parcel_approach, str):
-        parcel_dict = _convert_pickle_to_dict(parcel_approach)
-    else:
-        parcel_dict = copy.deepcopy(parcel_approach)
+    parcel_dict = _IO.get_obj(parcel_approach)
 
     if parcel_dict is None and call == "TimeseriesExtractor":
         parcel_dict = {"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}

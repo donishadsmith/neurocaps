@@ -6,7 +6,7 @@ from typing import Union
 import numpy as np
 
 from ..check_parcel_approach import _check_parcel_approach
-from ..pickle_utils import _convert_pickle_to_dict
+from ..io import _IO
 from ...typing import ParcelConfig, ParcelApproach, SubjectTimeseries
 
 
@@ -62,18 +62,11 @@ class _TimeseriesExtractorGetter:
 
     @subject_timeseries.setter
     def subject_timeseries(self, subject_dict: Union[SubjectTimeseries, str]) -> None:
-        need_deepcopy = True
-
-        if isinstance(subject_dict, str):
-            subject_dict = _convert_pickle_to_dict(subject_dict)
-            need_deepcopy = False
+        subject_dict = _IO.get_obj(subject_dict)
 
         self._validate_timeseries(subject_dict)
 
-        if need_deepcopy:
-            self._subject_timeseries = copy.deepcopy(subject_dict)
-        else:
-            self._subject_timeseries = subject_dict
+        self._subject_timeseries = subject_dict
 
     @subject_timeseries.deleter
     def subject_timeseries(self) -> None:

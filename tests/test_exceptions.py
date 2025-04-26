@@ -5,7 +5,7 @@ import pytest
 from neurocaps.extraction import TimeseriesExtractor
 from neurocaps.analysis import CAP
 from neurocaps.exceptions import BIDSQueryError, NoElbowDetectedError, UnsupportedFileExtensionError
-from neurocaps._utils import _convert_pickle_to_dict
+from neurocaps._utils import _IO
 
 from .utils import Parcellation
 
@@ -83,4 +83,4 @@ def test_unsupported_serialized_file_error():
     msg = "Serialized files must end with one of the following extensions: '.pkl', '.pickle', '.joblib'."
 
     with pytest.raises(UnsupportedFileExtensionError, match=re.escape(msg)):
-        _convert_pickle_to_dict("placeholder.txt")
+        _IO.unserialize("placeholder.txt")

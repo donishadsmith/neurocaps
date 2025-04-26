@@ -1,12 +1,9 @@
 """Function to standardize timeseries within subject runs."""
 
-import copy
 from typing import Union, Optional
 
 from ..typing import SubjectTimeseries
-from .._utils import _convert_pickle_to_dict, _dicts_to_pickles, _logger, _standardize
-
-LG = _logger(__name__)
+from .._utils import _IO, _standardize
 
 
 def standardize(
@@ -61,16 +58,12 @@ def standardize(
         isinstance(subject_timeseries_list, list) and len(subject_timeseries_list) > 0
     ), "`subject_timeseries_list` must be a list greater than length 0."
 
-    if filenames is not None and output_dir is None:
-        LG.warning("`filenames` supplied but no `output_dir` specified. Files will not be saved.")
+    _IO.issue_file_warning("filenames", filenames, output_dir)
 
     standardized_dicts = {}
 
     for indx, curr_dict in enumerate(subject_timeseries_list):
-        if isinstance(curr_dict, str):
-            curr_dict = _convert_pickle_to_dict(curr_dict)
-        else:
-            curr_dict = copy.deepcopy(curr_dict)
+        curr_dict = _IO.get_obj(curr_dict)
 
         for subj_id in curr_dict:
             for run in curr_dict[subj_id]:
@@ -79,7 +72,9 @@ def standardize(
         standardized_dicts[f"dict_{indx}"] = curr_dict
 
     if output_dir:
-        _dicts_to_pickles(output_dir=output_dir, dict_list=standardized_dicts, filenames=filenames, call="standardize")
+        _IO.dicts_to_pickles(
+            output_dir=output_dir, dict_list=standardized_dicts, filenames=filenames, call="standardize"
+        )
 
     if return_dicts:
         return standardized_dicts

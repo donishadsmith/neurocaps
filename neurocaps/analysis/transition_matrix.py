@@ -4,9 +4,7 @@ from typing import Optional, Union
 
 import matplotlib.pyplot as plt, pandas as pd
 
-from .._utils import _PlotDefaults, _check_kwargs, _create_display, _logger, _save_contents
-
-LG = _logger(__name__)
+from .._utils import _IO, _MatrixVisualizer, _PlotDefaults, _check_kwargs
 
 
 def transition_matrix(
@@ -114,8 +112,7 @@ def transition_matrix(
     """
     assert isinstance(trans_dict, dict), "transition_dict must be in the form dict[str, pd.DataFrame]."
 
-    if suffix_filename is not None and output_dir is None:
-        LG.warning("`suffix_filename` supplied but no `output_dir` specified. Files will not be saved.")
+    _IO.issue_file_warning("suffix_filename", suffix_filename, output_dir)
 
     # Create plot dictionary
     plot_dict = _check_kwargs(_PlotDefaults.transition_matrix(), **kwargs)
@@ -137,13 +134,13 @@ def transition_matrix(
         for location, name in enumerate(indices):
             trans_mat.loc[f"CAP-{name.split('.')[0]}", f"CAP-{name.split('.')[1]}"] = averaged_probabilities[location]
 
-        display = _create_display(trans_mat, plot_dict, suffix_title, group, "trans")
+        display = _MatrixVisualizer.create_display(trans_mat, plot_dict, suffix_title, group, "trans")
 
         trans_mat_dict[group] = trans_mat
 
         # Save figure & dataframe
         if output_dir:
-            _save_contents(
+            _MatrixVisualizer.save_contents(
                 output_dir=output_dir,
                 suffix_filename=suffix_filename,
                 group=group,

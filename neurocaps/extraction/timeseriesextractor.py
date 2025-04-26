@@ -15,12 +15,13 @@ from ..typing import ParcelConfig, ParcelApproach
 from .._utils import (
     _TimeseriesExtractorGetter,
     _PlotDefaults,
+    _PlotFuncs,
+    _IO,
     _check_kwargs,
     _check_confound_names,
     _check_parcel_approach,
     _extract_timeseries,
     _logger,
-    _pickle_object,
 )
 
 LG = _logger(__name__)
@@ -979,8 +980,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         """
         Save the Extracted Subject Timeseries.
 
-        Saves the extracted timeseries stored in the ``self.subject_timeseries`` dictionary as a pickle file with
-        Joblib.
+        Saves the extracted timeseries stored in the ``self.subject_timeseries`` dictionary as a pickle file (ending in
+        ".pkl") with Joblib.
 
         Parameters
         ----------
@@ -988,7 +989,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             Directory to save a pickle file to. The directory will be created if it does not exist.
 
         filename: :obj:`str` or :obj:`None`, default=None
-            Name of the file with or without the "pkl" extension. If None, will use "subject_timeseries.pkl" as default.
+            Name of the file. If None, will use "subject_timeseries.pkl" as default.
 
         Returns
         -------
@@ -998,7 +999,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             output_dir, filename, prop_name="_subject_timeseries", call="timeseries_to_pickle"
         )
 
-        _pickle_object(self._subject_timeseries, output_dir, save_filename)
+        _IO.serialize(self._subject_timeseries, output_dir, save_filename, use_joblib=True)
 
         return self
 
@@ -1106,8 +1107,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         if not output_dir:
             return None
-        elif output_dir and not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+        else:
+            _IO.makedir(output_dir)
 
         ext = "pkl" if call == "timeseries_to_pickle" else "csv"
 
@@ -1203,8 +1204,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         if roi_indx is not None and region is not None:
             raise ValueError("`roi_indx` and `region` can not be used simultaneously.")
 
-        if filename is not None and output_dir is None:
-            LG.warning("`filename` supplied but no `output_dir` specified. Files will not be saved.")
+        _IO.issue_file_warning("filename", filename, output_dir)
 
         # Defaults
         plot_dict = _check_kwargs(_PlotDefaults.visualize_bold(), **kwargs)
@@ -1239,19 +1239,14 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         plt.xlabel("TR")
 
         if output_dir:
-            if not os.path.exists(output_dir):
-                os.makedirs(output_dir)
+            _IO.makedir(output_dir)
+
             if filename:
                 save_filename = f"{os.path.splitext(filename.rstrip())[0].rstrip()}.png"
             else:
                 save_filename = f"subject-{subj_id}_{run}_timeseries.png"
 
-            if not as_pickle:
-                plt.savefig(
-                    os.path.join(output_dir, save_filename), dpi=plot_dict["dpi"], bbox_inches=plot_dict["bbox_inches"]
-                )
-            else:
-                _pickle_object(plt.gcf(), output_dir, save_filename.replace(".png", ".pkl"))
+            _PlotFuncs.save_fig(plt.gcf(), output_dir, save_filename, plot_dict, as_pickle)
 
         plt.show() if show_figs else plt.close()
 

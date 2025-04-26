@@ -18,17 +18,16 @@ from ..exceptions import NoElbowDetectedError
 from ..typing import ParcelConfig, ParcelApproach, SubjectTimeseries
 from .._utils import (
     _CAPGetter,
+    _MatrixVisualizer,
     _PlotDefaults,
+    _PlotFuncs,
+    _IO,
     _cap2statmap,
     _check_kwargs,
-    _create_display,
-    _convert_pickle_to_dict,
     _check_parcel_approach,
     _collapse_aal_node_names,
     _logger,
-    _pickle_object,
     _run_kmeans,
-    _save_contents,
     _standardize,
 )
 
@@ -401,7 +400,7 @@ class CAP(_CAPGetter):
         self._runs = runs
         self._standardize = standardize
 
-        subject_timeseries = self._process_subject_timeseries(subject_timeseries)
+        subject_timeseries = _IO.get_obj(subject_timeseries)
         self._concatenated_timeseries = self._concatenate_timeseries(subject_timeseries, runs, progress_bar)
 
         if cluster_selection_method:
@@ -420,13 +419,6 @@ class CAP(_CAPGetter):
         self._create_caps_dict()
 
         return self
-
-    @staticmethod
-    def _process_subject_timeseries(subject_timeseries):
-        if isinstance(subject_timeseries, str):
-            subject_timeseries = _convert_pickle_to_dict(subject_timeseries)
-
-        return subject_timeseries
 
     def _generate_lookup_table(self):
         self._subject_table = {}
@@ -613,15 +605,10 @@ class CAP(_CAPGetter):
             plt.vlines(self._optimal_n_clusters[group], plt.ylim()[0], plt.ylim()[1], linestyles="--", label="elbow")
 
         if output_dir:
-            self._makedir(output_dir)
-            save_name = f"{group.replace(' ', '_')}_{method}.png"
+            _IO.makedir(output_dir)
 
-            if as_pickle:
-                _pickle_object(plt.gcf(), output_dir, save_name.replace(".png", ".pkl"))
-            else:
-                plt.savefig(
-                    os.path.join(output_dir, save_name), dpi=plot_dict["dpi"], bbox_inches=plot_dict["bbox_inches"]
-                )
+            save_name = f"{group.replace(' ', '_')}_{method}.png"
+            _PlotFuncs.save_fig(plt.gcf(), output_dir, save_name, plot_dict, as_pickle)
 
         plt.show() if show_figs else plt.close()
 
@@ -648,11 +635,6 @@ class CAP(_CAPGetter):
             )
 
     @staticmethod
-    def _makedir(output_dir):
-        if output_dir and not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-
-    @staticmethod
     def _raise_error(attr_name):
         if attr_name == "_caps":
             raise AttributeError("Cannot plot caps since `self.caps` is None. Run `self.get_caps()` first.")
@@ -668,11 +650,6 @@ class CAP(_CAPGetter):
         for attr_name in attr_names:
             if getattr(self, attr_name, None) is None:
                 self._raise_error(attr_name)
-
-    @staticmethod
-    def _issue_file_warning(param_name, param, output_dir):
-        if param is not None and output_dir is None:
-            LG.warning(f"`{param_name}` supplied but no `output_dir` specified. Files will not be saved.")
 
     def calculate_metrics(
         self,
@@ -930,14 +907,15 @@ class CAP(_CAPGetter):
         """
         self._check_required_attrs(["_kmeans"])
 
-        self._issue_file_warning("prefix_filename", prefix_filename, output_dir)
+        _IO.issue_file_warning("prefix_filename", prefix_filename, output_dir)
+        _IO.makedir(output_dir)
 
         if runs and not isinstance(runs, list):
             runs = [runs]
 
         metrics = self._filter_metrics(metrics)
 
-        subject_timeseries = self._process_subject_timeseries(subject_timeseries)
+        subject_timeseries = _IO.get_obj(subject_timeseries)
 
         # Assign each subject's frame to a CAP
         predicted_subject_timeseries = self._build_prediction_dict(subject_timeseries, runs, continuous_runs)
@@ -1041,17 +1019,15 @@ class CAP(_CAPGetter):
                 continue
 
             prediction_dict = {}
-            for curr_run in subject_runs:
+            for run_id in subject_runs:
                 # Standardize or not
                 if self._standardize:
-                    timeseries = (subject_timeseries[subj_id][curr_run] - self._mean_vec[group]) / self._stdev_vec[
-                        group
-                    ]
+                    timeseries = (subject_timeseries[subj_id][run_id] - self._mean_vec[group]) / self._stdev_vec[group]
                 else:
-                    timeseries = subject_timeseries[subj_id][curr_run]
+                    timeseries = subject_timeseries[subj_id][run_id]
 
                 # Add 1 to the prediction vector since labels start at 0, ensures that the labels map onto the caps
-                prediction_dict.update({curr_run: self._kmeans[group].predict(timeseries) + 1})
+                prediction_dict.update({run_id: self._kmeans[group].predict(timeseries) + 1})
 
             if len(prediction_dict) > 1 and continuous_runs:
                 # Horizontally stack predicted runs
@@ -1082,10 +1058,10 @@ class CAP(_CAPGetter):
             if metric not in ["transition_frequency", "transition_probability"]:
                 df_dict.update({metric: pd.DataFrame(columns=base_cols + list(cap_names))})
             elif metric == "transition_probability":
-                df_dict["transition_probability"] = {}
+                df_dict[metric] = {}
                 for group in self._groups:
                     col_names = base_cols + [f"{x}.{y}" for x, y in pairs[group]]
-                    df_dict["transition_probability"].update({group: pd.DataFrame(columns=col_names)})
+                    df_dict[metric].update({group: pd.DataFrame(columns=col_names)})
             else:
                 df_dict.update({metric: pd.DataFrame(columns=base_cols + ["Transition_Frequency"])})
 
@@ -1197,14 +1173,8 @@ class CAP(_CAPGetter):
         return df
 
     def _save_metrics(self, output_dir, df_dict, prefix_filename):
-        self._makedir(output_dir)
-
         for metric in df_dict:
-            if prefix_filename:
-                filename = os.path.splitext(prefix_filename.rstrip())[0].rstrip() + f"-{metric}"
-            else:
-                filename = f"{metric}"
-
+            filename = _IO.filename(base_name=f"{metric}", add_name=prefix_filename, pos="prefix")
             if metric != "transition_probability":
                 df_dict[f"{metric}"].to_csv(
                     path_or_buf=os.path.join(output_dir, f"{filename}.csv"), sep=",", index=False
@@ -1339,8 +1309,8 @@ class CAP(_CAPGetter):
                 "Number of nodes used for CAPs does not equal the number of nodes specified in `parcel_approach`."
             )
 
-        self._makedir(output_dir)
-        self._issue_file_warning("suffix_filename", suffix_filename, output_dir)
+        _IO.issue_file_warning("suffix_filename", suffix_filename, output_dir)
+        _IO.makedir(output_dir)
 
         if isinstance(plot_options, str):
             plot_options = [plot_options]
@@ -1473,6 +1443,12 @@ class CAP(_CAPGetter):
     ):
         self._outer_products[group] = {}
 
+        plot_labels = (
+            {"xticklabels": full_labels, "yticklabels": full_labels}
+            if scope == "regions"
+            else {"xticklabels": [], "yticklabels": []}
+        )
+
         # Create base grid for subplots
         if subplots:
             fig, axes, axes_x, axes_y, ncol, nrow = self._initialize_outer_product_subplot(
@@ -1482,6 +1458,7 @@ class CAP(_CAPGetter):
         for cap in cap_dict[group]:
             # Calculate outer product
             self._outer_products[group].update({cap: np.outer(cap_dict[group][cap], cap_dict[group][cap])})
+
             # Create labels if nodes requested for scope
             if scope == "nodes" and plot_dict["hemisphere_labels"] is False:
                 reduced_labels, _ = self._collapse_node_labels(
@@ -1497,39 +1474,41 @@ class CAP(_CAPGetter):
                     display = seaborn.heatmap(
                         ax=ax,
                         data=self._outer_products[group][cap],
-                        xticklabels=full_labels,
-                        yticklabels=full_labels,
-                        **self._base_plot_kwargs(plot_dict),
+                        **plot_labels,
+                        **_PlotFuncs.base_kwargs(plot_dict),
                     )
                 else:
+                    # No labels
                     display = seaborn.heatmap(
                         ax=ax,
                         data=self._outer_products[group][cap],
-                        **self._base_plot_kwargs(plot_dict, *self._extra_plot_kwargs(plot_dict["hemisphere_labels"])),
+                        **_PlotFuncs.base_kwargs(plot_dict, *_PlotFuncs.extra_kwargs(plot_dict["hemisphere_labels"])),
                     )
 
                     if plot_dict["hemisphere_labels"] is False:
-                        ax = self._set_ticks(ax, reduced_labels)
+                        ax = _PlotFuncs.set_ticks(ax, reduced_labels)
                     else:
-                        ax, division_line, plot_dict["linewidths"] = self._division_line(
-                            ax, parcellation_name, plot_dict["linewidths"]
+                        ax, division_line, plot_dict["linewidths"] = _PlotFuncs.division_line(
+                            display=ax,
+                            linewidths=plot_dict["linewidths"],
+                            n_labels=len(self._parcel_approach[parcellation_name]["nodes"]),
+                            add_labels=["LH", "RH"],
                         )
 
                         ax.axhline(division_line, color=plot_dict["linecolor"], linewidth=plot_dict["linewidths"])
                         ax.axvline(division_line, color=plot_dict["linecolor"], linewidth=plot_dict["linewidths"])
 
-                # Add border
-                if plot_dict["borderwidths"] != 0:
-                    border_length = self._outer_products[group][cap].shape[0]
-                    display = self._border(display, plot_dict, border_length)
+                # Add border; if "borderwidths" is Falsy, returns display unmodified
+                display = _PlotFuncs.border(display, plot_dict, axhline=self._outer_products[group][cap].shape[0])
 
                 # Modify label sizes for x axis
-                display = self._label_size(display, plot_dict, set_x=True, set_y=False)
+                display = _PlotFuncs.label_size(display, plot_dict, set_x=True, set_y=False)
+
                 # Modify label sizes for y axis; if share_y, only set y for plots at axes == 0
                 if plot_dict["sharey"]:
-                    display = self._label_size(display, plot_dict, set_x=False, set_y=True) if axes_y == 0 else display
+                    display = _PlotFuncs.label_size(display, plot_dict, False, set_y=True) if axes_y == 0 else display
                 else:
-                    display = self._label_size(display, plot_dict, set_x=False, set_y=True)
+                    display = _PlotFuncs.label_size(display, plot_dict, False, set_y=True)
 
                 # Set title of subplot
                 ax.set_title(cap, fontsize=plot_dict["fontsize"])
@@ -1547,70 +1526,76 @@ class CAP(_CAPGetter):
                 if scope == "regions":
                     display = seaborn.heatmap(
                         self._outer_products[group][cap],
-                        xticklabels=full_labels,
-                        yticklabels=full_labels,
-                        **self._base_plot_kwargs(plot_dict),
+                        **plot_labels,
+                        **_PlotFuncs.base_kwargs(plot_dict),
                     )
                 else:
                     display = seaborn.heatmap(
                         self._outer_products[group][cap],
-                        xticklabels=[],
-                        yticklabels=[],
-                        **self._base_plot_kwargs(plot_dict, *self._extra_plot_kwargs(plot_dict["hemisphere_labels"])),
+                        **plot_labels,
+                        **_PlotFuncs.base_kwargs(plot_dict, *_PlotFuncs.extra_kwargs(plot_dict["hemisphere_labels"])),
                     )
 
                     if plot_dict["hemisphere_labels"] is False:
-                        display = self._set_ticks(display, reduced_labels)
+                        display = _PlotFuncs.set_ticks(display, reduced_labels)
                     else:
-                        display, division_line, plot_dict["linewidths"] = self._division_line(
-                            display, parcellation_name, plot_dict["linewidths"]
+                        display, division_line, plot_dict["linewidths"] = _PlotFuncs.division_line(
+                            display=display,
+                            linewidths=plot_dict["linewidths"],
+                            n_labels=len(self._parcel_approach[parcellation_name]["nodes"]),
+                            add_labels=["LH", "RH"],
                         )
 
                         plt.axhline(division_line, color=plot_dict["linecolor"], linewidth=plot_dict["linewidths"])
                         plt.axvline(division_line, color=plot_dict["linecolor"], linewidth=plot_dict["linewidths"])
 
-                # Add border
-                if plot_dict["borderwidths"] != 0:
-                    border_length = self._outer_products[group][cap].shape[0]
-                    display = self._border(display, plot_dict, border_length)
+                # Add border; if "borderwidths" is Falsy, returns display unmodified
+                display = _PlotFuncs.border(display, plot_dict, axhline=self._outer_products[group][cap].shape[0])
+
+                # Set title
+                display = _PlotFuncs.set_title(display, f"{group} {cap}", suffix_title, plot_dict)
 
                 # Modify label sizes
-                plot_title = f"{group} {cap} {suffix_title}" if suffix_title else f"{group} {cap}"
-                display.set_title(plot_title, fontdict={"fontsize": plot_dict["fontsize"]})
-                display = self._label_size(display, plot_dict)
+                display = _PlotFuncs.label_size(display, plot_dict)
 
                 # Save individual plots
                 if output_dir:
-                    partial_filename = f"{group}_{cap}"
-                    self._save_heatmap(
-                        display=display,
-                        scope=scope,
-                        partial=partial_filename,
-                        suffix=suffix_filename,
-                        plot_dict=plot_dict,
-                        output_dir=output_dir,
-                        as_pickle=as_pickle,
-                        call="outer_product",
-                    )
+                    filename = _IO.filename(f"{group}_{cap}_outer_product-{scope}", suffix_filename, "suffix", "png")
+                    _PlotFuncs.save_fig(display, output_dir, filename, plot_dict, as_pickle)
 
         if subplots:
             # Remove subplots with no data
             [fig.delaxes(ax) for ax in axes.flatten() if not ax.has_data()]
 
             if output_dir:
-                partial_filename = f"{group}_CAPs"
-                self._save_heatmap(
-                    display=display,
-                    scope=scope,
-                    partial=partial_filename,
-                    suffix=suffix_filename,
-                    plot_dict=plot_dict,
-                    output_dir=output_dir,
-                    as_pickle=as_pickle,
-                    call="outer_product",
-                )
+                filename = _IO.filename(f"{group}_CAPs_outer_product-{scope}", suffix_filename, "suffix", "png")
+                _PlotFuncs.save_fig(display, output_dir, filename, plot_dict, as_pickle)
 
         plt.show() if show_figs else plt.close()
+
+    @staticmethod
+    def _initialize_outer_product_subplot(cap_dict, group, plot_dict, suffix_title):
+        # Subplotting for outer_product
+        # Max five subplots per row for default
+        default_col = len(cap_dict[group]) if len(cap_dict[group]) <= 5 else 5
+        ncol = plot_dict["ncol"] if plot_dict["ncol"] is not None else default_col
+        ncol = min(ncol, len(cap_dict[group]))
+
+        # Determine number of rows needed based on ceiling if not specified
+        nrow = plot_dict["nrow"] if plot_dict["nrow"] is not None else int(np.ceil(len(cap_dict[group]) / ncol))
+        subplot_figsize = (8 * ncol, 6 * nrow) if plot_dict["figsize"] == (8, 6) else plot_dict["figsize"]
+        fig, axes = plt.subplots(nrow, ncol, sharex=False, sharey=plot_dict["sharey"], figsize=subplot_figsize)
+
+        fig = _PlotFuncs.set_title(fig, f"{group}", suffix_title, plot_dict, is_subplot=True)
+        fig.subplots_adjust(hspace=plot_dict["hspace"], wspace=plot_dict["wspace"])
+
+        if plot_dict["tight_layout"]:
+            fig.tight_layout(rect=plot_dict["rect"])
+
+        # Current subplot
+        axes_x, axes_y = [0, 0]
+
+        return fig, axes, axes_x, axes_y, ncol, nrow
 
     def _generate_heatmap_plots(
         self,
@@ -1627,113 +1612,64 @@ class CAP(_CAPGetter):
         parcellation_name,
     ):
         plt.figure(figsize=plot_dict["figsize"])
+        plot_labels = {"xticklabels": True, "yticklabels": True}
 
         if scope == "regions":
             display = seaborn.heatmap(
                 pd.DataFrame(cap_dict[group], index=full_labels),
-                xticklabels=True,
-                yticklabels=True,
-                **self._base_plot_kwargs(plot_dict),
+                **plot_labels,
+                **_PlotFuncs.base_kwargs(plot_dict),
             )
         else:
             # Create Labels
             if plot_dict["hemisphere_labels"] is False:
-                reduced_labels, collapesed_node_names = self._collapse_node_labels(
+                reduced_labels, collapsed_node_names = self._collapse_node_labels(
                     parcellation_name, self._parcel_approach, full_labels
                 )
 
                 display = seaborn.heatmap(
                     pd.DataFrame(cap_dict[group], columns=list(cap_dict[group])),
-                    xticklabels=True,
-                    yticklabels=True,
-                    **self._base_plot_kwargs(plot_dict),
+                    **plot_labels,
+                    **_PlotFuncs.base_kwargs(plot_dict),
                 )
 
                 plt.yticks(
-                    ticks=[indx for indx, label in enumerate(reduced_labels) if label], labels=collapesed_node_names
+                    ticks=[indx for indx, label in enumerate(reduced_labels) if label], labels=collapsed_node_names
                 )
             else:
                 display = seaborn.heatmap(
                     pd.DataFrame(cap_dict[group], columns=list(cap_dict[group])),
-                    xticklabels=True,
-                    yticklabels=True,
-                    **self._base_plot_kwargs(plot_dict, line=False, edge=False),
+                    **plot_labels,
+                    **_PlotFuncs.base_kwargs(plot_dict, line=False, edge=False),
                 )
 
-                display, division_line, plot_dict["linewidths"] = self._division_line(
-                    display, parcellation_name, plot_dict["linewidths"], call="heatmap"
+                display, division_line, plot_dict["linewidths"] = _PlotFuncs.division_line(
+                    display=display,
+                    linewidths=plot_dict["linewidths"],
+                    n_labels=len(self._parcel_approach[parcellation_name]["nodes"]),
+                    set_x=False,
+                    add_labels=["LH", "RH"],
                 )
 
                 plt.axhline(division_line, color=plot_dict["linecolor"], linewidth=plot_dict["linewidths"])
 
-        if plot_dict["borderwidths"] != 0:
-            y_length = len(cap_dict[group][list(cap_dict[group])[0]])
-            display = self._border(display, plot_dict, y_length, len(self._caps[group]))
+        # Add border; if "borderwidths" is Falsy, returns display unmodified
+        display = _PlotFuncs.border(
+            display, plot_dict, axhline=len(cap_dict[group][list(cap_dict[group])[0]]), axvline=len(self._caps[group])
+        )
 
         # Modify label sizes
-        display = self._label_size(display, plot_dict)
-        plot_title = f"{group} CAPs {suffix_title}" if suffix_title else f"{group} CAPs"
-        display.set_title(plot_title, fontdict={"fontsize": plot_dict["fontsize"]})
+        display = _PlotFuncs.label_size(display, plot_dict)
+
+        # Set title
+        display = _PlotFuncs.set_title(display, f"{group} CAPs", suffix_title, plot_dict)
 
         if output_dir:
-            partial_filename = f"{group}_CAPs"
-            self._save_heatmap(
-                display, scope, partial_filename, suffix_filename, plot_dict, output_dir, as_pickle, call="heatmap"
-            )
+            filename = _IO.filename(f"{group}_CAPs_heatmap-{scope}", suffix_filename, "suffix", "png")
+            _PlotFuncs.save_fig(display, output_dir, filename, plot_dict, as_pickle)
 
         # Display figures
         plt.show() if show_figs else plt.close()
-
-    @staticmethod
-    def _initialize_outer_product_subplot(cap_dict, group, plot_dict, suffix_title):
-        # Subplotting for outer_product
-        # Max five subplots per row for default
-        default_col = len(cap_dict[group]) if len(cap_dict[group]) <= 5 else 5
-        ncol = plot_dict["ncol"] if plot_dict["ncol"] is not None else default_col
-        ncol = min(ncol, len(cap_dict[group]))
-
-        # Determine number of rows needed based on ceiling if not specified
-        nrow = plot_dict["nrow"] if plot_dict["nrow"] is not None else int(np.ceil(len(cap_dict[group]) / ncol))
-        subplot_figsize = (8 * ncol, 6 * nrow) if plot_dict["figsize"] == (8, 6) else plot_dict["figsize"]
-        fig, axes = plt.subplots(nrow, ncol, sharex=False, sharey=plot_dict["sharey"], figsize=subplot_figsize)
-
-        suptitle = f"{group} {suffix_title}" if suffix_title else f"{group}"
-        fig.suptitle(suptitle, fontsize=plot_dict["suptitle_fontsize"])
-        fig.subplots_adjust(hspace=plot_dict["hspace"], wspace=plot_dict["wspace"])
-
-        if plot_dict["tight_layout"]:
-            fig.tight_layout(rect=plot_dict["rect"])
-
-        # Current subplot
-        axes_x, axes_y = [0, 0]
-
-        return fig, axes, axes_x, axes_y, ncol, nrow
-
-    @staticmethod
-    def _base_plot_kwargs(plot_dict, line=True, edge=True):
-        kwargs = {
-            "cmap": plot_dict["cmap"],
-            "cbar_kws": {"shrink": plot_dict["shrink"]},
-            "annot": plot_dict["annot"],
-            "annot_kws": plot_dict["annot_kws"],
-            "fmt": plot_dict["fmt"],
-            "alpha": plot_dict["alpha"],
-            "vmin": plot_dict["vmin"],
-            "vmax": plot_dict["vmax"],
-        }
-
-        if line:
-            kwargs.update({"linewidths": plot_dict["linewidths"], "linecolor": plot_dict["linecolor"]})
-        if edge:
-            kwargs.update({"edgecolors": plot_dict["edgecolors"]})
-
-        return kwargs
-
-    @staticmethod
-    def _extra_plot_kwargs(hemisphere_labels):
-        # Determine whether to add line related and edge related kwargs to base kwargs
-        # determined by hemisphere_labels
-        return (False, False) if hemisphere_labels else (True, True)
 
     @staticmethod
     def _collapse_node_labels(parcellation_name, parcel_approach, node_ids=None):
@@ -1778,83 +1714,6 @@ class CAP(_CAPGetter):
                 tick_labels[starting_value] = collapsed_node_label
 
         return tick_labels, collapsed_node_labels
-
-    def _division_line(self, display, parcellation_name, linewidths, call="outer"):
-        n_labels = len(self._parcel_approach[parcellation_name]["nodes"])
-        division_line = n_labels // 2
-        left_hemisphere_tick = (0 + division_line) // 2
-        right_hemisphere_tick = (division_line + n_labels) // 2
-
-        if call == "outer":
-            display.set_xticks([left_hemisphere_tick, right_hemisphere_tick])
-            display.set_xticklabels(["LH", "RH"])
-
-        display.set_yticks([left_hemisphere_tick, right_hemisphere_tick])
-        display.set_yticklabels(["LH", "RH"])
-
-        line_widths = linewidths if linewidths != 0 else 1
-
-        return display, division_line, line_widths
-
-    @staticmethod
-    def _set_ticks(display, labels):
-        ticks = [i for i, label in enumerate(labels) if label]
-
-        display.set_xticks(ticks)
-        display.set_xticklabels([label for label in labels if label])
-        display.set_yticks(ticks)
-        display.set_yticklabels([label for label in labels if label])
-
-        return display
-
-    @staticmethod
-    def _border(display, plot_dict, length, axvline=None):
-        display.axhline(y=0, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
-        display.axhline(y=length, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
-        display.axvline(x=0, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
-
-        if axvline:
-            display.axvline(x=axvline, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
-        else:
-            display.axvline(x=length, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
-
-        return display
-
-    @staticmethod
-    def _label_size(display, plot_dict, set_x=True, set_y=True):
-        if set_x:
-            display.set_xticklabels(
-                display.get_xticklabels(), size=plot_dict["xticklabels_size"], rotation=plot_dict["xlabel_rotation"]
-            )
-
-        if set_y:
-            display.set_yticklabels(
-                display.get_yticklabels(), size=plot_dict["yticklabels_size"], rotation=plot_dict["ylabel_rotation"]
-            )
-
-        if plot_dict["cbarlabels_size"]:
-            cbar = display.collections[0].colorbar
-            cbar.ax.tick_params(labelsize=plot_dict["cbarlabels_size"])
-
-        return display
-
-    # Function to save plots for outer_product and heatmap called by caps2plot
-    @staticmethod
-    def _save_heatmap(display, scope, partial, suffix, plot_dict, output_dir, as_pickle, call):
-        full_filename = partial + f"_{call}-{scope}"
-
-        if suffix:
-            full_filename += f"_{suffix}"
-
-        full_filename = full_filename.replace(" ", "_")
-        full_filename += ".png" if not as_pickle else ".pkl"
-
-        if full_filename.endswith(".pkl"):
-            _pickle_object(display, output_dir, full_filename)
-        else:
-            display.get_figure().savefig(
-                os.path.join(output_dir, full_filename), dpi=plot_dict["dpi"], bbox_inches=plot_dict["bbox_inches"]
-            )
 
     def caps2corr(
         self,
@@ -1948,7 +1807,7 @@ class CAP(_CAPGetter):
         """
         self._check_required_attrs(["_caps"])
 
-        self._issue_file_warning("suffix_filename", suffix_filename, output_dir)
+        _IO.issue_file_warning("suffix_filename", suffix_filename, output_dir)
 
         corr_dict = {group: None for group in self._groups} if return_df or save_df else None
 
@@ -1959,7 +1818,7 @@ class CAP(_CAPGetter):
             df = pd.DataFrame(self._caps[group])
             corr_df = df.corr(method="pearson")
 
-            display = _create_display(corr_df, plot_dict, suffix_title, group, "corr")
+            display = _MatrixVisualizer.create_display(corr_df, plot_dict, suffix_title, group, "corr")
 
             if corr_dict:
                 # Get p-values; use np.eye to make main diagonals equal zero; implementation of tozCSS from
@@ -1974,7 +1833,7 @@ class CAP(_CAPGetter):
                 corr_dict[group] = corr_df.map(lambda x: f'{format(x, plot_dict["fmt"])}') + " " + pval_df
 
             if output_dir:
-                _save_contents(
+                _MatrixVisualizer.save_contents(
                     output_dir=output_dir,
                     suffix_filename=suffix_filename,
                     group=group,
@@ -1991,19 +1850,6 @@ class CAP(_CAPGetter):
 
         if return_df:
             return corr_dict
-
-    # Create basename for certain files
-    @staticmethod
-    def _basename(group, cap, desc=None, suffix=None, ext="png"):
-        base = f"{group.replace(' ', '_')}_{cap}"
-
-        if desc:
-            base += f"_{desc}"
-
-        if suffix:
-            base += f"_{suffix.rstrip().replace(' ', '_')}"
-
-        return base + f".{ext}"
 
     def caps2niftis(
         self,
@@ -2062,10 +1908,9 @@ class CAP(_CAPGetter):
         """
         self._check_required_attrs(["_parcel_approach", "_caps"])
 
-        if knn_dict:
-            knn_dict = self._validate_knn_dict(knn_dict)
+        knn_dict = self._validate_knn_dict(knn_dict)
 
-        self._makedir(output_dir)
+        _IO.makedir(output_dir)
 
         parcellation_name = list(self._parcel_approach)[0]
         for group in self._groups:
@@ -2079,14 +1924,16 @@ class CAP(_CAPGetter):
                     knn_dict=knn_dict,
                 )
 
-                filename = self._basename(group, cap, suffix=suffix_filename, ext="nii.gz")
-
+                filename = _IO.filename(f"{group.replace(' ', '_')}_{cap}", suffix_filename, "suffix", "nii.gz")
                 nib.save(stat_map, os.path.join(output_dir, filename))
 
         return self
 
     @staticmethod
     def _validate_knn_dict(knn_dict):
+        if not knn_dict:
+            return None
+
         valid_atlases = ["Schaefer", "AAL"]
 
         if "reference_atlas" not in knn_dict:
@@ -2250,12 +2097,10 @@ class CAP(_CAPGetter):
         check_params = ["_parcel_approach", "_caps"] if fslr_giftis_dict is None else ["_caps"]
         self._check_required_attrs(check_params)
 
-        self._issue_file_warning("suffix_filename", suffix_filename, output_dir)
+        knn_dict = self._validate_knn_dict(knn_dict)
 
-        if knn_dict:
-            knn_dict = self._validate_knn_dict(knn_dict)
-
-        self._makedir(output_dir)
+        _IO.issue_file_warning("suffix_filename", suffix_filename, output_dir)
+        _IO.makedir(output_dir)
 
         # Create plot dictionary
         plot_dict = _check_kwargs(_PlotDefaults.caps2surf(), **kwargs)
@@ -2295,20 +2140,13 @@ class CAP(_CAPGetter):
                 fig = self._generate_surface_plot(plot_dict, gii_lh, gii_rh, group, cap, suffix_title)
 
                 if output_dir:
-                    filename = self._basename(group, cap, "surface", suffix_filename, "png")
-
-                    if as_pickle:
-                        _pickle_object(fig, output_dir, filename.replace(".png", ".pkl"))
-                    else:
-                        fig.savefig(
-                            os.path.join(output_dir, filename),
-                            dpi=plot_dict["dpi"],
-                            bbox_inches=plot_dict["bbox_inches"],
-                        )
+                    filename = _IO.filename(
+                        f"{group.replace(' ', '_')}_{cap}_surface", suffix_filename, "suffix", "png"
+                    )
+                    _PlotFuncs.save_fig(fig, output_dir, filename, plot_dict, as_pickle)
 
                     if save_stat_maps:
-                        stat_map_name = filename.split("_surface")[0] + ".nii.gz"
-                        nib.save(stat_map, os.path.join(output_dir, stat_map_name))
+                        nib.save(stat_map, os.path.join(output_dir, filename.split("_surface")[0] + ".nii.gz"))
 
                 try:
                     plt.show(fig) if show_figs else plt.close(fig)
@@ -2595,7 +2433,8 @@ class CAP(_CAPGetter):
         """
         self._check_required_attrs(["_parcel_approach", "_caps"])
 
-        self._issue_file_warning("suffix_filename", suffix_filename, output_dir)
+        _IO.issue_file_warning("suffix_filename", suffix_filename, output_dir)
+        _IO.makedir(output_dir)
 
         if not self._standardize:
             LG.warning(
@@ -2626,9 +2465,7 @@ class CAP(_CAPGetter):
                         pyo.plot(fig, auto_open=True)
 
                 if output_dir:
-                    self._makedir(output_dir)
-
-                    filename = self._basename(group, cap, "radar", suffix_filename, "png")
+                    filename = _IO.filename(f"{group.replace(' ', '_')}_{cap}_radar", suffix_filename, "suffix", "png")
                     if as_html:
                         fig.write_html(os.path.join(output_dir, filename.replace(".png", ".html")))
                     elif as_json:
