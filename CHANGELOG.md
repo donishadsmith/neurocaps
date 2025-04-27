@@ -13,6 +13,20 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.28.2] - 2025-04-26
+### ♻ Changed
+- Changes and refactors for internal functions and classes related to plotting and IO:
+    - "plotting_defaults.py" changed to "plotting_utils.py"
+    - "heatmap_utils.py" deleted and functions are now stored in _MatrixVisualizer class in "plotting_utils.py"
+    - Shared plotting function now stored in PlotFuncs to increase reusability
+    - "pickle_utils.py" changed to "io.py"
+    - Created IO class to store IO operations
+    - Removed some internal methods in ``CAP`` that are either generalized IO operations or generalized plotting functions
+    - Logged IO related warnings about not specifying an output directory when specifying a filenames only comes from "io.py" instead of various modules
+### 🐛 Fixes
+ - Support compressed serialized files
+ - Fix serialization of timeseries dict to use Joblib instead of standard pickle
+
 ## [0.28.1] - 2025-04-23
 - Primarily refactoring to improve readability. Also includes internal functions that can be used independently
 for implementation purposes or unit testing.
