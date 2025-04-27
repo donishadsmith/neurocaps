@@ -1248,7 +1248,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             _PlotFuncs.save_fig(plt.gcf(), output_dir, save_filename, plot_dict, as_pickle)
 
-        plt.show() if show_figs else plt.close()
+        plt.show() if show_figs else plt.close("all")
 
         return self
 

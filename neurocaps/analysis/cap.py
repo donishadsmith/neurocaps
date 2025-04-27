@@ -610,7 +610,7 @@ class CAP(_CAPGetter):
             save_name = f"{group.replace(' ', '_')}_{method}.png"
             _PlotFuncs.save_fig(plt.gcf(), output_dir, save_name, plot_dict, as_pickle)
 
-        plt.show() if show_figs else plt.close()
+        plt.show() if show_figs else plt.close("all")
 
     def _var_explained(self):
         self._variance_explained = {}
@@ -1571,7 +1571,7 @@ class CAP(_CAPGetter):
                 filename = _IO.filename(f"{group}_CAPs_outer_product-{scope}", suffix_filename, "suffix", "png")
                 _PlotFuncs.save_fig(display, output_dir, filename, plot_dict, as_pickle)
 
-        plt.show() if show_figs else plt.close()
+        plt.show() if show_figs else plt.close("all")
 
     @staticmethod
     def _initialize_outer_product_subplot(cap_dict, group, plot_dict, suffix_title):
@@ -1669,7 +1669,7 @@ class CAP(_CAPGetter):
             _PlotFuncs.save_fig(display, output_dir, filename, plot_dict, as_pickle)
 
         # Display figures
-        plt.show() if show_figs else plt.close()
+        plt.show() if show_figs else plt.close("all")
 
     @staticmethod
     def _collapse_node_labels(parcellation_name, parcel_approach, node_ids=None):
@@ -1846,7 +1846,7 @@ class CAP(_CAPGetter):
                     call="corr",
                 )
 
-            plt.show() if show_figs else plt.close()
+            plt.show() if show_figs else plt.close("all")
 
         if return_df:
             return corr_dict
@@ -2151,7 +2151,7 @@ class CAP(_CAPGetter):
                 try:
                     plt.show(fig) if show_figs else plt.close(fig)
                 except:
-                    plt.show() if show_figs else plt.close()
+                    plt.show() if show_figs else plt.close("all")
 
         return self
 

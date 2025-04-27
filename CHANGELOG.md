@@ -13,6 +13,11 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.28.3] - 2025-04-27
+### 🐛 Fixes
+- Use "all" to ensure all figures are closed for matplotlib objects and prevent unnecessary memory consumption
+whenever ``show_figs`` is False.
+
 ## [0.28.2] - 2025-04-26
 ### ♻ Changed
 - Changes and refactors for internal functions and classes related to plotting and IO:

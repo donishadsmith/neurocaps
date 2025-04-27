@@ -154,7 +154,7 @@ def transition_matrix(
             )
 
         # Display figures
-        plt.show() if show_figs else plt.close()
+        plt.show() if show_figs else plt.close("all")
 
     if return_df:
         return trans_mat_dict
