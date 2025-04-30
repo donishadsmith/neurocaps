@@ -184,10 +184,20 @@ desc = {
     "Name": "fMRIPrep - fMRI PREProcessing workflow",
     "BIDSVersion": "1.0.0",
     "DatasetType": "derivative",
-    "GeneratedBy": [{"Name": "fMRIPrep", "Version": "20.2.0", "CodeURL": "https://github.com/nipreps/fmriprep"}],
+    "GeneratedBy": [
+        {
+            "Name": "fMRIPrep",
+            "Version": "20.2.0",
+            "CodeURL": "https://github.com/nipreps/fmriprep",
+        }
+    ],
 }
 
-with open("neurocaps_demo/derivatives/fmriprep/dataset_description.json", "w", encoding="utf-8") as f:
+with open(
+    "neurocaps_demo/derivatives/fmriprep/dataset_description.json",
+    "w",
+    encoding="utf-8",
+) as f:
     json.dump(desc, f)
 ```
 
@@ -196,7 +206,15 @@ from neurocaps.extraction import TimeseriesExtractor
 from neurocaps.analysis import CAP
 
 # Set specific confounds for nuisance regression
-confounds = ["cosine*", "trans_x", "trans_y", "trans_z", "rot_x", "rot_y", "rot_z"]
+confounds = [
+    "cosine*",
+    "trans_x",
+    "trans_y",
+    "trans_z",
+    "rot_x",
+    "rot_y",
+    "rot_z",
+]
 
 # Set parcellation
 parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7, "resolution_mm": 2}}
@@ -212,7 +230,13 @@ extractor = TimeseriesExtractor(
     high_pass=None,
     n_acompcor_separate=2,
     confound_names=confounds,
-    fd_threshold={"threshold": 0.35, "outlier_percentage": 0.20, "n_before": 2, "n_after": 1, "use_sample_mask": True},
+    fd_threshold={
+        "threshold": 0.35,
+        "outlier_percentage": 0.20,
+        "n_before": 2,
+        "n_after": 1,
+        "use_sample_mask": True,
+    },
 )
 
 # Extracting timeseries from the DET task (specifically for the "late" condition) for subjects in the BIDS directory
@@ -275,7 +299,11 @@ cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
 
 # Pickle files can also be used as input for `subject_timeseries`
 # Only using 2 clusters for simplicity
-cap_analysis.get_caps(subject_timeseries=extractor.subject_timeseries, n_clusters=2, standardize=True)
+cap_analysis.get_caps(
+    subject_timeseries=extractor.subject_timeseries,
+    n_clusters=2,
+    standardize=True,
+)
 
 # `sharey` only applicable to outer product plots
 kwargs = {
@@ -345,7 +373,13 @@ cap_analysis.caps2surf(progress_bar=False, **kwargs)
 
 ```python
 # Create Pearson correlation matrix
-kwargs = {"annot": True, "cmap": "viridis", "xticklabels_size": 10, "yticklabels_size": 10, "cbarlabels_size": 10}
+kwargs = {
+    "annot": True,
+    "cmap": "viridis",
+    "xticklabels_size": 10,
+    "yticklabels_size": 10,
+    "cbarlabels_size": 10,
+}
 
 cap_analysis.caps2corr(**kwargs)
 ```
