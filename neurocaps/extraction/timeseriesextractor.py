@@ -542,7 +542,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         ::
 
-            start_scan = int(onset / tr)
+            start_scan = math.floor(onset / tr)
             end_scan = math.ceil((onset + duration) / tr)
             scans.extend(range(onset_scan, end_scan))
             scans = sorted(list(set(scans)))
