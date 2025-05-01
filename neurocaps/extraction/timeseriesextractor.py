@@ -524,17 +524,21 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         ::
 
-            adjusted_onset = onset - slice_time_ref * tr
-            adjusted_onset = max([0, adjusted_onset])
-            start_scan = int(adjusted_onset / tr) + condition_tr_shift
-            end_scan = math.ceil((adjusted_onset + duration) / tr) + condition_tr_shift
+            adjusted_onset = condition_df.loc[i, "onset"] - data.slice_ref * data.tr
+            onset_scan = math.floor(adjusted_onset / data.tr) + data.tr_shift
+            end_scan = math.ceil((adjusted_onset + condition_df.loc[i, "duration"]) / data.tr) + data.tr_shift
+
+            onset_scan = max([0, onset_scan])
+            end_scan = max([0, end_scan])
             scans.extend(range(onset_scan, end_scan))
             scans = sorted(list(set(scans)))
 
-        When partial scans are computed, ``int`` is used to round down for the beginning scan index and ``math.ceil``
-        is used to round up for the ending scan index. Negative scan indices are set to 0 to avoid unintentional
-        negative indexing. For simplicity, note that when ``slice_time_ref`` and ``condition_tr_shift`` are 0, the
-        formula simplifies to:
+        .. versionchanged:: 0.28.4 Max check done for ``onset_scan`` and ``end_scan`` instead of ``adjusted_onset``.
+
+        When partial scans are computed, ``math.floor`` is used to round down for the beginning scan index and
+        ``math.ceil`` is used to round up for the ending scan index. Negative scan indices are set to 0 to avoid
+        unintentional negative indexing. For simplicity, note that when ``slice_time_ref`` and ``condition_tr_shift``
+        are 0, the formula simplifies to:
 
         ::
 

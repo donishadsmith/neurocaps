@@ -208,12 +208,15 @@ def get_scans(
 
     for i in condition_df.index:
         adjusted_onset = condition_df.loc[i, "onset"] - slice_time_ref * tr
-        adjusted_onset = adjusted_onset if adjusted_onset >= 0 else 0
-        start = int(adjusted_onset / tr) + condition_tr_shift
+        true_floor = -1 if adjusted_onset < 0 else 0
+        start = (int(adjusted_onset / tr) + true_floor) + condition_tr_shift
         end_convert = (adjusted_onset + condition_df.loc[i, "duration"]) / tr
         # Conditional instead of math.ceil
         end = int(end_convert) if end_convert == int(end_convert) else int(end_convert) + 1
         end += condition_tr_shift
+
+        start = start if start >= 0 else 0
+        end = end if end >= 0 else 0
         scan_list.extend(list(range(start, end)))
 
     scan_list = sorted(list(set(scan_list)))

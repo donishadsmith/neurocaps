@@ -13,6 +13,33 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.28.4] - 2025-05-01
+### 🐛 Fixes
+- More robust handling of certain edge cases for event timing conversion. Instead of having
+
+Old Computation:
+```python
+adjusted_onset = onset - slice_time_ref * tr
+adjusted_onset = max([0, adjusted_onset])
+start_scan = int(adjusted_onset / tr) + condition_tr_shift
+end_scan = math.ceil((adjusted_onset + duration) / tr) + condition_tr_shift
+scans.extend(range(onset_scan, end_scan))
+scans = sorted(list(set(scans)))
+```
+
+New Computation:
+```python
+adjusted_onset = condition_df.loc[i, "onset"] - data.slice_ref * data.tr
+# Int is always the floor for positive floats
+onset_scan = int(adjusted_onset / data.tr) + data.tr_shift
+end_scan = math.ceil((adjusted_onset + condition_df.loc[i, "duration"]) / data.tr) + data.tr_shift
+
+# Avoid accidental negative indexing
+onset_scan = max([0, onset_scan])
+end_scan = max([0, end_scan])
+scans.extend(range(onset_scan, end_scan))
+```
+
 ## [0.28.3] - 2025-04-27
 ### 🐛 Fixes
 - Use "all" to ensure all figures are closed for matplotlib objects and prevent unnecessary memory consumption

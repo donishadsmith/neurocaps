@@ -529,11 +529,12 @@ def _get_condition_indices(data, condition_df):
     # condition of interest; include partial scans
     for i in condition_df.index:
         adjusted_onset = condition_df.loc[i, "onset"] - data.slice_ref * data.tr
-        # Avoid accidental negative indexing
-        adjusted_onset = max([0, adjusted_onset])
-        # Int is always the floor for positive floats
-        onset_scan = int(adjusted_onset / data.tr) + data.tr_shift
+        onset_scan = math.floor(adjusted_onset / data.tr) + data.tr_shift
         end_scan = math.ceil((adjusted_onset + condition_df.loc[i, "duration"]) / data.tr) + data.tr_shift
+
+        # Avoid accidental negative indexing
+        onset_scan = max([0, onset_scan])
+        end_scan = max([0, end_scan])
         scans.extend(range(onset_scan, end_scan))
 
     # Get unique scans to not duplicate information
