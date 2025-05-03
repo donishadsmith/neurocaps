@@ -134,7 +134,10 @@ class _PlotDefaults:
                 "gridcolor": "rgba(0, 0, 0, 0.25)",
                 "tickfont": {"size": 16, "color": "black"},
             },
-            "color_discrete_map": {"High Amplitude": "rgba(255, 0, 0, 1)", "Low Amplitude": "rgba(0, 0, 255, 1)"},
+            "color_discrete_map": {
+                "High Amplitude": "rgba(255, 0, 0, 1)",
+                "Low Amplitude": "rgba(0, 0, 255, 1)",
+            },
             "title_font": {"family": "Times New Roman", "size": 30, "color": "black"},
             "title_x": 0.5,
             "title_y": None,
@@ -172,7 +175,9 @@ class _PlotFuncs:
         }
 
         if line:
-            kwargs.update({"linewidths": plot_dict["linewidths"], "linecolor": plot_dict["linecolor"]})
+            kwargs.update(
+                {"linewidths": plot_dict["linewidths"], "linecolor": plot_dict["linecolor"]}
+            )
         if edge:
             kwargs.update({"edgecolors": plot_dict["edgecolors"]})
 
@@ -180,24 +185,34 @@ class _PlotFuncs:
 
     @staticmethod
     def extra_kwargs(hemisphere_labels: bool) -> tuple[bool, bool]:
-        # Determine whether to add line related and edge related kwargs to base kwargs determined by hemisphere_labels
+        # Determine whether to add line related and edge related kwargs to base kwargs determined
+        # by hemisphere_labels
         return (False, False) if hemisphere_labels else (True, True)
 
     @staticmethod
     def border(
-        display: Union[Axes, Figure], plot_dict: dict, axhline: int, axvline: Union[int, None] = None
+        display: Union[Axes, Figure],
+        plot_dict: dict,
+        axhline: int,
+        axvline: Union[int, None] = None,
     ) -> Union[Axes, Figure]:
         if not plot_dict["borderwidths"]:
             return display
 
         display.axhline(y=0, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
-        display.axhline(y=axhline, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
+        display.axhline(
+            y=axhline, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"]
+        )
         display.axvline(x=0, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
 
         if axvline:
-            display.axvline(x=axvline, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
+            display.axvline(
+                x=axvline, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"]
+            )
         else:
-            display.axvline(x=axhline, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"])
+            display.axvline(
+                x=axhline, color=plot_dict["linecolor"], linewidth=plot_dict["borderwidths"]
+            )
 
         return display
 
@@ -207,12 +222,16 @@ class _PlotFuncs:
     ) -> Union[Axes, Figure]:
         if set_x:
             display.set_xticklabels(
-                display.get_xticklabels(), size=plot_dict["xticklabels_size"], rotation=plot_dict["xlabel_rotation"]
+                display.get_xticklabels(),
+                size=plot_dict["xticklabels_size"],
+                rotation=plot_dict["xlabel_rotation"],
             )
 
         if set_y:
             display.set_yticklabels(
-                display.get_yticklabels(), size=plot_dict["yticklabels_size"], rotation=plot_dict["ylabel_rotation"]
+                display.get_yticklabels(),
+                size=plot_dict["yticklabels_size"],
+                rotation=plot_dict["ylabel_rotation"],
             )
 
         if plot_dict["cbarlabels_size"]:
@@ -259,7 +278,11 @@ class _PlotFuncs:
 
     @staticmethod
     def set_title(
-        display: Union[Axes, Figure], title: str, suffix: Union[str, None], plot_dict: dict, is_subplot: bool = False
+        display: Union[Axes, Figure],
+        title: str,
+        suffix: Union[str, None],
+        plot_dict: dict,
+        is_subplot: bool = False,
     ) -> Union[Axes, Figure]:
         title = f"{title} {suffix}" if suffix else title
 
@@ -275,24 +298,37 @@ class _PlotFuncs:
         return display
 
     @staticmethod
-    def save_fig(fig: Union[Axes, Figure], output_dir: str, filename: str, plot_dict: dict, as_pickle: bool) -> None:
+    def save_fig(
+        fig: Union[Axes, Figure], output_dir: str, filename: str, plot_dict: dict, as_pickle: bool
+    ) -> None:
         if as_pickle:
             # Allow Axes or Figure
             _IO.serialize(fig, output_dir, filename.replace(".png", ".pkl"))
         else:
             fig = fig.get_figure() if not hasattr(fig, "savefig") else fig
-            fig.savefig(os.path.join(output_dir, filename), dpi=plot_dict["dpi"], bbox_inches=plot_dict["bbox_inches"])
+            fig.savefig(
+                os.path.join(output_dir, filename),
+                dpi=plot_dict["dpi"],
+                bbox_inches=plot_dict["bbox_inches"],
+            )
 
 
 class _MatrixVisualizer:
-    """Generates heatmaps and saves contents for correlation (``CAP.caps2corr``) and transition probability matrices."""
+    """
+    Generates heatmaps and saves contents for correlation (``CAP.caps2corr``) and transition
+    probability matrices.
+    """
 
     @staticmethod
-    def create_display(df: DataFrame, plot_dict: dict, suffix_title: str, group: str, call: str) -> Union[Axes, Figure]:
+    def create_display(
+        df: DataFrame, plot_dict: dict, suffix_title: str, group: str, call: str
+    ) -> Union[Axes, Figure]:
         # Refresh grid for each iteration
         plt.figure(figsize=plot_dict["figsize"])
 
-        display = seaborn.heatmap(df, xticklabels=True, yticklabels=True, **_PlotFuncs.base_kwargs(plot_dict))
+        display = seaborn.heatmap(
+            df, xticklabels=True, yticklabels=True, **_PlotFuncs.base_kwargs(plot_dict)
+        )
 
         # Add Border; returns display if border in `plot_dict` is Falsy
         display = _PlotFuncs.border(display, plot_dict, df.shape[1], df.shape[0])
@@ -306,7 +342,9 @@ class _MatrixVisualizer:
 
         # Set plot name
         plot_name = "Correlation Matrix" if call == "corr" else "Transition Probabilities"
-        display = _PlotFuncs.set_title(display, f"{group} CAPs {plot_name}", suffix_title, plot_dict)
+        display = _PlotFuncs.set_title(
+            display, f"{group} CAPs {plot_name}", suffix_title, plot_dict
+        )
 
         return display
 
@@ -334,4 +372,6 @@ class _MatrixVisualizer:
 
             if save_df:
                 filename = filename.replace(".png", ".csv")
-                curr_dict[group].to_csv(path_or_buf=os.path.join(output_dir, filename), sep=",", index=True)
+                curr_dict[group].to_csv(
+                    path_or_buf=os.path.join(output_dir, filename), sep=",", index=True
+                )

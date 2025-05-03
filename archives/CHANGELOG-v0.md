@@ -305,7 +305,9 @@ def _call_layout(bids_dir, pipeline_name):
         pipeline_name = os.path.normpath(pipeline_name).lstrip(os.path.sep).rstrip(os.path.sep)
         if pipeline_name.startswith("derivatives"):
             pipeline_name = pipeline_name[len("derivatives") :].lstrip(os.path.sep)
-        layout = bids.BIDSLayout(bids_dir, derivatives=os.path.join(bids_dir, "derivatives", pipeline_name))
+        layout = bids.BIDSLayout(
+            bids_dir, derivatives=os.path.join(bids_dir, "derivatives", pipeline_name)
+        )
     else:
         layout = bids.BIDSLayout(bids_dir, derivatives=True)
 
@@ -482,10 +484,14 @@ internal function `_extract_timeseries`.
 of how the calculation is done.
 ```python
 if "transition_probability" in metrics:
-    temp_dict[group].loc[len(temp_dict[group])] = [subj_id, group, curr_run] + [0.0] * (temp_dict[group].shape[-1] - 3)
+    temp_dict[group].loc[len(temp_dict[group])] = [subj_id, group, curr_run] + [0.0] * (
+        temp_dict[group].shape[-1] - 3
+    )
     # Get number of transitions
     trans_dict = {
-        target: np.sum(np.where(predicted_subject_timeseries[subj_id][curr_run][:-1] == target, 1, 0))
+        target: np.sum(
+            np.where(predicted_subject_timeseries[subj_id][curr_run][:-1] == target, 1, 0)
+        )
         for target in group_caps[group]
     }
     indx = temp_dict[group].index[-1]
@@ -558,9 +564,13 @@ for info in groups:
         diff_array = np.diff(trans_array, n=1)
         # Avoid division by zero errors and calculate both the forward and reverse transition
         if trans_dict[target1] != 0:
-            df.loc[indx, f"{target1}.{target2}"] = float(np.sum(np.where(diff_array == 2, 1, 0)) / trans_dict[target1])
+            df.loc[indx, f"{target1}.{target2}"] = float(
+                np.sum(np.where(diff_array == 2, 1, 0)) / trans_dict[target1]
+            )
         if trans_dict[target2] != 0:
-            df.loc[indx, f"{target2}.{target1}"] = float(np.sum(np.where(diff_array == -2, 1, 0)) / trans_dict[target2])
+            df.loc[indx, f"{target2}.{target1}"] = float(
+                np.sum(np.where(diff_array == -2, 1, 0)) / trans_dict[target2]
+            )
 
     # Calculate the probability for the self transitions/diagonals
     for target in caps:
@@ -663,13 +673,19 @@ import or use numpy operations to reduce needed to create the same calculation.
         # Add zero to missing CAPs for participants that exhibit zero instances of a certain CAP
         if len(sorted_frequency_dict) != len(cap_numbers):
             sorted_frequency_dict = {
-                cap_number: sorted_frequency_dict[cap_number] if cap_number in list(sorted_frequency_dict) else 0
+                cap_number: (
+                    sorted_frequency_dict[cap_number] if cap_number in list(sorted_frequency_dict) else 0
+                )
                 for cap_number in cap_numbers
             }
         # Replace zeros with nan for groups with less caps than the group with the max caps
         if len(cap_numbers) > group_cap_counts[group]:
             sorted_frequency_dict = {
-                cap_number: sorted_frequency_dict[cap_number] if cap_number <= group_cap_counts[group] else float("nan")
+                cap_number: (
+                    sorted_frequency_dict[cap_number]
+                    if cap_number <= group_cap_counts[group]
+                    else float("nan")
+                )
                 for cap_number in cap_numbers
             }
         ```
@@ -689,13 +705,15 @@ import or use numpy operations to reduce needed to create the same calculation.
         - Previous Code:
         ```python
         proportion_dict = {
-            key: item / (len(predicted_subject_timeseries[subj_id][curr_run])) for key, item in sorted_frequency_dict.items()
+            key: item / (len(predicted_subject_timeseries[subj_id][curr_run]))
+            for key, item in sorted_frequency_dict.items()
         }
         ```
         - "Refactored Code": Nothing other than some parameter names have changed.
         ```python
         proportion_dict = {
-            key: value / (len(predicted_subject_timeseries[subj_id][curr_run])) for key, value in frequency_dict.items()
+            key: value / (len(predicted_subject_timeseries[subj_id][curr_run]))
+            for key, value in frequency_dict.items()
         }
         ```
     - **"persistence"**
@@ -737,7 +755,9 @@ import or use numpy operations to reduce needed to create the same calculation.
         # Replace zeros with nan for groups with less caps than the group with the max caps
         if len(cap_numbers) > group_cap_counts[group]:
             persistence_dict = {
-                cap_number: persistence_dict[cap_number] if cap_number <= group_cap_counts[group] else float("nan")
+                cap_number: (
+                    persistence_dict[cap_number] if cap_number <= group_cap_counts[group] else float("nan")
+                )
                 for cap_number in cap_numbers
             }
         ```
@@ -785,7 +805,9 @@ import or use numpy operations to reduce needed to create the same calculation.
         ```python
         # Sum the differences that are not zero - [1,2,1,1,1,3] becomes [1,-1,0,0,2], binary representation
         # for values not zero is [1,1,0,0,1] = 3 transitions
-        transition_frequency = np.where(np.diff(predicted_subject_timeseries[subj_id][curr_run]) != 0, 1, 0).sum()
+        transition_frequency = np.where(
+            np.diff(predicted_subject_timeseries[subj_id][curr_run]) != 0, 1, 0
+        ).sum()
         ```
         *Note, the `n` parameter in `np.diff` defaults to 1, and differences are calculated as `out[i] = a[i+1] - a[i]`*
 ### 🐛 Fixes

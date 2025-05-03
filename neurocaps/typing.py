@@ -10,8 +10,8 @@ SubjectTimeseries = dict[str, dict[str, NDArray[floating]]]
 """
    Type Definition for the Subject Timeseries Dictionary Structure.
 
-   A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs) as a NumPy array.
-   The structure is as follows:
+   A dictionary mapping subject IDs to their run IDs and their associated timeseries (TRs x ROIs)
+   as a NumPy array. The structure is as follows:
 
     ::
 
@@ -35,8 +35,9 @@ class SchaeferParcelConfig(TypedDict):
     """
     Type Definition for the Schaefer Parcellation Configurations.
 
-    A ``TypedDict`` representing the available subkeys (second level keys for "Schaefer") for initializing the Schaefer
-    parcellation in the ``TimeseriesExtractor`` or ``CAP`` classes. The structure is as follows:
+    A ``TypedDict`` representing the available subkeys (second level keys for "Schaefer") for
+    initializing the Schaefer parcellation in the ``TimeseriesExtractor`` or ``CAP`` classes. The
+    structure is as follows:
 
     ::
 
@@ -45,7 +46,8 @@ class SchaeferParcelConfig(TypedDict):
     Parameters
     ----------
     n_rois: :obj:`int`
-        Number of ROIs (Default=400). Options are 100, 200, 300, 400, 500, 600, 700, 800, 900, or 1000.
+        Number of ROIs (Default=400). Options are 100, 200, 300, 400, 500, 600, 700, 800, 900, or
+        1000.
     yeo_networks: :obj:`int`
         Number of Yeo networks (Default=7). Options are 7 or 17.
     resolution_mm: :obj:`int`
@@ -54,12 +56,14 @@ class SchaeferParcelConfig(TypedDict):
     See Also
     --------
     ParcelConfig
-        Type definition representing the configuration options and structure for the Schaefer and AAL parcellations.
+        Type definition representing the configuration options and structure for the Schaefer and
+        AAL parcellations.
 
     Notes
     -----
     See `Nilearn's fetch Schaefer documentation\
-    <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_schaefer_2018.html>`_  for more information.
+    <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_schaefer_2018.html>`_
+    for more information.
     """
 
     n_rois: NotRequired[int]
@@ -71,8 +75,8 @@ class AALParcelConfig(TypedDict):
     """
     Type Definition for the AAL Parcellation Configurations.
 
-    A ``TypedDict`` representing the available subkeys (second level keys for "AAL") for initializing the AAL
-    parcellation in the ``TimeseriesExtractor`` or ``CAP`` classes. The structure is as follows:
+    A ``TypedDict`` representing the available subkeys (second level keys for "AAL") for initializing
+    the AAL parcellation in the ``TimeseriesExtractor`` or ``CAP`` classes. The structure is as follows:
 
     ::
 
@@ -81,30 +85,34 @@ class AALParcelConfig(TypedDict):
     Parameters
     ----------
     version: :obj:`str`
-        AAL parcellation version to use (Default="SPM12" if ``{"AAL": {}}`` is given). Options are "SPM5", "SPM8",
-        "SPM12", or "3v2".
+        AAL parcellation version to use (Default="SPM12" if ``{"AAL": {}}`` is given). Options are
+        "SPM5", "SPM8", "SPM12", or "3v2".
 
     See Also
     --------
     ParcelConfig
-        Type definition representing the configuration options and structure for the Schaefer and AAL parcellations.
+        Type definition representing the configuration options and structure for the Schaefer and
+        AAL parcellations.
 
     Notes
     -----
     See `Nilearn's fetch AAL documentation\
-    <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_aal.html>`_ for more information.
+    <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_aal.html>`_
+    for more information.
     """
 
     version: NotRequired[str]
 
 
-ParcelConfig = Union[dict[Literal["Schaefer"], SchaeferParcelConfig], dict[Literal["AAL"], AALParcelConfig]]
+ParcelConfig = Union[
+    dict[Literal["Schaefer"], SchaeferParcelConfig], dict[Literal["AAL"], AALParcelConfig]
+]
 """
    Type Definition for the Parcellation Configurations.
 
-   A dictionary mapping the Schaefer or AAL parcellation to their associated configuration subkeys that are used
-   by the ``TimeseriesExtractor`` and ``CAP`` class to create the processed ``ParcelApproach``. The structure is
-   as follows:
+   A dictionary mapping the Schaefer or AAL parcellation to their associated configuration subkeys
+   that are used by the ``TimeseriesExtractor`` and ``CAP`` class to create the processed
+   ``ParcelApproach``. The structure is as follows:
 
     ::
 
@@ -134,8 +142,9 @@ class SchaeferParcelApproach(ParcelApproachBase):
     """
     Type Definition for the Schaefer Parcellation Approach.
 
-    A ``TypedDict`` representing the subkeys (second level keys for "Schaefer") for the processed Schaefer parcellation
-    produced by the ``TimeseriesExtractor`` or ``CAP`` classes. The structure is as follows:
+    A ``TypedDict`` representing the subkeys (second level keys for "Schaefer") for the processed
+    Schaefer parcellation produced by the ``TimeseriesExtractor`` or ``CAP`` classes. The structure
+    is as follows:
 
     ::
 
@@ -150,17 +159,19 @@ class SchaeferParcelApproach(ParcelApproachBase):
     maps: :obj:`str`
         Path to the Schaefer parcellation.
     nodes: :obj:`list[str]`
-        List of nodes (ROIs) in the Schaefer parcellation. Ordered in ascending order of their label ID in the
-        parcellation and must exclude "Background".
+        List of nodes (ROIs) in the Schaefer parcellation. Ordered in ascending order of their label
+        ID in the parcellation and must exclude "Background".
     regions: :obj:`list[str]`
-        List of networks in the Schaefer parcellation. **Important**: For certain visualization methods, the ``in``
-        operator is used to determine which nodes belong to which network. Therefore, network names must be contained
-        within the corresponding node names (e.g., 'Vis' network should have nodes with 'Vis' in their names).
+        List of networks in the Schaefer parcellation. **Important**: For certain visualization
+        methods, the ``in`` operator is used to determine which nodes belong to which network.
+        Therefore, network names must be contained within the corresponding node names (e.g., "Vis"
+        network should have nodes with "Vis" in their names).
 
     See Also
     --------
     ParcelApproach
-        Type definition representing the structure of the Schaefer, AAL, and Custom parcellation approaches.
+        Type definition representing the structure of the Schaefer, AAL, and Custom parcellation
+        approaches.
     """
 
     regions: NotRequired[list[str]]
@@ -170,8 +181,9 @@ class AALParcelApproach(ParcelApproachBase):
     """
     Type Definition for the AAL Parcellation Approach.
 
-    A ``TypedDict`` representing the subkeys (second level keys for "AAL") for the processed AAL parcellation produced
-    by the ``TimeseriesExtractor`` or ``CAP`` classes. The structure is as follows:
+    A ``TypedDict`` representing the subkeys (second level keys for "AAL") for the processed AAL
+    parcellation produced by the ``TimeseriesExtractor`` or ``CAP`` classes. The structure is as
+    follows:
 
     ::
 
@@ -186,17 +198,20 @@ class AALParcelApproach(ParcelApproachBase):
     maps: :obj:`str`
         Path to the AAL parcellation.
     nodes: :obj:`list[str]`
-        List of nodes (ROIs) in the AAL parcellation. Ordered in ascending order of their label ID in the parcellation
+        List of nodes (ROIs) in the AAL parcellation. Ordered in ascending order of their label ID
+        in the parcellation
         and must exclude "Background".
     regions: :obj:`list[str]`
-        List of networks in the AAL parcellation. **Important**: For certain visualization methods, the ``in``
-        operator is used to determine which nodes belong to which network. Therefore, network names must be contained
-        within the corresponding node names (e.g., 'Frontal' network should have nodes with 'Frontal' in their names).
+        List of networks in the AAL parcellation. **Important**: For certain visualization methods,
+        the ``in`` operator is used to determine which nodes belong to which network. Therefore,
+        network names must be contained within the corresponding node names (e.g., 'Frontal' network
+        should have nodes with 'Frontal' in their names).
 
     See Also
     --------
     ParcelApproach
-        Type definition representing the structure of the Schaefer, AAL, and Custom parcellation approaches.
+        Type definition representing the structure of the Schaefer, AAL, and Custom parcellation
+        approaches.
     """
 
     regions: NotRequired[list[str]]
@@ -206,7 +221,8 @@ class CustomRegionHemispheres(TypedDict):
     """
     Type Definition for Hemisphere Mapping in Custom Parcellation Regions.
 
-    A ``TypedDict`` representing the mapping of the index position of the "nodes" to the left and right hemispheres.
+    A ``TypedDict`` representing the mapping of the index position of the "nodes" to the left and
+    right hemispheres.
 
     ::
 
@@ -215,11 +231,11 @@ class CustomRegionHemispheres(TypedDict):
     Parameters
     ----------
     lh: :obj:`list[int] | range`
-       List of integers or range representing the index positions of elements in the "nodes" list belonging to the
-       left hemisphere of a specific region.
+       List of integers or range representing the index positions of elements in the "nodes" list
+       belonging to the left hemisphere of a specific region.
     rh: :obj:`list[int] | range`
-       List of integers or range representing the index positions of elements in the "nodes" list belonging to the
-       right hemisphere of a specific region.
+       List of integers or range representing the index positions of elements in the "nodes" list
+       belonging to the right hemisphere of a specific region.
 
     See Also
     --------
@@ -235,8 +251,8 @@ class CustomParcelApproach(ParcelApproachBase):
     """
     Type Definition for the Custom Parcellation Approach.
 
-    A ``TypedDict`` representing the subkeys (second level keys for "Custom") for the user-defined Custom parcellation
-    approach. The structure is as follows:
+    A ``TypedDict`` representing the subkeys (second level keys for "Custom") for the user-defined
+    Custom parcellation approach. The structure is as follows:
 
     ::
 
@@ -254,8 +270,8 @@ class CustomParcelApproach(ParcelApproachBase):
     maps: :obj:`str`
         Path to the Custom parcellation.
     nodes: :obj:`list[str]`
-        List of nodes (ROIs) in the Custom parcellation. Ordered in ascending order of their label ID in the
-        parcellation and must exclude "Background".
+        List of nodes (ROIs) in the Custom parcellation. Ordered in ascending order of their label
+        ID in the parcellation and must exclude "Background".
     regions: :obj:`dict[str, CustomRegionHemispheres]`
         Dictionary mapping the regions to their left and right hemispheres.
 
@@ -264,7 +280,8 @@ class CustomParcelApproach(ParcelApproachBase):
     CustomRegionHemispheres
         Type definition of the Custom hemisphere dictionary for the "regions" subkeys.
     ParcelApproach
-        Type definition representing the structure of the Schaefer, AAL, and Custom parcellation approaches.
+        Type definition representing the structure of the Schaefer, AAL, and Custom parcellation
+        approaches.
     """
 
     regions: NotRequired[dict[str, CustomRegionHemispheres]]
@@ -278,7 +295,8 @@ ParcelApproach = Union[
 """
   Type Definition for the Parcellation Approaches.
 
-   A dictionary mapping the Schaefer, AAL, and Custom parcellation approaches to their associated subkeys:
+   A dictionary mapping the Schaefer, AAL, and Custom parcellation approaches to their associated
+   subkeys:
 
     ::
 

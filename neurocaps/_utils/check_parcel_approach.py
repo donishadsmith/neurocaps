@@ -23,8 +23,8 @@ VALID_DICT_STUCTURES = {
 
 def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
     """
-    Pipeline to ensure ``parcel_approach`` is valid and process the ``parcel_approach`` if certain initialization
-    keys are used.
+    Pipeline to ensure ``parcel_approach`` is valid and process the ``parcel_approach`` if certain
+    initialization keys are used.
     """
     parcel_dict = _IO.get_obj(parcel_approach)
 
@@ -35,8 +35,8 @@ def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
 
     if not isinstance(parcel_dict, dict) or not list(parcel_dict)[0] in list(VALID_DICT_STUCTURES):
         error_message = (
-            "Please include a valid `parcel_approach` in one of the following dictionary formats for "
-            f"'Schaefer', 'AAL', or 'Custom': {VALID_DICT_STUCTURES}"
+            "Please include a valid `parcel_approach` in one of the following dictionary formats "
+            f"for 'Schaefer', 'AAL', or 'Custom': {VALID_DICT_STUCTURES}"
         )
 
         if not isinstance(parcel_dict, dict):
@@ -56,15 +56,19 @@ def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
     else:
         has_required_keys = _check_keys(parcel_dict)
         if not has_required_keys:
-            parcel_dict = _process_aal(parcel_dict) if "AAL" in parcel_dict else _process_schaefer(parcel_dict)
+            parcel_dict = (
+                _process_aal(parcel_dict)
+                if "AAL" in parcel_dict
+                else _process_schaefer(parcel_dict)
+            )
 
     return parcel_dict
 
 
 def _check_keys(parcel_dict):
     """
-    Checks if the all required keys are in ``parcel_approach`` to skip processing of the ``parcel_approach``
-    for "Schaefer" and "AAL".
+    Checks if the all required keys are in ``parcel_approach`` to skip processing of the
+    ``parcel_approach`` for "Schaefer" and "AAL".
     """
     required_keys = ["maps", "nodes", "regions"]
 
@@ -73,8 +77,8 @@ def _check_keys(parcel_dict):
 
 def _process_aal(parcel_dict):
     """
-    Converts a ``parcel_approach`` containing initialization keys for "AAL" the the final processed version.
-    Uses nilearn to fetch the parcellation map and labels.
+    Converts a ``parcel_approach`` containing initialization keys for "AAL" the the final processed
+    version. Uses nilearn to fetch the parcellation map and labels.
     """
     if "version" not in parcel_dict["AAL"]:
         LG.warning("'version' not specified in `parcel_approach`. Defaulting to 'SPM12'.")
@@ -103,26 +107,30 @@ def _process_aal(parcel_dict):
 
 def _process_custom(parcel_dict, call):
     """
-    Ensures that "Custom" parcel approaches have the necessary keys. Performs basic validation before passing to
-    ``_check_custom_structure``.
+    Ensures that "Custom" parcel approaches have the necessary keys. Performs basic validation
+    before passing to ``_check_custom_structure``.
     """
     custom_example = {"Custom": VALID_DICT_STUCTURES["Custom"]}
 
     if call == "TimeseriesExtractor" and "maps" not in parcel_dict["Custom"]:
         raise ValueError(
-            "For `Custom` parcel_approach, a nested key-value pair containing the key 'maps' with the "
-            "value being a string specifying the location of the parcellation is needed. "
+            "For 'Custom' parcel_approach, a nested key-value pair containing the key 'maps' with "
+            "the value being a string specifying the location of the parcellation is needed. "
             f"Refer to example: {custom_example}"
         )
 
-    if not all(check_subkeys := ["nodes" in parcel_dict["Custom"], "regions" in parcel_dict["Custom"]]):
-        missing_subkeys = [["nodes", "regions"][x] for x, y in enumerate(check_subkeys) if y is False]
+    if not all(
+        check_subkeys := ["nodes" in parcel_dict["Custom"], "regions" in parcel_dict["Custom"]]
+    ):
+        missing_subkeys = [
+            ["nodes", "regions"][x] for x, y in enumerate(check_subkeys) if y is False
+        ]
         error_message = f"The following subkeys haven't been detected {missing_subkeys}"
 
         if call == "TimeseriesExtractor":
             LG.warning(
-                f"{error_message}. These labels are not needed for timeseries extraction but are needed "
-                "for plotting."
+                f"{error_message}. These labels are not needed for timeseries extraction but are "
+                "needed for plotting."
             )
         else:
             raise ValueError(
@@ -143,8 +151,8 @@ def _process_custom(parcel_dict, call):
 
 def _process_schaefer(parcel_dict):
     """
-    Converts a ``parcel_approach`` containing initialization keys for "Schafer" the the final processed version.
-    Uses nilearn to fetch the parcellation map and labels.
+    Converts a ``parcel_approach`` containing initialization keys for "Schafer" the the final
+    processed version. Uses nilearn to fetch the parcellation map and labels.
     """
     if "n_rois" not in parcel_dict["Schaefer"]:
         LG.warning("'n_rois' not specified in `parcel_approach`. Defaulting to 400 ROIs.")
@@ -169,13 +177,17 @@ def _process_schaefer(parcel_dict):
             {"nodes": [label.decode().split(network_name)[-1] for label in fetched_schaefer.labels]}
         )
     except AttributeError:
-        parcel_dict["Schaefer"].update({"nodes": [label.split(network_name)[-1] for label in fetched_schaefer.labels]})
+        parcel_dict["Schaefer"].update(
+            {"nodes": [label.split(network_name)[-1] for label in fetched_schaefer.labels]}
+        )
 
     # Remove background label
     parcel_dict["Schaefer"]["nodes"] = _remove_background(parcel_dict["Schaefer"]["nodes"])
 
     # Get regions
-    regions = dict.fromkeys([re.split("LH_|RH_", node)[-1].split("_")[0] for node in parcel_dict["Schaefer"]["nodes"]])
+    regions = dict.fromkeys(
+        [re.split("LH_|RH_", node)[-1].split("_")[0] for node in parcel_dict["Schaefer"]["nodes"]]
+    )
     parcel_dict["Schaefer"].update({"regions": list(regions)})
 
     # Clean initialization keys
@@ -186,49 +198,68 @@ def _process_schaefer(parcel_dict):
 
 
 def _check_custom_structure(custom_parcel, custom_example):
-    """Validates the structure of the "nodes" and "regions" subkeys for user-defined ("Custom") parcel approaches."""
+    """
+    Validates the structure of the "nodes" and "regions" subkeys for user-defined ("Custom")
+    parcel approaches.
+    """
     example_msg = f"Refer to example: {custom_example}"
 
     if "nodes" in custom_parcel:
-        if not (isinstance(custom_parcel.get("nodes"), (list, np.ndarray)) and list(custom_parcel.get("nodes"))):
+        if not (
+            isinstance(custom_parcel.get("nodes"), (list, np.ndarray))
+            and list(custom_parcel.get("nodes"))
+        ):
             raise TypeError(
-                "The 'nodes' subkey must be a non-empty list or numpy array containing the node labels. "
-                f"{example_msg}"
+                "The 'nodes' subkey must be a non-empty list or numpy array containing the "
+                f"node labels. {example_msg}"
             )
 
         if not all(isinstance(element, str) for element in custom_parcel["nodes"]):
             raise TypeError(
-                "All elements in the 'nodes' subkey's list or numpy array must be a string. " f"{example_msg}"
+                "All elements in the 'nodes' subkey's list or numpy array must be a string. "
+                f"{example_msg}"
             )
 
     if "regions" in custom_parcel:
         if not (custom_parcel.get("regions") and isinstance(custom_parcel.get("regions"), dict)):
             raise TypeError(
-                "The 'regions' subkey must be a non-empty dictionary containing the regions/networks "
-                f"labels. {example_msg}"
+                "The 'regions' subkey must be a non-empty dictionary containing the "
+                f"regions/networks labels. {example_msg}"
             )
 
         if not all(isinstance(key, str) for key in custom_parcel["regions"]):
-            raise TypeError(f"All first level keys in the 'regions' subkey's dictionary must be strings. {example_msg}")
+            raise TypeError(
+                "All first level keys in the 'regions' subkey's dictionary must be strings. "
+                f"{example_msg}"
+            )
 
         regions = custom_parcel["regions"].values()
-        if not all([all([hemisphere in region.keys() for hemisphere in ["lh", "rh"]]) for region in regions]):
+        if not all(
+            [
+                all([hemisphere in region.keys() for hemisphere in ["lh", "rh"]])
+                for region in regions
+            ]
+        ):
             raise KeyError(
-                "All second level keys in the 'regions' subkey's dictionary must contain 'lh' and 'rh'. "
-                f"{example_msg}"
+                "All second level keys in the 'regions' subkey's dictionary must contain 'lh' "
+                f"and 'rh'. {example_msg}"
             )
 
         if not _check_custom_hemisphere_dicts(regions):
             raise TypeError(
-                "Each 'lh' and 'rh' subkey in the 'regions' subkey's dictionary must contain a list of integers or "
-                f"range of node indices. {example_msg}"
+                "Each 'lh' and 'rh' subkey in the 'regions' subkey's dictionary must contain a "
+                f"list of integers or range of node indices. {example_msg}"
             )
 
 
 def _check_custom_hemisphere_dicts(regions):
-    """Ensures that the "Custom" parcel approach has the proper structure for the hemisphere dictionary."""
+    """
+    Ensures that the "Custom" parcel approach has the proper structure for the hemisphere
+    dictionary.
+    """
     # For the left and right hemisphere subkeys, check that they contain a list or range
-    # Only check if each element of a list is an integer since range is guaranteed to be a sequence of integers already
+    # Only check if each element of a list is an integer since range is guaranteed to be a sequence
+    # of integers already
     return all(
         isinstance(item[key], range)
         or (isinstance(item[key], list) and all(isinstance(element, int) for element in item[key]))
@@ -244,11 +275,11 @@ def _remove_background(nodes):
 
 def _collapse_aal_node_names(nodes, return_unique_names=True):
     """
-    Creates general regions/networks from AAL labels (e.g. Frontal_Sup_2_L and Frontal_Inf_Oper_L -> Frontal) with
-    special consideration for version "3v2".
+    Creates general regions/networks from AAL labels (e.g. Frontal_Sup_2_L and
+    Frontal_Inf_Oper_L -> Frontal) with special consideration for version "3v2".
     """
-    # Names in "3v2" that don't split well .split("_")[0] or could be reduced more in the case of OFC, which
-    # has OFCmed, OFCant, OFCpos
+    # Names in "3v2" that don't split well .split("_")[0] or could be reduced more in the case of
+    # OFC, which has OFCmed, OFCant, OFCpos
     special_names = ["N_Acc", "Red_N", "OFC"]
 
     collapsed_node_names = []

@@ -19,8 +19,8 @@ def merge_dicts(
     """
     Merge Participant Timeseries Across Multiple Sessions or Tasks.
 
-    Merge subject timeseries data across dictionaries, concatenating matching run IDs. Only subjects present across all
-    input dictionaries are included in the merged output.
+    Merge subject timeseries data across dictionaries, concatenating matching run IDs. Only subjects
+    present across all input dictionaries are included in the merged output.
 
     For example, if three dictionaries are provided contain subject 1 with:
 
@@ -34,32 +34,33 @@ def merge_dicts(
         - run-2: timeseries from dict 2 (stroop)
         - run-3: timeseries from dict 3 (n-back)
 
-    This function supports workflows for identifying similar CAPs across tasks or sessions. Specifically, using the
-    merged dictionary as input for ``CAP.get_caps`` and the filtered input dictionaries, containing only subjects
-    present in the merged dictionary, as inputs for ``CAP.calculate_metrics`` to compute participant-wise CAP metrics
-    for each task.
+    This function supports workflows for identifying similar CAPs across tasks or sessions.
+    Specifically, using the merged dictionary as input for ``CAP.get_caps`` and the filtered input
+    dictionaries, containing only subjects present in the merged dictionary, as inputs for
+    ``CAP.calculate_metrics`` to compute participant-wise CAP metrics for each task.
 
     Parameters
     ----------
     subject_timeseries_list: :obj:`list[SubjectTimeseries]` or :obj:`list[str]`
-        A list where each element consist of a dictionary mapping subject IDs to their run IDs and associated
-        timeseries (TRs x ROIs) as a NumPy array. Can also be a list consisting of paths to pickle files
-        containing this same structure. Refer to documentation for ``SubjectTimeseries`` in the "See Also" section for
-        an example structure.
+        A list where each element consist of a dictionary mapping subject IDs to their run IDs and
+        associated timeseries (TRs x ROIs) as a NumPy array. Can also be a list consisting of paths
+        to pickle files containing this same structure. Refer to documentation for
+        ``SubjectTimeseries`` in the "See Also" section for an example structure.
 
     return_merged_dict: :obj:`bool`, default=True
-        If True, returns a single dictionary containing the merged dictionary under a key named "merged".
+        If True, returns a single dictionary containing the merged dictionary under a key named
+        "merged".
 
     return_reduced_dicts: :obj:`bool`, default=False
-        If True, returns a single dictionary containing the input dictionaries filtered to only include subjects present
-        in the merged dictionary. Keys are named "dict_{0}" where {0} corresponds to the dictionary's position in the
-        input list.
+        If True, returns a single dictionary containing the input dictionaries filtered to only
+        include subjects present in the merged dictionary. Keys are named "dict_{0}" where {0}
+        corresponds to the dictionary's position in the input list.
 
     output_dir: :obj:`str` or :obj:`None`, default=None
-        Directory to save the merged or reduced dictionaries as pickle files. The directory will be created
-        if it does not exist. For the reduced dictionaries to be saved, ``save_reduced_dicts`` must be set to True.
-        If ``save_reduced_dicts`` is False and ``output_dir`` is provided, only the merged dictionary will be saved.
-        Dictionaries will not be saved if None.
+        Directory to save the merged or reduced dictionaries as pickle files. The directory will be
+        created if it does not exist. For the reduced dictionaries to be saved, ``save_reduced_dicts``
+        must be set to True. If ``save_reduced_dicts`` is False and ``output_dir`` is provided, only
+        the merged dictionary will be saved. Dictionaries will not be saved if None.
 
     filenames: :obj:`list[str]` or :obj:`None`, default=None
         A list of file names for saving dictionaries when ``output_dir`` is provided.
@@ -70,37 +71,41 @@ def merge_dicts(
 
         If ``save_reduced_dicts`` is True:
 
-            - Provide N+1 names (where N is the length of ``subject_timeseries_list``): N names for individual reduced
-              dictionaries followed by one name for the merged dictionary. Names are  assigned by input position order.
+            - Provide N+1 names (where N is the length of ``subject_timeseries_list``): N names for
+            individual reduced dictionaries followed by one name for the merged dictionary. Names
+            are assigned by input position order.
 
-        *Note*: Full paths are handled using basename and extensions are ignored. If None, uses default
-        names - "subject_timeseries_{0}_reduced.pkl" (where {0} indicates the original input order) and
-        "merged_subject_timeseries.pkl" for the merged dictionary.
+        *Note*: Full paths are handled using basename and extensions are ignored. If None, uses
+        default names - "subject_timeseries_{0}_reduced.pkl" (where {0} indicates the original input
+        order) and "merged_subject_timeseries.pkl" for the merged dictionary.
 
     save_reduced_dicts: :obj:`bool` or None, default=False
-        If True and the ``output_dir`` is provided, then the reduced dictionaries are saved as pickle files.
+        If True and the ``output_dir`` is provided, then the reduced dictionaries are saved as
+        pickle files.
 
     Returns
     -------
     dict[str, SubjectTimeseries]
-        A nested dictionary containing the merged subject timeseries and reduced subject timeseries if either
-        ``return_merged_dict`` or ``return_reduced_dict`` are True.
+        A nested dictionary containing the merged subject timeseries and reduced subject timeseries
+        if either ``return_merged_dict`` or ``return_reduced_dict`` are True.
 
     See Also
     --------
     :data:`neurocaps.typing.SubjectTimeseries`
-        Type definition for the subject timeseries dictionary structure. Refer to the `SubjectTimeseries
-        documentation <https://neurocaps.readthedocs.io/en/stable/generated/neurocaps.typing.SubjectTimeseries.html#neurocaps.typing.SubjectTimeseries>`_.
+        Type definition for the subject timeseries dictionary structure.
 
     References
     ----------
-    Kupis, L., Romero, C., Dirks, B., Hoang, S., Parladé, M. V., Beaumont, A. L., Cardona, S. M., Alessandri, M.,
-    Chang, C., Nomi, J. S., & Uddin, L. Q. (2020). Evoked and intrinsic brain network dynamics in children with autism
-    spectrum disorder. NeuroImage: Clinical, 28, 102396. https://doi.org/10.1016/j.nicl.2020.102396
+    Kupis, L., Romero, C., Dirks, B., Hoang, S., Parladé, M. V., Beaumont, A. L., Cardona, S. M.,
+    Alessandri, M., Chang, C., Nomi, J. S., & Uddin, L. Q. (2020). Evoked and intrinsic brain
+    network dynamics in children with autism spectrum disorder. NeuroImage: Clinical, 28, 102396.
+    https://doi.org/10.1016/j.nicl.2020.102396
     """
 
     assert isinstance(subject_timeseries_list, list), "`subject_timeseries_list` must be a list."
-    assert len(subject_timeseries_list) > 1, "Merging cannot be done with less than two dictionaries or files."
+    assert (
+        len(subject_timeseries_list) > 1
+    ), "Merging cannot be done with less than two dictionaries or files."
 
     _IO.issue_file_warning("filenames", filenames, output_dir)
 
@@ -146,7 +151,9 @@ def merge_dicts(
                 subject_timeseries_merged[subj_id][curr_run] = np.vstack(arr_list)
 
         # Sort runs lexicographically
-        if list(subject_timeseries_merged[subj_id]) != sorted(subject_timeseries_merged[subj_id].keys()):
+        if list(subject_timeseries_merged[subj_id]) != sorted(
+            subject_timeseries_merged[subj_id].keys()
+        ):
             subject_timeseries_merged[subj_id] = {
                 run_id: subject_timeseries_merged[subj_id][run_id]
                 for run_id in sorted(subject_timeseries_merged[subj_id].keys())

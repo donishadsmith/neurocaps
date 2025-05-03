@@ -1,6 +1,7 @@
 """
-Internal logging function and class for flushing. Logger configured to respect user logging configuration
-prior to package import while defaulting to console logging if no configurations are provided.
+Internal logging function and class for flushing. Logger configured to respect user logging
+configuration prior to package import while defaulting to console logging if no configurations are
+provided.
 """
 
 import logging, sys
@@ -23,15 +24,12 @@ def _logger(name, flush=False, top_level=True, parallel_log_config=None):
     logger = logging.getLogger(name)
     parallel_module = "neurocaps._utils.extraction.extract_timeseries"
 
-    # Note: Based on _logger from (commit: 08723e0 - Oct 6, 2024), Windows logging formatting issue likely due to
-    # due to a combination of only initializing module logger at function level and using hasHandlers() for child
-    # loggers to determine propogation and handler assignment, which resulted in no module handler and propogation to
-    # the root handler which defaults to standard error stream and has its own formatter
     if top_level is True:
         _USER_ROOT_HANDLER = logging.getLogger().hasHandlers()
         _USER_MODULE_HANDLERS[logger.name] = logger.handlers
 
-    # Special case for parallel config to pass a user-defined logger specifically for parallel processing.
+    # Special case for parallel config to pass a user-defined logger specifically for parallel
+    # processing.
     if logger.name == parallel_module and not top_level and parallel_log_config:
         # Only QueueHandler will be in handler list
         logger.handlers.clear()
@@ -47,11 +45,16 @@ def _logger(name, flush=False, top_level=True, parallel_log_config=None):
     default_handlers = _USER_ROOT_HANDLER or _USER_MODULE_HANDLERS[logger.name]
 
     # Propagate to root if no user-defined module or a root handler is detected
-    logger.propagate = False if _USER_MODULE_HANDLERS[logger.name] or not _USER_ROOT_HANDLER else True
+    logger.propagate = (
+        False if _USER_MODULE_HANDLERS[logger.name] or not _USER_ROOT_HANDLER else True
+    )
 
     # Add or messages will repeat several times due to multiple handlers if same name used
-    if not default_handlers and not (parallel_log_config or (logger.name == parallel_module and top_level)):
-        # Safeguard; ensure a clean state for "extract_timeseries" since it is used in parallel and sequential contexts
+    if not default_handlers and not (
+        parallel_log_config or (logger.name == parallel_module and top_level)
+    ):
+        # Safeguard; ensure a clean state for "extract_timeseries" since it is used in parallel and
+        # sequential contexts
         if logger.name == parallel_module:
             logger.handlers.clear()
 

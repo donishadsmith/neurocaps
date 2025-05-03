@@ -2,8 +2,11 @@ import os, subprocess, sys
 
 grep_found = False
 is_windows = sys.platform == "win32"
-basename = os.path.join(os.path.dirname(__file__).removesuffix('hooks').rstrip(os.sep), "neurocaps")
-files = [os.path.join(basename, "analysis", "cap.py"), os.path.join(basename, "extraction", "timeseriesextractor.py")]
+basename = os.path.join(os.path.dirname(__file__).removesuffix("hooks").rstrip(os.sep), "neurocaps")
+files = [
+    os.path.join(basename, "analysis", "cap.py"),
+    os.path.join(basename, "extraction", "timeseriesextractor.py"),
+]
 
 for file in files:
     if not is_windows:
@@ -11,7 +14,11 @@ for file in files:
         # then a negative look ahead for "self" that is not followed by underscore, followed by word.
         cmd = f"grep -P '(?<!`)(?<!del )self\.(?!_)(?=\w+)' {file}"
     else:
-        cmd = ["powershell", "-Command", f"Select-String -Path {file} -Pattern '(?<!`)(?<!del )self\.(?!_)(?=\w+)'"]
+        cmd = [
+            "powershell",
+            "-Command",
+            f"Select-String -Path {file} -Pattern '(?<!`)(?<!del )self\.(?!_)(?=\w+)'",
+        ]
 
     # Get std output
     output = subprocess.run(cmd, shell=not is_windows, capture_output=True, text=True)

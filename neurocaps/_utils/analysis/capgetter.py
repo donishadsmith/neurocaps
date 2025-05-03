@@ -39,8 +39,8 @@ class _CAPGetter:
             self._subject_table = copy.deepcopy(subject_dict)
         else:
             raise TypeError(
-                "`self.subject_table` must be a dictionary where the keys are the subject IDs and the "
-                "values are the group names."
+                "`self.subject_table` must be a dictionary where the keys are the subject IDs and "
+                "the values are the group names."
             )
 
     @property
@@ -106,7 +106,9 @@ class _CAPGetter:
 
     # Generated in `caps2plot`
     @property
-    def region_means(self) -> Union[dict[str, dict[str, Union[list[str], NDArray[np.floating]]]], None]:
+    def region_means(
+        self,
+    ) -> Union[dict[str, dict[str, Union[list[str], NDArray[np.floating]]]], None]:
         return getattr(self, "_region_means", None)
 
     @property
@@ -115,7 +117,9 @@ class _CAPGetter:
 
     # Generated in `caps2radar`
     @property
-    def cosine_similarity(self) -> Union[dict[str, dict[str, Union[list[str], NDArray[np.floating]]]], None]:
+    def cosine_similarity(
+        self,
+    ) -> Union[dict[str, dict[str, Union[list[str], NDArray[np.floating]]]], None]:
         return getattr(self, "_cosine_similarity", None)
 
     def _concatenated_timeseries_size(self) -> str:
@@ -131,8 +135,8 @@ class _CAPGetter:
         """
         Print Current Object State.
 
-        Provides a formatted summary of the ``CAP`` configuration when called with ``print(self)``. Returns a string
-        containing the following information:
+        Provides a formatted summary of the ``CAP`` configuration when called with ``print(self)``.
+        Returns a string containing the following information:
 
         - Parcellation approach used
         - Group definitions
@@ -150,8 +154,8 @@ class _CAPGetter:
         str
             A formatted string containing information about the object's current state.
 
-        Examples
-        --------
+        Example
+        -------
 
         >>> cap_analysis = CAP()
         >>> print(cap_analysis)
@@ -165,19 +169,24 @@ class _CAPGetter:
         groups_names = ", ".join(f"{k}" for k in self.groups) if self.groups else None
         # Get total CAPs per group
         group_caps = {k: len(v) for k, v in self.caps.items()} if self.caps else None
+        # Get additional information
+        method = self.cluster_selection_method
+        optimal_n = self.optimal_n_clusters
+        data_size = self._concatenated_timeseries_size()
+        var_explained = self.variance_explained
 
         object_properties = (
             f"Parcellation Approach                                       : {parcellation_name}\n"
             f"Groups                                                      : {groups_names}\n"
             f"Number of Clusters                                          : {self.n_clusters}\n"
-            f"Cluster Selection Method                                    : {self.cluster_selection_method}\n"
-            f"Optimal Number of Clusters (if Range of Clusters Provided)  : {self.optimal_n_clusters}\n"
+            f"Cluster Selection Method                                    : {method}\n"
+            f"Optimal Number of Clusters (if Range of Clusters Provided)  : {optimal_n}\n"
             f"CPU Cores Used for Clustering (Multiprocessing)             : {self.n_cores}\n"
             f"User-Specified Runs IDs Used for Clustering                 : {self.runs}\n"
-            f"Concatenated Timeseries Bytes                               : {self._concatenated_timeseries_size()}\n"
+            f"Concatenated Timeseries Bytes                               : {data_size}\n"
             f"Standardized Concatenated Timeseries                        : {self.standardize}\n"
             f"Co-Activation Patterns (CAPs)                               : {group_caps}\n"
-            f"Variance Explained by Clustering                            : {self.variance_explained}"
+            f"Variance Explained by Clustering                            : {var_explained}"
         )
 
         sep = "=" * len(object_properties.rsplit(": ")[0])

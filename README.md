@@ -318,12 +318,16 @@ kwargs = {
 }
 
 # Outer Product
-cap_analysis.caps2plot(visual_scope="regions", plot_options=["outer_product"], suffix_title="DET Task - late", **kwargs)
+cap_analysis.caps2plot(
+    visual_scope="regions", plot_options=["outer_product"], suffix_title="DET Task - late", **kwargs
+)
 
 # Heatmap
 kwargs["xlabel_rotation"] = 0
 
-cap_analysis.caps2plot(visual_scope="regions", plot_options=["heatmap"], suffix_title="DET Task - late", **kwargs)
+cap_analysis.caps2plot(
+    visual_scope="regions", plot_options=["heatmap"], suffix_title="DET Task - late", **kwargs
+)
 ```
 ```
 2025-04-20 18:00:20,925 neurocaps.analysis.cap [INFO] No groups specified. Using default group 'All Subjects' containing all subject IDs from `subject_timeseries`. The `self.groups` dictionary will remain fixed unless the `CAP` class is re-initialized.

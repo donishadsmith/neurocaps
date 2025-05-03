@@ -9,16 +9,25 @@ def test_change_dtype():
     """
     Tests dtype change.
     """
-    subject_timeseries = {str(x): {f"run-{y}": np.random.rand(100, 100) for y in range(1, 4)} for x in range(1, 11)}
-    changed_subject_timeseries = change_dtype(subject_timeseries_list=[subject_timeseries], dtype="float16")
+    subject_timeseries = {
+        str(x): {f"run-{y}": np.random.rand(100, 100) for y in range(1, 4)} for x in range(1, 11)
+    }
+    changed_subject_timeseries = change_dtype(
+        subject_timeseries_list=[subject_timeseries], dtype="float16"
+    )
     assert changed_subject_timeseries["dict_0"]["1"]["run-1"].dtype == "float16"
 
-    subject_timeseries2 = {str(x): {f"run-{y}": np.random.rand(100, 100) for y in range(1, 4)} for x in range(1, 10)}
+    subject_timeseries2 = {
+        str(x): {f"run-{y}": np.random.rand(100, 100) for y in range(1, 4)} for x in range(1, 10)
+    }
     changed_subject_timeseries = change_dtype(
         subject_timeseries_list=[subject_timeseries, subject_timeseries2], dtype="float16"
     )
     # No mutability issues
-    assert "10" in changed_subject_timeseries["dict_0"] and "10" not in changed_subject_timeseries["dict_1"]
+    assert (
+        "10" in changed_subject_timeseries["dict_0"]
+        and "10" not in changed_subject_timeseries["dict_1"]
+    )
 
 
 def test_change_dtype_w_pickle(data_dir, tmp_dir):

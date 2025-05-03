@@ -25,8 +25,20 @@ For this demonstration, the extended Human Connectome Project multimodal parcell
 
     if sys.platform != "win32":
         cmd = [
-            ["wget", "-q", "-P", demo_dir, "https://github.com/wayalan/HCPex/raw/main/HCPex_v1.1/HCPex_LookUpTable.txt"],
-            ["wget", "-q", "-P", demo_dir, "https://github.com/wayalan/HCPex/raw/main/HCPex_v1.1/HCPex.nii.gz"],
+            [
+                "wget",
+                "-q",
+                "-P",
+                demo_dir,
+                "https://github.com/wayalan/HCPex/raw/main/HCPex_v1.1/HCPex_LookUpTable.txt",
+            ],
+            [
+                "wget",
+                "-q",
+                "-P",
+                demo_dir,
+                "https://github.com/wayalan/HCPex/raw/main/HCPex_v1.1/HCPex.nii.gz",
+            ],
         ]
     else:
         cmd = [
@@ -102,10 +114,14 @@ The first level of the pipeline directory must also have a dataset_description.j
         "Name": "fMRIPrep - fMRI PREProcessing workflow",
         "BIDSVersion": "1.0.0",
         "DatasetType": "derivative",
-        "GeneratedBy": [{"Name": "fMRIPrep", "Version": "20.2.0", "CodeURL": "https://github.com/nipreps/fmriprep"}],
+        "GeneratedBy": [
+            {"Name": "fMRIPrep", "Version": "20.2.0", "CodeURL": "https://github.com/nipreps/fmriprep"}
+        ],
     }
 
-    with open("neurocaps_demo/derivatives/fmriprep/dataset_description.json", "w", encoding="utf-8") as f:
+    with open(
+        "neurocaps_demo/derivatives/fmriprep/dataset_description.json", "w", encoding="utf-8"
+    ) as f:
         json.dump(desc, f)
 
 
@@ -131,7 +147,12 @@ For ``TimeseriesExtractor.get_bold``, only the "maps" subkey (the location of th
         low_pass=0.15,
         high_pass=None,
         dummy_scans="auto",
-        fd_threshold={"threshold": 0.5, "outlier_percentage": 0.30, "use_sample_mask": True, "interpolate": False},
+        fd_threshold={
+            "threshold": 0.5,
+            "outlier_percentage": 0.30,
+            "use_sample_mask": True,
+            "interpolate": False,
+        },
     )
 
     # Using chaining to extract timeseries data and save dictionary as a pickle file
@@ -223,7 +244,9 @@ Visualizing BOLD data
     # Setting updated parcellation approach
     extractor.parcel_approach = parcel_approach
 
-    extractor.visualize_bold(subj_id="0004", run=1, region="TPO", figsize=(5, 4), output_dir=demo_dir, filename="HCPex_TPO")
+    extractor.visualize_bold(
+        subj_id="0004", run=1, region="TPO", figsize=(5, 4), output_dir=demo_dir, filename="HCPex_TPO"
+    )
 
 .. image:: embed/HCPex_TPO.png
     :width: 800

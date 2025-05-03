@@ -6,8 +6,8 @@ from sklearn.metrics import davies_bouldin_score, calinski_harabasz_score, silho
 
 def _run_kmeans(n_cluster, configs, concatenated_timeseries, method):
     """
-    Uses scikit-learn to perform k-means clustering on concatenated timeseries data in both sequential and parallel
-    contexts. Also uses scikit-learn to provide cluster performance metrics.
+    Uses scikit-learn to perform k-means clustering on concatenated timeseries data in both
+    sequential and parallel contexts. Also uses scikit-learn to provide cluster performance metrics.
     """
     model = KMeans(n_clusters=n_cluster, **configs, verbose=0).fit(concatenated_timeseries)
 
@@ -21,7 +21,9 @@ def _run_kmeans(n_cluster, configs, concatenated_timeseries, method):
     elif method == "elbow":
         performance = {n_cluster: model.inertia_}
     elif method == "silhouette":
-        performance = {n_cluster: silhouette_score(concatenated_timeseries, cluster_labels, metric="euclidean")}
+        performance = {
+            n_cluster: silhouette_score(concatenated_timeseries, cluster_labels, metric="euclidean")
+        }
     else:
         # Variance Ratio
         performance = {n_cluster: calinski_harabasz_score(concatenated_timeseries, cluster_labels)}

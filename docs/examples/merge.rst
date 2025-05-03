@@ -20,13 +20,17 @@ same number of columns/ROIs.
 
     # Simulate two subject_timeseries dictionaries
     # First dictionary contains 3 subjects, each with three runs that have 10 timepoints and 100 rois
-    subject_timeseries_session_pre = {str(x): {f"run-{y}": np.random.rand(10, 100) for y in range(3)} for x in range(3)}
+    subject_timeseries_session_pre = {
+        str(x): {f"run-{y}": np.random.rand(10, 100) for y in range(3)} for x in range(3)
+    }
 
     # Deleting run-2 for subject 2; situation where subject 2 only completed two runs of a task
     del subject_timeseries_session_pre["2"]["run-2"]
 
     # Second dictionary contains 2 subjects, each with a single run that have 20 timepoints and 100 rois
-    subject_timeseries_session_post = {str(x): {f"run-{y}": np.random.rand(20, 100) for y in range(1)} for x in range(2)}
+    subject_timeseries_session_post = {
+        str(x): {f"run-{y}": np.random.rand(20, 100) for y in range(1)} for x in range(2)
+    }
 
     # The subject_timeseries_list also takes pickle files and can save the modified dictionaries as pickles too.
     subject_timeseries_merged = merge_dicts(
@@ -99,7 +103,10 @@ or tasks.
 
     # Deriving CAPs from the merged timeseries data
     cap_analysis.get_caps(
-        merged_dicts["merged"], n_clusters=range(2, 8), cluster_selection_method="davies_bouldin", show_figs=True
+        merged_dicts["merged"],
+        n_clusters=range(2, 8),
+        cluster_selection_method="davies_bouldin",
+        show_figs=True,
     )
 
 .. rst-class:: sphx-glr-script-out

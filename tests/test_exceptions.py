@@ -40,7 +40,9 @@ def remove_task_entity(get_vars):
     sub_folder = os.path.join("sub-01", "ses-002", "func")
     # Get raw and derivative files
     raw_files = glob.glob(os.path.join(bids_dir, sub_folder, "*"))
-    derivatives_files = glob.glob(os.path.join(bids_dir, "derivatives", "fmriprep_1.0.0", "fmriprep", sub_folder, "*"))
+    derivatives_files = glob.glob(
+        os.path.join(bids_dir, "derivatives", "fmriprep_1.0.0", "fmriprep", sub_folder, "*")
+    )
     files = raw_files + derivatives_files
     # Rename files
     renamed_files = [x.replace("task-", "") for x in files]
@@ -76,11 +78,16 @@ def test_elbow_error():
     cap_analysis = CAP()
 
     with pytest.raises(NoElbowDetectedError, match=re.escape(ELBOWMSG)):
-        cap_analysis.get_caps(subject_timeseries, n_clusters=range(2, 4), cluster_selection_method="elbow")
+        cap_analysis.get_caps(
+            subject_timeseries, n_clusters=range(2, 4), cluster_selection_method="elbow"
+        )
 
 
 def test_unsupported_serialized_file_error():
-    msg = "Serialized files must end with one of the following extensions: '.pkl', '.pickle', '.joblib'."
+    msg = (
+        "Serialized files must end with one of the following extensions: "
+        "'.pkl', '.pickle', '.joblib'."
+    )
 
     with pytest.raises(UnsupportedFileExtensionError, match=re.escape(msg)):
         _IO.unserialize("placeholder.txt")

@@ -15,33 +15,35 @@ def standardize(
     """
     Perform Participant-wise Timeseries Standardization Within Runs.
 
-    Standardizes the columns/ROIs of each run independently for all subjects in the subject timeseries. Uses sample
-    standard deviation with Bessel's correction (`n-1` in denominator). Primarily to be used when standardizing was not
-    done in ``TimeseriesExtractor``.
+    Standardizes the columns/ROIs of each run independently for all subjects in the subject
+    timeseries. Uses sample standard deviation with Bessel's correction (`n-1` in denominator).
+    Primarily to be used when standardizing was not done in ``TimeseriesExtractor``.
 
-    .. note:: Standard deviations below ``np.finfo(std.dtype).eps`` are replaced with 1 for numerical stability.
+    .. note:: Standard deviations below ``np.finfo(std.dtype).eps`` are replaced with 1 for\
+    numerical stability.
 
     Parameters
     ----------
     subject_timeseries_list: :obj:`list[SubjectTimeseries]` or :obj:`list[str]`
-        A list where each element consist of a dictionary mapping subject IDs to their run IDs and associated
-        timeseries (TRs x ROIs) as a NumPy array. Can also be a list consisting of paths to pickle files
-        containing this same structure. Refer to documentation for ``SubjectTimeseries`` in the "See Also" section for
-        an example structure.
+        A list where each element consist of a dictionary mapping subject IDs to their run IDs and
+        associated timeseries (TRs x ROIs) as a NumPy array. Can also be a list consisting of paths
+        to pickle files containing this same structure. Refer to documentation for
+        ``SubjectTimeseries`` in the "See Also" section for an example structure.
 
     return_dicts: :obj:`bool`, default=True
-        If True, returns a single dictionary containing the standardized input dictionaries. Keys are named "dict_{0}"
-        where {0} corresponds to the dictionary's position in the input list.
+        If True, returns a single dictionary containing the standardized input dictionaries. Keys
+        are named "dict_{0}" where {0} corresponds to the dictionary's position in the input list.
 
     output_dir: :obj:`str` or :obj:`None`, default=None
-        Directory to save the standardized dictionaries as pickle files. The directory will be created if it does not
-        exist. Dictionaries will not be saved if None.
+        Directory to save the standardized dictionaries as pickle files. The directory will be
+        created if it does not exist. Dictionaries will not be saved if None.
 
     filenames: :obj:`list[str]` or :obj:`None`, default=None
-        A list of names to save the standardized dictionaries as. Names are matched to dictionaries by position (e.g.,
-        a file name in the 0th position will be the file name for the dictionary in the 0th position of
-        ``subject_timeseries_list``). If None and ``output_dir`` is specified, uses default file names -
-        "subject_timeseries_{0}_standardized.pkl" (where {0} indicates the original input order).
+        A list of names to save the standardized dictionaries as. Names are matched to dictionaries
+        by position (e.g., a file name in the 0th position will be the file name for the dictionary
+        in the 0th position of ``subject_timeseries_list``). If None and ``output_dir`` is specified,
+        uses default file names - "subject_timeseries_{0}_standardized.pkl" (where {0} indicates the
+        original input order).
 
     Returns
     -------
@@ -51,8 +53,7 @@ def standardize(
     See Also
     --------
     :data:`neurocaps.typing.SubjectTimeseries`
-        Type definition for the subject timeseries dictionary structure. Refer to the `SubjectTimeseries
-        documentation <https://neurocaps.readthedocs.io/en/stable/generated/neurocaps.typing.SubjectTimeseries.html#neurocaps.typing.SubjectTimeseries>`_.
+        Type definition for the subject timeseries dictionary structure.
     """
     assert (
         isinstance(subject_timeseries_list, list) and len(subject_timeseries_list) > 0
@@ -73,7 +74,10 @@ def standardize(
 
     if output_dir:
         _IO.dicts_to_pickles(
-            output_dir=output_dir, dict_list=standardized_dicts, filenames=filenames, call="standardize"
+            output_dir=output_dir,
+            dict_list=standardized_dicts,
+            filenames=filenames,
+            call="standardize",
         )
 
     if return_dicts:

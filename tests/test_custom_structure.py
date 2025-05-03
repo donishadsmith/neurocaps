@@ -16,7 +16,9 @@ def copy_parcellation(tmp_dir):
     shutil.copyfile(os.path.join(os.path.dirname(__file__), "data", "HCPex.nii.gz"), nii_file)
 
     pickle_file = os.path.join(tmp_dir.name, "HCPex_parcel_approach.pkl")
-    shutil.copyfile(os.path.join(os.path.dirname(__file__), "data", "HCPex_parcel_approach.pkl"), pickle_file)
+    shutil.copyfile(
+        os.path.join(os.path.dirname(__file__), "data", "HCPex_parcel_approach.pkl"), pickle_file
+    )
 
     yield nii_file, pickle_file
 
@@ -33,8 +35,8 @@ def test_nodes_error(copy_parcellation):
     }
 
     msg = (
-        "All elements in the 'nodes' subkey's list or numpy array must be a string. Refer to example: "
-        f"{CUSTOM_EXAMPLE}"
+        "All elements in the 'nodes' subkey's list or numpy array must be a string. "
+        f"Refer to example: {CUSTOM_EXAMPLE}"
     )
     with pytest.raises(TypeError, match=re.escape(msg)):
         TimeseriesExtractor(parcel_approach=parcel_approach)
@@ -47,13 +49,16 @@ def test_regions_error(copy_parcellation):
         "Custom": {
             "maps": nii_file,
             "nodes": CUSTOM_EXAMPLE["Custom"]["nodes"],
-            "regions": {"Vis": {"lh": [0, 1], "rh": [3, 4]}, "Hippocampus": {"lh": ["placeholder"], "rh": [5]}},
+            "regions": {
+                "Vis": {"lh": [0, 1], "rh": [3, 4]},
+                "Hippocampus": {"lh": ["placeholder"], "rh": [5]},
+            },
         }
     }
 
     msg = (
-        "Each 'lh' and 'rh' subkey in the 'regions' subkey's dictionary must contain a list of integers or "
-        f"range of node indices. Refer to example: {CUSTOM_EXAMPLE}"
+        "Each 'lh' and 'rh' subkey in the 'regions' subkey's dictionary must contain a list of "
+        f"integers or range of node indices. Refer to example: {CUSTOM_EXAMPLE}"
     )
     with pytest.raises(TypeError, match=re.escape(msg)):
         CAP(parcel_approach=parcel_approach)

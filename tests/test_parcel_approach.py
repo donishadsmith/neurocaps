@@ -37,7 +37,9 @@ def test_aal_indices_ordering():
         check_aal_node_order(version)
 
 
-@pytest.mark.skipif(not NILEARN_VERSION_WITH_AAL_3V2, reason="3v2 only available in Nilearn >= 0.11.0")
+@pytest.mark.skipif(
+    not NILEARN_VERSION_WITH_AAL_3V2, reason="3v2 only available in Nilearn >= 0.11.0"
+)
 def test_3v2_AAL():
     """
     Test that the AAL produces the correct shape
@@ -70,8 +72,8 @@ def test_Schaefer(yeo_networks):
 
 def test_partial_parcel_approaches():
     """
-    Ensures the correct defaults are used when an empty dictionary, only specifying the parcellation name,
-    is passed for `parcel_approach`.
+    Ensures the correct defaults are used when an empty dictionary, only specifying the parcellation
+    name, is passed for ``parcel_approach``.
     """
     keys = ["maps", "nodes", "regions"]
 
@@ -110,7 +112,8 @@ def test_partial_parcel_approaches():
 @pytest.mark.parametrize("data", ["Schaefer", "AAL"])
 def test_masker_label_ordering(data, tmp_dir, data_dir):
     """
-    Use attribute ``region_ids_`` in ``NiftiLabelsMasker``, introduces in 0.10.3, to always affirm ordering.
+    Use attribute ``region_ids_`` in ``NiftiLabelsMasker``, introduces in 0.10.3, to always affirm
+    ordering.
     """
     from operator import itemgetter
 

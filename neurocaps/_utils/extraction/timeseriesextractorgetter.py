@@ -81,8 +81,8 @@ class _TimeseriesExtractorGetter:
     def _validate_timeseries(subject_dict: SubjectTimeseries) -> None:
         error_msg = (
             "A valid pickle file/subject timeseries should contain a nested dictionary where the "
-            "first level is the subject id, second level is the run number in the form of 'run-#', and "
-            "the final level is the timeseries as a numpy array. "
+            "first level is the subject id, second level is the run number in the form of 'run-#', "
+            "and the final level is the timeseries as a numpy array. "
         )
 
         error_dict = {
@@ -96,24 +96,33 @@ class _TimeseriesExtractorGetter:
         for sub in subject_dict:
             if not isinstance(subject_dict[sub], dict):
                 raise TypeError(
-                    error_dict["Sub"].format(sub) + "The subject must be a dictionary with second level "
+                    error_dict["Sub"].format(sub)
+                    + "The subject must be a dictionary with second level "
                     "'run-#' keys."
                 )
 
             runs = list(subject_dict[sub])
 
             if not all("run" in x for x in runs):
-                raise TypeError(error_dict["Sub"].format(sub) + "Not all second level keys follow the form of 'run-#'.")
+                raise TypeError(
+                    error_dict["Sub"].format(sub)
+                    + "Not all second level keys follow the form of 'run-#'."
+                )
 
             for run in runs:
                 if not isinstance(subject_dict[sub][run], np.ndarray):
-                    raise TypeError(error_dict["Run"].format(sub, run) + "All 'run-#' keys must contain a numpy array.")
+                    raise TypeError(
+                        error_dict["Run"].format(sub, run)
+                        + "All 'run-#' keys must contain a numpy array."
+                    )
 
     def _subject_timeseries_size(self) -> str:
         if not self.subject_timeseries:
             return "0 bytes"
 
-        total_bytes = sum(arr.nbytes for subject in self.subject_timeseries.values() for arr in subject.values())
+        total_bytes = sum(
+            arr.nbytes for subject in self.subject_timeseries.values() for arr in subject.values()
+        )
         # Adding size of dictionary
         total_bytes += sys.getsizeof(self.subject_timeseries)
 
@@ -123,8 +132,8 @@ class _TimeseriesExtractorGetter:
         """
         Print Current Object State.
 
-        Provides a formatted summary of the ``TimeseriesExtractor`` configuration when called with ``print(self)``.
-        Returns a string containing the following information:
+        Provides a formatted summary of the ``TimeseriesExtractor`` configuration when called with
+        ``print(self)``. Returns a string containing the following information:
 
         - Preprocessed BOLD template space
         - Parcellation approach used
@@ -139,8 +148,8 @@ class _TimeseriesExtractorGetter:
         str
             A formatted string containing information about the object's current state.
 
-        Examples
-        --------
+        Example
+        -------
         >>> from neurocaps.extraction import TimeseriesExtractor
         >>> extractor = TimeseriesExtractor()
         >>> print(extractor)
@@ -149,16 +158,20 @@ class _TimeseriesExtractorGetter:
             Preprocessed BOLD Template Space                           : "MNI152NLin2009cAsym"
             ...
         """
+        # Store some information in variables
         n_subjects = len(self.subject_ids) if self.subject_ids else None
+        parcel_approach = list(self.parcel_approach)[0]
+        clean_params = self.signal_clean_info
+        data_size = self._subject_timeseries_size()
 
         object_properties = (
             f"Preprocessed BOLD Template Space                           : {self.space}\n"
-            f"Parcellation Approach                                      : {list(self.parcel_approach)[0]}\n"
-            f"Signal Cleaning Parameters                                 : {self.signal_clean_info}\n"
+            f"Parcellation Approach                                      : {parcel_approach}\n"
+            f"Signal Cleaning Parameters                                 : {clean_params}\n"
             f"Task Information                                           : {self.task_info}\n"
             f"Number of Subjects                                         : {n_subjects}\n"
             f"CPU Cores Used for Timeseries Extraction (Multiprocessing) : {self.n_cores}\n"
-            f"Subject Timeseries Byte Size                               : {self._subject_timeseries_size()}"
+            f"Subject Timeseries Byte Size                               : {data_size}"
         )
 
         sep = "=" * len(object_properties.rsplit(": ")[0])

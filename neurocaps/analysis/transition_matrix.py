@@ -22,20 +22,20 @@ def transition_matrix(
     """
     Generate and Visualize the Averaged Transition Probabilities.
 
-    Averages subject-level transition probabilities to produce a transition probability matrix. One matrix is
-    generated per group.
+    Averages subject-level transition probabilities to produce a transition probability matrix. One
+    matrix is generated per group.
 
     Parameters
     ----------
     trans_dict: :obj: `dict[str, pd.DataFrame]`
-        A dictionary mapping groups to pandas DataFrame containing the transition probabilities for each subject.
-        This assumes the output from ``CAP.calculate_metrics`` is being used, specifically
-        ``metrics_output["transition_probability"]``.
+        A dictionary mapping groups to pandas DataFrame containing the transition probabilities for
+        each subject. This assumes the output from ``CAP.calculate_metrics`` is being used,
+        specifically ``metrics_output["transition_probability"]``.
 
     output_dir: :obj:`str` or :obj:`None`, default=None
-        Directory to save plots (if ``save_plots`` is True) and transition probability matrices DataFrames (if
-        ``save_df`` is True) to. The directory will be created if it does not exist. Plots and dataframes will not
-        be saved if None.
+        Directory to save plots (if ``save_plots`` is True) and transition probability matrices
+        DataFrames (if ``save_df`` is True) to. The directory will be created if it does not exist.
+        Plots and dataframes will not be saved if None.
 
     suffix_title: :obj:`str` or :obj:`None`, default=None
         Appended to the title of each plot.
@@ -53,12 +53,12 @@ def transition_matrix(
         If True, returns a dictionary with a transition probability matrix for each group.
 
     save_df: :obj:`bool`, default=False,
-        If True, saves the transition probability matrix contained in the DataFrames as csv files. For this to be used,
-        ``output_dir`` must be specified.
+        If True, saves the transition probability matrix contained in the DataFrames as csv files.
+        For this to be used, ``output_dir`` must be specified.
 
     as_pickle: :obj:`bool`, default=False
-        When ``output_dir`` is specified, plots are saved as pickle files, which can be further modified, instead of png
-        images.
+        When ``output_dir`` is specified, plots are saved as pickle files, which can be further
+        modified, instead of png images.
 
         .. versionadded:: 0.26.5
 
@@ -67,7 +67,8 @@ def transition_matrix(
 
         - dpi: :obj:`int`, default=300 -- Dots per inch for the figure.
         - figsize: :obj:`tuple`, default=(8, 6) -- Size of the figure in inches.
-        - fontsize: :obj:`int`, default=14 -- Font size for the plot title, x-axis title, and y-axis title of each plot.
+        - fontsize: :obj:`int`, default=14 -- Font size for the plot title, x-axis title, and\
+          y-axis title of each plot.
         - xticklabels_size: :obj:`int`, default=8 -- Font size for x-axis tick labels.
         - yticklabels_size: :obj:`int`, default=8 -- Font size for y-axis tick labels.
         - shrink: :obj:`float`, default=0.8 -- Fraction by which to shrink the colorbar.
@@ -81,11 +82,14 @@ def transition_matrix(
         - borderwidths: :obj:`float`, default=0 -- Width of the border around the plot.
         - linecolor: :obj:`str`, default="black" -- Color of the line that separates each cell.
         - edgecolors: :obj:`str` or :obj:`None`, default=None -- Color of the edges.
-        - alpha: :obj:`float` or :obj:`None`, default=None -- Controls transparency and ranges from 0 (transparent) to 1 (opaque).
-        - bbox_inches: :obj:`str` or :obj:`None`, default="tight" -- Alters size of the whitespace in the saved image.
-        - cmap: :obj:`str`, :obj:`callable` default="coolwarm" -- Color map for the plot cells. Options include\
-            strings to call seaborn's pre-made palettes, ``seaborn.diverging_palette`` function to generate custom\
-            palettes, and ``matplotlib.color.LinearSegmentedColormap`` to generate custom palettes.
+        - alpha: :obj:`float` or :obj:`None`, default=None -- Controls transparency and ranges from\
+          0 (transparent) to 1 (opaque).
+        - bbox_inches: :obj:`str` or :obj:`None`, default="tight" -- Alters size of the whitespace\
+          in the saved image.
+        - cmap: :obj:`str`, :obj:`callable` default="coolwarm" -- Color map for the plot cells.\
+          Options include strings to call seaborn's pre-made palettes, ``seaborn.diverging_palette``\
+          function to generate custom palettes, and ``matplotlib.color.LinearSegmentedColormap`` to\
+          generate custom palettes.
         - vmin: :obj:`float` or :obj:`None`, default=None -- The minimum value to display in colormap.
         - vmax: :obj:`float` or :obj:`None`, default=None -- The maximum value to display in colormap.
 
@@ -97,8 +101,8 @@ def transition_matrix(
     Note
     ----
     **Dataframe Representation**: Rows represent "from" and columns represent "to". For instance,
-    the probability at ``df.loc["CAP-1", "CAP-2"]`` represents the averaged probability from transitioning from
-    CAP-1 to CAP-2.
+    the probability at ``df.loc["CAP-1", "CAP-2"]`` represents the averaged probability from
+    transitioning from CAP-1 to CAP-2.
 
     +------------+---------+-------+-------+
     | From/To    |  CAP-1  | CAP-2 | CAP-3 |
@@ -110,7 +114,9 @@ def transition_matrix(
     | CAP-3      |  0.35   | 0.18  |  0.47 |
     +------------+---------+-------+-------+
     """
-    assert isinstance(trans_dict, dict), "transition_dict must be in the form dict[str, pd.DataFrame]."
+    assert isinstance(
+        trans_dict, dict
+    ), "transition_dict must be in the form dict[str, pd.DataFrame]."
 
     _IO.issue_file_warning("suffix_filename", suffix_filename, output_dir)
 
@@ -132,9 +138,13 @@ def transition_matrix(
 
         # Create matrix
         for location, name in enumerate(indices):
-            trans_mat.loc[f"CAP-{name.split('.')[0]}", f"CAP-{name.split('.')[1]}"] = averaged_probabilities[location]
+            trans_mat.loc[f"CAP-{name.split('.')[0]}", f"CAP-{name.split('.')[1]}"] = (
+                averaged_probabilities[location]
+            )
 
-        display = _MatrixVisualizer.create_display(trans_mat, plot_dict, suffix_title, group, "trans")
+        display = _MatrixVisualizer.create_display(
+            trans_mat, plot_dict, suffix_title, group, "trans"
+        )
 
         trans_mat_dict[group] = trans_mat
 

@@ -10,8 +10,8 @@ from scipy.spatial import KDTree
 
 def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
     """
-    Projects cluster centroids (CAPs) on to the parcellation map. Also if specified, performs k-nearest neighbors
-    and spatial smoothing on the NifTI image.
+    Projects cluster centroids (CAPs) on to the parcellation map. Also if specified, performs
+    k-nearest neighbors and spatial smoothing on the NifTI image.
 
     Important
     ---------
@@ -22,7 +22,8 @@ def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
     # Create array of zeroes with same dimensions as atlas
     atlas_array = np.zeros_like(atlas_fdata)
 
-    # Get array containing all labels in atlas to avoid issue if the first non-zero atlas label is not 1
+    # Get array containing all labels in atlas to avoid issue if the first non-zero atlas label is
+    # not 1
     target_array = np.unique(atlas_fdata)
 
     # Start at 1 to avoid assigment to the background label
@@ -33,40 +34,7 @@ def _cap2statmap(atlas_file, cap_vector, fwhm, knn_dict):
 
     # Knn implementation to aid in coverage issues
     if knn_dict:
-        if "remove_labels" in knn_dict:
-            remove_labels = tuple(knn_dict["remove_labels"])
-        else:
-            remove_labels = None
-
-        # Get target indices
-        target_indices = _get_target_indices(
-            atlas_file, knn_dict["reference_atlas"], knn_dict["resolution_mm"], remove_labels
-        )
-
-        # Get non-zero indices; Build kdtree for nearest neighbors
-        kdtree, non_zero_indices = _build_tree(atlas_file)
-
-        # Get k
-        k = knn_dict["k"]
-        for target_indx in target_indices:
-            # Get the nearest non-zero index
-            _, neighbor_indx = kdtree.query(target_indx, k=k)
-            nearest_neighbors = non_zero_indices[neighbor_indx]
-
-            if k > 1:
-                # Values of nearest neighbors
-                neighbor_values = [
-                    stat_map.get_fdata()[tuple(nearest_neighbor)] for nearest_neighbor in nearest_neighbors
-                ]
-
-                # Majority vote
-                new_value = max(set(neighbor_values), key=neighbor_values.count)
-            else:
-                nearest_neighbor = non_zero_indices[neighbor_indx]
-                new_value = stat_map.get_fdata()[tuple(nearest_neighbor)]
-
-            # Assign the new value to the current index
-            stat_map.get_fdata()[tuple(target_indx)] = new_value
+        stat_map = _perform_knn(atlas_file, knn_dict, stat_map)
 
     # Add smoothing to stat map to help mitigate potential coverage issues
     if fwhm is not None:
@@ -96,13 +64,15 @@ def _get_remove_indices(atlas_file, remove_labels):
 @lru_cache(maxsize=4)
 def _get_target_indices(atlas_file, reference_atlas, resolution_mm, remove_labels):
     """
-    Uses a reference atlas ("Schaefer" or "AAL") as a mask to identify non-background coordinates to use for
-    k-nearest neighbors interpolation.
+    Uses a reference atlas ("Schaefer" or "AAL") as a mask to identify non-background coordinates
+    to use for k-nearest neighbors interpolation.
     """
     atlas = nib.load(atlas_file)
 
     if reference_atlas == "Schaefer":
-        reference_atlas_map = datasets.fetch_atlas_schaefer_2018(resolution_mm=resolution_mm, verbose=0)["maps"]
+        reference_atlas_map = datasets.fetch_atlas_schaefer_2018(
+            resolution_mm=resolution_mm, verbose=0
+        )["maps"]
     else:
         reference_atlas_map = datasets.fetch_atlas_aal(verbose=0)["maps"]
 
@@ -136,3 +106,43 @@ def _get_target_indices(atlas_file, reference_atlas, resolution_mm, remove_label
     target_indices = sorted(target_indices)
 
     return target_indices
+
+
+def _perform_knn(atlas_file, knn_dict, stat_map):
+    """
+    Perform KNN to assist with coverage issues prior to plotting. Modifies ``stat_map`` in place.
+    """
+    remove_labels = tuple(knn_dict["remove_labels"]) if knn_dict.get("remove_labels") else None
+
+    # Get target indices
+    target_indices = _get_target_indices(
+        atlas_file, knn_dict["reference_atlas"], knn_dict["resolution_mm"], remove_labels
+    )
+
+    # Get non-zero indices; Build kdtree for nearest neighbors
+    kdtree, non_zero_indices = _build_tree(atlas_file)
+
+    # Get k
+    k = knn_dict["k"]
+    for target_indx in target_indices:
+        # Get the nearest non-zero index
+        _, neighbor_indx = kdtree.query(target_indx, k=k)
+        nearest_neighbors = non_zero_indices[neighbor_indx]
+
+        if k > 1:
+            # Values of nearest neighbors
+            neighbor_values = [
+                stat_map.get_fdata()[tuple(nearest_neighbor)]
+                for nearest_neighbor in nearest_neighbors
+            ]
+
+            # Majority vote
+            new_value = max(set(neighbor_values), key=neighbor_values.count)
+        else:
+            nearest_neighbor = non_zero_indices[neighbor_indx]
+            new_value = stat_map.get_fdata()[tuple(nearest_neighbor)]
+
+        # Assign the new value to the current index
+        stat_map.get_fdata()[tuple(target_indx)] = new_value
+
+    return stat_map

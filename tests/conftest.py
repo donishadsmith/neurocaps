@@ -22,8 +22,8 @@ def tmp_dir():
 @pytest.fixture(autouse=False, scope="function")
 def data_dir(tmp_dir):
     """
-    Copies the test data to the temporary directory, then removes the "data" folder, while leaving the
-    temporary directory to minimize cross-test contamination.
+    Copies the test data to the temporary directory, then removes the "data" folder, while leaving
+    the temporary directory to minimize cross-test contamination.
     """
     work_dir = os.path.dirname(__file__)
 
