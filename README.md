@@ -121,18 +121,25 @@ section of the documentation homepage.**
 
 **Main features for `TimeseriesExtractor` includes:**
 - **Timeseries Extraction:** Extract timeseries for resting-state or task data using Schaefer, AAL,
-or a lateralized Custom parcellations (which can be manually defined) for spatial dimensionality reduction.
-- **Parallel Processing:** Parallelize at the subject-level (one subject per CPU core) to speed up timeseries extraction.
-- **Saving Timeseries:** Save the nested dictionary containing timeseries (mapping subject id -> run id -> timeseries data) as a pickle file.
-- **Reporting Quality Control:** Reports statistics related to framewise displacement and dummy volumes per-subject.
-- **Visualization:** Visualize the timeseries at the region or node level of the parcellation for a given subject and run.
+or a lateralized Custom parcellations (which can be manually defined) for spatial dimensionality
+reduction.
+- **Parallel Processing:** Parallelize at the subject-level (one subject per CPU core) to speed up
+timeseries extraction.
+- **Saving Timeseries:** Save the nested dictionary containing timeseries (mapping subject id ->
+run id -> timeseries data) as a pickle file.
+- **Reporting Quality Control:** Reports statistics related to framewise displacement and dummy
+volumes per-subject.
+- **Visualization:** Visualize the timeseries at the region or node level of the parcellation for
+a given subject and run.
 
 **Main features for `CAP` includes:**
 - **Grouping:** Perform CAPs analysis for entire sample or groups of subject IDs.
 - **Optimal Cluster Size Identification:** Perform the Davies Bouldin, Silhouette, Elbow, or
-Variance Ratio criterions to identify the optimal cluster size and automatically save the optimal model as an attribute.
+Variance Ratio criterions to identify the optimal cluster size and automatically save the optimal
+model as an attribute.
 - **Parallel Processing:** Use parallel processing to speed up optimal cluster size identification.
-- **CAPs Visualization:** Visualize the CAPs as outer products or heatmaps at either the region or node level of the parcellation.
+- **CAPs Visualization:** Visualize the CAPs as outer products or heatmaps at either the region or
+node level of the parcellation.
 - **Save CAPs as NifTIs:** Convert the atlas used for parcellation to a statistical NifTI image.
 - **Surface Plot Visualization:** Project CAPs onto a surface plot.
 - **Correlation Matrix Creation:** Create a correlation matrix from CAPs.
@@ -140,9 +147,9 @@ Variance Ratio criterions to identify the optimal cluster size and automatically
 [Liu et al., 2018](https://doi.org/10.1016/j.neuroimage.2018.01.041)[^1] and
 [Yang et al., 2021](https://doi.org/10.1016/j.neuroimage.2021.118193)[^2]:
     - *Temporal Fraction:* The proportion of total volumes spent in a single CAP over all volumes in a run.
-    - *Persistence:* The average time spent in a single CAP before transitioning to another CAP
-    - *Counts:* The total number of initiations of a specific CAP across an entire run. An initiation
-    is defined as the first occurrence of a CAP.
+    - *Persistence (Dwell Time):* The average time spent in a single CAP before transitioning to another CAP
+    - *Counts (State Initiation):* The total number of initiations of a specific CAP across an entire
+    run. An initiation is defined as the first occurrence of a CAP.
     - *Transition Frequency:* The number of transitions between different CAPs across the entire run.
     - *Transition Probability:* The probability of transitioning from one CAP to another CAP (or the same CAP).
     This is calculated as (Number of transitions from A to B)/(Total transitions from A).
@@ -508,16 +515,17 @@ Clustering [GROUP: All Subjects]: 100%|█████████████�
 NeuroCAPs relies on several popular data processing, machine learning, neuroimaging, and visualization
 [packages](https://neurocaps.readthedocs.io/en/stable/#dependencies).
 
-Additionally, some foundational concepts in this package take inspiration from features or design patterns implemented
-in other neuroimaging Python packages, specically:
+Additionally, some foundational concepts in this package take inspiration from features or design
+patterns implemented in other neuroimaging Python packages, specically:
 
-- mtorabi59's [pydfc](https://github.com/neurodatascience/dFC), a toolbox that allows comparisons among several popular
-dynamic functionality methods.
-- 62442katieb's [IDConn](https://github.com/62442katieb/IDConn), a pipeline for assessing individual differences in
-resting-state or task-based functional connectivity.
+- mtorabi59's [pydfc](https://github.com/neurodatascience/dFC), a toolbox that allows comparisons
+among several popular dynamic functionality methods.
+- 62442katieb's [IDConn](https://github.com/62442katieb/IDConn), a pipeline for assessing individual
+differences in resting-state or task-based functional connectivity.
 
 ## Contributing
-Please refer the [contributing guidelines](https://neurocaps.readthedocs.io/en/stable/contributing.html) on how to contribute to NeuroCAPs.
+Please refer the [contributing guidelines](https://neurocaps.readthedocs.io/en/stable/contributing.html)
+on how to contribute to NeuroCAPs.
 
 ## References
 [^1]: Liu, X., Zhang, N., Chang, C., & Duyn, J. H. (2018). Co-activation patterns in resting-state

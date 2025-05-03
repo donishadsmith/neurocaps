@@ -789,8 +789,8 @@ class CAP(_CAPGetter):
                 target = 1
                 temporal_fraction = 4 / 6
 
-         - "persistence": Average time spent in a single CAP before transitioning to another CAP
-           (average consecutive/uninterrupted time).
+         - "persistence" (dwell time): Average time spent in a single CAP before transitioning to
+           another CAP (average consecutive/uninterrupted time).
 
            ::
 
@@ -804,9 +804,10 @@ class CAP(_CAPGetter):
                 tr = 2
                 if tr: persistence = ((1 + 3) / 2) * 2
 
-         - "counts": Total number of initiations of a specific CAP across an entire run. An
-           initiation is defined as the first occurrence of a CAP. If the same CAP is maintained in
-           consecutively (indicating stability), it is still counted as a single initiation.
+         - "counts" (state initiation): Total number of initiations of a specific CAP across an
+           entire run. An initiation is defined as the first occurrence of a CAP. If the same CAP is
+           maintained in consecutively (indicating stability), it is still counted as a single
+           initiation.
 
            ::
 
