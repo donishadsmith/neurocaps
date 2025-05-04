@@ -53,6 +53,16 @@ def test_default_arg():
     assert not cap_analysis.parcel_approach
 
 
+def test_labels():
+    """
+    Test that scikit's ``KMeans`` labels start at zero for current version.
+    """
+    from sklearn.cluster import KMeans
+
+    labels = KMeans(n_clusters=1).fit_predict(np.array([[1, 1, 1, 1], [1, 1, 1, 1]]))
+    assert np.all(labels == 0)
+
+
 @pytest.mark.parametrize("standardize", [True, False])
 def test_without_groups_and_without_cluster_selection(standardize):
     """
