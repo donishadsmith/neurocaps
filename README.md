@@ -146,7 +146,8 @@ node level of the parcellation.
 - **CAPs Metrics Calculation:** Calculate several CAPs metrics as described in
 [Liu et al., 2018](https://doi.org/10.1016/j.neuroimage.2018.01.041)[^1] and
 [Yang et al., 2021](https://doi.org/10.1016/j.neuroimage.2021.118193)[^2]:
-    - *Temporal Fraction:* The proportion of total volumes spent in a single CAP over all volumes in a run.
+    - *Temporal Fraction (Fraction of Time):* The proportion of total volumes spent in a single CAP
+    over all volumes in a run.
     - *Persistence (Dwell Time):* The average time spent in a single CAP before transitioning to another CAP
     - *Counts (State Initiation):* The total number of initiations of a specific CAP across an entire
     run. An initiation is defined as the first occurrence of a CAP.

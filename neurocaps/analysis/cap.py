@@ -780,8 +780,8 @@ class CAP(_CAPGetter):
         Computes the following temporal dynamic metrics (as described by Liu et al., 2018 and
         Yang et al., 2021):
 
-         - "temporal_fraction": Proportion of total volumes spent in a single CAP over all volumes i
-           n a run.
+         - "temporal_fraction" (fraction of time): Proportion of total volumes spent in a single CAP
+           over all volumes in a run.
 
            ::
 
@@ -1912,13 +1912,15 @@ class CAP(_CAPGetter):
             nodes = parcel_approach[parcellation_name]["nodes"]
             # Retain only the hemisphere and primary Schaefer network
             # Node string in form of {hemisphere}_{region}_{number} (e.g. LH_Cont_Par_1)
-            # Below code returns a list where each element is a list of [Hemisphere, Network] (e.g ["LH", "Vis"])
+            # Below code returns a list where each element is a list of [Hemisphere, Network]
+            # (e.g ["LH", "Vis"])
             hemi_network_pairs = [node.split("_")[:2] for node in nodes]
             frequency_dict = collections.Counter([" ".join(node) for node in hemi_network_pairs])
         elif parcellation_name == "AAL":
             nodes = parcel_approach[parcellation_name]["nodes"]
             # AAL in the form of {region}_{hemisphere}_{number} or {region}_{hemisphere)
-            # (e.g. Frontal_Inf_Orb_2_R, Precentral_L); _collapse_aal_node_names would return these as Frontal and Pre
+            # (e.g. Frontal_Inf_Orb_2_R, Precentral_L); _collapse_aal_node_names would return these
+            # as Frontal and Pre
             collapsed_aal_nodes = _collapse_aal_node_names(nodes, return_unique_names=False)
             frequency_dict = collections.Counter(collapsed_aal_nodes)
         else:
@@ -1932,20 +1934,21 @@ class CAP(_CAPGetter):
                 ]
                 frequency_dict.update({node_id: len(node_indices)})
 
-        # Get the names, which indicate the hemisphere and region
-        # Reverting Counter objects to list retains original ordering of nodes in list as of Python 3.7
+        # Get the names, which indicate the hemisphere and region; reverting Counter objects to
+        # list retains original ordering of nodes in list as of Python 3.7
         collapsed_node_labels = list(frequency_dict)
         tick_labels = ["" for _ in range(len(parcel_approach[parcellation_name]["nodes"]))]
 
         starting_value = 0
 
-        # Iterate through names_list and assign the starting indices corresponding to unique region and hemisphere key
+        # Iterate through names_list and assign the starting indices corresponding to unique region
+        # and hemisphere key
         for num, collapsed_node_label in enumerate(collapsed_node_labels):
             if num == 0:
                 tick_labels[0] = collapsed_node_label
             else:
-                # Shifting to previous frequency of the preceding network to obtain the new starting value of
-                # the subsequent region and hemisphere pair
+                # Shifting to previous frequency of the preceding network to obtain the new starting
+                # value of the subsequent region and hemisphere pair
                 starting_value += frequency_dict[collapsed_node_labels[num - 1]]
                 tick_labels[starting_value] = collapsed_node_label
 
