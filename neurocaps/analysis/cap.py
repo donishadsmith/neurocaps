@@ -347,14 +347,14 @@ class CAP(_CAPGetter):
         **kwargs:
             Additional keyword arguments when ``cluster_selection_method`` is specified:
 
-            - S: :obj:`int`, default=1 -- Adjusts the sensitivity of finding the elbow. Larger\
-              values are more conservative and less sensitive to small fluctuations. Passed to\
-              ``KneeLocator`` from the kneed package.
+            - S: :obj:`int` or :obj:`float`, default=1.0 -- Adjusts the sensitivity of finding the
+              elbow. Larger values are more conservative and less sensitive to small fluctuations.
+              Passed to ``KneeLocator`` from the kneed package.
             - dpi: :obj:`int`, default=300 -- Dots per inch for the figure.
             - figsize: :obj:`tuple`, default=(8, 6) -- Adjusts the size of the plots.
-            - bbox_inches: :obj:`str` or :obj:`None`, default="tight" -- Alters size of the\
+            - bbox_inches: :obj:`str` or :obj:`None`, default="tight" -- Alters size of the
               whitespace in the saved image.
-            - step: :obj:`int`, default=None -- An integer value that controls the progression of\
+            - step: :obj:`int`, default=None -- An integer value that controls the progression of
               the x-axis in plots.
 
         See Also
@@ -608,13 +608,12 @@ class CAP(_CAPGetter):
 
             # Select optimal clusters
             if method == "elbow":
-                knee_dict = {"S": kwargs["S"] if "S" in kwargs else 1}
                 kneedle = KneeLocator(
                     x=list(performance_dict[group]),
                     y=list(performance_dict[group].values()),
                     curve="convex",
                     direction="decreasing",
-                    S=knee_dict["S"],
+                    S=kwargs.get("S", 1.0),
                 )
 
                 self._optimal_n_clusters[group] = kneedle.elbow

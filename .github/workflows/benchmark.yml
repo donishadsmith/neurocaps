@@ -24,7 +24,7 @@ jobs:
 
       - name: Install Packages
         run: |
-          pip install asv virtualenv
+          pip install asv 'virtualenv<20.31.0'
 
       - name: Run benchmarks in virtual environment; compare previous commit to new commit
         run: |
