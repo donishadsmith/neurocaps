@@ -13,6 +13,13 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.28.5] - 2025-05-05
+### 🚀 New/Added
+- Add ``clear_groups`` function to ``CAP``
+- Add ``max_nbytes`` kwarg to ``CAP.get_caps``.
+### ♻ Changed
+- Removes private ``_IO`` class
+
 ## [0.28.4] - 2025-05-01
 ### 🐛 Fixes
 - More robust handling of certain edge cases for event timing conversion. Instead of having

@@ -356,7 +356,7 @@ class CAP(_CAPGetter):
               whitespace in the saved image.
             - step: :obj:`int`, default=None -- An integer value that controls the progression of
               the x-axis in plots.
-            - max_nbytes: :obj:`int`, :obj:`str`, or :obj:None, default="1M" -- If ``n_cores`` is
+            - max_nbytes: :obj:`int`, :obj:`str`, or :obj:`None`, default="1M" -- If ``n_cores`` is
               not None, serves as the threshold to trigger Joblib's automated memory mapping for
               large arrays.
 
@@ -479,10 +479,12 @@ class CAP(_CAPGetter):
 
     def clear_groups(self) -> None:
         """
+        Clears the ``groups`` property.
+
         Sets ``groups`` to None to allow ``self.get_caps`` to create a new "All Subjects" group
         with different subject IDs based on the inputted ``subject_timeseries``.
 
-        ..version_added:: 0.28.5
+        .. version_added:: 0.28.5
         """
         self._groups = None
 
