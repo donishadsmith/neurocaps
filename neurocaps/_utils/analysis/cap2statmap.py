@@ -135,7 +135,6 @@ def _perform_knn(atlas_file, knn_dict, stat_map):
                 stat_map.get_fdata()[tuple(nearest_neighbor)]
                 for nearest_neighbor in nearest_neighbors
             ]
-
             # Majority vote
             new_value = max(set(neighbor_values), key=neighbor_values.count)
         else:

@@ -5,7 +5,7 @@ import os, re
 import numpy as np
 from nilearn import datasets
 
-from .io import _IO
+import neurocaps._utils.io as io_utils
 from .logger import _logger
 
 LG = _logger(__name__)
@@ -26,7 +26,7 @@ def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
     Pipeline to ensure ``parcel_approach`` is valid and process the ``parcel_approach`` if certain
     initialization keys are used.
     """
-    parcel_dict = _IO.get_obj(parcel_approach)
+    parcel_dict = io_utils._get_obj(parcel_approach)
 
     if parcel_dict is None and call == "TimeseriesExtractor":
         parcel_dict = {"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}

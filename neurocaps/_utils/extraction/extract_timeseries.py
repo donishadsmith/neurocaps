@@ -155,11 +155,11 @@ def _extract_timeseries(
 ):
     """
     Entry point for extracting timeseries data and getting quality control information on a per run
-    basis. Before the actual extraction is conducted, the framewise displacement censoring information
-    (if requested) and the condition event information (if requested) are obtained to determine if a
-    run should be skipped. This is done to prevent extraction of timeseries where all frames are
-    censored, too many frames are censored (based on "outlier_percentage"), or no condition can be
-    extracted.
+    basis. Before the actual extraction is conducted, the framewise displacement censoring
+    information (if requested) and the condition event information (if requested) are obtained to
+    determine if a run should be skipped. This is done to prevent extraction of timeseries where all
+    frames are censored, too many frames are censored (based on "outlier_percentage"), or no
+    condition can be extracted.
 
     Note
     ----
@@ -258,8 +258,8 @@ def _extract_timeseries(
 
                 LG.warning(
                     f"{data.head}" + f"Timeseries Extraction Skipped: Run flagged due to more than "
-                    f"{data.out_percent * 100}% of the volumes exceeding the framewise displacement "
-                    f"threshold of {data.fd_thresh}. {msg}."
+                    f"{data.out_percent * 100}% of the volumes exceeding the framewise "
+                    f"displacement threshold of {data.fd_thresh}. {msg}."
                 )
                 continue
 
@@ -280,7 +280,8 @@ def _extract_timeseries(
 
     if not subject_timeseries[subj_id]:
         LG.warning(
-            f"{data.head.split(' | RUN:')[0]}] Timeseries Extraction Skipped: No runs were extracted."
+            f"{data.head.split(' | RUN:')[0]}] Timeseries Extraction Skipped: No runs were "
+            "extracted."
         )
         subject_timeseries, qc = None, None
 

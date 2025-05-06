@@ -34,7 +34,8 @@ function to generate visualizations of the average transition probabilities per 
 
     .. code-block:: none
 
-        2024-11-02 00:09:54,273 neurocaps.analysis.cap [INFO] [GROUP: All Subjects | METHOD: davies_bouldin] Optimal cluster size is 3.
+        2025-05-06 00:09:40,114 neurocaps.analysis.cap [INFO] No groups specified. Using default group 'All Subjects' containing all subject IDs from `subject_timeseries`. The `self.groups` dictionary will remain fixed unless the `CAP` class is re-initialized or `self.clear_groups()` is used.
+        2025-05-06 00:09:54,273 neurocaps.analysis.cap [INFO] [GROUP: All Subjects | METHOD: davies_bouldin] Optimal cluster size is 3.
 
 .. code-block:: python
 

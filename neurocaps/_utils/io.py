@@ -1,5 +1,5 @@
 """
-Internal IO class and functions for creating directories, issuing warnings, serializing (with
+Internal IO functions for creating directories, issuing warnings, serializing (with
 Joblib or pickle), unserializing (with Joblib), and additional utilities.
 """
 
@@ -14,114 +14,112 @@ from ..exceptions import UnsupportedFileExtensionError
 LG = _logger(__name__)
 
 
-class _IO:
-    @staticmethod
-    def makedir(output_dir: str) -> None:
-        """Creates non-existent directory."""
-        if output_dir and not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+def _makedir(output_dir: str) -> None:
+    """Creates non-existent directory."""
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
-    @staticmethod
-    def issue_file_warning(param_name: str, param: str, output_dir: str) -> None:
-        """Issues warning."""
-        if param is not None and not output_dir:
-            LG.warning(
-                f"`{param_name}` supplied but no `output_dir` specified. Files will not be saved."
-            )
 
-    @staticmethod
-    def filename(
-        base_name: str, add_name: Union[str, None], pos: str, ext: Union[None, str] = None
-    ) -> str:
-        """
-        Adds the file extension and the prefix or suffix to the file name depending on if ``pos``
-        is "prefix" or "suffix".
-        """
-        if not add_name:
-            return f"{base_name}.{ext}" if ext else base_name
+def _issue_file_warning(param_name: str, param: str, output_dir: str) -> None:
+    """Issues warning."""
+    if param is not None and not output_dir:
+        LG.warning(
+            f"`{param_name}` supplied but no `output_dir` specified. Files will not be saved."
+        )
 
-        if pos == "prefix":
-            # Use - since prefix is currently for ``CAP.calculate_metrics``
-            add_name = os.path.splitext(add_name.rstrip())[0].rstrip()
-            filename = f"{add_name}-{base_name}"
-        else:
-            filename = f"{base_name}_{add_name.rstrip().replace(' ', '_')}"
 
-        filename = filename.replace(" ", "_")
+def _filename(
+    base_name: str, add_name: Union[str, None], pos: str, ext: Union[None, str] = None
+) -> str:
+    """
+    Adds the file extension and the prefix or suffix to the file name depending on if ``pos``
+    is "prefix" or "suffix".
+    """
+    if not add_name:
+        return f"{base_name}.{ext}" if ext else base_name
 
-        return f"{filename}.{ext}" if ext else filename
+    if pos == "prefix":
+        # Use - since prefix is currently for ``CAP.calculate_metrics``
+        add_name = os.path.splitext(add_name.rstrip())[0].rstrip()
+        filename = f"{add_name}-{base_name}"
+    else:
+        filename = f"{base_name}_{add_name.rstrip().replace(' ', '_')}"
 
-    @staticmethod
-    def serialize(obj: Any, output_dir: str, save_filename: str, use_joblib=False) -> None:
-        """
-        Serialize an object with standard pickle or Joblib. Internally, plots use pickle for
-        compatibility with pickle or Joblib.
-        """
-        with open(os.path.join(output_dir, save_filename), "wb") as f:
-            joblib.dump(obj, f) if use_joblib else pickle.dump(obj, f)
+    filename = filename.replace(" ", "_")
 
-    @staticmethod
-    def get_obj(obj: Any, needs_deepcopy=True) -> Any:
-        """Determines if object needs deepcopy or needs to be unserialized."""
-        if not isinstance(obj, str):
-            obj = copy.deepcopy(obj) if needs_deepcopy else obj
-            return obj
-        else:
-            return _IO.unserialize(obj)
+    return f"{filename}.{ext}" if ext else filename
 
-    @staticmethod
-    def unserialize(file: str) -> Any:
-        """Opens serialized objects such as ``subject_timeseries`` or ``parcel_approach``."""
-        base_ext = (".pkl", ".pickle", ".joblib")
-        supported_ext = (*base_ext, *[f"{x}.gz" for x in base_ext])
-        if file.endswith(supported_ext):
-            with open(file, "rb") as f:
-                obj = joblib.load(f)
-        else:
-            raise UnsupportedFileExtensionError(
-                "Serialized files must end with one of the following extensions: "
-                "'.pkl', '.pickle', '.joblib'."
-            )
 
+def _serialize(obj: Any, output_dir: str, save_filename: str, use_joblib=False) -> None:
+    """
+    Serialize an object with standard pickle or Joblib. Internally, plots use pickle for
+    compatibility with pickle or Joblib.
+    """
+    with open(os.path.join(output_dir, save_filename), "wb") as f:
+        joblib.dump(obj, f) if use_joblib else pickle.dump(obj, f)
+
+
+def _get_obj(obj: Any, needs_deepcopy=True) -> Any:
+    """Determines if object needs deepcopy or needs to be unserialized."""
+    if not isinstance(obj, str):
+        obj = copy.deepcopy(obj) if needs_deepcopy else obj
         return obj
+    else:
+        return _unserialize(obj)
 
-    @staticmethod
-    def dicts_to_pickles(
-        output_dir: str,
-        dict_list: list[dict],
-        call: str,
-        filenames: Union[str, None] = None,
-        message: Union[str, None] = None,
-        save_reduced_dicts: bool = False,
-    ) -> None:
-        """
-        Saves dictionaries containing NumPy arrays as pickles for the ``merge_dicts``,
-        ``standardize``, and ``change_dtypes`` functions.
-        """
-        if not filenames:
-            saved_filenames = _create_default_filenames(dict_list, call, save_reduced_dicts)
-        else:
-            saved_filenames = [
-                f"{os.path.splitext(os.path.basename(name).rstrip())[0].rstrip()}.pkl"
-                for name in filenames
-            ]
 
-        if message is None:
-            message = (
-                "Length of `filenames` list  must be the same length as `subject_timeseries_list`."
-            )
+def _unserialize(file: str) -> Any:
+    """Opens serialized objects such as ``subject_timeseries`` or ``parcel_approach``."""
+    base_ext = (".pkl", ".pickle", ".joblib")
+    supported_ext = (*base_ext, *[f"{x}.gz" for x in base_ext])
+    if file.endswith(supported_ext):
+        with open(file, "rb") as f:
+            obj = joblib.load(f)
+    else:
+        raise UnsupportedFileExtensionError(
+            "Serialized files must end with one of the following extensions: "
+            "'.pkl', '.pickle', '.joblib'."
+        )
 
-        if call == "merge" and save_reduced_dicts is False:
-            dict_list = {"merged": dict_list["merged"]}
+    return obj
 
-        if filenames:
-            assert len(filenames) == len(list(dict_list)), message
 
-        _IO.makedir(output_dir)
+def _dicts_to_pickles(
+    output_dir: str,
+    dict_list: list[dict],
+    call: str,
+    filenames: Union[str, None] = None,
+    message: Union[str, None] = None,
+    save_reduced_dicts: bool = False,
+) -> None:
+    """
+    Saves dictionaries containing NumPy arrays as pickles for the ``merge_dicts``,
+    ``standardize``, and ``change_dtypes`` functions.
+    """
+    if not filenames:
+        saved_filenames = _create_default_filenames(dict_list, call, save_reduced_dicts)
+    else:
+        saved_filenames = [
+            f"{os.path.splitext(os.path.basename(name).rstrip())[0].rstrip()}.pkl"
+            for name in filenames
+        ]
 
-        for i, dict_name in enumerate(list(dict_list)):
-            with open(os.path.join(output_dir, saved_filenames[i]), "wb") as f:
-                joblib.dump(dict_list[dict_name], f)
+    if message is None:
+        message = (
+            "Length of `filenames` list  must be the same length as `subject_timeseries_list`."
+        )
+
+    if call == "merge" and save_reduced_dicts is False:
+        dict_list = {"merged": dict_list["merged"]}
+
+    if filenames:
+        assert len(filenames) == len(list(dict_list)), message
+
+    _makedir(output_dir)
+
+    for i, dict_name in enumerate(list(dict_list)):
+        with open(os.path.join(output_dir, saved_filenames[i]), "wb") as f:
+            joblib.dump(dict_list[dict_name], f)
 
 
 def _create_default_filenames(

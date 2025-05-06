@@ -14,6 +14,7 @@ from neuromaps.datasets import fetch_fslr
 from scipy.stats import pearsonr
 from tqdm.auto import tqdm
 
+import neurocaps._utils.io as io_utils
 from ..exceptions import NoElbowDetectedError
 from ..typing import ParcelConfig, ParcelApproach, SubjectTimeseries
 from .._utils import (
@@ -21,7 +22,6 @@ from .._utils import (
     _MatrixVisualizer,
     _PlotDefaults,
     _PlotFuncs,
-    _IO,
     _cap2statmap,
     _check_kwargs,
     _check_parcel_approach,
@@ -53,7 +53,7 @@ class CAP(_CAPGetter):
         Optional mapping of group names to lists of subject IDs for group-specific analyses. If
         None, on the first call of ``self.get_caps()``, "All Subjects" will be set as the default
         group name and be populated with the subject IDs in ``subject_timeseries``. Groups remain
-        fixed for the entire instance of the class.
+        fixed for the entire instance of the class unless ``self.clear_groups()`` is used.
 
 
     Properties
@@ -356,6 +356,11 @@ class CAP(_CAPGetter):
               whitespace in the saved image.
             - step: :obj:`int`, default=None -- An integer value that controls the progression of
               the x-axis in plots.
+            - max_nbytes: :obj:`int`, :obj:`str`, or :obj:None, default="1M" -- If ``n_cores`` is
+              not None, serves as the threshold to trigger Joblib's automated memory mapping for
+              large arrays.
+
+              .. versionadded:: 0.28.5
 
         See Also
         --------
@@ -385,7 +390,8 @@ class CAP(_CAPGetter):
         **Default Group Naming:** When ``group`` is None during initialization of the ``CAP`` class,
         then "All Subjects" is the default group name. On the first call of this function, the
         subject IDs in ``subject_timeseries`` will be automatically detected and stored in
-        ``self.group``. This mapping persists until the ``CAP`` class is re-initialized.
+        ``self.group``. This mapping persists until the ``CAP`` class is re-initialized or unless
+        ``self.clear_groups()`` is used.
 
         **Concatenated Timeseries**: The concatenated timeseries is stored in
         ``self.concatenated_timeseries`` for user convenience and can be deleted using
@@ -443,7 +449,7 @@ class CAP(_CAPGetter):
         self._runs = runs
         self._standardize = standardize
 
-        subject_timeseries = _IO.get_obj(subject_timeseries)
+        subject_timeseries = io_utils._get_obj(subject_timeseries)
         self._concatenated_timeseries = self._concatenate_timeseries(
             subject_timeseries, runs, progress_bar
         )
@@ -471,6 +477,15 @@ class CAP(_CAPGetter):
 
         return self
 
+    def clear_groups(self) -> None:
+        """
+        Sets ``groups`` to None to allow ``self.get_caps`` to create a new "All Subjects" group
+        with different subject IDs based on the inputted ``subject_timeseries``.
+
+        ..version_added:: 0.28.5
+        """
+        self._groups = None
+
     def _generate_lookup_table(self):
         self._subject_table = {}
 
@@ -490,7 +505,7 @@ class CAP(_CAPGetter):
             LG.info(
                 "No groups specified. Using default group 'All Subjects' containing all subject "
                 "IDs from `subject_timeseries`. The `self.groups` dictionary will remain fixed "
-                "unless the `CAP` class is re-initialized."
+                "unless the `CAP` class is re-initialized or `self.clear_groups()` is used."
             )
             self._groups = {"All Subjects": list(subject_timeseries)}
 
@@ -587,7 +602,12 @@ class CAP(_CAPGetter):
                     performance_dict[group].update(output_score)
                     model_dict.update(model)
             else:
-                parallel = Parallel(return_as="generator", n_jobs=self._n_cores, backend="loky")
+                parallel = Parallel(
+                    return_as="generator",
+                    n_jobs=self._n_cores,
+                    backend="loky",
+                    max_nbytes=kwargs.get("max_nbytes", "1M"),
+                )
                 outputs = tqdm(
                     parallel(
                         delayed(_run_kmeans)(
@@ -621,7 +641,7 @@ class CAP(_CAPGetter):
                 if self._optimal_n_clusters[group] is None:
                     raise NoElbowDetectedError(
                         f"[GROUP: {group}] - No elbow detected. Try adjusting the sensitivity "
-                        "parameter, `S`, to increase or decrease sensitivity (higher values "
+                        "parameter (`S`) to increase or decrease sensitivity (higher values "
                         "are less sensitive), expanding the list of `n_clusters` to test, or "
                         "using another `cluster_selection_method`."
                     )
@@ -690,12 +710,12 @@ class CAP(_CAPGetter):
             )
 
         if output_dir:
-            _IO.makedir(output_dir)
+            io_utils._makedir(output_dir)
 
             save_name = f"{group.replace(' ', '_')}_{method}.png"
             _PlotFuncs.save_fig(plt.gcf(), output_dir, save_name, plot_dict, as_pickle)
 
-        plt.show() if show_figs else plt.close("all")
+        _PlotFuncs.show(show_figs)
 
     def _var_explained(self):
         self._variance_explained = {}
@@ -1030,15 +1050,15 @@ class CAP(_CAPGetter):
         """
         self._check_required_attrs(["_kmeans"])
 
-        _IO.issue_file_warning("prefix_filename", prefix_filename, output_dir)
-        _IO.makedir(output_dir)
+        io_utils._issue_file_warning("prefix_filename", prefix_filename, output_dir)
+        io_utils._makedir(output_dir)
 
         if runs and not isinstance(runs, list):
             runs = [runs]
 
         metrics = self._filter_metrics(metrics)
 
-        subject_timeseries = _IO.get_obj(subject_timeseries)
+        subject_timeseries = io_utils._get_obj(subject_timeseries)
 
         # Assign each subject's frame to a CAP
         predicted_subject_timeseries = self._build_prediction_dict(
@@ -1329,7 +1349,9 @@ class CAP(_CAPGetter):
 
     def _save_metrics(self, output_dir, df_dict, prefix_filename):
         for metric in df_dict:
-            filename = _IO.filename(base_name=f"{metric}", add_name=prefix_filename, pos="prefix")
+            filename = io_utils._filename(
+                base_name=f"{metric}", add_name=prefix_filename, pos="prefix"
+            )
             if metric != "transition_probability":
                 df_dict[f"{metric}"].to_csv(
                     path_or_buf=os.path.join(output_dir, f"{filename}.csv"), sep=",", index=False
@@ -1478,8 +1500,8 @@ class CAP(_CAPGetter):
                 "`parcel_approach`."
             )
 
-        _IO.issue_file_warning("suffix_filename", suffix_filename, output_dir)
-        _IO.makedir(output_dir)
+        io_utils._issue_file_warning("suffix_filename", suffix_filename, output_dir)
+        io_utils._makedir(output_dir)
 
         if isinstance(plot_options, str):
             plot_options = [plot_options]
@@ -1773,7 +1795,7 @@ class CAP(_CAPGetter):
 
                 # Save individual plots
                 if output_dir:
-                    filename = _IO.filename(
+                    filename = io_utils._filename(
                         f"{group}_{cap}_outer_product-{scope}", suffix_filename, "suffix", "png"
                     )
                     _PlotFuncs.save_fig(display, output_dir, filename, plot_dict, as_pickle)
@@ -1783,12 +1805,12 @@ class CAP(_CAPGetter):
             [fig.delaxes(ax) for ax in axes.flatten() if not ax.has_data()]
 
             if output_dir:
-                filename = _IO.filename(
+                filename = io_utils._filename(
                     f"{group}_CAPs_outer_product-{scope}", suffix_filename, "suffix", "png"
                 )
                 _PlotFuncs.save_fig(display, output_dir, filename, plot_dict, as_pickle)
 
-        plt.show() if show_figs else plt.close("all")
+        _PlotFuncs.show(show_figs)
 
     @staticmethod
     def _initialize_outer_product_subplot(cap_dict, group, plot_dict, suffix_title):
@@ -1896,13 +1918,12 @@ class CAP(_CAPGetter):
         display = _PlotFuncs.set_title(display, f"{group} CAPs", suffix_title, plot_dict)
 
         if output_dir:
-            filename = _IO.filename(
+            filename = io_utils._filename(
                 f"{group}_CAPs_heatmap-{scope}", suffix_filename, "suffix", "png"
             )
             _PlotFuncs.save_fig(display, output_dir, filename, plot_dict, as_pickle)
 
-        # Display figures
-        plt.show() if show_figs else plt.close("all")
+        _PlotFuncs.show(show_figs)
 
     @staticmethod
     def _collapse_node_labels(parcellation_name, parcel_approach, node_ids=None):
@@ -2051,7 +2072,7 @@ class CAP(_CAPGetter):
         """
         self._check_required_attrs(["_caps"])
 
-        _IO.issue_file_warning("suffix_filename", suffix_filename, output_dir)
+        io_utils._issue_file_warning("suffix_filename", suffix_filename, output_dir)
 
         corr_dict = {group: None for group in self._groups} if return_df or save_df else None
 
@@ -2094,7 +2115,7 @@ class CAP(_CAPGetter):
                     call="corr",
                 )
 
-            plt.show() if show_figs else plt.close("all")
+            _PlotFuncs.show(show_figs)
 
         if return_df:
             return corr_dict
@@ -2163,7 +2184,7 @@ class CAP(_CAPGetter):
 
         knn_dict = self._validate_knn_dict(knn_dict)
 
-        _IO.makedir(output_dir)
+        io_utils._makedir(output_dir)
 
         parcellation_name = list(self._parcel_approach)[0]
         for group in self._groups:
@@ -2179,7 +2200,7 @@ class CAP(_CAPGetter):
                     knn_dict=knn_dict,
                 )
 
-                filename = _IO.filename(
+                filename = io_utils._filename(
                     f"{group.replace(' ', '_')}_{cap}", suffix_filename, "suffix", "nii.gz"
                 )
                 nib.save(stat_map, os.path.join(output_dir, filename))
@@ -2377,8 +2398,8 @@ class CAP(_CAPGetter):
 
         knn_dict = self._validate_knn_dict(knn_dict)
 
-        _IO.issue_file_warning("suffix_filename", suffix_filename, output_dir)
-        _IO.makedir(output_dir)
+        io_utils._issue_file_warning("suffix_filename", suffix_filename, output_dir)
+        io_utils._makedir(output_dir)
 
         # Create plot dictionary
         plot_dict = _check_kwargs(_PlotDefaults.caps2surf(), **kwargs)
@@ -2432,7 +2453,7 @@ class CAP(_CAPGetter):
                 )
 
                 if output_dir:
-                    filename = _IO.filename(
+                    filename = io_utils._filename(
                         f"{group.replace(' ', '_')}_{cap}_surface", suffix_filename, "suffix", "png"
                     )
                     _PlotFuncs.save_fig(fig, output_dir, filename, plot_dict, as_pickle)
@@ -2446,7 +2467,7 @@ class CAP(_CAPGetter):
                 try:
                     plt.show(fig) if show_figs else plt.close(fig)
                 except:
-                    plt.show() if show_figs else plt.close("all")
+                    _PlotFuncs.show(show_figs)
 
         return self
 
@@ -2740,8 +2761,8 @@ class CAP(_CAPGetter):
         """
         self._check_required_attrs(["_parcel_approach", "_caps"])
 
-        _IO.issue_file_warning("suffix_filename", suffix_filename, output_dir)
-        _IO.makedir(output_dir)
+        io_utils._issue_file_warning("suffix_filename", suffix_filename, output_dir)
+        io_utils._makedir(output_dir)
 
         if not self._standardize:
             LG.warning(
@@ -2774,7 +2795,7 @@ class CAP(_CAPGetter):
                         pyo.plot(fig, auto_open=True)
 
                 if output_dir:
-                    filename = _IO.filename(
+                    filename = io_utils._filename(
                         f"{group.replace(' ', '_')}_{cap}_radar", suffix_filename, "suffix", "png"
                     )
                     if as_html:

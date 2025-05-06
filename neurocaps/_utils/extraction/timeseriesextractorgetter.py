@@ -5,8 +5,8 @@ from typing import Union
 
 import numpy as np
 
+import neurocaps._utils.io as io_utils
 from ..check_parcel_approach import _check_parcel_approach
-from ..io import _IO
 from ...typing import ParcelConfig, ParcelApproach, SubjectTimeseries
 
 
@@ -62,7 +62,7 @@ class _TimeseriesExtractorGetter:
 
     @subject_timeseries.setter
     def subject_timeseries(self, subject_dict: Union[SubjectTimeseries, str]) -> None:
-        subject_dict = _IO.get_obj(subject_dict)
+        subject_dict = io_utils._get_obj(subject_dict)
 
         self._validate_timeseries(subject_dict)
 

@@ -260,18 +260,39 @@ def test_no_mutability():
     }
 
     original_timeseries = copy.deepcopy(subject_timeseries)
-
     assert id(subject_timeseries) != id(original_timeseries)
 
     cap_analysis = CAP()
 
     cap_analysis.get_caps(subject_timeseries=subject_timeseries, standardize=True)
-
     assert np.array_equal(subject_timeseries["0"]["run-0"], original_timeseries["0"]["run-0"])
 
     cap_analysis.calculate_metrics(subject_timeseries=subject_timeseries)
-
     assert np.array_equal(subject_timeseries["0"]["run-0"], original_timeseries["0"]["run-0"])
+
+
+def test_clear_groups():
+    """
+    Ensure group clears.
+    """
+    subject_timeseries = {
+        str(x): {f"run-{y}": np.random.rand(50, 100) for y in range(1)} for x in range(1)
+    }
+
+    cap_analysis = CAP()
+
+    cap_analysis.get_caps(subject_timeseries=subject_timeseries)
+    assert len(cap_analysis.groups["All Subjects"]) == 1
+
+    cap_analysis.clear_groups()
+    assert not cap_analysis.groups
+
+    subject_timeseries = {
+        str(x): {f"run-{y}": np.random.rand(50, 100) for y in range(1)} for x in range(1, 5)
+    }
+
+    cap_analysis.get_caps(subject_timeseries=subject_timeseries)
+    assert len(cap_analysis.groups["All Subjects"]) == 4
 
 
 @pytest.mark.flaky(reruns=5)

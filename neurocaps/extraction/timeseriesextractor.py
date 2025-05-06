@@ -10,13 +10,13 @@ from joblib import Parallel, delayed
 from pandas import DataFrame
 from tqdm.auto import tqdm
 
+import neurocaps._utils.io as io_utils
 from ..exceptions import BIDSQueryError
 from ..typing import ParcelConfig, ParcelApproach
 from .._utils import (
     _TimeseriesExtractorGetter,
     _PlotDefaults,
     _PlotFuncs,
-    _IO,
     _check_kwargs,
     _check_confound_names,
     _check_parcel_approach,
@@ -1110,7 +1110,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             output_dir, filename, prop_name="_subject_timeseries", call="timeseries_to_pickle"
         )
 
-        _IO.serialize(self._subject_timeseries, output_dir, save_filename, use_joblib=True)
+        io_utils._serialize(self._subject_timeseries, output_dir, save_filename, use_joblib=True)
 
         return self
 
@@ -1233,7 +1233,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         if not output_dir:
             return None
         else:
-            _IO.makedir(output_dir)
+            io_utils._makedir(output_dir)
 
         ext = "pkl" if call == "timeseries_to_pickle" else "csv"
 
@@ -1334,7 +1334,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         if roi_indx is not None and region is not None:
             raise ValueError("`roi_indx` and `region` can not be used simultaneously.")
 
-        _IO.issue_file_warning("filename", filename, output_dir)
+        io_utils._issue_file_warning("filename", filename, output_dir)
 
         # Defaults
         plot_dict = _check_kwargs(_PlotDefaults.visualize_bold(), **kwargs)
@@ -1371,7 +1371,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         plt.xlabel("TR")
 
         if output_dir:
-            _IO.makedir(output_dir)
+            io_utils._makedir(output_dir)
 
             if filename:
                 save_filename = f"{os.path.splitext(filename.rstrip())[0].rstrip()}.png"
@@ -1380,7 +1380,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             _PlotFuncs.save_fig(plt.gcf(), output_dir, save_filename, plot_dict, as_pickle)
 
-        plt.show() if show_figs else plt.close("all")
+        _PlotFuncs.show(show_figs)
 
         return self
 

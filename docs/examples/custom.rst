@@ -173,17 +173,17 @@ For ``TimeseriesExtractor.get_bold``, only the "maps" subkey (the location of th
 
     .. code-block:: none
 
-        2025-04-20 14:11:27,418 neurocaps._utils.check_parcel_approach [WARNING] The following subkeys haven't been detected ['nodes', 'regions']. These labels are not needed for timeseries extraction but are needed for plotting.
-        2025-04-20 14:11:27,419 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: cosine*, trans_x, trans_x_derivative1, trans_y, trans_y_derivative1, trans_z, trans_z_derivative1, rot_x, rot_x_derivative1, rot_y, rot_y_derivative1, rot_z, rot_z_derivative1, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05.
-        2025-04-20 14:11:28,975 neurocaps.extraction.timeseriesextractor [INFO] BIDS Layout: ...mples\notebooks\neurocaps_demo | Subjects: 1 | Sessions: 1 | Runs: 2
-        2025-04-20 14:11:29,043 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-1_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
-        2025-04-20 14:11:29,063 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] No 'non_steady_state_outlier_XX' columns were found so 0 dummy scans will be removed.
-        2025-04-20 14:11:29,086 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_x_derivative1, trans_y, trans_y_derivative1, trans_z, trans_z_derivative1, rot_x, rot_x_derivative1, rot_y, rot_y_derivative1, rot_z, rot_z_derivative1, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05.
-        2025-04-20 14:11:39,939 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Nuisance regression completed; extracting [CONDITION: late].
-        2025-04-20 14:11:39,977 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-2_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
-        2025-04-20 14:11:39,994 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] No 'non_steady_state_outlier_XX' columns were found so 0 dummy scans will be removed.
-        2025-04-20 14:11:40,006 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_x_derivative1, trans_y, trans_y_derivative1, trans_z, trans_z_derivative1, rot_x, rot_x_derivative1, rot_y, rot_y_derivative1, rot_z, rot_z_derivative1, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05.
-        2025-04-20 14:11:50,949 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] Nuisance regression completed; extracting [CONDITION: late].
+        2025-05-06 14:11:27,418 neurocaps._utils.check_parcel_approach [WARNING] The following subkeys haven't been detected ['nodes', 'regions']. These labels are not needed for timeseries extraction but are needed for plotting.
+        2025-05-06 14:11:27,419 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: cosine*, trans_x, trans_x_derivative1, trans_y, trans_y_derivative1, trans_z, trans_z_derivative1, rot_x, rot_x_derivative1, rot_y, rot_y_derivative1, rot_z, rot_z_derivative1, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05.
+        2025-05-06 14:11:28,975 neurocaps.extraction.timeseriesextractor [INFO] BIDS Layout: ...mples\notebooks\neurocaps_demo | Subjects: 1 | Sessions: 1 | Runs: 2
+        2025-05-06 14:11:29,043 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-1_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
+        2025-05-06 14:11:29,063 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] No 'non_steady_state_outlier_XX' columns were found so 0 dummy scans will be removed.
+        2025-05-06 14:11:29,086 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_x_derivative1, trans_y, trans_y_derivative1, trans_z, trans_z_derivative1, rot_x, rot_x_derivative1, rot_y, rot_y_derivative1, rot_z, rot_z_derivative1, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05.
+        2025-05-06 14:11:39,939 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Nuisance regression completed; extracting [CONDITION: late].
+        2025-05-06 14:11:39,977 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-2_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
+        2025-05-06 14:11:39,994 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] No 'non_steady_state_outlier_XX' columns were found so 0 dummy scans will be removed.
+        2025-05-06 14:11:40,006 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_x_derivative1, trans_y, trans_y_derivative1, trans_z, trans_z_derivative1, rot_x, rot_x_derivative1, rot_y, rot_y_derivative1, rot_z, rot_z_derivative1, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05.
+        2025-05-06 14:11:50,949 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] Nuisance regression completed; extracting [CONDITION: late].
 
 For visualization methods in the ``TimeseriesExtractor`` and ``CAP`` classes, the nodes and regions need to be defined.
 Refer to the documentation for each function to determine which subkeys are required, as some methods only need the
@@ -275,7 +275,7 @@ The following code uses ``CAP.get_bold`` to extract two CAPs.
 
     .. code-block:: none
 
-        2025-04-20 14:12:14,255 neurocaps.analysis.cap [INFO] No groups specified. Using default group 'All Subjects' containing all subject IDs from `subject_timeseries`. The `self.groups` dictionary will remain fixed unless the `CAP` class is re-initialized.
+        2025-05-06 14:12:14,255 neurocaps.analysis.cap [INFO] No groups specified. Using default group 'All Subjects' containing all subject IDs from `subject_timeseries`. The `self.groups` dictionary will remain fixed unless the `CAP` class is re-initialized.
 
 Surface Plotting with and without KNN Interpolation
 ---------------------------------------------------
@@ -326,7 +326,7 @@ other subkeys are optional*.
 
     .. code-block:: none
 
-        2025-04-20 14:15:00,435 neurocaps.analysis.cap [WARNING] Defaulting to 1mm resolution for the Schaefer atlas since 'resolution_mm' was not specified in `knn_dict`.
+        2025-05-06 14:15:00,435 neurocaps.analysis.cap [WARNING] Defaulting to 1mm resolution for the Schaefer atlas since 'resolution_mm' was not specified in `knn_dict`.
 
 
 .. image:: embed/All_Subjects_CAP-1_surface_KNN.png

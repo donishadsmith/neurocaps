@@ -2,8 +2,9 @@
 
 from typing import Union, Optional
 
+import neurocaps._utils.io as io_utils
 from ..typing import SubjectTimeseries
-from .._utils import _IO, _standardize
+from .._utils import _standardize
 
 
 def standardize(
@@ -48,7 +49,8 @@ def standardize(
     Returns
     -------
     dict[str, SubjectTimeseries]
-        A nested dictionary containing the standardized subject timeseries if ``return_dicts`` is True.
+        A nested dictionary containing the standardized subject timeseries if ``return_dicts`` is
+        True.
 
     See Also
     --------
@@ -59,12 +61,12 @@ def standardize(
         isinstance(subject_timeseries_list, list) and len(subject_timeseries_list) > 0
     ), "`subject_timeseries_list` must be a list greater than length 0."
 
-    _IO.issue_file_warning("filenames", filenames, output_dir)
+    io_utils._issue_file_warning("filenames", filenames, output_dir)
 
     standardized_dicts = {}
 
     for indx, curr_dict in enumerate(subject_timeseries_list):
-        curr_dict = _IO.get_obj(curr_dict)
+        curr_dict = io_utils._get_obj(curr_dict)
 
         for subj_id in curr_dict:
             for run in curr_dict[subj_id]:
@@ -73,7 +75,7 @@ def standardize(
         standardized_dicts[f"dict_{indx}"] = curr_dict
 
     if output_dir:
-        _IO.dicts_to_pickles(
+        io_utils._dicts_to_pickles(
             output_dir=output_dir,
             dict_list=standardized_dicts,
             filenames=filenames,

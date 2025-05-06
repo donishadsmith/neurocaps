@@ -2,10 +2,10 @@ import glob, os, re
 
 import pytest
 
+import neurocaps._utils.io as io_utils
 from neurocaps.extraction import TimeseriesExtractor
 from neurocaps.analysis import CAP
 from neurocaps.exceptions import BIDSQueryError, NoElbowDetectedError, UnsupportedFileExtensionError
-from neurocaps._utils import _IO
 
 from .utils import Parcellation
 
@@ -25,8 +25,8 @@ BIDSMSG = (
 )
 
 ELBOWMSG = (
-    f"[GROUP: All Subjects] - No elbow detected. Try adjusting the sensitivity parameter, "
-    "`S`, to increase or decrease sensitivity (higher values are less sensitive), "
+    f"[GROUP: All Subjects] - No elbow detected. Try adjusting the sensitivity parameter "
+    "(`S`) to increase or decrease sensitivity (higher values are less sensitive), "
     "expanding the list of `n_clusters` to test, or using another "
     "`cluster_selection_method`."
 )
@@ -90,4 +90,4 @@ def test_unsupported_serialized_file_error():
     )
 
     with pytest.raises(UnsupportedFileExtensionError, match=re.escape(msg)):
-        _IO.unserialize("placeholder.txt")
+        io_utils._unserialize("placeholder.txt")

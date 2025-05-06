@@ -8,7 +8,7 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from pandas import DataFrame
 
-from .io import _IO
+import neurocaps._utils.io as io_utils
 
 
 class _PlotDefaults:
@@ -303,7 +303,7 @@ class _PlotFuncs:
     ) -> None:
         if as_pickle:
             # Allow Axes or Figure
-            _IO.serialize(fig, output_dir, filename.replace(".png", ".pkl"))
+            io_utils._serialize(fig, output_dir, filename.replace(".png", ".pkl"))
         else:
             fig = fig.get_figure() if not hasattr(fig, "savefig") else fig
             fig.savefig(
@@ -311,6 +311,10 @@ class _PlotFuncs:
                 dpi=plot_dict["dpi"],
                 bbox_inches=plot_dict["bbox_inches"],
             )
+
+    @staticmethod
+    def show(show_figs: bool) -> None:
+        plt.show() if show_figs else plt.close("all")
 
 
 class _MatrixVisualizer:
@@ -363,10 +367,10 @@ class _MatrixVisualizer:
     ) -> None:
         # Save figure
         if output_dir:
-            _IO.makedir(output_dir)
+            io_utils._makedir(output_dir)
 
             desc = "correlation_matrix" if call == "corr" else "transition_probability_matrix"
-            filename = _IO.filename(f"{group}_CAPs_{desc}", suffix_filename, "suffix", "png")
+            filename = io_utils._filename(f"{group}_CAPs_{desc}", suffix_filename, "suffix", "png")
             if save_plots:
                 _PlotFuncs.save_fig(display, output_dir, filename, plot_dict, as_pickle)
 

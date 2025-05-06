@@ -2,9 +2,10 @@
 
 from typing import Optional, Union
 
-import matplotlib.pyplot as plt, pandas as pd
+import pandas as pd
 
-from .._utils import _IO, _MatrixVisualizer, _PlotDefaults, _check_kwargs
+import neurocaps._utils.io as io_utils
+from .._utils import _MatrixVisualizer, _PlotDefaults, _PlotFuncs, _check_kwargs
 
 
 def transition_matrix(
@@ -67,7 +68,7 @@ def transition_matrix(
 
         - dpi: :obj:`int`, default=300 -- Dots per inch for the figure.
         - figsize: :obj:`tuple`, default=(8, 6) -- Size of the figure in inches.
-        - fontsize: :obj:`int`, default=14 -- Font size for the plot title, x-axis title, and\
+        - fontsize: :obj:`int`, default=14 -- Font size for the plot title, x-axis title, and
           y-axis title of each plot.
         - xticklabels_size: :obj:`int`, default=8 -- Font size for x-axis tick labels.
         - yticklabels_size: :obj:`int`, default=8 -- Font size for y-axis tick labels.
@@ -82,13 +83,13 @@ def transition_matrix(
         - borderwidths: :obj:`float`, default=0 -- Width of the border around the plot.
         - linecolor: :obj:`str`, default="black" -- Color of the line that separates each cell.
         - edgecolors: :obj:`str` or :obj:`None`, default=None -- Color of the edges.
-        - alpha: :obj:`float` or :obj:`None`, default=None -- Controls transparency and ranges from\
+        - alpha: :obj:`float` or :obj:`None`, default=None -- Controls transparency and ranges from
           0 (transparent) to 1 (opaque).
-        - bbox_inches: :obj:`str` or :obj:`None`, default="tight" -- Alters size of the whitespace\
+        - bbox_inches: :obj:`str` or :obj:`None`, default="tight" -- Alters size of the whitespace
           in the saved image.
-        - cmap: :obj:`str`, :obj:`callable` default="coolwarm" -- Color map for the plot cells.\
-          Options include strings to call seaborn's pre-made palettes, ``seaborn.diverging_palette``\
-          function to generate custom palettes, and ``matplotlib.color.LinearSegmentedColormap`` to\
+        - cmap: :obj:`str`, :obj:`callable` default="coolwarm" -- Color map for the plot cells.
+          Options include strings to call seaborn's pre-made palettes, ``seaborn.diverging_palette``
+          function to generate custom palettes, and ``matplotlib.color.LinearSegmentedColormap`` to
           generate custom palettes.
         - vmin: :obj:`float` or :obj:`None`, default=None -- The minimum value to display in colormap.
         - vmax: :obj:`float` or :obj:`None`, default=None -- The maximum value to display in colormap.
@@ -118,7 +119,7 @@ def transition_matrix(
         trans_dict, dict
     ), "transition_dict must be in the form dict[str, pd.DataFrame]."
 
-    _IO.issue_file_warning("suffix_filename", suffix_filename, output_dir)
+    io_utils._issue_file_warning("suffix_filename", suffix_filename, output_dir)
 
     # Create plot dictionary
     plot_dict = _check_kwargs(_PlotDefaults.transition_matrix(), **kwargs)
@@ -163,8 +164,7 @@ def transition_matrix(
                 call="trans",
             )
 
-        # Display figures
-        plt.show() if show_figs else plt.close("all")
+        _PlotFuncs.show(show_figs)
 
     if return_df:
         return trans_mat_dict
