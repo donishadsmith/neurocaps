@@ -13,6 +13,21 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.28.6] - 2025-05-08
+### ♻ Changed
+- Backwards compatible change for ``CAP.calculate_metrics``, which changes the default metrics
+from None to `("temporal_fraction", "persistence", "counts", "transition_frequency")`, Still
+retains the same behavior where None defaults to "temporal_fraction", "persistence", "counts",
+and "transition_frequency". Change done to enhance clarity
+### 📖 Documentation
+- Minor language fixes. Fix to example in ``CAP.caps2radar``, which had
+`low_amp = high_amp = np.where(cap_1_cluster_centroid < 0, -cap_1_cluster_centroid, 0)` instead of
+`low_amp = np.where(cap_1_cluster_centroid < 0, -cap_1_cluster_centroid, 0)`
+### 🐛 Fixes
+- If ``fslr_giftis_dict`` in ``CAP.caps2surf`` is supplied, then ``caps`` is not a required
+attribute
+- Stops invalid kwargs warning in ``CAP.get_caps`` for `S` and `max_nbytes`
+
 ## [0.28.5] - 2025-05-05
 ### 🚀 New/Added
 - Add ``clear_groups`` function to ``CAP``

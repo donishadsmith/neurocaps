@@ -110,7 +110,9 @@ def _get_target_indices(atlas_file, reference_atlas, resolution_mm, remove_label
 
 def _perform_knn(atlas_file, knn_dict, stat_map):
     """
-    Perform KNN to assist with coverage issues prior to plotting. Modifies ``stat_map`` in place.
+    Perform KNN to assist with coverage issues prior to plotting.
+
+    .. important:: Modifies ``stat_map`` in place.
     """
     remove_labels = tuple(knn_dict["remove_labels"]) if knn_dict.get("remove_labels") else None
 

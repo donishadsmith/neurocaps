@@ -685,7 +685,8 @@ class CAP(_CAPGetter):
         }
 
         # Create plot dictionary
-        plot_dict = _check_kwargs(_PlotDefaults.get_caps(), **kwargs)
+        filtered_kwargs = {k: v for k, v in kwargs.items() if k not in ["S", "max_nbytes"]}
+        plot_dict = _check_kwargs(_PlotDefaults.get_caps(), **filtered_kwargs)
 
         plt.figure(figsize=plot_dict["figsize"])
 
@@ -779,17 +780,10 @@ class CAP(_CAPGetter):
                 "transition_frequency",
                 "transition_probability",
             ],
-            list[
-                Literal[
-                    "temporal_fraction",
-                    "persistence",
-                    "counts",
-                    "transition_frequency",
-                    "transition_probability",
-                ]
-            ],
+            list[str],
+            tuple[str],
             None,
-        ] = None,
+        ] = ("temporal_fraction", "persistence", "counts", "transition_frequency"),
         return_df: bool = True,
         output_dir: Optional[str] = None,
         prefix_filename: Optional[str] = None,
@@ -916,18 +910,18 @@ class CAP(_CAPGetter):
                 - If only a single run available for a subject, the original run ID (as opposed to
                   "run-continuous") will be used.
 
-        metrics: {"temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"}, \
-                 :obj:`list["temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"]`, \
-                 or :obj:`None`, default=None
+        metrics: {"temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"},\
+                 :obj:`list[str]`, :obj:`tuple[str]`, or :obj:`None`,\
+                 default=("temporal_fraction", "persistence", "counts", "transition_frequency")
             The metrics to calculate. Available options include "temporal_fraction", "persistence",
             "counts", "transition_frequency", and "transition_probability". Defaults to
-            ``["temporal_fraction", "persistence", "counts", "transition_frequency"]`` if None.
+            ``("temporal_fraction", "persistence", "counts", "transition_frequency")`` if None.
 
-            .. versionchanged:: 0.28.0 Default changed to None; however, the default metrics\
-            remains the same and is backwards compatible.
+            .. versionchanged:: 0.28.6 Default changed to tuple to provide better clarity; however,\
+            the default metrics remains the same and is backwards compatible.
 
         return_df: :obj:`str`, default=True
-            If True, returns ``pandas.DataFrame`` inside a dictionary`, mapping each dataframe to
+            If True, returns ``pandas.DataFrame`` inside a dictionary, mapping each dataframe to
             their metric.
 
         output_dir: :obj:`str` or :obj:`None`, default=None
@@ -1124,7 +1118,7 @@ class CAP(_CAPGetter):
     @staticmethod
     def _filter_metrics(metrics):
         metrics = (
-            ["temporal_fraction", "persistence", "counts", "transition_frequency"]
+            ("temporal_fraction", "persistence", "counts", "transition_frequency")
             if metrics is None
             else metrics
         )
@@ -1178,12 +1172,14 @@ class CAP(_CAPGetter):
 
             if miss_runs:
                 LG.warning(
-                    f"[SUBJECT: {subj_id}] Does not have the requested runs: {', '.join(miss_runs)}."
+                    f"[SUBJECT: {subj_id}] Does not have the requested runs: "
+                    f"{', '.join(miss_runs)}."
                 )
 
             if not subject_runs:
                 LG.warning(
-                    f"[SUBJECT: {subj_id}] Excluded from the concatenated timeseries due to having no runs."
+                    f"[SUBJECT: {subj_id}] Excluded from the concatenated timeseries due to having "
+                    "no runs."
                 )
                 continue
 
@@ -1258,7 +1254,7 @@ class CAP(_CAPGetter):
             key: np.where(arr == key, 1, 0).sum() for key in range(1, n_group_caps + 1)
         }
 
-        self._update_dict(max_cap, n_group_caps, frequency_dict)
+        frequency_dict = self._update_dict(max_cap, n_group_caps, frequency_dict)
 
         proportion_dict = {key: value / (len(arr)) for key, value in frequency_dict.items()}
 
@@ -1273,7 +1269,7 @@ class CAP(_CAPGetter):
             else:
                 count_dict.update({target: 0})
 
-        self._update_dict(max_cap, n_group_caps, count_dict)
+        count_dict = self._update_dict(max_cap, n_group_caps, count_dict)
 
         return self._append_df(df, count_dict, sub_info)
 
@@ -1288,7 +1284,7 @@ class CAP(_CAPGetter):
             # timeseries
             persistence_dict.update({target: (binary_arr.sum() / n_segments) * (tr if tr else 1)})
 
-        self._update_dict(max_cap, n_group_caps, persistence_dict)
+        persistence_dict = self._update_dict(max_cap, n_group_caps, persistence_dict)
 
         return self._append_df(df, persistence_dict, sub_info)
 
@@ -1307,10 +1303,14 @@ class CAP(_CAPGetter):
 
     @staticmethod
     def _update_dict(max_cap, n_group_caps, curr_dict):
+        curr_dict = curr_dict.copy()
+
         # Adds NaN for groups with less caps than the group with the greatest number of caps
         if max_cap > n_group_caps:
             for i in range(n_group_caps + 1, max_cap + 1):
                 curr_dict.update({i: float("nan")})
+
+        return curr_dict
 
     @staticmethod
     def _append_df(df, metric_dict, sub_info):
@@ -1611,8 +1611,8 @@ class CAP(_CAPGetter):
             self._region_means[group].update({cap: region_means})
 
     def _extract_scope_information(self, scope, parcellation_name):
-        # Extracting region means if scope is "region" and the labels or extracting the full activation vector and labels
-        # if scope is "nodes"
+        # Extracting region means if scope is "region" and the labels or extracting the full
+        # activation vector and labels if scope is "nodes"
         if scope == "regions":
             cap_dict = {
                 group: {k: v for k, v in self._region_means[group].items() if k != "Regions"}
@@ -2090,7 +2090,8 @@ class CAP(_CAPGetter):
             )
 
             if corr_dict:
-                # Get p-values; use np.eye to make main diagonals equal zero; implementation of tozCSS from
+                # Get p-values; use np.eye to make main diagonals equal zero; implementation of
+                # tozCSS from:
                 # https://stackoverflow.com/questions/25571882/pandas-columns-correlation-with-statistical-significance
                 pval_df = df.corr(method=lambda x, y: pearsonr(x, y)[1]) - np.eye(*corr_df.shape)
                 # Add asterisk to values that meet the threshold
@@ -2147,7 +2148,7 @@ class CAP(_CAPGetter):
 
         fwhm: :obj:`float` or :obj:`None`, default=None
             Strength of spatial smoothing to apply (in millimeters) to the statistical map prior to
-            interpolating from MNI152 space to fsLR surface space. Uses Nilearn's ``image.smooth_img``.
+            interpolating from MNI152 space to fsLR surface space. Uses Nilearn's ``smooth_img``.
 
         knn_dict: :obj:`dict[str, int | bool]`, default=None
             Use KNN (k-nearest neighbors) interpolation with reference atlas masking to fill in
@@ -2352,7 +2353,7 @@ class CAP(_CAPGetter):
             - cmap: :obj:`str` or :obj:`callable`, default="cold_hot" -- Colormap to be used for the plot.
             - cbar_kws: :obj:`dict`, default={"location": "bottom", "n_ticks": 3} -- Customize colorbar.
               Refer to ``_add_colorbars`` for ``surfplot.plotting.Plot`` in `Surfplot's Plot
-              Documentation\ <https://surfplot.readthedocs.io/en/latest/generated/surfplot.plotting.Plot.html#surfplot.plotting.Plot._add_colorbars>`_
+              Documentation <https://surfplot.readthedocs.io/en/latest/generated/surfplot.plotting.Plot.html#surfplot.plotting.Plot._add_colorbars>`_
               for valid parameters.
             - alpha: :obj:`float`, default=1 -- Transparency level of the colorbar.
             - as_outline: :obj:`bool`, default=False -- Plots only an outline of contiguous vertices
@@ -2365,8 +2366,7 @@ class CAP(_CAPGetter):
             - layout: :obj:`str`, default="grid" -- Layout of the plot.
             - zoom: :obj:`float`, default=1.5 -- Zoom level for the plot.
             - views: {"lateral", "medial"} or :obj:`list[{"lateral", "medial}]`,\
-              default=["lateral", "medial"] --
-              Views to be displayed in the plot.
+              default=["lateral", "medial"] -- Views to be displayed in the plot.
             - brightness: :obj:`float`, default=0.5 -- Brightness level of the plot.
             - figsize: :obj:`tuple` or :obj:`None`, default=None -- Size of the figure.
             - scale: :obj:`tuple`, default=(2, 2) -- Scale factors for the plot.
@@ -2384,19 +2384,24 @@ class CAP(_CAPGetter):
 
         Important
         ---------
-        **Parcellation Approach**: ``parcel_approach`` must have the "maps" subkey containing the path to th
-        NifTI file of the parcellation.
+        **Parcellation Approach**: ``parcel_approach`` must have the "maps" subkey containing the
+        path to the NifTI file of the parcellation.
 
-        **Assumptions**: This function assumes that the background label for the parcellation is zero. During extraction
-        of the numerical labels from the parcellation map, the first element (assumed to be zero/the background label
-        after sorting) is skipped. Then the remaining sorted labels are iterated over to map each element of the CAP
-        cluster centroid onto the corresponding non-zero label IDs in the parcellation.
+        **Assumptions**: This function assumes that the background label for the parcellation is
+        zero. During extraction of the numerical labels from the parcellation map, the first element
+        (assumed to be zero/the background label after sorting) is skipped. Then the remaining sorted
+        labels are iterated over to map each element of the CAP cluster centroid onto the
+        corresponding non-zero label IDs in the parcellation.
 
-        Additionally, this funcition assumes that the parcellation map is in volumetric MNI space unless
-        ``fslr_giftis_dict`` is defined, then this function assumes the maps are in surface space.
+        Additionally, this funcition assumes that the parcellation map is in volumetric MNI space
+        unless ``fslr_giftis_dict`` is defined, then this function assumes the maps are in surface
+        space.
         """
-        check_params = ["_parcel_approach", "_caps"] if fslr_giftis_dict is None else ["_caps"]
-        self._check_required_attrs(check_params)
+        if fslr_giftis_dict is None:
+            check_params = ["_parcel_approach", "_caps"]
+            self._check_required_attrs(check_params)
+
+            parcellation_name = list(self._parcel_approach)[0]
 
         knn_dict = self._validate_knn_dict(knn_dict)
 
@@ -2409,17 +2414,12 @@ class CAP(_CAPGetter):
         groups = (
             self._caps if hasattr(self, "_caps") and fslr_giftis_dict is None else fslr_giftis_dict
         )
-
-        if fslr_giftis_dict is None:
-            parcellation_name = list(self._parcel_approach)[0]
-
         for group in groups:
             caps = (
                 self._caps[group]
                 if hasattr(self, "_caps") and fslr_giftis_dict is None
                 else fslr_giftis_dict[group]
             )
-
             for cap in tqdm(
                 caps, desc=f"Generating Surface Plots [GROUP: {group}]", disable=not progress_bar
             ):
@@ -2585,10 +2585,10 @@ class CAP(_CAPGetter):
 
             2. Generate Binary Vectors:
 
-              - For each region create a binary vector (1 x ROI) where `1` indicates that the ROI is
-                part of the specific region and `0` otherwise.
-              - In this example, the binary vector acts as a 1D mask to isolate ROIs in the Visual
-                Network by setting the corresponding indices to `1`.
+              - For each region create a binary vector (1 x ROI) where "1" indicates that the ROI is
+                part of the specific region and "0" otherwise.
+              - In this example, the binary vector acts as a 1-D mask to isolate ROIs in the Visual
+                Network by setting the corresponding indices to "1".
 
                 ::
 
@@ -2616,9 +2616,9 @@ class CAP(_CAPGetter):
                     # Assign values less than 0 as 0 to isolate the high amplitude activations
                     high_amp = np.where(cap_1_cluster_centroid > 0, cap_1_cluster_centroid, 0)
 
-                    # Assign values less than 0 as 0 to isolate the low amplitude activations; Also
-                    # invert the sign
-                    low_amp = high_amp = np.where(cap_1_cluster_centroid < 0, -cap_1_cluster_centroid, 0)
+                    # Assign values less than 0 as 0 to isolate the low amplitude activations
+                    # Also invert the sign to restrict similarity to [0, 1]
+                    low_amp = np.where(cap_1_cluster_centroid < 0, -cap_1_cluster_centroid, 0)
 
             4. Calculate Cosine Similarity:
 
@@ -2627,7 +2627,7 @@ class CAP(_CAPGetter):
 
                 ::
 
-                    # Compute dot product between the binary vector with the positive and negative activations
+                    # Compute dot product between the binary vector each activation vector
                     high_dot = np.dot(high_amp, binary_vector)
                     low_dot = np.dot(low_amp, binary_vector)
 
@@ -2642,8 +2642,8 @@ class CAP(_CAPGetter):
 
             5. Generate Radar Plots of Each CAPs:
 
-              - Each radar plot visualizes the cosine similarity for both "High Amplitude" (positive) and
-                "Low Amplitude" (negative) activations of the CAP.
+              - Each radar plot visualizes the cosine similarity for both "High Amplitude"
+                (positive) and "Low Amplitude" (negative) activations of the CAP.
 
         Parameters
         ----------

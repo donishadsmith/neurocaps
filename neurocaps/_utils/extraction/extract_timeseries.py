@@ -875,9 +875,11 @@ def _interpolate_censored_frames(timeseries, data):
     """
     Replaces censored frames in the timeseries using cubic spline interpolation using scipy's
     ``CubicSpline``. Removes any censored frames that are not neighbored by non-censored data on
-    its left or right. Modifies ``timeseries`` in place.
+    its left or right.
 
     References `nilearn's _interpolate_volumes <https://github.com/nilearn/nilearn/blob/f74c4c5c0/nilearn/signal.py#L894>`_
+
+    .. important:: Modifies ``timeseries`` in place.
     """
     # Get frame times
     frame_times = np.arange(data.fd_array_len) * data.tr

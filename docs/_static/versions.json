@@ -13,6 +13,11 @@
         "url": "https://neurocaps.readthedocs.io/en/development/"
     },
     {
+        "name": "0.28.5",
+        "version": "0.28.5",
+        "url": "https://neurocaps.readthedocs.io/en/0.28.5/"
+    },
+    {
         "name": "0.26.10",
         "version": "0.26.10",
         "url": "https://neurocaps.readthedocs.io/en/0.26.10/"
