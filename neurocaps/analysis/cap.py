@@ -2770,7 +2770,7 @@ class CAP(_CAPGetter):
             LG.warning(
                 "To better aid interpretation, the matrix subjected to kmeans clustering in "
                 "`self.get_caps()` should be standardized so that each ROI in the CAP cluster "
-                "centroid. represents activation or de-activation relative to the mean."
+                "centroid represents activation or de-activation relative to the mean (0)."
             )
 
         # Create plot dictionary
