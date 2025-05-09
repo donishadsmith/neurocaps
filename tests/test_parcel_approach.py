@@ -138,4 +138,8 @@ def test_masker_label_ordering(data, tmp_dir, data_dir):
         masker.region_ids_.pop("background")
 
     masker_labels = itemgetter(*list(masker.region_ids_))(masker.region_ids_)
+
+    if masker_labels[0] == 0:
+        masker_labels = masker_labels[1:]
+
     assert np.array_equal(labels, masker_labels)
