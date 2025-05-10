@@ -278,7 +278,7 @@ def check_logs(log_file, phrase, subjects):
     assert all([subject in logged_subjects for subject in subjects])
 
 
-def concat_data(timeseries, subject_table, standardize, runs=[1, 2, 3]):
+def concat_data(timeseries, subject_table, standardize, runs=(1, 2, 3)):
     """
     Similar to internal function in the CAP class for concatenating data. Used to assess if
     concatenation works as expected and if the subject table being generated in the CAP class is
@@ -303,7 +303,7 @@ def concat_data(timeseries, subject_table, standardize, runs=[1, 2, 3]):
     return concatenated_timeseries
 
 
-def predict_labels(timeseries, cap_analysis, standardize, group, runs=[1, 2, 3]):
+def predict_labels(timeseries, cap_analysis, standardize, group, runs=(1, 2, 3)):
     """
     Similar method to how labels are predicted in CAP.calculate_metrics, same labels are then used
     to calculate the metrics.
@@ -328,15 +328,16 @@ def predict_labels(timeseries, cap_analysis, standardize, group, runs=[1, 2, 3])
     return labels
 
 
-def get_first_subject(timeseries, cap_analysis, standardize=True, group="A", runs=[1]):
-    """Get the first subject from the timeseries data."""
+def get_first_subject(timeseries, cap_analysis, standardize=True, group="A", runs=(1,)):
+    """
+    Get the first subject from the timeseries data. Unlike internal implementation, doesn't
+    shift labels by + 1 due to the zero based indexing to. Minor difference to increase
+    independence between testing implementation and source code implementation.
+    """
     first_subject_timeseries = {}
     first_subject_timeseries.update({"0": timeseries["0"]})
-    first_subject_labels = (
-        predict_labels(
-            first_subject_timeseries, cap_analysis, standardize=standardize, group=group, runs=runs
-        )
-        + 1
+    first_subject_labels = predict_labels(
+        first_subject_timeseries, cap_analysis, standardize=standardize, group=group, runs=runs
     )
 
     return first_subject_labels
@@ -376,12 +377,13 @@ def segments_mirrored(target, timeseries):
     in NumPy. For counts, an explicit check is done internally to see if the target is in target is
     in the timeseries.
     """
-    # Binary representation of numpy array - if [1,2,1,1,1,3] and target is 1, then it is [1,0,1,1,1,0]
+    # timeseries = [1, 2, 1, 1, 1, 3]; target = 1
+    # binary_arr = [1, 0, 1, 1, 1, 0]
     binary_arr = np.where(timeseries == target, 1, 0)
-    # Get indices of values that equal 1; [0,2,3,4]
+    # indxs = [0, 2, 3, 4]; indices of target
     target_indices = np.where(binary_arr == 1)[0]
-    # Count the transitions, indices where diff > 1 is a transition; diff of indices = [2,1,1];
-    # binary for diff > 1 = [1,0,0]; thus, segments = transitions + first_sequence(1) = 2
+    # diff_arr = [2, 1, 1]; diff_arr > 1 represents number of transitions based on indices
+    # binary for diff > 1 = [1, 0, 0]; n_segments = n_transitions + 1 (first_sequence) = 2
     n_segments = np.where(np.diff(target_indices, n=1) > 1, 1, 0).sum() + 1
 
     return binary_arr, n_segments

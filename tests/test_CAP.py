@@ -554,7 +554,7 @@ def test_temporal_fraction():
     first_subject_labels = get_first_subject(timeseries, cap_analysis)
 
     sorted_frequency_dict = {
-        num: np.where(first_subject_labels == num, 1, 0).sum() for num in range(1, 4)
+        num: np.where(first_subject_labels == num, 1, 0).sum() for num in range(3)
     }
     proportion_dict = {
         num: value / len(first_subject_labels) for num, value in sorted_frequency_dict.items()
@@ -587,17 +587,17 @@ def test_counts():
     first_subject_labels = get_first_subject(timeseries, cap_analysis)
 
     counts_reimplemented_dict = {}
-    for target in range(1, 4):
+    for target in range(3):
         _, counts = segments(target, first_subject_labels)
         counts_reimplemented_dict.update({target: counts})
 
     counts_dict = {}
-    for target in range(1, 4):
+    for target in range(3):
         _, counts = segments_mirrored(target, first_subject_labels)
         counts = counts if target in first_subject_labels else 0
         counts_dict.update({target: counts})
 
-    assert all([counts_reimplemented_dict[target] == counts_dict[target] for target in range(1, 4)])
+    assert all([counts_reimplemented_dict[target] == counts_dict[target] for target in range(3)])
 
     assert [x for x in list(counts_dict.values()) if not math.isnan(x)] == [
         x for x in df.loc[0, :].values if not math.isnan(x)
@@ -629,13 +629,13 @@ def test_persistence(tr):
     tr = tr
 
     persistence_reimplemented_dict = {}
-    for target in range(1, 4):
+    for target in range(3):
         seg_list, counts = segments(target, first_subject_labels)
         val = sum(seg_list) / len(seg_list) if counts != 0 else 0
         persistence_reimplemented_dict.update({target: val * (tr if tr else 1)})
 
     persistence_dict = {}
-    for target in range(1, 4):
+    for target in range(3):
         binary, counts = segments_mirrored(target, first_subject_labels)
         persistence_dict.update({target: (binary.sum() / counts) * (tr if tr else 1)})
         assert all(x in [0, 1] for x in binary)

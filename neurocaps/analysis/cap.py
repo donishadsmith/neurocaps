@@ -1258,7 +1258,7 @@ class CAP(_CAPGetter):
 
         proportion_dict = {key: value / (len(arr)) for key, value in frequency_dict.items()}
 
-        return self._append_df(df, proportion_dict, sub_info)
+        return self._append_df(df, sub_info, proportion_dict)
 
     def _compute_counts(self, arr, sub_info, df, n_group_caps, max_cap):
         count_dict = {}
@@ -1271,7 +1271,7 @@ class CAP(_CAPGetter):
 
         count_dict = self._update_dict(max_cap, n_group_caps, count_dict)
 
-        return self._append_df(df, count_dict, sub_info)
+        return self._append_df(df, sub_info, count_dict)
 
     def _compute_persistence(self, arr, sub_info, df, n_group_caps, max_cap, tr):
         # Initialize variable
@@ -1286,7 +1286,7 @@ class CAP(_CAPGetter):
 
         persistence_dict = self._update_dict(max_cap, n_group_caps, persistence_dict)
 
-        return self._append_df(df, persistence_dict, sub_info)
+        return self._append_df(df, sub_info, persistence_dict)
 
     @staticmethod
     def _segments(target, timeseries):
@@ -1313,7 +1313,7 @@ class CAP(_CAPGetter):
         return curr_dict
 
     @staticmethod
-    def _append_df(df, metric_dict, sub_info):
+    def _append_df(df, sub_info, metric_dict):
         df.loc[len(df)] = sub_info + [items for items in metric_dict.values()]
         return df
 
