@@ -11,6 +11,7 @@ from joblib import Parallel, delayed
 from nilearn.plotting.cm import _cmap_d
 from neuromaps.transforms import mni152_to_fslr, fslr_to_fslr
 from neuromaps.datasets import fetch_fslr
+from numpy.typing import NDArray
 from scipy.stats import pearsonr
 from tqdm.auto import tqdm
 
@@ -488,7 +489,10 @@ class CAP(_CAPGetter):
         """
         self._groups = None
 
-    def _generate_lookup_table(self):
+    def _generate_lookup_table(self) -> None:
+        """
+        Creates dictionary mapping subject IDs to their associated group. This function is
+        called whenever ``self._concatenate_timeseries`` is called."""
         self._subject_table = {}
 
         for group in self._groups:
@@ -501,7 +505,13 @@ class CAP(_CAPGetter):
                 else:
                     self._subject_table.update({subj_id: group})
 
-    def _concatenate_timeseries(self, subject_timeseries, runs, progress_bar):
+    def _concatenate_timeseries(
+        self, subject_timeseries: SubjectTimeseries, runs: Union[list, None], progress_bar: bool
+    ) -> dict[str, NDArray]:
+        """
+        Concatenates the timeseries data of all subjects into a single numpy array if ``groups`` are
+        None or group-specific numpy arrays.
+        """
         # Create dictionary for "All Subjects" if no groups are specified
         if not self._groups:
             LG.info(
@@ -563,7 +573,8 @@ class CAP(_CAPGetter):
 
         return concatenated_timeseries
 
-    def _scale(self, concatenated_timeseries):
+    def _scale(self, concatenated_timeseries: NDArray) -> NDArray:
+        """Scales the concatenated timeseries data."""
         for group in self._groups:
             concatenated_timeseries[group], self._mean_vec[group], self._stdev_vec[group] = (
                 _standardize(concatenated_timeseries[group], return_parameters=True)
@@ -572,7 +583,13 @@ class CAP(_CAPGetter):
         return concatenated_timeseries
 
     @staticmethod
-    def _get_runs(requested_runs, curr_runs):
+    def _get_runs(
+        requested_runs: Union[list, None], curr_runs: list
+    ) -> tuple[list, Union[list, None]]:
+        """
+        Filters the current runs available for a subject if specific runs are requested.
+        Also returns a list of missing runs that were requested
+        """
         if requested_runs:
             requested_runs = [str(run).removeprefix("run-") for run in requested_runs]
             requested_runs = [f"run-{run}" for run in requested_runs]
@@ -583,8 +600,16 @@ class CAP(_CAPGetter):
         return runs, miss_runs
 
     def _select_optimal_clusters(
-        self, method, configs, show_figs, output_dir, progress_bar, as_pickle, **kwargs
-    ):
+        self,
+        method: str,
+        configs: dict,
+        show_figs: bool,
+        output_dir: Union[str, None],
+        progress_bar: bool,
+        as_pickle: bool,
+        **kwargs,
+    ) -> None:
+        """Selects optimal number of clusters based on the specific ``cluster_selection_method``."""
         self._cluster_scores = {}
         self._optimal_n_clusters = {}
         self._kmeans = {}
@@ -675,8 +700,16 @@ class CAP(_CAPGetter):
         self._cluster_scores.update({"Scores": performance_dict})
 
     def _plot_method(
-        self, method, performance_dict, group, show_figs, output_dir, as_pickle, **kwargs
-    ):
+        self,
+        method: str,
+        performance_dict: dict,
+        group: str,
+        show_figs: bool,
+        output_dir: Union[str, None],
+        as_pickle: bool,
+        **kwargs,
+    ) -> None:
+        """Plots results of the specific ``cluster_selection_method``."""
         y_titles = {
             "elbow": "Inertia",
             "davies_bouldin": "Davies Bouldin Score",
@@ -720,7 +753,8 @@ class CAP(_CAPGetter):
 
         _PlotFuncs.show(show_figs)
 
-    def _var_explained(self):
+    def _var_explained(self) -> None:
+        """Computes variance explained in the concatenated timeseries by clustering."""
         self._variance_explained = {}
 
         for group in self._groups:
@@ -729,7 +763,8 @@ class CAP(_CAPGetter):
             explained_var = 1 - (self._kmeans[group].inertia_ / total_var)
             self._variance_explained[group] = explained_var
 
-    def _create_caps_dict(self):
+    def _create_caps_dict(self) -> None:
+        """Maps groups to their CAPs (cluster centroids)."""
         self._caps = {}
 
         for group in self._groups:
@@ -746,7 +781,8 @@ class CAP(_CAPGetter):
             )
 
     @staticmethod
-    def _raise_error(attr_name):
+    def _raise_error(attr_name: str) -> None:
+        """Raises an attribute error if a specific attribute is not present."""
         if attr_name == "_caps":
             raise AttributeError(
                 "Cannot plot caps since `self.caps` is None. Run `self.get_caps()` first."
@@ -761,7 +797,8 @@ class CAP(_CAPGetter):
                 "Cannot calculate metrics since `self.kmeans` is None. Run `self.get_caps()` first."
             )
 
-    def _check_required_attrs(self, attr_names):
+    def _check_required_attrs(self, attr_names: list) -> None:
+        """Checks if certain attributes, needed for a specific function, are present."""
         for attr_name in attr_names:
             if getattr(self, attr_name, None) is None:
                 self._raise_error(attr_name)
@@ -1116,7 +1153,12 @@ class CAP(_CAPGetter):
             return df_dict
 
     @staticmethod
-    def _filter_metrics(metrics):
+    def _filter_metrics(metrics: Union[list, tuple, None]) -> list:
+        """
+        Filters metrics to ensure only the supported metrics ("temporal_fraction", "persistence",
+        "counts", "transition_frequency") are in the list. Maintains the order of the original
+        user-specified metrics.
+        """
         metrics = (
             ("temporal_fraction", "persistence", "counts", "transition_frequency")
             if metrics is None
@@ -1149,7 +1191,12 @@ class CAP(_CAPGetter):
 
         return ordered_metrics
 
-    def _get_caps_info(self):
+    def _get_caps_info(self) -> tuple[list, int, dict]:
+        """
+        Extracts CAP-related information, specifically the names of the CAPs (i.e. CAP-1, CAP-2,
+        etc), the maximum number of CAPs found across all groups (e.g if Group A has 4 CAPs and
+        group B has 5 CAPs then 5 is returned), and the number of CAPs for each group.
+        """
         group_cap_counts = {}
 
         for group in self._groups:
@@ -1162,7 +1209,15 @@ class CAP(_CAPGetter):
 
         return cap_names, max_cap, group_cap_counts
 
-    def _build_prediction_dict(self, subject_timeseries, runs, continuous_runs):
+    def _build_prediction_dict(
+        self, subject_timeseries: SubjectTimeseries, runs: Union[list, None], continuous_runs: bool
+    ) -> dict[str, NDArray]:
+        """
+        Uses group-specific k-means models to assign frames to CAPs for each subject in
+        ``self.subject_table``. If ``standardize`` is True, uses group-specific means and standard
+        deviations (derived from the group-specific concatenated timeseries) to scale the
+        timeseries data of a subject prior to frame assignments.
+        """
         for subj_id, group in self._subject_table.items():
             if "predicted_subject_timeseries" not in locals():
                 predicted_subject_timeseries = {}
@@ -1210,8 +1265,8 @@ class CAP(_CAPGetter):
 
         return predicted_subject_timeseries
 
-    # Get all pairs of all possible transitions
-    def _get_pairs(self):
+    def _get_pairs(self) -> dict[str, list[tuple[int, int]]]:
+        """Obtains all possible transition pairs."""
         group_caps = {}
         all_pairs = {}
 
@@ -1221,7 +1276,10 @@ class CAP(_CAPGetter):
 
         return all_pairs
 
-    def _build_df(self, metrics, cap_names, pairs):
+    def _build_df(
+        self, metrics: list, cap_names: list, pairs: dict[str, list[tuple[int, int]]]
+    ) -> dict:
+        """Initializes the output dataframes with column names for each requested metric."""
         df_dict = {}
         base_cols = ["Subject_ID", "Group", "Run"]
 
@@ -1238,7 +1296,8 @@ class CAP(_CAPGetter):
 
         return df_dict
 
-    def _distribute(self, predicted_subject_timeseries):
+    def _distribute(self, predicted_subject_timeseries: dict[str, NDArray]) -> dict[str, tuple]:
+        """Creates a dictionary mapping for each subject and run pair to iterate over."""
         distributed_dict = {}
 
         for subj_id, group in self._subject_table.items():
@@ -1248,8 +1307,13 @@ class CAP(_CAPGetter):
 
         return distributed_dict
 
-    def _compute_temporal_fraction(self, arr, sub_info, df, n_group_caps, max_cap):
-        # Get frequency
+    def _compute_temporal_fraction(
+        self, arr: NDArray, sub_info: list, df: pd.DataFrame, n_group_caps: int, max_cap: int
+    ) -> pd.DataFrame:
+        """
+        Computes temporal fraction for the subject and run specified in ``sub_info`` and inserts new
+        row in the dataframe.
+        """
         frequency_dict = {
             key: np.where(arr == key, 1, 0).sum() for key in range(1, n_group_caps + 1)
         }
@@ -1260,7 +1324,13 @@ class CAP(_CAPGetter):
 
         return self._append_df(df, sub_info, proportion_dict)
 
-    def _compute_counts(self, arr, sub_info, df, n_group_caps, max_cap):
+    def _compute_counts(
+        self, arr: NDArray, sub_info: list, df: pd.DataFrame, n_group_caps: int, max_cap: int
+    ) -> pd.DataFrame:
+        """
+        Computes counts for the subject and run specified in ``sub_info`` and inserts new row in the
+        dataframe.
+        """
         count_dict = {}
         for target in range(1, n_group_caps + 1):
             if target in arr:
@@ -1273,8 +1343,11 @@ class CAP(_CAPGetter):
 
         return self._append_df(df, sub_info, count_dict)
 
-    def _compute_persistence(self, arr, sub_info, df, n_group_caps, max_cap, tr):
-        # Initialize variable
+    def _compute_persistence(self, arr, sub_info, df, n_group_caps, max_cap, tr) -> pd.DataFrame:
+        """
+        Computes persistence for the subject and run specified in ``sub_info`` and inserts new row
+        in the dataframe.
+        """
         persistence_dict = {}
 
         # Iterate through caps
@@ -1289,23 +1362,33 @@ class CAP(_CAPGetter):
         return self._append_df(df, sub_info, persistence_dict)
 
     @staticmethod
-    def _segments(target, timeseries):
-        # timeseries = [1, 2, 1, 1, 1, 3]; target = 1
-        # binary_arr = [1, 0, 1, 1, 1, 0]
+    def _segments(target, timeseries) -> tuple[NDArray[np.bool_], int]:
+        """
+        Computes the number of segments for persistence and counts computation. Always returns
+        1 for number of segments to prevent NaN due to divide by 0.
+
+        Example Computation
+        -------------------
+        >>> import numpy as np
+        >>> arr = np.array([1, 2, 1, 1, 1, 3])
+        >>> target = 1
+        >>> binary_arr = np.where(timeseries == target, 1, 0) # [1, 0, 1, 1, 1, 0]
+        >>> target_indices = np.where(binary_arr == 1)[0] # [0, 2, 3, 4]
+        >>> diff_arr = np.diff(target_indices, n=1) # [2, 1, 1]
+        >>> n_transitions = np.where(diff_arr > 1, 1, 0).sum() # 1
+        >>> n_segments += 1 # Account for first segment
+        """
         binary_arr = np.where(timeseries == target, 1, 0)
-        # indxs = [0, 2, 3, 4]; indices of target
         target_indices = np.where(binary_arr == 1)[0]
-        # diff_arr = [2, 1, 1]; diff_arr > 1 represents number of transitions based on indices
-        # binary for diff > 1 = [1, 0, 0]; n_segments = n_transitions + 1 (first_sequence) = 2
         n_segments = np.where(np.diff(target_indices, n=1) > 1, 1, 0).sum() + 1
 
         return binary_arr, n_segments
 
     @staticmethod
-    def _update_dict(max_cap, n_group_caps, curr_dict):
+    def _update_dict(max_cap: int, n_group_caps: int, curr_dict: dict):
+        """Adds NaN for groups with less caps than the group with the greatest number of caps."""
         curr_dict = curr_dict.copy()
 
-        # Adds NaN for groups with less caps than the group with the greatest number of caps
         if max_cap > n_group_caps:
             for i in range(n_group_caps + 1, max_cap + 1):
                 curr_dict.update({i: float("nan")})
@@ -1313,14 +1396,25 @@ class CAP(_CAPGetter):
         return curr_dict
 
     @staticmethod
-    def _append_df(df, sub_info, metric_dict):
+    def _append_df(df, sub_info, metric_dict) -> pd.DataFrame:
+        """Appends new row in dataframe."""
         df.loc[len(df)] = sub_info + [items for items in metric_dict.values()]
         return df
 
     @staticmethod
-    def _compute_transition_frequency(arr, sub_info, df):
-        # timeseries = [1, 2, 1, 1, 1, 3]; diff_arr = [1, -1, 0, 0, 2]
-        # binary representation for values not zero is [1, 1, 0, 0, 1] = 3 transitions
+    def _compute_transition_frequency(
+        arr: NDArray, sub_info: list, df: pd.DataFrame
+    ) -> pd.DataFrame:
+        """
+        Computes transition frequency for the subject and run specified in ``sub_info`` and inserts
+        new row in the dataframe.
+
+        Example Computation
+        -------------------
+        >>> import numpy as np
+        >>> arr = np.array([1, 2, 1, 1, 1, 3])
+        >>> n_trans = np.where(np.diff(arr, n=1) != 0, 1, 0).sum()
+        """
         transition_frequency = np.where(np.diff(arr, n=1) != 0, 1, 0).sum()
 
         df.loc[len(df)] = sub_info + [transition_frequency]
@@ -1328,7 +1422,13 @@ class CAP(_CAPGetter):
         return df
 
     @staticmethod
-    def _compute_transition_probability(arr, sub_info, df, cap_pairs):
+    def _compute_transition_probability(
+        arr: NDArray, sub_info: list, df: pd.DataFrame, cap_pairs: list[tuple[int, int]]
+    ) -> pd.DataFrame:
+        """
+        Computes transition probability for the subject and run specified in ``sub_info`` and
+        inserts new row in the dataframe.
+        """
         df.loc[len(df)] = sub_info + [0.0] * (df.shape[-1] - 3)
 
         # Arrays for transitioning from and to element
@@ -1349,7 +1449,10 @@ class CAP(_CAPGetter):
 
         return df
 
-    def _save_metrics(self, output_dir, df_dict, prefix_filename):
+    def _save_metrics(
+        self, output_dir: str, df_dict: dict, prefix_filename: Union[str, None]
+    ) -> None:
+        """Saves the metric dataframes as csv files."""
         for metric in df_dict:
             filename = io_utils._filename(
                 base_name=f"{metric}", add_name=prefix_filename, pos="prefix"
@@ -1569,9 +1672,11 @@ class CAP(_CAPGetter):
 
         return self
 
-    def _compute_region_means(self, parcellation_name):
-        # Internal function to create an attribute called `_region_means` to average the values of
-        # all nodes in a corresponding region to create region heatmaps or outer product plots
+    def _compute_region_means(self, parcellation_name: str) -> None:
+        """
+        Creates an attribute called ``self._region_means``, representing the average values of
+        all nodes in a corresponding region to create region heatmaps or outer product plots.
+        """
         self._region_means = {group: {} for group in self._groups}
 
         region_dict = (
@@ -1610,9 +1715,12 @@ class CAP(_CAPGetter):
             self._region_means[group].update({"Regions": regions})
             self._region_means[group].update({cap: region_means})
 
-    def _extract_scope_information(self, scope, parcellation_name):
-        # Extracting region means if scope is "region" and the labels or extracting the full
-        # activation vector and labels if scope is "nodes"
+    def _extract_scope_information(self, scope: str, parcellation_name: str) -> tuple[dict, list]:
+        """
+        Extracting region means of each CAP from ``self._region_means`` if scope is "region" else
+        extracts the CAP vectors from ``self._caps``. Also extracts region labels or nodes
+        from the ``parcel_approach``.
+        """
         if scope == "regions":
             cap_dict = {
                 group: {k: v for k, v in self._region_means[group].items() if k != "Regions"}
@@ -1635,19 +1743,23 @@ class CAP(_CAPGetter):
 
     def _generate_outer_product_plots(
         self,
-        group,
-        plot_dict,
-        cap_dict,
-        full_labels,
-        subplots,
-        output_dir,
-        suffix_title,
-        suffix_filename,
-        show_figs,
-        as_pickle,
-        scope,
-        parcellation_name,
-    ):
+        group: str,
+        plot_dict: dict,
+        cap_dict: dict,
+        full_labels: list,
+        subplots: bool,
+        output_dir: Union[str, None],
+        suffix_title: Union[str, None],
+        suffix_filename: Union[str, None],
+        show_figs: bool,
+        as_pickle: bool,
+        scope: str,
+        parcellation_name: str,
+    ) -> None:
+        """
+        Generates the outer product plots (either individual plots for each CAP or a single subplot
+        if ``subplot`` is True).
+        """
         self._outer_products[group] = {}
 
         plot_labels = (
@@ -1658,9 +1770,11 @@ class CAP(_CAPGetter):
 
         # Create base grid for subplots
         if subplots:
-            fig, axes, axes_x, axes_y, ncol, nrow = self._initialize_outer_product_subplot(
+            fig, axes, axes_coord, shape = self._initialize_outer_product_subplot(
                 cap_dict, group, plot_dict, suffix_title
             )
+            axes_x, axes_y = axes_coord
+            ncol, nrow = shape
 
         for cap in cap_dict[group]:
             # Calculate outer product
@@ -1815,8 +1929,18 @@ class CAP(_CAPGetter):
         _PlotFuncs.show(show_figs)
 
     @staticmethod
-    def _initialize_outer_product_subplot(cap_dict, group, plot_dict, suffix_title):
-        # Subplotting for outer_product
+    def _initialize_outer_product_subplot(
+        cap_dict: dict, group: str, plot_dict: dict, suffix_title: Union[str, None]
+    ) -> tuple[plt.Figure, plt.Axes, tuple, tuple]:
+        """
+        Initializes the subplot for "outer_product".
+
+        Returns
+        -------
+            tuple containing the matplotlib figure, matplolib axes, tuple representing the row and
+            column position of the current suplot (0, 0), and tuple representing the number of
+            rows and columns in the subplot.
+        """
         # Max five subplots per row for default
         default_col = len(cap_dict[group]) if len(cap_dict[group]) <= 5 else 5
         ncol = plot_dict["ncol"] if plot_dict["ncol"] is not None else default_col
@@ -1841,25 +1965,23 @@ class CAP(_CAPGetter):
         if plot_dict["tight_layout"]:
             fig.tight_layout(rect=plot_dict["rect"])
 
-        # Current subplot
-        axes_x, axes_y = [0, 0]
-
-        return fig, axes, axes_x, axes_y, ncol, nrow
+        return fig, axes, (0, 0), (ncol, nrow)
 
     def _generate_heatmap_plots(
         self,
-        group,
-        plot_dict,
-        cap_dict,
-        full_labels,
-        output_dir,
-        suffix_title,
-        suffix_filename,
-        show_figs,
-        as_pickle,
-        scope,
-        parcellation_name,
-    ):
+        group: str,
+        plot_dict: dict,
+        cap_dict: dict,
+        full_labels: list,
+        output_dir: Union[str, None],
+        suffix_title: Union[str, None],
+        suffix_filename: Union[str, None],
+        show_figs: bool,
+        as_pickle: bool,
+        scope: str,
+        parcellation_name: str,
+    ) -> None:
+        """Generates one heatmap per group."""
         plt.figure(figsize=plot_dict["figsize"])
         plot_labels = {"xticklabels": True, "yticklabels": True}
 
@@ -1928,7 +2050,24 @@ class CAP(_CAPGetter):
         _PlotFuncs.show(show_figs)
 
     @staticmethod
-    def _collapse_node_labels(parcellation_name, parcel_approach, node_ids=None):
+    def _collapse_node_labels(
+        parcellation_name: str, parcel_approach: ParcelApproach, node_ids: Union[list, None] = None
+    ) -> tuple[list, list]:
+        """
+        Collapses node labels names (based on unique node names and hemisphere) for plotting
+        purposes. For instance in the Schaefer parcellation, nodes containing "Vis" have a left and
+        right hemisphere version, instead of ["LH_Vis_1", "LH_Vis_2", "RH_Vis_1", "RH_Vis_2", ...],
+        the unique names would be "LH Vis" and "RH Vis". The frequencies of nodes containing the
+        unique node name and hemisphere combination are computed to reduce plot clutter when "nodes"
+        are plotted.
+
+        Returns
+        -------
+            tuple consisting of a two lists. The first list is the same length as
+            "nodes" in ``self._parcel_approach`` and contains the unique node and hemisphere
+            combination at certain indices, with the remaining indices being empty strings.
+            The second list only contains the names of the unique node and hemisphere comvination.
+        """
         # Get frequency of each major hemisphere and region in Schaefer, AAL, or Custom atlas
         if parcellation_name == "Schaefer":
             nodes = parcel_approach[parcellation_name]["nodes"]
@@ -2211,7 +2350,8 @@ class CAP(_CAPGetter):
         return self
 
     @staticmethod
-    def _validate_knn_dict(knn_dict):
+    def _validate_knn_dict(knn_dict: Union[dict, None]) -> Union[dict, None]:
+        """Validates the ``knn_dict``."""
         if not knn_dict:
             return None
 
@@ -2474,7 +2614,8 @@ class CAP(_CAPGetter):
         return self
 
     @staticmethod
-    def _create_temp_nifti(stat_map):
+    def _create_temp_nifti(stat_map: nib.Nifti1Image) -> tempfile._TemporaryFileWrapper:
+        """Creates a temporary NifTI image as a workaround for Python 3.12 issue."""
         # Create temp file
         temp_nifti = tempfile.NamedTemporaryFile(delete=False, suffix=".nii.gz")
         LG.warning(
@@ -2491,7 +2632,15 @@ class CAP(_CAPGetter):
         return temp_nifti
 
     @staticmethod
-    def _generate_surface_plot(plot_dict, gii_lh, gii_rh, group, cap, suffix_title):
+    def _generate_surface_plot(
+        plot_dict: dict,
+        gii_lh: tuple[nib.gifti.GiftiImage],
+        gii_rh: tuple[nib.gifti.GiftiImage],
+        group: str,
+        cap: str,
+        suffix_title: Union[str, None],
+    ) -> plt.Figure:
+        """Creates the surface plot."""
         # Code adapted from example on https://surfplot.readthedocs.io/
         surfaces = fetch_fslr()
 
@@ -2813,7 +2962,13 @@ class CAP(_CAPGetter):
 
         return self
 
-    def _update_radar_dict(self, group, parcellation_name, radar_dict):
+    def _update_radar_dict(self, group: str, parcellation_name: str, radar_dict: dict) -> None:
+        """
+        Updates a dictionary containing information about the cosine similarity between each region
+        specified in a parcellation and the positive and negative activations in a CAP vector for
+        all CAPs.
+        """
+        # TODO: Add explicit return, possibly create deepcopy of dict
         for cap in self._caps[group]:
             cap_vector = self._caps[group][cap]
             radar_dict[cap] = {"High Amplitude": [], "Low Amplitude": []}
@@ -2833,7 +2988,13 @@ class CAP(_CAPGetter):
                 radar_dict[cap]["High Amplitude"].append(high_amp_cosine)
                 radar_dict[cap]["Low Amplitude"].append(low_amp_cosine)
 
-    def _create_region_mask_1d(self, parcellation_name, region, cap_vector):
+    def _create_region_mask_1d(
+        self, parcellation_name: str, region: str, cap_vector: NDArray[np.floating]
+    ) -> NDArray[np.bool_]:
+        """
+        Creates a 1D binary mask where 1 denotes the indices in ``cap_vector`` belonging to a
+        specific network/region and "0" otherwise.
+        """
         # Get the index values of nodes in each network/region
         if parcellation_name == "Custom":
             lh = list(self._parcel_approach[parcellation_name]["regions"][region]["lh"])
@@ -2855,7 +3016,10 @@ class CAP(_CAPGetter):
         return region_mask
 
     @staticmethod
-    def _compute_cosine_similarity(amp_vector, region_mask):
+    def _compute_cosine_similarity(
+        amp_vector: NDArray[np.floating], region_mask: NDArray[np.bool_]
+    ) -> np.floating:
+        """Compute the cosine similarity between a vector and 1D binary mask."""
         dot_product = np.dot(amp_vector, region_mask)
         norm_region_mask = np.linalg.norm(region_mask)
         norm_amp_vector = np.linalg.norm(amp_vector)
@@ -2864,7 +3028,15 @@ class CAP(_CAPGetter):
         return cosine_similarity
 
     @staticmethod
-    def _generate_radar_plot(use_scatterpolar, radar_dict, cap, plot_dict, group, suffix_title):
+    def _generate_radar_plot(
+        use_scatterpolar: bool,
+        radar_dict: dict,
+        cap: str,
+        plot_dict: dict,
+        group: str,
+        suffix_title: Union[str, None],
+    ) -> go.Figure:
+        """Generates radar plots."""
         if use_scatterpolar:
             # Create dataframe
             df = pd.DataFrame({"Regions": radar_dict["Regions"]})
