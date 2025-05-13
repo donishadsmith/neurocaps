@@ -13,7 +13,7 @@ from tqdm.auto import tqdm
 
 import neurocaps._utils.io as io_utils
 from ..exceptions import BIDSQueryError
-from ..typing import ParcelConfig, ParcelApproach
+from ..typing import ParcelConfig, ParcelApproach, SubjectTimeseries
 from .._utils import (
     _TimeseriesExtractorGetter,
     _PlotDefaults,
@@ -1121,7 +1121,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         return tr
 
-    def _expand_dicts(self, subject_timeseries: dict, qc: dict) -> None:
+    def _expand_dicts(
+        self, subject_timeseries: Union[SubjectTimeseries, None], qc: Union[dict, None]
+    ) -> None:
         """
         Aggregates individual subject timeseries and qc dictionaries into ``self._subject_timeseries``
         and ``self._qc``.
@@ -1401,7 +1403,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         # Obtain the column indices associated with the rois
         parcellation_name = list(self._parcel_approach)[0]
-        if roi_indx or roi_indx == 0:
+        if roi_indx is not None:
             plot_indxs = self._get_roi_indices(roi_indx, parcellation_name)
         else:
             plot_indxs = self._get_region_indices(region, parcellation_name)
