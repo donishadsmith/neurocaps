@@ -1343,7 +1343,15 @@ class CAP(_CAPGetter):
 
         return self._append_df(df, sub_info, count_dict)
 
-    def _compute_persistence(self, arr, sub_info, df, n_group_caps, max_cap, tr) -> pd.DataFrame:
+    def _compute_persistence(
+        self,
+        arr: NDArray,
+        sub_info: list,
+        df: pd.DataFrame,
+        n_group_caps: int,
+        max_cap: int,
+        tr: Union[float, int, None],
+    ) -> pd.DataFrame:
         """
         Computes persistence for the subject and run specified in ``sub_info`` and inserts new row
         in the dataframe.
@@ -1362,7 +1370,7 @@ class CAP(_CAPGetter):
         return self._append_df(df, sub_info, persistence_dict)
 
     @staticmethod
-    def _segments(target, timeseries) -> tuple[NDArray[np.bool_], int]:
+    def _segments(target: int, timeseries: NDArray) -> tuple[NDArray[np.bool_], int]:
         """
         Computes the number of segments for persistence and counts computation. Always returns
         1 for number of segments to prevent NaN due to divide by 0.
@@ -1396,7 +1404,7 @@ class CAP(_CAPGetter):
         return curr_dict
 
     @staticmethod
-    def _append_df(df, sub_info, metric_dict) -> pd.DataFrame:
+    def _append_df(df: pd.DataFrame, sub_info: list, metric_dict: dict) -> pd.DataFrame:
         """Appends new row in dataframe."""
         df.loc[len(df)] = sub_info + [items for items in metric_dict.values()]
         return df
