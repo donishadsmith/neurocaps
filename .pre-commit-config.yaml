@@ -50,9 +50,11 @@ repos:
     hooks:
     -   id: grep
         name: grep
-        # Public classes the underscore prefix for attribute names. These attributes are accessed using private getter
-        # classes which allows access to these attributes via properties.
-        description: Uses grep to ensure all attributes in the TimeseriesExtractor and CAP classes have the underscore prefix
+        # Public classes the underscore prefix for attribute names. These attributes are accessed
+        # using private getter classes which allows access to these attributes via properties.
+        description: Uses grep to ensure all attributes in the TimeseriesExtractor and CAP classes
+                     have the underscore prefix. Only exception is ``return_cap_labels()`` in the
+                     CAP class.
         types: [python]
         entry: python hooks/grep.py
         language: system

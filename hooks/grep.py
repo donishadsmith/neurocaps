@@ -12,12 +12,12 @@ for file in files:
     if not is_windows:
         # Pattern used two negative look behinds to ignore "self" preceded by a backtick or del + whitespace
         # then a negative look ahead for "self" that is not followed by underscore, followed by word.
-        cmd = f"grep -P '(?<!`)(?<!del )self\.(?!_)(?=\w+)' {file}"
+        cmd = fr"grep -P '(?<!`)(?<!del )self\.(?!_)(?!return_cap_labels\b)(?=\w+)' {file}"
     else:
         cmd = [
             "powershell",
             "-Command",
-            f"Select-String -Path {file} -Pattern '(?<!`)(?<!del )self\.(?!_)(?=\w+)'",
+            fr"Select-String -Path {file} -Pattern '(?<!`)(?<!del )self\.(?!_)(?!return_cap_labels\b)(?=\w+)'",
         ]
 
     # Get std output

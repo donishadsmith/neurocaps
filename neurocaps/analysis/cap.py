@@ -925,8 +925,8 @@ class CAP(_CAPGetter):
 
         runs: :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
             The run IDs to calculate CAP metrics for (e.g. ``runs=[0, 1]`` or ``runs=["01", "02"]``).
-            If None, CAP metrics will be calculated for each run, even if only specific runs were
-            used during ``self.get_caps()``.
+            If None, CAP metrics will be calculated for all detected run IDs even if only specific
+            runs were used during ``self.get_caps()``.
 
         continuous_runs: :obj:`bool`, default=False
             If True, all runs will be treated as a single, uninterrupted run.
@@ -1091,11 +1091,13 @@ class CAP(_CAPGetter):
 
         metrics = self._filter_metrics(metrics)
 
-        subject_timeseries = io_utils._get_obj(subject_timeseries)
+        subject_timeseries = io_utils._get_obj(subject_timeseries, needs_deepcopy=False)
 
-        # Assign each subject's frame to a CAP
-        predicted_subject_timeseries = self._build_prediction_dict(
-            subject_timeseries, runs, continuous_runs
+        # Assign each subject's frame to a CAP, adding shift is not necessary for the current
+        # iteration of the code, done for conceptual reasons due to the naming for the CAPs start
+        # at 1
+        predicted_subject_timeseries = self.return_cap_labels(
+            subject_timeseries, runs, continuous_runs, shift_labels=True
         )
 
         cap_names, max_cap, group_cap_counts = self._get_caps_info()
@@ -1209,15 +1211,101 @@ class CAP(_CAPGetter):
 
         return cap_names, max_cap, group_cap_counts
 
-    def _build_prediction_dict(
-        self, subject_timeseries: SubjectTimeseries, runs: Union[list, None], continuous_runs: bool
-    ) -> dict[str, NDArray]:
+    def return_cap_labels(
+        self,
+        subject_timeseries: Union[SubjectTimeseries, str],
+        runs: Union[list, None] = None,
+        continuous_runs: bool = False,
+        shift_labels: bool = False,
+    ) -> dict[str, dict[str, NDArray]]:
         """
-        Uses group-specific k-means models to assign frames to CAPs for each subject in
-        ``self.subject_table``. If ``standardize`` is True, uses group-specific means and standard
-        deviations (derived from the group-specific concatenated timeseries) to scale the
-        timeseries data of a subject prior to frame assignments.
+        Return CAP Labels for Each Subject.
+
+        Uses the group-specific k-means models in ``self.kmeans`` to assign each frames (TR) to
+        CAPs for each subject in ``self.subject_table``.
+
+        The process involves the following steps:
+
+            1. Retrieve the timeseries for a specific subject's run from ``subject_timeseries``.
+
+            2. Determine their group assignment using ``self.subject_table`` and scale their
+               timeseries data (if ``standardize`` was set to True in ``self.get_caps()``) using the
+               means and standard deviation derived from the group specific concatenated dataframes
+               (``self.means`` and ``self.std_dev``).
+
+                .. note:: This scaling ensures the subject's data matches the distribution of the\
+                input data used for group-specific clustering, which is needed for accurate\
+                predictions when using group-specific k-means models.
+
+            3. Use group-specific k-means model (``self.kmeans``) and the ``predict()`` function
+               from scikit-learn's ``KMeans`` to assign each frame (TR).
+
+            4. If ``shift_labels`` is True, apply a one unit shift for the minimum label to
+               start at "1" instead of "0".
+
+            5. Repeat 1-4 to the remaining runs (all if ``runs`` is None or specific runs) for the
+               subject.
+
+            6. If ``continuous_runs`` is True, then stack each numpy array horizontally to create a
+               single array containing the predicted labels for a subject.
+
+            7. Repeat 1-6 for the remaining subjects.
+
+        Parameters
+        ----------
+        subject_timeseries: :obj:`SubjectTimeseries` or :obj:`str`
+            A dictionary mapping subject IDs to their run IDs and their associated timeseries
+            (TRs x ROIs) as a NumPy array. Can also be a path to a pickle file containing this same
+            structure. Refer to documentation for ``SubjectTimeseries`` in the "See Also" section
+            for an example structure.
+
+        runs: :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
+            The run IDs to return CAP labels for (e.g. ``runs=[0, 1]`` or ``runs=["01", "02"]``).
+            If None, CAP labels will be returned for all detected run IDs even if only specific runs
+            were used during ``self.get_caps()``.
+
+        continuous_runs: :obj:`bool`, default=False
+            If True, all runs will be treated as a single, uninterrupted run.
+
+            ::
+
+                # CAP assignment of frames from for run_1 and run_2
+                run_1 = [0, 1, 1]
+                run_2 = [2, 3, 3]
+
+                # Computation of each CAP metric will be conducted on the combined vector
+                continuous_runs = [0, 1, 1, 2, 3, 3]
+
+            .. note::
+                - This parameter can be used together with ``runs`` to filter the runs to combine.
+                - The run-ID for each subject in the dictionary will be converted to run-continuous
+                  to denote that runs were combined.
+                - If only a single run available for a subject, the original run ID (as opposed to
+                  "run-continuous") will be used.
+
+        shift_labels: :obj:`bool`, default=False
+            If True, shifts each label by up one unit for the minimum CAP label to start at "1" as
+            opposed to "0" (scikit-learn's default), if preferred.
+
+            ::
+
+                predicted_labels = [0, 2, 5]
+                # Add plus one shift
+                predicted_labels = [1, 3, 6]
+
+        See Also
+        --------
+        :data:`neurocaps.typing.SubjectTimeseries`
+            Type definition for the subject timeseries dictionary structure.
+
+        Returns
+        -------
+            dict[str, dict[str, np.ndarray]]
+                Dictionary mapping each subject to their run IDs and a 1D numpy array containing
+                the predicted CAP for each frame (TR).
         """
+        subject_timeseries = io_utils._get_obj(subject_timeseries, needs_deepcopy=False)
+
         for subj_id, group in self._subject_table.items():
             if "predicted_subject_timeseries" not in locals():
                 predicted_subject_timeseries = {}
@@ -1233,8 +1321,7 @@ class CAP(_CAPGetter):
 
             if not subject_runs:
                 LG.warning(
-                    f"[SUBJECT: {subj_id}] Excluded from the concatenated timeseries due to having "
-                    "no runs."
+                    f"[SUBJECT: {subj_id}] Excluded from the dictionary due to having no runs."
                 )
                 continue
 
@@ -1249,7 +1336,8 @@ class CAP(_CAPGetter):
                     timeseries = subject_timeseries[subj_id][run_id]
 
                 # Add 1 to the prediction vector since labels start at 0
-                prediction_dict.update({run_id: self._kmeans[group].predict(timeseries) + 1})
+                shift = 1 if shift_labels else 0
+                prediction_dict.update({run_id: self._kmeans[group].predict(timeseries) + shift})
 
             if len(prediction_dict) > 1 and continuous_runs:
                 # Horizontally stack predicted runs
@@ -2976,7 +3064,6 @@ class CAP(_CAPGetter):
         specified in a parcellation and the positive and negative activations in a CAP vector for
         all CAPs.
         """
-        # TODO: Add explicit return, possibly create deepcopy of dict
         for cap in self._caps[group]:
             cap_vector = self._caps[group][cap]
             radar_dict[cap] = {"High Amplitude": [], "Low Amplitude": []}

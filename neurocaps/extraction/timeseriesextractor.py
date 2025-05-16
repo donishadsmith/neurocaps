@@ -1134,10 +1134,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 self._qc.update(qc)
 
     @staticmethod
-    def _raise_error(prop_name: str, msg: str) -> None:
+    def _raise_error(attr_name: str, msg: str) -> None:
         """Raises error if ``_subject_timeseries`` pr ``self._qc`` is not available."""
-        # TODO: Change all instances of prop_name to attr_name in class and tests
-        if prop_name == "_subject_timeseries":
+        if attr_name == "_subject_timeseries":
             raise AttributeError(
                 f"{msg} since `self.subject_timeseries` is None, either run `self.get_bold()` or "
                 "assign a valid timeseries dictionary to `self.subject_timeseries`."
@@ -1164,8 +1163,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         -------
         self
         """
-        save_filename = self._prepare_output_file(
-            output_dir, filename, prop_name="_subject_timeseries", call="timeseries_to_pickle"
+        save_filename = self._create_output_filename(
+            output_dir, filename, attr_name="_subject_timeseries", call="timeseries_to_pickle"
         )
 
         io_utils._serialize(self._subject_timeseries, output_dir, save_filename, use_joblib=True)
@@ -1238,8 +1237,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         represent the average length and population standard deviation of consecutive frames flagged
         for high-motion frames, respectively.
         """
-        save_filename = self._prepare_output_file(
-            output_dir, filename, prop_name="_qc", call="report_qc"
+        save_filename = self._create_output_filename(
+            output_dir, filename, attr_name="_qc", call="report_qc"
         )
         assert self._qc, "No quality control information to report."
 
@@ -1277,17 +1276,16 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         if return_df:
             return df
 
-    def _prepare_output_file(
-        self, output_dir: Union[str, None], filename: Union[str, None], prop_name: str, call: str
+    def _create_output_filename(
+        self, output_dir: Union[str, None], filename: Union[str, None], attr_name: str, call: str
     ) -> Union[str, None]:
         """Checks if the required attribute is present then creates the output filename."""
-        # TODO: Change ``_prepare_output_file`` to ``_create_output_filename``
-        if not hasattr(self, prop_name):
+        if not hasattr(self, attr_name):
             self._raise_error(
-                prop_name,
+                attr_name,
                 msg=(
                     "Cannot save pickle file"
-                    if prop_name == "_subject_timeseries"
+                    if attr_name == "_subject_timeseries"
                     else "Cannot save csv file"
                 ),
             )
@@ -1378,7 +1376,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         """
 
         if not hasattr(self, "_subject_timeseries"):
-            self._raise_error(prop_name="_subject_timeseries", msg="Cannot plot bold data")
+            self._raise_error(attr_name="_subject_timeseries", msg="Cannot plot bold data")
 
         subj_id = str(subj_id).removeprefix("sub-")
         if subj_id not in self._subject_timeseries:

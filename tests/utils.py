@@ -305,8 +305,8 @@ def concat_data(timeseries, subject_table, standardize, runs=(1, 2, 3)):
 
 def predict_labels(timeseries, cap_analysis, standardize, group, runs=(1, 2, 3)):
     """
-    Similar method to how labels are predicted in CAP.calculate_metrics, same labels are then used
-    to calculate the metrics.
+    Similar method to how labels are predicted in ``CAP.calculate_metrics``, same labels are then
+    used to calculate the metrics.
     """
     labels = None
     group_dict = cap_analysis.groups[group]
@@ -328,19 +328,47 @@ def predict_labels(timeseries, cap_analysis, standardize, group, runs=(1, 2, 3))
     return labels
 
 
-def get_first_subject(timeseries, cap_analysis, standardize=True, group="A", runs=(1,)):
-    """
-    Get the first subject from the timeseries data. Unlike internal implementation, doesn't
-    shift labels by + 1 due to the zero based indexing to. Minor difference to increase
-    independence between testing implementation and source code implementation.
-    """
-    first_subject_timeseries = {}
-    first_subject_timeseries.update({"0": timeseries["0"]})
-    first_subject_labels = predict_labels(
-        first_subject_timeseries, cap_analysis, standardize=standardize, group=group, runs=runs
+def predict_subject_labels(
+    timeseries, cap_analysis, standardize=True, subject="0", group="A", runs=(1,)
+):
+    """Predicts subject timeseries labels. Similar to internal implementation."""
+    single_subject_timeseries = {}
+    single_subject_timeseries.update({subject: timeseries[subject]})
+    single_subject_labels = predict_labels(
+        single_subject_timeseries, cap_analysis, standardize=standardize, group=group, runs=runs
     )
 
-    return first_subject_labels
+    return single_subject_labels
+
+
+def get_subject_labels(timeseries, cap_analysis, subject="0", group="A", runs=(1,), hstack=False):
+    """
+    Get the subject from the timeseries data and computes the labels. Used to demonstrate that
+    predicting labels and extracting labels will yield the same results.
+    """
+    single_subject_labels = {subject: {}}
+    labels = cap_analysis.kmeans[group].labels_
+    group_map = [sub for sub, sub_group in cap_analysis.subject_table.items() if sub_group == group]
+
+    pad = 0
+    for sub in group_map:
+        if sub == subject:
+            break
+        else:
+            for run in timeseries[sub]:
+                pad += timeseries[sub][run].shape[0]
+
+    start_point = pad
+    for run in runs:
+        end_point = start_point + timeseries[subject][f"run-{run}"].shape[0]
+        single_subject_labels[subject].update({f"run-{run}": labels[start_point:end_point]})
+        start_point = end_point
+
+    if hstack:
+        arr_list = [single_subject_labels[subject][run] for run in single_subject_labels[subject]]
+        single_subject_labels = np.hstack(arr_list)
+
+    return single_subject_labels
 
 
 def segments(target, timeseries):
