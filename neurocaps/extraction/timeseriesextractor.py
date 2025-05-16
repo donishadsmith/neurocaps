@@ -2,17 +2,18 @@
 
 import json, os, re
 from functools import lru_cache
-from typing import Callable, Literal, Optional, Union
+from typing import Any, Callable, Literal, Optional, Union
 from typing_extensions import Self
 
 import matplotlib.pyplot as plt, numpy as np
 from joblib import Parallel, delayed
+from numpy.typing import NDArray
 from pandas import DataFrame
 from tqdm.auto import tqdm
 
 import neurocaps._utils.io as io_utils
 from ..exceptions import BIDSQueryError
-from ..typing import ParcelConfig, ParcelApproach
+from ..typing import ParcelConfig, ParcelApproach, SubjectTimeseries
 from .._utils import (
     _TimeseriesExtractorGetter,
     _PlotDefaults,
@@ -327,8 +328,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         }
 
     @staticmethod
-    def _validate_init_params(param, struct):
-
+    def _validate_init_params(param: str, struct: Any) -> None:
+        """Validates structure for ``dummy_scans`` and ``fd_threshold``."""
         mandatory_keys = {
             "dummy_scans": {"auto": (bool,)},
             "fd_threshold": {"threshold": (float, int)},
@@ -729,7 +730,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         return self
 
-    def _validate_get_bold_params(self):
+    def _validate_get_bold_params(self) -> None:
+        """Validates ``condition_tr_shift`` and ``slice_time_ref``."""
         if self._task_info["condition_tr_shift"] != 0:
             if (
                 not isinstance(self._task_info["condition_tr_shift"], int)
@@ -753,7 +755,20 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
     @staticmethod
     @lru_cache(maxsize=4)
-    def _call_layout(bids_dir, pipeline_name):
+    def _call_layout(bids_dir: str, pipeline_name: Union[str]):
+        """
+        Returns ``BIDSLayout``.
+
+        Raises
+        ------
+        ModuleNotFoundError
+            The pybids package is not installed.
+
+        Note
+        ----
+        The type hint for the returned (``BIDSLayout`)` is not added to allow certain functions in
+        ``TimeseriesExtractor`` to be used on Windows machines that do not have pybids installed.
+        """
         try:
             import bids
         except ModuleNotFoundError:
@@ -780,8 +795,18 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         return layout
 
-    # Get valid subjects to iterate through
-    def _setup_extraction(self, layout, subj_ids, exclude_niftis, verbose):
+    def _setup_extraction(
+        self, layout, subj_ids: list[str], exclude_niftis: list, verbose: bool
+    ) -> None:
+        """
+        Get valid subjects (stored in ``self._subject_info``) and all required information needed
+        to extract timeseries.
+
+        Note
+        ----
+        The type hint for ``layout`` is not added to allow certain in ``TimeseriesExtractor`` to be
+        used on Windows machines that do not have pybids installed.
+        """
         base_dict = {"layout": layout, "subj_id": None}
 
         for subj_id in subj_ids:
@@ -857,14 +882,22 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
     def _get_files(
         self,
         layout,
-        extension,
-        subj_id,
-        scope="derivatives",
-        suffix=None,
-        desc=None,
-        event=False,
-        space="attr",
+        extension: str,
+        subj_id: str,
+        scope: str = "derivatives",
+        suffix: Union[str, None] = None,
+        desc: Union[str, None] = None,
+        event: bool = False,
+        space: str = "attr",
     ):
+        """
+        Queries specific files (sorted lexicographically) using ``BidsLayout``.
+
+        Note
+        ----
+        The type hint for ``layout`` is not added to allow certain in ``TimeseriesExtractor`` to be
+        used on Windows machines that do not have pybids installed.
+        """
         query_dict = {
             "scope": scope,
             "return_type": "file",
@@ -887,7 +920,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         return sorted(layout.get(**query_dict))
 
-    def _build_dict(self, base):
+    def _build_dict(self, base: dict) -> dict:
+        """Builds dictionary containing subject-specific files queried using ``BIDSLayout``."""
         files = {}
         files["niftis"] = self._get_files(**base, suffix="bold", extension="nii.gz")
 
@@ -912,12 +946,13 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         return files
 
     @staticmethod
-    def _exclude(niftis, exclude_niftis):
+    def _exclude(niftis: list, exclude_niftis: list) -> list:
+        """Excludes certain NifTI files based on ``exclude_niftis``."""
         exclude_niftis = exclude_niftis if isinstance(exclude_niftis, list) else [exclude_niftis]
         return [nifti for nifti in niftis if os.path.basename(nifti) not in exclude_niftis]
 
-    def _header(self, subj_id):
-        # Base subject message
+    def _header(self, subj_id: str) -> str:
+        """Creates base subject-specific header for logged messages."""
         sub_message = (
             f"[SUBJECT: {subj_id} | "
             f"SESSION: {self._task_info['session']} | "
@@ -927,7 +962,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         return subject_header
 
-    def _check_files(self, files):
+    def _check_files(self, files: dict) -> tuple[Union[bool, None], Union[str, None]]:
+        """
+        Simple initial check to ensure the required files are needed based on certain
+        parameters ``__init__``.
+        """
         skip, msg = None, None
 
         if not files["niftis"]:
@@ -962,7 +1001,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         return skip, msg
 
-    def _check_sess(self, niftis, subject_header):
+    def _check_sess(self, niftis: list, subject_header: str) -> None:
+        """
+        Checks if all subject's NifTI's are from a single session and returns an error if
+        different sessions are detected.
+        """
         ses_list = []
 
         for nifti in niftis:
@@ -978,7 +1021,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 "specific session to extract must be specified using `session`."
             )
 
-    def _gen_runs(self, niftis):
+    def _gen_runs(self, niftis: list) -> set:
+        """
+        Gets all the runs for a specific subject and filters if specific runs are requested.
+        Returns set of run IDs sorted lexicographically.
+        """
         check_runs = []
 
         for nifti in niftis:
@@ -997,7 +1044,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             else sorted(check_runs)
         )
 
-    def _filter_runs(self, check_runs, files):
+    def _filter_runs(self, check_runs: list, files: dict) -> list:
+        """Filters runs by checking if all required files have the same run ID."""
         run_list = []
 
         # Check if at least one run has all files present
@@ -1022,7 +1070,10 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         return run_list
 
-    def _get_tr(self, bold_meta, subject_header, verbose):
+    def _get_tr(
+        self, bold_meta: str, subject_header: str, verbose: bool
+    ) -> Union[float, int, None]:
+        """Gets repetition time."""
         try:
             if self._task_info["tr"]:
                 tr = self._task_info["tr"]
@@ -1070,16 +1121,22 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         return tr
 
-    def _expand_dicts(self, subject_timeseries, qc):
-        # Aggregate new timeseries dictionary and qc
+    def _expand_dicts(
+        self, subject_timeseries: Union[SubjectTimeseries, None], qc: Union[dict, None]
+    ) -> None:
+        """
+        Aggregates individual subject timeseries and qc dictionaries into ``self._subject_timeseries``
+        and ``self._qc``.
+        """
         if isinstance(subject_timeseries, dict):
             self._subject_timeseries.update(subject_timeseries)
             if qc:
                 self._qc.update(qc)
 
     @staticmethod
-    def _raise_error(prop_name, msg):
-        if prop_name == "_subject_timeseries":
+    def _raise_error(attr_name: str, msg: str) -> None:
+        """Raises error if ``_subject_timeseries`` pr ``self._qc`` is not available."""
+        if attr_name == "_subject_timeseries":
             raise AttributeError(
                 f"{msg} since `self.subject_timeseries` is None, either run `self.get_bold()` or "
                 "assign a valid timeseries dictionary to `self.subject_timeseries`."
@@ -1106,8 +1163,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         -------
         self
         """
-        save_filename = self._prepare_output_file(
-            output_dir, filename, prop_name="_subject_timeseries", call="timeseries_to_pickle"
+        save_filename = self._create_output_filename(
+            output_dir, filename, attr_name="_subject_timeseries", call="timeseries_to_pickle"
         )
 
         io_utils._serialize(self._subject_timeseries, output_dir, save_filename, use_joblib=True)
@@ -1180,8 +1237,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         represent the average length and population standard deviation of consecutive frames flagged
         for high-motion frames, respectively.
         """
-        save_filename = self._prepare_output_file(
-            output_dir, filename, prop_name="_qc", call="report_qc"
+        save_filename = self._create_output_filename(
+            output_dir, filename, attr_name="_qc", call="report_qc"
         )
         assert self._qc, "No quality control information to report."
 
@@ -1219,13 +1276,16 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         if return_df:
             return df
 
-    def _prepare_output_file(self, output_dir, filename, prop_name, call):
-        if not hasattr(self, prop_name):
+    def _create_output_filename(
+        self, output_dir: Union[str, None], filename: Union[str, None], attr_name: str, call: str
+    ) -> Union[str, None]:
+        """Checks if the required attribute is present then creates the output filename."""
+        if not hasattr(self, attr_name):
             self._raise_error(
-                prop_name,
+                attr_name,
                 msg=(
                     "Cannot save pickle file"
-                    if prop_name == "_subject_timeseries"
+                    if attr_name == "_subject_timeseries"
                     else "Cannot save csv file"
                 ),
             )
@@ -1316,7 +1376,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         """
 
         if not hasattr(self, "_subject_timeseries"):
-            self._raise_error(prop_name="_subject_timeseries", msg="Cannot plot bold data")
+            self._raise_error(attr_name="_subject_timeseries", msg="Cannot plot bold data")
 
         subj_id = str(subj_id).removeprefix("sub-")
         if subj_id not in self._subject_timeseries:
@@ -1341,7 +1401,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         # Obtain the column indices associated with the rois
         parcellation_name = list(self._parcel_approach)[0]
-        if roi_indx or roi_indx == 0:
+        if roi_indx is not None:
             plot_indxs = self._get_roi_indices(roi_indx, parcellation_name)
         else:
             plot_indxs = self._get_region_indices(region, parcellation_name)
@@ -1384,7 +1444,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         return self
 
-    def _get_roi_indices(self, roi_indx, parcellation_name):
+    def _get_roi_indices(self, roi_indx: Union[int, str, list], parcellation_name: str) -> NDArray:
+        """Gets the indices for a specified node or nodes from ``self._parcel_approach``."""
         if isinstance(roi_indx, int):
             plot_indxs = roi_indx
         elif isinstance(roi_indx, str):
@@ -1419,7 +1480,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         return plot_indxs
 
-    def _get_region_indices(self, region, parcellation_name):
+    def _get_region_indices(self, region: str, parcellation_name: str) -> NDArray:
+        """Gets the indices for a specified region from ``self._parcel_approach``."""
         if "Custom" in self._parcel_approach:
             if "regions" not in self._parcel_approach["Custom"]:
                 _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_bold")

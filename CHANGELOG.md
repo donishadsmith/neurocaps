@@ -13,6 +13,14 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.29.0] - 2025-05-16
+### 🚀 New/Added
+- Adds ``return_cap_labels`` function to public API, which used to be an internal function. This
+allows CAP assignments to be returned directly.
+### 🐛 Fixes
+- Adds temporary version restriction for plotly to not install 6.1.0 since it currently breaks
+image saving function. Once fixed, will allow versions after 6.1.0.
+
 ## [0.28.6] - 2025-05-08
 ### ♻ Changed
 - Backwards compatible change for ``CAP.calculate_metrics``, which changes the default metrics

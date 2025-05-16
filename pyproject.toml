@@ -54,7 +54,7 @@ dependencies = [
     "surfplot>=0.2.0",
     "neuromaps>=0.0.5",
     "pybids>=0.16.5; platform_system != 'Windows'",
-    "plotly>=5.19.0",
+    "plotly>=5.19.0, <6.1.0", # TODO: change <6.1.0 to !6.1.0 when ``fig.write_image`` fixed
     "nbformat>=5.10.0", # Needed for plotly figures to display in Jupyter Notebooks without errors
     "kaleido==0.1.0.post1; platform_system == 'Windows'", # Used by plotly for saving plots
     "kaleido>=0.2.0; platform_system != 'Windows'",

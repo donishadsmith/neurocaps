@@ -10,7 +10,7 @@ from .utils import (
     Parcellation,
     check_outputs,
     concat_data,
-    get_first_subject,
+    get_subject_labels,
     segments,
     segments_mirrored,
     predict_labels,
@@ -120,6 +120,45 @@ def test_without_groups_and_without_cluster_selection(standardize):
     # Quick check deleter
     del cap_analysis.concatenated_timeseries
     assert not cap_analysis.concatenated_timeseries
+
+
+@pytest.mark.parametrize("standardize", [True, False])
+def test_return_cap_labels(standardize):
+    """
+    Tests that the expected CAP labels are returned.
+    """
+    timeseries = Parcellation.get_schaefer("timeseries")
+    cap_analysis = CAP(groups={"A": [0, 1, 2, 3], "B": [4, 5, 6]})
+    cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=5, standardize=standardize)
+
+    true_labels_dict = {}
+    # Labels per subject and run
+    for group in cap_analysis.groups:
+        for sub in cap_analysis.groups[group]:
+            subject_labels = get_subject_labels(
+                timeseries, cap_analysis, subject=sub, group=group, runs=(1, 2, 3), hstack=False
+            )
+            true_labels_dict.update(subject_labels)
+
+    returned_subject_labels = cap_analysis.return_cap_labels(timeseries)
+
+    for sub in true_labels_dict:
+        for run in true_labels_dict[sub]:
+            assert np.array_equal(true_labels_dict[sub][run], returned_subject_labels[sub][run])
+
+    true_labels_dict = {}
+    # Labels per subject
+    for group in cap_analysis.groups:
+        for sub in cap_analysis.groups[group]:
+            subject_labels = get_subject_labels(
+                timeseries, cap_analysis, subject=sub, group=group, runs=(1, 2, 3), hstack=True
+            )
+            true_labels_dict[sub] = subject_labels
+
+    returned_subject_labels = cap_analysis.return_cap_labels(timeseries, continuous_runs=True)
+
+    for sub in true_labels_dict:
+        assert np.array_equal(true_labels_dict[sub], returned_subject_labels[sub]["run-continuous"])
 
 
 def test_subject_skipping():
@@ -551,7 +590,7 @@ def test_temporal_fraction():
     assert all(df.apply(lambda x: all(x.values <= 1) and all(x.values >= 0)).values)
 
     # Get first subject
-    first_subject_labels = get_first_subject(timeseries, cap_analysis)
+    first_subject_labels = get_subject_labels(timeseries, cap_analysis, hstack=True)
 
     sorted_frequency_dict = {
         num: np.where(first_subject_labels == num, 1, 0).sum() for num in range(3)
@@ -584,7 +623,7 @@ def test_counts():
     all(df.apply(lambda x: x.values.dtype == "int64" and all(x.values >= 0)).values)
 
     # Get first subject
-    first_subject_labels = get_first_subject(timeseries, cap_analysis)
+    first_subject_labels = get_subject_labels(timeseries, cap_analysis, hstack=True)
 
     counts_reimplemented_dict = {}
     for target in range(3):
@@ -624,7 +663,7 @@ def test_persistence(tr):
     assert all(df.apply(lambda x: all(x.values >= 0)).values)
 
     # Get first subject
-    first_subject_labels = get_first_subject(timeseries, cap_analysis)
+    first_subject_labels = get_subject_labels(timeseries, cap_analysis, hstack=True)
 
     tr = tr
 
@@ -670,7 +709,7 @@ def test_transition_frequency():
     assert all(df.iloc[:, 3].values >= 0)
 
     # Get first subject
-    first_subject_labels = get_first_subject(timeseries, cap_analysis)
+    first_subject_labels = get_subject_labels(timeseries, cap_analysis, hstack=True)
 
     # Different from internal implementation
     transition_frequency = 0

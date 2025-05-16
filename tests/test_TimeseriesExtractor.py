@@ -510,7 +510,7 @@ def test_check_raise_error():
     )
 
     with pytest.raises(AttributeError, match=re.escape(msg)):
-        TimeseriesExtractor._raise_error(prop_name="_subject_timeseries", msg="Cannot do x")
+        TimeseriesExtractor._raise_error(attr_name="_subject_timeseries", msg="Cannot do x")
 
 
 # Check basic extraction across all parcel approaches
