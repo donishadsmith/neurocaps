@@ -1224,6 +1224,8 @@ class CAP(_CAPGetter):
         Uses the group-specific k-means models in ``self.kmeans`` to assign each frames (TR) to
         CAPs for each subject in ``self.subject_table``.
 
+        .. versionadded:: 0.29.0
+
         The process involves the following steps:
 
             1. Retrieve the timeseries for a specific subject's run from ``subject_timeseries``.
