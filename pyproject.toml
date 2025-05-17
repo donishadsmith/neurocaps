@@ -65,7 +65,7 @@ dependencies = [
     ]
 
 [project.optional-dependencies]
-benchmark = ["asv", "virtualenv<20.31.0"]
+benchmark = ["asv", "virtualenv<20.31.3"]
 demo = ["ipywidgets", "openneuro-py"]
 development = ["pre-commit"]
 test = ["pytest", "pytest-cov", "pytest-rerunfailures"]
