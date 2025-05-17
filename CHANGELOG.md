@@ -13,6 +13,11 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.29.1] - 2025-05-16
+### 🐛 Fixes
+- Adds a small check to ensure required attributes are available before ``return_cap_labels``
+can run to issue an error and guide user towards the expected workflow.
+
 ## [0.29.0] - 2025-05-16
 ### 🚀 New/Added
 - Adds ``return_cap_labels`` function to public API, which used to be an internal function. This
