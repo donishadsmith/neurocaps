@@ -1306,6 +1306,8 @@ class CAP(_CAPGetter):
                 Dictionary mapping each subject to their run IDs and a 1D numpy array containing
                 the predicted CAP for each frame (TR).
         """
+        self._check_required_attrs(["_kmeans"])
+
         subject_timeseries = io_utils._get_obj(subject_timeseries, needs_deepcopy=False)
 
         for subj_id, group in self._subject_table.items():
