@@ -3,6 +3,9 @@ name: Benchmark
 on:
   push:
     branches: [main, development]
+  pull_request:
+    branches:
+      - '*'
 
 jobs:
   benchmark:
