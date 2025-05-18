@@ -13,6 +13,14 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+
+## [0.29.3] - 2025-05-18
+### ♻ Changed
+- Restricts kaleido version to less than 1.0.0, which will have to be tested to ensure it is
+compatible on Windows and works similarly on non-Windows machines.
+- Stays with plotly versions less than 6.1.0 since versions greater than 6.1.0 may require
+kaleido versions >= 1.0.0.
+
 ## [0.29.2] - 2025-05-18
 ### 📖 Documentation
 - Adds documentation to properties to be viewed in IDEs instead of the definitions only being
