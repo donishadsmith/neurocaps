@@ -6,6 +6,7 @@ provided.
 
 import logging, sys
 from logging.handlers import QueueHandler
+from typing import Union
 
 # Global variables to determine if a handler is user defined or defined by OS
 _USER_ROOT_HANDLER = None
@@ -21,7 +22,10 @@ class _Flush(logging.StreamHandler):
 
 
 def _logger(
-    name: str, flush: bool = False, top_level: bool = True, parallel_log_config: dict = None
+    name: str,
+    flush: bool = False,
+    top_level: bool = True,
+    parallel_log_config: Union[dict, None] = None,
 ):
     """
     Generates module specific loggers, defaults to outputting logs at the informational level to
