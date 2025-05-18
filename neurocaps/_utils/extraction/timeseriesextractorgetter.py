@@ -17,6 +17,10 @@ class _TimeseriesExtractorGetter:
     #### Exists upon initialization of TimeseriesExtractor
     @property
     def space(self) -> str:
+        """
+        The standard template space that the preprocessed BOLD data is registered to. This property
+        is also settable.
+        """
         return self._space
 
     @space.setter
@@ -27,6 +31,10 @@ class _TimeseriesExtractorGetter:
 
     @property
     def parcel_approach(self) -> ParcelApproach:
+        """
+        Parcellation information with "maps" (path to parcellation file), "nodes" (labels), and
+        "regions" (anatomical regions or networks). Returns a deep copy.
+        """
         return copy.deepcopy(self._parcel_approach)
 
     @parcel_approach.setter
@@ -35,6 +43,9 @@ class _TimeseriesExtractorGetter:
 
     @property
     def signal_clean_info(self) -> Union[dict[str, Union[bool, int, float, str]], None]:
+        """
+        Dictionary containing signal cleaning parameters. Returns a deep copy.
+        """
         return copy.deepcopy(self._signal_clean_info)
 
     ### Does not exists upon initialization of Timeseries Extractor
@@ -42,22 +53,37 @@ class _TimeseriesExtractorGetter:
     # Exist when TimeSeriesExtractor.get_bold() used
     @property
     def task_info(self) -> Union[dict[str, Union[str, int]], None]:
+        """
+        Dictionary containing all task-related information such. Defined after running
+        ``self.get_bold()``.
+        """
         return getattr(self, "_task_info", None)
 
     # Gets initialized and populated in TimeSeriesExtractor.get_bold(),
     @property
     def subject_ids(self) -> Union[list[str], None]:
+        """
+        A list containing all subject IDs retrieved from ``BIDSLayout`` for timeseries extraction.
+        Defined after running ``self.get_bold()``.
+        """
         return getattr(self, "_subject_ids", None)
 
     @property
     def n_cores(self) -> Union[int, None]:
+        """
+        Number of cores used for multiprocessing with Joblib. Defined after running
+        ``self.get_bold()``.
+        """
         return getattr(self, "_n_cores", None)
 
-    # Gets initialized in TimeSeriesExtractor.get_bold(), gets populated when
-    # TimeseriesExtractor._timeseries_aggregator gets called in TimeseriesExtractor._extract_timeseries
-    # Just return the reference since deepcopy could result in high memory usage
     @property
     def subject_timeseries(self) -> Union[SubjectTimeseries, None]:
+        """
+        A dictionary mapping subject IDs to their run IDs and their associated timeseries
+        (TRs x ROIs) as a NumPy array. Can be deleted using ``del self.subject_timeseries``.
+        Defined after running ``self.get_bold()``. This property is also settable (accepts a
+        dictionary or pickle file). Returns a reference.
+        """
         return getattr(self, "_subject_timeseries", None)
 
     @subject_timeseries.setter
@@ -72,13 +98,21 @@ class _TimeseriesExtractorGetter:
     def subject_timeseries(self) -> None:
         del self._subject_timeseries
 
-    # Return reference
     @property
     def qc(self) -> Union[dict, None]:
+        """
+        A dictionary reporting quality control, which maps subject IDs to their run IDs and
+        information related to framewise displacement and dummy scans. Returns a reference.
+
+        ::
+
+            {"subjectID": {"run-ID": {"mean_fd": float, "std_fd": float, ...}}}
+        """
         return getattr(self, "_qc", None)
 
     @staticmethod
     def _validate_timeseries(subject_dict: SubjectTimeseries) -> None:
+        """Validates ``subject_timeseries`` structure."""
         error_msg = (
             "A valid pickle file/subject timeseries should contain a nested dictionary where the "
             "first level is the subject id, second level is the run number in the form of 'run-#', "
@@ -117,6 +151,7 @@ class _TimeseriesExtractorGetter:
                     )
 
     def _subject_timeseries_size(self) -> str:
+        """Computes the byte size of ``self.subject_timeseries``."""
         if not self.subject_timeseries:
             return "0 bytes"
 

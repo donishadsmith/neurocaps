@@ -113,7 +113,8 @@ class CAP(_CAPGetter):
 
     concatenated_timeseries: :obj:`dict[str, np.array]` or :obj:`None`
         Group-specific concatenated timeseries data. Can be deleted using
-        ``del self.concatenated_timeseries``. Defined after running ``self.get_caps()``.
+        ``del self.concatenated_timeseries``. Defined after running ``self.get_caps()``. Returns a
+        reference.
 
         ::
 
@@ -1233,7 +1234,7 @@ class CAP(_CAPGetter):
             2. Determine their group assignment using ``self.subject_table`` and scale their
                timeseries data (if ``standardize`` was set to True in ``self.get_caps()``) using the
                means and standard deviation derived from the group specific concatenated dataframes
-               (``self.means`` and ``self.std_dev``).
+               (``self.means`` and ``self.stdev``).
 
                 .. note:: This scaling ensures the subject's data matches the distribution of the\
                 input data used for group-specific clustering, which is needed for accurate\
