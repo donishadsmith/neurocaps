@@ -13,6 +13,15 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.29.2] - 2025-05-18
+### 📖 Documentation
+- Adds documentation to properties to be viewed in IDEs instead of the definitions only being
+in the public class.
+### 🐛 Fixes
+- Adds a small check for ``parallel_log_config``, since the ``queue`` key is mandatory.
+- Changes plotly version to "!=6.1.0" instead of "<6.1.0" as there are several issues raised
+about the ``write_image`` issue.
+
 ## [0.29.1] - 2025-05-16
 ### 🐛 Fixes
 - Adds a small check to ensure required attributes are available before ``return_cap_labels``

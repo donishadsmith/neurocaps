@@ -207,8 +207,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         ``self.get_bold()``.
 
     subject_ids: :obj:`list[str]` or :obj:`None`
-        A list containing all subject IDs that have retrieved from PyBIDS and subjected to
-        timeseries extraction. Defined after running ``self.get_bold()``.
+        A list containing all subject IDs retrieved from ``BIDSLayout`` for timeseries extraction.
+        Defined after running ``self.get_bold()``.
 
     n_cores: :obj:`int` or :obj:`None`
         Number of cores used for multiprocessing with Joblib. Defined after running
@@ -218,11 +218,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         A dictionary mapping subject IDs to their run IDs and their associated timeseries
         (TRs x ROIs) as a NumPy array. Can be deleted using ``del self.subject_timeseries``.
         Defined after running ``self.get_bold()``. This property is also settable (accepts a
-        dictionary or pickle file).
+        dictionary or pickle file). Returns a reference.
 
     qc: :obj:`dict` or :obj:`None`
         A dictionary reporting quality control, which maps subject IDs to their run IDs and
-        information related to framewise displacement and dummy scans.
+        information related to framewise displacement and dummy scans. Returns a reference.
 
         ::
 
