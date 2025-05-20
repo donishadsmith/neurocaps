@@ -1,7 +1,7 @@
 """Classes to centralize plotting defaults and functions."""
 
 import inspect, os
-from typing import Union
+from typing import Any, Union
 
 import matplotlib.pyplot as plt, seaborn
 from matplotlib.axes import Axes
@@ -15,15 +15,15 @@ class _PlotDefaults:
     """Default plotting options."""
 
     @staticmethod
-    def visualize_bold() -> dict:
+    def visualize_bold() -> dict[str, Any]:
         return {"dpi": 300, "figsize": (11, 5), "bbox_inches": "tight"}
 
     @staticmethod
-    def get_caps() -> dict:
+    def get_caps() -> dict[str, Any]:
         return {"dpi": 300, "figsize": (8, 6), "step": None, "bbox_inches": "tight"}
 
     @staticmethod
-    def caps2plot() -> dict:
+    def caps2plot() -> dict[str, Any]:
         return {
             "dpi": 300,
             "figsize": (8, 6),
@@ -58,7 +58,7 @@ class _PlotDefaults:
         }
 
     @staticmethod
-    def caps2corr() -> dict:
+    def caps2corr() -> dict[str, Any]:
         return {
             "dpi": 300,
             "figsize": (8, 6),
@@ -84,7 +84,7 @@ class _PlotDefaults:
         }
 
     @staticmethod
-    def caps2surf() -> dict:
+    def caps2surf() -> dict[str, Any]:
         return {
             "dpi": 300,
             "title_pad": -3,
@@ -107,7 +107,7 @@ class _PlotDefaults:
         }
 
     @staticmethod
-    def caps2radar() -> dict:
+    def caps2radar() -> dict[str, Any]:
         return {
             "scale": 2,
             "height": 800,
@@ -154,7 +154,7 @@ class _PlotDefaults:
         }
 
     @staticmethod
-    def transition_matrix() -> dict:
+    def transition_matrix() -> dict[str, Any]:
         return _PlotDefaults.caps2corr()
 
 
@@ -162,7 +162,7 @@ class _PlotFuncs:
     """Helper functions for plotting."""
 
     @staticmethod
-    def base_kwargs(plot_dict: dict, line: bool = True, edge: bool = True) -> dict:
+    def base_kwargs(plot_dict: dict, line: bool = True, edge: bool = True) -> dict[str, Any]:
         kwargs = {
             "cmap": plot_dict["cmap"],
             "cbar_kws": {"shrink": plot_dict["shrink"]},
@@ -192,7 +192,7 @@ class _PlotFuncs:
     @staticmethod
     def border(
         display: Union[Axes, Figure],
-        plot_dict: dict,
+        plot_dict: dict[str, Any],
         axhline: int,
         axvline: Union[int, None] = None,
     ) -> Union[Axes, Figure]:
@@ -218,7 +218,10 @@ class _PlotFuncs:
 
     @staticmethod
     def label_size(
-        display: Union[Axes, Figure], plot_dict: dict, set_x: bool = True, set_y: bool = True
+        display: Union[Axes, Figure],
+        plot_dict: dict[str, Any],
+        set_x: bool = True,
+        set_y: bool = True,
     ) -> Union[Axes, Figure]:
         if set_x:
             display.set_xticklabels(
@@ -241,7 +244,7 @@ class _PlotFuncs:
         return display
 
     @staticmethod
-    def set_ticks(display: Union[Axes, Figure], labels: list) -> Union[Axes, Figure]:
+    def set_ticks(display: Union[Axes, Figure], labels: list[str]) -> Union[Axes, Figure]:
         ticks = [i for i, label in enumerate(labels) if label]
 
         display.set_xticks(ticks)
@@ -281,7 +284,7 @@ class _PlotFuncs:
         display: Union[Axes, Figure],
         title: str,
         suffix: Union[str, None],
-        plot_dict: dict,
+        plot_dict: dict[str, Any],
         is_subplot: bool = False,
     ) -> Union[Axes, Figure]:
         title = f"{title} {suffix}" if suffix else title
@@ -299,7 +302,11 @@ class _PlotFuncs:
 
     @staticmethod
     def save_fig(
-        fig: Union[Axes, Figure], output_dir: str, filename: str, plot_dict: dict, as_pickle: bool
+        fig: Union[Axes, Figure],
+        output_dir: str,
+        filename: str,
+        plot_dict: dict[str, Any],
+        as_pickle: bool,
     ) -> None:
         if as_pickle:
             # Allow Axes or Figure
@@ -325,7 +332,7 @@ class _MatrixVisualizer:
 
     @staticmethod
     def create_display(
-        df: DataFrame, plot_dict: dict, suffix_title: str, group: str, call: str
+        df: DataFrame, plot_dict: dict[str, Any], suffix_title: str, group: str, call: str
     ) -> Union[Axes, Figure]:
         # Refresh grid for each iteration
         plt.figure(figsize=plot_dict["figsize"])
@@ -357,8 +364,8 @@ class _MatrixVisualizer:
         output_dir: str,
         suffix_filename: str,
         group: str,
-        curr_dict: dict,
-        plot_dict: dict,
+        curr_dict: dict[str, DataFrame],
+        plot_dict: dict[str, Any],
         save_plots: bool,
         save_df: bool,
         display: Union[Axes, Figure],

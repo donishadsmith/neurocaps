@@ -99,7 +99,7 @@ class _TimeseriesExtractorGetter:
         del self._subject_timeseries
 
     @property
-    def qc(self) -> Union[dict, None]:
+    def qc(self) -> Union[dict[str, dict[str, dict[str, Union[float, int]]]], None]:
         """
         A dictionary reporting quality control, which maps subject IDs to their run IDs and
         information related to framewise displacement and dummy scans. Returns a reference.

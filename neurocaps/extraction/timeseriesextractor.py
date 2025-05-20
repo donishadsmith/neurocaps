@@ -220,7 +220,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         Defined after running ``self.get_bold()``. This property is also settable (accepts a
         dictionary or pickle file). Returns a reference.
 
-    qc: :obj:`dict` or :obj:`None`
+    qc: :obj:`dict[str, dict[str, dict[str, float | int]]]` or :obj:`None`
         A dictionary reporting quality control, which maps subject IDs to their run IDs and
         information related to framewise displacement and dummy scans. Returns a reference.
 
@@ -755,7 +755,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
     @staticmethod
     @lru_cache(maxsize=4)
-    def _call_layout(bids_dir: str, pipeline_name: Union[str]):
+    def _call_layout(bids_dir: str, pipeline_name: Union[str, None]) -> Any:
         """
         Returns ``BIDSLayout``.
 
@@ -766,7 +766,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         Note
         ----
-        The type hint for the returned (``BIDSLayout`)` is not added to allow certain functions in
+        The type hint for the returned (``BIDSLayout``) is not added to allow certain functions in
         ``TimeseriesExtractor`` to be used on Windows machines that do not have pybids installed.
         """
         try:
@@ -796,7 +796,11 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         return layout
 
     def _setup_extraction(
-        self, layout, subj_ids: list[str], exclude_niftis: list, verbose: bool
+        self,
+        layout: Any,
+        subj_ids: list[str],
+        exclude_niftis: Union[list[str], None],
+        verbose: bool,
     ) -> None:
         """
         Get valid subjects (stored in ``self._subject_info``) and all required information needed
@@ -804,8 +808,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         Note
         ----
-        The type hint for ``layout`` is not added to allow certain in ``TimeseriesExtractor`` to be
-        used on Windows machines that do not have pybids installed.
+        The ``BIDSLayout`` type hint for ``layout`` is not added to allow certain in
+        ``TimeseriesExtractor`` to be used on Windows machines that do not have pybids installed.
         """
         base_dict = {"layout": layout, "subj_id": None}
 
@@ -881,7 +885,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
     def _get_files(
         self,
-        layout,
+        layout: Any,
         extension: str,
         subj_id: str,
         scope: str = "derivatives",
@@ -920,7 +924,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         return sorted(layout.get(**query_dict))
 
-    def _build_dict(self, base: dict) -> dict:
+    def _build_dict(self, base: dict[str, Union[Any, None]]) -> dict[str, Union[str, None]]:
         """Builds dictionary containing subject-specific files queried using ``BIDSLayout``."""
         files = {}
         files["niftis"] = self._get_files(**base, suffix="bold", extension="nii.gz")
@@ -946,7 +950,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         return files
 
     @staticmethod
-    def _exclude(niftis: list, exclude_niftis: list) -> list:
+    def _exclude(niftis: list[str], exclude_niftis: list[str]) -> list[str]:
         """Excludes certain NifTI files based on ``exclude_niftis``."""
         exclude_niftis = exclude_niftis if isinstance(exclude_niftis, list) else [exclude_niftis]
         return [nifti for nifti in niftis if os.path.basename(nifti) not in exclude_niftis]
@@ -962,7 +966,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         return subject_header
 
-    def _check_files(self, files: dict) -> tuple[Union[bool, None], Union[str, None]]:
+    def _check_files(
+        self, files: dict[str, list[str]]
+    ) -> tuple[Union[bool, None], Union[str, None]]:
         """
         Simple initial check to ensure the required files are needed based on certain
         parameters ``__init__``.
@@ -1001,7 +1007,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         return skip, msg
 
-    def _check_sess(self, niftis: list, subject_header: str) -> None:
+    def _check_sess(self, niftis: list[str], subject_header: str) -> None:
         """
         Checks if all subject's NifTI's are from a single session and returns an error if
         different sessions are detected.
@@ -1021,7 +1027,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
                 "specific session to extract must be specified using `session`."
             )
 
-    def _gen_runs(self, niftis: list) -> set:
+    def _gen_runs(self, niftis: list[str]) -> set[str]:
         """
         Gets all the runs for a specific subject and filters if specific runs are requested.
         Returns set of run IDs sorted lexicographically.
@@ -1044,7 +1050,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             else sorted(check_runs)
         )
 
-    def _filter_runs(self, check_runs: list, files: dict) -> list:
+    def _filter_runs(self, check_runs: list[str], files: dict[str, list[str]]) -> list[str]:
         """Filters runs by checking if all required files have the same run ID."""
         run_list = []
 
@@ -1122,7 +1128,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         return tr
 
     def _expand_dicts(
-        self, subject_timeseries: Union[SubjectTimeseries, None], qc: Union[dict, None]
+        self,
+        subject_timeseries: Union[SubjectTimeseries, None],
+        qc: Union[dict[str, dict[str, dict[str, Union[float, int]]]], None],
     ) -> None:
         """
         Aggregates individual subject timeseries and qc dictionaries into ``self._subject_timeseries``
@@ -1444,7 +1452,9 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         return self
 
-    def _get_roi_indices(self, roi_indx: Union[int, str, list], parcellation_name: str) -> NDArray:
+    def _get_roi_indices(
+        self, roi_indx: Union[int, str, list[str], list[int]], parcellation_name: str
+    ) -> NDArray:
         """Gets the indices for a specified node or nodes from ``self._parcel_approach``."""
         if isinstance(roi_indx, int):
             plot_indxs = roi_indx

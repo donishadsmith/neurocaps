@@ -1,11 +1,12 @@
 """Internal function to check kwargs for the ``CAP`` and ``TimeseriesExtractor`` classes."""
 
+from typing import Any
 from .logger import _logger
 
 LG = _logger(__name__)
 
 
-def _check_kwargs(defaults, **kwargs):
+def _check_kwargs(defaults: dict[str, Any], **kwargs) -> dict[str, Any]:
     plot_dict = defaults.copy()
     plot_dict.update({k: v for k, v in kwargs.items() if k in plot_dict})
 
