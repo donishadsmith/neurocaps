@@ -13,6 +13,10 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.29.4] - 2025-05-20
+### 🐛 Fixes
+- Fixes and improve type hints for public API and some private functions
+- Updates plotly restriction to allow 6.1.1 to be downloaded
 
 ## [0.29.3] - 2025-05-18
 ### ♻ Changed

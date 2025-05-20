@@ -6,6 +6,7 @@ provided.
 
 import logging, sys
 from logging.handlers import QueueHandler
+from multiprocessing.queues import Queue
 from typing import Union
 
 # Global variables to determine if a handler is user defined or defined by OS
@@ -25,7 +26,7 @@ def _logger(
     name: str,
     flush: bool = False,
     top_level: bool = True,
-    parallel_log_config: Union[dict, None] = None,
+    parallel_log_config: Union[dict[str, Union[Queue, int]], None] = None,
 ):
     """
     Generates module specific loggers, defaults to outputting logs at the informational level to
