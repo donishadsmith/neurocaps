@@ -2,7 +2,8 @@
 
 import json, os, re
 from functools import lru_cache
-from typing import Any, Callable, Literal, Optional, Union
+from multiprocessing.queues import Queue
+from typing import Any, Literal, Optional, Union
 from typing_extensions import Self
 
 import matplotlib.pyplot as plt, numpy as np
@@ -410,7 +411,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         exclude_niftis: Optional[Union[str, list[str]]] = None,
         pipeline_name: Optional[str] = None,
         n_cores: Optional[int] = None,
-        parallel_log_config: Optional[dict[str, Union[Callable, int]]] = None,
+        parallel_log_config: Optional[dict[str, Union[Queue, int]]] = None,
         verbose: bool = True,
         flush: bool = False,
         progress_bar: bool = False,
