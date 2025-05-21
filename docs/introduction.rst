@@ -39,6 +39,10 @@ NeuroCAPs (**Neuro**\ imaging **C**\ o-**A**\ ctivation **P**\ attern\ **s**) is
 Co-Activation Patterns (CAPs) analyses on resting-state or task-based fMRI data. CAPs identifies recurring brain states
 by applying k-means clustering on BOLD timeseries data [1]_.
 
+.. image:: assets/workflow.png
+   :width: 70%
+   :align: center
+
 **Note:** NeuroCAPs is most optimized for fMRI data preprocessed with `fMRIPrep <https://fmriprep.org/en/stable/>`_ and
 assumes the data is BIDs compliant. Refer to `NeuroCAPs' BIDS Structure and Entities Documentation <https://neurocaps.readthedocs.io/en/stable/bids.html>`_
 for additional information.
