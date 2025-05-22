@@ -61,6 +61,49 @@ def _get_remove_indices(atlas_file, remove_labels):
     return remove_indxs
 
 
+def _perform_knn(atlas_file, knn_dict, stat_map):
+    """
+    Perform KNN to assist with coverage issues prior to plotting.
+
+    .. important:: Modifies ``stat_map`` in place.
+    """
+    remove_labels = tuple(knn_dict["remove_labels"]) if knn_dict.get("remove_labels") else None
+
+    # Get target indices
+    target_indices = _get_target_indices(
+        atlas_file, knn_dict["reference_atlas"], knn_dict["resolution_mm"], remove_labels
+    )
+
+    # Get non-zero indices; Build kdtree for nearest neighbors
+    kdtree, non_zero_indices = _build_tree(atlas_file)
+
+    # Get k
+    k = knn_dict["k"]
+    for target_indx in target_indices:
+        # Get the nearest non-zero index
+        distances, neighbor_indx = kdtree.query(target_indx, k=k)
+        nearest_neighbors = non_zero_indices[neighbor_indx]
+
+        if k == 1:
+            nearest_neighbors = [nearest_neighbors]
+
+        # Values of nearest neighbors
+        neighbor_values = [
+            stat_map.get_fdata()[tuple(nearest_neighbor)] for nearest_neighbor in nearest_neighbors
+        ]
+
+        new_value = (
+            _majority_vote(neighbor_values)
+            if knn_dict["method"] == "majority_vote"
+            else _distance_weighted(neighbor_values, distances)
+        )
+
+        # Assign the new value to the current index
+        stat_map.get_fdata()[tuple(target_indx)] = new_value
+
+    return stat_map
+
+
 @lru_cache(maxsize=4)
 def _get_target_indices(atlas_file, reference_atlas, resolution_mm, remove_labels):
     """
@@ -108,42 +151,11 @@ def _get_target_indices(atlas_file, reference_atlas, resolution_mm, remove_label
     return target_indices
 
 
-def _perform_knn(atlas_file, knn_dict, stat_map):
-    """
-    Perform KNN to assist with coverage issues prior to plotting.
+def _distance_weighted(neighbor_values, distances):
+    """Computes a new value based on the weighted inverse distance."""
+    return np.mean(np.array(neighbor_values) * (1 / np.array(distances)))
 
-    .. important:: Modifies ``stat_map`` in place.
-    """
-    remove_labels = tuple(knn_dict["remove_labels"]) if knn_dict.get("remove_labels") else None
 
-    # Get target indices
-    target_indices = _get_target_indices(
-        atlas_file, knn_dict["reference_atlas"], knn_dict["resolution_mm"], remove_labels
-    )
-
-    # Get non-zero indices; Build kdtree for nearest neighbors
-    kdtree, non_zero_indices = _build_tree(atlas_file)
-
-    # Get k
-    k = knn_dict["k"]
-    for target_indx in target_indices:
-        # Get the nearest non-zero index
-        _, neighbor_indx = kdtree.query(target_indx, k=k)
-        nearest_neighbors = non_zero_indices[neighbor_indx]
-
-        if k > 1:
-            # Values of nearest neighbors
-            neighbor_values = [
-                stat_map.get_fdata()[tuple(nearest_neighbor)]
-                for nearest_neighbor in nearest_neighbors
-            ]
-            # Majority vote
-            new_value = max(set(neighbor_values), key=neighbor_values.count)
-        else:
-            nearest_neighbor = non_zero_indices[neighbor_indx]
-            new_value = stat_map.get_fdata()[tuple(nearest_neighbor)]
-
-        # Assign the new value to the current index
-        stat_map.get_fdata()[tuple(target_indx)] = new_value
-
-    return stat_map
+def _majority_vote(neighbor_values):
+    """Selects new value based on highest frequency."""
+    return max(set(neighbor_values), key=neighbor_values.count)
