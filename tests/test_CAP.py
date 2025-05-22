@@ -1134,7 +1134,7 @@ def test_caps2radar(tmp_dir, timeseries, parcel_approach):
 def test_caps2niftis(tmp_dir, timeseries, parcel_approach):
     """
     Ensures ``CAP.caps2niftis`` produces the expected number of files, the KNN interpolation works,
-    and that the 3D NifTI image can be used to reconstruct the 1D cluster centroid.
+    and that the 3D NIfTI image can be used to reconstruct the 1D cluster centroid.
     """
     cap_analysis = CAP(parcel_approach=parcel_approach)
     cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=2)

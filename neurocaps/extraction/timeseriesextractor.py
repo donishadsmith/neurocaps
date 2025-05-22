@@ -551,8 +551,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         subject timeseries dictionary, ``self.timeseries_to_pickle()`` can be used. Additionally, to
         save the quality control dictionary, ``self.report_qc()`` can be used.
 
-        **NifTI Files Without "run-" Entity**: By default, "run-0" will be used as a placeholder,
-        if run IDs are not specified in the NifTI file.
+        **NIfTI Files Without "run-" Entity**: By default, "run-0" will be used as a placeholder,
+        if run IDs are not specified in the NIfTI file.
 
         **Parcellation & Nuisance Regression**: For timeseries extraction, nuisance regression, and
         spatial dimensionality reduction using a parcellation, Nilearn's ``NiftiLabelsMasker``
@@ -952,7 +952,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
     @staticmethod
     def _exclude(niftis: list[str], exclude_niftis: list[str]) -> list[str]:
-        """Excludes certain NifTI files based on ``exclude_niftis``."""
+        """Excludes certain NIfTI files based on ``exclude_niftis``."""
         exclude_niftis = exclude_niftis if isinstance(exclude_niftis, list) else [exclude_niftis]
         return [nifti for nifti in niftis if os.path.basename(nifti) not in exclude_niftis]
 
@@ -979,7 +979,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         if not files["niftis"]:
             skip = True
             msg = (
-                "Timeseries Extraction Skipped: No NifTI files were found or all NifTI files "
+                "Timeseries Extraction Skipped: No NIfTI files were found or all NifTI files "
                 "were excluded."
             )
 
@@ -1010,7 +1010,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
     def _check_sess(self, niftis: list[str], subject_header: str) -> None:
         """
-        Checks if all subject's NifTI's are from a single session and returns an error if
+        Checks if all subject's NIfTI's are from a single session and returns an error if
         different sessions are detected.
         """
         ses_list = []

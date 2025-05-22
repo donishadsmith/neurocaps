@@ -16,7 +16,7 @@ NeuroCAPs (**Neuro**imaging **C**o-**A**ctivation **P**attern**s**) is a Python 
 Patterns (CAPs) analyses on resting-state or task-based fMRI data. CAPs identifies recurring brain states by applying
 k-means clustering on BOLD timeseries data [^1].
 
-<img src="assets/workflow.png" width=70% height=70%>
+<img src="docs/assets/workflow.png" width=70% height=70%>
 
 **Note:** NeuroCAPs is most optimized for fMRI data preprocessed with [fMRIPrep](https://fmriprep.org/en/stable/) and
 assumes the data is BIDs compliant. Refer to [NeuroCAPs' BIDS Structure and Entities Documentation](https://neurocaps.readthedocs.io/en/stable/bids.html)

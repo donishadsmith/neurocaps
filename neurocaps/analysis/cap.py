@@ -2386,10 +2386,10 @@ class CAP(_CAPGetter):
         progress_bar: bool = False,
     ) -> Self:
         """
-        Convert CAPs to NifTI Statistical Maps.
+        Convert CAPs to NIfTI Statistical Maps.
 
         Projects CAPs onto the parcellation in defined in ``parcel_approach`` to create compressed
-        NifTI (.nii.gz) statistical maps. One image is generated per CAP and separate images are
+        NIfTI (.nii.gz) statistical maps. One image is generated per CAP and separate images are
         generated per group.
 
         Parameters
@@ -2436,7 +2436,7 @@ class CAP(_CAPGetter):
         Important
         ---------
         **Parcellation Approach**: ``parcel_approach`` must have the "maps" subkey containing the
-        path to the parcellation NifTI file.
+        path to the parcellation NIfTI file.
 
         **Assumption**: This function assumes that the background label for the parcellation is
         zero. When the numerical labels from the parcellation map are extracted, the first element
@@ -2543,7 +2543,7 @@ class CAP(_CAPGetter):
         """
         Project CAPs onto Surface Plots.
 
-        Projects CAPs onto the parcellation defined in ``parcel_approach`` to create NifTI
+        Projects CAPs onto the parcellation defined in ``parcel_approach`` to create NIfTI
         statistical maps. Then transforms these maps from volumetric to surface space and generates
         visualizations. One surface plot image is generated per CAP and separate images are produced
         per group.
@@ -2664,7 +2664,7 @@ class CAP(_CAPGetter):
         Important
         ---------
         **Parcellation Approach**: ``parcel_approach`` must have the "maps" subkey containing the
-        path to the NifTI file of the parcellation.
+        path to the NIfTI file of the parcellation.
 
         **Assumptions**: This function assumes that the background label for the parcellation is
         zero. During extraction of the numerical labels from the parcellation map, the first element
@@ -2710,7 +2710,7 @@ class CAP(_CAPGetter):
                         knn_dict=knn_dict,
                     )
 
-                    # Fix for python 3.12, saving stat map so that it is path instead of a NifTi
+                    # Fix for python 3.12, saving stat map so that it is path instead of a NIfTI
                     try:
                         gii_lh, gii_rh = mni152_to_fslr(
                             stat_map, method=method, fslr_density=fslr_density
@@ -2754,12 +2754,12 @@ class CAP(_CAPGetter):
 
     @staticmethod
     def _create_temp_nifti(stat_map: nib.Nifti1Image) -> tempfile._TemporaryFileWrapper:
-        """Creates a temporary NifTI image as a workaround for Python 3.12 issue."""
+        """Creates a temporary NIfTI image as a workaround for Python 3.12 issue."""
         # Create temp file
         temp_nifti = tempfile.NamedTemporaryFile(delete=False, suffix=".nii.gz")
         LG.warning(
             "TypeError raised by neuromaps due to changes in pathlib.py in Python 3.12 "
-            "Converting NifTI image into a temporary nii.gz file (which will be "
+            "Converting NIfTI image into a temporary nii.gz file (which will be "
             f"automatically deleted afterwards) [TEMP FILE: {temp_nifti.name}]"
         )
 
