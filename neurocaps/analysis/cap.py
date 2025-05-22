@@ -2382,7 +2382,7 @@ class CAP(_CAPGetter):
         output_dir: str,
         suffix_filename: Optional[str] = None,
         fwhm: Optional[float] = None,
-        knn_dict: Optional[dict[str, Union[int, list[int], NDArray[np.integer]]]] = None,
+        knn_dict: Optional[dict[str, Union[int, list[int], NDArray[np.integer], str]]] = None,
         progress_bar: bool = False,
     ) -> Self:
         """
@@ -2416,6 +2416,13 @@ class CAP(_CAPGetter):
               parcellation (in millimeters) (1 or 2).
             - "remove_labels": A list or array (Default=None). The label IDs as integers of the
               regions in the parcellation to not interpolate.
+            - "method": A string (Default="majority_vote"). Method used to assign new values to
+              non-background voxels ("majority_vote" or "distance_weighted"). For majority vote,
+              the most frequently appearing value among "k" choices (or chosen neighbors) is, while
+              the distance weighted approach uses inverse distance weighting (1/distance) to
+              estimate the new averaged value for the non-background voxel.
+
+              .. versionadded:: 0.29.5 "method" key added.
 
             .. note:: KNN interpolation is applied before ``fwhm``.
 
@@ -2467,45 +2474,53 @@ class CAP(_CAPGetter):
     @staticmethod
     def _validate_knn_dict(
         knn_dict: Union[dict[str, Any], None],
-    ) -> Union[dict[str, Union[int, list[int], NDArray[np.integer]]], None]:
+    ) -> Union[dict[str, Union[int, list[int], NDArray[np.integer], str]], None]:
         """Validates the ``knn_dict``."""
         if not knn_dict:
             return None
 
-        valid_atlases = ["Schaefer", "AAL"]
+        valid_atlases = ("Schaefer", "AAL")
+        valid_methods = ("majority_vote", "distance_weighted")
 
-        if "reference_atlas" not in knn_dict:
+        if knn_dict.get("reference_atlas") and knn_dict.get("reference_atlas") not in valid_atlases:
+            raise ValueError(
+                "In `knn_dict`, 'reference_atlas' must be a string ('Schaefer' or 'AAL')."
+            )
+        else:
             knn_dict["reference_atlas"] = "Schaefer"
             LG.warning(
                 "'reference_atlas' not specified in `knn_dict`. The default reference atlas is "
                 "'Schaefer'."
             )
-        else:
-            if not isinstance(knn_dict["reference_atlas"], str):
-                raise TypeError("In `knn_dict`, 'reference_atlas' must be a string.")
 
-            if not any(knn_dict["reference_atlas"] == atlas for atlas in valid_atlases):
-                raise ValueError(
-                    "Only 'Schaefer' and 'AAL' are valid options for 'reference_atlas'."
+        if knn_dict["reference_atlas"] == "Schaefer":
+            if not knn_dict.get("resolution_mm"):
+                knn_dict["resolution_mm"] = 1
+                LG.warning(
+                    "Defaulting to 1mm resolution for the Schaefer atlas since 'resolution_mm' "
+                    "was not specified in `knn_dict`."
                 )
-
-        if "resolution_mm" not in knn_dict and knn_dict["reference_atlas"] == "Schaefer":
-            knn_dict["resolution_mm"] = 1
-            LG.warning(
-                "Defaulting to 1mm resolution for the Schaefer atlas since 'resolution_mm' was not "
-                "specified in `knn_dict`."
-            )
         else:
-            if "resolution_mm" in knn_dict and not knn_dict["reference_atlas"] == "Schaefer":
-                knn_dict["resolution_mm"] = None
-                LG.warning("'resolution_mm' only used when 'reference_atlas' is set to 'Schaefer'.")
+            if "resolution_mm" in knn_dict:
+                LG.warning(
+                    "In `knn_dict`, 'resolution_mm' only used when 'reference_atlas' is . "
+                    "set to 'Schaefer'."
+                )
+            knn_dict["resolution_mm"] = None
 
-            if "resolution_mm" not in knn_dict:
-                knn_dict["resolution_mm"] = None
-
-        if "k" not in knn_dict:
+        if not knn_dict.get("k"):
             knn_dict["k"] = 3
             LG.warning("Defaulting to k=3 since 'k' was not specified in `knn_dict`.")
+
+        if not knn_dict.get("method"):
+            knn_dict["method"] = "majority_vote"
+            LG.warning(
+                "Defaulting to 'majority_vote' since 'method' was not specified in `knn_dict`."
+            )
+        elif knn_dict.get("method") not in valid_methods:
+            raise ValueError(
+                "In `knn_dict`, 'method' must be 'majority_vote' or 'distance_weighted'."
+            )
 
         return knn_dict
 
@@ -2520,7 +2535,7 @@ class CAP(_CAPGetter):
         method: Literal["linear", "nearest"] = "linear",
         save_stat_maps: bool = False,
         fslr_giftis_dict: Optional[dict] = None,
-        knn_dict: Optional[dict[str, Union[int, list[int], NDArray[np.integer]]]] = None,
+        knn_dict: Optional[dict[str, Union[int, list[int], NDArray[np.integer], str]]] = None,
         progress_bar: bool = False,
         as_pickle: bool = False,
         **kwargs,
@@ -2590,6 +2605,13 @@ class CAP(_CAPGetter):
               parcellation (in millimeters) (1 or 2).
             - "remove_labels": A list or array (Default=None). The label IDs as integers of the
               regions in the parcellation to not interpolate.
+            - "method": A string (Default="majority_vote"). Method used to assign new values to
+              non-background voxels ("majority_vote" or "distance_weighted"). For majority vote,
+              the most frequently appearing value among "k" choices (or chosen neighbors) is, while
+              the distance weighted approach uses inverse distance weighting (1/distance) to
+              estimate the new averaged value for the non-background voxel.
+
+              .. versionadded:: 0.29.5 "method" key added.
 
             .. note:: KNN interpolation is applied before ``fwhm``.
 
