@@ -13,6 +13,11 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.29.6] - 2025-05-25
+### 🚀 New/Added
+- `method` parameter added to `CAP.caps2corr` to allow spearman or pearson correlation to be
+computed. By default pearson is computed for backwards compatibility.
+
 ## [0.29.5] - 2025-05-22
 ### 🚀 New/Added
 - Adds "method" key to `knn_dict`, which defaults to majority vote KNN approach but allows for
