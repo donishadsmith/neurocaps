@@ -1023,7 +1023,8 @@ def test_caps2plot(tmp_dir, timeseries, parcel_approach):
     assert cap_analysis.region_means["All Subjects"]["CAP-1"].shape == regions_dim
 
 
-def test_caps2corr(tmp_dir):
+@pytest.mark.parametrize("method", ["pearson", "spearman"])
+def test_caps2corr(tmp_dir, method):
     """
     Ensures ``CAP.caps2corr`` produces the expected number of plots and files.
     """
@@ -1032,6 +1033,7 @@ def test_caps2corr(tmp_dir):
     cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=2)
 
     df = cap_analysis.caps2corr(
+        method=method,
         annot=True,
         show_figs=False,
         return_df=True,

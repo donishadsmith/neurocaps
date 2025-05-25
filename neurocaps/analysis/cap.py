@@ -12,7 +12,7 @@ from nilearn.plotting.cm import _cmap_d
 from neuromaps.transforms import mni152_to_fslr, fslr_to_fslr
 from neuromaps.datasets import fetch_fslr
 from numpy.typing import ArrayLike, NDArray
-from scipy.stats import pearsonr
+from scipy.stats import pearsonr, spearmanr
 from tqdm.auto import tqdm
 
 import neurocaps._utils.io as io_utils
@@ -2240,10 +2240,11 @@ class CAP(_CAPGetter):
         return_df: bool = False,
         save_df: bool = False,
         as_pickle: bool = False,
+        method: str = "pearson",
         **kwargs,
     ) -> Union[dict[str, pd.DataFrame], None]:
         """
-        Generate Pearson Correlation Matrix for CAPs.
+        Generate a Correlation Matrix for CAPs.
 
         Produces a correlation matrix of all CAPs. Separate correlation matrices are created for
         each group.
@@ -2280,6 +2281,11 @@ class CAP(_CAPGetter):
             modified, instead of png images.
 
             .. versionadded:: 0.26.5
+
+        method: :obj:`str`, default="pearson":
+            Type of correlation method to use. Options are "pearson" or "spearman".
+
+            .. versionadded:: 0.29.6
 
         **kwargs
             Keyword arguments used when modifying figures. Valid keywords include:
@@ -2328,6 +2334,11 @@ class CAP(_CAPGetter):
         """
         self._check_required_attrs(["_caps"])
 
+        assert method in [
+            "spearman",
+            "pearson",
+        ], "Options for `method` are 'pearson' or 'spearman'."
+
         io_utils._issue_file_warning("suffix_filename", suffix_filename, output_dir)
 
         corr_dict = {group: None for group in self._groups} if return_df or save_df else None
@@ -2335,9 +2346,12 @@ class CAP(_CAPGetter):
         # Create plot dictionary
         plot_dict = _check_kwargs(_PlotDefaults.caps2corr(), **kwargs)
 
+        # Dictionary of scipy correlation functions
+        corr_func = {"pearson": pearsonr, "spearman": spearmanr}
+
         for group in self._groups:
             df = pd.DataFrame(self._caps[group])
-            corr_df = df.corr(method="pearson")
+            corr_df = df.corr(method=method)
 
             display = _MatrixVisualizer.create_display(
                 corr_df, plot_dict, suffix_title, group, "corr"
@@ -2347,7 +2361,9 @@ class CAP(_CAPGetter):
                 # Get p-values; use np.eye to make main diagonals equal zero; implementation of
                 # tozCSS from:
                 # https://stackoverflow.com/questions/25571882/pandas-columns-correlation-with-statistical-significance
-                pval_df = df.corr(method=lambda x, y: pearsonr(x, y)[1]) - np.eye(*corr_df.shape)
+                pval_df = df.corr(method=lambda x, y: corr_func[method](x, y)[1]) - np.eye(
+                    *corr_df.shape
+                )
                 # Add asterisk to values that meet the threshold
                 pval_df = pval_df.map(
                     lambda x: f'({format(x, plot_dict["fmt"])})'
