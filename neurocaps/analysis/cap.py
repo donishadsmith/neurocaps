@@ -2272,7 +2272,7 @@ class CAP(_CAPGetter):
         return_df: :obj:`bool`, default=False
             If True, returns a dictionary with a correlation matrix for each group.
 
-        save_df: :obj:`bool`, default=False,
+        save_df: :obj:`bool`, default=False
             If True, saves the correlation matrix contained in the DataFrames as csv files. For
             this to be used, ``output_dir`` must be specified.
 
@@ -2282,7 +2282,7 @@ class CAP(_CAPGetter):
 
             .. versionadded:: 0.26.5
 
-        method: :obj:`str`, default="pearson":
+        method: :obj:`str`, default="pearson"
             Type of correlation method to use. Options are "pearson" or "spearman".
 
             .. versionadded:: 0.29.6
