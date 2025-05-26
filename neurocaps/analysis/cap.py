@@ -1394,7 +1394,7 @@ class CAP(_CAPGetter):
 
     def _distribute(
         self, predicted_subject_timeseries: dict[str, NDArray]
-    ) -> dict[str, tuple[str, str]]:
+    ) -> dict[str, list[tuple[str, str]]]:
         """Creates a dictionary mapping for each subject and run pair to iterate over."""
         distributed_dict = {}
 
