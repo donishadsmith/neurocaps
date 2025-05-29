@@ -37,7 +37,7 @@
 
 NeuroCAPs (**Neuro**\ imaging **C**\ o-**A**\ ctivation **P**\ attern\ **s**) is a Python package for performing
 Co-Activation Patterns (CAPs) analyses on resting-state or task-based fMRI data. CAPs identifies recurring brain states
-by applying k-means clustering on BOLD timeseries data [1]_.
+by applying k-means clustering on BOLD timeseries data [1]_ [2]_.
 
 .. image:: assets/workflow.png
    :width: 70%
@@ -85,8 +85,8 @@ node level of the parcellation.
 - **Surface Plot Visualization:** Project CAPs onto a surface plot.
 - **Correlation Matrix Creation:** Create a correlation matrix from CAPs.
 - **CAPs Metrics Calculation:** Calculate several CAPs metrics as described in
-`Liu et al., 2018 <https://doi.org/10.1016/j.neuroimage.2018.01.041>`_ [1]_ and
-`Yang et al., 2021 <https://doi.org/10.1016/j.neuroimage.2021.118193>`_ [2]_:
+`Liu et al., 2018 <https://doi.org/10.1016/j.neuroimage.2018.01.041>`_ [2]_ and
+`Yang et al., 2021 <https://doi.org/10.1016/j.neuroimage.2021.118193>`_ [3]_:
     - *Temporal Fraction (Fraction of Time):* The proportion of total volumes spent in a single CAP
       over all volumes in a run.
     - *Persistence (Dwell Time):* The average time spent in a single CAP before transitioning to
@@ -97,12 +97,12 @@ node level of the parcellation.
     - *Transition Probability* : The probability of transitioning from one CAP to another CAP
       (or the same CAP). This is calculated as (Number of transitions from A to B) / (Total transitions from A).
 - **Cosine Similarity Radar Plots:** Create radar plots showing the cosine similarity between
-  positive and negative activations of each CAP and each a-priori regions in a parcellation [3]_ [4]_.
+  positive and negative activations of each CAP and each a-priori regions in a parcellation [4]_ [5]_.
 
 **Additional functions in the `neurocaps.analysis` module includes:**
 
 - ``merge_dicts()``: Merge the subject_timeseries dictionaries for overlapping subjects across tasks
-to identify similar CAPs across different tasks [5]_. The merged dictionary can be saved as a pickle file.
+to identify similar CAPs across different tasks [6]_. The merged dictionary can be saved as a pickle file.
 - ``standardize()``: Standardizes each run independently for all subjects in the subject timeseries.
 - ``change_dtype()``: Changes the dtype of all subjects in the subject timeseries to help with memory usage.
 - ``transition_matrix()``: Uses the subject-level transition probabilities outputted from the ``CAP``
@@ -155,25 +155,29 @@ individual differences in resting-state or task-based functional connectivity.
 
 References
 ----------
-.. [1] Liu, X., Zhang, N., Chang, C., & Duyn, J. H. (2018). Co-activation patterns in resting-state
+.. [1] Liu, X., Chang, C., & Duyn, J. H. (2013). Decomposition of spontaneous brain activity into
+distinct fMRI co-activation patterns. Frontiers in Systems Neuroscience, 7.
+https://doi.org/10.3389/fnsys.2013.00101
+
+.. [2] Liu, X., Zhang, N., Chang, C., & Duyn, J. H. (2018). Co-activation patterns in resting-state
        fMRI signals. NeuroImage, 180, 485–494. https://doi.org/10.1016/j.neuroimage.2018.01.041
 
-.. [2] Yang, H., Zhang, H., Di, X., Wang, S., Meng, C., Tian, L., & Biswal, B. (2021). Reproducible
+.. [3] Yang, H., Zhang, H., Di, X., Wang, S., Meng, C., Tian, L., & Biswal, B. (2021). Reproducible
        coactivation patterns of functional brain networks reveal the aberrant dynamic state
        transition in schizophrenia. NeuroImage, 237, 118193. https://doi.org/10.1016/j.neuroimage.2021.118193
 
-.. [3] Zhang, R., Yan, W., Manza, P., Shokri-Kojori, E., Demiral, S. B., Schwandt, M., Vines, L.,
+.. [4] Zhang, R., Yan, W., Manza, P., Shokri-Kojori, E., Demiral, S. B., Schwandt, M., Vines, L.,
        Sotelo, D., Tomasi, D., Giddens, N. T., Wang, G., Diazgranados, N., Momenan, R., & Volkow, N. D. (2023).
        Disrupted brain state dynamics in opioid and alcohol use disorder: attenuation by nicotine use.
        Neuropsychopharmacology, 49(5), 876–884. https://doi.org/10.1038/s41386-023-01750-w
 
-.. [4] Ingwersen, T., Mayer, C., Petersen, M., Frey, B. M., Fiehler, J., Hanning, U., Kühn, S.,
+.. [5] Ingwersen, T., Mayer, C., Petersen, M., Frey, B. M., Fiehler, J., Hanning, U., Kühn, S.,
        Gallinat, J., Twerenbold, R., Gerloff, C., Cheng, B., Thomalla, G., & Schlemm, E. (2024).
        Functional MRI brain state occupancy in the presence of cerebral small vessel disease — A
        pre-registered replication analysis of the Hamburg City Health Study. Imaging Neuroscience,
        2, 1–17. https://doi.org/10.1162/imag_a_00122
 
-.. [5] Kupis, L., Romero, C., Dirks, B., Hoang, S., Parladé, M. V., Beaumont, A. L., Cardona, S. M.,
+.. [6] Kupis, L., Romero, C., Dirks, B., Hoang, S., Parladé, M. V., Beaumont, A. L., Cardona, S. M.,
        Alessandri, M., Chang, C., Nomi, J. S., & Uddin, L. Q. (2020). Evoked and intrinsic brain network
        dynamics in children with autism spectrum disorder. NeuroImage: Clinical, 28, 102396.
        https://doi.org/10.1016/j.nicl.2020.102396

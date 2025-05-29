@@ -37,7 +37,7 @@ which change within seconds [@Jiang2022], remain stationary throughout the entir
 Unlike sFC approaches, dynamic functional connectivity (dFC) methods enable the analysis of dynamic functional states,
 which are characterized by consistent, replicable, and distinct periods of time-varying brain connectivity patterns
 [@Rabany2019]. Among these techniques, CAPs analysis aggregates similar spatial distributions of brain activity using
-clustering techniques, such as the k-means algorithm, to capture the dynamic nature of brain activity [@Liu2018].
+clustering techniques, such as the k-means algorithm, to capture the dynamic nature of brain activity [@Liu2013; @Liu2018].
 
 # Statement of Need
 Currently, performing an end-to-end CAPs analysis presents challenges due to the numerous steps required. Researchers must:
