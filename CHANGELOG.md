@@ -13,6 +13,12 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.29.7] - 2025-05-30
+### 🐛 Fixes
+- For `TimeseriesExtractor`, check and filtering added for `confound_names` when wildcard for prefix
+is used to ensure only that the asterisk is at the end since only prefix wildcards are supported.
+Also checks for case when only "*" is used since it would select all columns.
+
 ## [0.29.6] - 2025-05-25
 ### 🚀 New/Added
 - `method` parameter added to `CAP.caps2corr` to allow spearman or pearson correlation to be

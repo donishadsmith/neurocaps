@@ -56,6 +56,8 @@ def _check_confound_names(high_pass, user_confounds, n_acompcor_separate):
         ), "`confound_names` must be a non-empty list."
         confound_names = user_confounds
 
+    confound_names = _check_wildcard_confounds(confound_names)
+
     if n_acompcor_separate:
         confound_names = _remove_a_comp_cor(confound_names, user_confounds, n_acompcor_separate)
 
@@ -102,3 +104,30 @@ def _check_regressors(confound_names, n):
             "It is recommended to include the discrete cosine-bases regressors ('cosine_XX') in "
             "`confound_names` if including any 'a_comp_cor' or 't_comp_cor' regressors."
         )
+
+
+def _check_wildcard_confounds(confound_names):
+    """Checks asterisk position to ensure the wildcard expression is at the end of the word."""
+    removed_confounds = []
+    for confound_name in confound_names:
+        if "*" in confound_name:
+            indices = [indx for indx, element in enumerate(confound_name) if element == "*"]
+            final_indx = len(confound_name) - 1
+            if any(
+                [len(indices) > 1, indices[0] != final_indx, not bool(confound_name.split("*")[0])]
+            ):
+                removed_confounds.append(confound_name)
+
+    if removed_confounds:
+        LG.warning(
+            "Only wildcard prefixes (e.g. 'cosine*', 'rot*', etc) are supported. The following "
+            f"confounds will be removed: {removed_confounds}."
+        )
+
+        confound_names = [
+            confound_name
+            for confound_name in confound_names
+            if confound_name not in removed_confounds
+        ]
+
+    return confound_names

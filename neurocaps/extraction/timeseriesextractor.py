@@ -97,7 +97,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         .. important::
             - Confound names follow fMRIPrep's naming scheme (versions >= 1.2.0).
-            - Wildcards are supported: e.g., "cosine*" matches all confounds starting with "cosine".
+            - Wildcards are supported to match prefixes (e.g., "cosine*" matches all confounds\
+              starting with "cosine".)
 
     fd_threshold: :obj:`float`, :obj:`dict[str, float | int]`, or :obj:`None`, default=None
         Threshold for volume censoring based on framewise displacement (FD). Computed only after
