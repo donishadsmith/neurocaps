@@ -313,8 +313,8 @@ class CAP(_CAPGetter):
             Maximum number of iterations for a single run of k-means.
 
         tol: :obj:`float`, default=1e-4
-            Stopping criterion if the change in inertia is below this value, assuming ``max_iter``
-            has not been reached.
+            Stopping criterion if the change in cluster centers (measured using Frobenius norm) is
+            below this value, assuming ``max_iter`` has not been reached.
 
         algorithm: {"lloyd", "elkan"}, default="lloyd"
             The algorithm to use. Options are "lloyd" and "elkan".
