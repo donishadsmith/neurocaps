@@ -623,9 +623,16 @@ def test_missing_confound_messages(setup_environment_1, get_vars, caplog):
         # Only one invalid confound case
         extractor = TimeseriesExtractor(confound_names=["placeholder", "cosine*"])
         extractor.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
-
         assert "The following confounds were not found: placeholder." in caplog.text
         assert not msg in caplog.text
+
+        # Ensure only invalud confounds removed
+        extractor = TimeseriesExtractor(confound_names=["cosine*", "*rot", "*"])
+        assert (
+            "Only wildcard prefixes (e.g. 'cosine*', 'rot*', etc) are supported. The following "
+            "confounds will be removed: ['*rot', '*']."
+        ) in caplog.text
+        extractor.signal_clean_info["confound_names"] = ["cosine*"]
 
 
 def test_report_qc(setup_environment_1, tmp_dir, get_vars):
