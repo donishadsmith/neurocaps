@@ -133,7 +133,7 @@ NeuroCAPs relies on several packages:
       "surfplot>=0.2.0",
       "neuromaps>=0.0.5",
       "pybids>=0.16.5; platform_system != 'Windows'",
-      "plotly>=5.19.0, !=6.1.0, <=6.1.1",
+      "plotly>=5.19.0, !=6.1.0, <=6.1.2",
       "nbformat>=5.10.0",
       "kaleido==0.1.0.post1; platform_system == 'Windows'",
       "kaleido>=0.2.0, <1.0.0; platform_system != 'Windows'",
