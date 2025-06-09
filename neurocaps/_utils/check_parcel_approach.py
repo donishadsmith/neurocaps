@@ -21,6 +21,7 @@ VALID_DICT_STUCTURES = {
 }
 
 
+# TODO: Incorporate https://github.com/PennLINC/AtlasPack
 def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
     """
     Pipeline to ensure ``parcel_approach`` is valid and process the ``parcel_approach`` if certain
