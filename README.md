@@ -23,6 +23,8 @@ assumes the data is BIDs compliant. Refer to [NeuroCAPs' BIDS Structure and Enti
 for additional information.
 
 ## Installation
+**NeuroCAPs requires Python 3.9-3.12.**
+
 To install NeuroCAPs, follow the instructions below using your preferred terminal.
 
 ### Standard Installation from PyPi
