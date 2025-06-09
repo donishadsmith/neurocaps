@@ -60,27 +60,29 @@ This package contains two main classes: ``TimeseriesExtractor`` for extracting t
 
 Main features for ``TimeseriesExtractor`` includes:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 - **Timeseries Extraction:** Extract timeseries for resting-state or task data using Schaefer, AAL,
-or a lateralized Custom parcellations (which can be manually defined) for spatial dimensionality
-reduction.
+  or a lateralized Custom parcellations (which can be manually defined) for spatial dimensionality
+  reduction.
 - **Parallel Processing:** Parallelize at the subject-level (one subject per CPU core) to speed up
-timeseries extraction.
+  timeseries extraction.
 - **Saving Timeseries:** Save the nested dictionary containing timeseries (mapping subject id
--> run id -> timeseries data) as a pickle file.
+  -> run id -> timeseries data) as a pickle file.
 - **Reporting Quality Control:** Reports statistics related to framewise displacement and dummy
-volumes per-subject.
+  volumes per-subject.
 - **Visualization:** Visualize the timeseries at the region or node level of the parcellation for a
-given subject and run.
+  given subject and run.
 
 Main features for ``CAP`` includes:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 - **Grouping:** Perform CAPs analysis for entire sample or groups of subject IDs
 - **Optimal Cluster Size Identification:** Perform the Davies Bouldin, Silhouette, Elbow, or
-Variance Ratio criterions to identify the optimal cluster size and automatically save the optimal
-model as an attribute.
+  Variance Ratio criterions to identify the optimal cluster size and automatically save the optimal
+  model as an attribute.
 - **Parallel Processing:** Use parallel processing to speed up optimal cluster size identification.
 - **CAPs Visualization:** Visualize the CAPs as outer products or heatmaps at either the region or
-node level of the parcellation.
+  node level of the parcellation.
 - **Save CAPs as NifTIs:** Convert the atlas used for parcellation to a statistical NifTI image.
 - **Surface Plot Visualization:** Project CAPs onto a surface plot.
 - **Correlation Matrix Creation:** Create a correlation matrix from CAPs.
@@ -102,11 +104,11 @@ node level of the parcellation.
 **Additional functions in the `neurocaps.analysis` module includes:**
 
 - ``merge_dicts()``: Merge the subject_timeseries dictionaries for overlapping subjects across tasks
-to identify similar CAPs across different tasks [6]_. The merged dictionary can be saved as a pickle file.
+  to identify similar CAPs across different tasks [6]_. The merged dictionary can be saved as a pickle file.
 - ``standardize()``: Standardizes each run independently for all subjects in the subject timeseries.
 - ``change_dtype()``: Changes the dtype of all subjects in the subject timeseries to help with memory usage.
 - ``transition_matrix()``: Uses the subject-level transition probabilities outputted from the ``CAP``
-class to generate and visualize the averaged transition probability matrix for all groups from the analysis.
+  class to generate and visualize the averaged transition probability matrix for all groups from the analysis.
 
 Please refer to the `demos <https://github.com/donishadsmith/neurocaps/tree/main/demos>`_ or
 `tutorials <https://neurocaps.readthedocs.io/en/latest/examples/examples.html>`_ for a more
