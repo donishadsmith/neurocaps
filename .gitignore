@@ -1,0 +1,5 @@
+docs/_build/
+docs/api/generated/
+__pycache__/
+neurocaps.egg-info/
+dist/
