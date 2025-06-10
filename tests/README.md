@@ -25,6 +25,9 @@ git submodule update --init
 pytest
 ```
 
+**Note:** Some tests require the AAL 3v2 atlas and will be skipped if `nilearn < 0.11.0` is
+installed. All tests will run with `nilearn >= 0.11.0`.
+
 ## Coverage
 To obtain a coverage report, run the following command (only the home directory as the ".coveragerc" file):
 
