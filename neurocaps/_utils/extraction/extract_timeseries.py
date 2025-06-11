@@ -48,8 +48,6 @@ class _Data:
     std_fd: Union[float, None] = None
     high_motion_len_mean: Union[float, None] = None
     high_motion_len_std: Union[float, None] = None
-    # Percentage of volumes that exceed fd threshold
-    vols_exceed_percent: Union[float, None] = None
 
     @property
     def session(self) -> Union[int, str, None]:
@@ -248,24 +246,15 @@ def _extract_timeseries(
 
         # Compute number of volumes exceeding outlier percentage
         if data.censored_frames and data.out_percent is not None:
-            data.vols_exceed_percent, data.skip_run = _flag_run(data)
+            vols_exceed_percent, data.skip_run = _flag_run(data)
 
             if data.skip_run:
-                perc = data.vols_exceed_percent * 100
-                msg = f"Percentage of volumes exceeding the threshold limit is {perc}%"
-                if data.condition:
-                    msg += f" for [CONDITION: {data.condition}]"
-
-                LG.warning(
-                    f"{data.head}" + f"Timeseries Extraction Skipped: Run flagged due to more than "
-                    f"{data.out_percent * 100}% of the volumes exceeding the framewise "
-                    f"displacement threshold of {data.fd_thresh}. {msg}."
-                )
+                _log_high_motion_percentage(data, LG, vols_exceed_percent)
                 continue
 
-        timeseries, skip_run = _perform_extraction(data, LG)
+        timeseries, data.skip_run = _perform_extraction(data, LG)
 
-        if skip_run:
+        if data.skip_run:
             continue
 
         if timeseries.shape[0] == 0:
@@ -636,7 +625,23 @@ def _flag_run(data):
     vols_exceed_percent = n_censor / n
     skip_run = vols_exceed_percent > data.out_percent
 
-    return vols_exceed_percent, skip_run
+    return vols_exceed_percent * 100, skip_run
+
+
+def _log_high_motion_percentage(data, LG, vols_exceed_percent):
+    """
+    Logs the percentage of volumes exceeding a specified framewise displacement.
+    """
+    msg = f"Percentage of volumes exceeding the threshold limit is {vols_exceed_percent}%"
+
+    if data.condition:
+        msg += f" for [CONDITION: {data.condition}]"
+
+    LG.warning(
+        f"{data.head}" + f"Timeseries Extraction Skipped: Run flagged due to more than "
+        f"{data.out_percent * 100}% of the volumes exceeding the framewise "
+        f"displacement threshold of {data.fd_thresh}. {msg}."
+    )
 
 
 def _perform_extraction(data, LG):

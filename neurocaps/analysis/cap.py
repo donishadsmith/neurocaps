@@ -2050,7 +2050,8 @@ class CAP(_CAPGetter):
 
         Returns
         -------
-            tuple containing the matplotlib figure, matplolib axes, tuple representing the row and
+        tuple
+            Contains the matplotlib figure, matplolib axes, tuple representing the row and
             column position of the current suplot (0, 0), and tuple representing the number of
             rows and columns in the subplot.
         """
@@ -2178,10 +2179,11 @@ class CAP(_CAPGetter):
 
         Returns
         -------
-            tuple consisting of a two lists. The first list is the same length as
-            "nodes" in ``self._parcel_approach`` and contains the unique node and hemisphere
-            combination at certain indices, with the remaining indices being empty strings.
-            The second list only contains the names of the unique node and hemisphere comvination.
+        tuple
+            Consists of a two lists. The first list is the same length as "nodes" in
+            ``self._parcel_approach`` and contains the unique node and hemisphere combination at
+            certain indices, with the remaining indices being empty strings. The second list only
+            contains the names of the unique node and hemisphere comvination.
         """
         # Get frequency of each major hemisphere and region in Schaefer, AAL, or Custom atlas
         if parcellation_name == "Schaefer":
