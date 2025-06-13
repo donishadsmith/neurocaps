@@ -473,8 +473,8 @@ def test_parcel_setter(setup_environment_1, tmp_dir):
         "Please include a valid `parcel_approach` in one of the following dictionary formats for 'Schaefer', "
         "'AAL', or 'Custom': {'Schaefer': {'n_rois': 400, 'yeo_networks': 7, 'resolution_mm': 1}, "
         "'AAL': {'version': 'SPM12'}, 'Custom': {'maps': '/location/to/parcellation.nii.gz', "
-        "'nodes': ['LH_Vis1', 'LH_Vis2', 'LH_Hippocampus', 'RH_Vis1', 'RH_Vis2', 'RH_Hippocampus'], "
-        "'regions': {'Vis': {'lh': [0, 1], 'rh': [3, 4]}, 'Hippocampus': {'lh': [2], 'rh': [5]}}}}"
+        "'nodes': ['LH_Vis1', 'LH_Vis2', 'LH_Hippocampus', 'RH_Vis1', 'RH_Vis2', 'RH_Hippocampus', 'Cerebellum_1'], "
+        "'regions': {'Vis': {'lh': [0, 1], 'rh': [3, 4]}, 'Hippocampus': {'lh': [2], 'rh': [5]}, 'Cerebellum': [6]}}}"
     )
 
     with pytest.raises(TypeError, match=re.escape(error_msg)):

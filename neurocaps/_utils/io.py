@@ -36,7 +36,9 @@ def _filename(
     is "prefix" or "suffix".
     """
     if not add_name:
-        return f"{base_name}.{ext}" if ext else base_name
+        filename = f"{base_name}.{ext}" if ext else base_name
+
+        return filename.replace(" ", "_")
 
     if pos == "prefix":
         # Use - since prefix is currently for ``CAP.calculate_metrics``

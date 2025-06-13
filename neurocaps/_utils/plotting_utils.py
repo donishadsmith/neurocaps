@@ -50,11 +50,11 @@ class _PlotDefaults:
             "cmap": "coolwarm",
             "edgecolors": None,
             "alpha": None,
-            "hemisphere_labels": False,
             "borderwidths": 0,
             "vmin": None,
             "vmax": None,
             "bbox_inches": "tight",
+            "add_custom_node_labels": False,
         }
 
     @staticmethod
@@ -184,12 +184,6 @@ class _PlotFuncs:
         return kwargs
 
     @staticmethod
-    def extra_kwargs(hemisphere_labels: bool) -> tuple[bool, bool]:
-        # Determine whether to add line related and edge related kwargs to base kwargs determined
-        # by hemisphere_labels
-        return (False, False) if hemisphere_labels else (True, True)
-
-    @staticmethod
     def border(
         display: Union[Axes, Figure],
         plot_dict: dict[str, Any],
@@ -253,31 +247,6 @@ class _PlotFuncs:
         display.set_yticklabels([label for label in labels if label])
 
         return display
-
-    @staticmethod
-    def division_line(
-        display: Union[Axes, Figure],
-        linewidths: int,
-        n_labels: int,
-        set_x: bool = True,
-        add_labels: Union[list[str], bool] = None,
-    ) -> tuple[Union[Axes, Figure], int, int]:
-        division_line = n_labels // 2
-        left_hemisphere_tick = (0 + division_line) // 2
-        right_hemisphere_tick = (division_line + n_labels) // 2
-
-        if set_x:
-            display.set_xticks([left_hemisphere_tick, right_hemisphere_tick])
-
-        display.set_yticks([left_hemisphere_tick, right_hemisphere_tick])
-
-        if add_labels:
-            display.set_xticklabels(["LH", "RH"])
-            display.set_yticklabels(["LH", "RH"])
-
-        line_widths = linewidths if linewidths != 0 else 1
-
-        return display, division_line, line_widths
 
     @staticmethod
     def set_title(

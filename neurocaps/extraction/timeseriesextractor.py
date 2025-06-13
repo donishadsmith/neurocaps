@@ -22,6 +22,7 @@ from .._utils import (
     _check_kwargs,
     _check_confound_names,
     _check_parcel_approach,
+    _extract_custom_region_indices,
     _extract_timeseries,
     _logger,
 )
@@ -1498,10 +1499,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             if "regions" not in self._parcel_approach["Custom"]:
                 _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_bold")
             else:
-                plot_indxs = np.array(
-                    list(self._parcel_approach["Custom"]["regions"][region]["lh"])
-                    + list(self._parcel_approach["Custom"]["regions"][region]["rh"])
-                )
+                plot_indxs = np.array(_extract_custom_region_indices(self._parcel_approach, region))
         else:
             plot_indxs = np.array(
                 [

@@ -28,10 +28,8 @@ For AAL, the only available subkey is "version".
 
 Custom Parcellations
 ---------------------
-If using a "Custom" parcellation approach, ensure that the atlas is lateralized (where each region/network has nodes in
-the left and right hemisphere). This is due to certain visualization functions assuming that each region consists of
-left and right hemisphere nodes. Additionally, certain visualization functions in this class also assume that the
-background label is 0. Therefore, do not add a background label in the "nodes" or "regions" keys.
+If using a "Custom" parcellation approach, certain visualization functions in this class also assume
+that the background label is 0. Therefore, do not add a background label in the "nodes" or "regions" keys.
 
     The recognized sub-keys for the "Custom" parcellation approach includes:
 
@@ -45,6 +43,8 @@ background label is 0. Therefore, do not add a background label in the "nodes" o
       (assuming "0" is the background), then the node label corresponding to "2000" should occupy the 0th element of
       this list.
 
+      .. note:: Only ``CAP.caps2plot`` uses the lateralization information to
+
       ::
 
             # Example of numerical label IDs and their organization in the "nodes" key
@@ -57,30 +57,39 @@ background label is 0. Therefore, do not add a background label in the "nodes" o
                 "RH_Hippocampus"    # Corresponds to parcellation label 2300; sixth lowest non-background numerical ID
             }
 
-    - "regions": A dictionary defining major brain regions or networks. Each region should list node indices under
-      "lh" (left hemisphere) and "rh" (right hemisphere) to specify the respective nodes. Both the "lh" and "rh"
-      sub-keys should contain the indices of the nodes belonging to each region/hemisphere pair, as determined
-      by the order/index in the "nodes" list. The naming of the sub-keys defining the major brain regions or networks
-      have zero naming requirements and simply define the nodes belonging to the same name.
+    - "regions": A dictionary defining major brain regions or networks. Each key is a region name,
+      and its value defines the nodes belonging to that region. Each region can be specified in one
+      of two ways:
+
+      1. Non-Lateralized: The region name is mapped to a list or range of integers. These integers are the indices from the "nodes" list.
+      2. Lateralized: The region name is mapped to a dictionary containing "lh" and "rh" keys. Each of these keys then maps to the list or range of node indices for that hemisphere.
+
+         .. note::
+            **When is Lateralization Information Used?**
+
+            Defining regions with lateralization (i.e., using "lh" and "rh" sub-keys) is only
+            necessary for a specific visualization feature: using the ``add_custom_node_labels=True``
+            argument in the ``CAP.caps2plot`` method. This feature generates simplified axis labels
+            for node-level plots that include hemisphere information. In all other functions and
+            methods within NeuroCAPs, this lateralization structure is ignored.
+
+            **Important Caveat for ``add_custom_node_labels``**
+
+            The labeling logic for ``add_custom_node_labels=True`` assumes that the indices for
+            all nodes within a given region/hemisphere pair are **consecutive** in the "nodes" list.
+            For example, the structure ``"Visual": {"lh": [0, 1], "rh": [3, 4]}`` and
+            ``"Visual": {"lh": [0, 1], "rh": [180, 181]}`` labels correctly.
+
+            However, if the indices are interleaved (e.g., ``"Visual": {"lh": [0, 2], "rh": [1, 3]}``),
+            the axis labels on the resulting plot will be misplaced. This only affects the visual
+            labels; the data itself remains plotted in the correct order. If your parcellation has
+            non-consecutive indices for its regions, it is recommended to leave
+            ``add_custom_node_labels`` as ``False`` (the default).
+
+    **Lateralized Example:** This example shows a fully lateralized setup, where every region is
+    defined with "lh" and "rh" keys.
 
       ::
-
-            # Example of the "regions" sub-keys
-            "regions": {
-                "Visual": {
-                    "lh": [0, 1], # Corresponds to "LH_Vis1" and "LH_Vis2"
-                    "rh": [3, 4]  # Corresponds to "RH_Vis1" and "RH_Vis2"
-                },
-                "Hippocampus": {
-                    "lh": [2], # Corresponds to "LH_Hippocampus"
-                    "rh": [5]  # Corresponds to "RH_Hippocampus"
-                }
-            }
-
-    The provided example demonstrates setting up a custom parcellation containing nodes for the visual network (Vis)
-    and hippocampus regions in full:
-
-    ::
 
         parcel_approach = {
             "Custom": {
@@ -95,16 +104,62 @@ background label is 0. Therefore, do not add a background label in the "nodes" o
                 ],
                 "regions": {
                     "Visual": {
-                        "lh": [0, 1],
-                        "rh": [3, 4]
+                        "lh": [0, 1],  # Corresponds to "LH_Vis1" and "LH_Vis2"
+                        "rh": [3, 4]   # Corresponds to "RH_Vis1" and "RH_Vis2"
                     },
                     "Hippocampus": {
-                        "lh": [2],
-                        "rh": [5]
+                        "lh": [2],     # Corresponds to "LH_Hippocampus"
+                        "rh": [5]      # Corresponds to "RH_Hippocampus"
                     }
                 }
             }
         }
 
+    **Non-Lateralized and Mixed Examples:** If regions are not separated by hemisphere or
+    hemisphere-specific plotting labels are not needed, then, map region names directly to their
+    node indices. The same dictionary can also contain a mix of lateralized and non-lateralized
+    regions.
+    ::
+
+        # Non-lateralized Custom Parcellation
+        parcel_approach = {
+            "Custom": {
+                "maps": "/location/to/parcellation.nii.gz",
+                "nodes": [
+                    "Visual_1",
+                    "Visual_2",
+                    "Visual_3",
+                    "Hippocampus_1",
+                    "Hippocampus_2"
+                ],
+                "regions": {
+                    # Map region name directly to indices from the "nodes" list
+                    "Visual": range(3),      # Indices 0, 1, 2
+                    "Hippocampus": [3, 4]    # Indices 3, 4
+                }
+            }
+        }
+
+        # Mixed Custom Parcellation
+        parcel_approach = {
+            "Custom": {
+                "maps": "/location/to/parcellation.nii.gz",
+                "nodes": [
+                    # Non-lateralized
+                    "Cerebellum_1",
+                    "Cerebellum_2",
+                    # Lateralized
+                    "LH_Frontal",
+                    "RH_Frontal"
+                ],
+                "regions": {
+                    "Cerebellum": [0, 1], # Defined without hemispheres
+                    "Frontal": {          # Defined with hemispheres
+                        "lh": [2],
+                        "rh": [3]
+                    }
+                }
+            }
+        }
 
 **NOTE**: Complete examples can be found in the `demos <https://github.com/donishadsmith/neurocaps/tree/stable/demos>`_.

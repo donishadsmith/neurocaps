@@ -29,7 +29,13 @@ jobs:
         run: |
           pip install asv 'virtualenv<20.31.0'
 
-      - name: Run benchmarks in virtual environment; compare previous commit to new commit
+      - name: Run benchmarks in virtual environment; skip if submodule changed or
+              compare current commit with previous commit if submodule is the same
         run: |
           asv machine --yes
-          asv continuous HEAD~1 HEAD
+          if ! git diff --quiet HEAD~1 HEAD -- tests/data; then
+            echo "Submodule changed may result in breaking change; skipping run"
+          else
+            asv continuous HEAD~1 HEAD
+          fi
+        shell: bash
