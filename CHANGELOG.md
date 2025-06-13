@@ -13,8 +13,22 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
-## [0.29.7] - 2025-05-30
+## [0.30.0] - 2025-06-13
+### 🚀 New/Added
+- Added support for parcellations with non-lateralized nodes in the custom parcel_approach.
+- Added the add_custom_node_names keyword argument to ``CAP.caps2plot()`` to control the display of
+node labels.
+### ♻ Changed
+- Removed the ``hemisphere_labels`` keyword argument from CAP.caps2plot(). This is replaced by
+``add_custom_node_names``.
+- Node labels on heatmaps and outer product plots are now disabled by default.
+``add_custom_node_names=True`` to can be used to display them.
 ### 🐛 Fixes
+- Fixed an issue where whitespace in plot filenames was not correctly replaced with underscores.
+-  Improved the node labeling logic for heatmaps and outer product plots. Labels are now applied
+correctly even when the input parcellation has all nodes of one hemisphere ordered before the other.
+
+## [0.29.7] - 2025-05-30
 - For `TimeseriesExtractor`, check and filtering added for `confound_names` when wildcard for prefix
 is used to ensure only that the asterisk is at the end since only prefix wildcards are supported.
 Also checks for case when only "*" is used since it would select all columns.

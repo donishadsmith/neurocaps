@@ -2,7 +2,7 @@
 
 [![Latest Version](https://img.shields.io/pypi/v/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.15556804)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.15660250)
 [![Github Repository](https://img.shields.io/badge/Source%20Code-neurocaps-purple)](https://github.com/donishadsmith/neurocaps)
 [![Test Status](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg)](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml)
 [![Documentation Status](https://readthedocs.org/projects/neurocaps/badge/?version=stable)](http://neurocaps.readthedocs.io/en/stable/?badge=stable)
@@ -125,7 +125,7 @@ section of the documentation homepage.**
 
 **Main features for `TimeseriesExtractor` includes:**
 - **Timeseries Extraction:** Extract timeseries for resting-state or task data using Schaefer, AAL,
-or a Custom parcellation (which can be manually defined) for spatial dimensionality reduction.
+or a manually defined Custom parcellation for spatial dimensionality reduction.
 - **Parallel Processing:** Parallelize at the subject-level (one subject per CPU core) to speed up
 timeseries extraction.
 - **Saving Timeseries:** Save the nested dictionary containing timeseries (mapping subject id ->

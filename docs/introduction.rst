@@ -9,7 +9,7 @@
    :alt: Python Versions
 
 .. image:: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal
-   :target: https://doi.org/10.5281/zenodo.15556804
+   :target: https://doi.org/10.5281/zenodo.15660250
    :alt: DOI
 
 .. image:: https://img.shields.io/badge/Source%20Code-neurocaps-purple
@@ -51,7 +51,7 @@ Citing
 ------
 ::
 
-  Smith, D. (2024). NeuroCAPs. Zenodo. https://doi.org/10.5281/zenodo.15556804
+  Smith, D. (2024). NeuroCAPs. Zenodo. https://doi.org/10.5281/zenodo.15660250
 
 Usage
 -----
@@ -62,7 +62,7 @@ Main features for ``TimeseriesExtractor`` includes:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - **Timeseries Extraction:** Extract timeseries for resting-state or task data using Schaefer, AAL,
-  or a Custom parcellation (which can be manually defined) for spatial dimensionality
+  or a manually defined Custom parcellation for spatial dimensionality
   reduction.
 - **Parallel Processing:** Parallelize at the subject-level (one subject per CPU core) to speed up
   timeseries extraction.
