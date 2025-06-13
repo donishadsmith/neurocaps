@@ -117,7 +117,7 @@ Jupyter Notebook demos using either simulated data or data obtained from OpenNeu
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbcontainer" tooltip="Using lateralized parcellations other than the Schaefer and AAL parcelations.">
+      <div class="sphx-glr-thumbcontainer" tooltip="Using parcellations other than the Schaefer and AAL parcelations.">
       <a href="custom.html" style="display: block; text-align: center;">
 
 .. only:: html
@@ -127,7 +127,7 @@ Jupyter Notebook demos using either simulated data or data obtained from OpenNeu
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbnail-title">Tutorial 7: Using Lateralized Custom Parcellations</div>
+      <div class="sphx-glr-thumbnail-title">Tutorial 7: Using Custom Parcellations</div>
       </a>
       </div>
 

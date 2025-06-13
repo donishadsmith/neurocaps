@@ -125,7 +125,7 @@ section of the documentation homepage.**
 
 **Main features for `TimeseriesExtractor` includes:**
 - **Timeseries Extraction:** Extract timeseries for resting-state or task data using Schaefer, AAL,
-or a Custom parcellations (which can be manually defined) for spatial dimensionality reduction.
+or a Custom parcellation (which can be manually defined) for spatial dimensionality reduction.
 - **Parallel Processing:** Parallelize at the subject-level (one subject per CPU core) to speed up
 timeseries extraction.
 - **Saving Timeseries:** Save the nested dictionary containing timeseries (mapping subject id ->
