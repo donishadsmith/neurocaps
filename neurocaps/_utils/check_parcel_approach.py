@@ -1,12 +1,14 @@
 """Internal function for checking the validity of parcel_approach."""
 
 import os, re
+from typing import Any
 
 import numpy as np
 from nilearn import datasets
 
 import neurocaps._utils.io as io_utils
 from .logger import _logger
+from ..typing import ParcelApproach
 
 LG = _logger(__name__)
 
@@ -15,13 +17,24 @@ VALID_DICT_STUCTURES = {
     "AAL": {"version": "SPM12"},
     "Custom": {
         "maps": "/location/to/parcellation.nii.gz",
-        "nodes": ["LH_Vis1", "LH_Vis2", "LH_Hippocampus", "RH_Vis1", "RH_Vis2", "RH_Hippocampus"],
-        "regions": {"Vis": {"lh": [0, 1], "rh": [3, 4]}, "Hippocampus": {"lh": [2], "rh": [5]}},
+        "nodes": [
+            "LH_Vis1",
+            "LH_Vis2",
+            "LH_Hippocampus",
+            "RH_Vis1",
+            "RH_Vis2",
+            "RH_Hippocampus",
+            "Cerebellum_1",
+        ],
+        "regions": {
+            "Vis": {"lh": [0, 1], "rh": [3, 4]},
+            "Hippocampus": {"lh": [2], "rh": [5]},
+            "Cerebellum": [6],
+        },
     },
 }
 
 
-# TODO: Incorporate https://github.com/PennLINC/AtlasPack
 def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
     """
     Pipeline to ensure ``parcel_approach`` is valid and process the ``parcel_approach`` if certain
@@ -206,66 +219,98 @@ def _check_custom_structure(custom_parcel, custom_example):
     example_msg = f"Refer to example: {custom_example}"
 
     if "nodes" in custom_parcel:
-        if not (
-            isinstance(custom_parcel.get("nodes"), (list, np.ndarray))
-            and list(custom_parcel.get("nodes"))
-        ):
-            raise TypeError(
-                "The 'nodes' subkey must be a non-empty list or numpy array containing the "
-                f"node labels. {example_msg}"
-            )
-
-        if not all(isinstance(element, str) for element in custom_parcel["nodes"]):
-            raise TypeError(
-                "All elements in the 'nodes' subkey's list or numpy array must be a string. "
-                f"{example_msg}"
-            )
+        _check_custom_nodes(custom_parcel, example_msg)
 
     if "regions" in custom_parcel:
-        if not (custom_parcel.get("regions") and isinstance(custom_parcel.get("regions"), dict)):
-            raise TypeError(
-                "The 'regions' subkey must be a non-empty dictionary containing the "
-                f"regions/networks labels. {example_msg}"
+        _check_custom_regions(custom_parcel, example_msg)
+
+
+def _check_custom_nodes(custom_parcel, example_msg):
+    """Check structure of the "nodes" subkey."""
+    if not (
+        isinstance(custom_parcel.get("nodes"), (list, np.ndarray))
+        and list(custom_parcel.get("nodes"))
+    ):
+        raise TypeError(
+            "The 'nodes' subkey must be a non-empty list or numpy array containing the "
+            f"node labels. {example_msg}"
+        )
+
+    if not all(isinstance(element, str) for element in custom_parcel["nodes"]):
+        raise TypeError(
+            "All elements in the 'nodes' subkey's list or numpy array must be a string. "
+            f"{example_msg}"
+        )
+
+
+def _check_custom_regions(custom_parcel, example_msg):
+    """Check structure of the "regions" subkey."""
+    if not (custom_parcel.get("regions") and isinstance(custom_parcel.get("regions"), dict)):
+        raise TypeError(
+            "The 'regions' subkey must be a non-empty dictionary containing the "
+            f"regions/networks labels. {example_msg}"
+        )
+
+    if not all(isinstance(key, str) for key in custom_parcel["regions"]):
+        raise TypeError(
+            "All first level keys in the 'regions' subkey's dictionary must be strings. "
+            f"{example_msg}"
+        )
+
+    for region in custom_parcel["regions"]:
+        _check_individual_region_structure(custom_parcel["regions"][region], region, example_msg)
+
+
+def _check_individual_region_structure(region_object: Any, region: str, example_msg: str) -> None:
+    """
+    Ensures that a region in the "Custom" parcel approach has the proper structure if its
+    lateralized (then region name should be mapped to dictionary containing "lh" and "rh" subkeys)
+    or not lateralized (then region name should be mapped to list).
+    """
+    if isinstance(region_object, dict):
+        if not is_lateralized(region_object):
+            raise KeyError(
+                f"If a region name (i.e. '{region}') is mapped to a dictionary, then the dictionary "
+                "must contain the subkeys: 'lh' and 'rh'. If the region is not lateralized, then "
+                "map the region to a range or list containing integers reflecting the indices in "
+                f"the 'nodes' list belonging to the specified regions. {example_msg}"
             )
 
-        if not all(isinstance(key, str) for key in custom_parcel["regions"]):
+        if not all(_contains_integers(region_object[key]) for key in ["lh", "rh"]):
             raise TypeError(
-                "All first level keys in the 'regions' subkey's dictionary must be strings. "
+                f"Issue at region named '{region}'. Each 'lh' and 'rh' subkey in the 'regions' "
+                "subkey's dictionary must contain a list or range of node indices. "
                 f"{example_msg}"
             )
-
-        regions = custom_parcel["regions"].values()
-        if not all(
-            [
-                all([hemisphere in region.keys() for hemisphere in ["lh", "rh"]])
-                for region in regions
-            ]
-        ):
-            raise KeyError(
-                "All second level keys in the 'regions' subkey's dictionary must contain 'lh' "
-                f"and 'rh'. {example_msg}"
-            )
-
-        if not _check_custom_hemisphere_dicts(regions):
+    else:
+        if not isinstance(region_object, (list, range)):
             raise TypeError(
-                "Each 'lh' and 'rh' subkey in the 'regions' subkey's dictionary must contain a "
-                f"list of integers or range of node indices. {example_msg}"
+                f"Each region name (i.e. '{region}') must be mapped to a dictionary "
+                f"(if lateralized) or a list or range (if not lateralized). {example_msg}"
+            )
+
+        if not _contains_integers(region_object):
+            raise TypeError(
+                f"Issue at region named '{region}'. If not lateralized, the region must be mapped "
+                f"to a list or range of node indices. {example_msg}"
             )
 
 
-def _check_custom_hemisphere_dicts(regions):
+def is_lateralized(region_object: dict[str, list[int]]) -> bool:
     """
-    Ensures that the "Custom" parcel approach has the proper structure for the hemisphere
+    Ensures that custom hemisphere subkeys ("lh" and "rh") are in `region_object` assuming it is a
     dictionary.
     """
-    # For the left and right hemisphere subkeys, check that they contain a list or range
-    # Only check if each element of a list is an integer since range is guaranteed to be a sequence
-    # of integers already
-    return all(
-        isinstance(item[key], range)
-        or (isinstance(item[key], list) and all(isinstance(element, int) for element in item[key]))
-        for item in regions
-        for key in ["lh", "rh"]
+    return all([hemisphere in region_object.keys() for hemisphere in ["lh", "rh"]])
+
+
+def _contains_integers(obj: list[Any]) -> bool:
+    """
+    Checks if each element in a list is an integer that can be used for indexing. Range is
+    guarenteed to be a sequence of integers already.
+    """
+    return isinstance(obj, range) or (
+        isinstance(obj, list) and all(isinstance(element, int) for element in obj)
     )
 
 
@@ -298,3 +343,21 @@ def _collapse_aal_node_names(nodes, return_unique_names=True):
         collapsed_node_names = list(dict.fromkeys(collapsed_node_names))
 
     return collapsed_node_names
+
+
+def _extract_custom_region_indices(parcel_approach: ParcelApproach, region_name: str) -> list[int]:
+    """
+    Extract the indices for a specific region from a custom parcellation approach. Uses list
+    concatenation to return all indices (position in "nodes" list) associated with a specific
+    region.
+    """
+    # Determine nesting level
+    region_object = parcel_approach["Custom"]["regions"][region_name]
+    region_list = list(region_object)
+    has_hemispheres = len(region_list) == 2 and all([x in region_list for x in ["lh", "rh"]])
+
+    return (
+        list(region_object["lh"]) + list(region_object["rh"])
+        if has_hemispheres
+        else list(region_object)
+    )

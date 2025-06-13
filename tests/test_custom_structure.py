@@ -42,25 +42,111 @@ def test_nodes_error(copy_parcellation):
         TimeseriesExtractor(parcel_approach=parcel_approach)
 
 
-def test_regions_error(copy_parcellation):
-    """Tests errors produces when hemispheres not mapped to integers."""
+def test_regions(copy_parcellation):
+    """Ensure no error when regions is in the expected structure."""
     nii_file, _ = copy_parcellation
     parcel_approach = {
         "Custom": {
             "maps": nii_file,
             "nodes": CUSTOM_EXAMPLE["Custom"]["nodes"],
             "regions": {
-                "Vis": {"lh": [0, 1], "rh": [3, 4]},
-                "Hippocampus": {"lh": ["placeholder"], "rh": [5]},
+                "Vis": {"lh": [0, 1], "rh": range(3, 5)},
+                "Hippocampus": range(5, 6),
+            },
+        }
+    }
+
+    CAP(parcel_approach=parcel_approach)
+
+    parcel_approach = {
+        "Custom": {
+            "maps": nii_file,
+            "nodes": CUSTOM_EXAMPLE["Custom"]["nodes"],
+            "regions": {
+                "Vis": {"lh": [0, 1], "rh": range(3, 5)},
+                "Hippocampus": [5, 6],
+            },
+        }
+    }
+
+    CAP(parcel_approach=parcel_approach)
+
+
+def test_regions_error(copy_parcellation):
+    """Tests errors produced when hemispheres not mapped to integers or in expected structure."""
+    nii_file, _ = copy_parcellation
+    parcel_approach = {
+        "Custom": {
+            "maps": nii_file,
+            "nodes": CUSTOM_EXAMPLE["Custom"]["nodes"],
+            "regions": {
+                "Vis": {},
+                "Hippocampus": {"lh": [2], "rh": [5]},
             },
         }
     }
 
     msg = (
-        "Each 'lh' and 'rh' subkey in the 'regions' subkey's dictionary must contain a list of "
-        f"integers or range of node indices. Refer to example: {CUSTOM_EXAMPLE}"
+        f"If a region name (i.e. 'Vis') is mapped to a dictionary, then the dictionary "
+        "must contain the subkeys: 'lh' and 'rh'. If the region is not lateralized, then "
+        "map the region to a range or list containing integers reflecting the indices in "
+        f"the 'nodes' list belonging to the specified regions. Refer to example: {CUSTOM_EXAMPLE}"
     )
-    with pytest.raises(TypeError, match=re.escape(msg)):
+    with pytest.raises(KeyError, match=re.escape(msg)):
+        CAP(parcel_approach=parcel_approach)
+
+    parcel_approach = {
+        "Custom": {
+            "maps": nii_file,
+            "nodes": CUSTOM_EXAMPLE["Custom"]["nodes"],
+            "regions": {
+                "Vis": {"lh": [0, 1], "rh": [3, 4]},
+                "Hippocampus": {"lh": [0, 1], "rh": [3, "a"]},
+            },
+        }
+    }
+
+    msg = (
+        r"Issue at region named 'Hippocampus'\. Each 'lh' and 'rh' subkey.*must contain a list or "
+        r"range of node indices"
+    )
+    with pytest.raises(TypeError, match=msg):
+        CAP(parcel_approach=parcel_approach)
+
+    parcel_approach = {
+        "Custom": {
+            "maps": nii_file,
+            "nodes": CUSTOM_EXAMPLE["Custom"]["nodes"],
+            "regions": {
+                "Vis": {"lh": [0, 1], "rh": [3, 4]},
+                "Hippocampus": 2,
+            },
+        }
+    }
+
+    msg = (
+        r"Each region name.*must be mapped to a dictionary.*or a list or range.*if not "
+        r"lateralized"
+    )
+    with pytest.raises(TypeError, match=msg):
+        CAP(parcel_approach=parcel_approach)
+
+    parcel_approach = {
+        "Custom": {
+            "maps": nii_file,
+            "nodes": CUSTOM_EXAMPLE["Custom"]["nodes"],
+            "regions": {
+                "Vis": {"lh": [0, 1], "rh": [3, 4]},
+                "Hippocampus": [2, "A"],
+            },
+        }
+    }
+
+    msg = (
+        r"Issue at region named 'Hippocampus'\. If not lateralized, the region must be mapped.*"
+        r"to a list or range of node indices.*"
+    )
+    with pytest.raises(TypeError, match=msg):
         CAP(parcel_approach=parcel_approach)
 
 

@@ -3,3 +3,5 @@ docs/api/generated/
 __pycache__/
 neurocaps.egg-info/
 dist/
+demos/neurocaps_demo/
+.asv/

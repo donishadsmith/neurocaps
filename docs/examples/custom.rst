@@ -1,5 +1,5 @@
-Tutorial 7: Using Lateralized Custom Parcellations
-==================================================
+Tutorial 7: Using Custom Parcellations
+======================================
 
 .. |colab| image:: https://colab.research.google.com/assets/colab-badge.svg
    :target: https://colab.research.google.com/github/donishadsmith/neurocaps/blob/stable/docs/examples/notebooks/custom.ipynb
@@ -8,9 +8,11 @@ Tutorial 7: Using Lateralized Custom Parcellations
 
 While NeuroCAPs leverages Nilearn's fetch functions for the `Schaefer <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_schaefer_2018.html>`_
 and `AAL <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_aal.html>`_, additional
-lateralized parcellations can be manually defined. For custom parcellation approaches, three subkeys are
+parcellations (lateralized and non-lateralized) can be manually defined. For custom parcellation approaches, three subkeys are
 recognized: "maps", "nodes", and "regions". For additional details on these subkeys, refer to the
 `"Custom Parcellations" sub-section <https://neurocaps.readthedocs.io/en/stable/user_guide/parcellations.html#custom-parcellations>`_.
+
+**Note:** Non-lateralized parcellations are supported in versions >= 0.30.0.
 
 For this demonstration, the extended Human Connectome Project multimodal parcellation (HCPex) [1]_ [2]_ from
 `wayalan's Github <https://github.com/wayalan/HCPex/>`_ will be used.
@@ -173,17 +175,17 @@ For ``TimeseriesExtractor.get_bold``, only the "maps" subkey (the location of th
 
     .. code-block:: none
 
-        2025-05-22 14:11:27,418 neurocaps._utils.check_parcel_approach [WARNING] The following subkeys haven't been detected ['nodes', 'regions']. These labels are not needed for timeseries extraction but are needed for plotting.
-        2025-05-22 14:11:27,419 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: cosine*, trans_x, trans_x_derivative1, trans_y, trans_y_derivative1, trans_z, trans_z_derivative1, rot_x, rot_x_derivative1, rot_y, rot_y_derivative1, rot_z, rot_z_derivative1, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05.
-        2025-05-22 14:11:28,975 neurocaps.extraction.timeseriesextractor [INFO] BIDS Layout: ...mples\notebooks\neurocaps_demo | Subjects: 1 | Sessions: 1 | Runs: 2
-        2025-05-22 14:11:29,043 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-1_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
-        2025-05-22 14:11:29,063 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] No 'non_steady_state_outlier_XX' columns were found so 0 dummy scans will be removed.
-        2025-05-22 14:11:29,086 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_x_derivative1, trans_y, trans_y_derivative1, trans_z, trans_z_derivative1, rot_x, rot_x_derivative1, rot_y, rot_y_derivative1, rot_z, rot_z_derivative1, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05.
-        2025-05-22 14:11:39,939 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Nuisance regression completed; extracting [CONDITION: late].
-        2025-05-22 14:11:39,977 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-2_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
-        2025-05-22 14:11:39,994 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] No 'non_steady_state_outlier_XX' columns were found so 0 dummy scans will be removed.
-        2025-05-22 14:11:40,006 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_x_derivative1, trans_y, trans_y_derivative1, trans_z, trans_z_derivative1, rot_x, rot_x_derivative1, rot_y, rot_y_derivative1, rot_z, rot_z_derivative1, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05.
-        2025-05-22 14:11:50,949 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] Nuisance regression completed; extracting [CONDITION: late].
+        2025-06-13 14:11:27,418 neurocaps._utils.check_parcel_approach [WARNING] The following subkeys haven't been detected ['nodes', 'regions']. These labels are not needed for timeseries extraction but are needed for plotting.
+        2025-06-13 14:11:27,419 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: cosine*, trans_x, trans_x_derivative1, trans_y, trans_y_derivative1, trans_z, trans_z_derivative1, rot_x, rot_x_derivative1, rot_y, rot_y_derivative1, rot_z, rot_z_derivative1, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05.
+        2025-06-13 14:11:28,975 neurocaps.extraction.timeseriesextractor [INFO] BIDS Layout: ...mples\notebooks\neurocaps_demo | Subjects: 1 | Sessions: 1 | Runs: 2
+        2025-06-13 14:11:29,043 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-1_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
+        2025-06-13 14:11:29,063 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] No 'non_steady_state_outlier_XX' columns were found so 0 dummy scans will be removed.
+        2025-06-13 14:11:29,086 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_x_derivative1, trans_y, trans_y_derivative1, trans_z, trans_z_derivative1, rot_x, rot_x_derivative1, rot_y, rot_y_derivative1, rot_z, rot_z_derivative1, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05.
+        2025-06-13 14:11:39,939 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Nuisance regression completed; extracting [CONDITION: late].
+        2025-06-13 14:11:39,977 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-2_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
+        2025-06-13 14:11:39,994 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] No 'non_steady_state_outlier_XX' columns were found so 0 dummy scans will be removed.
+        2025-06-13 14:11:40,006 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_x_derivative1, trans_y, trans_y_derivative1, trans_z, trans_z_derivative1, rot_x, rot_x_derivative1, rot_y, rot_y_derivative1, rot_z, rot_z_derivative1, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05.
+        2025-06-13 14:11:50,949 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] Nuisance regression completed; extracting [CONDITION: late].
 
 For visualization methods in the ``TimeseriesExtractor`` and ``CAP`` classes, the nodes and regions need to be defined.
 Refer to the documentation for each function to determine which subkeys are required, as some methods only need the
@@ -275,7 +277,7 @@ The following code uses ``CAP.get_bold`` to extract two CAPs.
 
     .. code-block:: none
 
-        2025-05-22 14:12:14,255 neurocaps.analysis.cap [INFO] No groups specified. Using default group 'All Subjects' containing all subject IDs from `subject_timeseries`. The `self.groups` dictionary will remain fixed unless the `CAP` class is re-initialized.
+        2025-06-13 14:12:14,255 neurocaps.analysis.cap [INFO] No groups specified. Using default group 'All Subjects' containing all subject IDs from `subject_timeseries`. The `self.groups` dictionary will remain fixed unless the `CAP` class is re-initialized.
 
 Surface Plotting with and without KNN Interpolation
 ---------------------------------------------------
@@ -326,7 +328,7 @@ other subkeys are optional*.
 
     .. code-block:: none
 
-        2025-05-22 14:15:00,435 neurocaps.analysis.cap [WARNING] Defaulting to 1mm resolution for the Schaefer atlas since 'resolution_mm' was not specified in `knn_dict`.
+        2025-06-13 14:15:00,435 neurocaps.analysis.cap [WARNING] Defaulting to 1mm resolution for the Schaefer atlas since 'resolution_mm' was not specified in `knn_dict`.
 
 
 .. image:: embed/All_Subjects_CAP-1_surface_KNN.png
@@ -335,6 +337,138 @@ other subkeys are optional*.
 
 .. image:: embed/All_Subjects_CAP-2_surface_KNN.png
     :width: 1000
+
+Simulated Example with Schaefer 4S
+----------------------------------
+
+.. code-block:: python
+
+    # Fetching atlas NiFTI image and labels from Github
+    if sys.platform != "win32":
+        cmd = [
+            [
+                "wget",
+                "-q",
+                "-P",
+                "neurocaps_demo",
+                "https://github.com/PennLINC/AtlasPack/raw/main/atlas-4S156Parcels_dseg.tsv",
+            ],
+        ]
+    else:
+        cmd = [
+            [
+                "curl",
+                "-L",
+                "-o",
+                "neurocaps_demo\\atlas-4S156Parcels_dseg.tsv",
+                "https://github.com/PennLINC/AtlasPack/raw/main/atlas-4S156Parcels_dseg.tsv",
+            ],
+        ]
+
+    for command in cmd:
+        subprocess.run(command, check=True)
+
+    # Creating custom parcel approach dictionary and extracting timeseries
+    parcel_approach = {"Custom": {}}
+
+    # Setting the "nodes", which is needed for "TimeseriesExtractor.visualize_bold";
+    # Getting nodes that don't correspond to background label
+    parcel_approach["Custom"]["nodes"] = pd.read_csv(
+        "neurocaps_demo\\atlas-4S156Parcels_dseg.tsv",
+        sep="\t",
+    )["label"].values
+
+    # Needed for many plotting methods; Setting the region names and their corresponding indices
+    # in the nodes list in this case it is just the label id - 1
+    parcel_approach["Custom"]["regions"] = {
+        "Visual": [*range(0, 9), *range(50, 58)],
+        "SMN": [*range(9, 15), *range(58, 66)],
+        "DAN": [*range(15, 23), *range(66, 73)],
+        "VAN": [*range(23, 30), *range(73, 78)],
+        "Limbic": [*range(30, 33), *range(78, 80)],
+        "Cont": [*range(33, 37), *range(80, 89)],
+        "DMN": [*range(37, 50), *range(89, 100)],
+        "Subcortical": [*range(100, 146)],
+        "Cerebellar": [*range(100, 156)],
+    }
+
+.. code-block:: python
+
+    import numpy as np
+
+    sub_ids = [f"0{x}" if x < 10 else x for x in range(1, 11)]
+    subject_timeseries = {
+        str(x): {f"run-{y}": np.random.rand(50, 156) for y in range(1, 4)} for x in sub_ids
+    }
+
+    cap_analysis = CAP(parcel_approach=None)
+    cap_analysis.parcel_approach = parcel_approach
+    cap_analysis.get_caps(subject_timeseries=subject_timeseries, n_clusters=3)
+
+.. code-block:: python
+
+    import seaborn as sns
+
+    sns.diverging_palette(145, 300, s=60, as_cmap=True)
+
+    palette = sns.diverging_palette(260, 10, s=80, l=55, n=256, as_cmap=True)
+
+    cap_analysis.caps2plot(visual_scope="regions", plot_options="heatmap", borderwidths=10)
+
+    cap_analysis.caps2plot(
+        visual_scope="regions",
+        plot_options="outer_product",
+        subplots=True,
+        fontsize=14,
+        tight_layout=False,
+        xlabel_rotation=90,
+        hspace=0.3,
+        cmap=palette,
+        output_dir="neurocaps_demo",
+    )
+
+.. image:: embed/All_Subjects_CAPs_outer_product-regions-Schaefer4s.png
+    :width: 1000
+
+
+.. code-block:: python
+
+    radialaxis = {
+        "showline": True,
+        "linewidth": 2,
+        "linecolor": "rgba(0, 0, 0, 0.25)",
+        "gridcolor": "rgba(0, 0, 0, 0.25)",
+        "ticks": "outside",
+        "tickfont": {"size": 14, "color": "black"},
+        "range": [0, 0.5],
+        "tickvals": [0.1, "", 0.3, "", 0.5],
+    }
+
+    color_discrete_map = {
+        "High Amplitude": "rgba(255, 165, 0, 0.75)",
+        "Low Amplitude": "black",
+    }
+
+    cap_analysis.caps2radar(
+        radialaxis=radialaxis,
+        fill="toself",
+        color_discrete_map=color_discrete_map,
+        use_scatterpolar=True,
+        output_dir="neurocaps_demo",
+        as_html=True,
+    )
+
+.. image:: embed/All_Subjects_CAP-1_radar-Schaefer4s.png
+    :width: 1000
+
+
+.. image:: embed/All_Subjects_CAP-2_radar-Schaefer4s.png
+    :width: 1000
+
+
+.. image:: embed/All_Subjects_CAP-3_radar-Schaefer4s.png
+    :width: 1000
+
 
 .. only:: html
 

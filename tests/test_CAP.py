@@ -985,6 +985,7 @@ def test_caps2plot(tmp_dir, timeseries, parcel_approach):
         visual_scope=["regions", "nodes"],
         plot_options=["heatmap", "outer_product"],
         output_dir=tmp_dir.name,
+        add_custom_node_labels=True,  # Only relevant to Custom
     )
 
     cap_analysis.caps2plot(**kwargs)
@@ -992,23 +993,12 @@ def test_caps2plot(tmp_dir, timeseries, parcel_approach):
     cap_analysis.caps2plot(**kwargs, as_pickle=True)
     check_outputs(tmp_dir, plot_type="pickle", values_dict={"pkl": 6})
 
-    # Assess hemisphere labels
-    if "AAL" not in parcel_approach:
-        kwargs["hemisphere_labels"] = True
-        cap_analysis.caps2plot(**kwargs)
-        check_outputs(tmp_dir, values_dict={"heatmap": 2, "outer": 4})
-
     # Subplots set to True
     kwargs["subplots"] = True
-    kwargs["hemisphere_labels"] = False
     kwargs["share_y"] = True
+    kwargs["add_custom_node_labels"] = False
     cap_analysis.caps2plot(**kwargs)
     check_outputs(tmp_dir, values_dict={"heatmap": 2, "outer": 2})
-
-    if "AAL" not in parcel_approach:
-        kwargs["hemisphere_labels"] = True
-        cap_analysis.caps2plot(**kwargs)
-        check_outputs(tmp_dir, values_dict={"heatmap": 2, "outer": 2})
 
     parcel_name = list(parcel_approach.keys())[0]
     if parcel_name != "Custom":

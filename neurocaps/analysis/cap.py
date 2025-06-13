@@ -27,6 +27,7 @@ from .._utils import (
     _check_kwargs,
     _check_parcel_approach,
     _collapse_aal_node_names,
+    _extract_custom_region_indices,
     _logger,
     _run_kmeans,
     _standardize,
@@ -1670,17 +1671,35 @@ class CAP(_CAPGetter):
               from 0 (transparent) to 1 (opaque).
             - bbox_inches: :obj:`str` or :obj:`None`, default="tight" -- Alters size of the
               whitespace in the saved image.
-            - hemisphere_labels: :obj:`bool`, default=False -- When ``visual_scope="nodes"``,
-              shows simplified left/right hemisphere division line instead of individual node labels
-              (only for Custom and Schaefer parcellations). For Custom parcellations, assumes labels
-              are ordered such that all left hemisphere nodes come before right hemisphere nodes.
-              Ignores edgecolors; linewidths/linecolor only affect division line.
             - cmap: :obj:`str`, :obj:`callable` default="coolwarm" -- Color map for the plot cells.
               Options include strings to call seaborn's pre-made palettes, ``seaborn.diverging_palette``
               function to generate custom palettes, and ``matplotlib.color.LinearSegmentedColormap``
               to generate custom palettes.
             - vmin: :obj:`float` or :obj:`None`, default=None -- The minimum value to display in colormap.
             - vmax: :obj:`float` or :obj:`None`, default=None -- The maximum value to display in colormap.
+            - add_custom_node_labels: :obj:`bool`, default=False -- When ``visual_scope`` is set to
+              "nodes" and a "Custom" ``parcel_approach`` is used, adds simplified node names to the
+              plot's axes. Instead of labeling every individual node, the node list is "collapsed"
+              by region. A single label is then placed at the beginning of the group of nodes
+              corresponding to that region (e.g., "LH Visual" or "Hippocampus"), while the other
+              nodes in that group are not explicitly labeled. This is done to minimize
+              cluttering of the axes labels.
+
+              .. versionadded:: 0.30.0
+
+              .. important::
+                This feature should be used with caution. It is recommended to leave this
+                argument as ``False`` for the following conditions:
+
+                1. **Large Number of Nodes**: Enabling labels for a parcellation with many
+                   nodes can clutter the plot axes and make them unreadable.
+                2. **Non-Consecutive Node Indices**: The labeling logic assumes that the
+                   numerical indices for all nodes within a given region are defined as a
+                   consecutive block (e.g., ``"RegionA": [0, 1, 2]``, ``"RegionB": [3, 4]``).
+                   If the indices are non-consecutive or interleaved (e.g.,
+                   ``"RegionA": [0, 2]``, ``"RegionB": [1, 3]``), the axis labels will be
+                   misplaced. Note that this issue only affects the visual labeling on the plot;
+                   the underlying data matrix remains correctly ordered and plotted.
 
         Returns
         -------
@@ -1734,15 +1753,6 @@ class CAP(_CAPGetter):
 
         # Create plot dictionary
         plot_dict = _check_kwargs(_PlotDefaults.caps2plot(), **kwargs)
-        if plot_dict["hemisphere_labels"] is True:
-            if "nodes" not in visual_scope:
-                raise ValueError(
-                    "`hemisphere_labels` is only available when `visual_scope == 'nodes'`."
-                )
-            if parcellation_name == "AAL":
-                raise ValueError(
-                    "`hemisphere_labels` is only available for 'Custom' and 'Schaefer'."
-                )
 
         # Ensure plot_options and visual_scope are lists
         plot_options = plot_options if isinstance(plot_options, list) else list(plot_options)
@@ -1755,7 +1765,9 @@ class CAP(_CAPGetter):
 
         for plot_option, scope, group in distributed_list:
             # Get correct labels depending on scope
-            cap_dict, labels = self._extract_scope_information(scope, parcellation_name)
+            cap_dict, labels = self._extract_scope_information(
+                scope, parcellation_name, plot_dict["add_custom_node_labels"]
+            )
 
             # Generate plot for each group
             input_keys = dict(
@@ -1787,9 +1799,6 @@ class CAP(_CAPGetter):
         """
         self._region_means = {group: {} for group in self._groups}
 
-        region_dict = (
-            self._parcel_approach["Custom"]["regions"] if parcellation_name == "Custom" else None
-        )
         # List of regions remains list for Schaefer and AAL but converts keys to list for Custom
         regions = list(self._parcel_approach[parcellation_name]["regions"])
 
@@ -1809,7 +1818,7 @@ class CAP(_CAPGetter):
                     )
                 else:
                     region_indxs = np.array(
-                        list(region_dict[region]["lh"]) + list(region_dict[region]["rh"])
+                        _extract_custom_region_indices(self._parcel_approach, region)
                     )
 
                 if region_means is None:
@@ -1824,7 +1833,7 @@ class CAP(_CAPGetter):
             self._region_means[group].update({cap: region_means})
 
     def _extract_scope_information(
-        self, scope: str, parcellation_name: str
+        self, scope: str, parcellation_name: str, add_custom_node_labels: bool
     ) -> tuple[dict[str, dict[str, NDArray]], list[str]]:
         """
         Extracting region means of each CAP from ``self._region_means`` if scope is "region" else
@@ -1838,18 +1847,125 @@ class CAP(_CAPGetter):
             }
             labels = list(self._parcel_approach[parcellation_name]["regions"])
         elif scope == "nodes":
-            if parcellation_name in ["Schaefer", "AAL"]:
-                cap_dict, labels = self._caps, self._parcel_approach[parcellation_name]["nodes"]
-            else:
-                cap_dict = self._caps
-                labels = [
-                    x[0] + " " + x[1]
-                    for x in list(
-                        itertools.product(["LH", "RH"], self._parcel_approach["Custom"]["regions"])
-                    )
-                ]
+            cap_dict, labels = self._extract_node_names(parcellation_name, add_custom_node_labels)
 
         return cap_dict, labels
+
+    def _extract_node_names(
+        self, parcellation_name: str, add_custom_node_labels: bool
+    ) -> tuple[dict[str, dict[str, NDArray]], list[str]]:
+        """
+        Extracts the node names from the ``parcel_approach``. For "Custom", if the region is
+        lateralized, then the label is returned in the form "{Hemisphere} {Region}", else its
+        returned as "{Region}".
+        """
+        if parcellation_name in ["Schaefer", "AAL"]:
+            cap_dict, labels = self._caps, self._parcel_approach[parcellation_name]["nodes"]
+        else:
+            cap_dict = self._caps
+            labels = self._sort_custom_node_names() if add_custom_node_labels else None
+
+        return cap_dict, labels
+
+    def _sort_custom_node_names(self) -> list[str]:
+        """
+        Generates and sorts node names for the "Custom" parcellation based on their starting
+        numerical index.
+        """
+        indexed_labels = []
+        custom_regions = self._parcel_approach["Custom"]["regions"]
+
+        for region_name, region_data in custom_regions.items():
+            if isinstance(region_data, dict):
+                # Case when region is lateralized (e.g., {"lh": [...], "rh": [...]})
+                for hemisphere, indices in region_data.items():
+                    # Use the starting integer as a sorting key (sort_key, region_name)
+                    sort_key = sorted(list(indices))[0]
+                    indexed_labels.append((sort_key, f"{hemisphere.upper()} {region_name}"))
+            else:
+                # Case when region is non-lateralized (e.g., "Hippocampus": [95, ...])
+                sort_key = sorted(list(region_data))[0]
+                indexed_labels.append((sort_key, region_name))
+
+        # Return only labels
+        return [label for _, label in sorted(indexed_labels)]
+
+    @staticmethod
+    def _collapse_node_labels(
+        parcellation_name: str,
+        parcel_approach: ParcelApproach,
+        custom_nodes: Union[list[str], None] = None,
+    ) -> tuple[list[str], list[str]]:
+        """
+        Collapses node labels names (based on unique node names and hemisphere) for plotting
+        purposes. For instance in the Schaefer parcellation, nodes containing "Vis" have a left and
+        right hemisphere version, instead of ["LH_Vis_1", "LH_Vis_2", "RH_Vis_1", "RH_Vis_2", ...],
+        the unique names would be "LH Vis" and "RH Vis". The frequencies of nodes containing the
+        unique node name and hemisphere combination are computed to reduce plot clutter when "nodes"
+        are plotted.
+
+        Returns
+        -------
+        tuple
+            Consists of a two lists. The first list is the same length as "nodes" in
+            ``self._parcel_approach`` and contains the unique node and hemisphere combination at
+            certain indices, with the remaining indices being empty strings. The second list only
+            contains the names of the unique node and hemisphere comvination.
+        """
+        # Get frequency of each major hemisphere and region in Schaefer, AAL, or Custom atlas
+        if parcellation_name == "Schaefer":
+            nodes = parcel_approach[parcellation_name]["nodes"]
+            # Retain only the hemisphere and primary Schaefer network
+            # Node string in form of {hemisphere}_{region}_{number} (e.g. LH_Cont_Par_1)
+            # Below code returns a list where each element is a list of [Hemisphere, Network]
+            # (e.g ["LH", "Vis"])
+            hemi_network_pairs = [node.split("_")[:2] for node in nodes]
+            frequency_dict = collections.Counter([" ".join(node) for node in hemi_network_pairs])
+        elif parcellation_name == "AAL":
+            nodes = parcel_approach[parcellation_name]["nodes"]
+            # AAL in the form of {region}_{hemisphere}_{number} or {region}_{hemisphere)
+            # (e.g. Frontal_Inf_Orb_2_R, Precentral_L); _collapse_aal_node_names would return these
+            # as Frontal and Pre
+            collapsed_aal_nodes = _collapse_aal_node_names(nodes, return_unique_names=False)
+            frequency_dict = collections.Counter(collapsed_aal_nodes)
+        else:
+            if custom_nodes is None:
+                return [], []
+
+            frequency_dict = {}
+            for node_id in custom_nodes:
+                # For custom, columns comes in the form of "{Hemisphere} {Region}" or "{Region}"
+                is_lateralized = node_id.startswith("LH ") or node_id.startswith("RH ")
+                if is_lateralized:
+                    hemisphere_id = "LH" if node_id.startswith("LH ") else "RH"
+                    region_id = re.split("LH |RH ", node_id)[-1]
+                    node_indices = parcel_approach["Custom"]["regions"][region_id][
+                        hemisphere_id.lower()
+                    ]
+                else:
+                    node_indices = parcel_approach["Custom"]["regions"][node_id]
+
+                frequency_dict.update({node_id: len(node_indices)})
+
+        # Get the names, which indicate the hemisphere and region; reverting Counter objects to
+        # list retains original ordering of nodes in list as of Python 3.7
+        collapsed_node_labels = list(frequency_dict)
+        tick_labels = ["" for _ in range(len(parcel_approach[parcellation_name]["nodes"]))]
+
+        starting_value = 0
+
+        # Iterate through names_list and assign the starting indices corresponding to unique region
+        # and hemisphere key
+        for num, collapsed_node_label in enumerate(collapsed_node_labels):
+            if num == 0:
+                tick_labels[0] = collapsed_node_label
+            else:
+                # Shifting to previous frequency of the preceding network to obtain the new starting
+                # value of the subsequent region and hemisphere pair (if lateralized)
+                starting_value += frequency_dict[collapsed_node_labels[num - 1]]
+                tick_labels[starting_value] = collapsed_node_label
+
+        return tick_labels, collapsed_node_labels
 
     def _generate_outer_product_plots(
         self,
@@ -1872,6 +1988,14 @@ class CAP(_CAPGetter):
         """
         self._outer_products[group] = {}
 
+        # Create labels if nodes requested for scope
+        if scope == "nodes":
+            reduced_labels, _ = self._collapse_node_labels(
+                parcellation_name,
+                self._parcel_approach,
+                custom_nodes=full_labels if parcellation_name == "Custom" else None,
+            )
+        # Modify tick labels based on scope
         plot_labels = (
             {"xticklabels": full_labels, "yticklabels": full_labels}
             if scope == "regions"
@@ -1892,54 +2016,18 @@ class CAP(_CAPGetter):
                 {cap: np.outer(cap_dict[group][cap], cap_dict[group][cap])}
             )
 
-            # Create labels if nodes requested for scope
-            if scope == "nodes" and plot_dict["hemisphere_labels"] is False:
-                reduced_labels, _ = self._collapse_node_labels(
-                    parcellation_name,
-                    self._parcel_approach,
-                    node_ids=full_labels if parcellation_name == "Custom" else None,
-                )
-
             if subplots:
                 ax = axes[axes_y] if nrow == 1 else axes[axes_x, axes_y]
-                # Modify tick labels based on scope
-                if scope == "regions":
-                    display = seaborn.heatmap(
-                        ax=ax,
-                        data=self._outer_products[group][cap],
-                        **plot_labels,
-                        **_PlotFuncs.base_kwargs(plot_dict),
-                    )
-                else:
-                    # No labels
-                    display = seaborn.heatmap(
-                        ax=ax,
-                        data=self._outer_products[group][cap],
-                        **_PlotFuncs.base_kwargs(
-                            plot_dict, *_PlotFuncs.extra_kwargs(plot_dict["hemisphere_labels"])
-                        ),
-                    )
 
-                    if plot_dict["hemisphere_labels"] is False:
-                        ax = _PlotFuncs.set_ticks(ax, reduced_labels)
-                    else:
-                        ax, division_line, plot_dict["linewidths"] = _PlotFuncs.division_line(
-                            display=ax,
-                            linewidths=plot_dict["linewidths"],
-                            n_labels=len(self._parcel_approach[parcellation_name]["nodes"]),
-                            add_labels=["LH", "RH"],
-                        )
+                display = seaborn.heatmap(
+                    ax=ax,
+                    data=self._outer_products[group][cap],
+                    **plot_labels,
+                    **_PlotFuncs.base_kwargs(plot_dict),
+                )
 
-                        ax.axhline(
-                            division_line,
-                            color=plot_dict["linecolor"],
-                            linewidth=plot_dict["linewidths"],
-                        )
-                        ax.axvline(
-                            division_line,
-                            color=plot_dict["linecolor"],
-                            linewidth=plot_dict["linewidths"],
-                        )
+                if scope == "nodes":
+                    ax = _PlotFuncs.set_ticks(ax, reduced_labels)
 
                 # Add border; if "borderwidths" is Falsy, returns display unmodified
                 display = _PlotFuncs.border(
@@ -1968,45 +2056,31 @@ class CAP(_CAPGetter):
                     axes_y = 0
                 else:
                     axes_y += 1
+
+                # Save if last iteration for group
+                if cap == list(cap_dict[group])[-1]:
+                    # Remove subplots with no data
+                    [fig.delaxes(ax) for ax in axes.flatten() if not ax.has_data()]
+
+                    if output_dir:
+                        filename = io_utils._filename(
+                            f"{group}_CAPs_outer_product-{scope}", suffix_filename, "suffix", "png"
+                        )
+
+                        _PlotFuncs.save_fig(display, output_dir, filename, plot_dict, as_pickle)
+
             else:
                 # Create new plot for each iteration when not subplot
                 plt.figure(figsize=plot_dict["figsize"])
 
-                if scope == "regions":
-                    display = seaborn.heatmap(
-                        self._outer_products[group][cap],
-                        **plot_labels,
-                        **_PlotFuncs.base_kwargs(plot_dict),
-                    )
-                else:
-                    display = seaborn.heatmap(
-                        self._outer_products[group][cap],
-                        **plot_labels,
-                        **_PlotFuncs.base_kwargs(
-                            plot_dict, *_PlotFuncs.extra_kwargs(plot_dict["hemisphere_labels"])
-                        ),
-                    )
+                display = seaborn.heatmap(
+                    self._outer_products[group][cap],
+                    **plot_labels,
+                    **_PlotFuncs.base_kwargs(plot_dict),
+                )
 
-                    if plot_dict["hemisphere_labels"] is False:
-                        display = _PlotFuncs.set_ticks(display, reduced_labels)
-                    else:
-                        display, division_line, plot_dict["linewidths"] = _PlotFuncs.division_line(
-                            display=display,
-                            linewidths=plot_dict["linewidths"],
-                            n_labels=len(self._parcel_approach[parcellation_name]["nodes"]),
-                            add_labels=["LH", "RH"],
-                        )
-
-                        plt.axhline(
-                            division_line,
-                            color=plot_dict["linecolor"],
-                            linewidth=plot_dict["linewidths"],
-                        )
-                        plt.axvline(
-                            division_line,
-                            color=plot_dict["linecolor"],
-                            linewidth=plot_dict["linewidths"],
-                        )
+                if scope == "nodes":
+                    display = _PlotFuncs.set_ticks(display, reduced_labels)
 
                 # Add border; if "borderwidths" is Falsy, returns display unmodified
                 display = _PlotFuncs.border(
@@ -2025,16 +2099,6 @@ class CAP(_CAPGetter):
                         f"{group}_{cap}_outer_product-{scope}", suffix_filename, "suffix", "png"
                     )
                     _PlotFuncs.save_fig(display, output_dir, filename, plot_dict, as_pickle)
-
-        if subplots:
-            # Remove subplots with no data
-            [fig.delaxes(ax) for ax in axes.flatten() if not ax.has_data()]
-
-            if output_dir:
-                filename = io_utils._filename(
-                    f"{group}_CAPs_outer_product-{scope}", suffix_filename, "suffix", "png"
-                )
-                _PlotFuncs.save_fig(display, output_dir, filename, plot_dict, as_pickle)
 
         _PlotFuncs.show(show_figs)
 
@@ -2107,39 +2171,20 @@ class CAP(_CAPGetter):
             )
         else:
             # Create Labels
-            if plot_dict["hemisphere_labels"] is False:
-                reduced_labels, collapsed_node_names = self._collapse_node_labels(
-                    parcellation_name, self._parcel_approach, full_labels
-                )
+            reduced_labels, collapsed_node_names = self._collapse_node_labels(
+                parcellation_name, self._parcel_approach, full_labels
+            )
 
-                display = seaborn.heatmap(
-                    pd.DataFrame(cap_dict[group], columns=list(cap_dict[group])),
-                    **plot_labels,
-                    **_PlotFuncs.base_kwargs(plot_dict),
-                )
+            display = seaborn.heatmap(
+                pd.DataFrame(cap_dict[group], columns=list(cap_dict[group])),
+                **plot_labels,
+                **_PlotFuncs.base_kwargs(plot_dict),
+            )
 
-                plt.yticks(
-                    ticks=[indx for indx, label in enumerate(reduced_labels) if label],
-                    labels=collapsed_node_names,
-                )
-            else:
-                display = seaborn.heatmap(
-                    pd.DataFrame(cap_dict[group], columns=list(cap_dict[group])),
-                    **plot_labels,
-                    **_PlotFuncs.base_kwargs(plot_dict, line=False, edge=False),
-                )
-
-                display, division_line, plot_dict["linewidths"] = _PlotFuncs.division_line(
-                    display=display,
-                    linewidths=plot_dict["linewidths"],
-                    n_labels=len(self._parcel_approach[parcellation_name]["nodes"]),
-                    set_x=False,
-                    add_labels=["LH", "RH"],
-                )
-
-                plt.axhline(
-                    division_line, color=plot_dict["linecolor"], linewidth=plot_dict["linewidths"]
-                )
+            plt.yticks(
+                ticks=[indx for indx, label in enumerate(reduced_labels) if label],
+                labels=collapsed_node_names,
+            )
 
         # Add border; if "borderwidths" is Falsy, returns display unmodified
         display = _PlotFuncs.border(
@@ -2162,75 +2207,6 @@ class CAP(_CAPGetter):
             _PlotFuncs.save_fig(display, output_dir, filename, plot_dict, as_pickle)
 
         _PlotFuncs.show(show_figs)
-
-    @staticmethod
-    def _collapse_node_labels(
-        parcellation_name: str,
-        parcel_approach: ParcelApproach,
-        node_ids: Union[list[str], None] = None,
-    ) -> tuple[list[str], list[str]]:
-        """
-        Collapses node labels names (based on unique node names and hemisphere) for plotting
-        purposes. For instance in the Schaefer parcellation, nodes containing "Vis" have a left and
-        right hemisphere version, instead of ["LH_Vis_1", "LH_Vis_2", "RH_Vis_1", "RH_Vis_2", ...],
-        the unique names would be "LH Vis" and "RH Vis". The frequencies of nodes containing the
-        unique node name and hemisphere combination are computed to reduce plot clutter when "nodes"
-        are plotted.
-
-        Returns
-        -------
-        tuple
-            Consists of a two lists. The first list is the same length as "nodes" in
-            ``self._parcel_approach`` and contains the unique node and hemisphere combination at
-            certain indices, with the remaining indices being empty strings. The second list only
-            contains the names of the unique node and hemisphere comvination.
-        """
-        # Get frequency of each major hemisphere and region in Schaefer, AAL, or Custom atlas
-        if parcellation_name == "Schaefer":
-            nodes = parcel_approach[parcellation_name]["nodes"]
-            # Retain only the hemisphere and primary Schaefer network
-            # Node string in form of {hemisphere}_{region}_{number} (e.g. LH_Cont_Par_1)
-            # Below code returns a list where each element is a list of [Hemisphere, Network]
-            # (e.g ["LH", "Vis"])
-            hemi_network_pairs = [node.split("_")[:2] for node in nodes]
-            frequency_dict = collections.Counter([" ".join(node) for node in hemi_network_pairs])
-        elif parcellation_name == "AAL":
-            nodes = parcel_approach[parcellation_name]["nodes"]
-            # AAL in the form of {region}_{hemisphere}_{number} or {region}_{hemisphere)
-            # (e.g. Frontal_Inf_Orb_2_R, Precentral_L); _collapse_aal_node_names would return these
-            # as Frontal and Pre
-            collapsed_aal_nodes = _collapse_aal_node_names(nodes, return_unique_names=False)
-            frequency_dict = collections.Counter(collapsed_aal_nodes)
-        else:
-            frequency_dict = {}
-            for node_id in node_ids:
-                # For custom, columns comes in the form of "{Hemisphere} {Region}"
-                hemisphere_id = "LH" if node_id.startswith("LH ") else "RH"
-                region_id = re.split("LH |RH ", node_id)[-1]
-                node_indices = parcel_approach["Custom"]["regions"][region_id][
-                    hemisphere_id.lower()
-                ]
-                frequency_dict.update({node_id: len(node_indices)})
-
-        # Get the names, which indicate the hemisphere and region; reverting Counter objects to
-        # list retains original ordering of nodes in list as of Python 3.7
-        collapsed_node_labels = list(frequency_dict)
-        tick_labels = ["" for _ in range(len(parcel_approach[parcellation_name]["nodes"]))]
-
-        starting_value = 0
-
-        # Iterate through names_list and assign the starting indices corresponding to unique region
-        # and hemisphere key
-        for num, collapsed_node_label in enumerate(collapsed_node_labels):
-            if num == 0:
-                tick_labels[0] = collapsed_node_label
-            else:
-                # Shifting to previous frequency of the preceding network to obtain the new starting
-                # value of the subsequent region and hemisphere pair
-                starting_value += frequency_dict[collapsed_node_labels[num - 1]]
-                tick_labels[starting_value] = collapsed_node_label
-
-        return tick_labels, collapsed_node_labels
 
     def caps2corr(
         self,
@@ -3155,9 +3131,7 @@ class CAP(_CAPGetter):
         """
         # Get the index values of nodes in each network/region
         if parcellation_name == "Custom":
-            lh = list(self._parcel_approach[parcellation_name]["regions"][region]["lh"])
-            rh = list(self._parcel_approach[parcellation_name]["regions"][region]["rh"])
-            indxs = lh + rh
+            indxs = _extract_custom_region_indices(self._parcel_approach, region)
         else:
             indxs = np.array(
                 [

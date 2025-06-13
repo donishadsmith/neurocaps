@@ -256,11 +256,32 @@ class CustomParcelApproach(ParcelApproachBase):
 
     ::
 
+        # Lateralized regions
         {
             "maps": "path/to/parcellation.nii.gz",
             "nodes": ["LH_Vis1", "LH_Vis2", "LH_Hippocampus", "RH_Vis1", "RH_Vis2", "RH_Vis3", "RH_Hippocampus"],
             "regions": {
                 "Visual": CustomRegionHemispheres
+                "Hippocampus": CustomRegionHemispheres
+            }
+        }
+
+        # Non-lateralized regions
+        {
+            "maps": "path/to/parcellation.nii.gz",
+            "nodes": ["Vis1", "Vis2", "Vis3", "Hippocampus"],
+            "regions": {
+                "Visual": range(3)
+                "Hippocampus": [3]
+            }
+        }
+
+        # Mixture of lateralized and non-lateralized regions
+        {
+            "maps": "path/to/parcellation.nii.gz",
+            "nodes": ["Vis1", "Vis2", "Vis3", "LH_Vis2", "LH_Hippocampus"],
+            "regions": {
+                "Visual": range(3)
                 "Hippocampus": CustomRegionHemispheres
             }
         }
@@ -272,8 +293,20 @@ class CustomParcelApproach(ParcelApproachBase):
     nodes: :obj:`list[str]`
         List of nodes (ROIs) in the Custom parcellation. Ordered in ascending order of their label
         ID in the parcellation and must exclude "Background".
-    regions: :obj:`dict[str, CustomRegionHemispheres]`
-        Dictionary mapping the regions to their left and right hemispheres.
+    regions: :obj:`dict[str, list[int] | range]` or :obj:`dict[str, CustomRegionHemispheres]`
+        Dictionary mapping the regions to a list integers (or range) representing the index
+        positions of elements in the "nodes" list belonging to the region or a dictionary mapping
+        the region to a dictionary.
+
+        .. note::
+           The use of ``CustomRegionHemispheres`` to define lateralized regions (i.e., with "lh"
+           and "rh" keys) is only relevant when calling ``CAP.caps2plot`` with the
+           ``add_custom_node_labels`` kwarg set to ``True``. This information allows for the
+           creation of simplified axis labels that include hemisphere information. In all other
+           methods, the lateralization structure is ignored.
+
+        .. versionchanged:: 0.30.0 "regions" subkey can now be of type `dict[str, list[int] | range]`
+           for non-lateralized regions.
 
     See Also
     --------
@@ -284,7 +317,9 @@ class CustomParcelApproach(ParcelApproachBase):
         approaches.
     """
 
-    regions: NotRequired[dict[str, CustomRegionHemispheres]]
+    regions: NotRequired[
+        Union[dict[str, Union[list[int], range]], dict[str, CustomRegionHemispheres]]
+    ]
 
 
 ParcelApproach = Union[
