@@ -1847,7 +1847,8 @@ class CAP(_CAPGetter):
             }
             labels = list(self._parcel_approach[parcellation_name]["regions"])
         elif scope == "nodes":
-            cap_dict, labels = self._extract_node_names(parcellation_name, add_custom_node_labels)
+            cap_dict = self._caps
+            labels = self._extract_node_names(parcellation_name, add_custom_node_labels)
 
         return cap_dict, labels
 
@@ -1860,12 +1861,11 @@ class CAP(_CAPGetter):
         returned as "{Region}".
         """
         if parcellation_name in ["Schaefer", "AAL"]:
-            cap_dict, labels = self._caps, self._parcel_approach[parcellation_name]["nodes"]
+            labels = self._parcel_approach[parcellation_name]["nodes"]
         else:
-            cap_dict = self._caps
             labels = self._sort_custom_node_names() if add_custom_node_labels else None
 
-        return cap_dict, labels
+        return labels
 
     def _sort_custom_node_names(self) -> list[str]:
         """
@@ -2068,7 +2068,6 @@ class CAP(_CAPGetter):
                         )
 
                         _PlotFuncs.save_fig(display, output_dir, filename, plot_dict, as_pickle)
-
             else:
                 # Create new plot for each iteration when not subplot
                 plt.figure(figsize=plot_dict["figsize"])
