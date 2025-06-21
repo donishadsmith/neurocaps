@@ -578,7 +578,7 @@ class CAP(_CAPGetter):
 
         return concatenated_timeseries
 
-    def _scale(self, concatenated_timeseries: NDArray) -> NDArray:
+    def _scale(self, concatenated_timeseries: dict[str, NDArray]) -> dict[str, NDArray]:
         """Scales the concatenated timeseries data."""
         for group in self._groups:
             concatenated_timeseries[group], self._mean_vec[group], self._stdev_vec[group] = (
