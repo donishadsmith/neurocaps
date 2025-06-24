@@ -66,7 +66,7 @@ Main features for ``TimeseriesExtractor`` includes:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - **Timeseries Extraction:** Extract timeseries for resting-state or task data using Schaefer, AAL,
-  or a manually defined Custom parcellation for spatial dimensionality
+  or a manually defined deterministic "Custom" parcellation for spatial dimensionality
   reduction.
 - **Parallel Processing:** Parallelize at the subject-level (one subject per CPU core) to speed up
   timeseries extraction.

@@ -8,7 +8,7 @@ Tutorial 7: Using Custom Parcellations
 
 While NeuroCAPs leverages Nilearn's fetch functions for the `Schaefer <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_schaefer_2018.html>`_
 and `AAL <https://nilearn.github.io/stable/modules/generated/nilearn.datasets.fetch_atlas_aal.html>`_, additional
-parcellations (lateralized and non-lateralized) can be manually defined. For custom parcellation approaches, three subkeys are
+deterministic parcellations (lateralized and non-lateralized) can be manually defined. For custom parcellation approaches, three subkeys are
 recognized: "maps", "nodes", and "regions". For additional details on these subkeys, refer to the
 `"Custom Parcellations" sub-section <https://neurocaps.readthedocs.io/en/stable/user_guide/parcellations.html#custom-parcellations>`_.
 

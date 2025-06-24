@@ -76,7 +76,7 @@ and ``UnsupportedFileExtensionError``, which handles cases when pickled inputs h
 This module contains the `TimeseriesExtractor` class, which:
 
 - leverages extracts Nilearn's [@Nilearn] `NiftiLabelsMasker` to perform nuisance regression on resting-state and
-task-based fMRI data and use parcellations (such as the Schaefer [@Schaefer2018], Automated Anatomical
+task-based fMRI data and use deterministic parcellations (such as the Schaefer [@Schaefer2018], Automated Anatomical
 Labeling [@Tzourio-Mazoyer2002], and Human Connectome Project extended [@Huang2022]) for spatial
 dimensionality reduction.
 - censors high-motion volumes using fMRIPrep-derived framewise displacement values and stores the extracted timeseries

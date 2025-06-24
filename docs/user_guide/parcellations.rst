@@ -28,8 +28,9 @@ For AAL, the only available subkey is "version".
 
 Custom Parcellations
 ---------------------
-If using a "Custom" parcellation approach, certain visualization functions in this class also assume
-that the background label is 0. Therefore, do not add a background label in the "nodes" or "regions" keys.
+If using a "Custom" parcellation approach (**which is only compatible with deterministic parcellations**),
+certain visualization functions in this class also assume that the background label is 0. Therefore,
+do not add a background label in the "nodes" or "regions" keys.
 
     The recognized sub-keys for the "Custom" parcellation approach includes:
 

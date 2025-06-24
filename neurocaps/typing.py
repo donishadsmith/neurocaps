@@ -252,7 +252,7 @@ class CustomParcelApproach(ParcelApproachBase):
     Type Definition for the Custom Parcellation Approach.
 
     A ``TypedDict`` representing the subkeys (second level keys for "Custom") for the user-defined
-    Custom parcellation approach. The structure is as follows:
+    deterministic "Custom" parcellation approach. The structure is as follows:
 
     ::
 
