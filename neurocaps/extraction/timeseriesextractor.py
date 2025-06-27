@@ -36,15 +36,22 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
     Performs timeseries denoising, extraction, serialization (pickling), and visualization.
 
+    .. important::
+        It is highly recommended for all imaging data (the preprocessed BOLD images
+        and parcellation map) to be in a standard MNI space. This is due to the ``CAP.caps2surf``
+        assuming that the parcellation map is in MNI standard space when transforming data between
+        volumetric and surface spaces.
+
     Parameters
     ----------
     space: :obj:`str`, default="MNI152NLin2009cAsym"
-        The standard template space that the preprocessed bold data is registered to.
+        The standard template space that the preprocessed BOLD data is registered to. This
+        parameter is used for querying the preprocessed BOLD data with ``BIDSLayout``.
 
     parcel_approach: :obj:`ParcelConfig`, :obj:`ParcelApproach`, :obj:`str`, or :obj:`None`, default=None
         Specifies the parcellation approach to use. Options are "Schaefer", "AAL", or "Custom". Can
-        be initialized with parameters, as a nested dictionary, or loaded from a pickle file. For
-        detailed documentation on the expected structure, see the type definitions for
+        be initialized with parameters, as a nested dictionary, or loaded from a pickle file.
+        For detailed documentation on the expected structure, see the type definitions for
         ``ParcelConfig`` and ``ParcelApproach`` in the "See Also" section. Defaults to
         ``{"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}`` if None.
 
