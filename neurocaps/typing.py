@@ -203,8 +203,8 @@ class AALParcelApproach(ParcelApproachBase):
         and must exclude "Background".
     regions: :obj:`list[str]`
         List of networks in the AAL parcellation. **Important**: For certain visualization methods,
-        the ``in`` operator is used to determine which nodes belong to which network. Therefore,
-        network names must be contained within the corresponding node names (e.g., 'Frontal' network
+        the ``in`` operator is used to determine which nodes belong to which region. Therefore,
+        region names must be contained within the corresponding node names (e.g., 'Frontal' region
         should have nodes with 'Frontal' in their names).
 
     See Also

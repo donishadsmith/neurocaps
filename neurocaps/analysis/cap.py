@@ -43,6 +43,11 @@ class CAP(_CAPGetter):
     Performs k-means clustering for CAP identification, computes temporal dynamics metrics, and
     provides visualization tools for analyzing brain activation patterns.
 
+    .. important::
+       Parcellation maps are expected to be in a standard MNI space. This is due to the
+       ``CAP.caps2surf`` assuming that the parcellation map is in MNI standard space when
+       transforming data between volumetric and surface spaces.
+
     Parameters
     ----------
     parcel_approach: :obj:`ParcelConfig`, :obj:`ParcelApproach`, or :obj:`str`, default=None
@@ -380,8 +385,8 @@ class CAP(_CAPGetter):
             Occurs when ``cluster_selection_method`` is set to elbow but kneed's ``KneeLocator``
             does not detect an elbow in the convex curve.
 
-        Notes
-        -----
+        Note
+        ----
         **KMeans Algorithm:** Refer to `scikit-learn's Documentation
         <https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html>`_ for
         additional information about the ``KMeans`` algorithm used in this method.
@@ -487,7 +492,7 @@ class CAP(_CAPGetter):
         Sets ``groups`` to None to allow ``self.get_caps`` to create a new "All Subjects" group
         with different subject IDs based on the inputted ``subject_timeseries``.
 
-        .. version_added:: 0.28.5
+        .. versionadded:: 0.28.5
         """
         self._groups = None
 
@@ -832,10 +837,11 @@ class CAP(_CAPGetter):
         progress_bar: bool = False,
     ) -> Union[dict[str, pd.DataFrame], None]:
         """
-        Compute Participant-wise CAP Metrics.
+        Calculate Participant-wise CAP Metrics.
 
-        Computes the following temporal dynamic metrics (as described by Liu et al., 2018 and
-        Yang et al., 2021):
+        Calculates temporal dynamic metrics for each CAP across all participants. The metrics are
+        calculated as described by Liu et al. (2018) and Yang et al. (2021) and include the
+        following:
 
          - "temporal_fraction" (fraction of time): Proportion of total volumes spent in a single CAP
            over all volumes in a run.
@@ -985,9 +991,13 @@ class CAP(_CAPGetter):
         Returns
         -------
         dict[str, pd.DataFrame] or dict[str, dict[str, pd.DataFrame]]
-            Dictionary containing `pandas.DataFrame` - one for each requested metric. In the case of
-            "transition_probability", each group has a separate dataframe which is returned in the
-            from of `dict[str, dict[str, pd.DataFrame]]`. Only returned if ``return_df`` is True.
+            Dictionary containing `pandas.DataFrame`: Only returned if ``return_df`` is True.
+
+            - For "temporal_fraction", "counts", "persistence", and "transition_frequency": one
+            dataframe is returned for each requested metric.
+
+            - For "transition_probability": each group has a separate dataframe which is returned
+            in the from of `dict[str, dict[str, pd.DataFrame]]`.
 
 
         Important
@@ -1599,8 +1609,9 @@ class CAP(_CAPGetter):
         """
         Generate Heatmaps and Outer Product Plots for CAPs.
 
-        Plot CAPs as heatmaps or outer products at the node or region levels. Separate plots are
-        generated for each group.
+        Produces a 2D plot for each CAP, visualized as either a heatmap or an outer product.
+        The visualization can be generated at two levels of granularity (nodes or regions).
+        Separate plots are generated for each group.
 
         Parameters
         ----------
@@ -1614,14 +1625,31 @@ class CAP(_CAPGetter):
         suffix_filename: :obj:`str` or :obj:`None`, default=None
             Appended to the filename of each saved plot if ``output_dir`` is provided.
 
-        plot_options: {"outer_product", "heatmap"} or :obj:`list["outer_product", "heatmap"]`,\
+        plot_options: {"heatmap", "outer_product"} or :obj:`list["heatmap", "outer_product"]`,\
             default="outer_product"
-            Type of plots to create. Options are "outer_product" or "heatmap".
+            Type of plots to create. Options are:
+
+            - "heatmap": Displays the activation value (z-score if data was standardized prior to
+              clustering) of each node or the average activation of each predefined region across
+              all CAPs. Each column represents a different CAP, while each row represents a
+              node/region.
+
+            - "outer_product": Computed as the outer product of the CAP vector (cluster centroid)
+              with itself (i.e. ``np.outer(CAP_1, CAP_1)``). This shows the pairwise interactions
+              between all nodes/regions, highlighting pairs that co-activate/co-deactivate together
+              (positive values) or diverge where one node/region activates while the other
+              deactivates (negative values). The main diagonal represents self-interactions (the
+              squared activation of each node/region), while off-diagonal elements represent
+              pairwise interactions between different nodes/regions.
 
         visual_scope: {"regions", "nodes"} or :obj:`list["regions", "nodes"]`, default="regions"
-            Determines whether plotting is done at the region level or node level. For "regions",
-            the values of all nodes in the same regions (including both hemispheres) are averaged
-            together then plotted. For "nodes", plots individual node values separately.
+            Determines the level of granularity of the plots. Options are:
+
+            - "nodes": Visualizes each parcel from the brain parcellation individually.
+
+            - "regions": Averages parcels into larger groups based on their network membership
+              before plotting. These groupings must be defined in the `parcel_approach`
+              configuration under the "regions" subkey.
 
         show_figs: :obj:`bool`, default=True
            Display figures.
@@ -2848,83 +2876,14 @@ class CAP(_CAPGetter):
         Generate Radar Plots for CAPs using Cosine Similarity.
 
         Calculates the cosine similarity between the "High Amplitude" (positive/above the mean) and
-        "Low Amplitude" (negative/below the mean) activations of the CAP cluster centroid and each
-        a-priori region or network in the parcellation defined by ``parcel_approach``. One image is
-        generated per CAP and separate images are generated for each group.
+        "Low Amplitude" (negative/below the mean) activations of the CAP and each a-priori region
+        or network in the parcellation defined by ``parcel_approach`` (e.g. DMN, Vis, etc). One
+        radar plot is generated per CAP and separate images are generated for each group.
 
         .. important::
 
           - This function assumes the mean for each ROI is 0 due to standardization.
           - The absolute values of the negative activations are computed for visualization purposes.
-
-        The process involves the following steps:
-
-            1. Extract Cluster Centroids:
-
-              - Each CAP is represented by a cluster centroid, which is a 1 x ROI
-                (Region of Interest) vector.
-
-            2. Generate Binary Vectors:
-
-              - For each region create a binary vector (1 x ROI) where "1" indicates that the ROI is
-                part of the specific region and "0" otherwise.
-              - In this example, the binary vector acts as a 1-D mask to isolate ROIs in the Visual
-                Network by setting the corresponding indices to "1".
-
-                ::
-
-                    import numpy as np
-
-                    # Define nodes with their corresponding label IDs
-                    nodes = ["LH_Vis1", "LH_Vis2", "LH_SomSot1", "LH_SomSot2",
-                             "RH_Vis1", "RH_Vis2", "RH_SomSot1", "RH_SomSot2"]
-
-                    # Binary mask for the Visual Network (Vis)
-                    binary_vector = np.array([1, 1, 0, 0, 1, 1, 0, 0])
-
-            3. Isolate Positive and Negative Activations in CAP Centroid:
-
-              - Positive activations are defined as the values in the CAP centroid that are greater
-                than zero. These values represent the "High Amplitude" activations for that CAP.
-              - Negative activations are defined as the values in the CAP centroid that are less
-                than zero. These values represent the "Low Amplitude" activations for that CAP.
-
-                ::
-
-                    # Example cluster centroid for CAP 1
-                    cap_1_cluster_centroid = np.array([-0.3, 1.5, 2.0, -0.2, 0.7, 1.3, -0.5, 0.4])
-
-                    # Assign values less than 0 as 0 to isolate the high amplitude activations
-                    high_amp = np.where(cap_1_cluster_centroid > 0, cap_1_cluster_centroid, 0)
-
-                    # Assign values less than 0 as 0 to isolate the low amplitude activations
-                    # Also invert the sign to restrict similarity to [0, 1]
-                    low_amp = np.where(cap_1_cluster_centroid < 0, -cap_1_cluster_centroid, 0)
-
-            4. Calculate Cosine Similarity:
-
-              - Normalize the dot product by the product of the Euclidean norms of the cluster
-                centroid and the binary vector to obtain the cosine similarity:
-
-                ::
-
-                    # Compute dot product between the binary vector each activation vector
-                    high_dot = np.dot(high_amp, binary_vector)
-                    low_dot = np.dot(low_amp, binary_vector)
-
-                    # Compute the norms
-                    high_norm = np.linalg.norm(high_amp)
-                    low_norm = np.linalg.norm(low_amp)
-                    bin_norm = np.linalg.norm(binary_vector)
-
-                    # Calculate cosine similarity
-                    high_cos = high_dot / (high_norm * bin_norm)
-                    low_cos = low_dot / (low_norm * bin_norm)
-
-            5. Generate Radar Plots of Each CAPs:
-
-              - Each radar plot visualizes the cosine similarity for both "High Amplitude"
-                (positive) and "Low Amplitude" (negative) activations of the CAP.
 
         Parameters
         ----------
@@ -3013,8 +2972,98 @@ class CAP(_CAPGetter):
         self
 
         Note
-        -----
-        **Handling Division by Zero:** NumPy automatically handles division by zero errors. Thi
+        ----
+        **Interpretation**: Each radar plot provides a high-level representation of CAP by computing
+        and visualizing how closely each CAP's positive ("High Amplitude") and negative
+        ("Low Amplitude") patterns aligns large-scale, canonical networks or regions.
+
+        For each radar plot, two traces are shown:
+            - "High Amplitude": Spatial alignment with the positively activating nodes in a CAP.
+              Traces indicate a given region is active during that CAP.
+            - "Low Amplitude": Spatial alignment with deactivating nodes in a CAP. Traces indicate
+              that a given region is suppressed during that CAP.
+
+        This provides a quantitative method to label CAPs based on the dominant active and
+        suppressed networks or regions. For instance, if the dorsal attention network (DAN) has
+        the highest (largest trace) "High Amplitude" cosine similarity value and the ventral
+        attention network (VAN) has a highest "Low Amplitude" cosine similarity value, then that CAP
+        can be described as (DAN +/VAN -). Or if the highest "High Amplitude" cosine similarity
+        value is assoiciated with the default mode network (DMN), while the highest "Low Amplitude"
+        cosine similarity values are associates with the DAN and the frontoparietal network (FPN),
+        then the CAP can represent a classic task-negative pattern.
+
+        **Methodology**: The process involves the following steps for computing the "High Amplitude"
+        and "Low Amplitude" values for each CAP and network/region combination
+
+        1. Extract Cluster Centroids:
+
+            - Each CAP is represented by a cluster centroid, which is a 1 x ROI
+            (Region of Interest) vector.
+
+        2. Generate Binary Vectors:
+
+            - For each network/region create a binary vector (1 x ROI) where "1" indicates that
+            the ROI is part of the specific region and "0" otherwise.
+            - In this example, the binary vector acts as a 1-D mask to isolate ROIs in the Visual
+            Network by setting the corresponding indices to "1".
+
+            ::
+
+                import numpy as np
+
+                # Define nodes with their corresponding label IDs
+                nodes = ["LH_Vis1", "LH_Vis2", "LH_SomSot1", "LH_SomSot2",
+                            "RH_Vis1", "RH_Vis2", "RH_SomSot1", "RH_SomSot2"]
+
+                # Binary mask for the Visual Network (Vis)
+                binary_vector = np.array([1, 1, 0, 0, 1, 1, 0, 0])
+
+        3. Isolate Positive and Negative Activations in CAP Centroid:
+
+            - Positive activations are defined as the values in the CAP centroid that are greater
+            than zero. These values represent the "High Amplitude" activations for that CAP.
+            - Negative activations are defined as the values in the CAP centroid that are less
+            than zero. These values represent the "Low Amplitude" activations for that CAP.
+
+            ::
+
+                # Example cluster centroid for CAP 1
+                cap_1_cluster_centroid = np.array([-0.3, 1.5, 2.0, -0.2, 0.7, 1.3, -0.5, 0.4])
+
+                # Assign values less than 0 as 0 to isolate the high amplitude activations
+                high_amp = np.where(cap_1_cluster_centroid > 0, cap_1_cluster_centroid, 0)
+
+                # Assign values greater than 0 as 0 to isolate the low amplitude activations
+                # Also invert the sign to restrict similarity to [0, 1]
+                low_amp = np.where(cap_1_cluster_centroid < 0, -cap_1_cluster_centroid, 0)
+
+        4. Calculate Cosine Similarity:
+
+            - Normalize the dot product by the product of the Euclidean norms of the cluster
+            centroid and the binary vector to obtain the cosine similarity:
+
+            ::
+
+                # Compute dot product between the binary vector each activation vector
+                high_dot = np.dot(high_amp, binary_vector)
+                low_dot = np.dot(low_amp, binary_vector)
+
+                # Compute the norms
+                high_norm = np.linalg.norm(high_amp)
+                low_norm = np.linalg.norm(low_amp)
+                bin_norm = np.linalg.norm(binary_vector)
+
+                # Calculate cosine similarity; Produces the alignment of the region/network
+                # with the active and suppressed patterns of the CAP
+                high_cos = high_dot / (high_norm * bin_norm)
+                low_cos = low_dot / (low_norm * bin_norm)
+
+        5. Generate Radar Plots of Each CAPs:
+
+            - Each radar plot visualizes the cosine similarity for both "High Amplitude"
+            (positive) and "Low Amplitude" (negative) activations of the CAP.
+
+        **Handling Division by Zero:** NumPy automatically handles division by zero errors. This
         may occur if the network or the "High Amplitude" or "Low Amplitude" vectors are all zeroes.
         In such cases, NumPy assigns `NaN` to the cosine similarity for the affected network(s),
         indicating that the similarity is undefined.
