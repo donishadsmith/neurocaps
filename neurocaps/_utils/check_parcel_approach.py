@@ -321,28 +321,39 @@ def _remove_background(nodes):
 
 def _collapse_aal_node_names(nodes, return_unique_names=True):
     """
-    Creates general regions/networks from AAL labels (e.g. Frontal_Sup_2_L and
-    Frontal_Inf_Oper_L -> Frontal) with special consideration for version "3v2".
+    Creates general regions/networks from AAL labels by removing hemisphere and numerical suffixes.
     """
-    # Names in "3v2" that don't split well .split("_")[0] or could be reduced more in the case of
-    # OFC, which has OFCmed, OFCant, OFCpos
-    special_names = ["N_Acc", "Red_N", "OFC"]
+    collapsed_names = [_collapse_single_aal_node(node) for node in nodes]
 
-    collapsed_node_names = []
+    return list(dict.fromkeys(collapsed_names)) if return_unique_names else collapsed_names
 
-    for node in nodes:
-        bool_vec = [name in node for name in special_names]
 
-        if not any(bool_vec):
-            collapsed_node_names.append(node.split("_")[0])
+def _collapse_single_aal_node(node):
+    """Collapse a single AAL node name to its general region."""
+    SPECIAL_PREFIXES = {
+        "N_Acc",
+        "Red_N",
+        "OFC",
+        "Raphe",
+        "SN",
+        "ACC",
+        "Frontal_Sup",
+        "Frontal_Inf",
+        "Frontal_Mid",
+    }
+    SIMPLE_PREFIXES = {"Cerebelum", "Cerebellum", "Vermis", "Thal"}
+
+    special_match = next((prefix for prefix in SPECIAL_PREFIXES if prefix in node), None)
+
+    # Avoid Frontal_Sup_Medial from being collapsed to Frontal_Sup
+    if node.startswith("Frontal_Sup_Medial") or not special_match:
+        if any(node.startswith(prefix) for prefix in SIMPLE_PREFIXES):
+            return node.split("_")[0]
         else:
-            indx = bool_vec.index(True)
-            collapsed_node_names.append(special_names[indx])
-
-    if return_unique_names:
-        collapsed_node_names = list(dict.fromkeys(collapsed_node_names))
-
-    return collapsed_node_names
+            node_without_hemisphere = re.split(r"_[LR]$", node)[0]
+            return re.split(r"_\d+", node_without_hemisphere)[0]
+    else:
+        return special_match
 
 
 def _extract_custom_region_indices(parcel_approach: ParcelApproach, region_name: str) -> list[int]:

@@ -190,7 +190,7 @@ class AALParcelApproach(ParcelApproachBase):
         {
             "maps": "path/to/parcellation.nii.gz",
             "nodes": ["Precentral_L", "Precentral_R", "Frontal_Sup", "Frontal_Sup_R"],
-            "regions": ["Precentral", "Frontal"]
+            "regions": ["Precentral", "Frontal_Sup"]
         }
 
     Parameters
@@ -204,8 +204,8 @@ class AALParcelApproach(ParcelApproachBase):
     regions: :obj:`list[str]`
         List of networks in the AAL parcellation. **Important**: For certain visualization methods,
         the ``in`` operator is used to determine which nodes belong to which region. Therefore,
-        region names must be contained within the corresponding node names (e.g., 'Frontal' region
-        should have nodes with 'Frontal' in their names).
+        region names must be contained within the corresponding node names (e.g.,
+        "Frontal_Sup" region should have nodes with "Frontal_Sup" in their names).
 
     See Also
     --------
