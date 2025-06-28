@@ -56,6 +56,9 @@ class CAP(_CAPGetter):
         detailed documentation on the expected structure, see the type definitions for ``ParcelConfig``
         and ``ParcelApproach`` in the "See Also" section.
 
+        .. versionchanged:: 0.31.0 The default "regions" names for "AAL" has changed, which will\
+        group nodes differently.
+
     groups: :obj:`dict[str, list[str]]` or :obj:`None`, default=None
         Optional mapping of group names to lists of subject IDs for group-specific analyses. If
         None, on the first call of ``self.get_caps()``, "All Subjects" will be set as the default
@@ -1953,7 +1956,7 @@ class CAP(_CAPGetter):
             nodes = parcel_approach[parcellation_name]["nodes"]
             # AAL in the form of {region}_{hemisphere}_{number} or {region}_{hemisphere)
             # (e.g. Frontal_Inf_Orb_2_R, Precentral_L); _collapse_aal_node_names would return these
-            # as Frontal and Pre
+            # as Frontal_Inf and Precentral
             collapsed_aal_nodes = _collapse_aal_node_names(nodes, return_unique_names=False)
             frequency_dict = collections.Counter(collapsed_aal_nodes)
         else:
