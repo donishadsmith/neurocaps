@@ -1,4 +1,7 @@
-"""Internal module containing helper functions related to ``CAP.caps2plot``."""
+"""
+Internal module containing helper functions related to ``CAP.caps2plot`` for heatmaps and
+outer products.
+"""
 
 import collections, re
 from typing import Any, Union
@@ -19,7 +22,13 @@ from neurocaps._utils.parcellation import (
 from neurocaps._utils.plotting_utils import PlotFuncs
 
 
-def check_cap_length(cap_dict, parcel_approach):
+def check_cap_length(
+    cap_dict: dict[str, dict[str, NDArray]], parcel_approach: ParcelApproach
+) -> None:
+    """
+    Checks the first CAP vector to see if its length matches the number of nodes in
+    ``parcel_approach``.
+    """
     cap_dict = cap_dict[list(cap_dict)[0]]
     cap_1_vector = cap_dict[list(cap_dict)[0]]
     # Get parcellation name

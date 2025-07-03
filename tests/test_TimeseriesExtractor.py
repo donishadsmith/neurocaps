@@ -836,8 +836,12 @@ def test_tr_with_and_without_bandpass(
     assert extractor.subject_timeseries["01"]["run-001"].shape == (40, 400)
 
     if any([high_pass, low_pass]):
+        task_info = extractor.task_info
+        signal_clean = extractor.signal_clean_info
         with pytest.raises(ValueError):
-            extractor._get_tr(bold_json, None, None)
+            from neurocaps.extraction._internals import bids_query
+
+            bids_query.get_tr(bold_json, None, signal_clean, task_info, None)
 
 
 def test_condition_extraction(setup_environment_1, get_vars):
@@ -902,9 +906,13 @@ def test_standardize(setup_environment_1, get_vars):
     active_condition = copy.deepcopy(extractor.subject_timeseries["01"]["run-001"])
 
     scan_list = get_scans(bids_dir, "rest")
-    assert np.allclose(_standardize(timeseries[scan_list, :]), rest_condition, atol=0.00001)
+    assert np.allclose(
+        postprocess.standardize_rois(timeseries[scan_list, :]), rest_condition, atol=0.00001
+    )
     scan_list = get_scans(bids_dir, "active")
-    assert np.allclose(_standardize(timeseries[scan_list, :]), active_condition, atol=0.00001)
+    assert np.allclose(
+        postprocess.standardize_rois(timeseries[scan_list, :]), active_condition, atol=0.00001
+    )
 
 
 @pytest.mark.parametrize("confound_type", [None, "testing_confounds"])
@@ -2682,7 +2690,7 @@ def test_logging_redirection_sequential(setup_environment_4, get_vars, tmp_dir):
     bids_dir, _ = get_vars
 
     # Configure logger with FileHandler for specific module
-    extract_timeseries_logger = logging.getLogger("neurocaps._utils.extraction.extract_timeseries")
+    extract_timeseries_logger = logging.getLogger("neurocaps.extraction._internals.postprocess")
     extract_timeseries_logger.setLevel(logging.INFO)
     file_handler = logging.FileHandler(os.path.join(tmp_dir.name, "neurocaps_sequential.log"))
     file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
