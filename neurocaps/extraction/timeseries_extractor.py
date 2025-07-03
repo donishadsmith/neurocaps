@@ -49,6 +49,9 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
         .. versionchanged:: 0.28.0 Default changed to None; however, the same default dictionary\
         configuration remains the same and is backwards compatible.
 
+        .. versionchanged:: 0.31.0 The default "regions" names for "AAL" has changed, which will\
+        group nodes differently.
+
     standardize: :obj:`bool` or or :obj:`None`, default=True
         Standardizes the timeseries (zero mean and unit variance using sample standard deviation).
         Always the final step in the pipeline.

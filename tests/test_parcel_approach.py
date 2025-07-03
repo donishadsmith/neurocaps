@@ -60,7 +60,7 @@ def test_3v2_AAL():
         elif i == "nodes":
             assert len(extractor.parcel_approach["AAL"]["nodes"]) == 166
         else:
-            assert len(extractor.parcel_approach["AAL"][i]) == 38
+            assert len(extractor.parcel_approach["AAL"][i]) == 50
 
 
 @pytest.mark.parametrize("yeo_networks", [7, 17])
@@ -91,7 +91,7 @@ def test_partial_parcel_approaches():
         elif i == "nodes":
             assert len(extractor.parcel_approach["AAL"]["nodes"]) == 116
         else:
-            assert len(extractor.parcel_approach["AAL"][i]) == 30
+            assert len(extractor.parcel_approach["AAL"][i]) == 43
 
     parcel_approach = {"Schaefer": {}}
     extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
