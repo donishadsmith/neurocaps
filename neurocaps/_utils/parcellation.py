@@ -6,7 +6,7 @@ from typing import Any
 import numpy as np
 from nilearn import datasets
 
-from .io import _get_obj
+from .io import get_obj
 from .logging import setup_logger
 from ..typing import ParcelApproach
 
@@ -40,7 +40,7 @@ def check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
     Pipeline to ensure ``parcel_approach`` is valid and process the ``parcel_approach`` if certain
     initialization keys are used.
     """
-    parcel_dict = _get_obj(parcel_approach)
+    parcel_dict = get_obj(parcel_approach)
 
     if parcel_dict is None and call == "TimeseriesExtractor":
         parcel_dict = {"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
@@ -321,12 +321,12 @@ def collapse_aal_node_names(nodes, return_unique_names=True):
     """
     Creates general regions/networks from AAL labels by removing hemisphere and numerical suffixes.
     """
-    collapsed_names = [_collapse_single_aal_node(node) for node in nodes]
+    collapsed_names = [collapse_single_aal_node(node) for node in nodes]
 
     return list(dict.fromkeys(collapsed_names)) if return_unique_names else collapsed_names
 
 
-def _collapse_single_aal_node(node):
+def collapse_single_aal_node(node):
     """Collapse a single AAL node name to its general region."""
     SPECIAL_PREFIXES = {
         "N_Acc",

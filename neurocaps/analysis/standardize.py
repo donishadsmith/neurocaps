@@ -2,6 +2,7 @@
 
 from typing import Union, Optional
 
+from ._internals import serialize
 from .._utils import io as io_utils
 from ..typing import SubjectTimeseries
 from ..extraction._internals.postprocess import standardize_rois
@@ -75,7 +76,7 @@ def standardize(
         standardized_dicts[f"dict_{indx}"] = curr_dict
 
     if output_dir:
-        io_utils._dicts_to_pickles(
+        serialize.dicts_to_pickles(
             output_dir=output_dir,
             dict_list=standardized_dicts,
             filenames=filenames,

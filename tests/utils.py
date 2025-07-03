@@ -6,7 +6,7 @@ import joblib, nilearn, matplotlib, numpy as np, pandas as pd, plotly
 import plotly.graph_objects
 
 from neurocaps.extraction import TimeseriesExtractor
-from neurocaps._utils import _standardize
+from neurocaps.extraction._internals.postprocess import standardize_rois
 
 # Only available in Nilearn >= 0.11.0
 NILEARN_VERSION_WITH_AAL_3V2 = version.parse(nilearn.__version__) >= version.parse("0.11.0")
@@ -298,7 +298,7 @@ def concat_data(timeseries, subject_table, standardize, runs=(1, 2, 3)):
 
     if standardize:
         for _, group in subject_table.items():
-            concatenated_timeseries[group] = _standardize(concatenated_timeseries[group])
+            concatenated_timeseries[group] = standardize_rois(concatenated_timeseries[group])
 
     return concatenated_timeseries
 

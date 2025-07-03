@@ -88,7 +88,7 @@ class TimeseriesExtractorGetter:
 
     @subject_timeseries.setter
     def subject_timeseries(self, subject_dict: Union[SubjectTimeseries, str]) -> None:
-        subject_dict = io_utils._get_obj(subject_dict)
+        subject_dict = io_utils.get_obj(subject_dict)
 
         self._validate_timeseries(subject_dict)
 

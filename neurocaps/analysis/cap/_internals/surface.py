@@ -10,6 +10,8 @@ from neuromaps.datasets import fetch_fslr
 from neuromaps.transforms import mni152_to_fslr, fslr_to_fslr
 from nilearn.plotting.cm import _cmap_d
 from numpy.typing import NDArray
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 
 from neurocaps._utils import io as io_utils
 from neurocaps._utils.logging import setup_logger
@@ -77,7 +79,7 @@ def generate_surface_plot(
     cap_name: str,
     suffix_title: Union[str, None],
     plot_dict: dict[str, Any],
-) -> plt.Figure:
+) -> Figure:
     """Creates the surface plot."""
     # Code adapted from example on https://surfplot.readthedocs.io/
     surfaces = fetch_fslr()
@@ -141,18 +143,18 @@ def generate_surface_plot(
 
 
 def save_surface_plot(
-    output_dir,
-    stat_map,
-    fig,
-    group_name,
-    cap_name,
-    suffix_filename,
-    save_stat_map,
-    as_pickle,
-    plot_dict,
-):
+    output_dir: str,
+    stat_map: nib.Nifti1Image,
+    fig: Union[Figure, Axes],
+    group_name: str,
+    cap_name: str,
+    suffix_filename: Union[str, None],
+    save_stat_map: bool,
+    as_pickle: bool,
+    plot_dict: dict[str, Any],
+) -> None:
     """Saves a single surface plot."""
-    if not (output_dir or stat_map):
+    if not output_dir:
         return None
 
     filename = io_utils.filename(
@@ -163,17 +165,17 @@ def save_surface_plot(
     )
     PlotFuncs.save_fig(fig, output_dir, filename, plot_dict, as_pickle)
 
-    if save_stat_map:
+    if save_stat_map and stat_map:
         filename = filename.split("_surface")[0] + ".nii.gz"
         save_nifti_img(stat_map, output_dir, filename)
 
 
-def save_nifti_img(stat_map, output_dir, filename):
+def save_nifti_img(stat_map: nib.Nifti1Image, output_dir: str, filename: str) -> None:
     "Save a single NifTI statistical map."
     nib.save(stat_map, os.path.join(output_dir, filename))
 
 
-def show_surface_plot(fig, show_fig):
+def show_surface_plot(fig: Union[Figure, Axes], show_fig: bool) -> None:
     """Visualizes a single surface plot."""
     try:
         plt.show(fig) if show_fig else plt.close(fig)

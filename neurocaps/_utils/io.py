@@ -8,10 +8,10 @@ from typing import Any, Union
 
 import joblib
 
-from .logging import _logger
-from ..exceptions import UnsupportedFileExtensionError
+from .logging import setup_logger
+from neurocaps.exceptions import UnsupportedFileExtensionError
 
-LG = _logger(__name__)
+LG = setup_logger(__name__)
 
 
 def makedir(output_dir: str) -> None:

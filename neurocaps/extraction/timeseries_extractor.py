@@ -16,7 +16,10 @@ import neurocaps._utils.io as io_utils
 from ._internals import check_confound_names, process_subject_runs, TimeseriesExtractorGetter
 from neurocaps.exceptions import BIDSQueryError
 from neurocaps.typing import ParcelConfig, ParcelApproach, SubjectTimeseries
+from neurocaps._utils.helpers import resolve_kwargs
 from neurocaps._utils.logging import setup_logger
+from neurocaps._utils.parcellation import check_parcel_approach, extract_custom_region_indices
+from neurocaps._utils.plotting_utils import PlotDefaults, PlotFuncs
 
 LG = setup_logger(__name__)
 
@@ -1179,7 +1182,7 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
             output_dir, filename, attr_name="_subject_timeseries", call="timeseries_to_pickle"
         )
 
-        io_utils._serialize(self._subject_timeseries, output_dir, save_filename, use_joblib=True)
+        io_utils.serialize(self._subject_timeseries, output_dir, save_filename, use_joblib=True)
 
         return self
 
@@ -1305,7 +1308,7 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
         if not output_dir:
             return None
         else:
-            io_utils._makedir(output_dir)
+            io_utils.makedir(output_dir)
 
         ext = "pkl" if call == "timeseries_to_pickle" else "csv"
 
@@ -1406,10 +1409,10 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
         if roi_indx is not None and region is not None:
             raise ValueError("`roi_indx` and `region` can not be used simultaneously.")
 
-        io_utils._issue_file_warning("filename", filename, output_dir)
+        io_utils.issue_file_warning("filename", filename, output_dir)
 
         # Defaults
-        plot_dict = _check_kwargs(_PlotDefaults.visualize_bold(), **kwargs)
+        plot_dict = resolve_kwargs(PlotDefaults.visualize_bold(), **kwargs)
 
         # Obtain the column indices associated with the rois
         parcellation_name = list(self._parcel_approach)[0]
@@ -1443,16 +1446,16 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
         plt.xlabel("TR")
 
         if output_dir:
-            io_utils._makedir(output_dir)
+            io_utils.makedir(output_dir)
 
             if filename:
                 save_filename = f"{os.path.splitext(filename.rstrip())[0].rstrip()}.png"
             else:
                 save_filename = f"subject-{subj_id}_{run}_timeseries.png"
 
-            _PlotFuncs.save_fig(plt.gcf(), output_dir, save_filename, plot_dict, as_pickle)
+            PlotFuncs.save_fig(plt.gcf(), output_dir, save_filename, plot_dict, as_pickle)
 
-        _PlotFuncs.show(show_figs)
+        PlotFuncs.show(show_figs)
 
         return self
 
@@ -1500,7 +1503,7 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
             if "regions" not in self._parcel_approach["Custom"]:
                 _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_bold")
             else:
-                plot_indxs = np.array(_extract_custom_region_indices(self._parcel_approach, region))
+                plot_indxs = np.array(extract_custom_region_indices(self._parcel_approach, region))
         else:
             plot_indxs = np.array(
                 [

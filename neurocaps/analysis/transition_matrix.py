@@ -7,7 +7,7 @@ import pandas as pd
 from .._utils import io as io_utils
 from .._utils.helpers import resolve_kwargs
 
-from neurocaps._utils import _MatrixVisualizer, _PlotDefaults, _PlotFuncs
+from neurocaps._utils.plotting_utils import MatrixVisualizer, PlotDefaults, PlotFuncs
 
 
 def transition_matrix(
@@ -124,12 +124,12 @@ def transition_matrix(
     io_utils.issue_file_warning("suffix_filename", suffix_filename, output_dir)
 
     # Create plot dictionary
-    plot_dict = resolve_kwargs(_PlotDefaults.transition_matrix(), **kwargs)
+    plot_dict = resolve_kwargs(PlotDefaults.transition_matrix(), **kwargs)
 
     trans_mat_dict = {}
 
-    for group in trans_dict:
-        df = trans_dict[group]
+    for group_name in trans_dict:
+        df = trans_dict[group_name]
         # Get indices and averaged probabilities
         indices, averaged_probabilities = df.iloc[:, 3:].mean().index, df.iloc[:, 3:].mean().values
         # Get the maximum CAP
@@ -145,18 +145,18 @@ def transition_matrix(
                 averaged_probabilities[location]
             )
 
-        display = _MatrixVisualizer.create_display(
-            trans_mat, plot_dict, suffix_title, group, "trans"
+        display = MatrixVisualizer.create_display(
+            trans_mat, plot_dict, suffix_title, group_name, "trans"
         )
 
-        trans_mat_dict[group] = trans_mat
+        trans_mat_dict[group_name] = trans_mat
 
         # Save figure & dataframe
         if output_dir:
-            _MatrixVisualizer.save_contents(
+            MatrixVisualizer.save_contents(
                 output_dir=output_dir,
                 suffix_filename=suffix_filename,
-                group=group,
+                group_name=group_name,
                 curr_dict=trans_mat_dict,
                 plot_dict=plot_dict,
                 save_plots=save_plots,
@@ -166,7 +166,7 @@ def transition_matrix(
                 call="trans",
             )
 
-        _PlotFuncs.show(show_figs)
+        PlotFuncs.show(show_figs)
 
     if return_df:
         return trans_mat_dict

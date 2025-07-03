@@ -4,6 +4,7 @@ from typing import Union, Optional
 
 import numpy as np
 
+from ._internals import serialize
 from .._utils import io as io_utils
 from ..typing import SubjectTimeseries
 
@@ -78,7 +79,7 @@ def change_dtype(
         changed_dtype_dicts[f"dict_{indx}"] = curr_dict
 
     if output_dir:
-        io_utils.dicts_to_pickles(
+        serialize.dicts_to_pickles(
             output_dir=output_dir,
             dict_list=changed_dtype_dicts,
             filenames=filenames,

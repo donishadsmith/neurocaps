@@ -301,7 +301,7 @@ class MatrixVisualizer:
 
     @staticmethod
     def create_display(
-        df: DataFrame, plot_dict: dict[str, Any], suffix_title: str, group: str, call: str
+        df: DataFrame, plot_dict: dict[str, Any], suffix_title: str, group_name: str, call: str
     ) -> Union[Axes, Figure]:
         # Refresh grid for each iteration
         plt.figure(figsize=plot_dict["figsize"])
@@ -322,7 +322,9 @@ class MatrixVisualizer:
 
         # Set plot name
         plot_name = "Correlation Matrix" if call == "corr" else "Transition Probabilities"
-        display = PlotFuncs.set_title(display, f"{group} CAPs {plot_name}", suffix_title, plot_dict)
+        display = PlotFuncs.set_title(
+            display, f"{group_name} CAPs {plot_name}", suffix_title, plot_dict
+        )
 
         return display
 

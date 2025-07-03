@@ -4,7 +4,7 @@ import pytest
 
 from neurocaps.extraction import TimeseriesExtractor
 from neurocaps.analysis import CAP
-from neurocaps._utils.parcel_approach import VALID_DICT_STUCTURES
+from neurocaps._utils.parcellation import VALID_DICT_STUCTURES
 
 CUSTOM_EXAMPLE = {"Custom": VALID_DICT_STUCTURES["Custom"]}
 

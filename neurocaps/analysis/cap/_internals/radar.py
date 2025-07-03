@@ -93,9 +93,9 @@ def generate_radar_plot(
     use_scatterpolar: bool,
     radar_dict: dict,
     cap_name: str,
-    plot_dict: dict[str, Any],
-    group: str,
+    group_name: str,
     suffix_title: Union[str, None],
+    plot_dict: dict[str, Any],
 ) -> go.Figure:
     """Generates radar plots."""
     if use_scatterpolar:
@@ -166,7 +166,9 @@ def generate_radar_plot(
         default_ticks = [max_value / 4, max_value / 2, 3 * max_value / 4, max_value]
         plot_dict["radialaxis"]["tickvals"] = [round(x, 2) for x in default_ticks]
 
-    title_text = f"{group} {cap_name} {suffix_title}" if suffix_title else f"{group} {cap_name}"
+    title_text = (
+        f"{group_name} {cap_name} {suffix_title}" if suffix_title else f"{group_name} {cap_name}"
+    )
 
     # Add additional customization
     fig.update_layout(

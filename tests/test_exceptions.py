@@ -90,4 +90,4 @@ def test_unsupported_serialized_file_error():
     )
 
     with pytest.raises(UnsupportedFileExtensionError, match=re.escape(msg)):
-        io_utils._unserialize("placeholder.txt")
+        io_utils.unserialize("placeholder.txt")

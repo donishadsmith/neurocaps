@@ -7,8 +7,8 @@ import numpy as np
 from numpy.typing import NDArray
 from sklearn.cluster import KMeans
 
-from ..check_parcel_approach import _check_parcel_approach
-from ...typing import ParcelConfig, ParcelApproach
+from neurocaps._utils.parcellation import check_parcel_approach
+from neurocaps.typing import ParcelConfig, ParcelApproach
 
 
 class CAPGetter:
@@ -27,7 +27,7 @@ class CAPGetter:
 
     @parcel_approach.setter
     def parcel_approach(self, parcel_dict: Union[ParcelConfig, ParcelApproach, str]) -> None:
-        self._parcel_approach = _check_parcel_approach(parcel_approach=parcel_dict, call="setter")
+        self._parcel_approach = check_parcel_approach(parcel_approach=parcel_dict, call="setter")
 
     @property
     def groups(self) -> Union[dict[str, list[str]], None]:

@@ -105,7 +105,11 @@ def generate_lookup_table(group_dict: dict[str, str]) -> dict[str, str]:
 
 
 def create_group_map(subject_table: dict[str, str], group_dict: dict[str, str]) -> dict[str, str]:
-    """ """
+    """
+    Create a new group_dict by intersecting ``subject_table`` and ``group_dict``.
+    Done since ``subject_table`` will contain unique subject IDs but ``group_dict`` may have
+    subject IDs that repeat across groups. Output used for tqdm progress bars.
+    """
     # Intersect subjects in subjects table and the groups for tqdm
     group_map = {
         group_name: sorted(set(subject_table).intersection(group_dict[group_name]))
@@ -129,7 +133,7 @@ def concatenate_timeseries(
     group_arrays = {group_name: [] for group_name in group_dict}
     for group_name in group_dict:
         for subj_id in tqdm(
-            group_dict[group],
+            group_dict[group_name],
             desc=f"Collecting Subject Timeseries Data [GROUP: {group_name}]",
             disable=not progress_bar,
         ):
@@ -149,14 +153,14 @@ def concatenate_timeseries(
                 continue
 
             subj_arrays = [subject_timeseries[subj_id][run_id] for run_id in subject_runs]
-            group_arrays[group].extend(subj_arrays)
+            group_arrays[group_name].extend(subj_arrays)
 
     # Only stack once per group; avoid bottleneck due to repeated calls on large data
-    concatenated_timeseries = {group: None for group in group_dict}
-    for group in tqdm(
+    concatenated_timeseries = {group_name: None for group_name in group_dict}
+    for group_name in tqdm(
         group_arrays, desc="Concatenating Timeseries Data Per Group", disable=not progress_bar
     ):
-        concatenated_timeseries[group] = np.vstack(group_arrays[group])
+        concatenated_timeseries[group_name] = np.vstack(group_arrays[group_name])
 
     del group_arrays
 
@@ -296,6 +300,7 @@ def select_optimal_clusters(
                 method,
                 group_name,
                 performance_dict[group_name],
+                optimal_n_clusters[group_name] if method == "elbow" else None,
                 show_figs,
                 plot_dict,
             )
@@ -363,7 +368,11 @@ def save_cluster_performance_figure(
     method_name: str,
     as_pickle: bool,
     plot_dict: dict[str, Any],
-):
+) -> None:
+    """Saves the cluster performance plot if ``output_dir`` is not falsy."""
+    if not output_dir:
+        return None
+
     io_utils.makedir(output_dir)
 
     save_name = f"{group_name.replace(' ', '_')}_{method_name}.png"

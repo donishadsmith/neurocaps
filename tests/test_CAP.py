@@ -199,8 +199,8 @@ def test_mean_std_clear():
 
     cap_analysis.get_caps(subject_timeseries=timeseries, runs=1, n_clusters=2, standardize=False)
 
-    assert cap_analysis.means["All Subjects"] is None
-    assert cap_analysis.stdev["All Subjects"] is None
+    assert cap_analysis.means is None
+    assert cap_analysis.stdev is None
 
 
 @pytest.mark.parametrize("standardize, runs", ([True, [1, 2]], [False, ["run-1", "run-2"]]))
@@ -1332,9 +1332,11 @@ def test_compute_cosine_similarity():
     """
     Tests cosine similarity computation.
     """
+    from neurocaps.analysis.cap._internals import radar
+
     amp, bin_vec = np.array([0.3, 0.3, 0.3]), np.array([0, 0, 0])
 
-    assert np.isnan(CAP._compute_cosine_similarity(amp, bin_vec))
+    assert np.isnan(radar.compute_cosine_similarity(amp, bin_vec))
     assert math.isclose(
-        CAP._compute_cosine_similarity(amp, np.where(bin_vec, 0, 1)), 1, abs_tol=0.0001
+        radar.compute_cosine_similarity(amp, np.where(bin_vec, 0, 1)), 1, abs_tol=0.0001
     )

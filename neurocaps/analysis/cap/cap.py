@@ -445,26 +445,33 @@ class CAP(CAPGetter):
         self._runs = [runs] if runs and not isinstance(runs, list) else runs
         self._standardize = standardize
 
+        # Get `subject_timeseries`, could be in memory or serialized file
+        subject_timeseries = io_utils.get_obj(subject_timeseries)
+
         # Updates `group` if None, sorts IDs, and creates the subject table
         self._groups, self._subject_table = cluster.setup_groups(subject_timeseries, self._groups)
 
         # Create the temporally concatenated/stacked timeseries
         self._concatenated_timeseries = cluster.concatenate_timeseries(
-            io_utils.get_obj(subject_timeseries),
+            subject_timeseries,
             cluster.create_group_map(self._subject_table, self._groups),
-            runs,
+            self._runs,
             progress_bar,
         )
 
         # Scale the temporally concatenated timeseries data
+        self._mean_vec, self._stdev_vec = None, None
         if self._standardize:
-            self._concatenated_timeseries, self._mean_vec, self._std_dev = cluster.scale(
+            self._concatenated_timeseries, self._mean_vec, self._stdev_vec = cluster.scale(
                 self._concatenated_timeseries
             )
 
+        # Ensure objects are cleared
+        self._optimal_n_clusters, self._kmeans, self._cluster_scores = None, None, None
         if cluster_selection_method:
             self._optimal_n_clusters, self._kmeans, self._cluster_scores = (
                 cluster.select_optimal_clusters(
+                    self._concatenated_timeseries,
                     cluster_selection_method,
                     self._n_clusters,
                     self._n_cores,
@@ -486,10 +493,10 @@ class CAP(CAPGetter):
                     method=None,
                 )
 
-        self._variance_explained_dict = cluster.compute_variance_explained(
+        self._variance_explained = cluster.compute_variance_explained(
             self._concatenated_timeseries, self._kmeans
         )
-        self._caps = cluster.create_caps_dict(list(self._groups), self._kmeans)
+        self._caps = cluster.create_caps_dict(self._kmeans)
 
         return self
 
@@ -984,14 +991,14 @@ class CAP(CAPGetter):
         """
         self._check_required_attrs(["_kmeans"])
 
-        subject_timeseries = io_utils._get_obj(subject_timeseries, needs_deepcopy=False)
+        subject_timeseries = io_utils.get_obj(subject_timeseries, needs_deepcopy=False)
 
         for subj_id, group in self._subject_table.items():
             if "predicted_subject_timeseries" not in locals():
                 predicted_subject_timeseries = {}
 
             predicted_subject_timeseries[subj_id] = {}
-            subject_runs, miss_runs = self._get_runs(runs, list(subject_timeseries[subj_id]))
+            subject_runs, miss_runs = cluster.get_runs(runs, list(subject_timeseries[subj_id]))
 
             if miss_runs:
                 LG.warning(
@@ -1198,9 +1205,6 @@ class CAP(CAPGetter):
         io_utils.issue_file_warning("suffix_filename", suffix_filename, output_dir)
         io_utils.makedir(output_dir)
 
-        plot_options = [plot_options] if isinstance(plot_options, str) else plot_options
-        visual_scope = [visual_scope] if isinstance(visual_scope, str) else visual_scope
-
         # Check inputs for plot_options and visual_scope
         if not any(["heatmap" in plot_options, "outer_product" in plot_options]):
             raise ValueError("Valid inputs for `plot_options` are 'heatmap' and 'outer_product'.")
@@ -1208,31 +1212,36 @@ class CAP(CAPGetter):
         if not any(["regions" in visual_scope, "nodes" in visual_scope]):
             raise ValueError("Valid inputs for `visual_scope` are 'regions' and 'nodes'.")
 
-        if "regions" in visual_scope:
-            # Compute means of regions/networks for each cap
-            matrix.compute_region_means(parcellation_name)
-
         # Create plot dictionary
         plot_dict = resolve_kwargs(PlotDefaults.caps2plot(), **kwargs)
 
         # Ensure plot_options and visual_scope are lists
-        plot_options = plot_options if isinstance(plot_options, list) else list(plot_options)
-        visual_scope = visual_scope if isinstance(visual_scope, list) else list(visual_scope)
+        plot_options = [plot_options] if isinstance(plot_options, str) else plot_options
+        visual_scope = [visual_scope] if isinstance(visual_scope, str) else visual_scope
+
+        if "regions" in visual_scope:
+            # Compute means of regions/networks for each cap
+            self._region_means = matrix.compute_region_means(
+                self._parcel_approach, list(self._groups), self._caps
+            )
         # Initialize outer product attribute
         if "outer_product" in plot_options:
-            self._outer_products = {}
+            self._outer_products = {group_name: None for group_name in self._groups}
 
         distributed_list = list(itertools.product(plot_options, visual_scope, self._groups))
-
-        for plot_option, scope, group in distributed_list:
+        for plot_option, scope, group_name in distributed_list:
             # Get correct labels depending on scope
             cap_dict, labels = matrix.extract_scope_information(
-                scope, parcellation_name, plot_dict["add_custom_node_labels"]
+                scope,
+                self._parcel_approach,
+                plot_dict["add_custom_node_labels"],
+                self._caps,
+                getattr(self, "_region_means", None),
             )
 
             # Generate plot for each group
             input_keys = dict(
-                group=group,
+                group_name=group_name,
                 plot_dict=plot_dict,
                 cap_dict=cap_dict,
                 full_labels=labels,
@@ -1242,431 +1251,22 @@ class CAP(CAPGetter):
                 show_figs=show_figs,
                 as_pickle=as_pickle,
                 scope=scope,
-                parcellation_name=parcellation_name,
+                parcel_approach=self._parcel_approach,
             )
 
             # Generate plot for each group
             if plot_option == "outer_product":
-                matrix.generate_outer_product_plots(**input_keys, subplots=subplots)
+                # Always ends up storing the last iterations
+                self._outer_products[group_name] = matrix.compute_outer_products(
+                    cap_dict[group_name]
+                )
+                matrix.generate_outer_product_plots(
+                    **input_keys, subplots=subplots, outer_products=self._outer_products
+                )
             elif plot_option == "heatmap":
                 matrix.generate_heatmap_plots(**input_keys)
 
         return self
-
-    def _compute_region_means(self, parcellation_name: str) -> None:
-        """
-        Creates an attribute called ``self._region_means``, representing the average values of
-        all nodes in a corresponding region to create region heatmaps or outer product plots.
-        """
-        self._region_means = {group: {} for group in self._groups}
-
-        # List of regions remains list for Schaefer and AAL but converts keys to list for Custom
-        regions = list(self._parcel_approach[parcellation_name]["regions"])
-
-        group_caps = [(group, cap) for group in self._groups for cap in self._caps[group]]
-        for group, cap in group_caps:
-            region_means = None
-            for region in regions:
-                if parcellation_name != "Custom":
-                    region_indxs = np.array(
-                        [
-                            index
-                            for index, node in enumerate(
-                                self._parcel_approach[parcellation_name]["nodes"]
-                            )
-                            if region in node
-                        ]
-                    )
-                else:
-                    region_indxs = np.array(
-                        _extract_custom_region_indices(self._parcel_approach, region)
-                    )
-
-                if region_means is None:
-                    region_means = np.array([np.average(self._caps[group][cap][region_indxs])])
-                else:
-                    region_means = np.hstack(
-                        [region_means, np.average(self._caps[group][cap][region_indxs])]
-                    )
-
-            # Append regions and their means
-            self._region_means[group].update({"Regions": regions})
-            self._region_means[group].update({cap: region_means})
-
-    def _extract_scope_information(
-        self, scope: str, parcellation_name: str, add_custom_node_labels: bool
-    ) -> tuple[dict[str, dict[str, NDArray]], list[str]]:
-        """
-        Extracting region means of each CAP from ``self._region_means`` if scope is "region" else
-        extracts the CAP vectors from ``self._caps``. Also extracts region labels or nodes
-        from the ``parcel_approach``.
-        """
-        if scope == "regions":
-            cap_dict = {
-                group: {k: v for k, v in self._region_means[group].items() if k != "Regions"}
-                for group in self._region_means
-            }
-            labels = list(self._parcel_approach[parcellation_name]["regions"])
-        elif scope == "nodes":
-            cap_dict = self._caps
-            labels = self._extract_node_names(parcellation_name, add_custom_node_labels)
-
-        return cap_dict, labels
-
-    def _extract_node_names(
-        self, parcellation_name: str, add_custom_node_labels: bool
-    ) -> tuple[dict[str, dict[str, NDArray]], list[str]]:
-        """
-        Extracts the node names from the ``parcel_approach``. For "Custom", if the region is
-        lateralized, then the label is returned in the form "{Hemisphere} {Region}", else its
-        returned as "{Region}".
-        """
-        if parcellation_name in ["Schaefer", "AAL"]:
-            labels = self._parcel_approach[parcellation_name]["nodes"]
-        else:
-            labels = self._sort_custom_node_names() if add_custom_node_labels else None
-
-        return labels
-
-    def _sort_custom_node_names(self) -> list[str]:
-        """
-        Generates and sorts node names for the "Custom" parcellation based on their starting
-        numerical index.
-        """
-        indexed_labels = []
-        custom_regions = self._parcel_approach["Custom"]["regions"]
-
-        for region_name, region_data in custom_regions.items():
-            if isinstance(region_data, dict):
-                # Case when region is lateralized (e.g., {"lh": [...], "rh": [...]})
-                for hemisphere, indices in region_data.items():
-                    # Use the starting integer as a sorting key (sort_key, region_name)
-                    sort_key = sorted(list(indices))[0]
-                    indexed_labels.append((sort_key, f"{hemisphere.upper()} {region_name}"))
-            else:
-                # Case when region is non-lateralized (e.g., "Hippocampus": [95, ...])
-                sort_key = sorted(list(region_data))[0]
-                indexed_labels.append((sort_key, region_name))
-
-        # Return only labels
-        return [label for _, label in sorted(indexed_labels)]
-
-    @staticmethod
-    def _collapse_node_labels(
-        parcellation_name: str,
-        parcel_approach: ParcelApproach,
-        custom_nodes: Union[list[str], None] = None,
-    ) -> tuple[list[str], list[str]]:
-        """
-        Collapses node labels names (based on unique node names and hemisphere) for plotting
-        purposes. For instance in the Schaefer parcellation, nodes containing "Vis" have a left and
-        right hemisphere version, instead of ["LH_Vis_1", "LH_Vis_2", "RH_Vis_1", "RH_Vis_2", ...],
-        the unique names would be "LH Vis" and "RH Vis". The frequencies of nodes containing the
-        unique node name and hemisphere combination are computed to reduce plot clutter when "nodes"
-        are plotted.
-
-        Returns
-        -------
-        tuple
-            Consists of a two lists. The first list is the same length as "nodes" in
-            ``self._parcel_approach`` and contains the unique node and hemisphere combination at
-            certain indices, with the remaining indices being empty strings. The second list only
-            contains the names of the unique node and hemisphere comvination.
-        """
-        # Get frequency of each major hemisphere and region in Schaefer, AAL, or Custom atlas
-        if parcellation_name == "Schaefer":
-            nodes = parcel_approach[parcellation_name]["nodes"]
-            # Retain only the hemisphere and primary Schaefer network
-            # Node string in form of {hemisphere}_{region}_{number} (e.g. LH_Cont_Par_1)
-            # Below code returns a list where each element is a list of [Hemisphere, Network]
-            # (e.g ["LH", "Vis"])
-            hemi_network_pairs = [node.split("_")[:2] for node in nodes]
-            frequency_dict = collections.Counter([" ".join(node) for node in hemi_network_pairs])
-        elif parcellation_name == "AAL":
-            nodes = parcel_approach[parcellation_name]["nodes"]
-            # AAL in the form of {region}_{hemisphere}_{number} or {region}_{hemisphere)
-            # (e.g. Frontal_Inf_Orb_2_R, Precentral_L); _collapse_aal_node_names would return these
-            # as Frontal_Inf and Precentral
-            collapsed_aal_nodes = _collapse_aal_node_names(nodes, return_unique_names=False)
-            frequency_dict = collections.Counter(collapsed_aal_nodes)
-        else:
-            if custom_nodes is None:
-                return [], []
-
-            frequency_dict = {}
-            for node_id in custom_nodes:
-                # For custom, columns comes in the form of "{Hemisphere} {Region}" or "{Region}"
-                is_lateralized = node_id.startswith("LH ") or node_id.startswith("RH ")
-                if is_lateralized:
-                    hemisphere_id = "LH" if node_id.startswith("LH ") else "RH"
-                    region_id = re.split("LH |RH ", node_id)[-1]
-                    node_indices = parcel_approach["Custom"]["regions"][region_id][
-                        hemisphere_id.lower()
-                    ]
-                else:
-                    node_indices = parcel_approach["Custom"]["regions"][node_id]
-
-                frequency_dict.update({node_id: len(node_indices)})
-
-        # Get the names, which indicate the hemisphere and region; reverting Counter objects to
-        # list retains original ordering of nodes in list as of Python 3.7
-        collapsed_node_labels = list(frequency_dict)
-        tick_labels = ["" for _ in range(len(parcel_approach[parcellation_name]["nodes"]))]
-
-        starting_value = 0
-
-        # Iterate through names_list and assign the starting indices corresponding to unique region
-        # and hemisphere key
-        for num, collapsed_node_label in enumerate(collapsed_node_labels):
-            if num == 0:
-                tick_labels[0] = collapsed_node_label
-            else:
-                # Shifting to previous frequency of the preceding network to obtain the new starting
-                # value of the subsequent region and hemisphere pair (if lateralized)
-                starting_value += frequency_dict[collapsed_node_labels[num - 1]]
-                tick_labels[starting_value] = collapsed_node_label
-
-        return tick_labels, collapsed_node_labels
-
-    def _generate_outer_product_plots(
-        self,
-        group: str,
-        plot_dict: dict[str, Any],
-        cap_dict: dict[str, dict[str, NDArray]],
-        full_labels: list[str],
-        subplots: bool,
-        output_dir: Union[str, None],
-        suffix_title: Union[str, None],
-        suffix_filename: Union[str, None],
-        show_figs: bool,
-        as_pickle: bool,
-        scope: str,
-        parcellation_name: str,
-    ) -> None:
-        """
-        Generates the outer product plots (either individual plots for each CAP or a single subplot
-        if ``subplot`` is True).
-        """
-        self._outer_products[group] = {}
-
-        # Create labels if nodes requested for scope
-        if scope == "nodes":
-            reduced_labels, _ = self._collapse_node_labels(
-                parcellation_name,
-                self._parcel_approach,
-                custom_nodes=full_labels if parcellation_name == "Custom" else None,
-            )
-        # Modify tick labels based on scope
-        plot_labels = (
-            {"xticklabels": full_labels, "yticklabels": full_labels}
-            if scope == "regions"
-            else {"xticklabels": [], "yticklabels": []}
-        )
-
-        # Create base grid for subplots
-        if subplots:
-            fig, axes, axes_coord, shape = self._initialize_outer_product_subplot(
-                cap_dict, group, plot_dict, suffix_title
-            )
-            axes_x, axes_y = axes_coord
-            ncol, nrow = shape
-
-        for cap in cap_dict[group]:
-            # Calculate outer product
-            self._outer_products[group].update(
-                {cap: np.outer(cap_dict[group][cap], cap_dict[group][cap])}
-            )
-
-            if subplots:
-                ax = axes[axes_y] if nrow == 1 else axes[axes_x, axes_y]
-
-                display = seaborn.heatmap(
-                    ax=ax,
-                    data=self._outer_products[group][cap],
-                    **plot_labels,
-                    **_PlotFuncs.base_kwargs(plot_dict),
-                )
-
-                if scope == "nodes":
-                    ax = _PlotFuncs.set_ticks(ax, reduced_labels)
-
-                # Add border; if "borderwidths" is Falsy, returns display unmodified
-                display = _PlotFuncs.border(
-                    display, plot_dict, axhline=self._outer_products[group][cap].shape[0]
-                )
-
-                # Modify label sizes for x axis
-                display = _PlotFuncs.label_size(display, plot_dict, set_x=True, set_y=False)
-
-                # Modify label sizes for y axis; if share_y, only set y for plots at axes == 0
-                if plot_dict["sharey"]:
-                    display = (
-                        _PlotFuncs.label_size(display, plot_dict, False, set_y=True)
-                        if axes_y == 0
-                        else display
-                    )
-                else:
-                    display = _PlotFuncs.label_size(display, plot_dict, False, set_y=True)
-
-                # Set title of subplot
-                ax.set_title(cap, fontsize=plot_dict["fontsize"])
-
-                # If modulus is zero, move onto the new column back (to zero index of new column)
-                if (axes_y % ncol == 0 and axes_y != 0) or axes_y == ncol - 1:
-                    axes_x += 1
-                    axes_y = 0
-                else:
-                    axes_y += 1
-
-                # Save if last iteration for group
-                if cap == list(cap_dict[group])[-1]:
-                    # Remove subplots with no data
-                    [fig.delaxes(ax) for ax in axes.flatten() if not ax.has_data()]
-
-                    if output_dir:
-                        filename = io_utils._filename(
-                            f"{group}_CAPs_outer_product-{scope}", suffix_filename, "suffix", "png"
-                        )
-
-                        _PlotFuncs.save_fig(display, output_dir, filename, plot_dict, as_pickle)
-            else:
-                # Create new plot for each iteration when not subplot
-                plt.figure(figsize=plot_dict["figsize"])
-
-                display = seaborn.heatmap(
-                    self._outer_products[group][cap],
-                    **plot_labels,
-                    **_PlotFuncs.base_kwargs(plot_dict),
-                )
-
-                if scope == "nodes":
-                    display = _PlotFuncs.set_ticks(display, reduced_labels)
-
-                # Add border; if "borderwidths" is Falsy, returns display unmodified
-                display = _PlotFuncs.border(
-                    display, plot_dict, axhline=self._outer_products[group][cap].shape[0]
-                )
-
-                # Set title
-                display = _PlotFuncs.set_title(display, f"{group} {cap}", suffix_title, plot_dict)
-
-                # Modify label sizes
-                display = _PlotFuncs.label_size(display, plot_dict)
-
-                # Save individual plots
-                if output_dir:
-                    filename = io_utils._filename(
-                        f"{group}_{cap}_outer_product-{scope}", suffix_filename, "suffix", "png"
-                    )
-                    _PlotFuncs.save_fig(display, output_dir, filename, plot_dict, as_pickle)
-
-        _PlotFuncs.show(show_figs)
-
-    @staticmethod
-    def _initialize_outer_product_subplot(
-        cap_dict: dict[str, dict[str, NDArray]],
-        group: str,
-        plot_dict: dict[str, Any],
-        suffix_title: Union[str, None],
-    ) -> tuple[plt.Figure, plt.Axes, tuple[int, int], tuple[int, int]]:
-        """
-        Initializes the subplot for "outer_product".
-
-        Returns
-        -------
-        tuple
-            Contains the matplotlib figure, matplolib axes, tuple representing the row and
-            column position of the current suplot (0, 0), and tuple representing the number of
-            rows and columns in the subplot.
-        """
-        # Max five subplots per row for default
-        default_col = len(cap_dict[group]) if len(cap_dict[group]) <= 5 else 5
-        ncol = plot_dict["ncol"] if plot_dict["ncol"] is not None else default_col
-        ncol = min(ncol, len(cap_dict[group]))
-
-        # Determine number of rows needed based on ceiling if not specified
-        nrow = (
-            plot_dict["nrow"]
-            if plot_dict["nrow"] is not None
-            else int(np.ceil(len(cap_dict[group]) / ncol))
-        )
-        subplot_figsize = (
-            (8 * ncol, 6 * nrow) if plot_dict["figsize"] == (8, 6) else plot_dict["figsize"]
-        )
-        fig, axes = plt.subplots(
-            nrow, ncol, sharex=False, sharey=plot_dict["sharey"], figsize=subplot_figsize
-        )
-
-        fig = _PlotFuncs.set_title(fig, f"{group}", suffix_title, plot_dict, is_subplot=True)
-        fig.subplots_adjust(hspace=plot_dict["hspace"], wspace=plot_dict["wspace"])
-
-        if plot_dict["tight_layout"]:
-            fig.tight_layout(rect=plot_dict["rect"])
-
-        return fig, axes, (0, 0), (ncol, nrow)
-
-    def _generate_heatmap_plots(
-        self,
-        group: str,
-        plot_dict: dict[str, Any],
-        cap_dict: dict[str, dict[str, NDArray]],
-        full_labels: list[str],
-        output_dir: Union[str, None],
-        suffix_title: Union[str, None],
-        suffix_filename: Union[str, None],
-        show_figs: bool,
-        as_pickle: bool,
-        scope: str,
-        parcellation_name: str,
-    ) -> None:
-        """Generates one heatmap per group."""
-        plt.figure(figsize=plot_dict["figsize"])
-        plot_labels = {"xticklabels": True, "yticklabels": True}
-
-        if scope == "regions":
-            display = seaborn.heatmap(
-                pd.DataFrame(cap_dict[group], index=full_labels),
-                **plot_labels,
-                **_PlotFuncs.base_kwargs(plot_dict),
-            )
-        else:
-            # Create Labels
-            reduced_labels, collapsed_node_names = self._collapse_node_labels(
-                parcellation_name, self._parcel_approach, full_labels
-            )
-
-            display = seaborn.heatmap(
-                pd.DataFrame(cap_dict[group], columns=list(cap_dict[group])),
-                **plot_labels,
-                **_PlotFuncs.base_kwargs(plot_dict),
-            )
-
-            plt.yticks(
-                ticks=[indx for indx, label in enumerate(reduced_labels) if label],
-                labels=collapsed_node_names,
-            )
-
-        # Add border; if "borderwidths" is Falsy, returns display unmodified
-        display = _PlotFuncs.border(
-            display,
-            plot_dict,
-            axhline=len(cap_dict[group][list(cap_dict[group])[0]]),
-            axvline=len(self._caps[group]),
-        )
-
-        # Modify label sizes
-        display = _PlotFuncs.label_size(display, plot_dict)
-
-        # Set title
-        display = _PlotFuncs.set_title(display, f"{group} CAPs", suffix_title, plot_dict)
-
-        if output_dir:
-            filename = io_utils._filename(
-                f"{group}_CAPs_heatmap-{scope}", suffix_filename, "suffix", "png"
-            )
-            _PlotFuncs.save_fig(display, output_dir, filename, plot_dict, as_pickle)
-
-        _PlotFuncs.show(show_figs)
 
     def caps2corr(
         self,
@@ -1799,6 +1399,8 @@ class CAP(CAPGetter):
                 corr_dict[group_name] = correlation.add_significance_values(
                     df, corr_df, method, plot_dict["fmt"]
                 )
+            else:
+                corr_dict = None
 
             MatrixVisualizer.save_contents(
                 output_dir=output_dir,
@@ -1908,7 +1510,7 @@ class CAP(CAPGetter):
                 filename = io_utils.filename(
                     f"{group.replace(' ', '_')}_{cap}", suffix_filename, "suffix", "nii.gz"
                 )
-                surface.save_nifti_img(stat_map, filename)
+                surface.save_nifti_img(stat_map, output_dir, filename)
 
         return self
 
