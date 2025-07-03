@@ -13,24 +13,15 @@ from pandas import DataFrame
 from tqdm.auto import tqdm
 
 import neurocaps._utils.io as io_utils
-from ..exceptions import BIDSQueryError
-from ..typing import ParcelConfig, ParcelApproach, SubjectTimeseries
-from .._utils import (
-    _TimeseriesExtractorGetter,
-    _PlotDefaults,
-    _PlotFuncs,
-    _check_kwargs,
-    _check_confound_names,
-    _check_parcel_approach,
-    _extract_custom_region_indices,
-    _extract_timeseries,
-    _logger,
-)
+from ._internals import check_confound_names, process_subject_runs, TimeseriesExtractorGetter
+from neurocaps.exceptions import BIDSQueryError
+from neurocaps.typing import ParcelConfig, ParcelApproach, SubjectTimeseries
+from neurocaps._utils.logging import setup_logger
 
-LG = _logger(__name__)
+LG = setup_logger(__name__)
 
 
-class TimeseriesExtractor(_TimeseriesExtractorGetter):
+class TimeseriesExtractor(TimeseriesExtractorGetter):
     """
     Timeseries Extractor Class.
 
@@ -278,12 +269,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         self._space = space
         # Check parcel_approach
-        self._parcel_approach = _check_parcel_approach(parcel_approach=parcel_approach)
+        self._parcel_approach = check_parcel_approach(parcel_approach=parcel_approach)
 
         if use_confounds:
             if confound_names:
                 # Replace confounds if not None
-                confound_names = _check_confound_names(
+                confound_names = check_confound_names(
                     high_pass, confound_names, n_acompcor_separate
                 )
 
@@ -706,7 +697,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             parallel = Parallel(return_as="generator", n_jobs=self._n_cores, backend="loky")
             outputs = tqdm(
-                parallel(delayed(_extract_timeseries)(*args) for args in args_list),
+                parallel(delayed(process_subject_runs)(*args) for args in args_list),
                 desc="Processing Subjects",
                 total=len(args_list),
                 disable=not progress_bar,
@@ -726,7 +717,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             for subj_id in tqdm(
                 self._subject_ids, desc="Processing Subjects", disable=not progress_bar
             ):
-                outputs = _extract_timeseries(
+                outputs = process_subject_runs(
                     subj_id=subj_id,
                     **self._subject_info[subj_id],
                     parcel_approach=self._parcel_approach,

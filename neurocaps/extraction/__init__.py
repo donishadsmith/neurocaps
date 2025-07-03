@@ -1,3 +1,3 @@
-from .timeseriesextractor import TimeseriesExtractor
+from .timeseries_extractor import TimeseriesExtractor
 
 __all__ = ["TimeseriesExtractor"]

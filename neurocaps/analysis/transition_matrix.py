@@ -4,8 +4,10 @@ from typing import Optional, Union
 
 import pandas as pd
 
-import neurocaps._utils.io as io_utils
-from .._utils import _MatrixVisualizer, _PlotDefaults, _PlotFuncs, _check_kwargs
+from .._utils import io as io_utils
+from .._utils.helpers import resolve_kwargs
+
+from neurocaps._utils import _MatrixVisualizer, _PlotDefaults, _PlotFuncs
 
 
 def transition_matrix(
@@ -119,10 +121,10 @@ def transition_matrix(
         trans_dict, dict
     ), "transition_dict must be in the form dict[str, pd.DataFrame]."
 
-    io_utils._issue_file_warning("suffix_filename", suffix_filename, output_dir)
+    io_utils.issue_file_warning("suffix_filename", suffix_filename, output_dir)
 
     # Create plot dictionary
-    plot_dict = _check_kwargs(_PlotDefaults.transition_matrix(), **kwargs)
+    plot_dict = resolve_kwargs(_PlotDefaults.transition_matrix(), **kwargs)
 
     trans_mat_dict = {}
 
