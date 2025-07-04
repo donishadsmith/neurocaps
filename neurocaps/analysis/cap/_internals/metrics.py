@@ -189,7 +189,6 @@ def compute_persistence(
     return append_df(df, sub_info, persistence_dict)
 
 
-@staticmethod
 def segments(target: int, timeseries: NDArray) -> tuple[NDArray[np.bool_], int]:
     """
     Computes the number of segments for persistence and counts computation. Always returns
@@ -224,7 +223,6 @@ def add_nans_to_dict(
     return curr_dict
 
 
-@staticmethod
 def append_df(
     df: pd.DataFrame, sub_info: list[str], metric_dict: dict[str, Union[float, int]]
 ) -> pd.DataFrame:
@@ -233,7 +231,6 @@ def append_df(
     return df
 
 
-@staticmethod
 def compute_transition_frequency(
     arr: NDArray, sub_info: list[str], df: pd.DataFrame
 ) -> pd.DataFrame:

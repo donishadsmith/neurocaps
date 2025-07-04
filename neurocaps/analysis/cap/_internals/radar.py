@@ -75,7 +75,6 @@ def create_region_mask_1d(
     return region_mask
 
 
-@staticmethod
 def compute_cosine_similarity(
     amp_vector: NDArray[np.floating], region_mask: NDArray[np.bool_]
 ) -> np.floating:
@@ -88,7 +87,6 @@ def compute_cosine_similarity(
     return cosine_similarity
 
 
-@staticmethod
 def generate_radar_plot(
     use_scatterpolar: bool,
     radar_dict: dict,
