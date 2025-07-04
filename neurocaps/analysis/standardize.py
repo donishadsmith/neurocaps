@@ -2,9 +2,10 @@
 
 from typing import Union, Optional
 
-import neurocaps._utils.io as io_utils
+from ._internals import serialize
+from .._utils import io as io_utils
 from ..typing import SubjectTimeseries
-from .._utils import _standardize
+from ..extraction._internals.postprocess import standardize_rois
 
 
 def standardize(
@@ -61,21 +62,21 @@ def standardize(
         isinstance(subject_timeseries_list, list) and len(subject_timeseries_list) > 0
     ), "`subject_timeseries_list` must be a list greater than length 0."
 
-    io_utils._issue_file_warning("filenames", filenames, output_dir)
+    io_utils.issue_file_warning("filenames", filenames, output_dir)
 
     standardized_dicts = {}
 
     for indx, curr_dict in enumerate(subject_timeseries_list):
-        curr_dict = io_utils._get_obj(curr_dict)
+        curr_dict = io_utils.get_obj(curr_dict)
 
         for subj_id in curr_dict:
             for run in curr_dict[subj_id]:
-                curr_dict[subj_id][run] = _standardize(curr_dict[subj_id][run])
+                curr_dict[subj_id][run] = standardize_rois(curr_dict[subj_id][run])
 
         standardized_dicts[f"dict_{indx}"] = curr_dict
 
     if output_dir:
-        io_utils._dicts_to_pickles(
+        serialize.dicts_to_pickles(
             output_dir=output_dir,
             dict_list=standardized_dicts,
             filenames=filenames,

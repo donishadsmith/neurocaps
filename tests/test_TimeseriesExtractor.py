@@ -1,9 +1,8 @@
 import copy, glob, math, os, re, shutil, sys
 import joblib, pytest, numpy as np, pandas as pd
 
-import neurocaps._utils.extraction.extract_timeseries as et
 from neurocaps.extraction import TimeseriesExtractor
-from neurocaps._utils import _standardize
+from neurocaps.extraction._internals import postprocess
 
 from .utils import (
     Parcellation,
@@ -837,8 +836,12 @@ def test_tr_with_and_without_bandpass(
     assert extractor.subject_timeseries["01"]["run-001"].shape == (40, 400)
 
     if any([high_pass, low_pass]):
+        task_info = extractor.task_info
+        signal_clean = extractor.signal_clean_info
         with pytest.raises(ValueError):
-            extractor._get_tr(bold_json, None, None)
+            from neurocaps.extraction._internals import bids_query
+
+            bids_query.get_tr(bold_json, None, signal_clean, task_info, None)
 
 
 def test_condition_extraction(setup_environment_1, get_vars):
@@ -903,9 +906,13 @@ def test_standardize(setup_environment_1, get_vars):
     active_condition = copy.deepcopy(extractor.subject_timeseries["01"]["run-001"])
 
     scan_list = get_scans(bids_dir, "rest")
-    assert np.allclose(_standardize(timeseries[scan_list, :]), rest_condition, atol=0.00001)
+    assert np.allclose(
+        postprocess.standardize_rois(timeseries[scan_list, :]), rest_condition, atol=0.00001
+    )
     scan_list = get_scans(bids_dir, "active")
-    assert np.allclose(_standardize(timeseries[scan_list, :]), active_condition, atol=0.00001)
+    assert np.allclose(
+        postprocess.standardize_rois(timeseries[scan_list, :]), active_condition, atol=0.00001
+    )
 
 
 @pytest.mark.parametrize("confound_type", [None, "testing_confounds"])
@@ -953,7 +960,7 @@ def test_confounds(setup_environment_1, get_vars, confound_type):
 
         confound_file = get_confound_data(bids_dir, pipeline_name)
 
-        data = et._Data(files={"confound": confound_file}, verbose=False)
+        data = postprocess.RunData(files={"confound": confound_file}, verbose=False)
 
         correct_confounds = [
             "cosine_00",
@@ -968,7 +975,7 @@ def test_confounds(setup_environment_1, get_vars, confound_type):
             "rot_z",
         ]
 
-        returned_confounds = et._extract_valid_confounds(data, confound_names, None)
+        returned_confounds = postprocess.extract_valid_confounds(data, confound_names, None)
         assert isinstance(returned_confounds, pd.DataFrame)
         assert not returned_confounds.empty
         assert len(returned_confounds.columns) == len(correct_confounds)
@@ -1033,7 +1040,7 @@ def test_get_acompcor_separate(setup_environment_1, get_vars, n):
     confound_json = confound_file.replace(".tsv", ".json")
     correct_confounds = ["a_comp_cor_00", "a_comp_cor_01", "a_comp_cor_02", "a_comp_cor_03"]
 
-    data = et._Data(
+    data = postprocess.RunData(
         files={"confound": confound_file, "confound_meta": confound_json}, verbose=False
     )
     data.signal_clean_info = {
@@ -1042,7 +1049,7 @@ def test_get_acompcor_separate(setup_environment_1, get_vars, n):
         "confound_names": None,
     }
 
-    confounds = et._process_confounds(data, None)
+    confounds = postprocess.process_confounds(data, None)
     assert isinstance(confounds, pd.DataFrame)
     assert len(correct_confounds) == len(confounds.columns) == 4
     assert confounds.shape == (40, 4)
@@ -1050,14 +1057,14 @@ def test_get_acompcor_separate(setup_environment_1, get_vars, n):
 
     data.signal_clean_info["confound_names"] = ["rot_x"]
     correct_confounds += ["rot_x"]
-    confounds = et._process_confounds(data, None)
+    confounds = postprocess.process_confounds(data, None)
     assert isinstance(confounds, pd.DataFrame)
     assert len(correct_confounds) == len(confounds.columns) == 5
     assert confounds.shape == (40, 5)
     assert all(i in correct_confounds for i in confounds.columns)
 
     data.signal_clean_info["use_confounds"] = False
-    confounds = et._process_confounds(data, None)
+    confounds = postprocess.process_confounds(data, None)
     assert not confounds
 
 
@@ -1124,12 +1131,12 @@ def test_filter_censored_scan_indices_unit():
     """
     Redundant unit test before integration test for ``_filter_censored_scan_indices``.
     """
-    data = et._Data(
+    data = postprocess.RunData(
         censored_frames=[0, 1, 10],
         scans=[0, 1, 2, 3, 4, 5],
         signal_clean_info={"fd_threshold": {"interpolate": False}},
     )
-    scans, n_censored, n_interpolated = et._filter_censored_scan_indices(data)
+    scans, n_censored, n_interpolated = postprocess.filter_censored_scan_indices(data)
 
     assert len(scans) == 4
     assert n_censored == 2
@@ -1279,9 +1286,9 @@ def test_create_sample_mask_unit():
     """
     expected_mask = np.array([0, 0, 1, 1, 0, 0, 1, 1, 0, 1], dtype="bool")
 
-    data = et._Data(fd_array_len=10, censored_frames=[0, 1, 4, 5, 8])
+    data = postprocess.RunData(fd_array_len=10, censored_frames=[0, 1, 4, 5, 8])
 
-    sample_mask = et._create_sample_mask(data)
+    sample_mask = postprocess.create_sample_mask(data)
 
     assert np.array_equal(expected_mask, sample_mask)
 
@@ -1290,14 +1297,14 @@ def test_pad_timeseries_unit():
     """
     Redundant unit test for ``_pad_timeseries`` before the integration tests.
     """
-    data = et._Data(
+    data = postprocess.RunData(
         signal_clean_info={"fd_threshold": {"use_sample_mask": True}},
         fd_array_len=10,
         sample_mask=np.array([0, 0, 1, 1, 0, 0, 1, 1, 0, 1], dtype="bool"),
     )
     timeseries = np.random.rand(5, 20)
 
-    padded_timeseries = et._pad_timeseries(copy.deepcopy(timeseries), data)
+    padded_timeseries = postprocess.pad_timeseries(copy.deepcopy(timeseries), data)
 
     assert np.all(padded_timeseries[data.sample_mask == 0, :] == 0)
     assert not np.all(padded_timeseries[data.sample_mask == 1, :] == 0)
@@ -1672,13 +1679,13 @@ def test_extended_censoring_unit():
     """
     Redundant unit test for ``_extended_censor`` before integration tests.
     """
-    data = et._Data(
+    data = postprocess.RunData(
         censored_frames=[0, 1, 2, 4],
         fd_array_len=5,
         signal_clean_info={"fd_threshold": {"n_before": 2, "n_after": 2}},
     )
 
-    censored_indices = et._extended_censor(data.censored_frames, data.fd_array_len, data)
+    censored_indices = postprocess.extended_censor(data.censored_frames, data.fd_array_len, data)
 
     assert min(censored_indices) >= 0
     assert max(censored_indices) < 5
@@ -1855,7 +1862,7 @@ def test_scan_bounds_unit(shift, caplog, logger):
     """
     import logging
 
-    data = et._Data(
+    data = postprocess.RunData(
         task_info={"condition": "placeholder", "condition_tr_shift": shift},
         scans=[0, 10],
         head="[]",
@@ -1870,7 +1877,7 @@ def test_scan_bounds_unit(shift, caplog, logger):
     )
 
     with caplog.at_level(logging.WARNING):
-        scans = et._validate_scan_bounds(data, 5, logger)
+        scans = postprocess.validate_scan_bounds(data, 5, logger)
 
         if shift == 0:
             assert msg in caplog.text
@@ -2037,11 +2044,11 @@ def test_get_contiguous_segments_unit():
     expected_indices = [np.array(x) for x in ([0, 1], [2, 3], [4, 5], [6, 7], [8, 9])]
     expected_binary = [np.array(x, dtype="bool") for x in ([0, 0], [1, 1], [0, 0], [1, 1], [0, 0])]
 
-    segments_indices = et._get_contiguous_segments(sample_mask, splice="indices")
+    segments_indices = postprocess.get_contiguous_segments(sample_mask, splice="indices")
     assert len(segments_indices) == 5
     assert all(np.array_equal(segments_indices[indx], expected_indices[indx]) for indx in range(5))
 
-    segments_binary = et._get_contiguous_segments(sample_mask, splice="binary")
+    segments_binary = postprocess.get_contiguous_segments(sample_mask, splice="binary")
     assert len(segments_binary) == 5
     assert all(np.array_equal(segments_binary[indx], expected_binary[indx]) for indx in range(5))
 
@@ -2051,19 +2058,19 @@ def test_censored_ends_unit():
     Redundant unit tests for ``_get_contiguous_censored_ends`` before the integration tests.
     """
     sample_mask = np.array([0, 0, 1, 1, 0, 0, 1, 1, 0, 1], dtype="bool")
-    censored_ends = et._get_contiguous_censored_ends(sample_mask)
+    censored_ends = postprocess.get_contiguous_censored_ends(sample_mask)
     assert censored_ends == [0, 1]
 
     sample_mask = np.array([1, 0, 1, 1, 0, 0, 1, 1, 0, 1], dtype="bool")
-    censored_ends = et._get_contiguous_censored_ends(sample_mask)
+    censored_ends = postprocess.get_contiguous_censored_ends(sample_mask)
     assert not censored_ends
 
     sample_mask = np.array([0, 0, 1, 1, 0, 0, 1, 1, 0, 0], dtype="bool")
-    censored_ends = et._get_contiguous_censored_ends(sample_mask)
+    censored_ends = postprocess.get_contiguous_censored_ends(sample_mask)
     assert censored_ends == [0, 1, 8, 9]
 
     sample_mask = np.array([1, 0, 1, 1, 0, 0, 1, 1, 0, 0], dtype="bool")
-    censored_ends = et._get_contiguous_censored_ends(sample_mask)
+    censored_ends = postprocess.get_contiguous_censored_ends(sample_mask)
     assert censored_ends == [8, 9]
 
 
@@ -2071,13 +2078,13 @@ def test_filter_censored_scan_indices_interpolate_unit():
     """
     Redundant unit test before integration test for ``_filter_censored_scan_indices``.
     """
-    data = et._Data(
+    data = postprocess.RunData(
         censored_frames=[0, 1, 3, 7, 8],
         censored_ends=[0, 1, 7, 8],
         scans=[0, 1, 2, 3, 4, 5, 6, 7, 8],
         signal_clean_info={"fd_threshold": {"interpolate": True}},
     )
-    scans, n_censored, n_interpolated = et._filter_censored_scan_indices(data)
+    scans, n_censored, n_interpolated = postprocess.filter_censored_scan_indices(data)
 
     assert len(scans) == 5
     # True number of censored scans which subtracts from the interpolated number in _report qc
@@ -2092,7 +2099,7 @@ def test_interpolate_censored_frames_unit(condition):
     """
     timeseries = np.random.rand(10, 20)
 
-    data = et._Data(
+    data = postprocess.RunData(
         censored_ends=[0, 1],
         tr=1.2,
         task_info={"condition": condition},
@@ -2100,7 +2107,7 @@ def test_interpolate_censored_frames_unit(condition):
         fd_array_len=10,
     )
 
-    new_timeseries = et._interpolate_censored_frames(copy.deepcopy(timeseries), data)
+    new_timeseries = postprocess.interpolate_censored_frames(copy.deepcopy(timeseries), data)
 
     assert id(timeseries) != id(new_timeseries)
 
@@ -2683,7 +2690,7 @@ def test_logging_redirection_sequential(setup_environment_4, get_vars, tmp_dir):
     bids_dir, _ = get_vars
 
     # Configure logger with FileHandler for specific module
-    extract_timeseries_logger = logging.getLogger("neurocaps._utils.extraction.extract_timeseries")
+    extract_timeseries_logger = logging.getLogger("neurocaps.extraction._internals.postprocess")
     extract_timeseries_logger.setLevel(logging.INFO)
     file_handler = logging.FileHandler(os.path.join(tmp_dir.name, "neurocaps_sequential.log"))
     file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))

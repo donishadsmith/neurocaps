@@ -6,11 +6,11 @@ from typing import Any
 import numpy as np
 from nilearn import datasets
 
-import neurocaps._utils.io as io_utils
-from .logger import _logger
+from .io import get_obj
+from .logging import setup_logger
 from ..typing import ParcelApproach
 
-LG = _logger(__name__)
+LG = setup_logger(__name__)
 
 VALID_DICT_STUCTURES = {
     "Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1},
@@ -35,12 +35,12 @@ VALID_DICT_STUCTURES = {
 }
 
 
-def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
+def check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
     """
     Pipeline to ensure ``parcel_approach`` is valid and process the ``parcel_approach`` if certain
     initialization keys are used.
     """
-    parcel_dict = io_utils._get_obj(parcel_approach)
+    parcel_dict = get_obj(parcel_approach)
 
     if parcel_dict is None and call == "TimeseriesExtractor":
         parcel_dict = {"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
@@ -66,20 +66,18 @@ def _check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
 
     if "Custom" in parcel_dict:
         # No return, simply validate structure
-        _process_custom(parcel_dict, call)
+        process_custom(parcel_dict, call)
     else:
-        has_required_keys = _check_keys(parcel_dict)
+        has_required_keys = check_keys(parcel_dict)
         if not has_required_keys:
             parcel_dict = (
-                _process_aal(parcel_dict)
-                if "AAL" in parcel_dict
-                else _process_schaefer(parcel_dict)
+                process_aal(parcel_dict) if "AAL" in parcel_dict else process_schaefer(parcel_dict)
             )
 
     return parcel_dict
 
 
-def _check_keys(parcel_dict):
+def check_keys(parcel_dict):
     """
     Checks if the all required keys are in ``parcel_approach`` to skip processing of the
     ``parcel_approach`` for "Schaefer" and "AAL".
@@ -89,7 +87,7 @@ def _check_keys(parcel_dict):
     return all(key in parcel_dict[list(parcel_dict)[0]] for key in required_keys)
 
 
-def _process_aal(parcel_dict):
+def process_aal(parcel_dict):
     """
     Converts a ``parcel_approach`` containing initialization keys for "AAL" the the final processed
     version. Uses nilearn to fetch the parcellation map and labels.
@@ -106,10 +104,10 @@ def _process_aal(parcel_dict):
     parcel_dict["AAL"].update({"nodes": list(fetched_aal.labels)})
 
     # Remove background
-    parcel_dict["AAL"]["nodes"] = _remove_background(parcel_dict["AAL"]["nodes"])
+    parcel_dict["AAL"]["nodes"] = remove_background(parcel_dict["AAL"]["nodes"])
 
     # Get regions
-    regions = _collapse_aal_node_names(parcel_dict["AAL"]["nodes"])
+    regions = collapse_aal_node_names(parcel_dict["AAL"]["nodes"])
     parcel_dict["AAL"].update({"regions": regions})
 
     # Clean initialization keys
@@ -119,7 +117,7 @@ def _process_aal(parcel_dict):
     return parcel_dict
 
 
-def _process_custom(parcel_dict, call):
+def process_custom(parcel_dict, call):
     """
     Ensures that "Custom" parcel approaches have the necessary keys. Performs basic validation
     before passing to ``_check_custom_structure``.
@@ -160,10 +158,10 @@ def _process_custom(parcel_dict, call):
         )
 
     # Check structure
-    _check_custom_structure(parcel_dict["Custom"], custom_example)
+    check_custom_structure(parcel_dict["Custom"], custom_example)
 
 
-def _process_schaefer(parcel_dict):
+def process_schaefer(parcel_dict):
     """
     Converts a ``parcel_approach`` containing initialization keys for "Schafer" the the final
     processed version. Uses nilearn to fetch the parcellation map and labels.
@@ -196,7 +194,7 @@ def _process_schaefer(parcel_dict):
         )
 
     # Remove background label
-    parcel_dict["Schaefer"]["nodes"] = _remove_background(parcel_dict["Schaefer"]["nodes"])
+    parcel_dict["Schaefer"]["nodes"] = remove_background(parcel_dict["Schaefer"]["nodes"])
 
     # Get regions
     regions = dict.fromkeys(
@@ -211,7 +209,7 @@ def _process_schaefer(parcel_dict):
     return parcel_dict
 
 
-def _check_custom_structure(custom_parcel, custom_example):
+def check_custom_structure(custom_parcel, custom_example):
     """
     Validates the structure of the "nodes" and "regions" subkeys for user-defined ("Custom")
     parcel approaches.
@@ -219,13 +217,13 @@ def _check_custom_structure(custom_parcel, custom_example):
     example_msg = f"Refer to example: {custom_example}"
 
     if "nodes" in custom_parcel:
-        _check_custom_nodes(custom_parcel, example_msg)
+        check_custom_nodes(custom_parcel, example_msg)
 
     if "regions" in custom_parcel:
-        _check_custom_regions(custom_parcel, example_msg)
+        check_custom_regions(custom_parcel, example_msg)
 
 
-def _check_custom_nodes(custom_parcel, example_msg):
+def check_custom_nodes(custom_parcel, example_msg):
     """Check structure of the "nodes" subkey."""
     if not (
         isinstance(custom_parcel.get("nodes"), (list, np.ndarray))
@@ -243,7 +241,7 @@ def _check_custom_nodes(custom_parcel, example_msg):
         )
 
 
-def _check_custom_regions(custom_parcel, example_msg):
+def check_custom_regions(custom_parcel, example_msg):
     """Check structure of the "regions" subkey."""
     if not (custom_parcel.get("regions") and isinstance(custom_parcel.get("regions"), dict)):
         raise TypeError(
@@ -258,10 +256,10 @@ def _check_custom_regions(custom_parcel, example_msg):
         )
 
     for region in custom_parcel["regions"]:
-        _check_individual_region_structure(custom_parcel["regions"][region], region, example_msg)
+        check_individual_region_structure(custom_parcel["regions"][region], region, example_msg)
 
 
-def _check_individual_region_structure(region_object: Any, region: str, example_msg: str) -> None:
+def check_individual_region_structure(region_object: Any, region: str, example_msg: str) -> None:
     """
     Ensures that a region in the "Custom" parcel approach has the proper structure if its
     lateralized (then region name should be mapped to dictionary containing "lh" and "rh" subkeys)
@@ -276,7 +274,7 @@ def _check_individual_region_structure(region_object: Any, region: str, example_
                 f"the 'nodes' list belonging to the specified regions. {example_msg}"
             )
 
-        if not all(_contains_integers(region_object[key]) for key in ["lh", "rh"]):
+        if not all(contains_integers(region_object[key]) for key in ["lh", "rh"]):
             raise TypeError(
                 f"Issue at region named '{region}'. Each 'lh' and 'rh' subkey in the 'regions' "
                 "subkey's dictionary must contain a list or range of node indices. "
@@ -289,7 +287,7 @@ def _check_individual_region_structure(region_object: Any, region: str, example_
                 f"(if lateralized) or a list or range (if not lateralized). {example_msg}"
             )
 
-        if not _contains_integers(region_object):
+        if not contains_integers(region_object):
             raise TypeError(
                 f"Issue at region named '{region}'. If not lateralized, the region must be mapped "
                 f"to a list or range of node indices. {example_msg}"
@@ -304,7 +302,7 @@ def is_lateralized(region_object: dict[str, list[int]]) -> bool:
     return all([hemisphere in region_object.keys() for hemisphere in ["lh", "rh"]])
 
 
-def _contains_integers(obj: list[Any]) -> bool:
+def contains_integers(obj: list[Any]) -> bool:
     """
     Checks if each element in a list is an integer that can be used for indexing. Range is
     guarenteed to be a sequence of integers already.
@@ -314,21 +312,21 @@ def _contains_integers(obj: list[Any]) -> bool:
     )
 
 
-def _remove_background(nodes):
+def remove_background(nodes):
     """Removes the background label in the labels that are added in nilearn version > 0.11.1."""
     return nodes if nodes[0] != "Background" else nodes[1:]
 
 
-def _collapse_aal_node_names(nodes, return_unique_names=True):
+def collapse_aal_node_names(nodes, return_unique_names=True):
     """
     Creates general regions/networks from AAL labels by removing hemisphere and numerical suffixes.
     """
-    collapsed_names = [_collapse_single_aal_node(node) for node in nodes]
+    collapsed_names = [collapse_single_aal_node(node) for node in nodes]
 
     return list(dict.fromkeys(collapsed_names)) if return_unique_names else collapsed_names
 
 
-def _collapse_single_aal_node(node):
+def collapse_single_aal_node(node):
     """Collapse a single AAL node name to its general region."""
     SPECIAL_PREFIXES = {
         "N_Acc",
@@ -356,7 +354,7 @@ def _collapse_single_aal_node(node):
         return special_match
 
 
-def _extract_custom_region_indices(parcel_approach: ParcelApproach, region_name: str) -> list[int]:
+def extract_custom_region_indices(parcel_approach: ParcelApproach, region_name: str) -> list[int]:
     """
     Extract the indices for a specific region from a custom parcellation approach. Uses list
     concatenation to return all indices (position in "nodes" list) associated with a specific
@@ -372,3 +370,8 @@ def _extract_custom_region_indices(parcel_approach: ParcelApproach, region_name:
         if has_hemispheres
         else list(region_object)
     )
+
+
+def get_parc_name(parcel_approach: ParcelApproach):
+    """Extract the name of the parcellation."""
+    return list(parcel_approach)[0]

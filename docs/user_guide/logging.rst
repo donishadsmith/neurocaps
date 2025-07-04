@@ -42,8 +42,13 @@ When using joblib's loky backend for parallel processing, child processes do not
 Consequently, internal logs are output to the console by default even when parallel processing is enabled. To redirect
 these logs to a specific handler, you can set up a ``multiprocessing.Manager().Queue()`` (which is passed to
 ``QueueHandler`` internally) and ``QueueListener``. This `approach <https://github.com/joblib/joblib/issues/1017#issuecomment-1535983689>`_
-allows logs produced by the internal ``neurocaps._utils.extraction.extract_timeseries`` module to be redirected when
+allows logs produced by the internal ``neurocaps.extraction._internals.postprocess`` module to be redirected when
 parallel processing is enabled.
+
+.. note::
+    For versions < 0.31.0, the module the internal module that performs timeseries extraction is
+    ``neurocaps._utils.extraction.extract_timeseries``.
+
 
 .. code-block:: python
 

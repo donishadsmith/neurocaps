@@ -4,7 +4,8 @@ from typing import Union, Optional
 
 import numpy as np
 
-import neurocaps._utils.io as io_utils
+from ._internals import serialize
+from .._utils import io as io_utils
 from ..typing import SubjectTimeseries
 
 
@@ -64,12 +65,12 @@ def change_dtype(
     """
     assert isinstance(subject_timeseries_list, list), "`subject_timeseries_list` must be a list."
 
-    io_utils._issue_file_warning("filenames", filenames, output_dir)
+    io_utils.issue_file_warning("filenames", filenames, output_dir)
 
     changed_dtype_dicts = {}
 
     for indx, curr_dict in enumerate(subject_timeseries_list):
-        curr_dict = io_utils._get_obj(curr_dict)
+        curr_dict = io_utils.get_obj(curr_dict)
 
         for subj_id in curr_dict:
             for run in curr_dict[subj_id]:
@@ -78,7 +79,7 @@ def change_dtype(
         changed_dtype_dicts[f"dict_{indx}"] = curr_dict
 
     if output_dir:
-        io_utils._dicts_to_pickles(
+        serialize.dicts_to_pickles(
             output_dir=output_dir,
             dict_list=changed_dtype_dicts,
             filenames=filenames,

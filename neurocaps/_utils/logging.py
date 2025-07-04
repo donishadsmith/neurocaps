@@ -10,11 +10,12 @@ from multiprocessing.queues import Queue
 from typing import Union
 
 # Global variables to determine if a handler is user defined or defined by OS
+_PARALLEL_MODULE = "neurocaps.extraction._internals.postprocess"
 _USER_ROOT_HANDLER = None
 _USER_MODULE_HANDLERS = {}
 
 
-class _Flush(logging.StreamHandler):
+class Flush(logging.StreamHandler):
     """Flush logs immediately."""
 
     def emit(self, record: logging.LogRecord) -> None:
@@ -22,7 +23,7 @@ class _Flush(logging.StreamHandler):
         self.flush()
 
 
-def _logger(
+def setup_logger(
     name: str,
     flush: bool = False,
     top_level: bool = True,
@@ -51,7 +52,6 @@ def _logger(
     global _USER_ROOT_HANDLER, _USER_MODULE_HANDLERS
 
     logger = logging.getLogger(name)
-    parallel_module = "neurocaps._utils.extraction.extract_timeseries"
 
     if top_level is True:
         _USER_ROOT_HANDLER = logging.getLogger().hasHandlers()
@@ -59,18 +59,8 @@ def _logger(
 
     # Special case for parallel config to pass a user-defined logger specifically for parallel
     # processing.
-    if logger.name == parallel_module and not top_level and parallel_log_config:
-        # Only QueueHandler will be in handler list
-        logger.handlers.clear()
-        queue = parallel_log_config.get("queue")
-        # Non-strict check
-        if not queue:
-            ValueError("'queue' is a mandatory key and must contain a queue with a manager object.")
-        else:
-            logger.addHandler(QueueHandler(queue))
-
-        if "level" in parallel_log_config:
-            logger.setLevel(parallel_log_config["level"])
+    if logger.name == _PARALLEL_MODULE and not top_level and parallel_log_config:
+        logger = setup_queuehandler(logger, parallel_log_config)
 
     if not logger.level:
         logger.setLevel(logging.INFO)
@@ -85,19 +75,43 @@ def _logger(
 
     # Add or messages will repeat several times due to multiple handlers if same name used
     if not default_handlers and not (
-        parallel_log_config or (logger.name == parallel_module and top_level)
+        parallel_log_config or (logger.name == _PARALLEL_MODULE and top_level)
     ):
-        # Safeguard; ensure a clean state for "extract_timeseries" since it is used in parallel and
-        # sequential contexts
-        if logger.name == parallel_module:
-            logger.handlers.clear()
+        logger = add_handler(logger, flush)
 
-        if flush:
-            handler = _Flush(sys.stdout)
-        else:
-            handler = logging.StreamHandler(sys.stdout)
+    return logger
 
-        handler.setFormatter(logging.Formatter("%(asctime)s %(name)s [%(levelname)s] %(message)s"))
-        logger.addHandler(handler)
+
+def setup_queuehandler(logger: logging.Logger, parallel_log_config: dict[str, Union[Queue, int]]):
+    # Only QueueHandler will be in handler list
+    logger.handlers.clear()
+    queue = parallel_log_config.get("queue")
+    # Non-strict check
+    if not queue:
+        ValueError("'queue' is a mandatory key and must contain a queue with a manager object.")
+    else:
+        logger.addHandler(QueueHandler(queue))
+
+    if "level" in parallel_log_config:
+        logger.setLevel(parallel_log_config["level"])
+
+    return logger
+
+
+def add_handler(logger: logging.Logger, flush: bool, format: Union[str, None] = None):
+    """Add and format handler."""
+    # Safeguard; ensure a clean state for "extract_timeseries" since it is used in parallel and
+    # sequential contexts
+    if logger.name == _PARALLEL_MODULE:
+        logger.handlers.clear()
+
+    if flush:
+        handler = Flush(sys.stdout)
+    else:
+        handler = logging.StreamHandler(sys.stdout)
+
+    format = format if format else "%(asctime)s %(name)s [%(levelname)s] %(message)s"
+    handler.setFormatter(logging.Formatter(format))
+    logger.addHandler(handler)
 
     return logger

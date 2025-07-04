@@ -101,10 +101,10 @@ For example, placing an asterisk after cosine (cosine*) will utilize all paramet
 
     .. code-block:: none
 
-        2025-05-06 18:02:15,929 neurocaps._utils.extraction.check_confound_names [INFO] Confound regressors to be used if available: cosine*, a_comp_cor*, rot*.
-        2025-05-06 18:02:17,442 neurocaps.extraction.timeseriesextractor [INFO] BIDS Layout: ...books\neurocaps_demo\data\dset | Subjects: 1 | Sessions: 1 | Runs: 1
-        2025-05-06 18:02:17,499 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] Preparing for Timeseries Extraction using [FILE: sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz].
-        2025-05-06 18:02:17,516 neurocaps._utils.extraction.extract_timeseries [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] The following confounds will be used for nuisance regression: cosine_00, cosine_01, cosine_02, cosine_03, cosine_04, cosine_05, cosine_06, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05, rot_x, rot_y, rot_z.
+        2025-07-03 18:02:15,929 neurocaps.extraction._internals.confounds [INFO] Confound regressors to be used if available: cosine*, a_comp_cor*, rot*.
+        2025-07-03 18:02:17,442 neurocaps.extraction.timeseries_extractor [INFO] BIDS Layout: ...books\neurocaps_demo\data\dset | Subjects: 1 | Sessions: 1 | Runs: 1
+        2025-07-03 18:02:17,499 neurocaps.extraction._internals.postprocess [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] Preparing for Timeseries Extraction using [FILE: sub-01_ses-002_task-rest_run-001_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz].
+        2025-07-03 18:02:17,516 neurocaps.extraction._internals.postprocess [INFO] [SUBJECT: 01 | SESSION: 002 | TASK: rest | RUN: 001] The following confounds will be used for nuisance regression: cosine_00, cosine_01, cosine_02, cosine_03, cosine_04, cosine_05, cosine_06, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05, rot_x, rot_y, rot_z.
         Processing Subjects: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:05<00:00,  5.73s/it]
 
 ``print`` can be used to return a string representation of the ``TimeseriesExtractor`` class.

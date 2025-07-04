@@ -1,36 +1,29 @@
 """Contains the TimeseriesExtractor class for extracting timeseries"""
 
-import json, os, re
+import os
 from functools import lru_cache
 from multiprocessing.queues import Queue
 from typing import Any, Literal, Optional, Union
 from typing_extensions import Self
 
-import matplotlib.pyplot as plt, numpy as np
 from joblib import Parallel, delayed
-from numpy.typing import NDArray
 from pandas import DataFrame
 from tqdm.auto import tqdm
 
 import neurocaps._utils.io as io_utils
-from ..exceptions import BIDSQueryError
-from ..typing import ParcelConfig, ParcelApproach, SubjectTimeseries
-from .._utils import (
-    _TimeseriesExtractorGetter,
-    _PlotDefaults,
-    _PlotFuncs,
-    _check_kwargs,
-    _check_confound_names,
-    _check_parcel_approach,
-    _extract_custom_region_indices,
-    _extract_timeseries,
-    _logger,
-)
+from ._internals import check_confound_names, process_subject_runs, TimeseriesExtractorGetter
+from ._internals import bids_query, vizualization
+from neurocaps.exceptions import BIDSQueryError
+from neurocaps.typing import ParcelConfig, ParcelApproach, SubjectTimeseries
+from neurocaps._utils.helpers import resolve_kwargs
+from neurocaps._utils.logging import setup_logger
+from neurocaps._utils.parcellation import check_parcel_approach
+from neurocaps._utils.plotting_utils import PlotDefaults, PlotFuncs
 
-LG = _logger(__name__)
+LG = setup_logger(__name__)
 
 
-class TimeseriesExtractor(_TimeseriesExtractorGetter):
+class TimeseriesExtractor(TimeseriesExtractorGetter):
     """
     Timeseries Extractor Class.
 
@@ -281,12 +274,12 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         self._space = space
         # Check parcel_approach
-        self._parcel_approach = _check_parcel_approach(parcel_approach=parcel_approach)
+        self._parcel_approach = check_parcel_approach(parcel_approach=parcel_approach)
 
         if use_confounds:
             if confound_names:
                 # Replace confounds if not None
-                confound_names = _check_confound_names(
+                confound_names = check_confound_names(
                     high_pass, confound_names, n_acompcor_separate
                 )
 
@@ -642,10 +635,8 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         self._validate_get_bold_params()
 
         # Initialize new attributes
-        self._subject_ids = []
         self._subject_timeseries = {}
         self._qc = {}
-        self._subject_info = {}
         self._n_cores = n_cores
 
         layout = self._call_layout(bids_dir, pipeline_name)
@@ -687,7 +678,15 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             subj_ids = sorted([subj_id for subj_id in subj_ids if subj_id in run_subjects])
 
         # Setup extraction
-        self._setup_extraction(layout, subj_ids, exclude_niftis, verbose)
+        self._subject_ids, self._subject_info = bids_query.setup_extraction(
+            layout,
+            subj_ids,
+            self._space,
+            exclude_niftis,
+            self._signal_clean_info,
+            self._task_info,
+            verbose,
+        )
 
         if self._n_cores:
             # Generate list of tuples for each subject
@@ -709,7 +708,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
             parallel = Parallel(return_as="generator", n_jobs=self._n_cores, backend="loky")
             outputs = tqdm(
-                parallel(delayed(_extract_timeseries)(*args) for args in args_list),
+                parallel(delayed(process_subject_runs)(*args) for args in args_list),
                 desc="Processing Subjects",
                 total=len(args_list),
                 disable=not progress_bar,
@@ -729,7 +728,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             for subj_id in tqdm(
                 self._subject_ids, desc="Processing Subjects", disable=not progress_bar
             ):
-                outputs = _extract_timeseries(
+                outputs = process_subject_runs(
                     subj_id=subj_id,
                     **self._subject_info[subj_id],
                     parcel_approach=self._parcel_approach,
@@ -808,338 +807,6 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
 
         return layout
 
-    def _setup_extraction(
-        self,
-        layout: Any,
-        subj_ids: list[str],
-        exclude_niftis: Union[list[str], None],
-        verbose: bool,
-    ) -> None:
-        """
-        Get valid subjects (stored in ``self._subject_info``) and all required information needed
-        to extract timeseries.
-
-        Note
-        ----
-        The ``BIDSLayout`` type hint for ``layout`` is not added to allow certain in
-        ``TimeseriesExtractor`` to be used on Windows machines that do not have pybids installed.
-        """
-        base_dict = {"layout": layout, "subj_id": None}
-
-        for subj_id in subj_ids:
-            base_dict["subj_id"] = subj_id
-            files = self._build_dict(base_dict)
-
-            # Remove excluded file from the niftis list, which will prevent it from being processed
-            if exclude_niftis and files["niftis"]:
-                files["niftis"] = self._exclude(files["niftis"], exclude_niftis)
-
-            # Get subject header
-            subject_header = self._header(subj_id)
-
-            # Check files
-            skip, msg = self._check_files(files)
-            if msg and verbose:
-                LG.warning(subject_header + msg)
-            if skip:
-                continue
-
-            # Ensure only a single session is present if session is None
-            if not self._task_info["session"]:
-                self._check_sess(files["niftis"], subject_header)
-
-            # Generate a list of runs to iterate through based on runs in niftis
-            check_runs = self._gen_runs(files["niftis"])
-            if check_runs:
-                run_list = self._filter_runs(check_runs, files)
-
-                # Skip subject if no run has all needed files present
-                if not run_list:
-                    if verbose:
-                        LG.warning(
-                            f"{subject_header}"
-                            "Timeseries Extraction Skipped: None of the necessary files "
-                            "(i.e NifTIs, confound tsv files, confound json files, event files) "
-                            "are from the same run."
-                        )
-                    continue
-
-                if len(run_list) != len(check_runs):
-                    if verbose:
-                        LG.warning(
-                            f"{subject_header}"
-                            "Only the following runs available contain all required files: "
-                            f"{', '.join(run_list)}."
-                        )
-            elif not check_runs and self._task_info["runs"]:
-                if verbose:
-                    requested_runs = [
-                        f"run-{str(run)}" if "run-" not in str(run) else run
-                        for run in self._task_info["runs"]
-                    ]
-                    LG.warning(
-                        f"{subject_header}"
-                        "Timeseries Extraction Skipped: Subject does not have any of the requested "
-                        f"run IDs: {', '.join(requested_runs)}"
-                    )
-                    continue
-            else:
-                # Allows for nifti files that do not have the run- description
-                run_list = [None]
-
-            # Get repetition time for the subject
-            tr = self._get_tr(files["bold_meta"], subject_header, verbose)
-
-            # Add subject list to subject attribute. These are subjects that will be ran
-            self._subject_ids.append(subj_id)
-
-            # Store subject specific information
-            self._subject_info[subj_id] = {"prepped_files": files, "tr": tr, "run_list": run_list}
-
-    def _get_files(
-        self,
-        layout: Any,
-        extension: str,
-        subj_id: str,
-        scope: str = "derivatives",
-        suffix: Union[str, None] = None,
-        desc: Union[str, None] = None,
-        event: bool = False,
-        space: str = "attr",
-    ):
-        """
-        Queries specific files (sorted lexicographically) using ``BidsLayout``.
-
-        Note
-        ----
-        The type hint for ``layout`` is not added to allow certain in ``TimeseriesExtractor`` to be
-        used on Windows machines that do not have pybids installed.
-        """
-        query_dict = {
-            "scope": scope,
-            "return_type": "file",
-            "task": self._task_info["task"],
-            "extension": extension,
-            "subject": subj_id,
-        }
-
-        if desc:
-            query_dict.update({"desc": desc})
-
-        if suffix:
-            query_dict.update({"suffix": suffix})
-
-        if self._task_info["session"]:
-            query_dict.update({"session": self._task_info["session"]})
-
-        if not event and not desc:
-            query_dict.update({"space": self._space if space == "attr" else space})
-
-        return sorted(layout.get(**query_dict))
-
-    def _build_dict(self, base: dict[str, Union[Any, None]]) -> dict[str, Union[str, None]]:
-        """Builds dictionary containing subject-specific files queried using ``BIDSLayout``."""
-        files = {}
-        files["niftis"] = self._get_files(**base, suffix="bold", extension="nii.gz")
-
-        files["bold_meta"] = self._get_files(**base, suffix="bold", extension="json")
-        if not files["bold_meta"]:
-            files["bold_meta"] = self._get_files(
-                **base, scope="raw", suffix="bold", extension="json", space=None
-            )
-
-        if self._task_info["condition"]:
-            files["events"] = self._get_files(
-                **base, scope="raw", suffix="events", extension="tsv", event=True
-            )
-        else:
-            files["events"] = []
-
-        files["confounds"] = self._get_files(**base, desc="confounds", extension="tsv")
-
-        if self._signal_clean_info["n_acompcor_separate"]:
-            files["confound_metas"] = self._get_files(**base, extension="json", desc="confounds")
-
-        return files
-
-    @staticmethod
-    def _exclude(niftis: list[str], exclude_niftis: list[str]) -> list[str]:
-        """Excludes certain NIfTI files based on ``exclude_niftis``."""
-        exclude_niftis = exclude_niftis if isinstance(exclude_niftis, list) else [exclude_niftis]
-        return [nifti for nifti in niftis if os.path.basename(nifti) not in exclude_niftis]
-
-    def _header(self, subj_id: str) -> str:
-        """Creates base subject-specific header for logged messages."""
-        sub_message = (
-            f"[SUBJECT: {subj_id} | "
-            f"SESSION: {self._task_info['session']} | "
-            f"TASK: {self._task_info['task']}]"
-        )
-        subject_header = f"{sub_message} "
-
-        return subject_header
-
-    def _check_files(
-        self, files: dict[str, list[str]]
-    ) -> tuple[Union[bool, None], Union[str, None]]:
-        """
-        Simple initial check to ensure the required files are needed based on certain
-        parameters ``__init__``.
-        """
-        skip, msg = None, None
-
-        if not files["niftis"]:
-            skip = True
-            msg = (
-                "Timeseries Extraction Skipped: No NIfTI files were found or all NifTI files "
-                "were excluded."
-            )
-
-        if self._signal_clean_info["use_confounds"]:
-            if not files["confounds"]:
-                skip = True
-                msg = (
-                    "Timeseries Extraction Skipped: `use_confounds` is requested but no "
-                    "confound files found."
-                )
-
-            if self._signal_clean_info["n_acompcor_separate"] and not files.get("confound_metas"):
-                skip = True
-                msg = (
-                    "Timeseries Extraction Skipped: No confound metadata file found, which is "
-                    "needed to locate the first n components of the white-matter and cerebrospinal "
-                    "fluid masks separately."
-                )
-
-            if self._task_info["condition"] and not files["events"]:
-                skip = True
-                msg = (
-                    "Timeseries Extraction Skipped: `condition` is specified but no event files "
-                    "found."
-                )
-
-        return skip, msg
-
-    def _check_sess(self, niftis: list[str], subject_header: str) -> None:
-        """
-        Checks if all subject's NIfTI's are from a single session and returns an error if
-        different sessions are detected.
-        """
-        ses_list = []
-
-        for nifti in niftis:
-            if "ses-" in os.path.basename(nifti):
-                ses_list.append(re.search(r"ses-(\S+?)_", os.path.basename(nifti))[0][:-1])
-
-        ses_list = sorted(set(ses_list))
-        if len(ses_list) > 1:
-            raise ValueError(
-                f"{subject_header}"
-                "`session` not specified but subject has more than one session: "
-                f"{', '.join(ses_list)}. In order to continue timeseries extraction, the "
-                "specific session to extract must be specified using `session`."
-            )
-
-    def _gen_runs(self, niftis: list[str]) -> set[str]:
-        """
-        Gets all the runs for a specific subject and filters if specific runs are requested.
-        Returns set of run IDs sorted lexicographically.
-        """
-        check_runs = []
-
-        for nifti in niftis:
-            if "run-" in os.path.basename(niftis[0]):
-                check_runs.append(re.search(r"run-(\S+?)_", os.path.basename(nifti))[0][:-1])
-
-        check_runs = set(check_runs)
-
-        requested_runs = {}
-        if self._task_info["runs"]:
-            requested_runs = {f"run-{run}" for run in self._task_info["runs"]}
-
-        return (
-            sorted(check_runs.intersection(requested_runs))
-            if requested_runs
-            else sorted(check_runs)
-        )
-
-    def _filter_runs(self, check_runs: list[str], files: dict[str, list[str]]) -> list[str]:
-        """Filters runs by checking if all required files have the same run ID."""
-        run_list = []
-
-        # Check if at least one run has all files present
-        for run in check_runs:
-            bool_list = []
-
-            # Assess is any of these returns True
-            bool_list.append(any(f"{run}_" in file for file in files["niftis"]))
-
-            if self._task_info["condition"]:
-                bool_list.append(any(f"{run}_" in file for file in files["events"]))
-
-            if self._signal_clean_info["use_confounds"]:
-                bool_list.append(any(f"{run}_" in file for file in files["confounds"]))
-
-                if self._signal_clean_info["n_acompcor_separate"]:
-                    bool_list.append(any(f"{run}_" in file for file in files["confound_metas"]))
-
-            # Append runs that contain all needed files
-            if all(bool_list):
-                run_list.append(run)
-
-        return run_list
-
-    def _get_tr(
-        self, bold_meta: str, subject_header: str, verbose: bool
-    ) -> Union[float, int, None]:
-        """Gets repetition time."""
-        try:
-            if self._task_info["tr"]:
-                tr = self._task_info["tr"]
-            else:
-                with open(bold_meta[0], "r") as json_file:
-                    tr = json.load(json_file)["RepetitionTime"]
-        except (IndexError, KeyError, json.JSONDecodeError) as e:
-            base_msg = (
-                "`tr` not specified and could not be extracted since using the first BOLD "
-                "metadata file"
-            )
-            base_msg += " due to " + (
-                f"there being no BOLD metadata files for [TASK: {self._task_info['task']}]"
-                if str(type(e).__name__) == "IndexError"
-                else f"{type(e).__name__} - {str(e)}"
-            )
-
-            if self._task_info["condition"]:
-                raise ValueError(
-                    f"{subject_header}"
-                    f"{base_msg}" + " The `tr` must be provided when `condition` is specified."
-                )
-            elif any(
-                [
-                    self._signal_clean_info["masker_init"]["high_pass"],
-                    self._signal_clean_info["masker_init"]["low_pass"],
-                ]
-            ):
-                raise ValueError(
-                    f"{subject_header}"
-                    f"{base_msg}"
-                    + " The `tr` must be provided when `high_pass` or `low_pass` is specified."
-                )
-            elif self._signal_clean_info["fd_threshold"].get("interpolate"):
-                raise ValueError(
-                    "`tr` must be provided when interpolation of censored volumes is required."
-                )
-            else:
-                if verbose:
-                    LG.warning(
-                        f"{subject_header}"
-                        f"{base_msg}" + " `tr` has been set to None but extraction will continue."
-                    )
-                    tr = None
-
-        return tr
-
     def _expand_dicts(
         self,
         subject_timeseries: Union[SubjectTimeseries, None],
@@ -1188,7 +855,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
             output_dir, filename, attr_name="_subject_timeseries", call="timeseries_to_pickle"
         )
 
-        io_utils._serialize(self._subject_timeseries, output_dir, save_filename, use_joblib=True)
+        io_utils.serialize(self._subject_timeseries, output_dir, save_filename, use_joblib=True)
 
         return self
 
@@ -1314,7 +981,7 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         if not output_dir:
             return None
         else:
-            io_utils._makedir(output_dir)
+            io_utils.makedir(output_dir)
 
         ext = "pkl" if call == "timeseries_to_pickle" else "csv"
 
@@ -1415,108 +1082,25 @@ class TimeseriesExtractor(_TimeseriesExtractorGetter):
         if roi_indx is not None and region is not None:
             raise ValueError("`roi_indx` and `region` can not be used simultaneously.")
 
-        io_utils._issue_file_warning("filename", filename, output_dir)
+        io_utils.issue_file_warning("filename", filename, output_dir)
 
-        # Defaults
-        plot_dict = _check_kwargs(_PlotDefaults.visualize_bold(), **kwargs)
+        # Plotting defaults
+        plot_dict = resolve_kwargs(PlotDefaults.visualize_bold(), **kwargs)
 
         # Obtain the column indices associated with the rois
-        parcellation_name = list(self._parcel_approach)[0]
-        if roi_indx is not None:
-            plot_indxs = self._get_roi_indices(roi_indx, parcellation_name)
-        else:
-            plot_indxs = self._get_region_indices(region, parcellation_name)
-
-        plt.figure(figsize=plot_dict["figsize"])
+        plot_indxs = vizualization.get_plot_indxs(self._parcel_approach, roi_indx, region)
 
         run = None if not run else str(run)
         run = subject_runs[0] if not run else f"run-{run.removeprefix('run-')}"
         timeseries = self._subject_timeseries[subj_id][run]
-        if roi_indx or roi_indx == 0:
-            plt.plot(range(1, timeseries.shape[0] + 1), timeseries[:, plot_indxs])
+        fig = vizualization.create_bold_figure(
+            timeseries, self._parcel_approach, plot_dict["figsize"], plot_indxs, roi_indx, region
+        )
 
-            if isinstance(roi_indx, (int, str)) or (
-                isinstance(roi_indx, list) and len(roi_indx) == 1
-            ):
-                if isinstance(roi_indx, int):
-                    roi_title = self._parcel_approach[parcellation_name]["nodes"][roi_indx]
-                elif isinstance(roi_indx, str):
-                    roi_title = roi_indx
-                else:
-                    roi_title = roi_indx[0]
-                plt.title(roi_title)
-        else:
-            plt.plot(range(1, timeseries.shape[0] + 1), np.mean(timeseries[:, plot_indxs], axis=1))
-            plt.title(region)
+        vizualization.save_bold_figure(
+            fig, subj_id, run, output_dir, filename, plot_dict, as_pickle
+        )
 
-        plt.xlabel("TR")
-
-        if output_dir:
-            io_utils._makedir(output_dir)
-
-            if filename:
-                save_filename = f"{os.path.splitext(filename.rstrip())[0].rstrip()}.png"
-            else:
-                save_filename = f"subject-{subj_id}_{run}_timeseries.png"
-
-            _PlotFuncs.save_fig(plt.gcf(), output_dir, save_filename, plot_dict, as_pickle)
-
-        _PlotFuncs.show(show_figs)
+        PlotFuncs.show(show_figs)
 
         return self
-
-    def _get_roi_indices(
-        self, roi_indx: Union[int, str, list[str], list[int]], parcellation_name: str
-    ) -> NDArray:
-        """Gets the indices for a specified node or nodes from ``self._parcel_approach``."""
-        if isinstance(roi_indx, int):
-            plot_indxs = roi_indx
-        elif isinstance(roi_indx, str):
-            # Check if parcellation_approach is custom
-            if "Custom" in self._parcel_approach and "nodes" not in self._parcel_approach["Custom"]:
-                _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_bold")
-
-            plot_indxs = list(self._parcel_approach[parcellation_name]["nodes"]).index(roi_indx)
-        else:
-            if all(isinstance(indx, int) for indx in roi_indx):
-                plot_indxs = np.array(roi_indx)
-            elif all(isinstance(indx, str) for indx in roi_indx):
-                # Check if parcellation_approach is custom
-                if (
-                    "Custom" in self._parcel_approach
-                    and "nodes" not in self._parcel_approach["Custom"]
-                ):
-                    _check_parcel_approach(
-                        parcel_approach=self._parcel_approach, call="visualize_bold"
-                    )
-
-                plot_indxs = np.array(
-                    [
-                        list(self._parcel_approach[parcellation_name]["nodes"]).index(index)
-                        for index in roi_indx
-                    ]
-                )
-            else:
-                raise ValueError(
-                    "All elements in `roi_indx` need to be all strings or all integers."
-                )
-
-        return plot_indxs
-
-    def _get_region_indices(self, region: str, parcellation_name: str) -> NDArray:
-        """Gets the indices for a specified region from ``self._parcel_approach``."""
-        if "Custom" in self._parcel_approach:
-            if "regions" not in self._parcel_approach["Custom"]:
-                _check_parcel_approach(parcel_approach=self._parcel_approach, call="visualize_bold")
-            else:
-                plot_indxs = np.array(_extract_custom_region_indices(self._parcel_approach, region))
-        else:
-            plot_indxs = np.array(
-                [
-                    index
-                    for index, label in enumerate(self._parcel_approach[parcellation_name]["nodes"])
-                    if region in label
-                ]
-            )
-
-        return plot_indxs

@@ -4,8 +4,9 @@ from typing import Union, Optional
 
 import numpy as np
 
-import neurocaps._utils.io as io_utils
+from ._internals.serialize import dicts_to_pickles
 from ..typing import SubjectTimeseries
+from .._utils import io as io_utils
 
 
 def merge_dicts(
@@ -107,12 +108,12 @@ def merge_dicts(
         len(subject_timeseries_list) > 1
     ), "Merging cannot be done with less than two dictionaries or files."
 
-    io_utils._issue_file_warning("filenames", filenames, output_dir)
+    io_utils.issue_file_warning("filenames", filenames, output_dir)
 
     # Only perform IO operation once
     new_timeseries_list = []
     for curr_dict in subject_timeseries_list:
-        curr_dict = io_utils._get_obj(curr_dict, needs_deepcopy=False)
+        curr_dict = io_utils.get_obj(curr_dict, needs_deepcopy=False)
         new_timeseries_list.append(curr_dict)
 
     # Get common subject ids
@@ -184,7 +185,7 @@ def merge_dicts(
         if isinstance(filenames, str):
             filenames = [filenames]
 
-        io_utils._dicts_to_pickles(
+        dicts_to_pickles(
             output_dir=output_dir,
             dict_list=modified_dicts,
             call="merge",

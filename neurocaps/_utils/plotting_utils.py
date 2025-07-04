@@ -11,7 +11,7 @@ from pandas import DataFrame
 import neurocaps._utils.io as io_utils
 
 
-class _PlotDefaults:
+class PlotDefaults:
     """Default plotting options."""
 
     @staticmethod
@@ -155,10 +155,10 @@ class _PlotDefaults:
 
     @staticmethod
     def transition_matrix() -> dict[str, Any]:
-        return _PlotDefaults.caps2corr()
+        return PlotDefaults.caps2corr()
 
 
-class _PlotFuncs:
+class PlotFuncs:
     """Helper functions for plotting."""
 
     @staticmethod
@@ -279,7 +279,7 @@ class _PlotFuncs:
     ) -> None:
         if as_pickle:
             # Allow Axes or Figure
-            io_utils._serialize(fig, output_dir, filename.replace(".png", ".pkl"))
+            io_utils.serialize(fig, output_dir, filename.replace(".png", ".pkl"))
         else:
             fig = fig.get_figure() if not hasattr(fig, "savefig") else fig
             fig.savefig(
@@ -293,7 +293,7 @@ class _PlotFuncs:
         plt.show() if show_figs else plt.close("all")
 
 
-class _MatrixVisualizer:
+class MatrixVisualizer:
     """
     Generates heatmaps and saves contents for correlation (``CAP.caps2corr``) and transition
     probability matrices.
@@ -301,20 +301,20 @@ class _MatrixVisualizer:
 
     @staticmethod
     def create_display(
-        df: DataFrame, plot_dict: dict[str, Any], suffix_title: str, group: str, call: str
+        df: DataFrame, plot_dict: dict[str, Any], suffix_title: str, group_name: str, call: str
     ) -> Union[Axes, Figure]:
         # Refresh grid for each iteration
         plt.figure(figsize=plot_dict["figsize"])
 
         display = seaborn.heatmap(
-            df, xticklabels=True, yticklabels=True, **_PlotFuncs.base_kwargs(plot_dict)
+            df, xticklabels=True, yticklabels=True, **PlotFuncs.base_kwargs(plot_dict)
         )
 
         # Add Border; returns display if border in `plot_dict` is Falsy
-        display = _PlotFuncs.border(display, plot_dict, df.shape[1], df.shape[0])
+        display = PlotFuncs.border(display, plot_dict, df.shape[1], df.shape[0])
 
         # Modify label sizes
-        display = _PlotFuncs.label_size(display, plot_dict)
+        display = PlotFuncs.label_size(display, plot_dict)
 
         if call == "trans":
             display.set_ylabel("From", fontdict={"fontsize": plot_dict["fontsize"]})
@@ -322,8 +322,8 @@ class _MatrixVisualizer:
 
         # Set plot name
         plot_name = "Correlation Matrix" if call == "corr" else "Transition Probabilities"
-        display = _PlotFuncs.set_title(
-            display, f"{group} CAPs {plot_name}", suffix_title, plot_dict
+        display = PlotFuncs.set_title(
+            display, f"{group_name} CAPs {plot_name}", suffix_title, plot_dict
         )
 
         return display
@@ -332,7 +332,7 @@ class _MatrixVisualizer:
     def save_contents(
         output_dir: str,
         suffix_filename: str,
-        group: str,
+        group_name: str,
         curr_dict: dict[str, DataFrame],
         plot_dict: dict[str, Any],
         save_plots: bool,
@@ -341,17 +341,19 @@ class _MatrixVisualizer:
         as_pickle: bool,
         call: str,
     ) -> None:
-        # Save figure
-        if output_dir:
-            io_utils._makedir(output_dir)
+        """Save figure as png and dataframe as csv."""
+        if not output_dir:
+            return None
 
-            desc = "correlation_matrix" if call == "corr" else "transition_probability_matrix"
-            filename = io_utils._filename(f"{group}_CAPs_{desc}", suffix_filename, "suffix", "png")
-            if save_plots:
-                _PlotFuncs.save_fig(display, output_dir, filename, plot_dict, as_pickle)
+        io_utils.makedir(output_dir)
 
-            if save_df:
-                filename = filename.replace(".png", ".csv")
-                curr_dict[group].to_csv(
-                    path_or_buf=os.path.join(output_dir, filename), sep=",", index=True
-                )
+        desc = "correlation_matrix" if call == "corr" else "transition_probability_matrix"
+        filename = io_utils.filename(f"{group_name}_CAPs_{desc}", suffix_filename, "suffix", "png")
+        if save_plots:
+            PlotFuncs.save_fig(display, output_dir, filename, plot_dict, as_pickle)
+
+        if save_df:
+            filename = filename.replace(".png", ".csv")
+            curr_dict[group_name].to_csv(
+                path_or_buf=os.path.join(output_dir, filename), sep=",", index=True
+            )
