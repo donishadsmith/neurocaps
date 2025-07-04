@@ -13,6 +13,19 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.31.0] - 2025-07-03
+### 🔧 Refactoring
+- Significant internal refactoring to clean the code in the public API, changes include:
+    - Moving files in `neurocaps._utils.extraction` and `neurocaps._utils.analysis` to internal
+    folders in `neurocaps.extraction` and `neurocaps.analysis`
+    - Changing internal function names to be more descriptive
+    - Moving certain internal functions in `TimeseriesExtractor` and `CAP` into separate internal
+    modules
+    - Changing internal file names
+### ♻ Changed
+- Improved the default region names (changing how nodes are grouped) for the AAL atlas to improve
+granularity.
+
 ## [0.30.0] - 2025-06-13
 ### 🚀 New/Added
 - Added support for parcellations with non-lateralized nodes in the custom parcel_approach.
