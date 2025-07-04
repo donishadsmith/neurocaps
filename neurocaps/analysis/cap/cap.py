@@ -11,7 +11,7 @@ from numpy.typing import ArrayLike, NDArray
 from tqdm.auto import tqdm
 
 from ._internals import metrics as metrics_utils
-from ._internals import correlation, cluster, matrix, radar, spatial, surface
+from ._internals import cluster, correlation, matrix, radar, spatial, surface
 from ._internals.getter import CAPGetter
 from neurocaps.typing import ParcelConfig, ParcelApproach, SubjectTimeseries
 from neurocaps._utils import io as io_utils
