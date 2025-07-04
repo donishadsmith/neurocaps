@@ -257,7 +257,7 @@ def process_subject_runs(
                 log_high_motion_percentage(data, LG, vols_exceed_percent)
                 continue
 
-        timeseries, data.skip_run = _perform_extraction(data, LG)
+        timeseries, data.skip_run = perform_extraction(data, LG)
 
         if data.skip_run:
             continue
@@ -649,7 +649,7 @@ def log_high_motion_percentage(data, LG, vols_exceed_percent):
     )
 
 
-def _perform_extraction(data, LG):
+def perform_extraction(data, LG):
     """
     Pipeline to get the confounds passed to ``NiftiLabelsMasker`` for nuisance regression, extract
     the timeseries, and use ``data.scans`` to extract the condition if ``data.condition`` is not

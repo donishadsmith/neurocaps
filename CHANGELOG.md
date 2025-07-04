@@ -13,6 +13,11 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.31.1] - 2025-07-04
+### 🐛 Fixes
+- When computing metrics in ``CAP.calculate_metrics``, internally, the dataframes are no longer
+built one row at a time. All data is collected and the dataframe is created once.
+
 ## [0.31.0] - 2025-07-03
 ### 🔧 Refactoring
 - Significant internal refactoring to clean the code in the public API, changes include:

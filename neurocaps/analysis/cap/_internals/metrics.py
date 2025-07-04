@@ -68,7 +68,7 @@ def extract_caps_info(
 
     # CAP names based on groups with the most CAPs
     cap_names = list(cap_dict[max(group_cap_counts, key=group_cap_counts.get)])
-    max_cap = max([int(name.split("-")[-1]) for name in cap_names])
+    max_cap = max(group_cap_counts.values())
 
     return cap_names, max_cap, group_cap_counts
 
@@ -77,40 +77,67 @@ def create_transition_pairs(
     cap_dict: dict[str, dict[str, NDArray]],
 ) -> dict[str, list[tuple[int, int]]]:
     """Obtains all possible transition pairs."""
-    group_caps = {}
-    all_pairs = {}
-
-    for group_name in cap_dict:
-        group_caps.update({group_name: [int(name.split("-")[-1]) for name in cap_dict[group_name]]})
-        all_pairs.update(
-            {group_name: list(itertools.product(group_caps[group_name], group_caps[group_name]))}
-        )
-
-    return all_pairs
+    group_caps = {
+        group_name: [get_cap_id(cap_name) for cap_name in cap_dict[group_name]]
+        for group_name in cap_dict
+    }
+    return {
+        group_name: list(itertools.product(cap_id, cap_id))
+        for group_name, cap_id in group_caps.items()
+    }
 
 
-def build_df(
+def get_cap_id(cap_name):
+    """
+    Extracts the CAP name, assumed to be in the form `CAP-{n}` (i.e. CAP-1) and returns the int.
+    """
+    return int(cap_name.split("-")[-1])
+
+
+def create_columns_names(
     metrics: list[str],
     group_names: list[str],
     cap_names: list[str],
     pairs: dict[str, list[tuple[int, int]]],
-) -> dict[str, pd.DataFrame]:
-    """Initializes the output dataframes with column names for each requested metric."""
-    df_dict = {}
+) -> dict[str, Union[list[str], dict[str, list[str]]]]:
+    """
+    Creates the column names for each requested metric. Used downstream has the column
+    names for each metrics dataframe.
+    """
+    columns_names_dict = {}
     base_cols = ["Subject_ID", "Group", "Run"]
 
     for metric in metrics:
         if metric not in ["transition_frequency", "transition_probability"]:
-            df_dict.update({metric: pd.DataFrame(columns=base_cols + list(cap_names))})
+            columns_names_dict.update({metric: base_cols + list(cap_names)})
         elif metric == "transition_probability":
-            df_dict[metric] = {}
-            for group in group_names:
-                col_names = base_cols + [f"{x}.{y}" for x, y in pairs[group]]
-                df_dict[metric].update({group: pd.DataFrame(columns=col_names)})
+            columns_names_dict[metric] = {}
+            for group_name in group_names:
+                col_names = base_cols + [f"{x}.{y}" for x, y in pairs[group_name]]
+                columns_names_dict[metric].update({group_name: col_names})
         else:
-            df_dict.update({metric: pd.DataFrame(columns=base_cols + ["Transition_Frequency"])})
+            columns_names_dict.update({metric: base_cols + ["Transition_Frequency"]})
 
-    return df_dict
+    return columns_names_dict
+
+
+def initialize_all_metrics_dict(
+    metrics: list[str], group_names: list[str]
+) -> dict[str, Union[list, dict[str, list]]]:
+    """
+    Initializes a dictionary intended to store all computations for a metric across all
+    subjects. The dictionary will be converted to a dataframe downstream.
+    """
+    all_metrics_dict = {}
+    for metric in metrics:
+        if metric != "transition_probability":
+            all_metrics_dict[metric] = []
+        else:
+            all_metrics_dict["transition_probability"] = {
+                group_name: [] for group_name in group_names
+            }
+
+    return all_metrics_dict
 
 
 def create_distributed_dict(
@@ -127,72 +154,56 @@ def create_distributed_dict(
     return distributed_dict
 
 
-def compute_temporal_fraction(
-    arr: NDArray, sub_info: list[str], df: pd.DataFrame, n_group_caps: int, max_cap: int
-) -> pd.DataFrame:
+def compute_temporal_fraction(arr: NDArray, n_caps: int) -> dict[str, float]:
     """
     Computes temporal fraction for the subject and run specified in ``sub_info`` and inserts new
-    row in the dataframe.
+    row in the dataframe. Assumes one-based values in ``arr``.
     """
-    frequency_dict = {key: np.where(arr == key, 1, 0).sum() for key in range(1, n_group_caps + 1)}
-
-    frequency_dict = add_nans_to_dict(max_cap, n_group_caps, frequency_dict)
-
+    frequency_dict = {key: np.where(arr == key, 1, 0).sum() for key in range(1, n_caps + 1)}
     proportion_dict = {key: value / (len(arr)) for key, value in frequency_dict.items()}
 
-    return append_df(df, sub_info, proportion_dict)
+    return proportion_dict
 
 
-def compute_counts(
-    arr: NDArray, sub_info: list[str], df: pd.DataFrame, n_group_caps: int, max_cap: int
-) -> pd.DataFrame:
+def compute_counts(arr: NDArray, n_caps: int) -> dict[str, int]:
     """
     Computes counts for the subject and run specified in ``sub_info`` and inserts new row in the
-    dataframe.
+    dataframe. Assumes one-based values in ``arr``.
     """
     count_dict = {}
-    for target in range(1, n_group_caps + 1):
+    for target in range(1, n_caps + 1):
         if target in arr:
             _, counts = segments(target, arr)
             count_dict.update({target: counts})
         else:
             count_dict.update({target: 0})
 
-    count_dict = add_nans_to_dict(max_cap, n_group_caps, count_dict)
-
-    return append_df(df, sub_info, count_dict)
+    return count_dict
 
 
-def compute_persistence(
-    arr: NDArray,
-    sub_info: list[str],
-    df: pd.DataFrame,
-    n_group_caps: int,
-    max_cap: int,
-    tr: Union[float, int, None],
-) -> pd.DataFrame:
+def compute_persistence(arr: NDArray, n_caps: int, tr: Union[float, int, None]) -> dict[str, float]:
     """
     Computes persistence for the subject and run specified in ``sub_info`` and inserts new row
-    in the dataframe.
+    in the dataframe. Assumes one-based values in ``arr``.
     """
     persistence_dict = {}
 
     # Iterate through caps
-    for target in range(1, n_group_caps + 1):
-        binary_arr, n_segments = segments(target, arr)
-        # ``n_segments`` returns minimum of 1 so persistence is 0 instead of NaN when CAP not in
-        # timeseries
+    for target in range(1, n_caps + 1):
+        # Floor n_segments at one to prevent nan due to division by 0
+        binary_arr, n_segments = segments(arr, target, floor_at_one=True)
         persistence_dict.update({target: (binary_arr.sum() / n_segments) * (tr if tr else 1)})
 
-    persistence_dict = add_nans_to_dict(max_cap, n_group_caps, persistence_dict)
-
-    return append_df(df, sub_info, persistence_dict)
+    return persistence_dict
 
 
-def segments(target: int, timeseries: NDArray) -> tuple[NDArray[np.bool_], int]:
+def segments(
+    timeseries: NDArray, target: int, floor_at_one: bool = False
+) -> tuple[NDArray[np.bool_], int]:
     """
-    Computes the number of segments for persistence and counts computation. Always returns
-    1 for number of segments to prevent NaN due to divide by 0.
+    Computes the number of segments for persistence and counts computation. If ``floor_at_one``,
+    then a minimum of 1 for number of segments is returned to prevent NaN due to divide by 0
+    when computing persistence in which 0 is preferred to represent the absence of a CAP.
 
     Example Computation
     -------------------
@@ -209,13 +220,16 @@ def segments(target: int, timeseries: NDArray) -> tuple[NDArray[np.bool_], int]:
     target_indices = np.where(binary_arr == 1)[0]
     n_segments = np.where(np.diff(target_indices, n=1) > 1, 1, 0).sum() + 1
 
+    if not floor_at_one:
+        n_segments = n_segments if binary_arr.sum() != 0 else 0
+
     return binary_arr, n_segments
 
 
 def add_nans_to_dict(
     max_cap: int, n_group_caps: int, curr_dict: dict[str, Union[float, int]]
 ) -> dict[str, Union[float, int]]:
-    """Adds NaN for groups with less caps than the group with the greatest number of caps."""
+    """Adds NaN for groups with less CAPs than the group with the greatest number of CAPs."""
     if max_cap > n_group_caps:
         for i in range(n_group_caps + 1, max_cap + 1):
             curr_dict.update({i: float("nan")})
@@ -223,17 +237,33 @@ def add_nans_to_dict(
     return curr_dict
 
 
-def append_df(
-    df: pd.DataFrame, sub_info: list[str], metric_dict: dict[str, Union[float, int]]
-) -> pd.DataFrame:
-    """Appends new row in dataframe."""
-    df.loc[len(df)] = sub_info + [items for items in metric_dict.values()]
-    return df
+def convert_dict_to_df(
+    columns_names_dict: dict[str, Union[list[str], dict[str, list[str]]]],
+    all_metrics_dict: dict[str, Union[list, dict[str, list]]],
+) -> dict[str, Union[pd.DataFrame, dict[str, pd.DataFrame]]]:
+    """
+    Appends the data ``all_metrics_dict`` to its respective dataframe in ``df_dict``.
+    """
+    df_dict = {}
+    for metric_name in columns_names_dict:
+        if metric_name != "transition_probability":
+            df = pd.DataFrame.from_records(
+                all_metrics_dict[metric_name], columns=columns_names_dict[metric_name]
+            )
+            df_dict[metric_name] = df
+        else:
+            df_dict["transition_probability"] = {}
+            for group_name in columns_names_dict["transition_probability"]:
+                df = pd.DataFrame.from_records(
+                    all_metrics_dict[metric_name][group_name],
+                    columns=columns_names_dict[metric_name][group_name],
+                )
+                df_dict[metric_name].update({group_name: df})
+
+    return df_dict
 
 
-def compute_transition_frequency(
-    arr: NDArray, sub_info: list[str], df: pd.DataFrame
-) -> pd.DataFrame:
+def compute_transition_frequency(arr: NDArray) -> dict[str, int]:
     """
     Computes transition frequency for the subject and run specified in ``sub_info`` and inserts
     new row in the dataframe.
@@ -246,19 +276,17 @@ def compute_transition_frequency(
     """
     transition_frequency = np.where(np.diff(arr, n=1) != 0, 1, 0).sum()
 
-    df.loc[len(df)] = sub_info + [transition_frequency]
-
-    return df
+    return {"transition_frequency": transition_frequency}
 
 
 def compute_transition_probability(
-    arr: NDArray, sub_info: list[str], df: pd.DataFrame, cap_pairs: list[tuple[int, int]]
-) -> pd.DataFrame:
+    arr: NDArray, cap_pairs: list[tuple[int, int]]
+) -> dict[str, float]:
     """
     Computes transition probability for the subject and run specified in ``sub_info`` and
     inserts new row in the dataframe.
     """
-    df.loc[len(df)] = sub_info + [0.0] * (df.shape[-1] - 3)
+    trans_prob_dict = {}
 
     # Arrays for transitioning from and to element
     trans_from = arr[:-1]
@@ -268,19 +296,18 @@ def compute_transition_probability(
     for e1, e2 in cap_pairs:
         # Get total number of possible transitions for first element
         total_trans = np.sum(trans_from == e1)
-        column = f"{e1}.{e2}"
         # Compute sum of adjacent pairs of A -> B and divide
-        df.loc[df.index[-1], column] = (
+        trans_prob_dict[f"{e1}.{e2}"] = (
             np.sum((trans_from == e1) & (trans_to == e2)) / total_trans if total_trans > 0 else 0
         )
 
-    return df
+    return trans_prob_dict
 
 
 def save_metrics(
     output_dir: str,
     group_names: list[str],
-    df_dict: dict[str, pd.DataFrame],
+    df_dict: dict[str, Union[pd.DataFrame, dict[str, pd.DataFrame]]],
     prefix_filename: Union[str, None],
 ) -> None:
     """Saves the metric dataframes as csv files."""

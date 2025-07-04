@@ -54,7 +54,7 @@ def perform_kmeans(n_cluster: int, configs: dict, concatenated_timeseries: NDArr
 def setup_groups(
     subject_timeseries: SubjectTimeseries, groups_dict: Union[dict[str, str], None]
 ) -> tuple[dict[str, str], dict[str, str]]:
-    """ """
+    """Used to resolve ``self._groups`` and ``self._subject_table``."""
     if groups_dict is None:
         groups_dict = create_default_group(subject_timeseries)
 
@@ -81,14 +81,12 @@ def create_default_group(subject_timeseries: SubjectTimeseries):
 
 
 def sort_subject_ids(group_dict: dict[str, str]) -> dict[str, str]:
-    """Sort IDs lexicographically (also done in `TimeseriesExtractor`)"""
+    """Sort IDs lexicographically (also done in ``TimeseriesExtractor``)."""
     return {group: sorted(group_dict[group]) for group in group_dict}
 
 
 def generate_lookup_table(group_dict: dict[str, str]) -> dict[str, str]:
-    """
-    Creates dictionary mapping subject IDs to their associated group. This function is
-    called whenever ``_concatenate_timeseries`` is called."""
+    """Creates dictionary mapping subject IDs to their associated group."""
     subject_table = {}
 
     for group in group_dict:

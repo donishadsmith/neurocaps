@@ -843,7 +843,9 @@ class CAP(CAPGetter):
             if "transition_probability" in metrics
             else None
         )
-        df_dict = metrics_utils.build_df(metrics, list(self._groups), cap_names, cap_pairs)
+        columns_names_dict = metrics_utils.create_columns_names(
+            metrics, list(self._groups), cap_names, cap_pairs
+        )
 
         # Create function map
         metric_map = {
@@ -859,36 +861,35 @@ class CAP(CAPGetter):
             self._subject_table, predicted_subject_timeseries
         )
 
+        all_metrics_dict = metrics_utils.initialize_all_metrics_dict(metrics, list(self._groups))
         for subj_id in tqdm(
             distributed_dict, desc="Computing Metrics for Subjects", disable=not progress_bar
         ):
-            for group, curr_run in distributed_dict[subj_id]:
+            for group_name, curr_run in distributed_dict[subj_id]:
                 for metric in metrics:
-                    sub_info = [subj_id, group, curr_run]
-
-                    df = (
-                        df_dict[metric]
-                        if metric != "transition_probability"
-                        else df_dict[metric][group]
-                    )
-
-                    # Common base arguments for all functions
-                    args = [predicted_subject_timeseries[subj_id][curr_run], sub_info, df]
-
+                    # Create a list of base arguments
+                    args = [predicted_subject_timeseries[subj_id][curr_run]]
                     if metric in ["temporal_fraction", "counts", "persistence"]:
-                        args.extend([group_cap_counts[group], max_cap])
+                        args.append(group_cap_counts[group_name])
                         args += [tr] if metric == "persistence" else []
+                    elif metric == "transition_probability":
+                        args += [cap_pairs[group_name]]
 
+                    metric_dict = metric_map[metric](*args)
+                    # Pad with nan values to align data from groups with a different number of CAPs
+                    # Only for metrics that have different groups in a single dataframe
+                    if metric in ["temporal_fraction", "counts", "persistence"]:
+                        metric_dict = metrics_utils.add_nans_to_dict(
+                            max_cap, group_cap_counts[group_name], metric_dict
+                        )
+
+                    subject_data = [subj_id, group_name, curr_run] + list(metric_dict.values())
                     if metric == "transition_probability":
-                        args += [cap_pairs[group]]
-
-                    df = metric_map[metric](*args)
-
-                    if metric == "transition_probability":
-                        df_dict[metric][group] = df
+                        all_metrics_dict[metric][group_name].append(subject_data)
                     else:
-                        df_dict[metric] = df
+                        all_metrics_dict[metric].append(subject_data)
 
+        df_dict = metrics_utils.convert_dict_to_df(columns_names_dict, all_metrics_dict)
         metrics_utils.save_metrics(output_dir, list(self._groups), df_dict, prefix_filename)
 
         if return_df:
@@ -1187,6 +1188,12 @@ class CAP(CAPGetter):
         ----
         **Parcellation Approach**: the "nodes" and "regions" subkeys are required in
         ``parcel_approach`` for this method.
+
+        **Property Persistence**: the function creates and recomputes ``self.region_means`` for
+        each call if "regions" is in ``visual_scope`` and and creates and recomputes
+        ``self.outer_products`` for each call if "outer_products" is in ``plot_options``. For
+        ``self.outer_products``, the final values stored are associated with the last
+        string in the ``visual_scope`` list.
 
         **Color Palettes**: Refer to `seaborn's Color Palettes\
         <https://seaborn.pydata.org/tutorial/color_palettes.html>`_ for valid pre-made palettes.
@@ -1833,7 +1840,8 @@ class CAP(CAPGetter):
 
         as_json: :obj:`bool`, default=False
             When ``output_dir`` is specified, plots are saved as json file, which can be further
-            modified, instead of png images.
+            modified, instead of png images. Note that option is ignored if ``as_html`` is also
+            True.
 
             .. versionadded:: 0.26.5
 
