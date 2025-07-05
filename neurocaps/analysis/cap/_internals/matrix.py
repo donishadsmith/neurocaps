@@ -373,7 +373,7 @@ def generate_outer_product_plots(
 
 def initialize_outer_product_subplot(
     cap_dict: dict[str, dict[str, NDArray]],
-    group: str,
+    group_name: str,
     plot_dict: dict[str, Any],
     suffix_title: Union[str, None],
 ) -> tuple[plt.Figure, plt.Axes, tuple[int, int], tuple[int, int]]:
@@ -388,15 +388,15 @@ def initialize_outer_product_subplot(
         rows and columns in the subplot.
     """
     # Max five subplots per row for default
-    default_col = len(cap_dict[group]) if len(cap_dict[group]) <= 5 else 5
+    default_col = len(cap_dict[group_name]) if len(cap_dict[group_name]) <= 5 else 5
     ncol = plot_dict["ncol"] if plot_dict["ncol"] is not None else default_col
-    ncol = min(ncol, len(cap_dict[group]))
+    ncol = min(ncol, len(cap_dict[group_name]))
 
     # Determine number of rows needed based on ceiling if not specified
     nrow = (
         plot_dict["nrow"]
         if plot_dict["nrow"] is not None
-        else int(np.ceil(len(cap_dict[group]) / ncol))
+        else int(np.ceil(len(cap_dict[group_name]) / ncol))
     )
     subplot_figsize = (
         (8 * ncol, 6 * nrow) if plot_dict["figsize"] == (8, 6) else plot_dict["figsize"]
@@ -405,7 +405,7 @@ def initialize_outer_product_subplot(
         nrow, ncol, sharex=False, sharey=plot_dict["sharey"], figsize=subplot_figsize
     )
 
-    fig = PlotFuncs.set_title(fig, f"{group}", suffix_title, plot_dict, is_subplot=True)
+    fig = PlotFuncs.set_title(fig, f"{group_name}", suffix_title, plot_dict, is_subplot=True)
     fig.subplots_adjust(hspace=plot_dict["hspace"], wspace=plot_dict["wspace"])
 
     if plot_dict["tight_layout"]:

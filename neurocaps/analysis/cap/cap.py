@@ -1499,22 +1499,25 @@ class CAP(CAPGetter):
 
         io_utils.makedir(output_dir)
 
-        parcellation_name = list(self._parcel_approach)[0]
-        for group in self._groups:
-            for cap in tqdm(
-                self._caps[group],
-                desc=f"Generating Statistical Maps [GROUP: {group}]",
+        parc_name = get_parc_name(self._parcel_approach)
+        for group_name in self._groups:
+            for cap_name in tqdm(
+                self._caps[group_name],
+                desc=f"Generating Statistical Maps [GROUP: {group_name}]",
                 disable=not progress_bar,
             ):
                 stat_map = spatial.cap_to_img(
-                    atlas_file=self._parcel_approach[parcellation_name]["maps"],
-                    cap_vector=self._caps[group][cap],
+                    atlas_file=self._parcel_approach[parc_name]["maps"],
+                    cap_vector=self._caps[group_name][cap_name],
                     fwhm=fwhm,
                     knn_dict=knn_dict,
                 )
 
                 filename = io_utils.filename(
-                    f"{group.replace(' ', '_')}_{cap}", suffix_filename, "suffix", "nii.gz"
+                    f"{group_name.replace(' ', '_')}_{cap_name}",
+                    suffix_filename,
+                    "suffix",
+                    "nii.gz",
                 )
                 surface.save_nifti_img(stat_map, output_dir, filename)
 
