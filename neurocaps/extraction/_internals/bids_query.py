@@ -4,7 +4,7 @@ import json, os, re
 
 from typing import Any, Union
 
-from neurocaps._utils.logging import setup_logger
+from neurocaps.utils._logging import setup_logger
 
 LG = setup_logger(__name__)
 

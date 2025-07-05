@@ -58,6 +58,8 @@ class SchaeferParcelConfig(TypedDict):
     ParcelConfig
         Type definition representing the configuration options and structure for the Schaefer and
         AAL parcellations.
+        (See `ParcelConfig Documentation
+        <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.typing.ParcelConfig.html#neurocaps.typing.ParcelConfig>`_)
 
     Notes
     -----
@@ -93,6 +95,8 @@ class AALParcelConfig(TypedDict):
     ParcelConfig
         Type definition representing the configuration options and structure for the Schaefer and
         AAL parcellations.
+        (See `ParcelConfig Documentation
+        <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.typing.ParcelConfig.html#neurocaps.typing.ParcelConfig>`_)
 
     Notes
     -----
@@ -127,8 +131,13 @@ ParcelConfig = Union[
     --------
     :class:`neurocaps.typing.SchaeferParcelConfig`
         Type definition representing configuration options for the Schaefer parcellation.
+        (See `SchaeferParcelConfig Documentation
+        <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.typing.SchaeferParcelConfig.html#neurocaps.typing.SchaeferParcelConfig>`_)
+
     :class:`neurocaps.typing.AALParcelConfig`
         Type definition representing configuration options for the AAL parcellation.
+        (See `AALParcelConfig Documentation
+        <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.typing.AALParcelConfig.html#neurocaps.typing.AALParcelConfig>`_)
 """
 
 
@@ -172,6 +181,8 @@ class SchaeferParcelApproach(ParcelApproachBase):
     ParcelApproach
         Type definition representing the structure of the Schaefer, AAL, and Custom parcellation
         approaches.
+        (See `ParcelApproach Documentation
+        <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.typing.ParcelApproach.html#neurocaps.typing.ParcelApproach>`_)
     """
 
     regions: NotRequired[list[str]]
@@ -212,6 +223,8 @@ class AALParcelApproach(ParcelApproachBase):
     ParcelApproach
         Type definition representing the structure of the Schaefer, AAL, and Custom parcellation
         approaches.
+        (See `ParcelApproach Documentation
+        <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.typing.ParcelApproach.html#neurocaps.typing.ParcelApproach>`_)
     """
 
     regions: NotRequired[list[str]]
@@ -241,6 +254,13 @@ class CustomRegionHemispheres(TypedDict):
     --------
     CustomParcelApproach
        The type definition for the Custom parcellation approach.
+       (See `CustomParcelApproach Documentation
+       <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.typing.CustomParcelApproach.html#neurocaps.typing.CustomParcelApproach>`_)
+
+    Note
+    ----
+    For additional information, refer to `NeuroCAPs Parcellation Documentation
+    <https://neurocaps.readthedocs.io/en/stable/user_guide/parcellations.html>`_
     """
 
     lh: Required[Union[list[int], range]]
@@ -305,16 +325,27 @@ class CustomParcelApproach(ParcelApproachBase):
            creation of simplified axis labels that include hemisphere information. In all other
            methods, the lateralization structure is ignored.
 
-        .. versionchanged:: 0.30.0 "regions" subkey can now be of type `dict[str, list[int] | range]`
-           for non-lateralized regions.
+        .. versionchanged:: 0.30.0
+           "regions" subkey can now be of type `dict[str, list[int] | range]` for non-lateralized
+           regions.
 
     See Also
     --------
     CustomRegionHemispheres
         Type definition of the Custom hemisphere dictionary for the "regions" subkeys.
+        (See `CustomRegionHemispheres Documentation
+        <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.typing.CustomRegionHemispheres.html#neurocaps.typing.CustomRegionHemispheres>`_)
+
     ParcelApproach
         Type definition representing the structure of the Schaefer, AAL, and Custom parcellation
         approaches.
+        (See `ParcelApproach Documentation
+        <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.typing.ParcelApproach.html#neurocaps.typing.ParcelApproach>`_)
+
+    Note
+    ----
+    For additional information, refer to `NeuroCAPs Parcellation Documentation
+    <https://neurocaps.readthedocs.io/en/stable/user_guide/parcellations.html>`_
     """
 
     regions: NotRequired[
@@ -348,10 +379,18 @@ ParcelApproach = Union[
     --------
     :class:`neurocaps.typing.SchaeferParcelApproach`
         Type definition representing the structure of the Schaefer parcellation approach.
+        (See `SchaeferParcelApproach Documentation
+        <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.typing.SchaeferParcelApproach.html#neurocaps.typing.SchaeferParcelApproach>`_)
+
     :class:`neurocaps.typing.AALParcelApproach`
         Type definition representing the structure of the AAL parcellation approach.
+        (See `AALParcelApproach Documentation
+        <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.typing.AALParcelApproach.html#neurocaps.typing.AALParcelApproach>`_)
+
     :class:`neurocaps.typing.CustomParcelApproach`
         Type definition representing the structure of the Custom parcellation approach.
+        (See `CustomParcelApproach Documentation
+        <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.typing.CustomParcelApproach.html#neurocaps.typing.CustomParcelApproach>`_)
 """
 
 __all__ = [

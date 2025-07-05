@@ -43,9 +43,7 @@ class UnsupportedFileExtensionError(Exception):
     """
     Unsupported File Extension Exception.
 
-    This exception occurs when attempting to unpickle a file that does not have a supported
-    extension (e.g ".pkl", ".pickle", ".joblib", the preceding extensions with ".gz" if
-    version >= 0.28.2).
+    This exception occurs when an internal function attempts to open an unsupported file type.
 
     .. versionadded:: 0.26.5
     """

@@ -2,7 +2,7 @@ import glob, os, re
 
 import pytest
 
-import neurocaps._utils.io as io_utils
+import neurocaps.utils._io as io_utils
 from neurocaps.extraction import TimeseriesExtractor
 from neurocaps.analysis import CAP
 from neurocaps.exceptions import BIDSQueryError, NoElbowDetectedError, UnsupportedFileExtensionError
@@ -83,11 +83,20 @@ def test_elbow_error():
         )
 
 
-def test_unsupported_serialized_file_error():
+def test_unsupported_serialized_file_error(tmp_dir):
+    """Test unsupported file error."""
+    msg = "The following file does not exist: placeholder.txt"
+    with pytest.raises(FileExistsError, match=re.escape(msg)):
+        io_utils.unserialize("placeholder.txt")
+
+    filename = os.path.join(tmp_dir.name, "placeholder.txt")
+    with open(filename, "w") as f:
+        pass
+
     msg = (
-        "Serialized files must end with one of the following extensions: "
-        "'.pkl', '.pickle', '.joblib'."
+        "Only the following extensions are supported: "
+        "'.pkl', '.pickle', '.joblib', '.pkl.gz', '.pickle.gz', '.joblib.gz'"
     )
 
     with pytest.raises(UnsupportedFileExtensionError, match=re.escape(msg)):
-        io_utils.unserialize("placeholder.txt")
+        io_utils.unserialize(filename)

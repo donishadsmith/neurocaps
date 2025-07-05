@@ -7,8 +7,9 @@ import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
 
-from neurocaps._utils import io as io_utils
-from neurocaps._utils.logging import setup_logger
+from neurocaps.utils import _io as io_utils
+from neurocaps.utils._helpers import list_to_str
+from neurocaps.utils._logging import setup_logger
 
 LG = setup_logger(__name__)
 
@@ -40,13 +41,11 @@ def filter_metrics(metrics: Union[list[str], tuple[str], None]) -> list[str]:
     ordered_metrics = [metric for metric in metrics if metric in metrics_set]
 
     if set_diff:
-        formatted_string = ", ".join(["'{a}'".format(a=x) for x in set_diff])
-        LG.warning(f"The following invalid metrics will be ignored: {formatted_string}.")
+        LG.warning(f"The following invalid metrics will be ignored: {list_to_str(set_diff)}.")
 
     if not ordered_metrics:
-        formatted_string = ", ".join(["'{a}'".format(a=x) for x in valid_metrics])
         raise ValueError(
-            f"No valid metrics in `metrics` list. Valid metrics are: {formatted_string}."
+            f"No valid metrics in `metrics` list. Valid metrics are: {list_to_str(valid_metrics)}."
         )
 
     return ordered_metrics

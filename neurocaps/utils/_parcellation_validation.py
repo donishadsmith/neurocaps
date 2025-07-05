@@ -1,14 +1,14 @@
 """Internal function for checking the validity of parcel_approach."""
 
-import os, re
+import re
 from typing import Any
 
 import numpy as np
 from nilearn import datasets
 
-from .io import get_obj
-from .logging import setup_logger
-from ..typing import ParcelApproach
+from . import _io as io_utils
+from ._logging import setup_logger
+from neurocaps.typing import ParcelApproach
 
 LG = setup_logger(__name__)
 
@@ -40,7 +40,7 @@ def check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
     Pipeline to ensure ``parcel_approach`` is valid and process the ``parcel_approach`` if certain
     initialization keys are used.
     """
-    parcel_dict = get_obj(parcel_approach)
+    parcel_dict = io_utils.get_obj(parcel_approach)
 
     if parcel_dict is None and call == "TimeseriesExtractor":
         parcel_dict = {"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
@@ -151,11 +151,9 @@ def process_custom(parcel_dict, call):
                 f"`self.parcel_approach`. Refer to the example structure:\n{custom_example}"
             )
 
-    if call == "TimeseriesExtractor" and not os.path.isfile(parcel_dict["Custom"]["maps"]):
-        raise FileNotFoundError(
-            "The custom parcellation map does not exist in the specified file location: "
-            f"{parcel_dict['Custom']['maps']}"
-        )
+    if call == "TimeseriesExtractor":
+        io_utils.check_file_exist(parcel_dict["Custom"]["maps"])
+        io_utils.check_ext(parcel_dict["Custom"]["maps"], [".nii", ".nii.gz"])
 
     # Check structure
     check_custom_structure(parcel_dict["Custom"], custom_example)

@@ -3,9 +3,9 @@
 from typing import Union, Optional
 
 from ._internals import serialize
-from .._utils import io as io_utils
-from ..typing import SubjectTimeseries
-from ..extraction._internals.postprocess import standardize_rois
+from neurocaps.utils import _io as io_utils
+from neurocaps.typing import SubjectTimeseries
+from neurocaps.extraction._internals.postprocess import standardize_rois
 
 
 def standardize(

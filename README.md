@@ -170,6 +170,10 @@ identify similar CAPs across different tasks [^6]. The merged dictionary can be 
 - ``transition_matrix``: Uses the subject-level transition probabilities outputted from the ``CAP``
 class to generate and visualize the averaged transition probability matrix for all groups from the analysis.
 
+Additional function in the `neurocaps.utils` module include:
+- `generate_custom_parcel_approach`: Creates the custom parcellation approach from a metadata
+file.
+
 Refer to the [demos](https://github.com/donishadsmith/neurocaps/tree/main/demos) or
 the [tutorials](https://neurocaps.readthedocs.io/en/stable/examples/examples.html) on the
 documentation website for a more extensive demonstration of the features included in this package.
@@ -527,6 +531,11 @@ patterns implemented in other neuroimaging Python packages, specically:
 among several popular dynamic functionality methods.
 - 62442katieb's [IDConn](https://github.com/62442katieb/IDConn), a pipeline for assessing individual
 differences in resting-state or task-based functional connectivity.
+
+## Reporting Issues
+Bug reports, feature requests, and documentation enhancements can be reported using the
+templates offered when creating a new issue in the
+[issue tracker](https://github.com/donishadsmith/neurocaps/issues).
 
 ## Contributing
 Please refer the [contributing guidelines](https://neurocaps.readthedocs.io/en/stable/contributing.html)

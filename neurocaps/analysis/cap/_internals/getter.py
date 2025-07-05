@@ -7,7 +7,7 @@ import numpy as np
 from numpy.typing import NDArray
 from sklearn.cluster import KMeans
 
-from neurocaps._utils.parcellation import check_parcel_approach
+from neurocaps.utils._parcellation_validation import check_parcel_approach
 from neurocaps.typing import ParcelConfig, ParcelApproach
 
 

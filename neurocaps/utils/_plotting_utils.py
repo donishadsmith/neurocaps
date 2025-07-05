@@ -8,7 +8,7 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from pandas import DataFrame
 
-import neurocaps._utils.io as io_utils
+import neurocaps.utils._io as io_utils
 
 
 class PlotDefaults:

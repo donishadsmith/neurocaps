@@ -8,7 +8,8 @@ from typing import Any, Union
 
 import joblib
 
-from .logging import setup_logger
+from ._helpers import list_to_str
+from ._logging import setup_logger
 from neurocaps.exceptions import UnsupportedFileExtensionError
 
 LG = setup_logger(__name__)
@@ -70,17 +71,45 @@ def get_obj(obj: Any, needs_deepcopy=True) -> Any:
         return unserialize(obj)
 
 
-def unserialize(file: str) -> Any:
+def unserialize(filename: str) -> Any:
     """Opens serialized objects such as ``subject_timeseries`` or ``parcel_approach``."""
+    check_file_exist(filename)
+
     base_ext = (".pkl", ".pickle", ".joblib")
     supported_ext = (*base_ext, *[f"{x}.gz" for x in base_ext])
-    if file.endswith(supported_ext):
-        with open(file, "rb") as f:
-            obj = joblib.load(f)
-    else:
-        raise UnsupportedFileExtensionError(
-            "Serialized files must end with one of the following extensions: "
-            "'.pkl', '.pickle', '.joblib'."
-        )
+    check_ext(filename, supported_ext)
+
+    with open(filename, "rb") as f:
+        obj = joblib.load(f)
 
     return obj
+
+
+def check_file_exist(filename: str) -> None:
+    """Check is file exists."""
+    # Dont end with periods
+    if not isinstance(filename, str):
+        raise ValueError(f"The following file must be a string: {filename}")
+
+    if not os.path.isfile(filename):
+        raise FileExistsError(f"The following file does not exist: {filename}")
+
+
+def check_ext(
+    filename: str, supported_ext: list[str], return_ext: bool = False
+) -> Union[str, None]:
+    """Checks if a file as a valid extension."""
+    if filename.endswith(".gz"):
+        _, ext = os.path.splitext(filename.removesuffix(".gz"))
+        ext += ".gz"
+    else:
+        _, ext = os.path.splitext(filename)
+
+    # Dont end with periods
+    if ext not in supported_ext:
+        raise UnsupportedFileExtensionError(
+            f"The following file has an unsupported extension: {filename}\n"
+            f"Only the following extensions are supported: {list_to_str(supported_ext)}"
+        )
+
+    return ext if return_ext else None

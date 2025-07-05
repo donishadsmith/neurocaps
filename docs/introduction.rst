@@ -114,6 +114,11 @@ Main features for ``CAP`` includes:
 - ``transition_matrix()``: Uses the subject-level transition probabilities outputted from the ``CAP``
   class to generate and visualize the averaged transition probability matrix for all groups from the analysis.
 
+Additional function in the ``neurocaps.utils`` module include:
+
+- ``generate_custom_parcel_approach``: Creates the custom parcellation approach from a metadata
+file.
+
 Please refer to the `demos <https://github.com/donishadsmith/neurocaps/tree/main/demos>`_ or
 `tutorials <https://neurocaps.readthedocs.io/en/latest/examples/examples.html>`_ for a more
 extensive demonstration of the features included in this package.

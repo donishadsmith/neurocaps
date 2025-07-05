@@ -17,6 +17,15 @@ recognized: "maps", "nodes", and "regions". For additional details on these subk
 For this demonstration, the extended Human Connectome Project multimodal parcellation (HCPex) [1]_ [2]_ from
 `wayalan's Github <https://github.com/wayalan/HCPex/>`_ will be used.
 
+Creating A Custom Parcellation Approach
+---------------------------------------
+
+For ``TimeseriesExtractor.get_bold``, only the "maps" subkey (the location of the parcellation) needs to be defined.
+
+For visualization methods in the ``TimeseriesExtractor`` and ``CAP`` classes, the nodes and regions need to be defined.
+Refer to the documentation for each function to determine which subkeys are required, as some methods only need the
+"maps" subkey, while others require the "nodes" and "regions" subkeys.
+
 .. code-block:: python
 
     # Fetching atlas NiFTI image and labels from Github
@@ -62,6 +71,54 @@ For this demonstration, the extended Human Connectome Project multimodal parcell
 
     for command in cmd:
         subprocess.run(command, check=True)
+
+
+.. code-block:: python
+
+    import joblib
+
+    from neurocaps.utils import generate_custom_parcel_approach
+
+    parcel_approach = generate_custom_parcel_approach(
+        os.path.join(demo_dir, "HCPex_LookUpTable.txt"),
+        maps_path=os.path.join(demo_dir, "HCPex.nii.gz"),
+        column_map={"nodes": "Label"},
+        background_label="Unknown",
+    )
+
+    # The metadata for the labels are not mapped onto a region so this is done manually based
+    # on published manuscript associated with this parcellation
+    # Setting the region names and their corresponding indices in the nodes list
+    # in this case it is just the label id - 1
+    parcel_approach["Custom"]["regions"] = {
+        "Primary Visual": {"lh": [0], "rh": [180]},
+        "Early Visual": {"lh": [1, 2, 3], "rh": [181, 182, 183]},
+        "Dorsal Stream Visual": {"lh": range(4, 10), "rh": range(184, 190)},
+        "Ventral Stream Visual": {"lh": range(10, 17), "rh": range(190, 197)},
+        "MT+ Complex": {"lh": range(17, 26), "rh": range(197, 206)},
+        "SomaSens Motor": {"lh": range(26, 31), "rh": range(206, 211)},
+        "ParaCentral MidCing": {"lh": range(31, 40), "rh": range(211, 220)},
+        "Premotor": {"lh": range(40, 47), "rh": range(220, 227)},
+        "Posterior Opercular": {"lh": range(47, 52), "rh": range(227, 232)},
+        "Early Auditory": {"lh": range(52, 59), "rh": range(232, 239)},
+        "Auditory Association": {"lh": range(59, 67), "rh": range(239, 247)},
+        "Insula FrontalOperc": {"lh": range(67, 79), "rh": range(247, 259)},
+        "Medial Temporal": {"lh": range(79, 87), "rh": range(259, 267)},
+        "Lateral Temporal": {"lh": range(87, 95), "rh": range(267, 275)},
+        "TPO": {"lh": range(95, 100), "rh": range(275, 280)},
+        "Superior Parietal": {"lh": range(100, 110), "rh": range(280, 290)},
+        "Inferior Parietal": {"lh": range(110, 120), "rh": range(290, 300)},
+        "Posterior Cingulate": {"lh": range(120, 133), "rh": range(300, 313)},
+        "AntCing MedPFC": {"lh": range(133, 149), "rh": range(313, 329)},
+        "OrbPolaFrontal": {"lh": range(149, 158), "rh": range(329, 338)},
+        "Inferior Frontal": {"lh": range(158, 167), "rh": range(338, 347)},
+        "Dorsolateral Prefrontal": {"lh": range(167, 180), "rh": range(347, 360)},
+        "Subcortical Regions": {"lh": range(360, 393), "rh": range(393, 426)},
+    }
+
+    # Saving the dictionary as a pickle file for long-term storage
+    with open(os.path.join(demo_dir, "HCPex_dict.pkl"), "wb") as f:
+        joblib.dump(parcel_approach, f)
 
 
 The code below fetches a single subject from an `OpenNeuro dataset <https://openneuro.org/datasets/ds005381/versions/1.0.0>`_
@@ -126,10 +183,8 @@ The first level of the pipeline directory must also have a dataset_description.j
     ) as f:
         json.dump(desc, f)
 
-
 Extracting Timeseries
 ---------------------
-For ``TimeseriesExtractor.get_bold``, only the "maps" subkey (the location of the parcellation) needs to be defined.
 
 .. code-block:: python
 
@@ -175,68 +230,17 @@ For ``TimeseriesExtractor.get_bold``, only the "maps" subkey (the location of th
 
     .. code-block:: none
 
-        2025-07-03 14:11:27,418 neurocaps._utils.parcellation [WARNING] The following subkeys haven't been detected ['nodes', 'regions']. These labels are not needed for timeseries extraction but are needed for plotting.
-        2025-07-03 14:11:27,419 neurocaps.extraction._internals.confounds [INFO] Confound regressors to be used if available: cosine*, trans_x, trans_x_derivative1, trans_y, trans_y_derivative1, trans_z, trans_z_derivative1, rot_x, rot_x_derivative1, rot_y, rot_y_derivative1, rot_z, rot_z_derivative1, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05.
-        2025-07-03 14:11:28,975 neurocaps.extraction.timeseries_extractor [INFO] BIDS Layout: ...mples\notebooks\neurocaps_demo | Subjects: 1 | Sessions: 1 | Runs: 2
-        2025-07-03 14:11:29,043 neurocaps.extraction._internals.postprocess [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-1_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
-        2025-07-03 14:11:29,063 neurocaps.extraction._internals.postprocess [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] No 'non_steady_state_outlier_XX' columns were found so 0 dummy scans will be removed.
-        2025-07-03 14:11:29,086 neurocaps.extraction._internals.postprocess [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_x_derivative1, trans_y, trans_y_derivative1, trans_z, trans_z_derivative1, rot_x, rot_x_derivative1, rot_y, rot_y_derivative1, rot_z, rot_z_derivative1, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05.
-        2025-07-03 14:11:39,939 neurocaps.extraction._internals.postprocess [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Nuisance regression completed; extracting [CONDITION: late].
-        2025-07-03 14:11:39,977 neurocaps.extraction._internals.postprocess [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-2_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
-        2025-07-03 14:11:39,994 neurocaps.extraction._internals.postprocess [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] No 'non_steady_state_outlier_XX' columns were found so 0 dummy scans will be removed.
-        2025-07-03 14:11:40,006 neurocaps.extraction._internals.postprocess [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_x_derivative1, trans_y, trans_y_derivative1, trans_z, trans_z_derivative1, rot_x, rot_x_derivative1, rot_y, rot_y_derivative1, rot_z, rot_z_derivative1, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05.
-        2025-07-03 14:11:50,949 neurocaps.extraction._internals.postprocess [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] Nuisance regression completed; extracting [CONDITION: late].
-
-For visualization methods in the ``TimeseriesExtractor`` and ``CAP`` classes, the nodes and regions need to be defined.
-Refer to the documentation for each function to determine which subkeys are required, as some methods only need the
-"maps" subkey, while others require the "nodes" and "regions" subkeys.
-
-The following code defines the nodes and regions of the HCPex parcellation.
-
-.. code-block:: python
-
-    import joblib, pandas as pd
-
-    # Setting the "nodes"; needed for `TimeseriesExtractor.visualize_bold`; Getting nodes that don't correspond to
-    # background label
-    parcel_approach["Custom"]["nodes"] = pd.read_csv(
-        os.path.join(demo_dir, "HCPex_LookUpTable.txt"),
-        sep=None,
-        engine="python",
-    )["Label"].values[1:]
-
-    # Needed for many plotting methods; Setting the region names and their corresponding indices in the nodes list,
-    # in this case it is just the label id - 1
-    parcel_approach["Custom"]["regions"] = {
-        "Primary Visual": {"lh": [0], "rh": [180]},
-        "Early Visual": {"lh": [1, 2, 3], "rh": [181, 182, 183]},
-        "Dorsal Stream Visual": {"lh": range(4, 10), "rh": range(184, 190)},
-        "Ventral Stream Visual": {"lh": range(10, 17), "rh": range(190, 197)},
-        "MT+ Complex": {"lh": range(17, 26), "rh": range(197, 206)},
-        "SomaSens Motor": {"lh": range(26, 31), "rh": range(206, 211)},
-        "ParaCentral MidCing": {"lh": range(31, 40), "rh": range(211, 220)},
-        "Premotor": {"lh": range(40, 47), "rh": range(220, 227)},
-        "Posterior Opercular": {"lh": range(47, 52), "rh": range(227, 232)},
-        "Early Auditory": {"lh": range(52, 59), "rh": range(232, 239)},
-        "Auditory Association": {"lh": range(59, 67), "rh": range(239, 247)},
-        "Insula FrontalOperc": {"lh": range(67, 79), "rh": range(247, 259)},
-        "Medial Temporal": {"lh": range(79, 87), "rh": range(259, 267)},
-        "Lateral Temporal": {"lh": range(87, 95), "rh": range(267, 275)},
-        "TPO": {"lh": range(95, 100), "rh": range(275, 280)},
-        "Superior Parietal": {"lh": range(100, 110), "rh": range(280, 290)},
-        "Inferior Parietal": {"lh": range(110, 120), "rh": range(290, 300)},
-        "Posterior Cingulate": {"lh": range(120, 133), "rh": range(300, 313)},
-        "AntCing MedPFC": {"lh": range(133, 149), "rh": range(313, 329)},
-        "OrbPolaFrontal": {"lh": range(149, 158), "rh": range(329, 338)},
-        "Inferior Frontal": {"lh": range(158, 167), "rh": range(338, 347)},
-        "Dorsolateral Prefrontal": {"lh": range(167, 180), "rh": range(347, 360)},
-        "Subcortical Regions": {"lh": range(360, 393), "rh": range(393, 426)},
-    }
-
-    # Saving the dictionary as a pickle file for long-term storage
-    with open(os.path.join(demo_dir, "HCPex_dict.pkl"), "wb") as f:
-        joblib.dump(parcel_approach, f)
-
+        2025-07-05 14:11:27,418 neurocaps.utils._parcellation_validation [WARNING] The following subkeys haven't been detected ['nodes', 'regions']. These labels are not needed for timeseries extraction but are needed for plotting.
+        2025-07-05 14:11:27,419 neurocaps.extraction._internals.confounds [INFO] Confound regressors to be used if available: cosine*, trans_x, trans_x_derivative1, trans_y, trans_y_derivative1, trans_z, trans_z_derivative1, rot_x, rot_x_derivative1, rot_y, rot_y_derivative1, rot_z, rot_z_derivative1, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05.
+        2025-07-05 14:11:28,975 neurocaps.extraction.timeseries_extractor [INFO] BIDS Layout: ...mples\notebooks\neurocaps_demo | Subjects: 1 | Sessions: 1 | Runs: 2
+        2025-07-05 14:11:29,043 neurocaps.extraction._internals.postprocess [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-1_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
+        2025-07-05 14:11:29,063 neurocaps.extraction._internals.postprocess [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] No 'non_steady_state_outlier_XX' columns were found so 0 dummy scans will be removed.
+        2025-07-05 14:11:29,086 neurocaps.extraction._internals.postprocess [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_x_derivative1, trans_y, trans_y_derivative1, trans_z, trans_z_derivative1, rot_x, rot_x_derivative1, rot_y, rot_y_derivative1, rot_z, rot_z_derivative1, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05.
+        2025-07-05 14:11:39,939 neurocaps.extraction._internals.postprocess [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 1] Nuisance regression completed; extracting [CONDITION: late].
+        2025-07-05 14:11:39,977 neurocaps.extraction._internals.postprocess [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] Preparing for Timeseries Extraction using [FILE: sub-0004_ses-2_task-DET_run-2_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz].
+        2025-07-05 14:11:39,994 neurocaps.extraction._internals.postprocess [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] No 'non_steady_state_outlier_XX' columns were found so 0 dummy scans will be removed.
+        2025-07-05 14:11:40,006 neurocaps.extraction._internals.postprocess [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] The following confounds will be used for nuisance regression: cosine00, cosine01, cosine02, cosine03, trans_x, trans_x_derivative1, trans_y, trans_y_derivative1, trans_z, trans_z_derivative1, rot_x, rot_x_derivative1, rot_y, rot_y_derivative1, rot_z, rot_z_derivative1, a_comp_cor_00, a_comp_cor_01, a_comp_cor_02, a_comp_cor_03, a_comp_cor_04, a_comp_cor_05.
+        2025-07-05 14:11:50,949 neurocaps.extraction._internals.postprocess [INFO] [SUBJECT: 0004 | SESSION: 2 | TASK: DET | RUN: 2] Nuisance regression completed; extracting [CONDITION: late].
 
 Visualizing BOLD data
 ---------------------
@@ -277,7 +281,7 @@ The following code uses ``CAP.get_bold`` to extract two CAPs.
 
     .. code-block:: none
 
-        2025-07-03 14:12:14,255 neurocaps.analysis.cap._internals.cluster [INFO] No groups specified. Using default group 'All Subjects' containing all subject IDs from `subject_timeseries`. The `self.groups` dictionary will remain fixed unless the `CAP` class is re-initialized.
+        2025-07-05 14:12:14,255 neurocaps.analysis.cap._internals.cluster [INFO] No groups specified. Using default group 'All Subjects' containing all subject IDs from `subject_timeseries`. The `self.groups` dictionary will remain fixed unless the `CAP` class is re-initialized.
 
 Surface Plotting with and without KNN Interpolation
 ---------------------------------------------------
@@ -328,7 +332,7 @@ other subkeys are optional*.
 
     .. code-block:: none
 
-        2025-07-03 14:15:00,435 neurocaps.analysis.cap [WARNING] Defaulting to 1mm resolution for the Schaefer atlas since 'resolution_mm' was not specified in `knn_dict`.
+        2025-07-05 14:15:00,435 neurocaps.analysis.cap [WARNING] Defaulting to 1mm resolution for the Schaefer atlas since 'resolution_mm' was not specified in `knn_dict`.
 
 
 .. image:: embed/All_Subjects_CAP-1_surface_KNN.png
@@ -342,6 +346,9 @@ Simulated Example with Schaefer 4S
 ----------------------------------
 
 .. code-block:: python
+
+    import pandas as pd, numpy as np, sys, subprocess
+    from neurocaps.utils import generate_custom_parcel_approach
 
     # Fetching atlas NiFTI image and labels from Github
     if sys.platform != "win32":
@@ -368,29 +375,48 @@ Simulated Example with Schaefer 4S
     for command in cmd:
         subprocess.run(command, check=True)
 
-    # Creating custom parcel approach dictionary and extracting timeseries
-    parcel_approach = {"Custom": {}}
-
-    # Setting the "nodes", which is needed for "TimeseriesExtractor.visualize_bold";
-    # Getting nodes that don't correspond to background label
-    parcel_approach["Custom"]["nodes"] = pd.read_csv(
-        "neurocaps_demo\\atlas-4S156Parcels_dseg.tsv",
+    # For this parcellation, the metadata contains the labels and the network mappings though
+    # certain nodes in the Cerebellum, Subcortical, and Thalamus have NaN values in the
+    # column denoting network affiliation
+    df = pd.read_csv(
+        r"neurocaps_demo\atlas-4S156Parcels_dseg.tsv",
         sep="\t",
-    )["label"].values
+    )
 
-    # Needed for many plotting methods; Setting the region names and their corresponding indices
-    # in the nodes list in this case it is just the label id - 1
-    parcel_approach["Custom"]["regions"] = {
-        "Visual": [*range(0, 9), *range(50, 58)],
-        "SMN": [*range(9, 15), *range(58, 66)],
-        "DAN": [*range(15, 23), *range(66, 73)],
-        "VAN": [*range(23, 30), *range(73, 78)],
-        "Limbic": [*range(30, 33), *range(78, 80)],
-        "Cont": [*range(33, 37), *range(80, 89)],
-        "DMN": [*range(37, 50), *range(89, 100)],
-        "Subcortical": [*range(100, 146)],
-        "Cerebellar": [*range(100, 156)],
-    }
+    # Replacing null values in the "network_label" column with values in "atlas_name"
+    df["network_label"] = np.where(df["network_label"].isnull(), df["atlas_name"], df["network_label"])
+
+    # Simplifying names for for certain names in "network_label"
+    df.loc[df["network_label"].str.contains("Subcortical", na=False), "network_label"] = "Subcortical"
+    df.loc[df["network_label"].str.contains("Thalamus", na=False), "network_label"] = "Thalamus"
+
+    # Create empty file for demonstration purposes
+    with open(r"neurocaps_demo\temp_parc_map.nii.gz", "w") as f:
+        pass
+
+    # Creating custom parcel approach dictionary
+    parcel_approach = generate_custom_parcel_approach(
+        df,
+        maps_path=r"neurocaps_demo\temp_parc_map.nii.gz",
+        column_map={"nodes": "label", "regions": "network_label"},
+    )
+
+The following code creates a lateralized version of the ``parcel_approach``. Note that the
+lateralization information is specific case in ``CAP.caps2plot`` when ``visual_scope`` is set to
+"nodes" and the ``add_custom_node_labels`` kwarg is True.
+
+.. code-block:: python
+
+    # Create a hemisphere column
+    df["hemisphere_labels"] = df["hemisphere_labels"] = df["label"].str.extract(r"^(LH|RH)")
+
+    # Creating custom parcel approach dictionary
+    parcel_approach = generate_custom_parcel_approach(
+        df,
+        maps_path=r"neurocaps_demo\temp_parc_map.nii.gz",
+        column_map={"nodes": "label", "regions": "network_label", "hemispheres": "hemisphere_labels"},
+        hemisphere_map={"lh": ["LH"], "rh": ["RH"]},
+    )
 
 .. code-block:: python
 

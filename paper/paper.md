@@ -37,7 +37,7 @@ which change within seconds [@Jiang2022], remain stationary throughout the entir
 Unlike sFC approaches, dynamic functional connectivity (dFC) methods enable the analysis of dynamic functional states,
 which are characterized by consistent, replicable, and distinct periods of time-varying brain connectivity patterns
 [@Rabany2019]. Among these techniques, CAPs analysis aggregates similar spatial distributions of brain activity using
-clustering techniques, such as the k-means algorithm, to capture the dynamic nature of brain activity [@Liu2013; @Liu2018].
+clustering techniques, typically the k-means algorithm, to capture the dynamic nature of brain activity [@Liu2013; @Liu2018].
 
 # Statement of Need
 Currently, performing an end-to-end CAPs analysis presents challenges due to the numerous steps required. Researchers must:
@@ -57,10 +57,11 @@ specifically for performing end-to-end CAPs analyses, from post-processing of fM
 for downstream statistical analyses and visualizations to facilitate interpretations. However, many of NeuroCAPs'
 post-processing functionalities assumes that fMRI data is organized in a Brain Imaging Data Structure (BIDS) compliant
 directory and is most optimized for data preprocessed with fMRIPrep [@Esteban2019] or preprocessing pipelines
-that generate similar outputs (e.g. NiBabies [@Goncalves2025]).
+that generate similar outputs (e.g. NiBabies [@Goncalves2025]). Furthermore, NeuroCAPs only supports
+the k-means algorithm for clustering.
 
 # Modules
-NeuroCAPs consists of four modules, with core functionality primarily distributed between two main modules
+NeuroCAPs consists of five modules, with core functionality primarily distributed between two main modules
 (`neurocaps.extraction` and `neurocaps.analysis`) that handle the entire workflow, from post-processing to temporal
 metric computation and visualization capabilities.
 
@@ -111,6 +112,11 @@ tasks.
 
 This module provides custom type definitions compatible with static type checkers, enabling proper construction of
 dictionary structures for parcellations or timeseries data when manual creation is necessary.
+
+**neurocaps.utils**
+
+This module contains a utility function (`generate_custom_parcel_approach`) that automatically
+generates custom parcellation approaches from a parcellation's metadata file.
 
 # Examples
 Comprehensive demonstrations and tutorials for NeuroCAPs can be found on its repository at
