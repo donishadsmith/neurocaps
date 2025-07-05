@@ -81,13 +81,14 @@ def create_transition_pairs(
         group_name: [get_cap_id(cap_name) for cap_name in cap_dict[group_name]]
         for group_name in cap_dict
     }
+
     return {
         group_name: list(itertools.product(cap_id, cap_id))
         for group_name, cap_id in group_caps.items()
     }
 
 
-def get_cap_id(cap_name):
+def get_cap_id(cap_name: str) -> int:
     """
     Extracts the CAP name, assumed to be in the form `CAP-{n}` (i.e. CAP-1) and returns the int.
     """
