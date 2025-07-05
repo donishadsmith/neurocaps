@@ -19,7 +19,6 @@ from neurocaps._utils.helpers import resolve_kwargs
 from neurocaps._utils.logging import setup_logger
 from neurocaps._utils.parcellation import check_parcel_approach, get_parc_name
 from neurocaps._utils.plotting_utils import PlotDefaults, PlotFuncs, MatrixVisualizer
-import neurocaps._utils.io as io_utils
 
 LG = setup_logger(__name__)
 
