@@ -1,4 +1,4 @@
-"""Internal function containing helper functions for ``CAP.get_caps``."""
+"""Internal module containing helper functions for ``CAP.get_caps``."""
 
 from typing import Any, Union
 

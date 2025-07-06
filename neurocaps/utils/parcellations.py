@@ -105,7 +105,7 @@ def generate_custom_parcel_approach(
 
     +------------------------+----------+------------+-----+
     | labels                 | networks | hemisphere | ... |
-    +============+===========+==========+============+=====+
+    +========================+==========+============+=====+
     | SalVentAttn_TempOccPar | VAN      | L          | ... |
     +------------------------+----------+------------+-----+
     | SalVentAttn_FrOperIns  | VAN      | R          | ... |
@@ -300,7 +300,7 @@ def _check_partial_lateralization(
     lateralized_indices: list[int],
 ) -> None:
     """
-    Some regions are only partially lateralized (e.g. Cole-Antivetic atlas). This will result
+    Some regions are only partially lateralized (e.g. Cole-Anticevic atlas). This will result
     in an error.
     """
     if len(lateralized_indices) != len(group_df):
