@@ -124,7 +124,7 @@ def generate_custom_parcel_approach(
         if key in ["nodes", "regions"]:
             _check_column_validity(df[column_map[key]])
 
-    df.reset_index(drop=True, inplace=True)
+    df = df.reset_index(drop=True)
 
     # Create base `parcel_approach`
     custom_parcel_approach = {"maps": str(maps_path), "nodes": df[column_map["nodes"]].tolist()}
