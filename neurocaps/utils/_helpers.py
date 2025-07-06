@@ -1,7 +1,8 @@
-"""Internal helper functions for the ``CAP`` and ``TimeseriesExtractor`` classes."""
+"""Internal helper functions."""
 
 from typing import Any
-from .logging import setup_logger
+
+from ._logging import setup_logger
 
 LG = setup_logger(__name__)
 
@@ -18,3 +19,8 @@ def resolve_kwargs(defaults: dict[str, Any], **kwargs) -> dict[str, Any]:
             )
 
     return plot_dict
+
+
+def list_to_str(str_list: list[str]) -> None:
+    """Converts a list containing strings to a string."""
+    return ", ".join(["'{a}'".format(a=x) for x in str_list])

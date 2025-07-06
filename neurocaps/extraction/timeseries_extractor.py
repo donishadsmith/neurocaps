@@ -10,15 +10,15 @@ from joblib import Parallel, delayed
 from pandas import DataFrame
 from tqdm.auto import tqdm
 
-import neurocaps._utils.io as io_utils
 from ._internals import check_confound_names, process_subject_runs, TimeseriesExtractorGetter
 from ._internals import bids_query, vizualization
 from neurocaps.exceptions import BIDSQueryError
 from neurocaps.typing import ParcelConfig, ParcelApproach, SubjectTimeseries
-from neurocaps._utils.helpers import resolve_kwargs
-from neurocaps._utils.logging import setup_logger
-from neurocaps._utils.parcellation import check_parcel_approach
-from neurocaps._utils.plotting_utils import PlotDefaults, PlotFuncs
+from neurocaps.utils import _io as io_utils
+from neurocaps.utils._helpers import list_to_str, resolve_kwargs
+from neurocaps.utils._logging import setup_logger
+from neurocaps.utils._parcellation_validation import check_parcel_approach
+from neurocaps.utils._plotting_utils import PlotDefaults, PlotFuncs
 
 LG = setup_logger(__name__)
 
@@ -30,10 +30,10 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
     Performs timeseries denoising, extraction, serialization (pickling), and visualization.
 
     .. important::
-        It is highly recommended for all imaging data (the preprocessed BOLD images
-        and parcellation map) to be in a standard MNI space. This is due to the ``CAP.caps2surf``
-        assuming that the parcellation map is in MNI standard space when transforming data between
-        volumetric and surface spaces.
+       It is highly recommended for all imaging data (the preprocessed BOLD images
+       and parcellation map) to be in a standard MNI space. This is due to the ``CAP.caps2surf``
+       assuming that the parcellation map is in MNI standard space when transforming data between
+       volumetric and surface spaces.
 
     Parameters
     ----------
@@ -48,31 +48,35 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
         ``ParcelConfig`` and ``ParcelApproach`` in the "See Also" section. Defaults to
         ``{"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}`` if None.
 
-        .. versionchanged:: 0.28.0 Default changed to None; however, the same default dictionary\
-        configuration remains the same and is backwards compatible.
+        .. versionchanged:: 0.28.0
+           Default changed to None; however, the same default dictionary configuration remains the
+           same and is backwards compatible.
 
-        .. versionchanged:: 0.31.0 The default "regions" names for "AAL" has changed, which will\
-        group nodes differently.
+        .. versionchanged:: 0.31.0
+           The default "regions" names for "AAL" has changed, which will group nodes differently.
 
     standardize: :obj:`bool` or or :obj:`None`, default=True
         Standardizes the timeseries (zero mean and unit variance using sample standard deviation).
         Always the final step in the pipeline.
 
-        .. versionchanged:: 0.25.0 No longer passed to Nilearn's ``NiftiLabelsMasker`` and only\
-        performs standardization using sample standard deviation. Default behavior of standardizing\
-        using sample standard deviation is the same; however, when not None or False, standardizing\
-        is always done at the end of the pipeline to prevent any external standardization from\
-        needing to be done when censoring or extracting condition.
+        .. versionchanged:: 0.25.0
+           No longer passed to Nilearn's ``NiftiLabelsMasker`` and only performs standardization
+           using sample standard deviation. Default behavior of standardizing using sample standard
+           deviation is the same; however, when not None or False, standardizing is always done at
+           the end of the pipeline to prevent any external standardization from needing to be done
+           when censoring or extracting condition.
 
-        .. note:: Standard deviations below ``np.finfo(std.dtype).eps`` are replaced with 1 for\
-        numerical stability.
+        .. note::
+           Standard deviations below ``np.finfo(std.dtype).eps`` are replaced with 1 for numerical
+           stability.
 
     detrend: :obj:`bool`, default=False
         Detrends the timeseries.
 
-        .. versionchanged:: 0.26.0 Default changed from True to False due to the redundancy of\
-        detrending when discrete cosine-basis regressors are used, which is included in the "basic"\
-        option for ``confound_names``.
+        .. versionchanged:: 0.26.0
+           Default changed from True to False due to the redundancy of detrending when discrete
+           cosine-basis regressors are used, which is included in the "basic" option for
+           ``confound_names``.
 
     low_pass: :obj:`float`, :obj:`int`, or :obj:`None`, default=None
         Filters out signals above the specified cutoff frequency.
@@ -87,8 +91,8 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
         If True, performs nuisance regression during timeseries extraction using the default or
         user-specified confounds in ``confound_names``.
 
-        .. important:: Requires the confound tsv files to be in same directory as preprocessed BOLD
-        images.
+        .. important::
+           Requires the confound tsv files to be in same directory as preprocessed BOLD images.
 
     confound_names: {"basic"}, :obj:`list[str]`, or :obj:`None`, default="basic"
         Names of confounds extracted from the confound tsv files if ``use_confounds=True``.
@@ -141,24 +145,26 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
             - "interpolate": A boolean. If True, uses scipy's ``CubicSpline`` function` to perform\
               cubic spline interpolation only on censored frames. **Only performs interpolation if True**.
 
-            .. note:: Interpolation is only performed on frames that are bounded by non-censored\
-            frames on both ends. For example, given a ``censor_mask=[0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0]``\
-            where "0" indicates censored high motion volumes and "1" indicates non-censored, low\
-            motion volumes, only the volumes at index 3, 5, 6, 7, and 9 would be interpolated.
+            .. note::
+               Interpolation is only performed on frames that are bounded by non-censored
+               frames on both ends. For example, given a
+               ``censor_mask=[0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0]`` where "0" indicates censored
+               high motion volumes and "1" indicates non-censored, low
+               motion volumes, only the volumes at index 3, 5, 6, 7, and 9 would be interpolated.
 
         .. important::
             - A column named "framewise_displacement" must be available in the confounds file.
             - ``use_confounds`` must be set to True.
             - Do not specify "framewise_displacement" in ``confound_names``.
-            - See Nilearn's documentation for details on censored volume handling when\
-            "use_sample_mask" is True:
+            - See Nilearn's documentation for details on censored volume handling when
+              "use_sample_mask" is True:
 
                 - `Signal Clean <https://nilearn.github.io/stable/modules/generated/nilearn.signal.clean.html>`_
-                - `NiftiLabelsMasker \<https://nilearn.github.io/stable/modules/generated/nilearn.maskers.NiftiLabelsMasker.html>`_
+                - `NiftiLabelsMasker <https://nilearn.github.io/stable/modules/generated/nilearn.maskers.NiftiLabelsMasker.html>`_
 
-            - If "interpolate" is True, then interpolation is only applied after the nuisance\
+            - If "interpolate" is True, then interpolation is only applied after the nuisance
               regression and parcellation steps have been completed.
-            - See Scipy's `CubicSpline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicSpline.html>`_\
+            - See Scipy's `CubicSpline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicSpline.html>`_
               documentation.
 
     n_acompcor_separate: :obj:`int` or :obj:`None`, default=None
@@ -237,13 +243,22 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
     See Also
     --------
     :class:`neurocaps.typing.ParcelConfig`
-        Type definition representing the configuration options and structure for the Schaefer and
-        AAL parcellations.
+        Type definition representing the configuration options and structure for the Schaefer
+        and AAL parcellations.
+        (See `ParcelConfig Documentation
+        <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.typing.ParcelConfig.html#neurocaps.typing.ParcelConfig>`_)
+
     :class:`neurocaps.typing.ParcelApproach`
         Type definition representing the structure of the Schaefer, AAL, and Custom parcellation
-        approaches
+        approaches.
+        (See `ParcelApproach Documentation
+        <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.typing.ParcelApproach.html#neurocaps.typing.ParcelApproach>`_)
+
     :data:`neurocaps.typing.SubjectTimeseries`
         Type definition representing the structure of the subject timeseries.
+        (See: `SubjectTimeseries Documentation
+        <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.typing.SubjectTimeseries.html#neurocaps.typing.SubjectTimeseries>`_)
+
     Note
     ----
     **Passed Parameters**: ``detrend``, ``low_pass``, ``high_pass``, ``fwhm``, and nuisance
@@ -395,10 +410,9 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
             # Check invalid keys
             set_diff = set(struct) - set(optional_keys[param]) - set(mandatory_keys[param])
             if set_diff:
-                formatted_string = ", ".join(["'{a}'".format(a=x) for x in set_diff])
                 LG.warning(
                     f"The following invalid keys have been found in `{param}` and will be ignored: "
-                    f"{formatted_string}."
+                    f"{list_to_str(set_diff)}."
                 )
 
     def get_bold(
@@ -586,8 +600,8 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
             scans.extend(range(onset_scan, end_scan))
             scans = sorted(list(set(scans)))
 
-        .. versionchanged:: 0.28.4 Max check done for ``onset_scan`` and ``end_scan`` instead of\
-        ``adjusted_onset``.
+        .. versionchanged:: 0.28.4
+           Max check done for ``onset_scan`` and ``end_scan`` instead of ``adjusted_onset``.
 
         When partial scans are computed, ``math.floor`` is used to round down for the beginning scan
         index and ``math.ceil`` is used to round up for the ending scan index. Negative scan indices

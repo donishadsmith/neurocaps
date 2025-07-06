@@ -14,11 +14,11 @@ from ._internals import metrics as metrics_utils
 from ._internals import cluster, correlation, matrix, radar, spatial, surface
 from ._internals.getter import CAPGetter
 from neurocaps.typing import ParcelConfig, ParcelApproach, SubjectTimeseries
-from neurocaps._utils import io as io_utils
-from neurocaps._utils.helpers import resolve_kwargs
-from neurocaps._utils.logging import setup_logger
-from neurocaps._utils.parcellation import check_parcel_approach, get_parc_name
-from neurocaps._utils.plotting_utils import PlotDefaults, PlotFuncs, MatrixVisualizer
+from neurocaps.utils import _io as io_utils
+from neurocaps.utils._helpers import list_to_str, resolve_kwargs
+from neurocaps.utils._logging import setup_logger
+from neurocaps.utils._parcellation_validation import check_parcel_approach, get_parc_name
+from neurocaps.utils._plotting_utils import PlotDefaults, PlotFuncs, MatrixVisualizer
 
 LG = setup_logger(__name__)
 
@@ -43,8 +43,8 @@ class CAP(CAPGetter):
         detailed documentation on the expected structure, see the type definitions for ``ParcelConfig``
         and ``ParcelApproach`` in the "See Also" section.
 
-        .. versionchanged:: 0.31.0 The default "regions" names for "AAL" has changed, which will\
-        group nodes differently.
+        .. versionchanged:: 0.31.0
+           The default "regions" names for "AAL" has changed, which will group nodes differently.
 
     groups: :obj:`dict[str, list[str]]` or :obj:`None`, default=None
         Optional mapping of group names to lists of subject IDs for group-specific analyses. If
@@ -104,8 +104,9 @@ class CAP(CAPGetter):
 
             {"GroupName": np.array(shape=[1, ROIs])}
 
-        .. note:: Standard deviations below ``np.finfo(std.dtype).eps`` are replaced with 1 for\
-        numerical stability.
+        .. note::
+           Standard deviations below ``np.finfo(std.dtype).eps`` are replaced with 1 for
+           numerical stability.
 
     concatenated_timeseries: :obj:`dict[str, np.array]` or :obj:`None`
         Group-specific concatenated timeseries data. Can be deleted using
@@ -116,8 +117,9 @@ class CAP(CAPGetter):
 
             {"GroupName": np.array(shape=[(participants x TRs), ROIs])}
 
-        .. note:: For versions >= 0.25.0, subject IDs are sorted lexicographically prior to\
-        concatenation and the order is determined by ``self.groups``.
+        .. note::
+           For versions >= 0.25.0, subject IDs are sorted lexicographically prior to
+           concatenation and the order is determined by ``self.groups``.
 
     kmeans: :obj:`dict[str, sklearn.cluster.KMeans]` or :obj:`None`
         Group-specific k-means models. Defined after running ``self.get_caps()``. Returns a deep
@@ -192,9 +194,14 @@ class CAP(CAPGetter):
     :class:`neurocaps.typing.ParcelConfig`
         Type definition representing the configuration options and structure for the Schaefer
         and AAL parcellations.
+        (See `ParcelConfig Documentation
+        <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.typing.ParcelConfig.html#neurocaps.typing.ParcelConfig>`_)
+
     :class:`neurocaps.typing.ParcelApproach`
         Type definition representing the structure of the Schaefer, AAL, and Custom parcellation
         approaches.
+        (See `ParcelApproach Documentation
+        <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.typing.ParcelApproach.html#neurocaps.typing.ParcelApproach>`_)
 
     Important
     ---------
@@ -319,8 +326,9 @@ class CAP(CAPGetter):
             Standardizes the columns (ROIs) of the concatenated timeseries data. Uses sample
             standard deviation (`n-1`).
 
-            .. note:: Standard deviations below ``np.finfo(std.dtype).eps`` are replaced with 1 for\
-            numerical stability.
+            .. note::
+               Standard deviations below ``np.finfo(std.dtype).eps`` are replaced with 1 for
+               numerical stability.
 
         n_cores: :obj:`int` or :obj:`None`, default=None
             Number of cores to use for multiprocessing, with Joblib, to run multiple k-means models
@@ -364,6 +372,8 @@ class CAP(CAPGetter):
         --------
         :data:`neurocaps.typing.SubjectTimeseries`
             Type definition for the subject timeseries dictionary structure.
+            (See: `SubjectTimeseries Documentation
+            <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.typing.SubjectTimeseries.html#neurocaps.typing.SubjectTimeseries>`_)
 
         Returns
         -------
@@ -416,8 +426,9 @@ class CAP(CAPGetter):
 
         valid_methods = ["elbow", "davies_bouldin", "silhouette", "variance_ratio"]
         if cluster_selection_method and cluster_selection_method not in valid_methods:
-            formatted_string = ", ".join(["'{a}'".format(a=x) for x in valid_methods])
-            raise ValueError(f"Options for `cluster_selection_method` are: {formatted_string}.")
+            raise ValueError(
+                f"Options for `cluster_selection_method` are: {list_to_str(valid_methods)}."
+            )
 
         # Raise error if silhouette_method is requested when n_clusters is an integer
         if cluster_selection_method and isinstance(self._n_clusters, int):
@@ -635,10 +646,12 @@ class CAP(CAPGetter):
                 # There is only one 1 -> 2 transition
                 transition_probability = 1 / 3
 
-        .. note:: In the supplementary material for Yang et al., the mathematical relationship\
-        between temporal fraction, counts, and persistence is ``temporal_fraction = (persistence * counts)/total_volumes``.\
-        If persistence has been converted into time units (seconds), then\
-        ``temporal_fraction = (persistence * counts) / (total_volumes * tr)``.
+        .. note::
+           In the supplementary material for Yang et al., the mathematical relationship
+           between temporal fraction, counts, and persistence is
+           ``temporal_fraction = (persistence * counts)/total_volumes``. If persistence has been
+           converted into time units (seconds), then
+           ``temporal_fraction = (persistence * counts) / (total_volumes * tr)``.
 
         Parameters
         ----------
@@ -685,8 +698,9 @@ class CAP(CAPGetter):
             "counts", "transition_frequency", and "transition_probability". Defaults to
             ``("temporal_fraction", "persistence", "counts", "transition_frequency")`` if None.
 
-            .. versionchanged:: 0.28.6 Default changed to tuple to provide better clarity; however,\
-            the default metrics remains the same and is backwards compatible.
+            .. versionchanged:: 0.28.6
+               Default changed to tuple to provide better clarity; however, the default metrics
+               remains the same and is backwards compatible.
 
         return_df: :obj:`str`, default=True
             If True, returns ``pandas.DataFrame`` inside a dictionary, mapping each dataframe to
@@ -707,6 +721,8 @@ class CAP(CAPGetter):
         --------
         :data:`neurocaps.typing.SubjectTimeseries`
             Type definition for the subject timeseries dictionary structure.
+            (See: `SubjectTimeseries Documentation
+            <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.typing.SubjectTimeseries.html#neurocaps.typing.SubjectTimeseries>`_)
 
         Returns
         -------
@@ -918,9 +934,10 @@ class CAP(CAPGetter):
                means and standard deviation derived from the group specific concatenated dataframes
                (``self.means`` and ``self.stdev``).
 
-                .. note:: This scaling ensures the subject's data matches the distribution of the\
-                input data used for group-specific clustering, which is needed for accurate\
-                predictions when using group-specific k-means models.
+                .. note::
+                   This scaling ensures the subject's data matches the distribution of the
+                   input data used for group-specific clustering, which is needed for accurate
+                   predictions when using group-specific k-means models.
 
             3. Use group-specific k-means model (``self.kmeans``) and the ``predict()`` function
                from scikit-learn's ``KMeans`` to assign each frame (TR).
@@ -982,6 +999,8 @@ class CAP(CAPGetter):
         --------
         :data:`neurocaps.typing.SubjectTimeseries`
             Type definition for the subject timeseries dictionary structure.
+            (See: `SubjectTimeseries Documentation
+            <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.typing.SubjectTimeseries.html#neurocaps.typing.SubjectTimeseries>`_)
 
         Returns
         -------
@@ -1166,18 +1185,18 @@ class CAP(CAPGetter):
               .. versionadded:: 0.30.0
 
               .. important::
-                This feature should be used with caution. It is recommended to leave this
-                argument as ``False`` for the following conditions:
+                 This feature should be used with caution. It is recommended to leave this
+                 argument as ``False`` for the following conditions:
 
-                1. **Large Number of Nodes**: Enabling labels for a parcellation with many
-                   nodes can clutter the plot axes and make them unreadable.
-                2. **Non-Consecutive Node Indices**: The labeling logic assumes that the
-                   numerical indices for all nodes within a given region are defined as a
-                   consecutive block (e.g., ``"RegionA": [0, 1, 2]``, ``"RegionB": [3, 4]``).
-                   If the indices are non-consecutive or interleaved (e.g.,
-                   ``"RegionA": [0, 2]``, ``"RegionB": [1, 3]``), the axis labels will be
-                   misplaced. Note that this issue only affects the visual labeling on the plot;
-                   the underlying data matrix remains correctly ordered and plotted.
+                 1. **Large Number of Nodes**: Enabling labels for a parcellation with many
+                    nodes can clutter the plot axes and make them unreadable.
+                 2. **Non-Consecutive Node Indices**: The labeling logic assumes that the
+                    numerical indices for all nodes within a given region are defined as a
+                    consecutive block (e.g., ``"RegionA": [0, 1, 2]``, ``"RegionB": [3, 4]``).
+                    If the indices are non-consecutive or interleaved (e.g.,
+                    ``"RegionA": [0, 2]``, ``"RegionB": [1, 3]``), the axis labels will be
+                    misplaced. Note that this issue only affects the visual labeling on the plot;
+                    the underlying data matrix remains correctly ordered and plotted.
 
         Returns
         -------
@@ -1194,7 +1213,7 @@ class CAP(CAPGetter):
         ``self.outer_products``, the final values stored are associated with the last
         string in the ``visual_scope`` list.
 
-        **Color Palettes**: Refer to `seaborn's Color Palettes\
+        **Color Palettes**: Refer to `seaborn's Color Palettes
         <https://seaborn.pydata.org/tutorial/color_palettes.html>`_ for valid pre-made palettes.
         """
         self._check_required_attrs(["_parcel_approach", "_caps"])
@@ -1369,7 +1388,7 @@ class CAP(CAPGetter):
 
         Note
         ----
-        **Color Palettes**: Refer to `seaborn's Color Palettes\
+        **Color Palettes**: Refer to `seaborn's Color Palettes
         <https://seaborn.pydata.org/tutorial/color_palettes.html>`_ for valid pre-made palettes.
 
         **Significance Values**: If ``return_df`` is True, each element will contain its uncorrected

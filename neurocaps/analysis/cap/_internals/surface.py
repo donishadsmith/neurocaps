@@ -13,9 +13,9 @@ from numpy.typing import NDArray
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
-from neurocaps._utils import io as io_utils
-from neurocaps._utils.logging import setup_logger
-from neurocaps._utils.plotting_utils import PlotFuncs
+from neurocaps.utils import _io as io_utils
+from neurocaps.utils._logging import setup_logger
+from neurocaps.utils._plotting_utils import PlotFuncs
 
 LG = setup_logger(__name__)
 

@@ -5,8 +5,8 @@ from typing import Union, Optional
 import numpy as np
 
 from ._internals.serialize import dicts_to_pickles
-from ..typing import SubjectTimeseries
-from .._utils import io as io_utils
+from neurocaps.typing import SubjectTimeseries
+from neurocaps.utils import _io as io_utils
 
 
 def merge_dicts(
@@ -94,6 +94,8 @@ def merge_dicts(
     --------
     :data:`neurocaps.typing.SubjectTimeseries`
         Type definition for the subject timeseries dictionary structure.
+        (See: `SubjectTimeseries Documentation
+        <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.typing.SubjectTimeseries.html#neurocaps.typing.SubjectTimeseries>`_)
 
     References
     ----------

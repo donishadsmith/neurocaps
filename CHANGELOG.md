@@ -13,6 +13,16 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.32.0] - 2025-07-06
+### 🚀 New/Added
+- Created "generate_custom_parcel_approach" to help create a "Custom" `parcel_approach`
+for a parcellations metadata file.
+### 🔧 Refactoring
+- "_utils" is now "utils". Private file in the "utils" folder now start with "underscore".
+- "_.utils.parcellation.py" now "utils.parcellation_validation.py"
+### 📖 Documentation
+- If checking documentation from an IDE, links are provided for the typing definition.
+
 ## [0.31.1] - 2025-07-04
 ### 🐛 Fixes
 - When computing metrics in ``CAP.calculate_metrics``, internally, the dataframes are no longer

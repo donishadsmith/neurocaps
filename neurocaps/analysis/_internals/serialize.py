@@ -3,7 +3,7 @@ from typing import Union
 
 import joblib
 
-from neurocaps._utils.io import makedir
+from neurocaps.utils import _io as io_utils
 
 
 def dicts_to_pickles(
@@ -37,7 +37,7 @@ def dicts_to_pickles(
     if filenames:
         assert len(filenames) == len(list(dict_list)), message
 
-    makedir(output_dir)
+    io_utils.makedir(output_dir)
 
     for i, dict_name in enumerate(list(dict_list)):
         with open(os.path.join(output_dir, saved_filenames[i]), "wb") as f:

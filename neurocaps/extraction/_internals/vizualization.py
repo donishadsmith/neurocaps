@@ -10,13 +10,13 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
 from neurocaps.typing import ParcelApproach
-from neurocaps._utils import io as io_utils
-from neurocaps._utils.parcellation import (
+from neurocaps.utils import _io as io_utils
+from neurocaps.utils._parcellation_validation import (
     check_parcel_approach,
     extract_custom_region_indices,
     get_parc_name,
 )
-from neurocaps._utils.plotting_utils import PlotFuncs
+from neurocaps.utils._plotting_utils import PlotFuncs
 
 
 def get_roi_indices(

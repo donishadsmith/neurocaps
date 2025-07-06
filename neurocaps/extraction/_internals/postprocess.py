@@ -11,7 +11,7 @@ from nilearn.image import index_img, load_img
 from scipy.interpolate import CubicSpline
 
 from neurocaps.typing import ParcelApproach
-from neurocaps._utils.logging import setup_logger
+from neurocaps.utils._logging import setup_logger
 
 # Logger initialization to check if any user-defined loggers where created prior to package import.
 # No variable assignment needed.

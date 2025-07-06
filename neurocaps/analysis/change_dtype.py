@@ -5,8 +5,8 @@ from typing import Union, Optional
 import numpy as np
 
 from ._internals import serialize
-from .._utils import io as io_utils
-from ..typing import SubjectTimeseries
+from neurocaps.utils import _io as io_utils
+from neurocaps.typing import SubjectTimeseries
 
 
 def change_dtype(

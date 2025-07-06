@@ -4,10 +4,10 @@ from typing import Optional, Union
 
 import pandas as pd
 
-from .._utils import io as io_utils
-from .._utils.helpers import resolve_kwargs
+from neurocaps.utils import _io as io_utils
+from neurocaps.utils._helpers import resolve_kwargs
 
-from neurocaps._utils.plotting_utils import MatrixVisualizer, PlotDefaults, PlotFuncs
+from neurocaps.utils._plotting_utils import MatrixVisualizer, PlotDefaults, PlotFuncs
 
 
 def transition_matrix(

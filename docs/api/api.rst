@@ -1,7 +1,7 @@
 API
 ===
 
-Publicly available classes, functions, exceptions, and types within NeuroCAPs.
+Publicly available classes, functions, exceptions, types, and utility functions within NeuroCAPs.
 
 .. toctree::
    :hidden:
@@ -11,6 +11,7 @@ Publicly available classes, functions, exceptions, and types within NeuroCAPs.
    extraction
    analysis
    typing
+   utils
 
 .. autosummary::
    :nosignatures:
@@ -32,3 +33,4 @@ Publicly available classes, functions, exceptions, and types within NeuroCAPs.
    neurocaps.typing.SchaeferParcelApproach
    neurocaps.typing.AALParcelApproach
    neurocaps.typing.CustomParcelApproach
+   neurocaps.utils.generate_custom_parcel_approach

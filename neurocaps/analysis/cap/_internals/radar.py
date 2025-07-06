@@ -11,8 +11,8 @@ import plotly.offline as pyo
 from numpy.typing import NDArray
 
 from neurocaps.typing import ParcelApproach
-from neurocaps._utils.parcellation import extract_custom_region_indices, get_parc_name
-from neurocaps._utils import io as io_utils
+from neurocaps.utils._parcellation_validation import extract_custom_region_indices, get_parc_name
+from neurocaps.utils import _io as io_utils
 
 
 def update_radar_dict(

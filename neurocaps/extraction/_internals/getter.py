@@ -6,8 +6,8 @@ from typing import Union
 import numpy as np
 
 from neurocaps.typing import ParcelConfig, ParcelApproach, SubjectTimeseries
-from neurocaps._utils import io as io_utils
-from neurocaps._utils.parcellation import check_parcel_approach
+from neurocaps.utils import _io as io_utils
+from neurocaps.utils._parcellation_validation import check_parcel_approach
 
 
 class TimeseriesExtractorGetter:

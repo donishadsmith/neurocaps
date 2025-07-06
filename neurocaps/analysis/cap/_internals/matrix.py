@@ -13,13 +13,13 @@ import seaborn
 from numpy.typing import NDArray
 
 from neurocaps.typing import ParcelApproach
-from neurocaps._utils import io as io_utils
-from neurocaps._utils.parcellation import (
+from neurocaps.utils import _io as io_utils
+from neurocaps.utils._parcellation_validation import (
     collapse_aal_node_names,
     extract_custom_region_indices,
     get_parc_name,
 )
-from neurocaps._utils.plotting_utils import PlotFuncs
+from neurocaps.utils._plotting_utils import PlotFuncs
 
 
 def check_cap_length(
