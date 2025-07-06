@@ -1,4 +1,4 @@
-"""Internal function for checking the validity of parcel_approach."""
+"""Internal functions for checking the validity of parcel_approach."""
 
 import re
 from typing import Any
@@ -370,6 +370,6 @@ def extract_custom_region_indices(parcel_approach: ParcelApproach, region_name: 
     )
 
 
-def get_parc_name(parcel_approach: ParcelApproach):
+def get_parc_name(parcel_approach: ParcelApproach) -> str:
     """Extract the name of the parcellation."""
     return list(parcel_approach)[0]
