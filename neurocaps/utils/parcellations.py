@@ -18,7 +18,7 @@ def generate_custom_parcel_approach(
     column_map: dict[Literal["nodes", "regions", "hemispheres"], str],
     hemisphere_map: Optional[dict[Literal["lh", "rh"], list[str]]] = None,
     background_label: Optional[str] = "Background",
-) -> CustomParcelApproach:
+) -> dict[Literal["Custom"], CustomParcelApproach]:
     """
     Generates the "Custom" parcellation approach dictionary from a metadata file.
 
@@ -85,6 +85,12 @@ def generate_custom_parcel_approach(
        The type definition for the Custom parcellation approach.
        (See `CustomParcelApproach Documentation
        <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.typing.CustomParcelApproach.html#neurocaps.typing.CustomParcelApproach>`_)
+
+    ParcelApproach
+        Type definition representing the structure of the Schaefer, AAL, and Custom parcellation
+        approaches.
+        (See `ParcelApproach Documentation
+        <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.typing.ParcelApproach.html#neurocaps.typing.ParcelApproach>`_)
 
     Note
     ----
