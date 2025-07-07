@@ -41,15 +41,11 @@
 
 NeuroCAPs (**Neuro**\ imaging **C**\ o-**A**\ ctivation **P**\ attern\ **s**) is a Python package for performing
 Co-Activation Patterns (CAPs) analyses on resting-state or task-based fMRI data. CAPs identifies recurring brain states
-by applying k-means clustering on BOLD timeseries data [1]_ [2]_.
+by applying k-means clustering on BOLD timeseries data [1]_.
 
 .. image:: assets/workflow.png
    :width: 70%
    :align: center
-
-**Note:** NeuroCAPs is most optimized for fMRI data preprocessed with `fMRIPrep <https://fmriprep.org/en/stable/>`_ and
-assumes the data is BIDs compliant. Refer to `NeuroCAPs' BIDS Structure and Entities Documentation <https://neurocaps.readthedocs.io/en/stable/bids.html>`_
-for additional information.
 
 Citing
 ------
@@ -59,68 +55,46 @@ Citing
 
 Usage
 -----
-This package contains two main classes: ``TimeseriesExtractor`` for extracting the timeseries, and
-``CAP`` for performing the CAPs analysis.
+NeuroCAPs is built around two main classes (``TimeseriesExtractor`` and ``CAP``) and includes several
+features to perform the complete CAPs workflow from postprocessing to visualizations.
+Notable features includes:
 
-Main features for ``TimeseriesExtractor`` includes:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- Timeseries Extraction (``TimeseriesExtractor``):
 
-- **Timeseries Extraction:** Extract timeseries for resting-state or task data using Schaefer, AAL,
-  or a manually defined deterministic "Custom" parcellation for spatial dimensionality
-  reduction.
-- **Parallel Processing:** Parallelize at the subject-level (one subject per CPU core) to speed up
-  timeseries extraction.
-- **Saving Timeseries:** Save the nested dictionary containing timeseries (mapping subject id
-  -> run id -> timeseries data) as a pickle file.
-- **Reporting Quality Control:** Reports statistics related to framewise displacement and dummy
-  volumes per-subject.
-- **Visualization:** Visualize the timeseries at the region or node level of the parcellation for a
-  given subject and run.
+  - Extracts BOLD timeseries from resting-state or task-based fMRI data.
+  - Supports deterministic parcellations such as the Schaefer and AAL, in addition to custom-defined deterministic parcellations.
+  - Performs nuisance regression, motion scrubbing, and additional features
+  - Reports quality control information based on framewise displacement
 
-Main features for ``CAP`` includes:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  .. important::
+      NeuroCAPs is most optimized for fMRI data preprocessed with
+      [fMRIPrep](https://fmriprep.org/en/stable/) and assumes the data is BIDs compliant.
+      Refer to [NeuroCAPs' BIDS Structure and Entities Documentation](https://neurocaps.readthedocs.io/en/stable/bids.html)
+      for additional information.
 
-- **Grouping:** Perform CAPs analysis for entire sample or groups of subject IDs
-- **Optimal Cluster Size Identification:** Perform the Davies Bouldin, Silhouette, Elbow, or
-  Variance Ratio criterions to identify the optimal cluster size and automatically save the optimal
-  model as an attribute.
-- **Parallel Processing:** Use parallel processing to speed up optimal cluster size identification.
-- **CAPs Visualization:** Visualize the CAPs as outer products or heatmaps at either the region or
-  node level of the parcellation.
-- **Save CAPs as NifTIs:** Convert the atlas used for parcellation to a statistical NifTI image.
-- **Surface Plot Visualization:** Project CAPs onto a surface plot.
-- **Correlation Matrix Creation:** Create a correlation matrix from CAPs.
-- **CAPs Metrics Calculation:** Calculate several CAPs metrics as described in
-  `Liu et al., 2018 <https://doi.org/10.1016/j.neuroimage.2018.01.041>`_ [2]_ and
-  `Yang et al., 2021 <https://doi.org/10.1016/j.neuroimage.2021.118193>`_ [3]_:
-    - *Temporal Fraction (Fraction of Time):* The proportion of total volumes spent in a single CAP
-      over all volumes in a run.
-    - *Persistence (Dwell Time):* The average time spent in a single CAP before transitioning to
-      another CAP (average consecutive/uninterrupted time).
-    - *Counts (State Initiation):* The total number of initiations of a specific CAP across an
-      entire run. An initiation is defined as the first occurrence of a CAP.
-    - *Transition Frequency:* The number of transitions between different CAPs across the entire run.
-    - *Transition Probability* : The probability of transitioning from one CAP to another CAP
-      (or the same CAP). This is calculated as (Number of transitions from A to B) / (Total transitions from A).
-- **Cosine Similarity Radar Plots:** Create radar plots showing the cosine similarity between
-  positive and negative activations of each CAP and each a-priori regions in a parcellation [4]_ [5]_.
+- CAP Analysis (``CAP``):
 
-**Additional functions in the `neurocaps.analysis` module includes:**
+  - Performs k-means clustering on individuals or groups
+  - Identifies the optimal number of clusters using Silhouette, Elbow, Davies Bouldin, or Variance Ratio methods
+  - Computes several temporal dynamic metrics [2]_ [3]_:
+      - Temporal Fraction (Fraction of Time)
+      - Persistence (Dwell Time)
+      - Counts (State Initiation)
+      - Transition Frequency & Probability
+  - Produces several visualizations:
+      - Heatmaps and outer product plots
+      - Surface plots
+      - Correlation matrices
+      - Cosine similarity radar plots [4]_ [5]_
 
-- ``merge_dicts()``: Merge the subject_timeseries dictionaries for overlapping subjects across tasks
-  to identify similar CAPs across different tasks [6]_. The merged dictionary can be saved as a pickle file.
-- ``standardize()``: Standardizes each run independently for all subjects in the subject timeseries.
-- ``change_dtype()``: Changes the dtype of all subjects in the subject timeseries to help with memory usage.
-- ``transition_matrix()``: Uses the subject-level transition probabilities outputted from the ``CAP``
-  class to generate and visualize the averaged transition probability matrix for all groups from the analysis.
+- Utilities:
 
-Additional function in the ``neurocaps.utils`` module include:
+  - Plot transition matrices
+  - Merges timeseries data across tasks or session
+  - Generates the custom parcellation dictionary structure from the parcellation's metadata file
 
-- ``generate_custom_parcel_approach``: Creates the custom parcellation approach from a metadata
-file.
-
-Please refer to the `demos <https://github.com/donishadsmith/neurocaps/tree/main/demos>`_ or
-`tutorials <https://neurocaps.readthedocs.io/en/latest/examples/examples.html>`_ for a more
+Refer to the demos to the `demos <https://github.com/donishadsmith/neurocaps/tree/main/demos>`_ or
+`tutorials <https://neurocaps.readthedocs.io/en/latest/examples/examples.html>`_ for an
 extensive demonstration of the features included in this package.
 
 Dependencies
