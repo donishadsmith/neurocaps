@@ -87,18 +87,18 @@ def check_keys(parcel_dict):
     return all(key in parcel_dict[list(parcel_dict)[0]] for key in required_keys)
 
 
-def process_aal(parcel_dict):
+def process_aal(config_dict):
     """
     Converts a ``parcel_approach`` containing initialization keys for "AAL" the the final processed
     version. Uses nilearn to fetch the parcellation map and labels.
     """
-    if "version" not in parcel_dict["AAL"]:
+    if "version" not in config_dict["AAL"]:
         LG.warning("'version' not specified in `parcel_approach`. Defaulting to 'SPM12'.")
-        parcel_dict["AAL"].update({"version": "SPM12"})
+        config_dict["AAL"].update({"version": "SPM12"})
 
     # Get atlas map; named "maps" to match nilearn and only contains a single file
-    fetched_aal = datasets.fetch_atlas_aal(version=parcel_dict["AAL"]["version"], verbose=0)
-    parcel_dict["AAL"].update({"maps": fetched_aal.maps})
+    fetched_aal = datasets.fetch_atlas_aal(version=config_dict["AAL"]["version"], verbose=0)
+    parcel_dict = {"AAL": {"maps": fetched_aal.maps}}
 
     # Get nodes
     parcel_dict["AAL"].update({"nodes": list(fetched_aal.labels)})
@@ -110,9 +110,22 @@ def process_aal(parcel_dict):
     regions = collapse_aal_node_names(parcel_dict["AAL"]["nodes"])
     parcel_dict["AAL"].update({"regions": regions})
 
-    # Clean initialization keys
-    for key in VALID_DICT_STUCTURES["AAL"]:
-        parcel_dict["AAL"].pop(key, None)
+    # Copy configuration and add information; no resolution information due to not wanting to
+    # load in the parcellation file and checking header/diagonal of affine matrix
+    # This is called be an __init__
+    # Added name key for consistency purposes
+    metadata_dict = dict(
+        name="AAL",
+        n_nodes=len(parcel_dict["AAL"]["nodes"]),
+        n_regions=len(parcel_dict["AAL"]["regions"]),
+        space="MNI",
+        doi=(
+            "10.1006/nimg.2001.0978"
+            if not config_dict["AAL"]["version"] == "3v2"
+            else "10.1016/j.neuroimage.2019.116189"
+        ),
+    )
+    parcel_dict["AAL"]["metadata"] = metadata_dict
 
     return parcel_dict
 
@@ -120,7 +133,7 @@ def process_aal(parcel_dict):
 def process_custom(parcel_dict, call):
     """
     Ensures that "Custom" parcel approaches have the necessary keys. Performs basic validation
-    before passing to ``_check_custom_structure``.
+    before passing to ``check_custom_structure``.
     """
     custom_example = {"Custom": VALID_DICT_STUCTURES["Custom"]}
 
@@ -152,34 +165,33 @@ def process_custom(parcel_dict, call):
             )
 
     if call == "TimeseriesExtractor":
-        io_utils.check_file_exist(parcel_dict["Custom"]["maps"])
-        io_utils.check_ext(parcel_dict["Custom"]["maps"], [".nii", ".nii.gz"])
+        io_utils.validate_file(parcel_dict["Custom"]["maps"], [".nii", ".nii.gz"])
 
     # Check structure
     check_custom_structure(parcel_dict["Custom"], custom_example)
 
 
-def process_schaefer(parcel_dict):
+def process_schaefer(config_dict):
     """
     Converts a ``parcel_approach`` containing initialization keys for "Schafer" the the final
     processed version. Uses nilearn to fetch the parcellation map and labels.
     """
-    if "n_rois" not in parcel_dict["Schaefer"]:
+    if "n_rois" not in config_dict["Schaefer"]:
         LG.warning("'n_rois' not specified in `parcel_approach`. Defaulting to 400 ROIs.")
-        parcel_dict["Schaefer"].update({"n_rois": 400})
+        config_dict["Schaefer"].update({"n_rois": 400})
 
-    if "yeo_networks" not in parcel_dict["Schaefer"]:
+    if "yeo_networks" not in config_dict["Schaefer"]:
         LG.warning("'yeo_networks' not specified in `parcel_approach`. Defaulting to 7 networks.")
-        parcel_dict["Schaefer"].update({"yeo_networks": 7})
+        config_dict["Schaefer"].update({"yeo_networks": 7})
 
-    if "resolution_mm" not in parcel_dict["Schaefer"]:
+    if "resolution_mm" not in config_dict["Schaefer"]:
         LG.warning("'resolution_mm' not specified in `parcel_approach`. Defaulting to 1mm.")
-        parcel_dict["Schaefer"].update({"resolution_mm": 1})
+        config_dict["Schaefer"].update({"resolution_mm": 1})
 
     # Get atlas; named "maps" to match nilearn and only contains a single file
-    fetched_schaefer = datasets.fetch_atlas_schaefer_2018(**parcel_dict["Schaefer"], verbose=0)
-    parcel_dict["Schaefer"].update({"maps": fetched_schaefer.maps})
-    network_name = "7Networks_" if parcel_dict["Schaefer"]["yeo_networks"] == 7 else "17Networks_"
+    fetched_schaefer = datasets.fetch_atlas_schaefer_2018(**config_dict["Schaefer"], verbose=0)
+    parcel_dict = {"Schaefer": {"maps": fetched_schaefer.maps}}
+    network_name = "7Networks_" if config_dict["Schaefer"]["yeo_networks"] == 7 else "17Networks_"
 
     # Get nodes; decoding needed in nilearn version =< 0.11.1
     try:
@@ -200,9 +212,21 @@ def process_schaefer(parcel_dict):
     )
     parcel_dict["Schaefer"].update({"regions": list(regions)})
 
-    # Clean initialization keys
-    for key in VALID_DICT_STUCTURES["Schaefer"]:
-        parcel_dict["Schaefer"].pop(key, None)
+    # Add metadata; add name for consistency purposes
+    n_nodes, n_regions = config_dict["Schaefer"]["n_rois"], config_dict["Schaefer"]["yeo_networks"]
+
+    for key in ["n_rois", "yeo_networks"]:
+        config_dict["Schaefer"].pop(key)
+
+    metadata_dict = dict(
+        name="Schaefer",
+        n_nodes=n_nodes,
+        n_regions=n_regions,
+        space="MNI152NLin6Asym",
+        doi="10.1152/jn.00338.2011",
+        **config_dict["Schaefer"],
+    )
+    parcel_dict["Schaefer"]["metadata"] = metadata_dict
 
     return parcel_dict
 

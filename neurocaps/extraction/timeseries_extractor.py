@@ -43,10 +43,10 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
 
     parcel_approach: :obj:`ParcelConfig`, :obj:`ParcelApproach`, :obj:`str`, or :obj:`None`, default=None
         Specifies the parcellation approach to use. Options are "Schaefer", "AAL", or "Custom". Can
-        be initialized with parameters, as a nested dictionary, or loaded from a pickle file.
-        For detailed documentation on the expected structure, see the type definitions for
-        ``ParcelConfig`` and ``ParcelApproach`` in the "See Also" section. Defaults to
-        ``{"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}`` if None.
+        be initialized with parameters, as a nested dictionary, or loaded from a serialized file
+        (i.e. pickle, joblib, json). For detailed documentation on the expected structure, see the
+        type definitions for ``ParcelConfig`` and ``ParcelApproach`` in the "See Also" section.
+        Defaults to ``{"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}`` if None.
 
         .. versionchanged:: 0.28.0
            Default changed to None; however, the same default dictionary configuration remains the

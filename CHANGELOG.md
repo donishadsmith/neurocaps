@@ -13,6 +13,14 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+
+## [0.32.2] - 2025-07-08
+### 🚀 New/Added
+- Create `fetch_preset_parcel_approach` to retrieve preset parcellations (HCPex and 4S) from OSF
+- Parcel approaches have informational metadata keys
+### 🐛 Fixes
+- Fixed blank fifure issue when saving the cluster performance
+
 ## [0.32.1] - 2025-07-06
 ### 🐛 Fixes
 - Return type hint for `generate_custom_parcel_approach`.

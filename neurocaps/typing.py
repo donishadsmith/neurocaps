@@ -1,6 +1,6 @@
 """Module containing custom types."""
 
-from typing import Literal, TypedDict, Union
+from typing import Any, Literal, TypedDict, Union
 from typing_extensions import Required, NotRequired
 
 from numpy import floating
@@ -145,6 +145,7 @@ ParcelConfig = Union[
 class ParcelApproachBase(TypedDict):
     maps: NotRequired[str]
     nodes: NotRequired[list[str]]
+    metadata: NotRequired[dict[str, Any]]
 
 
 class SchaeferParcelApproach(ParcelApproachBase):
@@ -175,6 +176,11 @@ class SchaeferParcelApproach(ParcelApproachBase):
         methods, the ``in`` operator is used to determine which nodes belong to which network.
         Therefore, network names must be contained within the corresponding node names (e.g., "Vis"
         network should have nodes with "Vis" in their names).
+    metadata: :obj:`dict[str, Any]`
+        Dictionary containing metadata information about the parcellation. This key is purely
+        informational and can be removed, modified, or extended.
+
+        .. versionadded: 0.32.2
 
     See Also
     --------
@@ -186,6 +192,7 @@ class SchaeferParcelApproach(ParcelApproachBase):
     """
 
     regions: NotRequired[list[str]]
+    metadata: NotRequired[dict[str, Any]]
 
 
 class AALParcelApproach(ParcelApproachBase):
@@ -217,6 +224,11 @@ class AALParcelApproach(ParcelApproachBase):
         the ``in`` operator is used to determine which nodes belong to which region. Therefore,
         region names must be contained within the corresponding node names (e.g.,
         "Frontal_Sup" region should have nodes with "Frontal_Sup" in their names).
+    metadata: :obj:`dict[str, Any]`
+        Dictionary containing metadata information about the parcellation. This key is purely
+        informational and can be removed, modified, or extended.
+
+        .. versionadded: 0.32.2
 
     See Also
     --------
@@ -317,6 +329,10 @@ class CustomParcelApproach(ParcelApproachBase):
         Dictionary mapping the regions to a list integers (or range) representing the index
         positions of elements in the "nodes" list belonging to the region or a dictionary mapping
         the region to a dictionary.
+    metadata: :obj:`dict[str, Any]`
+        Dictionary containing metadata information about the parcellation. This key is purely
+        informational and can be removed, modified, or extended.
+        .. versionadded: 0.32.2
 
         .. note::
            The use of ``CustomRegionHemispheres`` to define lateralized regions (i.e., with "lh"

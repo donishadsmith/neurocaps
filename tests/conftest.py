@@ -1,5 +1,4 @@
 import logging, os, shutil, sys, tempfile
-from pathlib import Path
 
 # Assign null handler to root to reduce logged output when using `pytest -s`
 logging.getLogger().addHandler(logging.NullHandler())
@@ -70,12 +69,12 @@ def create_data_directories():
     """Function to copy nilearn and neuromaps data to home directory."""
     curr_dir = os.path.join(os.path.dirname(__file__), "data")
 
-    target_nilearn = Path("~/nilearn_data").expanduser()
-    if not target_nilearn.is_dir():
+    target_nilearn = os.path.expanduser("~/nilearn_data")
+    if not os.path.isdir(target_nilearn):
         shutil.copytree(os.path.join(curr_dir, "nilearn_data"), target_nilearn)
 
-    target_neuromaps = Path("~/neuromaps-data").expanduser()
-    if not target_neuromaps.is_dir():
+    target_neuromaps = os.path.expanduser("~/neuromaps-data")
+    if not os.path.isdir(target_neuromaps):
         shutil.copytree(os.path.join(curr_dir, "neuromaps-data"), target_neuromaps)
 
 

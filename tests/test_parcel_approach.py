@@ -44,7 +44,7 @@ def test_3v2_AAL():
     """
     Test that the AAL produces the correct shape
     """
-    keys = ["maps", "nodes", "regions"]
+    keys = ["maps", "nodes", "regions", "metadata"]
 
     parcel_approach = {"AAL": {"version": "3v2"}}
     extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
@@ -52,15 +52,17 @@ def test_3v2_AAL():
     assert "AAL" in extractor.parcel_approach
 
     assert all(key in extractor.parcel_approach["AAL"] for key in keys)
-    assert len(extractor.parcel_approach["AAL"]) == 3
+    assert len(extractor.parcel_approach["AAL"]) == 4
 
     for i in extractor.parcel_approach["AAL"]:
         if i == "maps":
             assert os.path.isfile(extractor.parcel_approach["AAL"]["maps"])
         elif i == "nodes":
             assert len(extractor.parcel_approach["AAL"]["nodes"]) == 166
+        elif i == "regions":
+            assert len(extractor.parcel_approach["AAL"]["regions"]) == 50
         else:
-            assert len(extractor.parcel_approach["AAL"][i]) == 50
+            assert extractor.parcel_approach["AAL"]["metadata"]["n_regions"] == 50
 
 
 @pytest.mark.parametrize("yeo_networks", [7, 17])
@@ -83,30 +85,34 @@ def test_partial_parcel_approaches():
     assert "AAL" in extractor.parcel_approach
 
     assert all(key in extractor.parcel_approach["AAL"] for key in keys)
-    assert len(extractor.parcel_approach["AAL"]) == 3
+    assert len(extractor.parcel_approach["AAL"]) == 4
 
     for i in extractor.parcel_approach["AAL"]:
         if i == "maps":
             assert os.path.isfile(extractor.parcel_approach["AAL"]["maps"])
         elif i == "nodes":
             assert len(extractor.parcel_approach["AAL"]["nodes"]) == 116
+        elif i == "regions":
+            assert len(extractor.parcel_approach["AAL"]["regions"]) == 43
         else:
-            assert len(extractor.parcel_approach["AAL"][i]) == 43
+            assert extractor.parcel_approach["AAL"]["metadata"]["n_regions"] == 43
 
     parcel_approach = {"Schaefer": {}}
     extractor = TimeseriesExtractor(parcel_approach=parcel_approach)
 
     assert "Schaefer" in extractor.parcel_approach
     assert all(key in extractor.parcel_approach["Schaefer"] for key in keys)
-    assert len(extractor.parcel_approach["Schaefer"]) == 3
+    assert len(extractor.parcel_approach["Schaefer"]) == 4
 
     for i in extractor.parcel_approach["Schaefer"]:
         if i == "maps":
             assert os.path.isfile(extractor.parcel_approach["Schaefer"]["maps"])
         elif i == "nodes":
             assert len(extractor.parcel_approach["Schaefer"]["nodes"]) == 400
+        elif i == "regions":
+            assert len(extractor.parcel_approach["Schaefer"]["regions"]) == 7
         else:
-            assert len(extractor.parcel_approach["Schaefer"][i]) == 7
+            assert extractor.parcel_approach["Schaefer"]["metadata"]["n_regions"] == 7
 
 
 @pytest.mark.parametrize("data", ["Schaefer", "AAL"])

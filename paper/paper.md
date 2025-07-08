@@ -78,9 +78,9 @@ Contains the `TimeseriesExtractor` class, which:
 - collects preproccessed BOLD data from an BIDS-compliant dataset [@Yarkoni2019]
 - leverages Nilearn's [@Nilearn] `NiftiLabelsMasker` to perform nuisance regression and spatial
 dimensionality reduction using deterministic parcellations (e.g., Schaefer [@Schaefer2018],
-AAL [@Tzourio-Mazoyer2002]).
-- scrubs high-motion volumes using fMRIPrep-derived framewise displacement values.
-- reports quality control information related to high-motion or non-steady state volumes.
+AAL [@Tzourio-Mazoyer2002])
+- scrubs high-motion volumes using fMRIPrep-derived framewise displacement values
+- reports quality control information related to high-motion or non-steady state volumes
 
 2. `neurocaps.analysis`
 Contains the CAP class for performing the main analysis, as well as several standalone
@@ -88,12 +88,12 @@ utility functions.
 
 - The `CAP` class:
   - performs k-means clustering [@scikit-learn] to identify CAPs, supporting both single and
-    optimized cluster selection with heuristics such as the silhouette and elbow method [Arvai2023].
+    optimized cluster selection with heuristics such as the silhouette and elbow method [Arvai2023]
   - computes subject-level temporal dynamics metrics (e.g., fractional occupancy, transition
-    probabilities) for statistical analysis.
-  - converts identified CAPs back into NIfTI statistical maps for spatial interpretation.
+    probabilities) for statistical analysis
+  - converts identified CAPs back into NIfTI statistical maps for spatial interpretation
   - integrates multiple plotting libraries [@Hunter:2007; @Waskom2021; @plotly; @Gale2021] to
-    provide a diverse range of visualization options.
+    provide a diverse range of visualization options
 
 - Standalone functions:
 Provide tools for data standardization [@harris2020array], merging timeseries data across sessions
@@ -101,12 +101,15 @@ or tasks, and creating group-averaged transition matrices.
 
 3. `neurocaps.utils`
 
-Contains a utility function, `generate_custom_parcel_approach`, which automatically creates
-the necessary data structures from a parcellation's metadata file.
+Contains a utility functions:
+
+- `fetch_preset_parcel_approach`: fetches a preset parcel approach (either "4S" or "HCPex" [@Huang2022])
+- `generate_custom_parcel_approach`: automatically creates the necessary data structures from a parcellation's metadata file
 
 # Workflow Example
 The following code demonstrates a simple workflow example using NeuroCAPs to perform the CAPs
-analysis.
+analysis. An interactive variant of this workflow example is available on the
+[readthedocs](https://neurocaps.readthedocs.io/en/stable/examples/workflow.html).
 
 1. Extract timeseries data
 ```python
@@ -191,10 +194,8 @@ cap_analysis.get_caps(
 
 3. Compute temporal dynamic metrics for downstream statistical analyses
 ```python
-# Calculate temporal fraction and persistence of each CAP for all subjects
-output = cap_analysis.calculate_metrics(
-    extractor.subject_timeseries, metrics=["temporal_fraction", "persistence"]
-)
+# Calculate temporal fraction of each CAP for all subjects
+output = cap_analysis.calculate_metrics(extractor.subject_timeseries, metrics=["temporal_fraction"])
 print(output["temporal_fraction"])
 ```
 

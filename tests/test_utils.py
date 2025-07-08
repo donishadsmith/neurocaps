@@ -3,7 +3,8 @@ import os, shutil
 import pandas as pd
 import pytest
 
-from neurocaps.utils import generate_custom_parcel_approach
+from neurocaps.utils import fetch_preset_parcel_approach, generate_custom_parcel_approach
+from neurocaps.utils._parcellation_validation import process_custom
 
 
 @pytest.fixture(autouse=False, scope="function")
@@ -30,6 +31,49 @@ def copy_test_data(tmp_dir):
     yield tsv_file, tsv_error_file
 
 
+def check_lateralized_regions(parcel_approach):
+    """
+    Checks 4S lateralized (Vis and SomSot) and non-lateralized regions (Cerebellum).
+    For 156 parcel variant.
+    """
+    # Check the regions mapping for lateralized case
+    regions_hemi = parcel_approach["Custom"]["regions"]
+    assert isinstance(regions_hemi["Vis"], dict)
+    assert "lh" in regions_hemi["Vis"] and "rh" in regions_hemi["Vis"]
+    assert regions_hemi["Vis"]["lh"] == [0, 1, 2, 3, 4, 5, 6, 7, 8]
+    assert regions_hemi["Vis"]["rh"] == [50, 51, 52, 53, 54, 55, 56, 57]
+
+    assert isinstance(regions_hemi["SomMot"], dict)
+    assert "lh" in regions_hemi["SomMot"] and "rh" in regions_hemi["SomMot"]
+    assert regions_hemi["SomMot"]["lh"] == [9, 10, 11, 12, 13, 14]
+    assert regions_hemi["SomMot"]["rh"] == [58, 59, 60, 61, 62, 63, 64, 65]
+
+    # For cerebellum in lateralized case should be a simple list of indices
+    assert isinstance(regions_hemi["Cerebellum"], list)
+    assert regions_hemi["Cerebellum"] == [146, 147, 148, 149, 150, 151, 152, 153, 154, 155]
+
+
+def check_structure(parcel_approach):
+    """Checks structure of custom parcellation approach."""
+    try:
+        process_custom(parcel_approach, call="test")
+    except:
+        pytest.raises("Custom parcellation does not have the correct structure.")
+
+
+def test_fetch_preset_parcel_approach():
+    """Tests the fetch function."""
+    parcel_approach = fetch_preset_parcel_approach("4S", n_nodes=156)
+
+    check_lateralized_regions(parcel_approach)
+
+    check_structure(parcel_approach)
+
+    assert parcel_approach["Custom"]["metadata"]["name"] == "4S"
+    assert parcel_approach["Custom"]["metadata"]["n_nodes"] == 156
+    assert parcel_approach["Custom"]["metadata"]["n_regions"] == 7
+
+
 def test_generate_custom_parcel_approach(copy_test_data, create_empty_nifti_file):
     """Tests the ``generate_custom_parcel_approach`` with and without hemispheres."""
     tsv_file, _ = copy_test_data
@@ -42,6 +86,8 @@ def test_generate_custom_parcel_approach(copy_test_data, create_empty_nifti_file
         column_map={"nodes": "label", "regions": "network_label"},
         background_label="Background",
     )
+
+    check_structure(parcel_approach_no_hemi)
 
     # Check that node labels match the dataframe (minus the background)
     expected_nodes = df["label"][1:].tolist()
@@ -68,22 +114,9 @@ def test_generate_custom_parcel_approach(copy_test_data, create_empty_nifti_file
     )
 
     assert parcel_approach_with_hemi["Custom"]["nodes"] == expected_nodes
+    check_structure(parcel_approach_with_hemi)
 
-    # Check the regions mapping for lateralized case
-    regions_hemi = parcel_approach_with_hemi["Custom"]["regions"]
-    assert isinstance(regions_hemi["Vis"], dict)
-    assert "lh" in regions_hemi["Vis"] and "rh" in regions_hemi["Vis"]
-    assert regions_hemi["Vis"]["lh"] == [0, 1, 2, 3, 4, 5, 6, 7, 8]
-    assert regions_hemi["Vis"]["rh"] == [50, 51, 52, 53, 54, 55, 56, 57]
-
-    assert isinstance(regions_hemi["SomMot"], dict)
-    assert "lh" in regions_hemi["SomMot"] and "rh" in regions_hemi["SomMot"]
-    assert regions_hemi["SomMot"]["lh"] == [9, 10, 11, 12, 13, 14]
-    assert regions_hemi["SomMot"]["rh"] == [58, 59, 60, 61, 62, 63, 64, 65]
-
-    # For cerebellum in lateralized case should be a simple list of indices
-    assert isinstance(regions_hemi["Cerebellum"], list)
-    assert regions_hemi["Cerebellum"] == [146, 147, 148, 149, 150, 151, 152, 153, 154, 155]
+    check_lateralized_regions(parcel_approach_with_hemi)
 
 
 def test_generate_custom_parcel_approach_partial_lateralization_error(
