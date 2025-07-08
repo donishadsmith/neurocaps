@@ -245,14 +245,35 @@ lateralization information is specific case in ``CAP.caps2plot`` when ``visual_s
         hemisphere_map={"lh": ["LH"], "rh": ["RH"]},
     )
 
-3. Fetching a preset "Custom" ``parcel_approach`` (currently only "HCPex" or "4S")
-----------------------------------------------------------------------------------
+3. Fetching a preset "Custom" ``parcel_approach``
+
+**Note**: Currently only "HCPex" and "4S" are supported
+-------------------------------------------------------
 .. code-block:: python
 
     from neurocaps.utils import fetch_preset_parcel_approach
 
     parcel_approach = fetch_preset_parcel_approach("HCPex")
     parcel_approach = fetch_preset_parcel_approach("4S", n_nodes=456)
+
+.. rst-class:: sphx-glr-script-out
+
+    .. code-block:: none
+
+        2025-07-09 10:11:30,644 neurocaps.utils._io [WARNING] Creating the following non-existent file path: C:\Users\donis\neurocaps_data.
+        2025-07-09 10:11:30,644 neurocaps.utils.datasets._fetch [INFO] Downloading the following files from OSF: 'atlas-HCPex_desc-CustomParcelApproach.json', 'tpl-MNI152NLin2009cAsym_atlas-HCPex_2mm.nii.gz'
+        [fetch_single_file] Downloading data from https://osf.io/rdbfv/download ...
+        [fetch_single_file]  ...done. (2 seconds, 0 min)
+
+        [fetch_single_file] Downloading data from https://osf.io/mx4d6/download ...
+        [fetch_single_file]  ...done. (2 seconds, 0 min)
+
+        2025-07-09 10:11:34,853 neurocaps.utils.datasets._fetch [INFO] Downloading the following files from OSF: 'atlas-4S456Parcels_desc-CustomParcelApproach.json', 'tpl-MNI152NLin2009cAsym_atlas-4S456Parcels_res-01_dseg.nii.gz'
+        [fetch_single_file] Downloading data from https://osf.io/juyac/download ...
+        [fetch_single_file]  ...done. (1 seconds, 0 min)
+
+        [fetch_single_file] Downloading data from https://osf.io/tpz6y/download ...
+        [fetch_single_file]  ...done. (4 seconds, 0 min)
 
 ==========
 

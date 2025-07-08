@@ -66,8 +66,8 @@ However, many of NeuroCAPs' post-processing functionalities assumes that fMRI da
 a Brain Imaging Data Structure (BIDS) compliant directory and is most optimized for data
 preprocessed with fMRIPrep [@Esteban2019] or preprocessing pipelines that generate similar
 outputs (e.g. NiBabies [@Goncalves2025]). Furthermore, NeuroCAPs only supports the k-means
-algorithm for clustering, which is the clustering algorithm typically employed when performing
-the CAPs analysis [@Liu2013].
+algorithm for clustering, which is the clustering algorithm that was originally used and is often
+employed when performing the CAPs analysis [@Liu2013].
 
 # Modules
 The core functionalities of NeuroCAPs are concentrated in three modules:
@@ -88,7 +88,7 @@ utility functions.
 
 - The `CAP` class:
   - performs k-means clustering [@scikit-learn] to identify CAPs, supporting both single and
-    optimized cluster selection with heuristics such as the silhouette and elbow method [Arvai2023]
+    optimized cluster selection with heuristics such as the silhouette and elbow method [@Arvai2023]
   - computes subject-level temporal dynamics metrics (e.g., fractional occupancy, transition
     probabilities) for statistical analysis
   - converts identified CAPs back into NIfTI statistical maps for spatial interpretation

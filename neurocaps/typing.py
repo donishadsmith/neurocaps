@@ -168,19 +168,22 @@ class SchaeferParcelApproach(ParcelApproachBase):
     ----------
     maps: :obj:`str`
         Path to the Schaefer parcellation.
+
     nodes: :obj:`list[str]`
         List of nodes (ROIs) in the Schaefer parcellation. Ordered in ascending order of their label
         ID in the parcellation and must exclude "Background".
+
     regions: :obj:`list[str]`
         List of networks in the Schaefer parcellation. **Important**: For certain visualization
         methods, the ``in`` operator is used to determine which nodes belong to which network.
         Therefore, network names must be contained within the corresponding node names (e.g., "Vis"
         network should have nodes with "Vis" in their names).
+
     metadata: :obj:`dict[str, Any]`
         Dictionary containing metadata information about the parcellation. This key is purely
         informational and can be removed, modified, or extended.
 
-        .. versionadded: 0.32.2
+        .. versionadded:: 0.32.2
 
     See Also
     --------
@@ -215,20 +218,22 @@ class AALParcelApproach(ParcelApproachBase):
     ----------
     maps: :obj:`str`
         Path to the AAL parcellation.
+
     nodes: :obj:`list[str]`
         List of nodes (ROIs) in the AAL parcellation. Ordered in ascending order of their label ID
-        in the parcellation
-        and must exclude "Background".
+        in the parcellation and must exclude "Background".
+
     regions: :obj:`list[str]`
         List of networks in the AAL parcellation. **Important**: For certain visualization methods,
         the ``in`` operator is used to determine which nodes belong to which region. Therefore,
         region names must be contained within the corresponding node names (e.g.,
         "Frontal_Sup" region should have nodes with "Frontal_Sup" in their names).
+
     metadata: :obj:`dict[str, Any]`
         Dictionary containing metadata information about the parcellation. This key is purely
         informational and can be removed, modified, or extended.
 
-        .. versionadded: 0.32.2
+        .. versionadded:: 0.32.2
 
     See Also
     --------
@@ -258,6 +263,7 @@ class CustomRegionHemispheres(TypedDict):
     lh: :obj:`list[int] | range`
        List of integers or range representing the index positions of elements in the "nodes" list
        belonging to the left hemisphere of a specific region.
+
     rh: :obj:`list[int] | range`
        List of integers or range representing the index positions of elements in the "nodes" list
        belonging to the right hemisphere of a specific region.
@@ -322,17 +328,15 @@ class CustomParcelApproach(ParcelApproachBase):
     ----------
     maps: :obj:`str`
         Path to the Custom parcellation.
+
     nodes: :obj:`list[str]`
         List of nodes (ROIs) in the Custom parcellation. Ordered in ascending order of their label
         ID in the parcellation and must exclude "Background".
+
     regions: :obj:`dict[str, list[int] | range]` or :obj:`dict[str, CustomRegionHemispheres]`
         Dictionary mapping the regions to a list integers (or range) representing the index
         positions of elements in the "nodes" list belonging to the region or a dictionary mapping
         the region to a dictionary.
-    metadata: :obj:`dict[str, Any]`
-        Dictionary containing metadata information about the parcellation. This key is purely
-        informational and can be removed, modified, or extended.
-        .. versionadded: 0.32.2
 
         .. note::
            The use of ``CustomRegionHemispheres`` to define lateralized regions (i.e., with "lh"
@@ -344,6 +348,12 @@ class CustomParcelApproach(ParcelApproachBase):
         .. versionchanged:: 0.30.0
            "regions" subkey can now be of type `dict[str, list[int] | range]` for non-lateralized
            regions.
+
+    metadata: :obj:`dict[str, Any]`
+        Dictionary containing metadata information about the parcellation. This key is purely
+        informational and can be removed, modified, or extended.
+
+        .. versionadded:: 0.32.2
 
     See Also
     --------

@@ -99,8 +99,8 @@ The first level of the pipeline directory must also have a "dataset_description.
     extractor = TimeseriesExtractor(
         space="MNI152NLin6Asym",
         parcel_approach=fetch_preset_parcel_approach("4S", n_nodes=456),
+        standardize=True,
         confound_names=confound_names,
-        standardize=False,
         fd_threshold={
             "threshold": 0.50,
             "outlier_percentage": 0.30,
@@ -116,6 +116,8 @@ The first level of the pipeline directory must also have a "dataset_description.
     extractor.get_bold(
         bids_dir=demo_dir,
         task="DET",
+        condition="late",
+        condition_tr_shift=4,
         tr=2,
         verbose=False,
     ).timeseries_to_pickle(demo_dir, "timeseries.pkl")
@@ -180,13 +182,25 @@ The first level of the pipeline directory must also have a "dataset_description.
 
 .. code-block:: python
 
-    # Calculate temporal fraction and persistence of each CAP for all subjects
-    output = cap_analysis.calculate_metrics(extractor.subject_timeseries, metrics=["temporal_fraction"])
+    # Calculate temporal fraction and transition probability of each CAP for all subjects
+    output = cap_analysis.calculate_metrics(
+        extractor.subject_timeseries, metrics=["temporal_fraction", "transition_probability"]
+    )
     print(output["temporal_fraction"])
 
 .. csv-table::
    :file: embed/temporal_fraction-workflow.csv
    :header-rows: 1
+
+.. code-block:: python
+
+    # Averaged transition probability matrix
+    from neurocaps.analysis import transition_matrix
+
+    transition_matrix(output["transition_probability"])
+
+.. image:: embed/transition_probability_matrix-workflow.png
+    :width: 1000
 
 .. code-block:: python
 

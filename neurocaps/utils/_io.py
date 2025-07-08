@@ -18,7 +18,7 @@ LG = setup_logger(__name__)
 def makedir(output_dir: str) -> None:
     """Creates non-existent directory."""
     if output_dir and not os.path.exists(output_dir):
-        LG.warning(f"Creating the following non-existent file path: {output_dir}.")
+        LG.warning(f"Creating the following non-existent path: {output_dir}.")
         os.makedirs(output_dir)
 
 
