@@ -29,7 +29,7 @@ def fetch_preset_parcel_approach(
     Parameters
     ----------
     name: :obj:`str`
-        The name of the preset ``parcel_approach`` to fetch. Options are "HCPex" and "4S".
+        Name of the preset "Custom" parcellation approach to fetch. Options are "HCPex" and "4S".
     n_nodes: :obj:`int` or :obj:`None`, default=None
         Currently only relevant to "4S". Options for the "4S" are: 156, 256, 356,
         456, 556, 656, 757, 956, 1056. Defaults to 456 if None.
@@ -40,7 +40,7 @@ def fetch_preset_parcel_approach(
     Returns
     -------
     dict[Literal["Custom"], CustomParcelApproach]
-        A dictionary representing the "Custom" ``parcel_approach``.
+        A dictionary representing the "Custom" parcellation approach.
 
     Note
     ----
@@ -135,7 +135,7 @@ def generate_custom_parcel_approach(
     Returns
     -------
     dict[Literal["Custom"], CustomParcelApproach]
-        A dictionary representing the "Custom" ``parcel_approach``.
+        A dictionary representing the "Custom" parcellation approach.
 
     See Also
     --------

@@ -19,7 +19,7 @@ improvements/enhancements. All fixes and modifications are backwards compatible.
 - Create `fetch_preset_parcel_approach` to retrieve preset parcellations (HCPex and 4S) from OSF
 - Parcel approaches have informational metadata keys
 ### 🐛 Fixes
-- Fixed blank fifure issue when saving the cluster performance
+- Fixed blank figure issue when saving the cluster performance
 
 ## [0.32.1] - 2025-07-06
 ### 🐛 Fixes
