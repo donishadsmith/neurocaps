@@ -3,7 +3,7 @@ Internal IO functions for creating directories, issuing warnings, serializing (w
 Joblib or pickle), unserializing (with Joblib), and additional utilities.
 """
 
-import os, copy, pickle
+import os, copy, json, pickle
 from typing import Any, Union
 
 import joblib
@@ -18,6 +18,7 @@ LG = setup_logger(__name__)
 def makedir(output_dir: str) -> None:
     """Creates non-existent directory."""
     if output_dir and not os.path.exists(output_dir):
+        LG.warning(f"Creating the following non-existent file path: {output_dir}.")
         os.makedirs(output_dir)
 
 
@@ -71,34 +72,55 @@ def get_obj(obj: Any, needs_deepcopy=True) -> Any:
         return unserialize(obj)
 
 
-def unserialize(filename: str) -> Any:
+def unserialize(filename: str, **kwargs) -> Any:
     """Opens serialized objects such as ``subject_timeseries`` or ``parcel_approach``."""
-    check_file_exist(filename)
+    base_ext = [".pkl", ".pickle", ".joblib"]
+    supported_ext = [*base_ext, *[f"{x}.gz" for x in base_ext]]
+    supported_ext += [".json"]
+    ext = validate_file(filename, supported_ext, return_ext=True)
+    if ext == ".json":
+        obj = open_json_file(filename, **kwargs)
+    else:
+        obj = open_pickle_file(filename)
 
-    base_ext = (".pkl", ".pickle", ".joblib")
-    supported_ext = (*base_ext, *[f"{x}.gz" for x in base_ext])
-    check_ext(filename, supported_ext)
+    return obj
 
+
+def open_json_file(filename: str, **kwargs) -> dict:
+    """Open a json file."""
+    with open(filename, "r") as f:
+        obj = json.load(f, **kwargs)
+
+    return obj
+
+
+def open_pickle_file(filename: str) -> dict:
+    """Opens pickle file."""
     with open(filename, "rb") as f:
         obj = joblib.load(f)
 
     return obj
 
 
-def check_file_exist(filename: str) -> None:
-    """Check is file exists."""
+def check_file_exist(
+    filename: str, raise_errors: bool = True, return_flag: bool = False
+) -> Union[bool, None]:
+    """Check if a file exists."""
     # Dont end with periods
-    if not isinstance(filename, str):
+    if not isinstance(filename, str) and raise_errors:
         raise ValueError(f"The following file must be a string: {filename}")
 
-    if not os.path.isfile(filename):
+    file_exist = os.path.isfile(filename)
+    if not file_exist and raise_errors:
         raise FileExistsError(f"The following file does not exist: {filename}")
+
+    return file_exist if return_flag else None
 
 
 def check_ext(
     filename: str, supported_ext: list[str], return_ext: bool = False
 ) -> Union[str, None]:
-    """Checks if a file as a valid extension."""
+    """Checks if a file has a valid extension."""
     if filename.endswith(".gz"):
         _, ext = os.path.splitext(filename.removesuffix(".gz"))
         ext += ".gz"
@@ -113,3 +135,12 @@ def check_ext(
         )
 
     return ext if return_ext else None
+
+
+def validate_file(
+    filename: str, supported_ext: list[str], return_ext: bool = False
+) -> Union[str, None]:
+    """Validates file and returns extension if True."""
+    check_file_exist(filename)
+
+    return check_ext(filename, supported_ext, return_ext)

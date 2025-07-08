@@ -221,7 +221,7 @@ def check_files(
         if not files["confounds"]:
             skip = True
             msg = (
-                "Timeseries Extraction Skipped: `use_confounds` is requested but no "
+                "Timeseries Extraction Skipped: `use_confounds` is True but no "
                 "confound files found."
             )
 

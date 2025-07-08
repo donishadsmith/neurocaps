@@ -127,7 +127,23 @@ Jupyter Notebook demos using either simulated data or data obtained from OpenNeu
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbnail-title">Tutorial 7: Using Custom Parcellations</div>
+      <div class="sphx-glr-thumbnail-title">Tutorial 7: Creating Custom Parcel Approaches</div>
+      </a>
+      </div>
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbcontainer" tooltip="An example workflow from timeseries extraction to visualization.">
+      <a href="workflow.html" style="display: block; text-align: center;">
+
+.. only:: html
+
+   .. image:: embed/thumbnail/neurocaps.png
+      :align: center
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Tutorial 8: Workflow Example</div>
       </a>
       </div>
 

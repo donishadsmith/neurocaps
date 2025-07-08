@@ -11,4 +11,5 @@ Module containing utility functions.
    :nosignatures:
    :toctree: generated/
 
+   fetch_preset_parcel_approach
    generate_custom_parcel_approach

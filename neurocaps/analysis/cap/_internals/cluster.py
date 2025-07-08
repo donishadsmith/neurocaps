@@ -354,9 +354,11 @@ def plot_cluster_performance(
             label="elbow",
         )
 
+    fig = plt.gcf()
+
     PlotFuncs.show(show_figs)
 
-    return plt.gcf()
+    return fig
 
 
 def save_cluster_performance_figure(

@@ -39,9 +39,9 @@ class CAP(CAPGetter):
     ----------
     parcel_approach: :obj:`ParcelConfig`, :obj:`ParcelApproach`, or :obj:`str`, default=None
         Specifies the parcellation approach to use. Options are "Schaefer", "AAL", or "Custom". Can
-        be initialized with parameters, as a nested dictionary, or loaded from a pickle file. For
-        detailed documentation on the expected structure, see the type definitions for ``ParcelConfig``
-        and ``ParcelApproach`` in the "See Also" section.
+        be initialized with parameters, as a nested dictionary, or loaded from a serialized file
+        (i.e. pickle, joblib, json). For detailed documentation on the expected structure, see the
+        type definitions for ``ParcelConfig`` and ``ParcelApproach`` in the "See Also" section.
 
         .. versionchanged:: 0.31.0
            The default "regions" names for "AAL" has changed, which will group nodes differently.
@@ -1702,7 +1702,7 @@ class CAP(CAPGetter):
             - title_pad: :obj:`int`, default=-3 -- Padding for the plot title.
             - cmap: :obj:`str` or :obj:`callable`, default="cold_hot" -- Colormap to be used for the plot.
             - cbar_kws: :obj:`dict`, default={"location": "bottom", "n_ticks": 3} -- Customize colorbar.
-              Refer to ``_add_colorbars`` for ``surfplot.plotting.Plot`` in `Surfplot's Plot
+              Refer to ``_add_colorbars`` for ``surfplot.plotting.Plot`` in `Surfplot's Plot\
               Documentation <https://surfplot.readthedocs.io/en/latest/generated/surfplot.plotting.Plot.html#surfplot.plotting.Plot._add_colorbars>`_
               for valid parameters.
             - alpha: :obj:`float`, default=1 -- Transparency level of the colorbar.
