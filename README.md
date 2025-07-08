@@ -17,7 +17,7 @@ NeuroCAPs (**Neuro**imaging **C**o-**A**ctivation **P**attern**s**) is a Python 
 Patterns (CAPs) analyses on resting-state or task-based fMRI data. CAPs identifies recurring brain states by applying
 k-means clustering on BOLD timeseries data [^1].
 
-<img src="docs/assets/workflow.png" width=70% height=70%>
+<img src="docs/assets/workflow.png">
 
 ## Installation
 **NeuroCAPs requires Python 3.9-3.12.**
@@ -345,8 +345,8 @@ cap_analysis.caps2plot(
 
 **Plot Outputs:**
 
-<img src="assets/outerproduct.png" width=70% height=70%>
-<img src="assets/heatmap.png" width=70% height=70%>
+<img src="assets/outerproduct.png">
+<img src="assets/heatmap.png">
 
 ```python
 # Get CAP metrics and using `tr` to convert persistence from TR units to seconds
@@ -383,8 +383,8 @@ cap_analysis.caps2surf(progress_bar=False, **kwargs)
 ```
 **Plot Outputs:**
 
-<img src="assets/cap1.png" width=70% height=70%>
-<img src="assets/cap2.png" width=70% height=70%>
+<img src="assets/cap1.png">
+<img src="assets/cap2.png">
 
 ```python
 # Create Pearson correlation matrix
@@ -400,7 +400,7 @@ cap_analysis.caps2corr(**kwargs)
 ```
 **Plot Output:**
 
-<img src="assets/correlation.png" width=70% height=70%>
+<img src="assets/correlation.png">
 
 ```python
 # Create radar plots showing cosine similarity between region/networks and caps
@@ -438,8 +438,8 @@ cap_analysis.caps2radar(**kwargs)
 ```
 **Plot Outputs:**
 
-<img src="assets/cap1radar.png" width=70% height=70%>
-<img src="assets/cap2radar.png" width=70% height=70%>
+<img src="assets/cap1radar.png">
+<img src="assets/cap2radar.png">
 
 ```python
 # Get transition probabilities for all participants in a dataframe
@@ -495,14 +495,14 @@ Clustering [GROUP: All Subjects]: 100%|█████████████�
 ```
 </details>
 
-<img src="assets/silhouette.png" width=70% height=70%>
+<img src="assets/silhouette.png">
 
 | Subject_ID | Group | Run | 1.1 | 1.2 | 2.1 | 2.2 |
 | --- | --- | --- | --- | --- | --- | --- |
 | 0004 | All Subjects | run-continuous | 0.454545 | 0.545455 | 0.289474 | 0.710526 |
 | 0006 | All Subjects | run-2 | 0.764706 | 0.235294 | 0.250000 |  0.750000 |
 
-<img src="assets/transprob.png" width=70% height=70%>
+<img src="assets/transprob.png">
 
 | From/To | CAP-1 | CAP-2 |
 | --- | --- | --- |
