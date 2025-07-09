@@ -14,6 +14,7 @@ Jupyter Notebook demos using either simulated data or data obtained from OpenNeu
    dtype
    transition
    custom
+   workflow
 
 .. raw:: html
 
