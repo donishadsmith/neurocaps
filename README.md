@@ -128,7 +128,7 @@ Notable features includes:
        Refer to [NeuroCAPs' BIDS Structure and Entities Documentation](https://neurocaps.readthedocs.io/en/stable/bids.html)
        for additional information.
 
-- CAP Analysis (``CAP``):
+- CAPs Analysis (``CAP``):
     - performs k-means clustering on individuals or groups
     - identifies the optimal number of clusters using Silhouette, Elbow, Davies Bouldin, or Variance Ratio methods
     - computes several temporal dynamic metrics [^2] [^3]:
