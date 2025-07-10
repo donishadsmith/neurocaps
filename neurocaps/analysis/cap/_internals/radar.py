@@ -11,8 +11,11 @@ import plotly.offline as pyo
 from numpy.typing import NDArray
 
 from neurocaps.typing import ParcelApproach
-from neurocaps.utils._parcellation_validation import extract_custom_region_indices, get_parc_name
 from neurocaps.utils import _io as io_utils
+from neurocaps.utils._logging import setup_logger
+from neurocaps.utils._parcellation_validation import extract_custom_region_indices, get_parc_name
+
+LG = setup_logger(__name__)
 
 
 def update_radar_dict(
@@ -186,7 +189,7 @@ def generate_radar_plot(
     return fig
 
 
-def show_radar_plot(fig, show_figure: bool) -> None:
+def show_radar_plot(fig: go.Figure, show_figure: bool) -> None:
     """
     Show a plotly image. Method of visualization depends on whether the current Python session is
     interactive.
@@ -199,7 +202,7 @@ def show_radar_plot(fig, show_figure: bool) -> None:
 
 
 def save_radar_plot(
-    fig,
+    fig: go.Figure,
     output_dir: Union[str, None],
     group_name: str,
     cap_name: str,
@@ -208,12 +211,17 @@ def save_radar_plot(
     as_json: bool,
     scale: int,
     engine: str,
-):
+) -> None:
     """
     Saves a plotly image. Images are saves as png files by default. If ``as_html`` and ``as_json``
     are True, then ``as_html`` takes precedence and images are only saved as html files.
     """
     if output_dir:
+        if as_html and as_html:
+            LG.warning(
+                "`as_html` and `as_json` are True. Figures will only be saved as html files."
+            )
+
         filename = io_utils.filename(
             f"{group_name.replace(' ', '_')}_{cap_name}_radar", suffix_filename, "suffix", "png"
         )

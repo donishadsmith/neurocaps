@@ -453,7 +453,10 @@ def check_outputs(tmp_dir, values_dict, plot_type="map", plot_name=None):
                 fig = json.load(f)
                 fig = plotly.graph_objects.Figure(fig)
 
-                assert isinstance(fig, plotly.graph_objs._figure.Figure)
+                try:
+                    assert isinstance(fig, plotly.graph_objs.Figure)
+                except:
+                    assert isinstance(fig, plotly.graph_objs._figure.Figure)
 
             [os.remove(file) for file in radar_jsons]
         else:

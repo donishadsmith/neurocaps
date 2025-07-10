@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from kneed import KneeLocator
 from joblib import Parallel, delayed
 from numpy.typing import NDArray
+from matplotlib.figure import Figure
 from sklearn.cluster import KMeans
 from sklearn.metrics import davies_bouldin_score, calinski_harabasz_score, silhouette_score
 from tqdm.auto import tqdm
@@ -362,7 +363,7 @@ def plot_cluster_performance(
 
 
 def save_cluster_performance_figure(
-    fig,
+    fig: Figure,
     output_dir: Union[str, None],
     group_name: str,
     method_name: str,

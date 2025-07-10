@@ -1104,15 +1104,15 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
         # Obtain the column indices associated with the rois
         plot_indxs = vizualization.get_plot_indxs(self._parcel_approach, roi_indx, region)
 
-        run = None if not run else str(run)
-        run = subject_runs[0] if not run else f"run-{run.removeprefix('run-')}"
-        timeseries = self._subject_timeseries[subj_id][run]
+        run_name = None if not run else str(run)
+        run_name = subject_runs[0] if not run_name else f"run-{run_name.removeprefix('run-')}"
+        timeseries = self._subject_timeseries[subj_id][run_name]
         fig = vizualization.create_bold_figure(
             timeseries, self._parcel_approach, plot_dict["figsize"], plot_indxs, roi_indx, region
         )
 
         vizualization.save_bold_figure(
-            fig, subj_id, run, output_dir, filename, plot_dict, as_pickle
+            fig, subj_id, run_name, output_dir, filename, plot_dict, as_pickle
         )
 
         PlotFuncs.show(show_figs)

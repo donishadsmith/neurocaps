@@ -75,6 +75,7 @@ def get_plot_indxs(
     roi_indx: Union[int, str, list[str], list[int]] = None,
     region: str = None,
 ):
+    """Retrieve the indices from the subject's timeseries data to plot."""
     if roi_indx is not None:
         plot_indxs = get_roi_indices(parcel_approach, roi_indx)
     else:
@@ -91,6 +92,7 @@ def create_bold_figure(
     roi_indx: Union[int, str, list[str], list[int]] = None,
     region: str = None,
 ):
+    """Generate the BOLD figure."""
     parc_name = get_parc_name(parcel_approach)
     plt.figure(figsize=figsize)
 
@@ -117,18 +119,19 @@ def create_bold_figure(
 def save_bold_figure(
     fig: Union[Figure, Axes],
     subj_id: str,
-    run: str,
+    run_name: str,
     output_dir: str,
     filename: str,
     plot_dict: dict[str, Any],
     as_pickle: bool,
 ):
+    """Saves the BOLD figure."""
     if output_dir:
         io_utils.makedir(output_dir)
 
         if filename:
             save_filename = f"{os.path.splitext(filename.rstrip())[0].rstrip()}.png"
         else:
-            save_filename = f"subject-{subj_id}_{run}_timeseries.png"
+            save_filename = f"subject-{subj_id}_{run_name}_timeseries.png"
 
         PlotFuncs.save_fig(fig, output_dir, save_filename, plot_dict, as_pickle)
