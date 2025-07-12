@@ -62,7 +62,11 @@ def check_structure(parcel_approach):
 
 
 def test_fetch_preset_parcel_approach():
-    """Tests the fetch function."""
+    """
+    Tests the fetch function. Confirmed fetching works on MAC, Ubuntu, Windows.
+    Now in the conftest, neurocaps data is moved to the home directory so that the
+    files are simply retrieved instead of fetched from OSF.
+    """
     parcel_approach = fetch_preset_parcel_approach("4S", n_nodes=156)
 
     check_lateralized_regions(parcel_approach)

@@ -29,7 +29,12 @@ def fetch_preset_parcel_approach(
     Parameters
     ----------
     name: :obj:`str`
-        Name of the preset "Custom" parcellation approach to fetch. Options are "HCPex" and "4S".
+        Name of the preset "Custom" parcellation approach to fetch. Options are "HCPex", "4S",
+        and "Gordon".
+
+        .. versionadded:: 0.32.3
+           Added "Gordon".
+
     n_nodes: :obj:`int` or :obj:`None`, default=None
         Currently only relevant to "4S". Options for the "4S" are: 156, 256, 356,
         456, 556, 656, 757, 956, 1056. Defaults to 456 if None.
