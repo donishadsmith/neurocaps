@@ -35,11 +35,14 @@ def convert_volume_to_surface(
         # Delete
         os.unlink(temp_nifti.name)
 
-    return gii_lh, gii_rh
+    return remove_medial_wall(gii_lh, gii_rh, fslr_density)
 
 
 def resample_surface(
-    fslr_giftis_dict: dict[str, NDArray], cap_name: str, method: str, fslr_density: str
+    fslr_giftis_dict: dict[str, NDArray],
+    cap_name: str,
+    method: str,
+    fslr_density: str,
 ) -> tuple[nib.gifti.GiftiImage, nib.gifti.GiftiImage]:
     """Uses neuromaps' ``fslr_to_fslr`` to resample fsLR surface to a new density."""
     gii_lh, gii_rh = fslr_to_fslr(
@@ -50,6 +53,22 @@ def resample_surface(
         target_density=fslr_density,
         method=method,
     )
+
+    return remove_medial_wall(gii_lh, gii_rh, fslr_density)
+
+
+def remove_medial_wall(
+    gii_lh: nib.gifti.GiftiImage, gii_rh: nib.gifti.GiftiImage, density: str
+) -> tuple[nib.gifti.GiftiImage, nib.gifti.GiftiImage]:
+    """Removes medial wall."""
+    fslr_atlas = fetch_fslr(density=density)
+    medial_wall_mask = fslr_atlas["medial"]
+
+    gii_lh_mask = nib.load(str(medial_wall_mask[0]))
+    gii_lh.darrays[0].data[gii_lh_mask.darrays[0].data == 0] = 0
+
+    gii_rh_mask = nib.load(str(medial_wall_mask[1]))
+    gii_rh.darrays[0].data[gii_rh_mask.darrays[0].data == 0] = 0
 
     return gii_lh, gii_rh
 

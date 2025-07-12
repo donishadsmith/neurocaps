@@ -247,8 +247,8 @@ lateralization information is specific case in ``CAP.caps2plot`` when ``visual_s
 
 3. Fetching a preset "Custom" ``parcel_approach``
 
-**Note**: Currently only "HCPex" and "4S" are supported
--------------------------------------------------------
+**Note**: Currently only "HCPex", "4S", and "Gordon" are supported
+------------------------------------------------------------------
 .. code-block:: python
 
     from neurocaps.utils import fetch_preset_parcel_approach
@@ -260,7 +260,7 @@ lateralization information is specific case in ``CAP.caps2plot`` when ``visual_s
 
     .. code-block:: none
 
-        2025-07-09 10:11:30,644 neurocaps.utils._io [WARNING] Creating the following non-existent file path: C:\Users\donis\neurocaps_data.
+        2025-07-09 10:11:30,644 neurocaps.utils._io [WARNING] Creating the following non-existent path: C:\Users\donis\neurocaps_data.
         2025-07-09 10:11:30,644 neurocaps.utils.datasets._fetch [INFO] Downloading the following files from OSF: 'atlas-HCPex_desc-CustomParcelApproach.json', 'tpl-MNI152NLin2009cAsym_atlas-HCPex_2mm.nii.gz'
         [fetch_single_file] Downloading data from https://osf.io/rdbfv/download ...
         [fetch_single_file]  ...done. (2 seconds, 0 min)

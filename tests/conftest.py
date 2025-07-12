@@ -65,8 +65,12 @@ def use_agg_backend():
     return
 
 
+@pytest.fixture(autouse=True, scope="session")
 def create_data_directories():
-    """Function to copy nilearn and neuromaps data to home directory."""
+    """
+    Function to copy nilearn, neuromaps, and neurocaps data to home directory to prevent
+    file fetching from OSF or other websites.
+    """
     curr_dir = os.path.join(os.path.dirname(__file__), "data")
 
     target_nilearn = os.path.expanduser("~/nilearn_data")
@@ -77,6 +81,6 @@ def create_data_directories():
     if not os.path.isdir(target_neuromaps):
         shutil.copytree(os.path.join(curr_dir, "neuromaps-data"), target_neuromaps)
 
-
-# Use function immediately on import
-create_data_directories()
+    target_neurocaps = os.path.expanduser("~/neurocaps_data")
+    if not os.path.isdir(target_neurocaps):
+        shutil.copytree(os.path.join(curr_dir, "neurocaps_data"), target_neurocaps)
