@@ -1793,7 +1793,7 @@ class CAP(CAPGetter):
                     )
 
                 fig = surface.generate_surface_plot(
-                    gii_lh, gii_rh, group_name, cap_name, suffix_title, plot_dict
+                    gii_lh, gii_rh, group_name, cap_name, suffix_title, plot_dict, fslr_density
                 )
 
                 surface.save_surface_plot(

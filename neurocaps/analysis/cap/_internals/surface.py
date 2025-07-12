@@ -58,10 +58,10 @@ def resample_surface(
 
 
 def remove_medial_wall(
-    gii_lh: nib.gifti.GiftiImage, gii_rh: nib.gifti.GiftiImage, density: str
+    gii_lh: nib.gifti.GiftiImage, gii_rh: nib.gifti.GiftiImage, fslr_density: str
 ) -> tuple[nib.gifti.GiftiImage, nib.gifti.GiftiImage]:
     """Removes medial wall."""
-    fslr_atlas = fetch_fslr(density=density)
+    fslr_atlas = fetch_fslr(density=fslr_density)
     medial_wall_mask = fslr_atlas["medial"]
 
     gii_lh_mask = nib.load(str(medial_wall_mask[0]))
@@ -98,10 +98,11 @@ def generate_surface_plot(
     cap_name: str,
     suffix_title: Union[str, None],
     plot_dict: dict[str, Any],
+    fslr_density,
 ) -> Figure:
     """Creates the surface plot."""
     # Code adapted from example on https://surfplot.readthedocs.io/
-    surfaces = fetch_fslr()
+    surfaces = fetch_fslr(density=fslr_density)
 
     if plot_dict["surface"] not in ["inflated", "veryinflated"]:
         LG.warning(
