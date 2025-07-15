@@ -7,9 +7,8 @@ import nibabel as nib
 import matplotlib.pyplot as plt
 import surfplot
 from neuromaps.datasets import fetch_fslr
-from neuromaps.transforms import mni152_to_fslr, fslr_to_fslr
+from neuromaps.transforms import mni152_to_fslr
 from nilearn.plotting.cm import _cmap_d
-from numpy.typing import NDArray
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
@@ -21,7 +20,7 @@ LG = setup_logger(__name__)
 
 
 def convert_volume_to_surface(
-    stat_map: nib.Nifti1Image, method: str, fslr_density: str
+    stat_map: nib.Nifti1Image, fslr_density: str, method: str
 ) -> tuple[nib.gifti.GiftiImage, nib.gifti.GiftiImage]:
     """
     Converts MNI152 statistical map to GifTI in fsLR surface using neuromaps' ``mni152_to_fslr``.
@@ -34,25 +33,6 @@ def convert_volume_to_surface(
         gii_lh, gii_rh = mni152_to_fslr(temp_nifti.name, method=method, fslr_density=fslr_density)
         # Delete
         os.unlink(temp_nifti.name)
-
-    return remove_medial_wall(gii_lh, gii_rh, fslr_density)
-
-
-def resample_surface(
-    fslr_giftis_dict: dict[str, NDArray],
-    cap_name: str,
-    method: str,
-    fslr_density: str,
-) -> tuple[nib.gifti.GiftiImage, nib.gifti.GiftiImage]:
-    """Uses neuromaps' ``fslr_to_fslr`` to resample fsLR surface to a new density."""
-    gii_lh, gii_rh = fslr_to_fslr(
-        (
-            fslr_giftis_dict[cap_name]["lh"],
-            fslr_giftis_dict[cap_name]["rh"],
-        ),
-        target_density=fslr_density,
-        method=method,
-    )
 
     return remove_medial_wall(gii_lh, gii_rh, fslr_density)
 
@@ -94,11 +74,11 @@ def create_temp_nifti(stat_map: nib.Nifti1Image) -> tempfile._TemporaryFileWrapp
 def generate_surface_plot(
     gii_lh: nib.gifti.GiftiImage,
     gii_rh: nib.gifti.GiftiImage,
+    fslr_density: str,
+    plot_dict: dict[str, Any],
     group_name: str,
     cap_name: str,
     suffix_title: Union[str, None],
-    plot_dict: dict[str, Any],
-    fslr_density,
 ) -> Figure:
     """Creates the surface plot."""
     # Code adapted from example on https://surfplot.readthedocs.io/
@@ -163,29 +143,28 @@ def generate_surface_plot(
 
 
 def save_surface_plot(
-    output_dir: str,
-    stat_map: nib.Nifti1Image,
     fig: Union[Figure, Axes],
+    plot_dict: dict[str, Any],
+    output_dir: str,
+    plot_output_format: str,
+    suffix_filename: Union[str, None],
+    stat_map: nib.Nifti1Image,
+    save_stat_maps: bool,
     group_name: str,
     cap_name: str,
-    suffix_filename: Union[str, None],
-    save_stat_map: bool,
-    as_pickle: bool,
-    plot_dict: dict[str, Any],
 ) -> None:
     """Saves a single surface plot."""
     if not output_dir:
         return None
 
     filename = io_utils.filename(
-        f"{group_name.replace(' ', '_')}_{cap_name}_surface",
-        suffix_filename,
-        "suffix",
-        "png",
+        basename=f"{group_name.replace(' ', '_')}_{cap_name}_surface",
+        add_name=suffix_filename,
+        pos="suffix",
     )
-    PlotFuncs.save_fig(fig, output_dir, filename, plot_dict, as_pickle)
+    PlotFuncs.save_fig(fig, plot_dict, output_dir, plot_output_format, filename)
 
-    if save_stat_map and stat_map:
+    if save_stat_maps and stat_map:
         filename = filename.split("_surface")[0] + ".nii.gz"
         save_nifti_img(stat_map, output_dir, filename)
 

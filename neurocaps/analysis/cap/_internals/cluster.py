@@ -204,8 +204,8 @@ def select_optimal_clusters(
     configs: dict[str, Any],
     show_figs: bool,
     output_dir: Union[str, None],
+    plot_output_format: str,
     progress_bar: bool,
-    as_pickle: bool,
     **kwargs,
 ) -> None:
     """Selects optimal number of clusters based on the specific ``cluster_selection_method``."""
@@ -305,7 +305,7 @@ def select_optimal_clusters(
             )
 
             save_cluster_performance_figure(
-                fig, output_dir, group_name, method, as_pickle, plot_dict
+                fig, output_dir, plot_output_format, group_name, method, plot_dict
             )
 
     cluster_scores = {"Cluster_Selection_Method": method}
@@ -365,9 +365,9 @@ def plot_cluster_performance(
 def save_cluster_performance_figure(
     fig: Figure,
     output_dir: Union[str, None],
+    plot_output_format: bool,
     group_name: str,
     method_name: str,
-    as_pickle: bool,
     plot_dict: dict[str, Any],
 ) -> None:
     """Saves the cluster performance plot if ``output_dir`` is not falsy."""
@@ -376,8 +376,8 @@ def save_cluster_performance_figure(
 
     io_utils.makedir(output_dir)
 
-    save_name = f"{group_name.replace(' ', '_')}_{method_name}.png"
-    PlotFuncs.save_fig(fig, output_dir, save_name, plot_dict, as_pickle)
+    save_name = f"{group_name.replace(' ', '_')}_{method_name}"
+    PlotFuncs.save_fig(fig, plot_dict, output_dir, plot_output_format, save_name)
 
 
 def compute_variance_explained(

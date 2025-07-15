@@ -11,11 +11,11 @@ from neurocaps.utils import _io as io_utils
 
 def merge_dicts(
     subject_timeseries_list: Union[list[SubjectTimeseries], list[str]],
-    return_merged_dict: bool = True,
-    return_reduced_dicts: bool = False,
     output_dir: Optional[Union[str, str]] = None,
     filenames: Optional[list[str]] = None,
     save_reduced_dicts: bool = False,
+    return_merged_dict: bool = True,
+    return_reduced_dicts: bool = False,
 ) -> Union[dict[str, SubjectTimeseries], None]:
     """
     Merge Participant Timeseries Across Multiple Sessions or Tasks.
@@ -48,15 +48,6 @@ def merge_dicts(
         to pickle files containing this same structure. Refer to documentation for
         ``SubjectTimeseries`` in the "See Also" section for an example structure.
 
-    return_merged_dict: :obj:`bool`, default=True
-        If True, returns a single dictionary containing the merged dictionary under a key named
-        "merged".
-
-    return_reduced_dicts: :obj:`bool`, default=False
-        If True, returns a single dictionary containing the input dictionaries filtered to only
-        include subjects present in the merged dictionary. Keys are named "dict_{0}" where {0}
-        corresponds to the dictionary's position in the input list.
-
     output_dir: :obj:`str` or :obj:`None`, default=None
         Directory to save the merged or reduced dictionaries as pickle files. The directory will be
         created if it does not exist. For the reduced dictionaries to be saved, ``save_reduced_dicts``
@@ -83,6 +74,15 @@ def merge_dicts(
     save_reduced_dicts: :obj:`bool` or None, default=False
         If True and the ``output_dir`` is provided, then the reduced dictionaries are saved as
         pickle files.
+
+    return_merged_dict: :obj:`bool`, default=True
+        If True, returns a single dictionary containing the merged dictionary under a key named
+        "merged".
+
+    return_reduced_dicts: :obj:`bool`, default=False
+        If True, returns a single dictionary containing the input dictionaries filtered to only
+        include subjects present in the merged dictionary. Keys are named "dict_{0}" where {0}
+        corresponds to the dictionary's position in the input list.
 
     Returns
     -------

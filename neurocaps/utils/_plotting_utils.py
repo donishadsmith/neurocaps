@@ -272,21 +272,20 @@ class PlotFuncs:
     @staticmethod
     def save_fig(
         fig: Union[Axes, Figure],
-        output_dir: str,
-        filename: str,
         plot_dict: dict[str, Any],
-        as_pickle: bool,
+        output_dir: str,
+        plot_output_format: str,
+        filename: str,
     ) -> None:
-        if as_pickle:
-            # Allow Axes or Figure
-            io_utils.serialize(fig, output_dir, filename.replace(".png", ".pkl"))
-        else:
+        if plot_output_format == "png":
             fig = fig.get_figure() if not hasattr(fig, "savefig") else fig
             fig.savefig(
-                os.path.join(output_dir, filename),
+                os.path.join(output_dir, filename + ".png"),
                 dpi=plot_dict["dpi"],
                 bbox_inches=plot_dict["bbox_inches"],
             )
+        else:
+            io_utils.serialize(fig, output_dir, filename + ".pkl")
 
     @staticmethod
     def show(show_figs: bool) -> None:
@@ -330,15 +329,15 @@ class MatrixVisualizer:
 
     @staticmethod
     def save_contents(
+        display: Union[Axes, Figure],
+        plot_dict: dict[str, Any],
         output_dir: str,
+        plot_output_format: str,
         suffix_filename: str,
         group_name: str,
         curr_dict: dict[str, DataFrame],
-        plot_dict: dict[str, Any],
         save_plots: bool,
         save_df: bool,
-        display: Union[Axes, Figure],
-        as_pickle: bool,
         call: str,
     ) -> None:
         """Save figure as png and dataframe as csv."""
@@ -347,13 +346,15 @@ class MatrixVisualizer:
 
         io_utils.makedir(output_dir)
 
-        desc = "correlation_matrix" if call == "corr" else "transition_probability_matrix"
-        filename = io_utils.filename(f"{group_name}_CAPs_{desc}", suffix_filename, "suffix", "png")
+        desc = "correlation_matrix" if call == "caps2corr" else "transition_probability_matrix"
+        filename = io_utils.filename(
+            basename=f"{group_name}_CAPs_{desc}", add_name=suffix_filename, pos="suffix"
+        )
         if save_plots:
-            PlotFuncs.save_fig(display, output_dir, filename, plot_dict, as_pickle)
+            PlotFuncs.save_fig(display, plot_dict, output_dir, plot_output_format, filename)
 
         if save_df:
-            filename = filename.replace(".png", ".csv")
+            filename += ".csv"
             curr_dict[group_name].to_csv(
                 path_or_buf=os.path.join(output_dir, filename), sep=",", index=True
             )

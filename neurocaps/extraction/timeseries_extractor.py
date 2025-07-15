@@ -48,23 +48,13 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
         type definitions for ``ParcelConfig`` and ``ParcelApproach`` in the "See Also" section.
         Defaults to ``{"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}`` if None.
 
-        .. versionchanged:: 0.28.0
-           Default changed to None; however, the same default dictionary configuration remains the
-           same and is backwards compatible.
-
-        .. versionchanged:: 0.31.0
-           The default "regions" names for "AAL" has changed, which will group nodes differently.
+        .. important::
+           The default "regions" names for "AAL" was changed in versions >=0.31.0, which will group
+           nodes differently.
 
     standardize: :obj:`bool` or or :obj:`None`, default=True
         Standardizes the timeseries (zero mean and unit variance using sample standard deviation).
         Always the final step in the pipeline.
-
-        .. versionchanged:: 0.25.0
-           No longer passed to Nilearn's ``NiftiLabelsMasker`` and only performs standardization
-           using sample standard deviation. Default behavior of standardizing using sample standard
-           deviation is the same; however, when not None or False, standardizing is always done at
-           the end of the pipeline to prevent any external standardization from needing to be done
-           when censoring or extracting condition.
 
         .. note::
            Standard deviations below ``np.finfo(std.dtype).eps`` are replaced with 1 for numerical
@@ -72,11 +62,6 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
 
     detrend: :obj:`bool`, default=False
         Detrends the timeseries.
-
-        .. versionchanged:: 0.26.0
-           Default changed from True to False due to the redundancy of detrending when discrete
-           cosine-basis regressors are used, which is included in the "basic" option for
-           ``confound_names``.
 
     low_pass: :obj:`float`, :obj:`int`, or :obj:`None`, default=None
         Filters out signals above the specified cutoff frequency.
@@ -432,7 +417,6 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
         n_cores: Optional[int] = None,
         parallel_log_config: Optional[dict[str, Union[Queue, int]]] = None,
         verbose: bool = True,
-        flush: bool = False,
         progress_bar: bool = False,
     ) -> Self:
         """
@@ -533,10 +517,6 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
             missing for a subject, and additional warnings encountered during the timeseries
             extraction process.
 
-        flush: :obj:`bool`, default=False
-            If True, flushes the logged subject-specific information produced during the timeseries
-            extraction process.
-
         progress_bar: :obj:`bool`, default=False
             If True, displays a progress bar.
 
@@ -600,8 +580,9 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
             scans.extend(range(onset_scan, end_scan))
             scans = sorted(list(set(scans)))
 
-        .. versionchanged:: 0.28.4
-           Max check done for ``onset_scan`` and ``end_scan`` instead of ``adjusted_onset``.
+        .. important::
+           Max check done for ``onset_scan`` and ``end_scan`` instead of ``adjusted_onset`` in
+           versions >= 0.28.4.
 
         When partial scans are computed, ``math.floor`` is used to round down for the beginning scan
         index and ``math.ceil`` is used to round up for the ending scan index. Negative scan indices
@@ -714,7 +695,6 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
                     self._task_info,
                     self._subject_info[subj_id]["tr"],
                     verbose,
-                    flush,
                     parallel_log_config,
                 )
                 for subj_id in self._subject_ids
@@ -749,7 +729,6 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
                     signal_clean_info=self._signal_clean_info,
                     task_info=self._task_info,
                     verbose=verbose,
-                    flush=flush,
                 )
 
                 self._expand_dicts(*outputs)
@@ -1016,8 +995,8 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
         region: Optional[str] = None,
         show_figs: bool = True,
         output_dir: Optional[str] = None,
+        plot_output_format: str = "png",
         filename: Optional[str] = None,
-        as_pickle: bool = False,
         **kwargs,
     ) -> Self:
         """
@@ -1050,14 +1029,15 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
             Directory to save plot as png image. The directory will be created if it does not exist.
             If None, plot will not be saved.
 
+        plot_output_format: :obj:`str`, default="png"
+            The format to save plots in when ``output_dir`` is specified. Options are "png" or
+            "pkl" (which can be further modified). Note that "pickle" is also accepted.
+
+            .. versionchanged:: 0.33.0
+               Replaces ``as_pickle`` and accepts a string value.
+
         filename: :obj:`str` or :obj:`None`, default=None
             Name of the file without the extension.
-
-        as_pickle: :obj:`bool`, default=False
-            When ``output_dir`` is specified, plots are saved as pickle file, which can be further
-            modified, instead of png images.
-
-            .. versionadded:: 0.26.5
 
         **kwargs:
             Keyword arguments used when saving figures. Valid keywords include:
@@ -1098,6 +1078,10 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
 
         io_utils.issue_file_warning("filename", filename, output_dir)
 
+        plot_output_format = io_utils.validate_plot_output_format(
+            output_dir, plot_output_format, "visualize_bold"
+        )
+
         # Plotting defaults
         plot_dict = resolve_kwargs(PlotDefaults.visualize_bold(), **kwargs)
 
@@ -1112,7 +1096,7 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
         )
 
         vizualization.save_bold_figure(
-            fig, subj_id, run_name, output_dir, filename, plot_dict, as_pickle
+            fig, plot_dict, subj_id, run_name, output_dir, plot_output_format, filename
         )
 
         PlotFuncs.show(show_figs)

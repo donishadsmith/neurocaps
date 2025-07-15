@@ -315,7 +315,7 @@ def save_metrics(
         return None
 
     for metric in df_dict:
-        filename = io_utils.filename(base_name=f"{metric}", add_name=prefix_filename, pos="prefix")
+        filename = io_utils.filename(basename=f"{metric}", add_name=prefix_filename, pos="prefix")
         if metric != "transition_probability":
             df_dict[f"{metric}"].to_csv(
                 path_or_buf=os.path.join(output_dir, f"{filename}.csv"), sep=",", index=False

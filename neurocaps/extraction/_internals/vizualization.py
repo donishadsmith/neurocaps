@@ -118,20 +118,20 @@ def create_bold_figure(
 
 def save_bold_figure(
     fig: Union[Figure, Axes],
+    plot_dict: dict[str, Any],
     subj_id: str,
     run_name: str,
     output_dir: str,
+    plot_output_format: str,
     filename: str,
-    plot_dict: dict[str, Any],
-    as_pickle: bool,
 ):
     """Saves the BOLD figure."""
     if output_dir:
         io_utils.makedir(output_dir)
 
         if filename:
-            save_filename = f"{os.path.splitext(filename.rstrip())[0].rstrip()}.png"
+            save_filename = f"{os.path.splitext(filename.rstrip())[0].rstrip()}"
         else:
-            save_filename = f"subject-{subj_id}_{run_name}_timeseries.png"
+            save_filename = f"subject-{subj_id}_{run_name}_timeseries"
 
-        PlotFuncs.save_fig(fig, output_dir, save_filename, plot_dict, as_pickle)
+        PlotFuncs.save_fig(fig, plot_dict, output_dir, plot_output_format, save_filename)

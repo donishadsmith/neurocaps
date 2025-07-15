@@ -43,8 +43,9 @@ class CAP(CAPGetter):
         (i.e. pickle, joblib, json). For detailed documentation on the expected structure, see the
         type definitions for ``ParcelConfig`` and ``ParcelApproach`` in the "See Also" section.
 
-        .. versionchanged:: 0.31.0
-           The default "regions" names for "AAL" has changed, which will group nodes differently.
+        .. important::
+           The default "regions" names for "AAL" was changed in versions >=0.31.0, which will group
+           nodes differently.
 
     groups: :obj:`dict[str, list[str]]` or :obj:`None`, default=None
         Optional mapping of group names to lists of subject IDs for group-specific analyses. If
@@ -267,10 +268,10 @@ class CAP(CAPGetter):
         algorithm: Literal["lloyd", "elkan"] = "lloyd",
         standardize: bool = True,
         n_cores: Optional[int] = None,
-        show_figs: bool = False,
         output_dir: Optional[str] = None,
+        plot_output_format: str = "png",
+        show_figs: bool = False,
         progress_bar: bool = False,
-        as_pickle: bool = False,
         **kwargs,
     ) -> Self:
         """
@@ -334,21 +335,22 @@ class CAP(CAPGetter):
             Number of cores to use for multiprocessing, with Joblib, to run multiple k-means models
             if ``cluster_selection_method`` is not None. The "loky" backend is used.
 
-        show_figs: :obj:`bool`, default=False
-            Displays the plots for the specified ``cluster_selection_method`` for all groups.
-
         output_dir: :obj:`str` or :obj:`None`, default=None
             Directory to save plots as png files if ``cluster_selection_method`` is not None. The
             directory will be created if it does not exist. If None, plots will not be saved.
 
+        plot_output_format: :obj:`str`, default="png"
+            The format to save plots in when ``output_dir`` is specified. Options are "png" or
+            "pkl" (which can be further modified). Note that "pickle" is also accepted.
+
+            .. versionchanged:: 0.33.0
+               Replaces ``as_pickle`` and accepts a string value.
+
+        show_figs: :obj:`bool`, default=False
+            Displays the plots for the specified ``cluster_selection_method`` for all groups.
+
         progress_bar: :obj:`bool`, default=False
             If True and ``cluster_selection_method`` is not None, displays a progress bar.
-
-        as_pickle: :obj:`bool`, default=False
-            When ``output_dir`` and ``cluster_selection_method`` is specified, plots are saved as
-            pickle filess, which can be further modified, instead of png images.
-
-            .. versionadded:: 0.26.5
 
         **kwargs:
             Additional keyword arguments when ``cluster_selection_method`` is specified:
@@ -365,8 +367,6 @@ class CAP(CAPGetter):
             - max_nbytes: :obj:`int`, :obj:`str`, or :obj:`None`, default="1M" -- If ``n_cores`` is
               not None, serves as the threshold to trigger Joblib's automated memory mapping for
               large arrays.
-
-              .. versionadded:: 0.28.5
 
         See Also
         --------
@@ -407,6 +407,10 @@ class CAP(CAPGetter):
         Additionally, for versions >= 0.25.0, the concatenation of subjects is performed
         lexicographically based on their subject IDs.
         """
+        plot_output_format = io_utils.validate_plot_output_format(
+            output_dir, plot_output_format, "get_caps"
+        )
+
         # Ensure all unique values if n_clusters is a list
         n_clusters = n_clusters if isinstance(n_clusters, int) else sorted(list(set(n_clusters)))
 
@@ -488,8 +492,8 @@ class CAP(CAPGetter):
                     configs,
                     show_figs,
                     output_dir,
+                    plot_output_format,
                     progress_bar,
-                    as_pickle,
                     **kwargs,
                 )
             )
@@ -516,8 +520,6 @@ class CAP(CAPGetter):
 
         Sets ``groups`` to None to allow ``self.get_caps`` to create a new "All Subjects" group
         with different subject IDs based on the inputted ``subject_timeseries``.
-
-        .. versionadded:: 0.28.5
         """
         self._groups = None
 
@@ -547,7 +549,6 @@ class CAP(CAPGetter):
     def calculate_metrics(
         self,
         subject_timeseries: Union[SubjectTimeseries, str],
-        tr: Optional[float] = None,
         runs: Optional[Union[int, str, list[int], list[str]]] = None,
         continuous_runs: bool = False,
         metrics: Union[
@@ -562,9 +563,10 @@ class CAP(CAPGetter):
             tuple[str],
             None,
         ] = ("temporal_fraction", "persistence", "counts", "transition_frequency"),
-        return_df: bool = True,
+        tr: Optional[float] = None,
         output_dir: Optional[str] = None,
         prefix_filename: Optional[str] = None,
+        return_df: bool = True,
         progress_bar: bool = False,
     ) -> Union[dict[str, pd.DataFrame], None]:
         """
@@ -661,12 +663,6 @@ class CAP(CAPGetter):
             structure. Refer to documentation for ``SubjectTimeseries`` in the "See Also" section
             for an example structure.
 
-        tr: :obj:`float` or :obj:`None`, default=None
-            Repetition time (TR) in seconds. If provided, persistence will be calculated as the
-            average uninterrupted time, in seconds, spent in each CAP. If not provided, persistence
-            will be calculated as the average uninterrupted volumes (TRs), in TR units, spent in
-            each state.
-
         runs: :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
             The run IDs to calculate CAP metrics for (e.g. ``runs=[0, 1]`` or ``runs=["01", "02"]``).
             If None, CAP metrics will be calculated for all detected run IDs even if only specific
@@ -698,13 +694,11 @@ class CAP(CAPGetter):
             "counts", "transition_frequency", and "transition_probability". Defaults to
             ``("temporal_fraction", "persistence", "counts", "transition_frequency")`` if None.
 
-            .. versionchanged:: 0.28.6
-               Default changed to tuple to provide better clarity; however, the default metrics
-               remains the same and is backwards compatible.
-
-        return_df: :obj:`str`, default=True
-            If True, returns ``pandas.DataFrame`` inside a dictionary, mapping each dataframe to
-            their metric.
+        tr: :obj:`float` or :obj:`None`, default=None
+            Repetition time (TR) in seconds. If provided, persistence will be calculated as the
+            average uninterrupted time, in seconds, spent in each CAP. If not provided, persistence
+            will be calculated as the average uninterrupted volumes (TRs), in TR units, spent in
+            each state.
 
         output_dir: :obj:`str` or :obj:`None`, default=None
             Directory to save ``pandas.DataFrame`` as csv files. The directory will be created if
@@ -713,6 +707,10 @@ class CAP(CAPGetter):
         prefix_filename: :obj:`str` or :obj:`None`, default=None
             A prefix to append to the saved file names for each ``pandas.DataFrame``, if
             ``output_dir`` is provided.
+
+        return_df: :obj:`str`, default=True
+            If True, returns ``pandas.DataFrame`` inside a dictionary, mapping each dataframe to
+            their metric.
 
         progress_bar: :obj:`bool`, default=False
             If True, displays a progress bar.
@@ -905,6 +903,9 @@ class CAP(CAPGetter):
                         all_metrics_dict[metric].append(subject_data)
 
         df_dict = metrics_utils.convert_dict_to_df(columns_names_dict, all_metrics_dict)
+
+        del all_metrics_dict
+
         metrics_utils.save_metrics(output_dir, list(self._groups), df_dict, prefix_filename)
 
         if return_df:
@@ -922,8 +923,6 @@ class CAP(CAPGetter):
 
         Uses the group-specific k-means models in ``self.kmeans`` to assign each frames (TR) to
         CAPs for each subject in ``self.subject_table``.
-
-        .. versionadded:: 0.29.0
 
         The process involves the following steps:
 
@@ -1061,18 +1060,18 @@ class CAP(CAPGetter):
 
     def caps2plot(
         self,
-        output_dir: Optional[str] = None,
-        suffix_title: Optional[str] = None,
-        suffix_filename: Optional[str] = None,
         plot_options: Union[
-            Literal["outer_product", "heatmap"], list[Literal["outer_product", "heatmap"]]
-        ] = "outer_product",
+            Literal["heatmap", "outer_product"], list[Literal["heatmap", "outer_product"]]
+        ] = "heatmap",
         visual_scope: Union[
             Literal["regions", "nodes"], list[Literal["regions", "nodes"]]
         ] = "regions",
-        show_figs: bool = True,
         subplots: bool = False,
-        as_pickle: bool = False,
+        output_dir: Optional[str] = None,
+        plot_output_format: str = "png",
+        suffix_filename: Optional[str] = None,
+        suffix_title: Optional[str] = None,
+        show_figs: bool = True,
         **kwargs,
     ) -> Self:
         """
@@ -1084,18 +1083,8 @@ class CAP(CAPGetter):
 
         Parameters
         ----------
-        output_dir: :obj:`str` or :obj:`None`, default=None
-            Directory for saving plots as png files. The directory will be created if it does not
-            exist. If None, plots will not be saved.
-
-        suffix_title: :obj:`str` or :obj:`None`, default=None
-            Appended to the title of each plot.
-
-        suffix_filename: :obj:`str` or :obj:`None`, default=None
-            Appended to the filename of each saved plot if ``output_dir`` is provided.
-
         plot_options: {"heatmap", "outer_product"} or :obj:`list["heatmap", "outer_product"]`,\
-            default="outer_product"
+            default="heatmap"
             Type of plots to create. Options are:
 
             - "heatmap": Displays the activation value (z-score if data was standardized prior to
@@ -1111,6 +1100,9 @@ class CAP(CAPGetter):
               squared activation of each node/region), while off-diagonal elements represent
               pairwise interactions between different nodes/regions.
 
+            .. versionchanged:: 0.33.0
+               Default changed to "heatmap"
+
         visual_scope: {"regions", "nodes"} or :obj:`list["regions", "nodes"]`, default="regions"
             Determines the level of granularity of the plots. Options are:
 
@@ -1120,17 +1112,28 @@ class CAP(CAPGetter):
               before plotting. These groupings must be defined in the `parcel_approach`
               configuration under the "regions" subkey.
 
-        show_figs: :obj:`bool`, default=True
-           Display figures.
-
         subplots: :obj:`bool`, default=True
             Produce subplots for outer product plots, combining all plots into a single figure.
 
-        as_pickle: :obj:`bool`, default=False
-            When ``output_dir`` is specified, plots are saved as pickle files, which can be further
-            modified, instead of png images.
+        output_dir: :obj:`str` or :obj:`None`, default=None
+            Directory for saving plots as png files. The directory will be created if it does not
+            exist. If None, plots will not be saved.
 
-            .. versionadded:: 0.26.5
+        plot_output_format: :obj:`str`, default="png"
+            The format to save plots in when ``output_dir`` is specified. Options are "png" or
+            "pkl" (which can be further modified). Note that "pickle" is also accepted.
+
+            .. versionchanged:: 0.33.0
+               Replaces ``as_pickle`` and accepts a string value.
+
+        suffix_filename: :obj:`str` or :obj:`None`, default=None
+            Appended to the filename of each saved plot if ``output_dir`` is provided.
+
+        suffix_title: :obj:`str` or :obj:`None`, default=None
+            Appended to the title of each plot.
+
+        show_figs: :obj:`bool`, default=True
+           Display figures.
 
         **kwargs:
             Keyword arguments used when saving figures. Valid keywords include:
@@ -1182,8 +1185,6 @@ class CAP(CAPGetter):
               nodes in that group are not explicitly labeled. This is done to minimize
               cluttering of the axes labels.
 
-              .. versionadded:: 0.30.0
-
               .. important::
                  This feature should be used with caution. It is recommended to leave this
                  argument as ``False`` for the following conditions:
@@ -1230,6 +1231,10 @@ class CAP(CAPGetter):
         io_utils.issue_file_warning("suffix_filename", suffix_filename, output_dir)
         io_utils.makedir(output_dir)
 
+        plot_output_format = io_utils.validate_plot_output_format(
+            output_dir, plot_output_format, "get_caps"
+        )
+
         # Check inputs for plot_options and visual_scope
         if not any(["heatmap" in plot_options, "outer_product" in plot_options]):
             raise ValueError("Valid inputs for `plot_options` are 'heatmap' and 'outer_product'.")
@@ -1271,10 +1276,10 @@ class CAP(CAPGetter):
                 cap_dict=cap_dict,
                 full_labels=labels,
                 output_dir=output_dir,
+                plot_output_format=plot_output_format,
                 suffix_title=suffix_title,
                 suffix_filename=suffix_filename,
                 show_figs=show_figs,
-                as_pickle=as_pickle,
                 scope=scope,
                 parcel_approach=self._parcel_approach,
             )
@@ -1295,15 +1300,15 @@ class CAP(CAPGetter):
 
     def caps2corr(
         self,
-        output_dir: Optional[str] = None,
-        suffix_title: Optional[str] = None,
-        suffix_filename: Optional[str] = None,
-        show_figs: bool = True,
-        save_plots: bool = True,
-        return_df: bool = False,
-        save_df: bool = False,
-        as_pickle: bool = False,
         method: str = "pearson",
+        output_dir: Optional[str] = None,
+        plot_output_format: str = "png",
+        suffix_filename: Optional[str] = None,
+        suffix_title: Optional[str] = None,
+        save_plots: bool = True,
+        save_df: bool = False,
+        show_figs: bool = True,
+        return_df: bool = False,
         **kwargs,
     ) -> Union[dict[str, pd.DataFrame], None]:
         """
@@ -1314,41 +1319,40 @@ class CAP(CAPGetter):
 
         Parameters
         ----------
+        method: :obj:`str`, default="pearson"
+            Type of correlation method to use. Options are "pearson" or "spearman".
+
         output_dir: :obj:`str` or :obj:`None`, default=None
             Directory to save plots (if ``save_plots`` is True) and correlation matrices DataFrames
             (if ``save_df`` is True). The directory will be created if it does not exist. If None,
             plots and dataFrame will not be saved.
 
-        suffix_title: :obj:`str` or :obj:`None`, default=None
-            Appended to the title of each plot.
+        plot_output_format: :obj:`str`, default="png"
+            The format to save plots in when ``output_dir`` is specified. Options are "png" or
+            "pkl" (which can be further modified). Note that "pickle" is also accepted.
+
+            .. versionchanged:: 0.33.0
+               Replaces ``as_pickle`` and accepts a string value.
 
         suffix_filename: :obj:`str` or :obj:`None`, default=None
             Appended to the filename of each saved plot if ``output_dir`` is provided.
 
-        show_figs: :obj:`bool`, default=True
-            Display figures.
+        suffix_title: :obj:`str` or :obj:`None`, default=None
+            Appended to the title of each plot.
 
         save_plots: :obj:`bool`, default=True
             If True, plots are saves as png images. For this to be used, ``output_dir`` must be
             specified.
 
-        return_df: :obj:`bool`, default=False
-            If True, returns a dictionary with a correlation matrix for each group.
-
         save_df: :obj:`bool`, default=False
             If True, saves the correlation matrix contained in the DataFrames as csv files. For
             this to be used, ``output_dir`` must be specified.
 
-        as_pickle: :obj:`bool`, default=False
-            When ``output_dir`` is specified, plots are saved as pickle files, which can be further
-            modified, instead of png images.
+        show_figs: :obj:`bool`, default=True
+            Display figures.
 
-            .. versionadded:: 0.26.5
-
-        method: :obj:`str`, default="pearson"
-            Type of correlation method to use. Options are "pearson" or "spearman".
-
-            .. versionadded:: 0.29.6
+        return_df: :obj:`bool`, default=False
+            If True, returns a dictionary with a correlation matrix for each group.
 
         **kwargs
             Keyword arguments used when modifying figures. Valid keywords include:
@@ -1404,6 +1408,10 @@ class CAP(CAPGetter):
 
         io_utils.issue_file_warning("suffix_filename", suffix_filename, output_dir)
 
+        plot_output_format = io_utils.validate_plot_output_format(
+            output_dir, plot_output_format, "caps2corr"
+        )
+
         create_corr_dict = return_df or save_df
 
         # Create plot dictionary
@@ -1428,16 +1436,16 @@ class CAP(CAPGetter):
                 corr_dict = None
 
             MatrixVisualizer.save_contents(
+                display=display,
+                plot_dict=plot_dict,
                 output_dir=output_dir,
+                plot_output_format=plot_output_format,
                 suffix_filename=suffix_filename,
                 group_name=group_name,
                 curr_dict=corr_dict,
-                plot_dict=plot_dict,
                 save_plots=save_plots,
                 save_df=save_df,
-                display=display,
-                as_pickle=as_pickle,
-                call="corr",
+                call="caps2corr",
             )
 
             PlotFuncs.show(show_figs)
@@ -1449,7 +1457,6 @@ class CAP(CAPGetter):
         self,
         output_dir: str,
         suffix_filename: Optional[str] = None,
-        fwhm: Optional[float] = None,
         knn_dict: Optional[dict[str, Union[int, list[int], NDArray[np.integer], str]]] = None,
         progress_bar: bool = False,
     ) -> Self:
@@ -1468,10 +1475,6 @@ class CAP(CAPGetter):
         suffix_filename: :obj:`str` or :obj:`None`, default=None
             Appended to the name of the saved file.
 
-        fwhm: :obj:`float` or :obj:`None`, default=None
-            Strength of spatial smoothing to apply (in millimeters) to the statistical map prior to
-            interpolating from MNI152 space to fsLR surface space. Uses Nilearn's ``smooth_img``.
-
         knn_dict: :obj:`dict[str, int | bool]`, default=None
             Use KNN (k-nearest neighbors) interpolation with reference atlas masking to fill in
             non-background coordinates that are assigned zero. Useful when custom parcellation does
@@ -1489,10 +1492,6 @@ class CAP(CAPGetter):
               the most frequently appearing value among "k" choices (or chosen neighbors) is, while
               the distance weighted approach uses inverse distance weighting (1/distance) to
               estimate the new averaged value for the non-background voxel.
-
-              .. versionadded:: 0.29.5 "method" key added.
-
-            .. note:: KNN interpolation is applied before ``fwhm``.
 
         progress_bar: :obj:`bool`, default=False
             If True, displays a progress bar.
@@ -1528,17 +1527,15 @@ class CAP(CAPGetter):
                 stat_map = spatial.cap_to_img(
                     atlas_file=self._parcel_approach[parc_name]["maps"],
                     cap_vector=self._caps[group_name][cap_name],
-                    fwhm=fwhm,
                     knn_dict=knn_dict,
                 )
 
                 filename = io_utils.filename(
-                    f"{group_name.replace(' ', '_')}_{cap_name}",
-                    suffix_filename,
-                    "suffix",
-                    "nii.gz",
+                    basename=f"{group_name.replace(' ', '_')}_{cap_name}",
+                    add_name=suffix_filename,
+                    pos="suffix",
                 )
-                surface.save_nifti_img(stat_map, output_dir, filename)
+                surface.save_nifti_img(stat_map, output_dir, filename + ".nii.gz")
 
         return self
 
@@ -1597,18 +1594,16 @@ class CAP(CAPGetter):
 
     def caps2surf(
         self,
-        output_dir: Optional[str] = None,
-        suffix_title: Optional[str] = None,
-        suffix_filename: Optional[str] = None,
-        show_figs: bool = True,
-        fwhm: Optional[float] = None,
         fslr_density: Literal["4k", "8k", "32k", "164k"] = "32k",
         method: Literal["linear", "nearest"] = "linear",
+        output_dir: Optional[str] = None,
+        plot_output_format: str = "png",
+        suffix_filename: Optional[str] = None,
+        suffix_title: Optional[str] = None,
         save_stat_maps: bool = False,
-        fslr_giftis_dict: Optional[dict] = None,
         knn_dict: Optional[dict[str, Union[int, list[int], NDArray[np.integer], str]]] = None,
+        show_figs: bool = True,
         progress_bar: bool = False,
-        as_pickle: bool = False,
         **kwargs,
     ) -> Self:
         """
@@ -1621,23 +1616,6 @@ class CAP(CAPGetter):
 
         Parameters
         ----------
-        output_dir: :obj:`str` or :obj:`None`, default=None
-            Directory to save plots as png files. The directory will be created if it does not exist.
-            If None, plots will not be saved.
-
-        suffix_title: :obj:`str` or :obj:`None`, default=None
-            Appended to the title of each plot.
-
-        suffix_filename: :obj:`str` or :obj:`None`, default=None
-            Appended to the filename of each saved plot if ``output_dir`` is provided.
-
-        show_figs: :obj:`bool`, default=True
-            Display figures.
-
-        fwhm: :obj:`float` or :obj:`None`, defualt=None
-            Strength of spatial smoothing to apply (in millimeters) to the statistical map prior to
-            interpolating from MNI152 space to fsLR surface space.
-
         fslr_density: {"4k", "8k", "32k", "164k"}, default="32k"
             Density of the fsLR surface when converting from MNI152 space to fsLR surface. Options
             are "32k" or "164k". If using ``fslr_giftis_dict`` options are "4k", "8k", "32k", and "164k".
@@ -1646,23 +1624,26 @@ class CAP(CAPGetter):
             Interpolation method to use when converting from MNI152 space to fsLR surface or from
             fsLR to fsLR. Options are "linear" or "nearest".
 
+        output_dir: :obj:`str` or :obj:`None`, default=None
+            Directory to save plots as png files. The directory will be created if it does not exist.
+            If None, plots will not be saved.
+
+        plot_output_format: :obj:`str`, default="png"
+            The format to save plots in when ``output_dir`` is specified. Options are "png" or
+            "pkl" (which can be further modified). Note that "pickle" is also accepted.
+
+            .. versionchanged:: 0.33.0
+               Replaces ``as_pickle`` and accepts a string value.
+
+        suffix_filename: :obj:`str` or :obj:`None`, default=None
+            Appended to the filename of each saved plot if ``output_dir`` is provided.
+
+        suffix_title: :obj:`str` or :obj:`None`, default=None
+            Appended to the title of each plot.
+
         save_stat_maps: :obj:`bool`, default=False
             If True, saves the statistical map for each CAP for all groups as a Nifti1Image if
             ``output_dir`` is provided.
-
-        fslr_giftis_dict: :obj:`dict` or :obj:`None`, default=None
-            Dictionary specifying precomputed GifTI files in fsLR space for plotting statistical maps.
-
-            ::
-
-                {
-                    "GroupName": {
-                        "CAP-1": {
-                            "lh": "path/to/left_hemisphere_gifti",
-                            "rh": "path/to/right_hemisphere_gifti",
-                        },
-                    }
-                }
 
         knn_dict: :obj:`dict[str, int | bool]`, default=None
             Use KNN (k-nearest neighbors) interpolation with reference atlas masking to fill in
@@ -1682,18 +1663,13 @@ class CAP(CAPGetter):
               the distance weighted approach uses inverse distance weighting (1/distance) to
               estimate the new averaged value for the non-background voxel.
 
-              .. versionadded:: 0.29.5 "method" key added.
-
             .. note:: KNN interpolation is applied before ``fwhm``.
+
+        show_figs: :obj:`bool`, default=True
+            Display figures.
 
         progress_bar: :obj:`bool`, default=False
             If True, displays a progress bar.
-
-        as_pickle: :obj:`bool`, default=False
-            When ``output_dir`` is specified, plots are saved as pickle files, which can be further
-            modified, instead of png images.
-
-            .. versionadded:: 0.26.5
 
         **kwargs
             Additional parameters to pass to modify certain plot parameters. Options include:
@@ -1747,65 +1723,49 @@ class CAP(CAPGetter):
         unless ``fslr_giftis_dict`` is defined, then this function assumes the maps are in surface
         space.
         """
-        if fslr_giftis_dict is None:
-            check_params = ["_parcel_approach", "_caps"]
-            self._check_required_attrs(check_params)
+        check_params = ["_parcel_approach", "_caps"]
+        self._check_required_attrs(check_params)
 
         knn_dict = self._validate_knn_dict(knn_dict)
 
         io_utils.issue_file_warning("suffix_filename", suffix_filename, output_dir)
         io_utils.makedir(output_dir)
 
+        plot_output_format = io_utils.validate_plot_output_format(
+            output_dir, plot_output_format, "caps2surf"
+        )
+
         # Create plot dictionary
         plot_dict = resolve_kwargs(PlotDefaults.caps2surf(), **kwargs)
 
-        group_names = (
-            self._caps if hasattr(self, "_caps") and fslr_giftis_dict is None else fslr_giftis_dict
-        )
-        for group_name in group_names:
-            cap_dict = (
-                self._caps[group_name]
-                if hasattr(self, "_caps") and fslr_giftis_dict is None
-                else fslr_giftis_dict[group_name]
-            )
+        for group_name in self._groups:
             for cap_name in tqdm(
-                cap_dict,
+                self._caps[group_name],
                 desc=f"Generating Surface Plots [GROUP: {group_name}]",
                 disable=not progress_bar,
             ):
-                params = {"method": method, "fslr_density": fslr_density}
-                if fslr_giftis_dict is None:
-                    parc_name = get_parc_name(self._parcel_approach)
-                    stat_map = spatial.cap_to_img(
-                        atlas_file=self._parcel_approach[parc_name]["maps"],
-                        cap_vector=self._caps[group_name][cap_name],
-                        fwhm=fwhm,
-                        knn_dict=knn_dict,
-                    )
-                    gii_lh, gii_rh = surface.convert_volume_to_surface(stat_map=stat_map, **params)
-                else:
-                    stat_map = None
-                    gii_lh, gii_rh = surface.resample_surface(
-                        fslr_giftis_dict=fslr_giftis_dict[group_name],
-                        group_name=group_name,
-                        cap_name=cap_name,
-                        **params,
-                    )
+                parc_name = get_parc_name(self._parcel_approach)
+                stat_map = spatial.cap_to_img(
+                    atlas_file=self._parcel_approach[parc_name]["maps"],
+                    cap_vector=self._caps[group_name][cap_name],
+                    knn_dict=knn_dict,
+                )
+                gii_lh, gii_rh = surface.convert_volume_to_surface(stat_map, fslr_density, method)
 
                 fig = surface.generate_surface_plot(
-                    gii_lh, gii_rh, group_name, cap_name, suffix_title, plot_dict, fslr_density
+                    gii_lh, gii_rh, fslr_density, plot_dict, group_name, cap_name, suffix_title
                 )
 
                 surface.save_surface_plot(
-                    output_dir,
-                    stat_map,
-                    fig,
-                    group_name,
-                    cap_name,
-                    suffix_filename,
-                    save_stat_maps,
-                    as_pickle,
-                    plot_dict,
+                    fig=fig,
+                    plot_dict=plot_dict,
+                    output_dir=output_dir,
+                    plot_output_format=plot_output_format,
+                    suffix_filename=suffix_filename,
+                    stat_map=stat_map,
+                    save_stat_maps=save_stat_maps,
+                    group_name=group_name,
+                    cap_name=cap_name,
                 )
 
                 surface.show_surface_plot(fig, show_figs)
@@ -1814,13 +1774,12 @@ class CAP(CAPGetter):
 
     def caps2radar(
         self,
-        output_dir: Optional[str] = None,
-        suffix_title: Optional[str] = None,
-        suffix_filename: Optional[str] = None,
-        show_figs: bool = True,
         use_scatterpolar: bool = False,
-        as_html: bool = False,
-        as_json: bool = False,
+        output_dir: Optional[str] = None,
+        plot_output_format: str = "png",
+        suffix_filename: Optional[str] = None,
+        suffix_title: Optional[str] = None,
+        show_figs: bool = True,
         **kwargs,
     ) -> Self:
         """
@@ -1838,33 +1797,30 @@ class CAP(CAPGetter):
 
         Parameters
         ----------
+        use_scatterpolar: :obj:`bool`, default=False
+            Uses ``plotly.graph_objects.Scatterpolar`` instead of ``plotly.express.line_polar``.
+
         output_dir: :obj:`str` or :obj:`None`, default=None
             Directory to save plots as png or html images. The directory will be created if it does
             not exist. If None, plots will not be saved.
 
-        suffix_title: :obj:`str` or :obj:`None`, default=None
-            Appended to the title of each plot.
+        plot_output_format: :obj:`str`, default="png"
+            The format to save plots in when ``output_dir`` is specified. Options are "png", "html",
+            or "json" (which can be further modified).
+
+            .. versionchanged:: 0.33.0
+               Replaces ``as_html`` and ``as_json`` and accepts a string value.
 
         suffix_filename: :obj:`str` or :obj:`None`, default=None
             Appended to the filename of each saved plot if ``output_dir`` is provided.
+
+        suffix_title: :obj:`str` or :obj:`None`, default=None
+            Appended to the title of each plot.
 
         show_figs: :obj:`bool`, default=True
             Display figures. If the current Python session is non-interactive, then ``plotly.offline``
             is used to generate an html file named "temp-plot.html", which opens each plot in the
             default browser.
-
-        use_scatterpolar: :obj:`bool`, default=False
-            Uses ``plotly.graph_objects.Scatterpolar`` instead of ``plotly.express.line_polar``.
-
-        as_html: :obj:`bool`, default=False
-            When ``output_dir`` is specified, plots are saved as html file instead of png images.
-
-        as_json: :obj:`bool`, default=False
-            When ``output_dir`` is specified, plots are saved as json file, which can be further
-            modified, instead of png images. Note that option is ignored if ``as_html`` is also
-            True.
-
-            .. versionadded:: 0.26.5
 
         **kwargs:
             Additional parameters to pass to modify certain plot parameters. Options include:
@@ -1887,8 +1843,6 @@ class CAP(CAPGetter):
               of the trace.
             - fill: :obj:`str`, default="toself" -- If "toself" the are of the dots and within the
               boundaries of the line will be filled.
-
-              .. versionchanged:: 0.26.0 Default changed from "none" to "toself".
 
             - mode: :obj:`str`, default="markers+lines" -- Determines how the trace is drawn.
               Can include "lines", "markers", "lines+markers", "lines+markers+text".
@@ -2048,6 +2002,10 @@ class CAP(CAPGetter):
         io_utils.issue_file_warning("suffix_filename", suffix_filename, output_dir)
         io_utils.makedir(output_dir)
 
+        plot_output_format = io_utils.validate_plot_output_format(
+            output_dir, plot_output_format, "caps2radar"
+        )
+
         if not self._standardize:
             LG.warning(
                 "To better aid interpretation, the matrix subjected to kmeans clustering in "
@@ -2077,15 +2035,14 @@ class CAP(CAPGetter):
                 radar.show_radar_plot(fig, show_figs)
 
                 radar.save_radar_plot(
-                    fig,
-                    output_dir,
-                    group_name,
-                    cap_name,
-                    suffix_filename,
-                    as_html,
-                    as_json,
-                    plot_dict["scale"],
-                    plot_dict["engine"],
+                    fig=fig,
+                    scale=plot_dict["scale"],
+                    engine=plot_dict["engine"],
+                    output_dir=output_dir,
+                    plot_output_format=plot_output_format,
+                    suffix_filename=suffix_filename,
+                    group_name=group_name,
+                    cap_name=cap_name,
                 )
 
         return self

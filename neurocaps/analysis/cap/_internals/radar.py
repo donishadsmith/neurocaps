@@ -203,35 +203,28 @@ def show_radar_plot(fig: go.Figure, show_figure: bool) -> None:
 
 def save_radar_plot(
     fig: go.Figure,
-    output_dir: Union[str, None],
-    group_name: str,
-    cap_name: str,
-    suffix_filename: str,
-    as_html: bool,
-    as_json: bool,
     scale: int,
     engine: str,
+    output_dir: Union[str, None],
+    plot_output_format: str,
+    suffix_filename: str,
+    group_name: str,
+    cap_name: str,
 ) -> None:
-    """
-    Saves a plotly image. Images are saves as png files by default. If ``as_html`` and ``as_json``
-    are True, then ``as_html`` takes precedence and images are only saved as html files.
-    """
+    """Saves a plotly image as a "png", "html", or "json"."""
     if output_dir:
-        if as_html and as_html:
-            LG.warning(
-                "`as_html` and `as_json` are True. Figures will only be saved as html files."
-            )
-
         filename = io_utils.filename(
-            f"{group_name.replace(' ', '_')}_{cap_name}_radar", suffix_filename, "suffix", "png"
+            basename=f"{group_name.replace(' ', '_')}_{cap_name}_radar",
+            add_name=suffix_filename,
+            pos="suffix",
         )
-        if as_html:
-            fig.write_html(os.path.join(output_dir, filename.replace(".png", ".html")))
-        elif as_json:
-            fig.write_json(os.path.join(output_dir, filename.replace(".png", ".json")))
+        if plot_output_format == "html":
+            fig.write_html(os.path.join(output_dir, filename + ".html"))
+        elif plot_output_format == "json":
+            fig.write_json(os.path.join(output_dir, filename + ".json"))
         else:
             fig.write_image(
-                os.path.join(output_dir, filename),
+                os.path.join(output_dir, filename + ".png"),
                 scale=scale,
                 engine=engine,
             )

@@ -247,10 +247,10 @@ def generate_outer_product_plots(
     full_labels: list[str],
     subplots: bool,
     output_dir: Union[str, None],
+    plot_output_format: str,
     suffix_title: Union[str, None],
     suffix_filename: Union[str, None],
     show_figs: bool,
-    as_pickle: bool,
     scope: str,
     parcel_approach: ParcelApproach,
 ) -> None:
@@ -328,10 +328,12 @@ def generate_outer_product_plots(
 
                 if output_dir:
                     filename = io_utils.filename(
-                        f"{group_name}_CAPs_outer_product-{scope}", suffix_filename, "suffix", "png"
+                        basename=f"{group_name}_CAPs_outer_product-{scope}",
+                        add_name=suffix_filename,
+                        pos="suffix",
                     )
 
-                    PlotFuncs.save_fig(display, output_dir, filename, plot_dict, as_pickle)
+                    PlotFuncs.save_fig(display, plot_dict, output_dir, plot_output_format, filename)
         else:
             # Create new plot for each iteration when not subplot
             plt.figure(figsize=plot_dict["figsize"])
@@ -361,12 +363,11 @@ def generate_outer_product_plots(
             # Save individual plots
             if output_dir:
                 filename = io_utils.filename(
-                    f"{group_name}_{cap_name}_outer_product-{scope}",
-                    suffix_filename,
-                    "suffix",
-                    "png",
+                    basename=f"{group_name}_{cap_name}_outer_product-{scope}",
+                    add_name=suffix_filename,
+                    pos="suffix",
                 )
-                PlotFuncs.save_fig(display, output_dir, filename, plot_dict, as_pickle)
+                PlotFuncs.save_fig(display, plot_dict, output_dir, plot_output_format, filename)
 
     PlotFuncs.show(show_figs)
 
@@ -420,10 +421,10 @@ def generate_heatmap_plots(
     cap_dict: dict[str, dict[str, NDArray]],
     full_labels: list[str],
     output_dir: Union[str, None],
+    plot_output_format: str,
     suffix_title: Union[str, None],
     suffix_filename: Union[str, None],
     show_figs: bool,
-    as_pickle: bool,
     scope: str,
     parcel_approach: ParcelApproach,
 ) -> None:
@@ -468,8 +469,8 @@ def generate_heatmap_plots(
 
     if output_dir:
         filename = io_utils.filename(
-            f"{group_name}_CAPs_heatmap-{scope}", suffix_filename, "suffix", "png"
+            basename=f"{group_name}_CAPs_heatmap-{scope}", add_name=suffix_filename, pos="suffix"
         )
-        PlotFuncs.save_fig(display, output_dir, filename, plot_dict, as_pickle)
+        PlotFuncs.save_fig(display, plot_dict, output_dir, plot_output_format, filename)
 
     PlotFuncs.show(show_figs)
