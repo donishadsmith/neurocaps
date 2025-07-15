@@ -24,16 +24,11 @@ def fetch_preset_parcel_approach(
     Open Science Framework (OSF) if the corresponding files are not present in the
     directory.
 
-    .. versionadded:: 0.32.2
-
     Parameters
     ----------
     name: :obj:`str`
         Name of the preset "Custom" parcellation approach to fetch. Options are "HCPex", "4S",
         and "Gordon".
-
-        .. versionadded:: 0.32.3
-           Added "Gordon".
 
     n_nodes: :obj:`int` or :obj:`None`, default=None
         Currently only relevant to "4S". Options for the "4S" are: 156, 256, 356,
@@ -85,8 +80,6 @@ def generate_custom_parcel_approach(
     .. important:
         The labels in the dataframe are assumed to be in order (minimum -> maximum label).
 
-    .. versionadded:: 0.32.0
-
     Parameters
     ----------
     filepath_or_df: :obj:`pd.Dataframe` or :obj:`str`
@@ -134,8 +127,6 @@ def generate_custom_parcel_approach(
 
     metadata: :obj:`dict[str, Any]` or None, default=None
         Metadata information to add to the "metadata" key if not None.
-
-        .. versionadded:: 0.32.2
 
     Returns
     -------

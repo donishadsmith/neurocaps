@@ -2,8 +2,6 @@
 -----------------------
 Module containing utility functions.
 
-.. versionadded:: 0.32.0
-
 .. currentmodule:: neurocaps.utils
 
 .. autosummary::

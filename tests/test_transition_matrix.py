@@ -59,7 +59,7 @@ def test_transition_matrix(tmp_dir, group, suffix_title, suffix_filename):
         output_dir=tmp_dir.name,
         show_figs=False,
         save_df=False,
-        as_pickle=True,
+        plot_output_format="pkl",
     )
 
     check_outputs(tmp_dir, {"pkl": len(groups)}, plot_type="pickle")

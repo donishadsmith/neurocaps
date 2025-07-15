@@ -4,7 +4,7 @@ Joblib or pickle), unserializing (with Joblib), and additional utilities.
 """
 
 import os, copy, json, pickle
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 import joblib
 
@@ -30,28 +30,25 @@ def issue_file_warning(param_name: str, param: str, output_dir: str) -> None:
         )
 
 
-def filename(
-    base_name: str, add_name: Union[str, None], pos: str, ext: Union[None, str] = None
-) -> str:
+def filename(basename: str, add_name: Union[str, None], pos: str) -> str:
     """
-    Adds the file extension and the prefix or suffix to the file name depending on if ``pos``
-    is "prefix" or "suffix".
+    Adds the the prefix or suffix to the file name depending on if ``pos`` is "prefix" or "suffix".
     """
     if not add_name:
-        filename = f"{base_name}.{ext}" if ext else base_name
+        filename = basename
 
         return filename.replace(" ", "_")
 
     if pos == "prefix":
         # Use - since prefix is currently for ``CAP.calculate_metrics``
         add_name = os.path.splitext(add_name.rstrip())[0].rstrip()
-        filename = f"{add_name}-{base_name}"
+        filename = f"{add_name}-{basename}"
     else:
-        filename = f"{base_name}_{add_name.rstrip().replace(' ', '_')}"
+        filename = f"{basename}_{add_name.rstrip().replace(' ', '_')}"
 
     filename = filename.replace(" ", "_")
 
-    return f"{filename}.{ext}" if ext else filename
+    return filename
 
 
 def serialize(obj: Any, output_dir: str, save_filename: str, use_joblib=False) -> None:
@@ -144,3 +141,25 @@ def validate_file(
     check_file_exist(filename)
 
     return check_ext(filename, supported_ext, return_ext)
+
+
+def validate_plot_output_format(output_dir: Optional[str], output_format: str, call=str) -> str:
+    """Validates the supported output format for files."""
+    if not output_dir:
+        return output_format
+
+    assert isinstance(output_format, str), "`output_format` must be a string."
+    output_format = output_format.lstrip(".").rstrip(".").lower()
+
+    if call != "caps2radar":
+        default_formats = ["png", "pkl", "pickle"]
+    else:
+        default_formats = ["png", "html", "json"]
+
+    if output_format not in default_formats:
+        raise ValueError(
+            f"{output_format} is not a supported output format for `{call}`. "
+            f"Only the following output formats are supported: {list_to_str(default_formats)}"
+        )
+
+    return output_format

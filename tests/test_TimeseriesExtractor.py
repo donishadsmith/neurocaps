@@ -748,7 +748,7 @@ def test_visualize_bold(setup_environment_1, get_vars, tmp_dir, parcel_approach,
         roi_indx=[0, 1, 2],
         show_figs=False,
         output_dir=tmp_dir.name,
-        as_pickle=True,
+        plot_output_format="pkl",
         filename="testing_save_nodes_multiple",
     )
     check_outputs(tmp_dir, {"pkl": 1}, plot_type="pickle", plot_name="testing_save_nodes_multiple")
@@ -2666,21 +2666,6 @@ def test_append_subjects_with_different_run_ids(setup_environment_4, get_vars):
 
     assert extractor.subject_timeseries["01"]["run-0"].shape == (40, 400)
     assert extractor.subject_timeseries["02"]["run-001"].shape == (40, 400)
-
-
-def test_flush(setup_environment_4, get_vars, caplog):
-    """Ensures flush produces logs."""
-    import logging
-
-    bids_dir, _ = get_vars
-
-    extractor = TimeseriesExtractor()
-
-    with caplog.at_level(logging.INFO):
-        extractor.get_bold(bids_dir=bids_dir, task="rest", tr=1.2, flush=True)
-
-    assert "Preparing for Timeseries Extraction using [FILE:" in caplog.text
-    assert "The following confounds will be used for nuisance regression:" in caplog.text
 
 
 def test_logging_redirection_sequential(setup_environment_4, get_vars, tmp_dir):

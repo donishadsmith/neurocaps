@@ -44,8 +44,6 @@ class UnsupportedFileExtensionError(Exception):
     Unsupported File Extension Exception.
 
     This exception occurs when an internal function attempts to open an unsupported file type.
-
-    .. versionadded:: 0.26.5
     """
 
 

@@ -15,17 +15,8 @@ _USER_ROOT_HANDLER = None
 _USER_MODULE_HANDLERS = {}
 
 
-class Flush(logging.StreamHandler):
-    """Flush logs immediately."""
-
-    def emit(self, record: logging.LogRecord) -> None:
-        super().emit(record)
-        self.flush()
-
-
 def setup_logger(
     name: str,
-    flush: bool = False,
     top_level: bool = True,
     parallel_log_config: Union[dict[str, Union[Queue, int]], None] = None,
 ):
@@ -77,7 +68,7 @@ def setup_logger(
     if not default_handlers and not (
         parallel_log_config or (logger.name == _PARALLEL_MODULE and top_level)
     ):
-        logger = add_handler(logger, flush)
+        logger = add_handler(logger)
 
     return logger
 
@@ -98,17 +89,14 @@ def setup_queuehandler(logger: logging.Logger, parallel_log_config: dict[str, Un
     return logger
 
 
-def add_handler(logger: logging.Logger, flush: bool, format: Union[str, None] = None):
+def add_handler(logger: logging.Logger, format: Union[str, None] = None):
     """Add and format handler."""
     # Safeguard; ensure a clean state for "extract_timeseries" since it is used in parallel and
     # sequential contexts
     if logger.name == _PARALLEL_MODULE:
         logger.handlers.clear()
 
-    if flush:
-        handler = Flush(sys.stdout)
-    else:
-        handler = logging.StreamHandler(sys.stdout)
+    handler = logging.StreamHandler(sys.stdout)
 
     format = format if format else "%(asctime)s %(name)s [%(levelname)s] %(message)s"
     handler.setFormatter(logging.Formatter(format))

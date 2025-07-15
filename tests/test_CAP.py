@@ -939,7 +939,7 @@ def test_get_caps_cluster_selection_plot(tmp_dir):
         cluster_selection_method="silhouette",
         output_dir=tmp_dir.name,
         show_figs=False,
-        as_pickle=True,
+        plot_output_format="pkl",
     )
     check_outputs(tmp_dir, {"pkl": 1}, plot_type="pickle", plot_name="silhouette")
 
@@ -990,7 +990,7 @@ def test_caps2plot(tmp_dir, timeseries, parcel_approach):
 
     cap_analysis.caps2plot(**kwargs)
     check_outputs(tmp_dir, values_dict={"heatmap": 2, "outer": 4})
-    cap_analysis.caps2plot(**kwargs, as_pickle=True)
+    cap_analysis.caps2plot(**kwargs, plot_output_format="pickle")
     check_outputs(tmp_dir, plot_type="pickle", values_dict={"pkl": 6})
 
     # Subplots set to True
@@ -1039,7 +1039,7 @@ def test_caps2corr(tmp_dir, method):
     check_outputs(tmp_dir, {"csv": 1, "png": 1}, plot_type="corr")
 
     df = cap_analysis.caps2corr(
-        output_dir=tmp_dir.name, show_figs=False, save_df=False, as_pickle=True
+        output_dir=tmp_dir.name, show_figs=False, save_df=False, plot_output_format="PKL"
     )
     check_outputs(tmp_dir, {"pkl": 1}, plot_type="pickle")
 
@@ -1082,27 +1082,26 @@ def test_caps2radar(tmp_dir, timeseries, parcel_approach):
     check_outputs(tmp_dir, plot_type="radar", values_dict={"png": 2})
 
     cap_analysis.caps2radar(
-        radialaxis=radialaxis, show_figs=False, as_html=True, output_dir=tmp_dir.name
+        radialaxis=radialaxis, show_figs=False, plot_output_format="html", output_dir=tmp_dir.name
     )
     check_outputs(tmp_dir, plot_type="radar", values_dict={"html": 2})
 
     cap_analysis.caps2radar(
-        radialaxis=radialaxis, show_figs=False, as_json=True, output_dir=tmp_dir.name
+        radialaxis=radialaxis, show_figs=False, plot_output_format="json", output_dir=tmp_dir.name
     )
     check_outputs(tmp_dir, plot_type="radar", values_dict={"json": 2})
 
     cap_analysis.caps2radar(
-        radialaxis=radialaxis, show_figs=False, as_html=False, output_dir=tmp_dir.name
+        radialaxis=radialaxis, show_figs=False, plot_output_format="PNG", output_dir=tmp_dir.name
     )
     check_outputs(tmp_dir, plot_type="radar", values_dict={"png": 2})
 
     cap_analysis.caps2radar(
         radialaxis=radialaxis,
-        fill="toself",
         use_scatterpolar=True,
         scattersize=10,
         show_figs=False,
-        as_html=True,
+        plot_output_format="html",
         output_dir=tmp_dir.name,
     )
     check_outputs(tmp_dir, plot_type="radar", values_dict={"html": 2})
@@ -1247,7 +1246,7 @@ def test_caps2surf(tmp_dir, remove_files, timeseries, parcel_approach):
     check_outputs(tmp_dir, plot_type="surface", values_dict={"png": 2})
     check_outputs(tmp_dir, plot_type="nifti", values_dict={"nii.gz": 2})
 
-    cap_analysis.caps2surf(output_dir=tmp_dir.name, show_figs=False, as_pickle=True)
+    cap_analysis.caps2surf(output_dir=tmp_dir.name, show_figs=False, plot_output_format="Pkl")
     check_outputs(tmp_dir, plot_type="pickle", values_dict={"pkl": 2})
 
     cap_analysis.caps2surf(

@@ -183,8 +183,6 @@ class SchaeferParcelApproach(ParcelApproachBase):
         Dictionary containing metadata information about the parcellation. This key is purely
         informational and can be removed, modified, or extended.
 
-        .. versionadded:: 0.32.2
-
     See Also
     --------
     ParcelApproach
@@ -232,8 +230,6 @@ class AALParcelApproach(ParcelApproachBase):
     metadata: :obj:`dict[str, Any]`
         Dictionary containing metadata information about the parcellation. This key is purely
         informational and can be removed, modified, or extended.
-
-        .. versionadded:: 0.32.2
 
     See Also
     --------
@@ -345,15 +341,12 @@ class CustomParcelApproach(ParcelApproachBase):
            creation of simplified axis labels that include hemisphere information. In all other
            methods, the lateralization structure is ignored.
 
-        .. versionchanged:: 0.30.0
-           "regions" subkey can now be of type `dict[str, list[int] | range]` for non-lateralized
-           regions.
+        .. note::
+           Non-lateralized "regions" is only supported in versions >= 0.30.0.
 
     metadata: :obj:`dict[str, Any]`
         Dictionary containing metadata information about the parcellation. This key is purely
         informational and can be removed, modified, or extended.
-
-        .. versionadded:: 0.32.2
 
     See Also
     --------

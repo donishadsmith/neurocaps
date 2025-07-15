@@ -10,9 +10,9 @@ from neurocaps.extraction._internals.postprocess import standardize_rois
 
 def standardize(
     subject_timeseries_list: Union[list[SubjectTimeseries], list[str]],
-    return_dicts: bool = True,
     output_dir: Optional[str] = None,
     filenames: Optional[list[str]] = None,
+    return_dicts: bool = True,
 ) -> Union[dict[str, SubjectTimeseries], None]:
     """
     Perform Participant-wise Timeseries Standardization Within Runs.
@@ -32,10 +32,6 @@ def standardize(
         to pickle files containing this same structure. Refer to documentation for
         ``SubjectTimeseries`` in the "See Also" section for an example structure.
 
-    return_dicts: :obj:`bool`, default=True
-        If True, returns a single dictionary containing the standardized input dictionaries. Keys
-        are named "dict_{0}" where {0} corresponds to the dictionary's position in the input list.
-
     output_dir: :obj:`str` or :obj:`None`, default=None
         Directory to save the standardized dictionaries as pickle files. The directory will be
         created if it does not exist. Dictionaries will not be saved if None.
@@ -46,6 +42,10 @@ def standardize(
         in the 0th position of ``subject_timeseries_list``). If None and ``output_dir`` is specified,
         uses default file names - "subject_timeseries_{0}_standardized.pkl" (where {0} indicates the
         original input order).
+
+    return_dicts: :obj:`bool`, default=True
+        If True, returns a single dictionary containing the standardized input dictionaries. Keys
+        are named "dict_{0}" where {0} corresponds to the dictionary's position in the input list.
 
     Returns
     -------

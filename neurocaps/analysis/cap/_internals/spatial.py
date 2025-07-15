@@ -8,7 +8,7 @@ from nilearn import datasets, image
 from scipy.spatial import KDTree
 
 
-def cap_to_img(atlas_file, cap_vector, fwhm, knn_dict):
+def cap_to_img(atlas_file, cap_vector, knn_dict):
     """
     Projects cluster centroids (CAPs) on to the parcellation map. Also if specified, performs
     k-nearest neighbors and spatial smoothing on the NifTI image.
@@ -35,10 +35,6 @@ def cap_to_img(atlas_file, cap_vector, fwhm, knn_dict):
     # Knn implementation to aid in coverage issues
     if knn_dict:
         stat_map = perform_knn(atlas, knn_dict, stat_map)
-
-    # Add smoothing to stat map to help mitigate potential coverage issues
-    if fwhm is not None:
-        stat_map = image.smooth_img(stat_map, fwhm=fwhm)
 
     return stat_map
 

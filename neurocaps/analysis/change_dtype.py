@@ -12,9 +12,9 @@ from neurocaps.typing import SubjectTimeseries
 def change_dtype(
     subject_timeseries_list: Union[list[SubjectTimeseries], list[str]],
     dtype: Union[str, np.floating],
-    return_dicts: bool = True,
     output_dir: Optional[str] = None,
     filenames: Optional[list[str]] = None,
+    return_dicts: bool = True,
 ) -> Union[dict[str, SubjectTimeseries], None]:
     """
     Perform Participant-wise Dtype Conversion.
@@ -33,10 +33,6 @@ def change_dtype(
         Target data type (e.g "float32" or ``np.float32``) to convert each participant's NumPy
         arrays into.
 
-    return_dicts: :obj:`bool`, default=True
-        If True, returns a single dictionary containing the converted input dictionaries. Keys are
-        named "dict_{0}" where {0} corresponds to the dictionary's position in the input list.
-
     output_dir: :obj:`str` or :obj:`None`, default=None
         Directory to save the converted ``subject_timeseries`` as pickle files. The directory will
         be created if it does not exist. Dictionaries will not be saved if None.
@@ -47,6 +43,10 @@ def change_dtype(
         the dictionary in the 0th position of ``subject_timeseries_list``). If None and
         ``output_dir`` is specified, uses default file names - "subject_timeseries_{0}_float{1}.pkl"
         (where {0} indicates the original input order and {1} is the dtype.
+
+    return_dicts: :obj:`bool`, default=True
+        If True, returns a single dictionary containing the converted input dictionaries. Keys are
+        named "dict_{0}" where {0} corresponds to the dictionary's position in the input list.
 
     Returns
     -------
@@ -73,8 +73,8 @@ def change_dtype(
         curr_dict = io_utils.get_obj(curr_dict)
 
         for subj_id in curr_dict:
-            for run in curr_dict[subj_id]:
-                curr_dict[subj_id][run] = curr_dict[subj_id][run].astype(dtype)
+            for run_name in curr_dict[subj_id]:
+                curr_dict[subj_id][run_name] = curr_dict[subj_id][run_name].astype(dtype)
 
         changed_dtype_dicts[f"dict_{indx}"] = curr_dict
 

@@ -13,13 +13,13 @@ from neurocaps.utils._plotting_utils import MatrixVisualizer, PlotDefaults, Plot
 def transition_matrix(
     trans_dict: dict[str, pd.DataFrame],
     output_dir: Optional[str] = None,
-    suffix_title: Optional[str] = None,
+    plot_output_format: str = "png",
     suffix_filename: Optional[str] = None,
-    show_figs: bool = True,
+    suffix_title: Optional[str] = None,
     save_plots: bool = True,
-    return_df: bool = True,
     save_df: bool = True,
-    as_pickle: bool = False,
+    show_figs: bool = True,
+    return_df: bool = True,
     **kwargs,
 ) -> Union[pd.DataFrame, None]:
     """
@@ -40,30 +40,31 @@ def transition_matrix(
         DataFrames (if ``save_df`` is True) to. The directory will be created if it does not exist.
         Plots and dataframes will not be saved if None.
 
-    suffix_title: :obj:`str` or :obj:`None`, default=None
-        Appended to the title of each plot.
+    plot_output_format: :obj:`str`, default="png"
+        The format to save plots in when ``output_dir`` is specified. Options are "png" or
+        "pkl" (which can be further modified). Note that "pickle" is also accepted.
+
+        .. versionchanged:: 0.33.0
+            Replaces ``as_pickle`` and accepts a string value.
 
     suffix_filename: :obj:`str` or :obj:`None`, default=None
         Appended to the filename of each saved plot if ``output_dir`` is provided.
 
-    show_figs: :obj:`bool`, default=True
-        Display figures.
+    suffix_title: :obj:`str` or :obj:`None`, default=None
+        Appended to the title of each plot.
 
     save_plots: :obj:`bool`, default=True
         If True, plots are saves as png images. For this to be used, ``output_dir`` must be specified.
-
-    return_df: :obj:`bool`, default=False
-        If True, returns a dictionary with a transition probability matrix for each group.
 
     save_df: :obj:`bool`, default=False,
         If True, saves the transition probability matrix contained in the DataFrames as csv files.
         For this to be used, ``output_dir`` must be specified.
 
-    as_pickle: :obj:`bool`, default=False
-        When ``output_dir`` is specified, plots are saved as pickle files, which can be further
-        modified, instead of png images.
+    show_figs: :obj:`bool`, default=True
+        Display figures.
 
-        .. versionadded:: 0.26.5
+    return_df: :obj:`bool`, default=False
+        If True, returns a dictionary with a transition probability matrix for each group.
 
     **kwargs
         Keyword arguments used when modifying figures. Valid keywords include:
@@ -154,16 +155,16 @@ def transition_matrix(
         # Save figure & dataframe
         if output_dir:
             MatrixVisualizer.save_contents(
+                display=display,
+                plot_dict=plot_dict,
                 output_dir=output_dir,
+                plot_output_format=plot_output_format,
                 suffix_filename=suffix_filename,
                 group_name=group_name,
                 curr_dict=trans_mat_dict,
-                plot_dict=plot_dict,
                 save_plots=save_plots,
                 save_df=save_df,
-                display=display,
-                as_pickle=as_pickle,
-                call="trans",
+                call="transition_matrix",
             )
 
         PlotFuncs.show(show_figs)
