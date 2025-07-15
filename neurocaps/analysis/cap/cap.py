@@ -1594,7 +1594,7 @@ class CAP(CAPGetter):
 
     def caps2surf(
         self,
-        fslr_density: Literal["4k", "8k", "32k", "164k"] = "32k",
+        fslr_density: Literal["32k", "164k"] = "32k",
         method: Literal["linear", "nearest"] = "linear",
         output_dir: Optional[str] = None,
         plot_output_format: str = "png",
@@ -1616,9 +1616,9 @@ class CAP(CAPGetter):
 
         Parameters
         ----------
-        fslr_density: {"4k", "8k", "32k", "164k"}, default="32k"
+        fslr_density: {"32k", "164k"}, default="32k"
             Density of the fsLR surface when converting from MNI152 space to fsLR surface. Options
-            are "32k" or "164k". If using ``fslr_giftis_dict`` options are "4k", "8k", "32k", and "164k".
+            are "32k" or "164k".
 
         method: {"linear", "nearest"}, default="linear"
             Interpolation method to use when converting from MNI152 space to fsLR surface or from
@@ -1662,8 +1662,6 @@ class CAP(CAPGetter):
               the most frequently appearing value among "k" choices (or chosen neighbors) is, while
               the distance weighted approach uses inverse distance weighting (1/distance) to
               estimate the new averaged value for the non-background voxel.
-
-            .. note:: KNN interpolation is applied before ``fwhm``.
 
         show_figs: :obj:`bool`, default=True
             Display figures.
@@ -1719,9 +1717,8 @@ class CAP(CAPGetter):
         labels are iterated over to map each element of the CAP cluster centroid onto the
         corresponding non-zero label IDs in the parcellation.
 
-        Additionally, this funcition assumes that the parcellation map is in volumetric MNI space
-        unless ``fslr_giftis_dict`` is defined, then this function assumes the maps are in surface
-        space.
+        **Space**: Additionally, this funcition assumes that the parcellation map is in MNI
+        volumetric space.
         """
         check_params = ["_parcel_approach", "_caps"]
         self._check_required_attrs(check_params)

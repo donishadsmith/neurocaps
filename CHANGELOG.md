@@ -15,6 +15,10 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.33.0.post1] - 2025-07-15
+### 📖 Documentation
+- Updates to remove old information in parameters (type hints and strings).
+
 ## [0.33.0] - 2025-07-15
 ### 🚀 New/Added
 - `plot_output_format` parameter added to replace `as_pickle`, `as_json`, and `as_html`
