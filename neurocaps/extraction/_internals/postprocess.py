@@ -929,12 +929,11 @@ def report_qc(data):
     flagged frames.
     """
     report_val = lambda val: val if val is not None else math.nan
-
     qc = {
         "mean_fd": report_val(data.mean_fd),
         "std_fd": report_val(data.std_fd),
-        "frames_scrubbed": report_val(data.std_fd),
-        "frames_interpolated": report_val(data.std_fd),
+        "frames_scrubbed": math.nan,
+        "frames_interpolated": math.nan,
         "mean_high_motion_length": report_val(data.high_motion_len_mean),
         "std_high_motion_length": report_val(data.high_motion_len_std),
         "n_dummy_scans": data.dummy_vols if data.signal_clean_info["dummy_scans"] else math.nan,
