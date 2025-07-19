@@ -35,3 +35,4 @@ Publicly available classes, functions, exceptions, types, and utility functions 
    neurocaps.typing.CustomParcelApproach
    neurocaps.utils.fetch_preset_parcel_approach
    neurocaps.utils.generate_custom_parcel_approach
+   neurocaps.utils.PlotDefaults

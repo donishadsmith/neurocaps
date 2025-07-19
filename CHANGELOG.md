@@ -15,6 +15,13 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.34.0] - 2025-07-19
+### ♻ Changed
+- `PlotDefaults` is now apart of the public API and has a new method (`available_methods`).
+- Documentation for plot related parameters moved to `PlotDefaults`.
+- For correlation and transition matrices plot, "annot" is now True by default.
+- Renamed "_plotting_utils.py" to "_plot_utils.py".
+
 ## [0.33.1] - 2025-07-18
 ### 🐛 Fixes
 - Fix in `knn_dict` that always defaulted to "Schaefer"

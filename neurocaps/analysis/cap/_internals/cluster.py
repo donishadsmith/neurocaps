@@ -15,10 +15,11 @@ from tqdm.auto import tqdm
 from neurocaps.extraction._internals.postprocess import standardize_rois
 from neurocaps.exceptions import NoElbowDetectedError
 from neurocaps.typing import SubjectTimeseries
+from neurocaps.utils import PlotDefaults
 from neurocaps.utils import _io as io_utils
 from neurocaps.utils._helpers import resolve_kwargs
 from neurocaps.utils._logging import setup_logger
-from neurocaps.utils._plotting_utils import PlotDefaults, PlotFuncs
+from neurocaps.utils._plot_utils import PlotFuncs
 
 LG = setup_logger(__name__)
 

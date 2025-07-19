@@ -19,7 +19,7 @@ from neurocaps.utils._parcellation_validation import (
     extract_custom_region_indices,
     get_parc_name,
 )
-from neurocaps.utils._plotting_utils import PlotFuncs
+from neurocaps.utils._plot_utils import PlotFuncs
 
 
 def check_cap_length(

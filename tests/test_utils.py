@@ -3,7 +3,11 @@ import os, shutil
 import pandas as pd
 import pytest
 
-from neurocaps.utils import fetch_preset_parcel_approach, generate_custom_parcel_approach
+from neurocaps.utils import (
+    fetch_preset_parcel_approach,
+    generate_custom_parcel_approach,
+    PlotDefaults,
+)
 from neurocaps.utils._parcellation_validation import process_custom
 
 
@@ -149,3 +153,17 @@ def test_generate_custom_parcel_approach_partial_lateralization_error(
             hemisphere_map=hemisphere_map,
             background_label="Background",
         )
+
+
+def test_PlotDefaults():
+    """Test if the ``available_methods`` function works"""
+    method_names = [
+        "caps2corr",
+        "caps2plot",
+        "caps2radar",
+        "caps2surf",
+        "get_caps",
+        "transition_matrix",
+        "visualize_bold",
+    ]
+    assert sorted(PlotDefaults.available_methods()) == method_names

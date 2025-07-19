@@ -13,7 +13,10 @@
       :nosignatures:
       :template: classmethod.rst
 
+      {% if objname != 'PlotDefaults' %}
       ~{{ objname }}.__str__
+      {% endif %}
+
 
    {% for item in methods %}
       {%  if not item.startswith('_') %} ~{{ name }}.{{ item }}

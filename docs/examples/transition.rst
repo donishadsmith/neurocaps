@@ -54,10 +54,13 @@ function to generate visualizations of the average transition probabilities per 
 
 .. code-block:: python
 
-    kwargs = {"cmap": "viridis", "fmt": ".3f", "annot": True}
+    from neurocaps.utils import PlotDefaults
+
+    plot_kwargs = PlotDefaults.transition_matrix()
+    plot_kwargs.update({"cmap": "viridis", "fmt": ".3f", "annot": True})
 
     trans_outputs = transition_matrix(
-        trans_dict=outputs["transition_probability"], show_figs=True, return_df=True, **kwargs
+        trans_dict=outputs["transition_probability"], show_figs=True, return_df=True, **plot_kwargs
     )
 
 .. image:: embed/All_Subjects_CAPs_transition_probability_matrix.png

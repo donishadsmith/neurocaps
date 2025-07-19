@@ -14,11 +14,12 @@ from ._internals import metrics as metrics_utils
 from ._internals import cluster, correlation, matrix, radar, spatial, surface
 from ._internals.getter import CAPGetter
 from neurocaps.typing import ParcelConfig, ParcelApproach, SubjectTimeseries
+from neurocaps.utils import PlotDefaults
 from neurocaps.utils import _io as io_utils
 from neurocaps.utils._helpers import list_to_str, resolve_kwargs
 from neurocaps.utils._logging import setup_logger
 from neurocaps.utils._parcellation_validation import check_parcel_approach, get_parc_name
-from neurocaps.utils._plotting_utils import PlotDefaults, PlotFuncs, MatrixVisualizer
+from neurocaps.utils._plot_utils import PlotFuncs, MatrixVisualizer
 
 LG = setup_logger(__name__)
 
@@ -358,15 +359,13 @@ class CAP(CAPGetter):
             - S: :obj:`int` or :obj:`float`, default=1.0 -- Adjusts the sensitivity of finding the
               elbow. Larger values are more conservative and less sensitive to small fluctuations.
               Passed to ``KneeLocator`` from the kneed package.
-            - dpi: :obj:`int`, default=300 -- Dots per inch for the figure.
-            - figsize: :obj:`tuple`, default=(8, 6) -- Adjusts the size of the plots.
-            - bbox_inches: :obj:`str` or :obj:`None`, default="tight" -- Alters size of the
-              whitespace in the saved image.
-            - step: :obj:`int`, default=None -- An integer value that controls the progression of
-              the x-axis in plots.
             - max_nbytes: :obj:`int`, :obj:`str`, or :obj:`None`, default="1M" -- If ``n_cores`` is
               not None, serves as the threshold to trigger Joblib's automated memory mapping for
               large arrays.
+
+            Refer to meth:`neurocaps.utils.PlotDefaults.get_caps` for all available plotting
+            options and their default values (See `PlotDefaults Documentation for get_caps\
+            <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.utils.PlotDefaults.get_caps.html#neurocaps.utils.PlotDefaults.get_caps>`_)
 
         See Also
         --------
@@ -1136,68 +1135,11 @@ class CAP(CAPGetter):
            Display figures.
 
         **kwargs:
-            Keyword arguments used when saving figures. Valid keywords include:
+            Additional keyword arguments for customizing plots.
+            See :meth:`neurocaps.utils.PlotDefaults.caps2plot` for all available options and
+            their default values (See `PlotDefaults Documentation for caps2plot\
+            <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.utils.PlotDefaults.caps2plot.html#neurocaps.utils.PlotDefaults.caps2plot>`_)
 
-            - dpi: :obj:`int`, default=300 -- Dots per inch for the figure.
-            - figsize: :obj:`tuple`, default=(8, 6) -- Size of the figure in inches.
-            - fontsize: :obj:`int`, default=14 -- Font size for the title of individual plots or
-              subplots.
-            - hspace: :obj:`float`, default=0.4 -- Height space between subplots.
-            - wspace: :obj:`float`, default=0.4 -- Width space between subplots.
-            - xticklabels_size: :obj:`int`, default=8 -- Font size for x-axis tick labels.
-            - yticklabels_size: :obj:`int`, default=8 -- Font size for y-axis tick labels.
-            - shrink: :obj:`float`, default=0.8 -- Fraction by which to shrink the colorbar.
-            - cbarlabels_size: :obj:`int`, default=8 -- Font size for the colorbar labels.
-            - nrow: :obj:`int`, default=varies (max 5) -- Number of rows for subplots.
-              Default varies but the maximum is 5.
-            - ncol: :obj:`int` or :obj:`None`, default=None -- Number of columns for subplots.
-              Default varies but the maximum is 5.
-            - suptitle_fontsize: :obj:`float`, default=0.7 -- Font size for the main title when
-              subplot is True.
-            - tight_layout: :obj:`bool`, default=True -- Use tight layout for subplots.
-            - rect: :obj:`list[int]`, default=[0, 0.03, 1, 0.95] -- Rectangle parameter for
-              ``tight_layout`` when ``subplots`` are True. Fixes whitespace issues.
-            - sharey: :obj:`bool`, default=True -- Share y-axis labels for subplots.
-            - xlabel_rotation: :obj:`int`, default=0 -- Rotation angle for x-axis labels.
-            - ylabel_rotation: :obj:`int`, default=0 -- Rotation angle for y-axis labels.
-            - annot: :obj:`bool`, default=False -- Add values to cells.
-            - annot_kws: :obj:`dict`, default=None -- Customize the annotations.
-            - fmt: :obj:`str`, default=".2g" -- Modify how the annotated vales are presented.
-            - linewidths: :obj:`float`, default=0 -- Padding between each cell in the plot.
-            - borderwidths: :obj:`float`, default=0 -- Width of the border around the plot.
-            - linecolor: :obj:`str`, default="black" -- Color of the line that seperates each cell.
-            - edgecolors: :obj:`str` or :obj:`None`, default=None -- Color of the edges.
-            - alpha: :obj:`float` or :obj:`None`, default=None -- Controls transparency and ranges
-              from 0 (transparent) to 1 (opaque).
-            - bbox_inches: :obj:`str` or :obj:`None`, default="tight" -- Alters size of the
-              whitespace in the saved image.
-            - cmap: :obj:`str`, :obj:`callable` default="coolwarm" -- Color map for the plot cells.
-              Options include strings to call seaborn's pre-made palettes, ``seaborn.diverging_palette``
-              function to generate custom palettes, and ``matplotlib.color.LinearSegmentedColormap``
-              to generate custom palettes.
-            - vmin: :obj:`float` or :obj:`None`, default=None -- The minimum value to display in colormap.
-            - vmax: :obj:`float` or :obj:`None`, default=None -- The maximum value to display in colormap.
-            - add_custom_node_labels: :obj:`bool`, default=False -- When ``visual_scope`` is set to
-              "nodes" and a "Custom" ``parcel_approach`` is used, adds simplified node names to the
-              plot's axes. Instead of labeling every individual node, the node list is "collapsed"
-              by region. A single label is then placed at the beginning of the group of nodes
-              corresponding to that region (e.g., "LH Visual" or "Hippocampus"), while the other
-              nodes in that group are not explicitly labeled. This is done to minimize
-              cluttering of the axes labels.
-
-              .. important::
-                 This feature should be used with caution. It is recommended to leave this
-                 argument as ``False`` for the following conditions:
-
-                 1. **Large Number of Nodes**: Enabling labels for a parcellation with many
-                    nodes can clutter the plot axes and make them unreadable.
-                 2. **Non-Consecutive Node Indices**: The labeling logic assumes that the
-                    numerical indices for all nodes within a given region are defined as a
-                    consecutive block (e.g., ``"RegionA": [0, 1, 2]``, ``"RegionB": [3, 4]``).
-                    If the indices are non-consecutive or interleaved (e.g.,
-                    ``"RegionA": [0, 2]``, ``"RegionB": [1, 3]``), the axis labels will be
-                    misplaced. Note that this issue only affects the visual labeling on the plot;
-                    the underlying data matrix remains correctly ordered and plotted.
 
         Returns
         -------
@@ -1213,9 +1155,6 @@ class CAP(CAPGetter):
         ``self.outer_products`` for each call if "outer_products" is in ``plot_options``. For
         ``self.outer_products``, the final values stored are associated with the last
         string in the ``visual_scope`` list.
-
-        **Color Palettes**: Refer to `seaborn's Color Palettes
-        <https://seaborn.pydata.org/tutorial/color_palettes.html>`_ for valid pre-made palettes.
         """
         self._check_required_attrs(["_parcel_approach", "_caps"])
 
@@ -1355,34 +1294,11 @@ class CAP(CAPGetter):
             If True, returns a dictionary with a correlation matrix for each group.
 
         **kwargs
-            Keyword arguments used when modifying figures. Valid keywords include:
+            Additional keyword arguments for customizing plots.
+            See :meth:`neurocaps.utils.PlotDefaults.caps2corr` for all available options and
+            their default values (See `PlotDefaults Documentation for caps2corr\
+            <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.utils.PlotDefaults.caps2corr.html#neurocaps.utils.PlotDefaults.caps2corr>`_)
 
-            - dpi: :obj:`int`, default=300 -- Dots per inch for the figure.
-            - figsize: :obj:`tuple`, default=(8, 6) -- Size of the figure in inches.
-            - fontsize: :obj:`int`, default=14 -- Font size for the title each plot.
-            - xticklabels_size: :obj:`int`, default=8 -- Font size for x-axis tick labels.
-            - yticklabels_size: :obj:`int`, default=8 -- Font size for y-axis tick labels.
-            - shrink: :obj:`float`, default=0.8 -- Fraction by which to shrink the colorbar.
-            - cbarlabels_size: :obj:`int`, default=8 -- Font size for the colorbar labels.
-            - xlabel_rotation: :obj:`int`, default=0 -- Rotation angle for x-axis labels.
-            - ylabel_rotation: :obj:`int`, default=0 -- Rotation angle for y-axis labels.
-            - annot: :obj:`bool`, default=False -- Add values to each cell.
-            - annot_kws: :obj:`dict`, default=None -- Customize the annotations.
-            - fmt: :obj:`str`, default=".2g" -- Modify how the annotated vales are presented.
-            - linewidths: :obj:`float`, default=0 -- Padding between each cell in the plot.
-            - borderwidths: :obj:`float`, default=0 -- Width of the border around the plot.
-            - linecolor: :obj:`str`, default="black" -- Color of the line that seperates each cell.
-            - edgecolors: :obj:`str` or :obj:`None`, default=None -- Color of the edges.
-            - alpha: :obj:`float` or :obj:`None`, default=None -- Controls transparency and ranges
-              from 0 (transparent) to 1 (opaque).
-            - bbox_inches: :obj:`str` or :obj:`None`, default="tight" -- Alters size of the
-              whitespace in the saved image.
-            - cmap: :obj:`str`, :obj:`callable` default="coolwarm" -- Color map for the plot cells.
-              Options include strings to call seaborn's pre-made palettes, ``seaborn.diverging_palette``
-              function to generate custom palettes, and ``matplotlib.color.LinearSegmentedColormap``
-              to generate custom palettes.
-            - vmin: :obj:`float` or :obj:`None`, default=None -- The minimum value to display in colormap.
-            - vmax: :obj:`float` or :obj:`None`, default=None -- The maximum value to display in colormap.
 
         Returns
         -------
@@ -1392,9 +1308,6 @@ class CAP(CAPGetter):
 
         Note
         ----
-        **Color Palettes**: Refer to `seaborn's Color Palettes
-        <https://seaborn.pydata.org/tutorial/color_palettes.html>`_ for valid pre-made palettes.
-
         **Significance Values**: If ``return_df`` is True, each element will contain its uncorrected
         p-value in parenthesis with a single asterisk if < 0.05, a double asterisk if < 0.01, and a
         triple asterisk < 0.001.
@@ -1675,37 +1588,10 @@ class CAP(CAPGetter):
             If True, displays a progress bar.
 
         **kwargs
-            Additional parameters to pass to modify certain plot parameters. Options include:
-
-            - dpi: :obj:`int`, default=300 -- Dots per inch for the plot.
-            - title_pad: :obj:`int`, default=-3 -- Padding for the plot title.
-            - cmap: :obj:`str` or :obj:`callable`, default="cold_hot" -- Colormap to be used for the plot.
-            - cbar_kws: :obj:`dict`, default={"location": "bottom", "n_ticks": 3} -- Customize colorbar.
-              Refer to ``_add_colorbars`` for ``surfplot.plotting.Plot`` in `Surfplot's Plot\
-              Documentation <https://surfplot.readthedocs.io/en/latest/generated/surfplot.plotting.Plot.html#surfplot.plotting.Plot._add_colorbars>`_
-              for valid parameters.
-            - alpha: :obj:`float`, default=1 -- Transparency level of the colorbar.
-            - as_outline: :obj:`bool`, default=False -- Plots only an outline of contiguous vertices
-              with the same value.
-            - outline_alpha: :obj:`float`, default=1 -- Transparency level of the colorbar for
-              outline if ``as_outline`` is True.
-            - zero_transparent: :obj:`bool`, default=True -- Turns vertices with a value of 0
-              transparent.
-            - size: :obj:`tuple`, default=(500, 400) -- Size of the plot in pixels.
-            - layout: :obj:`str`, default="grid" -- Layout of the plot.
-            - zoom: :obj:`float`, default=1.5 -- Zoom level for the plot.
-            - views: {"lateral", "medial"} or :obj:`list[{"lateral", "medial}]`,\
-              default=["lateral", "medial"] -- Views to be displayed in the plot.
-            - brightness: :obj:`float`, default=0.5 -- Brightness level of the plot.
-            - figsize: :obj:`tuple` or :obj:`None`, default=None -- Size of the figure.
-            - scale: :obj:`tuple`, default=(2, 2) -- Scale factors for the plot.
-            - surface: {"inflated", "veryinflated"}, default="inflated" -- The surface atlas that
-              is used for plotting. Options are "inflated" or "veryinflated".
-            - color_range: :obj:`tuple` or :obj:`None`, default=None -- The minimum and maximum
-              value to display in plots. For instance, (-1, 1) where minimum value is first. If
-              None, the minimum and maximum values from the image will be used.
-            - bbox_inches: :obj:`str` or :obj:`None`, default="tight" -- Alters size of the
-              whitespace in the saved image.
+            Additional keyword arguments for customizing plots.
+            See :meth:`neurocaps.utils.PlotDefaults.caps2surf` for all available options and
+            their default values (See `PlotDefaults Documentation for caps2surf\
+            <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.utils.PlotDefaults.caps2surf.html#neurocaps.utils.PlotDefaults.caps2surf>`_)
 
         Returns
         -------
@@ -1824,56 +1710,11 @@ class CAP(CAPGetter):
             is used to generate an html file named "temp-plot.html", which opens each plot in the
             default browser.
 
-        **kwargs:
-            Additional parameters to pass to modify certain plot parameters. Options include:
-
-            - scale: :obj:`int`, default=2 -- If ``output_dir`` provided, controls resolution of
-              image when saving. Serves a similar purpose as dpi.
-            - savefig_options: :obj:`dict[str]`, default={"width": 3, "height": 3, "scale": 1} -- If
-              ``output_dir`` provided, controls the width (in inches), height (in inches), and scale
-              of the plot.
-            - height: :obj:`int`, default=800 -- Height of the plot.
-            - width: :obj:`int`, defualt=1200 -- Width of the plot.
-            - line_close: :obj:`bool`, default=True -- Whether to close the lines
-            - bgcolor: :obj:`str`, default="white" -- Color of the background
-            - scattersize: :obj:`int`, default=8 -- Controls size of the dots when markers are used.
-            - connectgaps: :obj:`bool`, default=True -- If ``use_scatterpolar=True``, controls if
-              missing values are connected.
-            - linewidth: :obj:`int`, default = 2 -- The width of the line connecting the values if
-              ``use_scatterpolar=True``.
-            - opacity: :obj:`float`, default=0.5 -- If ``use_scatterpolar=True``, sets the opacity
-              of the trace.
-            - fill: :obj:`str`, default="toself" -- If "toself" the are of the dots and within the
-              boundaries of the line will be filled.
-
-            - mode: :obj:`str`, default="markers+lines" -- Determines how the trace is drawn.
-              Can include "lines", "markers", "lines+markers", "lines+markers+text".
-            - radialaxis: :obj:`dict`, default={"showline": False, "linewidth": 2, \
-              "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", \
-              ticks": "outside", "tickfont": {"size": 14, "color": "black"}} --
-              Customizes the radial axis. Refer to `Plotly's radialaxis Documentation\
-              <https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.radialaxis.html>`_\
-              or `Plotly's polar Documentation <https://plotly.com/python/reference/layout/polar/>`_
-              for valid keys.
-            - angularaxis: :obj:`dict`, default={"showline": True, "linewidth": 2, \
-              "linecolor": "rgba(0, 0, 0, 0.25)", "gridcolor": "rgba(0, 0, 0, 0.25)", \
-              "tickfont": {"size": 16, "color": "black"}} --
-              Customizes the angular axis. Refer to `Plotly's angularaxis Documentation\
-              <https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.angularaxis.html>`_\
-              or `Plotly's polar Documentation <https://plotly.com/python/reference/layout/polar/>`_ for valid keys.
-            - color_discrete_map: :obj:`dict`, default={"High Amplitude": "red", "Low Amplitude": "blue"} --
-              Change the color of the "High Amplitude" and "Low Amplitude" groups. Must use the keys
-              "High Amplitude" and "Low Amplitude".
-            - title_font: :obj:`dict`, default={"family": "Times New Roman", "size": 30, "color": "black"} --
-              Modifies the font of the title. Refer to `Plotly's layout Documentation\
-              <https://plotly.com/python/reference/layout/>`_ for valid keys.
-            - title_x: :obj:`float`, default=0.5 -- Modifies x position of title.
-            - title_y: :obj:`float`, default=None -- Modifies y position of title.
-            - legend: :obj:`dict`, default={"yanchor": "top", "xanchor": "left", "y": 0.99,\
-              "x": 0.01, title_font_family": "Times New Roman", "font": {"size": 12, "color": "black"}} --
-              Customizes the legend. Refer to `Plotly's layout Documentation\
-              <https://plotly.com/python/reference/layout/>`_ for valid keys
-            - engine: {"kaleido", "orca"}, default="kaleido" -- Engine used for saving plots.
+        **kwargs
+            Additional keyword arguments for customizing plots.
+            See :meth:`neurocaps.utils.PlotDefaults.caps2radar` for all available options and
+            their default values (See `PlotDefaults Documentation for caps2radar\
+            <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.utils.PlotDefaults.caps2radar.html#neurocaps.utils.PlotDefaults.caps2radar>`_)
 
         Returns
         -------

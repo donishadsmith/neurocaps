@@ -14,11 +14,12 @@ from ._internals import check_confound_names, process_subject_runs, TimeseriesEx
 from ._internals import bids_query, vizualization
 from neurocaps.exceptions import BIDSQueryError
 from neurocaps.typing import ParcelConfig, ParcelApproach, SubjectTimeseries
+from neurocaps.utils import PlotDefaults
 from neurocaps.utils import _io as io_utils
 from neurocaps.utils._helpers import list_to_str, resolve_kwargs
 from neurocaps.utils._logging import setup_logger
 from neurocaps.utils._parcellation_validation import check_parcel_approach
-from neurocaps.utils._plotting_utils import PlotDefaults, PlotFuncs
+from neurocaps.utils._plot_utils import PlotFuncs
 
 LG = setup_logger(__name__)
 
@@ -1040,12 +1041,9 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
             Name of the file without the extension.
 
         **kwargs:
-            Keyword arguments used when saving figures. Valid keywords include:
-
-            - dpi: :obj:`int`, default=300 -- Dots per inch for the figure.
-            - figsize: :obj:`tuple`, default=(11, 5) -- Size of the figure in inches.
-            - bbox_inches: :obj:`str` or :obj:`None`, default="tight" -- Alters size of the
-              whitespace in the saved image.
+            Additional keyword arguments for customizing plots. See :meth:`neurocaps.utils.PlotDefaults.visualize_bold`
+            for all available options and their default values (See `PlotDefaults Documentation for visualize_bold\
+            <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.utils.PlotDefaults.visualize_bold.html#neurocaps.utils.PlotDefaults.visualize_bold>`_)
 
         Returns
         -------

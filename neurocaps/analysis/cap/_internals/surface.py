@@ -14,7 +14,7 @@ from matplotlib.figure import Figure
 
 from neurocaps.utils import _io as io_utils
 from neurocaps.utils._logging import setup_logger
-from neurocaps.utils._plotting_utils import PlotFuncs
+from neurocaps.utils._plot_utils import PlotFuncs
 
 LG = setup_logger(__name__)
 

@@ -9,7 +9,7 @@
    :alt: Python Versions
 
 .. image:: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal
-   :target: https://doi.org/10.5281/zenodo.16134789
+   :target: https://doi.org/10.5281/zenodo.16183134
    :alt: DOI
 
 .. image:: https://img.shields.io/badge/Source%20Code-neurocaps-purple
@@ -51,7 +51,7 @@ Citing
 ------
 ::
 
-  Smith, D. (2024). NeuroCAPs. Zenodo. https://doi.org/10.5281/zenodo.16134789
+  Smith, D. (2024). NeuroCAPs. Zenodo. https://doi.org/10.5281/zenodo.16183134
 
 Usage
 -----
@@ -90,7 +90,7 @@ Notable features includes:
 - Utilities:
 
   - plot transition matrices
-  - merges timeseries data across tasks or session
+  - merges timeseries data across tasks or session [6]_
   - generates the custom parcellation dictionary structure from the parcellation's metadata file
   - fetches preset custom parcellation approaches
 

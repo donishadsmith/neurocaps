@@ -5,6 +5,8 @@ import nibabel as nib, nilearn, numpy as np, pandas as pd, pytest
 from kneed import KneeLocator
 
 from neurocaps.analysis import CAP
+from neurocaps.utils import PlotDefaults
+
 from .utils import (
     NILEARN_VERSION_WITH_AAL_3V2,
     Parcellation,
@@ -969,35 +971,41 @@ def test_caps2plot(tmp_dir, timeseries, parcel_approach):
     cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=2)
 
     # Subplots set to False
-    kwargs = dict(
-        subplots=False,
-        yticklabels_size=5,
-        borderwidths=10,
-        wspace=0.1,
-        xlabel_rotation=90,
-        xticklabels_size=5,
-        hspace=0.6,
-        tight_layout=True,
-        cbarlabels_size=8,
-        invalid_kwarg=0,
-        suffix_filename="suffix_name",
-        show_figs=False,
-        visual_scope=["regions", "nodes"],
-        plot_options=["heatmap", "outer_product"],
-        output_dir=tmp_dir.name,
-        add_custom_node_labels=True,  # Only relevant to Custom
+    plot_kwargs = PlotDefaults.caps2plot()
+    plot_kwargs.update(
+        dict(
+            subplots=False,
+            yticklabels_size=5,
+            borderwidths=10,
+            wspace=0.1,
+            xlabel_rotation=90,
+            xticklabels_size=5,
+            hspace=0.6,
+            tight_layout=True,
+            cbarlabels_size=8,
+            invalid_kwarg=0,
+            add_custom_node_labels=True,  # Only relevant to Custom
+        )
     )
 
-    cap_analysis.caps2plot(**kwargs)
+    params = dict(
+        visual_scope=["regions", "nodes"],
+        plot_options=["heatmap", "outer_product"],
+        suffix_filename="suffix_name",
+        output_dir=tmp_dir.name,
+        show_figs=False,
+    )
+
+    cap_analysis.caps2plot(**params, **plot_kwargs)
     check_outputs(tmp_dir, values_dict={"heatmap": 2, "outer": 4})
-    cap_analysis.caps2plot(**kwargs, plot_output_format="pickle")
+    cap_analysis.caps2plot(**params, **plot_kwargs, plot_output_format="pickle")
     check_outputs(tmp_dir, plot_type="pickle", values_dict={"pkl": 6})
 
     # Subplots set to True
-    kwargs["subplots"] = True
-    kwargs["share_y"] = True
-    kwargs["add_custom_node_labels"] = False
-    cap_analysis.caps2plot(**kwargs)
+    plot_kwargs["subplots"] = True
+    plot_kwargs["share_y"] = True
+    plot_kwargs["add_custom_node_labels"] = False
+    cap_analysis.caps2plot(**params, **plot_kwargs)
     check_outputs(tmp_dir, values_dict={"heatmap": 2, "outer": 2})
 
     parcel_name = list(parcel_approach.keys())[0]
@@ -1022,15 +1030,17 @@ def test_caps2corr(tmp_dir, method):
     cap_analysis = CAP()
     cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=2)
 
+    plot_kwargs = PlotDefaults.caps2corr()
+    plot_kwargs.update(dict(annot=True, cbarlabels_size=8))
+
     df = cap_analysis.caps2corr(
         method=method,
-        annot=True,
         show_figs=False,
         return_df=True,
         suffix_filename="suffix_name_corr",
         output_dir=tmp_dir.name,
         save_df=True,
-        cbarlabels_size=8,
+        **plot_kwargs,
     )
     assert isinstance(df, dict)
     assert isinstance(df["All Subjects"], pd.DataFrame)
@@ -1066,6 +1076,8 @@ def test_caps2radar(tmp_dir, timeseries, parcel_approach):
     cap_analysis = CAP(parcel_approach=parcel_approach)
     cap_analysis.get_caps(subject_timeseries=timeseries, n_clusters=2)
 
+    plot_kwargs = PlotDefaults.caps2radar()
+
     radialaxis = {
         "showline": True,
         "linewidth": 2,
@@ -1077,32 +1089,35 @@ def test_caps2radar(tmp_dir, timeseries, parcel_approach):
         "tickvals": [0.1, 0.2, 0.3],
     }
 
+    plot_kwargs["radialaxis"] = radialaxis
+
     # Radar plotting functions
     cap_analysis.caps2radar(output_dir=tmp_dir.name, show_figs=False, suffix_filename="suffix_name")
     check_outputs(tmp_dir, plot_type="radar", values_dict={"png": 2})
 
     cap_analysis.caps2radar(
-        radialaxis=radialaxis, show_figs=False, plot_output_format="html", output_dir=tmp_dir.name
+        show_figs=False, plot_output_format="html", output_dir=tmp_dir.name, **plot_kwargs
     )
     check_outputs(tmp_dir, plot_type="radar", values_dict={"html": 2})
 
     cap_analysis.caps2radar(
-        radialaxis=radialaxis, show_figs=False, plot_output_format="json", output_dir=tmp_dir.name
+        show_figs=False, plot_output_format="json", output_dir=tmp_dir.name, **plot_kwargs
     )
     check_outputs(tmp_dir, plot_type="radar", values_dict={"json": 2})
 
     cap_analysis.caps2radar(
-        radialaxis=radialaxis, show_figs=False, plot_output_format="PNG", output_dir=tmp_dir.name
+        show_figs=False, plot_output_format="PNG", output_dir=tmp_dir.name, **plot_kwargs
     )
     check_outputs(tmp_dir, plot_type="radar", values_dict={"png": 2})
 
+    plot_kwargs["scattersize"] = 10
+
     cap_analysis.caps2radar(
-        radialaxis=radialaxis,
         use_scatterpolar=True,
-        scattersize=10,
         show_figs=False,
         plot_output_format="html",
         output_dir=tmp_dir.name,
+        **plot_kwargs,
     )
     check_outputs(tmp_dir, plot_type="radar", values_dict={"html": 2})
 
@@ -1236,7 +1251,6 @@ def test_caps2surf(tmp_dir, remove_files, timeseries, parcel_approach):
 
     cap_analysis.caps2surf(
         method="nearest",
-        fwhm=1,
         save_stat_maps=True,
         suffix_filename="suffix_name",
         output_dir=tmp_dir.name,
@@ -1249,13 +1263,15 @@ def test_caps2surf(tmp_dir, remove_files, timeseries, parcel_approach):
     cap_analysis.caps2surf(output_dir=tmp_dir.name, show_figs=False, plot_output_format="Pkl")
     check_outputs(tmp_dir, plot_type="pickle", values_dict={"pkl": 2})
 
+    plot_kwargs = PlotDefaults.caps2surf()
+    plot_kwargs["as_outline"] = True
+
     cap_analysis.caps2surf(
         method="linear",
-        fwhm=1,
         save_stat_maps=False,
         output_dir=tmp_dir.name,
-        as_outline=True,
         show_figs=False,
+        **plot_kwargs,
     )
     check_outputs(tmp_dir, plot_type="surface", values_dict={"png": 2})
     check_outputs(tmp_dir, plot_type="nifti", values_dict={"nii.gz": 0})
