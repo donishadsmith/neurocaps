@@ -1476,9 +1476,11 @@ class CAP(CAPGetter):
             Appended to the name of the saved file.
 
         knn_dict: :obj:`dict[str, int | bool]`, default=None
-            Use KNN (k-nearest neighbors) interpolation with reference atlas masking to fill in
-            non-background coordinates that are assigned zero. Useful when custom parcellation does
-            not project well from volumetric to surface space. The following subkeys are recognized:
+            Use KNN (k-nearest neighbors) interpolation with reference atlas masking (which is native
+            to volume space) to fill in non-background coordinates that are assigned zero.
+            Useful when a "Custom" parcellation does not project well from volumetric to surface
+            space (typically cortical parcellations converted into volumetric format). The
+            following subkeys are recognized:
 
             - "k": An integer (Default=1). Determines the number of nearest neighbors to consider.
             - "reference_atlas": A string (Default="Schaefer"). Specifies the atlas to use for
@@ -1554,7 +1556,8 @@ class CAP(CAPGetter):
             raise ValueError(
                 "In `knn_dict`, 'reference_atlas' must be a string ('Schaefer' or 'AAL')."
             )
-        else:
+
+        if not knn_dict.get("reference_atlas"):
             knn_dict["reference_atlas"] = "Schaefer"
             LG.warning(
                 "'reference_atlas' not specified in `knn_dict`. The default reference atlas is "
@@ -1646,9 +1649,11 @@ class CAP(CAPGetter):
             ``output_dir`` is provided.
 
         knn_dict: :obj:`dict[str, int | bool]`, default=None
-            Use KNN (k-nearest neighbors) interpolation with reference atlas masking to fill in
-            non-background coordinates that are assigned zero. Useful when custom parcellation does
-            not project well from volumetric to surface space. The following subkeys are recognized:
+            Use KNN (k-nearest neighbors) interpolation with reference atlas masking (which is native
+            to volume space) to fill in non-background coordinates that are assigned zero.
+            Useful when a "Custom" parcellation does not project well from volumetric to surface
+            space (typically cortical parcellations converted into volumetric format). The
+            following subkeys are recognized:
 
             - "k": An integer (Default=1). Determines the number of nearest neighbors to consider.
             - "reference_atlas": A string (Default="Schaefer"). Specifies the atlas to use for
