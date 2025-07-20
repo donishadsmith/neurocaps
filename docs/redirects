@@ -7,3 +7,4 @@ api.rst api/api.rst
 generated/neurocaps.typing.SubjectTimeseries.rst api/generated/neurocaps.typing.SubjectTimeseries.rst
 generated/neurocaps.typing.ParcelConfig.rst api/generated/neurocaps.typing.ParcelConfig.rst
 generated/neurocaps.typing.ParcelApproach.rst api/generated/neurocaps.typing.ParcelApproach.rst
+examples/examples.rst tutorials/tutorials.rst

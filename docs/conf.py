@@ -47,6 +47,7 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_gallery.load_style",
     "sphinxcontrib.redirects",
+    "nbsphinx",
 ]
 
 # Generate the API documentation when building
@@ -68,6 +69,10 @@ napoleon_use_param = True
 napoleon_use_ivar = True
 napoleon_use_rtype = False
 napoleon_include_private_with_doc = False
+
+nbsphinx_execute = "never"
+nbsphinx_prompt_width = "0"
+nbsphinx_codecell_lexer = "ipython3"
 
 pygments_style = "sphinx"
 
@@ -119,10 +124,7 @@ html_sidebars = {
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
-html_extra_path = ["examples/notebooks"]
-
 redirects_file = "redirects"
-
 
 def setup(app):
     app.add_css_file("custom.css")

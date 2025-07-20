@@ -6,7 +6,7 @@ repos:
     -   id: end-of-file-fixer
     -   id: check-yaml
     -   id: check-added-large-files
-        exclude: ^docs/examples/embed/.*\.png$
+        exclude: ^docs/tutorials/.*\.ipynb$
     -   id: check-case-conflict
     -   id: check-merge-conflict
     -   id: mixed-line-ending

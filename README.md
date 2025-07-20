@@ -154,8 +154,8 @@ Full details for every function and parameter are available in the
 ## Workflow
 The following code demonstrates a high-level workflow overview using NeuroCAPs to perform the CAPs
 analysis. An interactive variant of this workflow is available on the
-[readthedocs](https://neurocaps.readthedocs.io/en/stable/examples/workflow.html). Additional
-[tutorials]([demos](https://github.com/donishadsmith/neurocaps/tree/main/demos)) and
+[readthedocs](https://neurocaps.readthedocs.io/en/stable/tutorials/tutorial-8.html). Additional
+[tutorials]([demos](https://neurocaps.readthedocs.io/en/stable/tutorials/)) and
 [interactive demonstrations](https://github.com/donishadsmith/neurocaps/tree/main/demos) are
 also provided.
 

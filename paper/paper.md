@@ -109,7 +109,7 @@ Contains a utility functions:
 # Workflow Example
 The following code demonstrates a simple workflow example using NeuroCAPs to perform the CAPs
 analysis. An interactive variant of this workflow example is available on the
-[readthedocs](https://neurocaps.readthedocs.io/en/stable/examples/workflow.html).
+[readthedocs](https://neurocaps.readthedocs.io/en/stable/tutorials/tutorial-8.html).
 
 1. Extract timeseries data
 ```python

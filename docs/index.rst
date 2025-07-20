@@ -6,6 +6,6 @@
 
    user_guide
    api/api
-   examples/examples
+   tutorials/tutorials
    contributing
    changelog

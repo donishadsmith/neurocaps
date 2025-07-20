@@ -5,4 +5,7 @@ sphinx-copybutton
 sphinxcontrib.redirects
 pydata_sphinx_theme
 myst_parser
+nbsphinx
+pandoc
+ipykernel
 neurocaps
