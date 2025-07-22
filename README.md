@@ -146,7 +146,7 @@ Notable features includes:
   - plot transition matrices
   - merge timeseries data across tasks or session [^6]
   - generate the custom parcellation dictionary structure from the parcellation's metadata file
-  - fetche preset custom parcellation approaches
+  - fetch preset custom parcellation approaches
 
 Full details for every function and parameter are available in the
 [API Documentation](https://neurocaps.readthedocs.io/en/stable/api.html).
