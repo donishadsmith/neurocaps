@@ -567,7 +567,7 @@ class CAP(CAPGetter):
         prefix_filename: Optional[str] = None,
         return_df: bool = True,
         progress_bar: bool = False,
-    ) -> Union[dict[str, pd.DataFrame], None]:
+    ) -> Union[dict[str, pd.DataFrame], dict[str, dict[str, pd.DataFrame]], None]:
         """
         Calculate Participant-wise CAP Metrics.
 

@@ -14,7 +14,7 @@ class PlotDefaults:
 
     >>> from neurocaps.analysis import PlotDefaults
     >>> plot_kwargs = PlotDefaults.caps2plot()
-    >>> print(plot_kwargs['dpi'])  # 300
+    >>> print(plot_kwargs["dpi"])  # 300
 
     Modify defaults priot to plotting:
 
@@ -22,8 +22,8 @@ class PlotDefaults:
     >>> cap_analysis = CAP()
     >>> cap_analysis.get_caps(subject_timeseries=subject_timeseries, n_clusters=2)
     >>> plot_kwargs = PlotDefaults.caps2plot()
-    >>> plot_kwargs['cmap'] = 'viridis'
-    >>> plot_kwargs['dpi'] = 600
+    >>> plot_kwargs["cmap"] = "viridis"
+    >>> plot_kwargs["dpi"] = 600
     >>> cap.caps2plot(**plot_kwargs)
 
     See all available plotting methods:
@@ -185,7 +185,7 @@ class PlotDefaults:
 
         Note
         ----
-        **Color Palettes**: Refer to `seaborn's Color Palettes
+        **Color Palettes**: Refer to `seaborn"s Color Palettes
         <https://seaborn.pydata.org/tutorial/color_palettes.html>`_ for valid pre-made palettes.
         """
         return {
@@ -287,7 +287,7 @@ class PlotDefaults:
 
         Note
         ----
-        **Color Palettes**: Refer to `seaborn's Color Palettes
+        **Color Palettes**: Refer to `seaborn"s Color Palettes
         <https://seaborn.pydata.org/tutorial/color_palettes.html>`_ for valid pre-made palettes.
         """
         return {
@@ -374,7 +374,7 @@ class PlotDefaults:
 
         Note
         ----
-        For "cbar_kws", refer to ``_add_colorbars`` for ``surfplot.plotting.Plot`` in `Surfplot's Plot\
+        For "cbar_kws", refer to ``_add_colorbars`` for ``surfplot.plotting.Plot`` in `Surfplot"s Plot\
         Documentation <https://surfplot.readthedocs.io/en/latest/generated/surfplot.plotting.Plot.html#surfplot.plotting.Plot._add_colorbars>`_
         for valid parameters.
         """
@@ -474,18 +474,18 @@ class PlotDefaults:
 
         Note
         ----
-        **Radial Axis**: Refer to `Plotly's radialaxis Documentation\
+        **Radial Axis**: Refer to `Plotly"s radialaxis Documentation\
         <https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.radialaxis.html>`_\
-        or `Plotly's polar Documentation <https://plotly.com/python/reference/layout/polar/>`_
+        or `Plotly"s polar Documentation <https://plotly.com/python/reference/layout/polar/>`_
 
-        **Angular Axis**: Refer to `Plotly's angularaxis Documentation\
+        **Angular Axis**: Refer to `Plotly"s angularaxis Documentation\
         <https://plotly.com/python-api-reference/generated/plotly.graph_objects.layout.polar.angularaxis.html>`_\
-        or `Plotly's polar Documentation <https://plotly.com/python/reference/layout/polar/>`_ for valid keys.
+        or `Plotly"s polar Documentation <https://plotly.com/python/reference/layout/polar/>`_ for valid keys.
 
-        **Title Font**: Refer to `Plotly's layout Documentation <https://plotly.com/python/reference/layout/>`_
+        **Title Font**: Refer to `Plotly"s layout Documentation <https://plotly.com/python/reference/layout/>`_
         for valid keys.
 
-        **Legend**: Refer to `Plotly's layout Documentation <https://plotly.com/python/reference/layout/>`_
+        **Legend**: Refer to `Plotly"s layout Documentation <https://plotly.com/python/reference/layout/>`_
         for valid keys.
         """
         return {
@@ -599,7 +599,7 @@ class PlotDefaults:
 
         Note
         ----
-        **Color Palettes**: Refer to `seaborn's Color Palettes
+        **Color Palettes**: Refer to `seaborn"s Color Palettes
         <https://seaborn.pydata.org/tutorial/color_palettes.html>`_ for valid pre-made palettes.
         """
         return PlotDefaults.caps2corr()

@@ -100,7 +100,7 @@ def simulate_bids_dataset(
 
 def create_dataset_description(
     dataset_name: str, bids_version: str = "1.0.0", derivative: bool = False
-) -> dict[str, str]:
+) -> dict:
     """
     Generate Dataset Description.
 
@@ -121,7 +121,7 @@ def create_dataset_description(
 
     Returns
     -------
-    dict[str, str]
+    dict
         The dataset description dictionary
     """
     dataset_description = {"Name": dataset_name, "BIDSVersion": bids_version}
@@ -132,7 +132,7 @@ def create_dataset_description(
     return dataset_description
 
 
-def save_dataset_description(dataset_description: dict[str, str], output_dir: str) -> None:
+def save_dataset_description(dataset_description: dict, output_dir: str) -> None:
     """
     Save Dataset Description.
 
@@ -143,7 +143,7 @@ def save_dataset_description(dataset_description: dict[str, str], output_dir: st
 
     Parameters
     ----------
-    dataset_description: :obj:`dict[str, str]`
+    dataset_description: :obj:`dict`
         The dataset description dictionary.
 
     output_dir: :obj:`str`

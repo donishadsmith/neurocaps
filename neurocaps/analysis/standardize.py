@@ -21,8 +21,9 @@ def standardize(
     timeseries. Uses sample standard deviation with Bessel's correction (`n-1` in denominator).
     Primarily to be used when standardizing was not done in ``TimeseriesExtractor``.
 
-    .. note:: Standard deviations below ``np.finfo(std.dtype).eps`` are replaced with 1 for\
-    numerical stability.
+    .. note::
+       Standard deviations below ``np.finfo(std.dtype).eps`` are replaced with 1 for numerical
+       stability.
 
     Parameters
     ----------
