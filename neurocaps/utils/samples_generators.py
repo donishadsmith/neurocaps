@@ -211,8 +211,7 @@ def simulate_subject_timeseries(
     """
     Generate Simulated Subject Timeseries Data.
 
-    Creates a randomly generated subject timeseries dictionary that can be used for testing
-    or tutorial purposes.
+    Creates a subject timeseries dictionary with randomly generated values.
 
     .. versionadded:: 0.34.1
 
