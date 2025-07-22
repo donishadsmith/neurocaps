@@ -35,4 +35,8 @@ Publicly available classes, functions, exceptions, types, and utility functions 
    neurocaps.typing.CustomParcelApproach
    neurocaps.utils.fetch_preset_parcel_approach
    neurocaps.utils.generate_custom_parcel_approach
+   neurocaps.utils.simulate_bids_dataset
+   neurocaps.utils.simulate_subject_timeseries
+   neurocaps.utils.create_dataset_description
+   neurocaps.utils.save_dataset_description
    neurocaps.utils.PlotDefaults

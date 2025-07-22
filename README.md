@@ -2,7 +2,7 @@
 
 [![Latest Version](https://img.shields.io/pypi/v/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.16183134)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.16298577)
 [![Github Repository](https://img.shields.io/badge/Source%20Code-neurocaps-purple)](https://github.com/donishadsmith/neurocaps)
 [![Test Status](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg)](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml)
 [![Documentation Status](https://readthedocs.org/projects/neurocaps/badge/?version=stable)](http://neurocaps.readthedocs.io/en/stable/?badge=stable)
@@ -144,9 +144,9 @@ Notable features includes:
 
 - Utilities:
   - plot transition matrices
-  - merges timeseries data across tasks or session [^6]
-  - generates the custom parcellation dictionary structure from the parcellation's metadata file
-  - fetches preset custom parcellation approaches
+  - merge timeseries data across tasks or session [^6]
+  - generate the custom parcellation dictionary structure from the parcellation's metadata file
+  - fetche preset custom parcellation approaches
 
 Full details for every function and parameter are available in the
 [API Documentation](https://neurocaps.readthedocs.io/en/stable/api.html).

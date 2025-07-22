@@ -3,10 +3,14 @@ import os, shutil
 import pandas as pd
 import pytest
 
+from neurocaps.extraction import TimeseriesExtractor
+from neurocaps.analysis import CAP
 from neurocaps.utils import (
     fetch_preset_parcel_approach,
     generate_custom_parcel_approach,
     PlotDefaults,
+    simulate_bids_dataset,
+    simulate_subject_timeseries,
 )
 from neurocaps.utils._parcellation_validation import process_custom
 
@@ -156,7 +160,7 @@ def test_generate_custom_parcel_approach_partial_lateralization_error(
 
 
 def test_PlotDefaults():
-    """Test if the ``available_methods`` function works"""
+    """Tests if the ``available_methods`` function works"""
     method_names = [
         "caps2corr",
         "caps2plot",
@@ -167,3 +171,23 @@ def test_PlotDefaults():
         "visualize_bold",
     ]
     assert sorted(PlotDefaults.available_methods()) == method_names
+
+
+def test_simulate_bids_dataset():
+    """Tests if ``simulate_bids_dataset`` is compatible with ``TimeseriesExtractor``."""
+    bids_root = simulate_bids_dataset()
+
+    extractor = TimeseriesExtractor()
+    extractor.get_bold(bids_dir=bids_root, task="rest")
+
+    assert extractor.subject_timeseries["0"]
+
+
+def test_simulate_subject_timeseries():
+    """Tests if ``simulate_bids_dataset`` is compatible with ``CAP``."""
+    subject_timeseries = simulate_subject_timeseries()
+
+    cap_analysis = CAP()
+    cap_analysis.get_caps(subject_timeseries)
+
+    assert cap_analysis.caps

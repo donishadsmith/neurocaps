@@ -15,10 +15,12 @@ from neurocaps.exceptions import UnsupportedFileExtensionError
 LG = setup_logger(__name__)
 
 
-def makedir(output_dir: str) -> None:
+def makedir(output_dir: str, suppress_msg: bool = False) -> None:
     """Creates non-existent directory."""
     if output_dir and not os.path.exists(output_dir):
-        LG.warning(f"Creating the following non-existent path: {output_dir}.")
+        if not suppress_msg:
+            LG.warning(f"Creating the following non-existent path: {output_dir}.")
+
         os.makedirs(output_dir)
 
 

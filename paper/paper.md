@@ -7,7 +7,7 @@ tags:
     - fMRI
     - dynamic functional connectivity
     - co-activation patterns
-date: 7 July 2025
+date: 21 July 2025
 output: pdf_document
 authors:
     - name: Donisha Smith
@@ -101,19 +101,30 @@ or tasks, and creating group-averaged transition matrices.
 
 3. `neurocaps.utils`
 
-Contains a utility functions:
+Contains several utility functions:
 
 - `fetch_preset_parcel_approach`: fetches a preset parcel approach (either "4S" or "HCPex" [@Huang2022])
 - `generate_custom_parcel_approach`: automatically creates the necessary data structures from a parcellation's metadata file
 
+Additional utility function are also available for plotting and simulating data.
+
 # Workflow Example
 The following code demonstrates a simple workflow example using NeuroCAPs to perform the CAPs
-analysis. An interactive variant of this workflow example is available on the
-[readthedocs](https://neurocaps.readthedocs.io/en/stable/tutorials/tutorial-8.html).
+analysis. Note that this example uses simulated data, an interactive variant of a workflow
+example using real data is available on the [readthedocs](https://neurocaps.readthedocs.io/en/stable/tutorials/tutorial-8.html).
 
 1. Extract timeseries data
 ```python
+import numpy as np
+
 from neurocaps.extraction import TimeseriesExtractor
+from neurocaps.utils import simulate_bids_dataset
+
+# Set seed
+np.random.seed(0)
+
+# Generate a BIDS directory with fMRIPrep derivatives
+bids_root = simulate_bids_dataset(n_subs=3, n_runs=1, n_volumes=100, task_name="rest")
 
 # Using Schaefer, one of the default parcellation approaches
 parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
@@ -121,18 +132,8 @@ parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
 # List of fMRIPrep-derived confounds for nuisance regression
 confound_names = [
     "cosine*",
-    "trans_x",
-    "trans_x_derivative1",
-    "trans_y",
-    "trans_y_derivative1",
-    "trans_z",
-    "trans_z_derivative1",
-    "rot_x",
-    "rot_x_derivative1",
-    "rot_y",
-    "rot_y_derivative1",
-    "rot_z",
-    "rot_z_derivative1",
+    "trans*",
+    "rot*",
     "a_comp_cor_00",
     "a_comp_cor_01",
     "a_comp_cor_02",
@@ -156,20 +157,14 @@ extractor = TimeseriesExtractor(
 # which should be located in the "derivatives" folder
 # within the BIDS root directory
 # The extracted timeseries data is automatically stored
-extractor.get_bold(
-    bids_dir="path/to/bids/root",
-    pipeline_name="fmriprep",
-    session="1",
-    task="rest",
-    tr=2,
-    verbose=False,
-)
+extractor.get_bold(bids_dir=bids_root, task="rest", tr=2, n_cores=1, verbose=False)
 
 # Retrieve the dataframe containing QC information for each subject
 # to use for downstream statistical analyses
 qc_df = extractor.report_qc()
 print(qc_df)
 ```
+![Quality Control Dataframe.](qc.png)
 
 2. Use k-means clustering to identify the optimal number of CAPs from the data using a heuristic
 ```python
@@ -179,16 +174,15 @@ from neurocaps.analysis import CAP
 cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
 
 # Identify the optimal number of CAPs (clusters)
-# using the elbow method to test 2-20
+# using the silhouette method to test 2-20
 # The optimal number of CAPs is automatically stored
 cap_analysis.get_caps(
     subject_timeseries=extractor.subject_timeseries,
     n_clusters=range(2, 21),
     standardize=True,
-    cluster_selection_method="elbow",
+    cluster_selection_method="silhouette",
     max_iter=500,
     n_init=10,
-    random_state=0,
 )
 ```
 
@@ -198,13 +192,53 @@ cap_analysis.get_caps(
 output = cap_analysis.calculate_metrics(extractor.subject_timeseries, metrics=["temporal_fraction"])
 print(output["temporal_fraction"])
 ```
+![Temporal Fraction Dataframe.](temporal_fraction.png)
 
 4. Visualize CAPs
 ```python
 # Project CAPs onto surface plots
 # and generate cosine similarity network alignment of CAPs
-cap_analysis.caps2surf().caps2radar()
+from neurocaps.utils import PlotDefaults
+
+surface_kwargs = PlotDefaults.caps2surf()
+surface_kwargs["layout"] = "row"
+surface_kwargs["size"] = (500, 100)
+
+radar_kwargs = PlotDefaults.caps2radar()
+radar_kwargs["height"] = 400
+radar_kwargs["width"] = 600
+
+radialaxis = {
+    "showline": True,
+    "linewidth": 2,
+    "linecolor": "rgba(0, 0, 0, 0.25)",
+    "gridcolor": "rgba(0, 0, 0, 0.25)",
+    "ticks": "outside",
+    "tickfont": {"size": 14, "color": "black"},
+    "range": [0, 0.4],
+    "tickvals": [0.1, "", "", 0.4],
+}
+
+legend = {
+    "yanchor": "top",
+    "y": 0.99,
+    "x": 0.99,
+    "title_font_family": "Times New Roman",
+    "font": {"size": 12, "color": "black"},
+}
+
+radar_kwargs["radialaxis"] = radialaxis
+radar_kwargs["legend"] = legend
+
+cap_analysis.caps2surf(**surface_kwargs).caps2radar(**radar_kwargs)
 ```
+![CAP-1 Surface Image.](cap_1_surface.png)
+
+![CAP-2 Surface Image.](cap_2_surface.png)
+
+![CAP-1 Radar Image.](cap_1_radar.png)
+
+![CAP-2 Radar Image.](cap_2_radar.png)
 
 # Documentation
 Comprehensive documentations and interactive tutorials of NeuroCAPS can be found at

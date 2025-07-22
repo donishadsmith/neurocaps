@@ -169,9 +169,9 @@ def save_surface_plot(
         save_nifti_img(stat_map, output_dir, filename)
 
 
-def save_nifti_img(stat_map: nib.Nifti1Image, output_dir: str, filename: str) -> None:
-    "Save a single NifTI statistical map."
-    nib.save(stat_map, os.path.join(output_dir, filename))
+def save_nifti_img(img: nib.Nifti1Image, output_dir: str, filename: str) -> None:
+    "Save a single NifTI img."
+    nib.save(img, os.path.join(output_dir, filename))
 
 
 def show_surface_plot(fig: Union[Figure, Axes], show_fig: bool) -> None:

@@ -11,6 +11,10 @@ Module containing utility functions.
 
    fetch_preset_parcel_approach
    generate_custom_parcel_approach
+   create_dataset_description
+   save_dataset_description
+   simulate_bids_dataset
+   simulate_subject_timeseries
 
    :template: class.rst
    :nosignatures:

@@ -621,3 +621,6 @@ class PlotDefaults:
             and method != "available_methods"
             and callable(getattr(self, method))
         ]
+
+
+__all__ = ["PlotDefaults"]

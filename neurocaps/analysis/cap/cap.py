@@ -286,9 +286,9 @@ class CAP(CAPGetter):
         ----------
         subject_timeseries: :obj:`SubjectTimeseries` or :obj:`str`
             A dictionary mapping subject IDs to their run IDs and their associated timeseries
-            (TRs x ROIs) as a NumPy array. Can also be a path to a pickle file containing this same
-            structure. Refer to documentation for ``SubjectTimeseries`` in the "See Also" section for
-            an example structure.
+            (TRs x ROIs) as a NumPy array. Can also be a path to a serialized file containing this
+            same structure. Refer to documentation for ``SubjectTimeseries`` in the "See Also" section
+            for an example structure.
 
         runs: :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
             Specific run IDs to perform the CAPs analysis with (e.g. ``runs=[0, 1]`` or
@@ -658,9 +658,9 @@ class CAP(CAPGetter):
         ----------
         subject_timeseries: :obj:`SubjectTimeseries` or :obj:`str`
             A dictionary mapping subject IDs to their run IDs and their associated timeseries
-            (TRs x ROIs) as a NumPy array. Can also be a path to a pickle file containing this same
-            structure. Refer to documentation for ``SubjectTimeseries`` in the "See Also" section
-            for an example structure.
+            (TRs x ROIs) as a NumPy array. Can also be a path to a serialized file containing this
+            same structure. Refer to documentation for ``SubjectTimeseries`` in the "See Also"
+            section for an example structure.
 
         runs: :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
             The run IDs to calculate CAP metrics for (e.g. ``runs=[0, 1]`` or ``runs=["01", "02"]``).
@@ -955,9 +955,9 @@ class CAP(CAPGetter):
         ----------
         subject_timeseries: :obj:`SubjectTimeseries` or :obj:`str`
             A dictionary mapping subject IDs to their run IDs and their associated timeseries
-            (TRs x ROIs) as a NumPy array. Can also be a path to a pickle file containing this same
-            structure. Refer to documentation for ``SubjectTimeseries`` in the "See Also" section
-            for an example structure.
+            (TRs x ROIs) as a NumPy array. Can also be a path to a serialized file containing this
+            same structure. Refer to documentation for ``SubjectTimeseries`` in the "See Also"
+            section for an example structure.
 
         runs: :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
             The run IDs to return CAP labels for (e.g. ``runs=[0, 1]`` or ``runs=["01", "02"]``).
