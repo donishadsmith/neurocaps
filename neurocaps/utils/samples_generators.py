@@ -116,6 +116,9 @@ def create_dataset_description(
     bids_version: :obj:`str`, default="1.0.0"
         Version of the BIDS dataset.
 
+    derivative: :obj:`bool`, default=False
+        Determines if "GeneratedBy" key is added to dictionary.
+
     Returns
     -------
     dict[str, str]
