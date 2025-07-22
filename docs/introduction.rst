@@ -90,9 +90,9 @@ Notable features includes:
 - Utilities:
 
   - plot transition matrices
-  - merges timeseries data across tasks or session [6]_
-  - generates the custom parcellation dictionary structure from the parcellation's metadata file
-  - fetches preset custom parcellation approaches
+  - merge timeseries data across tasks or session [6]_
+  - generate the custom parcellation dictionary structure from the parcellation's metadata file
+  - fetche preset custom parcellation approaches
 
 Refer to the demos to the `demos <https://github.com/donishadsmith/neurocaps/tree/main/demos>`_ or
 `tutorials <https://neurocaps.readthedocs.io/en/latest/examples/examples.html>`_ for an
@@ -135,9 +135,9 @@ Some foundational concepts in NeuroCAPs take inspiration from features or design
 implemented in other neuroimaging Python packages, specifically:
 
 - mtorabi59's `pydfc <https://github.com/neurodatascience/dFC>`_, a toolbox that allows comparisons
-among several popular dynamic functionality methods.
+  among several popular dynamic functionality methods.
 - 62442katieb's `IDConn <https://github.com/62442katieb/IDConn>`_, a pipeline for assessing
-individual differences in resting-state or task-based functional connectivity.
+  individual differences in resting-state or task-based functional connectivity.
 
 References
 ----------
