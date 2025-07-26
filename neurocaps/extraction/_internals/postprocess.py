@@ -911,9 +911,8 @@ def remove_censored_frames(timeseries, condition, removed_frames):
 
 def standardize_rois(timeseries, return_parameters=False):
     """
-    Standardizes ROIs of timeseries if censoring or condition extraction occurs. Uses Bessel's
-    correction (n-1). Standard deviations below ``np.finfo(std.dtype).eps`` are replaced with 1 for
-    numerical stability.
+    Standardizes ROIs of timeseries. Uses Bessel's correction (n-1). Standard deviations below
+    ``np.finfo(std.dtype).eps`` are replaced with 1 for numerical stability.
     """
     mean = np.mean(timeseries, axis=0)
     std = np.std(timeseries, axis=0, ddof=1)

@@ -1,6 +1,6 @@
 """Function for changing the dtype of timeseries data."""
 
-from typing import Union, Optional
+from typing import Optional, Union
 
 import numpy as np
 

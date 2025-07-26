@@ -15,6 +15,12 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.34.3] - 2025-07-25
+### 🚀 New/Added
+- Added `n_cores` and `progress_bar` parameters to `simulate_bids_dataset`.
+### 🐛 Fixes
+- Incorrect session ID also raises a `BIDSQueryError`.
+
 ## [0.34.2] - 2025-07-22
 ### 🐛 Fixes
 - Type hint fixes and fix undocumented parameter.

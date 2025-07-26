@@ -1,6 +1,6 @@
 """Function to standardize timeseries within subject runs."""
 
-from typing import Union, Optional
+from typing import Optional, Union
 
 from ._internals import serialize
 from neurocaps.utils import _io as io_utils

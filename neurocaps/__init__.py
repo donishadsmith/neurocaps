@@ -4,4 +4,4 @@ from . import analysis, extraction, exceptions, utils
 __all__ = ["analysis", "extraction", "exceptions", "utils"]
 
 # Version in single place
-__version__ = "0.34.2"
+__version__ = "0.34.3"

@@ -3,7 +3,10 @@
 import json, os
 from typing import Union
 
+from joblib import Parallel, delayed
 from numpy.typing import NDArray
+from tqdm.auto import tqdm
+
 import nibabel as nib
 import numpy as np
 import pandas as pd
@@ -22,6 +25,8 @@ def simulate_bids_dataset(
     n_volumes: int = 100,
     task_name: str = "rest",
     output_dir: Union[str, None] = None,
+    n_cores: Union[int, None] = None,
+    progress_bar: bool = False,
 ) -> str:
     """
     Generate a Simulated BIDS Dataset with fMRIPrep Derivatives.
@@ -34,7 +39,7 @@ def simulate_bids_dataset(
             - One confounds TSV file per subject/run
 
     .. note::
-       Returns `output_dir` if the path exists.
+       Returns ``output_dir`` if the path exists.
 
     .. versionadded:: 0.34.1
 
@@ -59,6 +64,17 @@ def simulate_bids_dataset(
            If None, a directory named "simulated_bids_dir" will be created in the current working
            directory.
 
+    n_cores: :obj:`int` or :obj:`None`, default=None
+        The number of cores to use for multiprocessing with Joblib (over subjects). The "loky"
+        backend is used.
+
+        .. versionadded:: 0.34.3
+
+    progress_bar: :obj:`bool`, default=False
+        If True, displays a progress bar.
+
+        .. versionadded:: 0.34.3
+
     Returns
     -------
     str
@@ -80,22 +96,42 @@ def simulate_bids_dataset(
     save_dataset_description(create_dataset_description("Mock"), bids_root)
     save_dataset_description(create_dataset_description("fMRIPrep", derivative=True), fmriprep_dir)
 
-    for sub_id in range(n_subs):
-        sub_dir = os.path.join(fmriprep_dir, f"sub-{sub_id}", "func")
-        io_utils.makedir(sub_dir, suppress_msg=True)
+    # Generate list of tuples for each subject
+    args_list = [(fmriprep_dir, subj_id, n_runs, task_name, n_volumes) for subj_id in range(n_subs)]
 
-        for run_id in range(n_runs):
-            base_filename = f"sub-{sub_id}_task-{task_name}_run-{run_id}"
-
-            confound_df = _simulate_confound_data(n_volumes)
-            filename = base_filename + "_desc-confounds_timeseries.tsv"
-            _save_confound_data(confound_df, sub_dir, filename)
-
-            nifti_img = _simulate_nifti_image(n_volumes)
-            filename = base_filename + "_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
-            save_nifti_img(nifti_img, sub_dir, filename)
+    parallel = Parallel(return_as="generator", n_jobs=n_cores, backend="loky")
+    # Needs to be generator for tqdm, force consumption gets file creation to work
+    list(
+        tqdm(
+            parallel(delayed(_create_sub_files)(*args) for args in args_list),
+            desc="Creating Simulated Subjects",
+            total=len(args_list),
+            disable=not progress_bar,
+        )
+    )
 
     return bids_root
+
+
+def _create_sub_files(
+    fmriprep_dir: str, subj_id: int, n_runs: int, task_name: str, n_volumes: int
+) -> None:
+    """Iterates through each to create simulate data."""
+    sub_dir = os.path.join(fmriprep_dir, f"sub-{subj_id}", "func")
+    io_utils.makedir(sub_dir, suppress_msg=True)
+
+    for run_id in range(n_runs):
+        base_filename = f"sub-{subj_id}_task-{task_name}_run-{run_id}"
+
+        confound_df = _simulate_confound_data(n_volumes)
+        filename = base_filename + "_desc-confounds_timeseries.tsv"
+        _save_confound_data(confound_df, sub_dir, filename)
+
+        nifti_img = _simulate_nifti_image(n_volumes)
+        filename = base_filename + "_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
+        save_nifti_img(nifti_img, sub_dir, filename)
+
+    return None
 
 
 def create_dataset_description(
@@ -244,8 +280,8 @@ def simulate_subject_timeseries(
         <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.typing.SubjectTimeseries.html#neurocaps.typing.SubjectTimeseries>`_)
     """
     return {
-        str(sub_id): {f"run-{run_id}": np.random.rand(*shape) for run_id in range(n_runs)}
-        for sub_id in range(n_subs)
+        str(subj_id): {f"run-{run_id}": np.random.rand(*shape) for run_id in range(n_runs)}
+        for subj_id in range(n_subs)
     }
 
 

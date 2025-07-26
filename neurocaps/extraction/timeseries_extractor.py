@@ -495,7 +495,8 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
             folder is nested (e.g. "fmriprep/fmriprep-20.0.0").
 
         n_cores: :obj:`int` or :obj:`None`, default=None
-            The number of cores to use for multiprocessing with Joblib. The "loky" backend is used.
+            The number of cores to use for multiprocessing with Joblib (over subjects). The "loky"
+            backend is used.
 
         parallel_log_config: :obj:`dict[str, multiprocessing.Manager.Queue | int]`
             Passes a user-defined managed queue and logging level to the internal timeseries
@@ -616,6 +617,9 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
         if runs and not isinstance(runs, list):
             runs = [runs]
 
+        if session and not isinstance(session, (int, str)):
+            raise TypeError("`session` must be an integer or string.")
+
         # Update attributes
         self._task_info = {
             "task": task,
@@ -636,12 +640,18 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
         self._n_cores = n_cores
 
         layout = self._call_layout(bids_dir, pipeline_name)
-        subj_ids = sorted(
-            layout.get(
-                return_type="id", target="subject", task=task, space=self._space, suffix="bold"
-            )
+        query_kwargs = dict(
+            return_type="id",
+            target="subject",
+            space=self._space,
+            task=self._task_info["task"],
+            suffix="bold",
         )
 
+        if self._task_info["session"]:
+            query_kwargs["session"] = self._task_info["session"]
+
+        subj_ids = sorted(layout.get(**query_kwargs))
         if not subj_ids:
             msg = (
                 "No subject IDs found - potential reasons:\n"
@@ -651,7 +661,7 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
                 "2. File names do not contain specific entities required for "
                 "querying such as 'sub-', 'space-', 'task-', or 'desc-' "
                 "(e.g 'sub-01_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-preproc-bold.nii.gz')\n"
-                "3. Incorrect task name specified in `task` parameter.\n"
+                "3. Incorrect task name or session ID specified in `task` or `session` parameters.\n"
                 "4. The cache may need to be cleared using "
                 "``TimeseriesExtractor._call_layout.cache_clear()`` if the directory has been "
                 "changed (e.g. new files added, file names changed, etc) during the current Python "
@@ -684,55 +694,40 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
             verbose,
         )
 
-        if self._n_cores:
-            # Generate list of tuples for each subject
-            args_list = [
-                (
-                    subj_id,
-                    self._subject_info[subj_id]["prepped_files"],
-                    self._subject_info[subj_id]["run_list"],
-                    self._parcel_approach,
-                    self._signal_clean_info,
-                    self._task_info,
-                    self._subject_info[subj_id]["tr"],
-                    verbose,
-                    parallel_log_config,
-                )
-                for subj_id in self._subject_ids
-            ]
-
-            parallel = Parallel(return_as="generator", n_jobs=self._n_cores, backend="loky")
-            outputs = tqdm(
-                parallel(delayed(process_subject_runs)(*args) for args in args_list),
-                desc="Processing Subjects",
-                total=len(args_list),
-                disable=not progress_bar,
+        if parallel_log_config and not (isinstance(self._n_cores, int) and self._n_cores > 1):
+            LG.warning(
+                "`parallel_log_config` is only used for parallel processing. "
+                "The default logger can be modified by configuring either the root logger or a "
+                "logger for a specific module prior to package import."
             )
 
-            for output in outputs:
-                subject_timeseries, qc = output
-                self._expand_dicts(subject_timeseries, qc)
-        else:
-            if parallel_log_config:
-                LG.warning(
-                    "`parallel_log_config` is only used for parallel processing. "
-                    "The default logger can be modified by configuring either the root logger or a "
-                    "logger for a specific module prior to package import."
-                )
+        # Generate list of tuples for each subject
+        args_list = [
+            (
+                subj_id,
+                self._subject_info[subj_id]["prepped_files"],
+                self._subject_info[subj_id]["run_list"],
+                self._parcel_approach,
+                self._signal_clean_info,
+                self._task_info,
+                self._subject_info[subj_id]["tr"],
+                verbose,
+                parallel_log_config,
+            )
+            for subj_id in self._subject_ids
+        ]
 
-            for subj_id in tqdm(
-                self._subject_ids, desc="Processing Subjects", disable=not progress_bar
-            ):
-                outputs = process_subject_runs(
-                    subj_id=subj_id,
-                    **self._subject_info[subj_id],
-                    parcel_approach=self._parcel_approach,
-                    signal_clean_info=self._signal_clean_info,
-                    task_info=self._task_info,
-                    verbose=verbose,
-                )
+        parallel = Parallel(return_as="generator", n_jobs=self._n_cores, backend="loky")
+        outputs = tqdm(
+            parallel(delayed(process_subject_runs)(*args) for args in args_list),
+            desc="Processing Subjects",
+            total=len(args_list),
+            disable=not progress_bar,
+        )
 
-                self._expand_dicts(*outputs)
+        for output in outputs:
+            subject_timeseries, qc = output
+            self._expand_dicts(subject_timeseries, qc)
 
         return self
 
