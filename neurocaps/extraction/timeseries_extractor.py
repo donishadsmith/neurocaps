@@ -67,7 +67,7 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
     low_pass: :obj:`float`, :obj:`int`, or :obj:`None`, default=None
         Filters out signals above the specified cutoff frequency.
 
-    high_pass: :obj:`float`, :obj:`int`, or :obj:`None``, default=None
+    high_pass: :obj:`float`, :obj:`int`, or :obj:`None`, default=None
         Filters out signals below the specified cutoff frequency.
 
     fwhm: :obj:`float`, :obj:`int`, or :obj:`None`, default=None
@@ -85,73 +85,78 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
 
         If "basic", the following confounds are used by default:
 
-        - All discrete cosine-basis regressors.
+        - All discrete cosine-basis regressors (removes low-frequency signal drift, operates as a
+          high-pass filter).
         - Six head-motion parameters and their first-order derivatives.
-        - First six principal aCompCor components.
+        - First six principal aCompCor components (accounts for physiological and motion-related
+          artifacts).
 
         .. important::
-            - Confound names follow fMRIPrep's naming scheme (versions >= 1.2.0).
-            - Wildcards are supported to match prefixes (e.g., "cosine*" matches all confounds\
-              starting with "cosine".)
+           - Confound names follow fMRIPrep's naming scheme (versions >= 1.2.0).
+           - Wildcards are supported to match prefixes (e.g., "cosine*" matches all confounds
+             starting with "cosine".)
 
     fd_threshold: :obj:`float`, :obj:`dict[str, float | int]`, or :obj:`None`, default=None
-        Threshold for volume censoring based on framewise displacement (FD). Computed only after
-        dummy volumes are removed.
+        Threshold for volume scrubbing (censoring) based on framewise displacement (FD).
 
         - *If float*, removes volumes where FD > threshold.
         - *If dict*, the following subkeys are available **(all non-required subkeys are None by default)**:
 
             - "threshold": A float (required). Removes volumes where FD > threshold.
             - "outlier_percentage": A float in interval [0,1]. Removes entire runs where proportion\
-              of censored volumes exceeds this threshold. Proportion calculated after dummy scan removal.
+              of volumes exceeds the specified threshold. Proportion calculated after dummy scan\
+              removal to not deflate the percentage of steady-state volumes removed.
 
-            .. note::
-                - A warning is issued when a run is flagged.
-                - If ``condition`` specified for task-based data in ``self.get_bold()``, only\
-                  considers volumes associated with the condition.
+              .. note::
+                 - A warning is issued when a run is flagged.
+                 - If ``condition`` specified for task-based data in ``self.get_bold()``, only\
+                   considers volumes associated with the condition.
 
             - "n_before": An integer. Indicates the number of volumes to remove before each flagged volume.
             - "n_after": An integer. Indicates the number of volumes to remove after each flagged volume.
-            - "use_sample_mask": A boolean. Controls when censoring is applied in the processing pipeline.
+            - "use_sample_mask": A boolean. Controls when scrubbing is applied in the processing pipeline.
 
-            .. important::
-                - When True:
+              .. important::
+                 - When True:
+                   - Passes a sample mask of high-motion volumes to Nilearn's ``NiftiLabelsMasker``.
+                   - Scrubbing is applied before nuisance regression.
+                   - Nilearn replaces high motion volumes with interpolated values using\
+                     Scipy's ``CubicSpline`` function prior to detrending and band-pass filtering.\
+                     These interpolated values are then removed prior to nuisance regression.\
+                     Additionally, extrapolation is set to False (``clean__extrapolate=False``)\
+                     to prevent interpolation of end volumes.
+                   - If ``condition`` is specified for task-based data in ``self.get_bold()``, the\
+                     timeseries is temporarily padded to extract the correct frames.
 
-                    - Passes a sample mask of censored volumes to Nilearn's ``NiftiLabelsMasker``.
-                    - Sets ``clean__extrapolate=False`` to prevent interpolation of end volumes.
-                    - Censoring is applied before nuisance regression.
-                    - If ``condition`` is specified for task-based data in ``self.get_bold()``, the\
-                      timeseries is temporarily padded to extract the correct frames.
+                   - When False or None (default behavior):
+                     - Full timeseries data is used during nuisance regression.
+                     - Scrubbing is applied after nuisance regression.
 
-                - When False or None:
-
-                    - Full timeseries data is used during nuisance regression.
-                    - Censoring is applied after nuisance regression.
-
-            - "interpolate": A boolean. If True, uses scipy's ``CubicSpline`` function` to perform\
-              cubic spline interpolation only on censored frames. **Only performs interpolation if True**.
+            - "interpolate": A boolean. If True, uses Scipy's ``CubicSpline`` function to perform\
+               cubic spline interpolation only on scrubbed frames. **Only performs interpolation if\
+               explicitly set to True**.
 
             .. note::
-               Interpolation is only performed on frames that are bounded by non-censored
+               Interpolation is only performed on frames that are bounded by non-scrubbed
                frames on both ends. For example, given a
-               ``censor_mask=[0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0]`` where "0" indicates censored
-               high motion volumes and "1" indicates non-censored, low
+               ``censor_mask=[0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0]`` where "0" indicates scrubbed
+               high motion volumes and "1" indicates non-scrubbed, low
                motion volumes, only the volumes at index 3, 5, 6, 7, and 9 would be interpolated.
 
         .. important::
-            - A column named "framewise_displacement" must be available in the confounds file.
-            - ``use_confounds`` must be set to True.
-            - Do not specify "framewise_displacement" in ``confound_names``.
-            - See Nilearn's documentation for details on censored volume handling when
-              "use_sample_mask" is True:
+           - A column named "framewise_displacement" must be available in the confounds file.
+           - ``use_confounds`` must be set to True.
+           - Do not specify "framewise_displacement" in ``confound_names``.
+           - See Nilearn's documentation for details on scrubbed volume handling when "use_sample_mask"
+             is True:
 
-                - `Signal Clean <https://nilearn.github.io/stable/modules/generated/nilearn.signal.clean.html>`_
-                - `NiftiLabelsMasker <https://nilearn.github.io/stable/modules/generated/nilearn.maskers.NiftiLabelsMasker.html>`_
+             - `Signal Clean <https://nilearn.github.io/stable/modules/generated/nilearn.signal.clean.html>`_
+             - `NiftiLabelsMasker <https://nilearn.github.io/stable/modules/generated/nilearn.maskers.NiftiLabelsMasker.html>`_
 
-            - If "interpolate" is True, then interpolation is only applied after the nuisance
-              regression and parcellation steps have been completed.
-            - See Scipy's `CubicSpline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicSpline.html>`_
-              documentation.
+           - If "interpolate" is True, then interpolation is only applied after the nuisance
+             regression and parcellation steps have been completed.
+           - See Scipy's `CubicSpline <https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CubicSpline.html>`_
+             documentation.
 
     n_acompcor_separate: :obj:`int` or :obj:`None`, default=None
         Number of aCompCor components to extract separately from the white-matter (WM) and CSF
@@ -160,9 +165,9 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
         (totaling 10 components) are regressed out.
 
         .. important::
-            - ``use_confounds`` must be set to True.
-            - If specified, this parameter overrides any aCompCor components listed in\
-              ``confound_names``.
+           - ``use_confounds`` must be set to True.
+           - If specified, this parameter overrides any aCompCor components listed in
+             ``confound_names``.
 
     dummy_scans: :obj:`int`, :obj:`dict[str, bool | int]`, "auto", or :obj:`None`, default=None
         Number of initial volumes to remove before timeseries extraction.
@@ -179,9 +184,9 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
               finds 6 outliers but ``{"max": 5}``, removes 5 volumes.
 
         .. important::
-            - "auto" and dictionary option requires ``use_confounds`` to be True and\
-              "non_steady_state_outlier_XX" to be present in the confounds tsv file.
-            - "min" and "max" keys only apply when "auto" is True.
+           - "auto" and dictionary option requires ``use_confounds`` to be True and\
+             "non_steady_state_outlier_XX" to be present in the confounds tsv file.
+           - "min" and "max" keys only apply when "auto" is True.
 
     dtype: :obj:`str` or "auto", default=None
         The NumPy dtype to convert NIfTI images to.
@@ -563,7 +568,7 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
         dictionary is set to True, then a boolean sample mask is generated (where False indicates
         the high motion volumes) and passed to the ``sample_mask`` parameter in Nilearn's
         ``NiftiLabelsMasker``. If, "use_sample_mask" key is False or not specified in the
-        ``fd_threshold`` dictionary, then censoring is done after nuisance regression, which is the
+        ``fd_threshold`` dictionary, then scrubbing is done after nuisance regression, which is the
         default behavior.
 
         **Extraction of Task Conditions**: The formula used for computing the scan indices
@@ -610,8 +615,8 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
 
         If the "interpolate" key in the ``fd_threshold`` dictionary is set to True, interpolation is
         performed using the full timeseries data (excluding dummy volumes) to replace only the
-        censored (high-motion) volumes. Then, the indices corresponding to the condition are
-        extracted from the timeseries, excluding any frames that do not have non-censored data at
+        scrubbed (high-motion) volumes. Then, the indices corresponding to the condition are
+        extracted from the timeseries, excluding any frames that do not have non-scrubbed data at
         both edges.
         """
         if runs and not isinstance(runs, list):
@@ -898,15 +903,15 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
         **Mean & Standard Deviation of Framewise Displacement:** "Mean_FD" and "Std_FD" represent
         the statistics prior to scrubbing or interpolating.
 
-        **Censored & Interpolated Frames**: The metrics for scrubbed frames and interpolated frames
+        **Scrubbed & Interpolated Frames**: The metrics for scrubbed frames and interpolated frames
         are independent. For instance, 2 scrubbed frames and 3 interpolated frames means that 3
         frames were interpolated while 2 were scrubbed due to excessive motion.
 
-        **Note:** Only censored frames with bounded by non-censored frames on both sides are
-        interpolated, while censored frames at the edge of the timeseries (including frames that
-        border censored edges) are always scrubbed and counted in "Frames_Scrubbed". For instance,
-        if the full sample mask is computed as ``[0, 0, 1, 0, 0, 1, 0]`` where "0" are censored and
-        "1" is not censored, then when no interpolation is requested, then "Frames_Scrubbed" will be
+        **Note:** Only scrubbed frames with bounded by non-scrubbed frames on both sides are
+        interpolated, while scrubbed frames at the edge of the timeseries (including frames that
+        border scrubbed edges) are always scrubbed and counted in "Frames_Scrubbed". For instance,
+        if the full sample mask is computed as ``[0, 0, 1, 0, 0, 1, 0]`` where "0" are scrubbed and
+        "1" is not scrubbed, then when no interpolation is requested, then "Frames_Scrubbed" will be
         5 and "Frames_Interpolated" will be 0. If interpolation is requested, then "Frames_Scrubbed"
         would be 3 and "Frames_Interpolated" would be 2 (indexes 3 and 4).
 
