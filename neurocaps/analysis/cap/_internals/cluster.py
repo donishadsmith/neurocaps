@@ -219,39 +219,29 @@ def select_optimal_clusters(
         performance_dict[group_name] = {}
         model_dict = {}
 
-        if n_cores is None:
-            for n_cluster in tqdm(
-                n_clusters, desc=f"Clustering [GROUP: {group_name}]", disable=not progress_bar
-            ):
-                output_score, model = perform_kmeans(
+        parallel = Parallel(
+            return_as="generator",
+            n_jobs=n_cores,
+            backend="loky",
+            max_nbytes=kwargs.get("max_nbytes", "1M"),
+        )
+        outputs = tqdm(
+            parallel(
+                delayed(perform_kmeans)(
                     n_cluster, configs, concatenated_timeseries_dict[group_name], method
                 )
-                performance_dict[group_name].update(output_score)
-                model_dict.update(model)
-        else:
-            parallel = Parallel(
-                return_as="generator",
-                n_jobs=n_cores,
-                backend="loky",
-                max_nbytes=kwargs.get("max_nbytes", "1M"),
-            )
-            outputs = tqdm(
-                parallel(
-                    delayed(perform_kmeans)(
-                        n_cluster, configs, concatenated_timeseries_dict[group_name], method
-                    )
-                    for n_cluster in n_clusters
-                ),
-                desc=f"Clustering [GROUP: {group_name}]",
-                total=len(n_clusters),
-                disable=not progress_bar,
-            )
+                for n_cluster in n_clusters
+            ),
+            desc=f"Clustering [GROUP: {group_name}]",
+            total=len(n_clusters),
+            disable=not progress_bar,
+        )
 
-            output_scores, models = zip(*outputs)
-            for output in output_scores:
-                performance_dict[group_name].update(output)
-            for model in models:
-                model_dict.update(model)
+        output_scores, models = zip(*outputs)
+        for output in output_scores:
+            performance_dict[group_name].update(output)
+        for model in models:
+            model_dict.update(model)
 
         # Select optimal clusters
         if method == "elbow":

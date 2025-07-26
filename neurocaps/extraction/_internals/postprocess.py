@@ -143,7 +143,7 @@ class RunData:
 
 
 def process_subject_runs(
-    subj_id,
+    sub_id,
     prepped_files,
     run_list,
     parcel_approach,
@@ -169,14 +169,14 @@ def process_subject_runs(
     LG = setup_logger(__name__, top_level=False, parallel_log_config=parallel_log_config)
 
     # Initialize subject dictionary and quality control dictionary
-    subject_timeseries = {subj_id: {}}
-    qc = {subj_id: {}}
+    subject_timeseries = {sub_id: {}}
+    qc = {sub_id: {}}
 
     for run in run_list:
         # Initialize class; placing inside run loops allows re-initialization of defaults
         data = RunData(parcel_approach, signal_clean_info, task_info, tr, verbose)
 
-        run_id, data.files, data.head = get_subject_data(subj_id, run, prepped_files, data, LG)
+        run_id, data.files, data.head = get_subject_data(sub_id, run, prepped_files, data, LG)
 
         # Get dummy volumes
         data.dummy_vols = get_dummy(data, LG)
@@ -265,24 +265,24 @@ def process_subject_runs(
                 "`subject_timeseries` dictionary."
             )
         else:
-            subject_timeseries[subj_id].update({run_id: timeseries})
+            subject_timeseries[sub_id].update({run_id: timeseries})
 
-            qc[subj_id].update({run_id: report_qc(data)})
+            qc[sub_id].update({run_id: report_qc(data)})
 
-    if not subject_timeseries[subj_id]:
+    if not subject_timeseries[sub_id]:
         LG.warning(
             f"{data.head.split(' | RUN:')[0]}] Timeseries Extraction Skipped: No runs were "
             "extracted."
         )
         subject_timeseries, qc = None, None
 
-    if qc is not None and not qc[subj_id]:
+    if qc is not None and not qc[sub_id]:
         qc = None
 
     return subject_timeseries, qc
 
 
-def get_subject_data(subj_id, run, prepped_files, data, LG):
+def get_subject_data(sub_id, run, prepped_files, data, LG):
     """Gets subject-related data."""
     run_id = "run-0" if run is None else run
 
@@ -296,7 +296,7 @@ def get_subject_data(subj_id, run, prepped_files, data, LG):
     }
 
     # Base message containing subject header information for logging
-    head = subject_header(data, run_id.split("-")[-1], subj_id, files["nifti"])
+    head = subject_header(data, run_id.split("-")[-1], sub_id, files["nifti"])
 
     if data.verbose:
         LG.info(
@@ -322,7 +322,7 @@ def grab_file(run, files):
         return files[0]
 
 
-def subject_header(data, run_id, subj_id, nifti):
+def subject_header(data, run_id, sub_id, nifti):
     """
     Creates the subject header to use in verbose logging, indicating the subject, session, task,
     and run.
@@ -336,7 +336,7 @@ def subject_header(data, run_id, subj_id, nifti):
         )
         sess_id = sess.split("-")[-1] if sess else None
 
-    sub_head = f"[SUBJECT: {subj_id} | SESSION: {sess_id} | TASK: {data.task} | RUN: {run_id}]"
+    sub_head = f"[SUBJECT: {sub_id} | SESSION: {sess_id} | TASK: {data.task} | RUN: {run_id}]"
 
     return f"{sub_head} "
 

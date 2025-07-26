@@ -173,9 +173,10 @@ def test_PlotDefaults():
     assert sorted(PlotDefaults.available_methods()) == method_names
 
 
-def test_simulate_bids_dataset():
+@pytest.mark.parametrize("n_cores", [None, 2])
+def test_simulate_bids_dataset(n_cores):
     """Tests if ``simulate_bids_dataset`` is compatible with ``TimeseriesExtractor``."""
-    bids_root = simulate_bids_dataset()
+    bids_root = simulate_bids_dataset(n_subs=2, n_cores=n_cores)
 
     extractor = TimeseriesExtractor()
     extractor.get_bold(bids_dir=bids_root, task="rest")

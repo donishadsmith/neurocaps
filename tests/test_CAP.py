@@ -517,6 +517,7 @@ def test_methods_parallel_and_sequential_equivalence(method):
         n_clusters=[2, 3, 4, 5],
         random_state=0,
         cluster_selection_method=method,
+        n_cores=None,
     )
 
     sequential = np.array(list(cap_analysis.cluster_scores["Scores"]["All Subjects"].values()))

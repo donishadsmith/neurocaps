@@ -11,7 +11,7 @@ LG = setup_logger(__name__)
 
 def setup_extraction(
     layout: Any,
-    subj_ids: list[str],
+    sub_ids: list[str],
     space: Union[str, None],
     exclude_niftis: Union[list[str], None],
     signal_clean_info: dict[str, Any],
@@ -27,12 +27,12 @@ def setup_extraction(
     The ``BIDSLayout`` type hint for ``layout`` is not added to allow certain in
     ``TimeseriesExtractor`` to be used on Windows machines that do not have pybids installed.
     """
-    base_dict = {"layout": layout, "subj_id": None}
+    base_dict = {"layout": layout, "sub_id": None}
     subject_ids = []
     subject_info = {}
 
-    for subj_id in subj_ids:
-        base_dict["subj_id"] = subj_id
+    for sub_id in sub_ids:
+        base_dict["sub_id"] = sub_id
         files = build_dict(base_dict, space, signal_clean_info, task_info)
 
         # Remove excluded file from the niftis list, which will prevent it from being processed
@@ -40,7 +40,7 @@ def setup_extraction(
             files["niftis"] = exclude_nifti_files(files["niftis"], exclude_niftis)
 
         # Get subject header
-        subject_header = create_header(subj_id, task_info)
+        subject_header = create_header(sub_id, task_info)
 
         # Check files
         skip, msg = check_files(files, signal_clean_info, task_info)
@@ -96,10 +96,10 @@ def setup_extraction(
         tr = get_tr(files["bold_meta"], subject_header, signal_clean_info, task_info, verbose)
 
         # Add subject list to subject attribute. These are subjects that will be ran
-        subject_ids.append(subj_id)
+        subject_ids.append(sub_id)
 
         # Store subject specific information
-        subject_info[subj_id] = {"prepped_files": files, "tr": tr, "run_list": run_list}
+        subject_info[sub_id] = {"prepped_files": files, "tr": tr, "run_list": run_list}
 
     return subject_ids, subject_info
 
@@ -108,7 +108,7 @@ def query_files(
     layout: Any,
     task_info: dict[str, Any],
     extension: str,
-    subj_id: str,
+    sub_id: str,
     scope: str = "derivatives",
     suffix: Union[str, None] = None,
     desc: Union[str, None] = None,
@@ -123,27 +123,24 @@ def query_files(
     The type hint for ``layout`` is not added to allow certain in ``TimeseriesExtractor`` to be
     used on Windows machines that do not have pybids installed.
     """
-    query_dict = {
+    query_kwargs = {
         "scope": scope,
         "return_type": "file",
         "task": task_info["task"],
         "extension": extension,
-        "subject": subj_id,
+        "subject": sub_id,
     }
 
     if desc:
-        query_dict.update({"desc": desc})
+        query_kwargs.update({"desc": desc})
 
     if suffix:
-        query_dict.update({"suffix": suffix})
-
-    if task_info["session"]:
-        query_dict.update({"session": task_info["session"]})
+        query_kwargs.update({"suffix": suffix})
 
     if not event and not desc:
-        query_dict.update({"space": space})
+        query_kwargs.update({"space": space})
 
-    return sorted(layout.get(**query_dict))
+    return sorted(layout.get(**query_kwargs))
 
 
 def build_dict(
@@ -189,12 +186,10 @@ def exclude_nifti_files(niftis: list[str], exclude_niftis: list[str]) -> list[st
     return [nifti for nifti in niftis if os.path.basename(nifti) not in exclude_niftis]
 
 
-def create_header(subj_id: str, task_info: dict[str, Any]) -> str:
+def create_header(sub_id: str, task_info: dict[str, Any]) -> str:
     """Creates base subject-specific header for logged messages."""
     sub_message = (
-        f"[SUBJECT: {subj_id} | "
-        f"SESSION: {task_info['session']} | "
-        f"TASK: {task_info['task']}]"
+        f"[SUBJECT: {sub_id} | " f"SESSION: {task_info['session']} | " f"TASK: {task_info['task']}]"
     )
     subject_header = f"{sub_message} "
 
