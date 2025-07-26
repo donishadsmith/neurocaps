@@ -1370,7 +1370,7 @@ class CAP(CAPGetter):
         self,
         output_dir: str,
         suffix_filename: Optional[str] = None,
-        knn_dict: Optional[dict[str, Union[int, list[int], NDArray[np.integer], str]]] = None,
+        knn_dict: Optional[dict[str, Union[int, list[int], str]]] = None,
         progress_bar: bool = False,
     ) -> Self:
         """
@@ -1388,7 +1388,7 @@ class CAP(CAPGetter):
         suffix_filename: :obj:`str` or :obj:`None`, default=None
             Appended to the name of the saved file.
 
-        knn_dict: :obj:`dict[str, int | bool]`, default=None
+        knn_dict: :obj:`dict[str, int | list[int] | str ]`, default=None
             Use KNN (k-nearest neighbors) interpolation with reference atlas masking (which is native
             to volume space) to fill in non-background coordinates that are assigned zero.
             Useful when a "Custom" parcellation does not project well from volumetric to surface
@@ -1400,7 +1400,7 @@ class CAP(CAPGetter):
               reference masking ("AAL" or "Schaefer").
             - "resolution_mm": An integer (Default=1). Spatial resolution of the Schaefer
               parcellation (in millimeters) (1 or 2).
-            - "remove_labels": A list or array (Default=None). The label IDs as integers of the
+            - "remove_labels": A list (Default=None). The label IDs as integers of the
               regions in the parcellation to not interpolate.
             - "method": A string (Default="majority_vote"). Method used to assign new values to
               non-background voxels ("majority_vote" or "distance_weighted"). For majority vote,
@@ -1457,7 +1457,7 @@ class CAP(CAPGetter):
     @staticmethod
     def _validate_knn_dict(
         knn_dict: Union[dict[str, Any], None],
-    ) -> Union[dict[str, Union[int, list[int], NDArray[np.integer], str]], None]:
+    ) -> Union[dict[str, Union[int, list[int], str]], None]:
         """Validates the ``knn_dict``."""
         if not knn_dict:
             return None
@@ -1517,7 +1517,7 @@ class CAP(CAPGetter):
         suffix_filename: Optional[str] = None,
         suffix_title: Optional[str] = None,
         save_stat_maps: bool = False,
-        knn_dict: Optional[dict[str, Union[int, list[int], NDArray[np.integer], str]]] = None,
+        knn_dict: Optional[dict[str, Union[int, list[int], str]]] = None,
         show_figs: bool = True,
         progress_bar: bool = False,
         **kwargs,
@@ -1561,7 +1561,7 @@ class CAP(CAPGetter):
             If True, saves the statistical map for each CAP for all groups as a Nifti1Image if
             ``output_dir`` is provided.
 
-        knn_dict: :obj:`dict[str, int | bool]`, default=None
+        knn_dict: :obj:`dict[str, int | list[int] | bool]`, default=None
             Use KNN (k-nearest neighbors) interpolation with reference atlas masking (which is native
             to volume space) to fill in non-background coordinates that are assigned zero.
             Useful when a "Custom" parcellation does not project well from volumetric to surface
@@ -1573,7 +1573,7 @@ class CAP(CAPGetter):
               reference masking ("AAL" or "Schaefer").
             - "resolution_mm": An integer (Default=1). Spatial resolution of the Schaefer
               parcellation (in millimeters) (1 or 2).
-            - "remove_labels": A list or array (Default=None). The label IDs as integers of the
+            - "remove_labels": A list (Default=None). The label IDs as integers of the
               regions in the parcellation to not interpolate.
             - "method": A string (Default="majority_vote"). Method used to assign new values to
               non-background voxels ("majority_vote" or "distance_weighted"). For majority vote,
