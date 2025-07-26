@@ -2,7 +2,7 @@
 
 import json, os, re
 
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 from neurocaps.utils._logging import setup_logger
 
@@ -11,8 +11,8 @@ LG = setup_logger(__name__)
 
 def setup_extraction(
     layout: Any,
-    sub_ids: list[str],
-    space: Union[str, None],
+    subj_ids: list[str],
+    space: str,
     exclude_niftis: Union[list[str], None],
     signal_clean_info: dict[str, Any],
     task_info: dict[str, Any],
@@ -113,7 +113,7 @@ def query_files(
     suffix: Union[str, None] = None,
     desc: Union[str, None] = None,
     event: bool = False,
-    space: str = None,
+    space: Optional[str] = None,
 ):
     """
     Queries specific files (sorted lexicographically) using ``BidsLayout``.
@@ -180,9 +180,10 @@ def build_dict(
     return files
 
 
-def exclude_nifti_files(niftis: list[str], exclude_niftis: list[str]) -> list[str]:
+def exclude_nifti_files(niftis: list[str], exclude_niftis: Union[str, list[str]]) -> list[str]:
     """Excludes certain NIfTI files based on ``exclude_niftis``."""
     exclude_niftis = exclude_niftis if isinstance(exclude_niftis, list) else [exclude_niftis]
+
     return [nifti for nifti in niftis if os.path.basename(nifti) not in exclude_niftis]
 
 
@@ -197,7 +198,9 @@ def create_header(sub_id: str, task_info: dict[str, Any]) -> str:
 
 
 def check_files(
-    files: dict[str, list[str]], signal_clean_info: dict[str, Any], task_info: dict[str, Any]
+    files: dict[str, Union[list[str], None]],
+    signal_clean_info: dict[str, Any],
+    task_info: dict[str, Any],
 ) -> tuple[Union[bool, None], Union[str, None]]:
     """
     Simple initial check to ensure the required files are needed based on certain

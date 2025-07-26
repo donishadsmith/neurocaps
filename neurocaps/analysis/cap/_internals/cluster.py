@@ -24,7 +24,9 @@ from neurocaps.utils._plot_utils import PlotFuncs
 LG = setup_logger(__name__)
 
 
-def perform_kmeans(n_cluster: int, configs: dict, concatenated_timeseries: NDArray, method: str):
+def perform_kmeans(
+    n_cluster: int, configs: dict[str, Any], concatenated_timeseries: NDArray, method: str
+) -> Union[KMeans, tuple[dict[int, float], dict[int, KMeans]]]:
     """
     Uses scikit-learn to perform k-means clustering on concatenated timeseries data in both
     sequential and parallel contexts. Also uses scikit-learn to provide cluster performance metrics.
@@ -67,7 +69,7 @@ def setup_groups(
     return groups_dict, subject_table
 
 
-def create_default_group(subject_timeseries: SubjectTimeseries):
+def create_default_group(subject_timeseries: SubjectTimeseries) -> dict[str, list[str]]:
     """
     Creates a dictionary mapping the default group "All Subjects" to the subject IDs in the
     SubjectTimeseries.
@@ -121,7 +123,7 @@ def create_group_map(subject_table: dict[str, str], group_dict: dict[str, str]) 
 
 def concatenate_timeseries(
     subject_timeseries: SubjectTimeseries,
-    group_dict: dict[str, str],
+    group_dict: dict[str, list[str]],
     runs: Union[list[int], list[str], None],
     progress_bar: bool,
 ) -> dict[str, NDArray]:
@@ -386,7 +388,7 @@ def compute_variance_explained(
     return variance_explained_dict
 
 
-def create_caps_dict(kmeans_dict: dict[str, KMeans]) -> dict[str, NDArray]:
+def create_caps_dict(kmeans_dict: dict[str, KMeans]) -> dict[str, dict[str, NDArray]]:
     """Maps groups to their CAPs (cluster centroids)."""
     caps_dict = {}
 

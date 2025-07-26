@@ -20,9 +20,9 @@ LG = setup_logger(__name__)
 
 def update_radar_dict(
     cap_dict: dict[str, NDArray],
-    radar_dict: dict,
+    radar_dict: Union[dict[str, str]],
     parcel_approach: ParcelApproach,
-) -> dict:
+) -> dict[str, Union[str, float]]:
     """
     Updates a dictionary containing information about the cosine similarity between each region
     specified in a parcellation and the positive and negative activations in a CAP vector for
@@ -92,7 +92,7 @@ def compute_cosine_similarity(
 
 def generate_radar_plot(
     use_scatterpolar: bool,
-    radar_dict: dict,
+    radar_dict: dict[str, Union[str, float]],
     cap_name: str,
     group_name: str,
     suffix_title: Union[str, None],

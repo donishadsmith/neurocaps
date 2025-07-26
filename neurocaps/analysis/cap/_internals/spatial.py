@@ -2,13 +2,19 @@
 
 import inspect
 from functools import lru_cache
+from typing import Union
 
 import nibabel as nib, numpy as np
 from nilearn import datasets, image
+from numpy.typing import NDArray
 from scipy.spatial import KDTree
 
 
-def cap_to_img(atlas_file, cap_vector, knn_dict):
+def cap_to_img(
+    atlas_file: str,
+    cap_vector: NDArray[np.floating],
+    knn_dict: dict[str, Union[int, list[int], str]],
+) -> nib.nifti1.Nifti1Image:
     """
     Projects cluster centroids (CAPs) on to the parcellation map. Also if specified, performs
     k-nearest neighbors and spatial smoothing on the NifTI image.
@@ -40,7 +46,7 @@ def cap_to_img(atlas_file, cap_vector, knn_dict):
 
 
 @lru_cache(maxsize=2)
-def build_tree(atlas):
+def build_tree(atlas: nib.nifti1.Nifti1Image) -> tuple[KDTree, NDArray[np.intp]]:
     """Uses scipy's ``KDTree`` to optimize k-nearest neighbors interpolation."""
     non_zero_indices = np.array(np.where(atlas.get_fdata() != 0)).T
     kdtree = KDTree(non_zero_indices)
@@ -48,14 +54,20 @@ def build_tree(atlas):
     return kdtree, non_zero_indices
 
 
-def get_remove_indices(atlas, remove_labels):
+def get_remove_indices(
+    atlas: nib.nifti1.Nifti1Image, remove_labels: Union[list[int], NDArray[np.integer]]
+) -> tuple[NDArray[np.intp], ...]:
     """If requested, gets the coordinates containing a specified label to be removed."""
     remove_indxs = np.where(np.isin(atlas.get_fdata(), remove_labels))
 
     return remove_indxs
 
 
-def perform_knn(atlas, knn_dict, stat_map):
+def perform_knn(
+    atlas: nib.nifti1.Nifti1Image,
+    knn_dict: dict[str, Union[int, list[int], str]],
+    stat_map: nib.nifti1.Nifti1Image,
+) -> nib.nifti1.Nifti1Image:
     """
     Perform KNN to assist with coverage issues prior to plotting.
 
@@ -75,8 +87,8 @@ def perform_knn(atlas, knn_dict, stat_map):
     k = knn_dict["k"]
     for target_indx in target_indices:
         # Get the nearest non-zero index
-        distances, neighbor_indx = kdtree.query(target_indx, k=k)
-        nearest_neighbors = non_zero_indices[neighbor_indx]
+        distances, neighbor_indxs = kdtree.query(target_indx, k=k)
+        nearest_neighbors = non_zero_indices[neighbor_indxs]
 
         if k == 1:
             nearest_neighbors = [nearest_neighbors]
@@ -99,7 +111,12 @@ def perform_knn(atlas, knn_dict, stat_map):
 
 
 @lru_cache(maxsize=4)
-def get_target_indices(atlas, reference_atlas, resolution_mm, remove_labels):
+def get_target_indices(
+    atlas: nib.nifti1.Nifti1Image,
+    reference_atlas: nib.nifti1.Nifti1Image,
+    resolution_mm: int,
+    remove_labels: list[int],
+) -> list[tuple,]:
     """
     Uses a reference atlas ("Schaefer" or "AAL") as a mask to identify non-background coordinates
     to use for k-nearest neighbors interpolation.
@@ -117,23 +134,27 @@ def get_target_indices(atlas, reference_atlas, resolution_mm, remove_labels):
     # Get indices that equal zero in reference atlas to avoid interpolating background values
     reference_background_indices = set(zip(*np.where(resampled_reference_atlas.get_fdata() == 0)))
 
-    # Get indices 0 indices for atlas
-    zeroed_indices_atlas = set(zip(*np.where(atlas.get_fdata() == 0)))
+    # Get indices that are zero in source atlas
+    source_atlas_zeroed_indices = set(zip(*np.where(atlas.get_fdata() == 0)))
 
     # Get the non-background indices through set subtraction
     if remove_labels:
         remove_indxs = get_remove_indices(atlas, remove_labels)
         remove_indxs = set(zip(*remove_indxs))
-        target_indices = list(zeroed_indices_atlas - reference_background_indices - remove_indxs)
+        target_indices = list(
+            source_atlas_zeroed_indices - reference_background_indices - remove_indxs
+        )
     else:
-        target_indices = list(zeroed_indices_atlas - reference_background_indices)
+        target_indices = list(source_atlas_zeroed_indices - reference_background_indices)
 
     target_indices = sorted(target_indices)
 
     return target_indices
 
 
-def resample_image(source_img, target_img):
+def resample_image(
+    source_img: nib.nifti1.Nifti1Image, target_img: nib.nifti1.Nifti1Image
+) -> nib.nifti1.Nifti1Image:
     """Resamples source image to the target image."""
     kwargs = {
         "source_img": source_img,
@@ -148,11 +169,11 @@ def resample_image(source_img, target_img):
     return image.resample_to_img(**kwargs)
 
 
-def distance_weighted(neighbor_values, distances):
+def distance_weighted(neighbor_values: list[float], distances: list[int]) -> np.floating:
     """Computes a new value based on the weighted inverse distance."""
     return np.mean(np.array(neighbor_values) * (1 / np.array(distances)))
 
 
-def majority_vote(neighbor_values):
+def majority_vote(neighbor_values: list[float]) -> float:
     """Selects new value based on highest frequency."""
     return max(set(neighbor_values), key=neighbor_values.count)
