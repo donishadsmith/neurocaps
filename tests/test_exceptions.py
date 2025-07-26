@@ -12,6 +12,15 @@ from .utils import Parcellation
 # Activate fixture to copy dataset to temporary directory
 pytestmark = pytest.mark.usefixtures("data_dir")
 
+BIDSMSG = r"No subject IDs found - potential reasons:*"
+
+ELBOWMSG = (
+    f"[GROUP: All Subjects] - No elbow detected. Try adjusting the sensitivity parameter "
+    "(`S`) to increase or decrease sensitivity (higher values are less sensitive), "
+    "expanding the list of `n_clusters` to test, or using another "
+    "`cluster_selection_method`."
+)
+
 
 @pytest.fixture(autouse=False, scope="module")
 def remove_task_entity(get_vars):
@@ -38,9 +47,7 @@ def test_wrong_task_with_entities(get_vars):
 
     extractor = TimeseriesExtractor(parcel_approach=Parcellation.get_custom("parcellation"))
 
-    with pytest.raises(
-        BIDSQueryError, match=re.escape(r"No subject IDs found - potential reasons:*")
-    ):
+    with pytest.raises(BIDSQueryError, match=BIDSMSG):
         extractor.get_bold(bids_dir=bids_dir, task="placeholder")
 
 
@@ -50,9 +57,7 @@ def test_no_entities(get_vars, remove_task_entity):
 
     extractor = TimeseriesExtractor(parcel_approach=Parcellation.get_custom("parcellation"))
 
-    with pytest.raises(
-        BIDSQueryError, match=re.escape(r"No subject IDs found - potential reasons:*")
-    ):
+    with pytest.raises(BIDSQueryError, match=BIDSMSG):
         extractor.get_bold(bids_dir=bids_dir, task="rest")
 
 

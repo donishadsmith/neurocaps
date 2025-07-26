@@ -97,7 +97,7 @@ def simulate_bids_dataset(
     save_dataset_description(create_dataset_description("fMRIPrep", derivative=True), fmriprep_dir)
 
     # Generate list of tuples for each subject
-    args_list = [(fmriprep_dir, sub_id, n_runs, task_name, n_volumes) for sub_id in range(n_subs)]
+    args_list = [(fmriprep_dir, subj_id, n_runs, task_name, n_volumes) for subj_id in range(n_subs)]
 
     parallel = Parallel(return_as="generator", n_jobs=n_cores, backend="loky")
     # Needs to be generator for tqdm, force consumption gets file creation to work
@@ -114,14 +114,14 @@ def simulate_bids_dataset(
 
 
 def _create_sub_files(
-    fmriprep_dir: str, sub_id: int, n_runs: int, task_name: str, n_volumes: int
+    fmriprep_dir: str, subj_id: int, n_runs: int, task_name: str, n_volumes: int
 ) -> None:
     """Iterates through each to create simulate data."""
-    sub_dir = os.path.join(fmriprep_dir, f"sub-{sub_id}", "func")
+    sub_dir = os.path.join(fmriprep_dir, f"sub-{subj_id}", "func")
     io_utils.makedir(sub_dir, suppress_msg=True)
 
     for run_id in range(n_runs):
-        base_filename = f"sub-{sub_id}_task-{task_name}_run-{run_id}"
+        base_filename = f"sub-{subj_id}_task-{task_name}_run-{run_id}"
 
         confound_df = _simulate_confound_data(n_volumes)
         filename = base_filename + "_desc-confounds_timeseries.tsv"
@@ -280,8 +280,8 @@ def simulate_subject_timeseries(
         <https://neurocaps.readthedocs.io/en/stable/api/generated/neurocaps.typing.SubjectTimeseries.html#neurocaps.typing.SubjectTimeseries>`_)
     """
     return {
-        str(sub_id): {f"run-{run_id}": np.random.rand(*shape) for run_id in range(n_runs)}
-        for sub_id in range(n_subs)
+        str(subj_id): {f"run-{run_id}": np.random.rand(*shape) for run_id in range(n_runs)}
+        for subj_id in range(n_subs)
     }
 
 

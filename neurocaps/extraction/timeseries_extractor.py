@@ -495,8 +495,8 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
             folder is nested (e.g. "fmriprep/fmriprep-20.0.0").
 
         n_cores: :obj:`int` or :obj:`None`, default=None
-            The number of cores to use for multiprocessing with Joblib (over subjects). The
-            "loky" backend is used.
+            The number of cores to use for multiprocessing with Joblib (over subjects). The "loky"
+            backend is used.
 
         parallel_log_config: :obj:`dict[str, multiprocessing.Manager.Queue | int]`
             Passes a user-defined managed queue and logging level to the internal timeseries
@@ -641,14 +641,18 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
 
         layout = self._call_layout(bids_dir, pipeline_name)
         query_kwargs = dict(
-            return_type="id", target="subject", space=self._space, task=task, suffix="bold"
+            return_type="id",
+            target="subject",
+            space=self._space,
+            task=self._task_info["task"],
+            suffix="bold",
         )
 
         if self._task_info["session"]:
             query_kwargs["session"] = self._task_info["session"]
 
-        sub_ids = sorted(layout.get(**query_kwargs))
-        if not sub_ids:
+        subj_ids = sorted(layout.get(**query_kwargs))
+        if not subj_ids:
             msg = (
                 "No subject IDs found - potential reasons:\n"
                 "1. Incorrect template space (default: 'MNI152NLin2009cAsym'). "
@@ -700,17 +704,17 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
         # Generate list of tuples for each subject
         args_list = [
             (
-                sub_id,
-                self._subject_info[sub_id]["prepped_files"],
-                self._subject_info[sub_id]["run_list"],
+                subj_id,
+                self._subject_info[subj_id]["prepped_files"],
+                self._subject_info[subj_id]["run_list"],
                 self._parcel_approach,
                 self._signal_clean_info,
                 self._task_info,
-                self._subject_info[sub_id]["tr"],
+                self._subject_info[subj_id]["tr"],
                 verbose,
                 parallel_log_config,
             )
-            for sub_id in self._subject_ids
+            for subj_id in self._subject_ids
         ]
 
         parallel = Parallel(return_as="generator", n_jobs=self._n_cores, backend="loky")

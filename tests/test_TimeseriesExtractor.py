@@ -2452,9 +2452,9 @@ def test_parallel_and_sequential_preprocessing_equivalence(setup_environment_3, 
         bids_dir=bids_dir,
         session="002",
         task="rest",
-        n_cores=None,
         pipeline_name=pipeline_name,
         tr=1.2,
+        n_cores=None,
     )
 
     for sub in extractor.subject_timeseries:

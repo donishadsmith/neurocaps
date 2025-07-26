@@ -13,7 +13,7 @@ class BIDSQueryError(Exception):
         space is used).
       - File naming issues where required entities (e.g. "sub-", "space-", "task-", "desc-") are
         missing.
-      - An incorrect task name or session ID specified in `task` or `session` parameters.
+      - An task name or session ID specified in ``task`` or ``session`` parameters.
       - The directory being changed during the current Python session (e.g. new files added, file
         names changed, etc), resulting in the cache needing to be cleared using
         ``TimeseriesExtractor._call_layout.cache_clear()``.

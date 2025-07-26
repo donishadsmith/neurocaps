@@ -17,9 +17,9 @@ improvements/enhancements. All fixes and modifications are backwards compatible.
 
 ## [0.34.3] - 2025-07-25
 ### 🚀 New/Added
-- Adds progress par and n_cores to to function simulating bids directory
+- Added `n_cores` and `progress_bar` parameters to `simulate_bids_dataset`.
 ### 🐛 Fixes
-- Error raised during extraction when no subjects detected due to incorrect session ID
+- Incorrect session ID also raises a `BIDSQueryError`.
 
 ## [0.34.2] - 2025-07-22
 ### 🐛 Fixes
