@@ -100,7 +100,7 @@ def simulate_bids_dataset(
     args_list = [(fmriprep_dir, subj_id, n_runs, task_name, n_volumes) for subj_id in range(n_subs)]
 
     parallel = Parallel(return_as="generator", n_jobs=n_cores, backend="loky")
-    # Needs to be generator for tqdm, force consumption gets file creation to work
+    # generator needed for tqdm, iteration triggers side effects (file creation)
     list(
         tqdm(
             parallel(delayed(_create_sub_files)(*args) for args in args_list),
