@@ -103,7 +103,7 @@ or tasks, and creating group-averaged transition matrices.
 
 Contains several utility functions:
 
-- `fetch_preset_parcel_approach`: fetches a preset parcel approach (either "4S" or "HCPex" [@Huang2022])
+- `fetch_preset_parcel_approach`: fetches a preset parcel approach ("4S", "HCPex" [@Huang2022], "Gordon" [@Gordon2016])
 - `generate_custom_parcel_approach`: automatically creates the necessary data structures from a parcellation's metadata file
 
 Additional utility function are also available for plotting and simulating data.
@@ -124,7 +124,9 @@ from neurocaps.utils import simulate_bids_dataset
 np.random.seed(0)
 
 # Generate a BIDS directory with fMRIPrep derivatives
-bids_root = simulate_bids_dataset(n_subs=3, n_runs=1, n_volumes=100, task_name="rest")
+bids_root = simulate_bids_dataset(
+    n_subs=3, n_runs=1, n_volumes=100, task_name="rest"
+)
 
 # Using Schaefer, one of the default parcellation approaches
 parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
@@ -148,7 +150,7 @@ extractor = TimeseriesExtractor(
     confound_names=confound_names,
     standardize=False,
     fd_threshold={
-        "threshold": 0.50,
+        "threshold": 0.90,
         "outlier_percentage": 0.30,
     },
 )
@@ -157,14 +159,21 @@ extractor = TimeseriesExtractor(
 # which should be located in the "derivatives" folder
 # within the BIDS root directory
 # The extracted timeseries data is automatically stored
-extractor.get_bold(bids_dir=bids_root, task="rest", tr=2, n_cores=1, verbose=False)
+extractor.get_bold(
+    bids_dir=bids_root, task="rest", tr=2, n_cores=1, verbose=False
+)
 
 # Retrieve the dataframe containing QC information for each subject
 # to use for downstream statistical analyses
 qc_df = extractor.report_qc()
 print(qc_df)
 ```
-![Quality Control Dataframe.](qc.png)
+
+| Subject_ID | Run | Mean_FD | Std_FD | Frames_Scrubbed | ... |
+|------------|-----|---------|--------|-----------------|-----|
+| 0 | run-0 | 0.516349 | 0.289657 |  9 | ... |
+| 1 | run-0 | 0.526343 | 0.297550 | 17 | ... |
+| 2 | run-0 | 0.518041 | 0.273964 |  8 | ... |
 
 2. Use k-means clustering to identify the optimal number of CAPs from the data using a heuristic
 ```python
@@ -189,10 +198,17 @@ cap_analysis.get_caps(
 3. Compute temporal dynamic metrics for downstream statistical analyses
 ```python
 # Calculate temporal fraction of each CAP for all subjects
-output = cap_analysis.calculate_metrics(extractor.subject_timeseries, metrics=["temporal_fraction"])
-print(output["temporal_fraction"])
+metric_dict = cap_analysis.calculate_metrics(
+    extractor.subject_timeseries, metrics=["temporal_fraction"]
+)
+print(metric_dict["temporal_fraction"])
 ```
-![Temporal Fraction Dataframe.](temporal_fraction.png)
+
+| Subject_ID | Group | Run | CAP-1 | CAP-2 |
+|------------|-------|-----|-------|-------|
+| 0 | All Subjects | run-0 | 0.505495 | 0.494505 |
+| 1 | All Subjects | run-0 | 0.530120 | 0.469880 |
+| 2 | All Subjects | run-0 | 0.521739 | 0.478261 |
 
 4. Visualize CAPs
 ```python
@@ -232,6 +248,7 @@ radar_kwargs["legend"] = legend
 
 cap_analysis.caps2surf(**surface_kwargs).caps2radar(**radar_kwargs)
 ```
+
 ![CAP-1 Surface Image.](cap_1_surface.png)
 
 ![CAP-2 Surface Image.](cap_2_surface.png)

@@ -22,10 +22,14 @@ This configuration sets the root logger to output to the console and configures 
     )
 
     # Configuring the logger for the internal function that does timeseries extraction
-    extract_timeseries_logger = logging.getLogger("neurocaps._utils.extraction.extract_timeseries")
+    extract_timeseries_logger = logging.getLogger(
+        "neurocaps._utils.extraction.extract_timeseries"
+    )
     extract_timeseries_logger.setLevel(logging.WARNING)
     file_handler = logging.FileHandler("neurocaps.log")
-    file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+    file_handler.setFormatter(
+        logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+    )
     extract_timeseries_logger.addHandler(file_handler)
 
     # Import package
@@ -60,7 +64,9 @@ parallel processing is enabled.
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.INFO)
     file_handler = logging.FileHandler("neurocaps.log")
-    file_handler.setFormatter(logging.Formatter("%(asctime)s %(name)s [%(levelname)s] %(message)s"))
+    file_handler.setFormatter(
+        logging.Formatter("%(asctime)s %(name)s [%(levelname)s] %(message)s")
+    )
     root_logger.addHandler(file_handler)
 
     if __name__ == "__main__":

@@ -243,7 +243,9 @@ cap_analysis.get_caps(
 3. Compute temporal dynamic metrics for downstream statistical analyses
 ```python
 # Calculate temporal fraction of each CAP for all subjects
-output = cap_analysis.calculate_metrics(extractor.subject_timeseries, metrics=["temporal_fraction"])
+output = cap_analysis.calculate_metrics(
+    extractor.subject_timeseries, metrics=["temporal_fraction"]
+)
 print(output["temporal_fraction"])
 ```
 

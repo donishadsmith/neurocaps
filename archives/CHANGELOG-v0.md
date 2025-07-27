@@ -99,7 +99,10 @@ from neurocaps._utils import _build_tree, _get_target_indices
 
 Previous import:
 ```python
-from neurocaps._utils.analysis.cap2statmap import _build_tree, _get_target_indices
+from neurocaps._utils.analysis.cap2statmap import (
+    _build_tree,
+    _get_target_indices,
+)
 ```
 
 ### 📖 Documentation
@@ -247,7 +250,9 @@ def _logger(name, flush=False, top_level=True):
     # handler is user defined or assigned by the system
     if top_level == True:
         _USER_ROOT_HANDLER = logging.getLogger().hasHandlers()
-        _USER_MODULE_HANDLERS[logger.name] = logging.getLogger(logger.name).hasHandlers()
+        _USER_MODULE_HANDLERS[logger.name] = logging.getLogger(
+            logger.name
+        ).hasHandlers()
 
     if not logger.level:
         logger.setLevel(logging.INFO)
@@ -259,7 +264,9 @@ def _logger(name, flush=False, top_level=True):
     logger.propagate = True if _USER_ROOT_HANDLER else False
 
     # Add or messages will repeat several times due to multiple handlers if same name used
-    if not default_handlers and not (logger.name == "_extract_timeseries" and top_level):
+    if not default_handlers and not (
+        logger.name == "_extract_timeseries" and top_level
+    ):
         # If no user specified default handler, any handler is assigned by OS and is cleared
         if logger.name == "_extract_timeseries":
             logger.handlers.clear()
@@ -269,7 +276,9 @@ def _logger(name, flush=False, top_level=True):
         else:
             handler = logging.StreamHandler(sys.stdout)
 
-        handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+        handler.setFormatter(
+            logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+        )
         logger.addHandler(handler)
 
     return logger
@@ -302,11 +311,18 @@ def _call_layout(bids_dir, pipeline_name):
         bids_dir = os.path.dirname(bids_dir)
 
     if pipeline_name:
-        pipeline_name = os.path.normpath(pipeline_name).lstrip(os.path.sep).rstrip(os.path.sep)
+        pipeline_name = (
+            os.path.normpath(pipeline_name)
+            .lstrip(os.path.sep)
+            .rstrip(os.path.sep)
+        )
         if pipeline_name.startswith("derivatives"):
-            pipeline_name = pipeline_name[len("derivatives") :].lstrip(os.path.sep)
+            pipeline_name = pipeline_name[len("derivatives") :].lstrip(
+                os.path.sep
+            )
         layout = bids.BIDSLayout(
-            bids_dir, derivatives=os.path.join(bids_dir, "derivatives", pipeline_name)
+            bids_dir,
+            derivatives=os.path.join(bids_dir, "derivatives", pipeline_name),
         )
     else:
         layout = bids.BIDSLayout(bids_dir, derivatives=True)
@@ -327,8 +343,16 @@ Jupyter notebook or python CL.
 no longer produces an error and now does the following:
 
 ```python
-if "tickvals" not in plot_dict["radialaxis"] and "range" not in plot_dict["radialaxis"]:
-    default_ticks = [max_value / 4, max_value / 2, 3 * max_value / 4, max_value]
+if (
+    "tickvals" not in plot_dict["radialaxis"]
+    and "range" not in plot_dict["radialaxis"]
+):
+    default_ticks = [
+        max_value / 4,
+        max_value / 2,
+        3 * max_value / 4,
+        max_value,
+    ]
     plot_dict["radialaxis"]["tickvals"] = [round(x, 2) for x in default_ticks]
 ```
 ### ♻ Changed
@@ -416,7 +440,9 @@ def _logger(name, level=logging.INFO, flush=False):
             handler = _Flush(sys.stdout)
         else:
             handler = logging.StreamHandler(sys.stdout)
-        handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+        handler.setFormatter(
+            logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+        )
         logger.addHandler(handler)
 
     return logger
@@ -431,7 +457,10 @@ For non-parallel processing, the logger can be configured by a user with a comma
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout), logging.FileHandler("info.out")],
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler("info.out"),
+    ],
 )
 ```
 
@@ -484,13 +513,19 @@ internal function `_extract_timeseries`.
 of how the calculation is done.
 ```python
 if "transition_probability" in metrics:
-    temp_dict[group].loc[len(temp_dict[group])] = [subj_id, group, curr_run] + [0.0] * (
-        temp_dict[group].shape[-1] - 3
-    )
+    temp_dict[group].loc[len(temp_dict[group])] = [
+        subj_id,
+        group,
+        curr_run,
+    ] + [0.0] * (temp_dict[group].shape[-1] - 3)
     # Get number of transitions
     trans_dict = {
         target: np.sum(
-            np.where(predicted_subject_timeseries[subj_id][curr_run][:-1] == target, 1, 0)
+            np.where(
+                predicted_subject_timeseries[subj_id][curr_run][:-1] == target,
+                1,
+                0,
+            )
         )
         for target in group_caps[group]
     }
@@ -520,7 +555,9 @@ if "transition_probability" in metrics:
         if trans_dict[target] == 0:
             continue
         # Will include the {target}.{target} column, but the value is initially set to zero
-        columns = temp_dict[group].filter(regex=rf"^{target}\.").columns.tolist()
+        columns = (
+            temp_dict[group].filter(regex=rf"^{target}\.").columns.tolist()
+        )
         cumulative = temp_dict[group].loc[indx, columns].values.sum()
         temp_dict[group].loc[indx, f"{target}.{target}"] = 1.0 - cumulative
 ```
@@ -536,7 +573,9 @@ timeseries_dict = {
 caps = list(range(1, 9))
 # Get all combinations of transitions
 products = list(itertools.product(caps, caps))
-df = pd.DataFrame(columns=["Subject_ID", "Group", "Run"] + [f"{x}.{y}" for x, y in products])
+df = pd.DataFrame(
+    columns=["Subject_ID", "Group", "Run"] + [f"{x}.{y}" for x, y in products]
+)
 # Filter out all reversed products and products with the self transitions
 products_unique = []
 for prod in products:
@@ -550,7 +589,10 @@ for info in groups:
     df.loc[len(df)] = info + [0.0] * (df.shape[-1] - 3)
     timeseries = timeseries_dict[info[0]]
     # Get number of transitions
-    trans_dict = {target: np.sum(np.where(timeseries[:-1] == target, 1, 0)) for target in caps}
+    trans_dict = {
+        target: np.sum(np.where(timeseries[:-1] == target, 1, 0))
+        for target in caps
+    }
     indx = df.index[-1]
     # Iterate through products and calculate all symmetric pairs/off-diagonals
     for prod in products_unique:
@@ -667,14 +709,20 @@ import or use numpy operations to reduce needed to create the same calculation.
         - Previous Code:
         ```python
         # Get frequency
-        frequency_dict = dict(collections.Counter(predicted_subject_timeseries[subj_id][curr_run]))
+        frequency_dict = dict(
+            collections.Counter(predicted_subject_timeseries[subj_id][curr_run])
+        )
         # Sort the keys
-        sorted_frequency_dict = {key: frequency_dict[key] for key in sorted(list(frequency_dict))}
+        sorted_frequency_dict = {
+            key: frequency_dict[key] for key in sorted(list(frequency_dict))
+        }
         # Add zero to missing CAPs for participants that exhibit zero instances of a certain CAP
         if len(sorted_frequency_dict) != len(cap_numbers):
             sorted_frequency_dict = {
                 cap_number: (
-                    sorted_frequency_dict[cap_number] if cap_number in list(sorted_frequency_dict) else 0
+                    sorted_frequency_dict[cap_number]
+                    if cap_number in list(sorted_frequency_dict)
+                    else 0
                 )
                 for cap_number in cap_numbers
             }
@@ -693,7 +741,9 @@ import or use numpy operations to reduce needed to create the same calculation.
         ```python
         # Get frequency;
         frequency_dict = {
-            key: np.where(predicted_subject_timeseries[subj_id][curr_run] == key, 1, 0).sum()
+            key: np.where(
+                predicted_subject_timeseries[subj_id][curr_run] == key, 1, 0
+            ).sum()
             for key in range(1, group_cap_counts[group] + 1)
         }
         # Replace zeros with nan for groups with less caps than the group with the max caps
@@ -726,7 +776,9 @@ import or use numpy operations to reduce needed to create the same calculation.
         # Iterate through caps
         for target in cap_numbers:
             # Iterate through each element and count uninterrupted volumes that equal target
-            for index in range(0, len(predicted_subject_timeseries[subj_id][curr_run])):
+            for index in range(
+                0, len(predicted_subject_timeseries[subj_id][curr_run])
+            ):
                 if predicted_subject_timeseries[subj_id][curr_run][index] == target:
                     count += 1
                 # Store count in list if interrupted and not zero
@@ -740,7 +792,9 @@ import or use numpy operations to reduce needed to create the same calculation.
                 uninterrupted_volumes.append(count)
             # If uninterrupted_volumes not zero, multiply elements in the list by repetition time, sum and divide
             if len(uninterrupted_volumes) > 0:
-                persistence_value = np.array(uninterrupted_volumes).sum() / len(uninterrupted_volumes)
+                persistence_value = np.array(uninterrupted_volumes).sum() / len(
+                    uninterrupted_volumes
+                )
                 if tr:
                     persistence_dict.update({target: persistence_value * tr})
                 else:
@@ -756,7 +810,9 @@ import or use numpy operations to reduce needed to create the same calculation.
         if len(cap_numbers) > group_cap_counts[group]:
             persistence_dict = {
                 cap_number: (
-                    persistence_dict[cap_number] if cap_number <= group_cap_counts[group] else float("nan")
+                    persistence_dict[cap_number]
+                    if cap_number <= group_cap_counts[group]
+                    else float("nan")
                 )
                 for cap_number in cap_numbers
             }
@@ -768,7 +824,9 @@ import or use numpy operations to reduce needed to create the same calculation.
         # Iterate through caps
         for target in cap_numbers:
             # Binary representation of array - if [1,2,1,1,1,3] and target is 1, then it is [1,0,1,1,1,0]
-            binary_arr = np.where(predicted_subject_timeseries[subj_id][curr_run] == target, 1, 0)
+            binary_arr = np.where(
+                predicted_subject_timeseries[subj_id][curr_run] == target, 1, 0
+            )
             # Get indices of values that equal 1; [0,2,3,4]
             target_indices = np.where(binary_arr == 1)[0]
             # Count the transitions, indices where diff > 1 is a transition; diff of indices = [2,1,1];
@@ -776,7 +834,9 @@ import or use numpy operations to reduce needed to create the same calculation.
             segments = np.where(np.diff(target_indices, n=1) > 1, 1, 0).sum() + 1
             # Sum of ones in the binary array divided by segments, then multiplied by 1 or the tr; segment is
             # always 1 at minimum due to + 1; np.where(np.diff(target_indices, n=1) > 1, 1,0).sum() is 0 when empty or the condition isn't met
-            persistence_dict.update({target: (binary_arr.sum() / segments) * (tr if tr else 1)})
+            persistence_dict.update(
+                {target: (binary_arr.sum() / segments) * (tr if tr else 1)}
+            )
 
         # Replace zeros with nan for groups with less caps than the group with the max caps
         if max(cap_numbers) > group_cap_counts[group]:
@@ -798,7 +858,9 @@ import or use numpy operations to reduce needed to create the same calculation.
                     count += 1
         # Populate DataFrame
         new_row = [subj_id, group_name, curr_run, count]
-        df_dict["transition_frequency"].loc[len(df_dict["transition_frequency"])] = new_row
+        df_dict["transition_frequency"].loc[
+            len(df_dict["transition_frequency"])
+        ] = new_row
         ```
 
         - Refactored Code:
@@ -1085,7 +1147,9 @@ This doesn't affect functionality but it may be better to respect the original u
 ```python3
 # Fix for python 3.12, saving stat map so that it is path instead of a NifTi
 try:
-    gii_lh, gii_rh = mni152_to_fslr(stat_map, method=method, fslr_density=fslr_density)
+    gii_lh, gii_rh = mni152_to_fslr(
+        stat_map, method=method, fslr_density=fslr_density
+    )
 except TypeError:
     # Create temp
     temp_nifti = tempfile.NamedTemporaryFile(delete=False, suffix=".nii.gz")
@@ -1104,7 +1168,9 @@ except TypeError:
     temp_nifti.close()
     # Save temporary nifti to temp file
     nib.save(stat_map, temp_nifti.name)
-    gii_lh, gii_rh = mni152_to_fslr(temp_nifti.name, method=method, fslr_density=fslr_density)
+    gii_lh, gii_rh = mni152_to_fslr(
+        temp_nifti.name, method=method, fslr_density=fslr_density
+    )
     # Delete
     os.unlink(temp_nifti.name)
 ```

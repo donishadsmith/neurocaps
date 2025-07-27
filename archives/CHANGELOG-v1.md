@@ -165,7 +165,10 @@ New Computation:
 adjusted_onset = condition_df.loc[i, "onset"] - data.slice_ref * data.tr
 # Int is always the floor for positive floats
 onset_scan = int(adjusted_onset / data.tr) + data.tr_shift
-end_scan = math.ceil((adjusted_onset + condition_df.loc[i, "duration"]) / data.tr) + data.tr_shift
+end_scan = (
+    math.ceil((adjusted_onset + condition_df.loc[i, "duration"]) / data.tr)
+    + data.tr_shift
+)
 
 # Avoid accidental negative indexing
 onset_scan = max([0, onset_scan])
@@ -596,27 +599,75 @@ List method:
 parcel_approach["Custom"]["regions"] = {
     "Primary Visual": {"lh": [0], "rh": [180]},
     "Early Visual": {"lh": [1, 2, 3], "rh": [181, 182, 183]},
-    "Dorsal Stream Visual": {"lh": list(range(4, 10)), "rh": list(range(184, 190))},
-    "Ventral Stream Visual": {"lh": list(range(10, 17)), "rh": list(range(190, 197))},
+    "Dorsal Stream Visual": {
+        "lh": list(range(4, 10)),
+        "rh": list(range(184, 190)),
+    },
+    "Ventral Stream Visual": {
+        "lh": list(range(10, 17)),
+        "rh": list(range(190, 197)),
+    },
     "MT+ Complex": {"lh": list(range(17, 26)), "rh": list(range(197, 206))},
     "SomaSens Motor": {"lh": list(range(26, 31)), "rh": list(range(206, 211))},
-    "ParaCentral MidCing": {"lh": list(range(31, 40)), "rh": list(range(211, 220))},
+    "ParaCentral MidCing": {
+        "lh": list(range(31, 40)),
+        "rh": list(range(211, 220)),
+    },
     "Premotor": {"lh": list(range(40, 47)), "rh": list(range(220, 227))},
-    "Posterior Opercular": {"lh": list(range(47, 52)), "rh": list(range(227, 232))},
+    "Posterior Opercular": {
+        "lh": list(range(47, 52)),
+        "rh": list(range(227, 232)),
+    },
     "Early Auditory": {"lh": list(range(52, 59)), "rh": list(range(232, 239))},
-    "Auditory Association": {"lh": list(range(59, 67)), "rh": list(range(239, 247))},
-    "Insula FrontalOperc": {"lh": list(range(67, 79)), "rh": list(range(247, 259))},
-    "Medial Temporal": {"lh": list(range(79, 87)), "rh": list(range(259, 267))},
-    "Lateral Temporal": {"lh": list(range(87, 95)), "rh": list(range(267, 275))},
+    "Auditory Association": {
+        "lh": list(range(59, 67)),
+        "rh": list(range(239, 247)),
+    },
+    "Insula FrontalOperc": {
+        "lh": list(range(67, 79)),
+        "rh": list(range(247, 259)),
+    },
+    "Medial Temporal": {
+        "lh": list(range(79, 87)),
+        "rh": list(range(259, 267)),
+    },
+    "Lateral Temporal": {
+        "lh": list(range(87, 95)),
+        "rh": list(range(267, 275)),
+    },
     "TPO": {"lh": list(range(95, 100)), "rh": list(range(275, 280))},
-    "Superior Parietal": {"lh": list(range(100, 110)), "rh": list(range(280, 290))},
-    "Inferior Parietal": {"lh": list(range(110, 120)), "rh": list(range(290, 300))},
-    "Posterior Cingulate": {"lh": list(range(120, 133)), "rh": list(range(300, 313))},
-    "AntCing MedPFC": {"lh": list(range(133, 149)), "rh": list(range(313, 329))},
-    "OrbPolaFrontal": {"lh": list(range(149, 158)), "rh": list(range(329, 338))},
-    "Inferior Frontal": {"lh": list(range(158, 167)), "rh": list(range(338, 347))},
-    "Dorsolateral Prefrontal": {"lh": list(range(167, 180)), "rh": list(range(347, 360))},
-    "Subcortical Regions": {"lh": list(range(360, 393)), "rh": list(range(393, 426))},
+    "Superior Parietal": {
+        "lh": list(range(100, 110)),
+        "rh": list(range(280, 290)),
+    },
+    "Inferior Parietal": {
+        "lh": list(range(110, 120)),
+        "rh": list(range(290, 300)),
+    },
+    "Posterior Cingulate": {
+        "lh": list(range(120, 133)),
+        "rh": list(range(300, 313)),
+    },
+    "AntCing MedPFC": {
+        "lh": list(range(133, 149)),
+        "rh": list(range(313, 329)),
+    },
+    "OrbPolaFrontal": {
+        "lh": list(range(149, 158)),
+        "rh": list(range(329, 338)),
+    },
+    "Inferior Frontal": {
+        "lh": list(range(158, 167)),
+        "rh": list(range(338, 347)),
+    },
+    "Dorsolateral Prefrontal": {
+        "lh": list(range(167, 180)),
+        "rh": list(range(347, 360)),
+    },
+    "Subcortical Regions": {
+        "lh": list(range(360, 393)),
+        "rh": list(range(393, 426)),
+    },
 }
 ```
 
