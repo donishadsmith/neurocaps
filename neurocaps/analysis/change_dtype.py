@@ -83,7 +83,7 @@ def change_dtype(
             output_dir=output_dir,
             dict_list=changed_dtype_dicts,
             filenames=filenames,
-            call="change_dtype",
+            caller="change_dtype",
         )
 
     if return_dicts:

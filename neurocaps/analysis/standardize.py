@@ -81,7 +81,7 @@ def standardize(
             output_dir=output_dir,
             dict_list=standardized_dicts,
             filenames=filenames,
-            call="standardize",
+            caller="standardize",
         )
 
     if return_dicts:

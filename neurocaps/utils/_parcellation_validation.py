@@ -35,14 +35,14 @@ VALID_DICT_STUCTURES = {
 }
 
 
-def check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
+def check_parcel_approach(parcel_approach, caller="TimeseriesExtractor"):
     """
     Pipeline to ensure ``parcel_approach`` is valid and process the ``parcel_approach`` if certain
     initialization keys are used.
     """
     parcel_dict = io_utils.get_obj(parcel_approach)
 
-    if parcel_dict is None and call == "TimeseriesExtractor":
+    if parcel_dict is None and caller == "TimeseriesExtractor":
         parcel_dict = {"Schaefer": {"n_rois": 400, "yeo_networks": 7, "resolution_mm": 1}}
 
         LG.warning("`parcel_approach` is None, defaulting to 'Schaefer'.")
@@ -66,7 +66,7 @@ def check_parcel_approach(parcel_approach, call="TimeseriesExtractor"):
 
     if "Custom" in parcel_dict:
         # No return, simply validate structure
-        process_custom(parcel_dict, call)
+        process_custom(parcel_dict, caller)
     else:
         has_required_keys = check_keys(parcel_dict)
         if not has_required_keys:
@@ -130,14 +130,14 @@ def process_aal(config_dict):
     return parcel_dict
 
 
-def process_custom(parcel_dict, call):
+def process_custom(parcel_dict, caller):
     """
     Ensures that "Custom" parcel approaches have the necessary keys. Performs basic validation
     before passing to ``check_custom_structure``.
     """
     custom_example = {"Custom": VALID_DICT_STUCTURES["Custom"]}
 
-    if call == "TimeseriesExtractor" and "maps" not in parcel_dict["Custom"]:
+    if caller == "TimeseriesExtractor" and "maps" not in parcel_dict["Custom"]:
         raise ValueError(
             "For 'Custom' parcel_approach, a nested key-value pair containing the key 'maps' with "
             "the value being a string specifying the location of the parcellation is needed. "
@@ -152,7 +152,7 @@ def process_custom(parcel_dict, call):
         ]
         error_message = f"The following subkeys haven't been detected {missing_subkeys}"
 
-        if call == "TimeseriesExtractor":
+        if caller == "TimeseriesExtractor":
             LG.warning(
                 f"{error_message}. These labels are not needed for timeseries extraction but are "
                 "needed for plotting."
@@ -164,7 +164,7 @@ def process_custom(parcel_dict, call):
                 f"`self.parcel_approach`. Refer to the example structure:\n{custom_example}"
             )
 
-    if call == "TimeseriesExtractor":
+    if caller == "TimeseriesExtractor":
         io_utils.validate_file(parcel_dict["Custom"]["maps"], [".nii", ".nii.gz"])
 
     # Check structure

@@ -145,7 +145,7 @@ def validate_file(
     return check_ext(filename, supported_ext, return_ext)
 
 
-def validate_plot_output_format(output_dir: Optional[str], output_format: str, call=str) -> str:
+def validate_plot_output_format(output_dir: Optional[str], output_format: str, caller=str) -> str:
     """Validates the supported output format for files."""
     if not output_dir:
         return output_format
@@ -153,14 +153,14 @@ def validate_plot_output_format(output_dir: Optional[str], output_format: str, c
     assert isinstance(output_format, str), "`output_format` must be a string."
     output_format = output_format.lstrip(".").rstrip(".").lower()
 
-    if call != "caps2radar":
+    if caller != "caps2radar":
         default_formats = ["png", "pkl", "pickle"]
     else:
         default_formats = ["png", "html", "json"]
 
     if output_format not in default_formats:
         raise ValueError(
-            f"{output_format} is not a supported output format for `{call}`. "
+            f"{output_format} is not a supported output format for `{caller}`. "
             f"Only the following output formats are supported: {list_to_str(default_formats)}"
         )
 

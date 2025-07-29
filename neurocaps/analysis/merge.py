@@ -190,7 +190,7 @@ def merge_dicts(
         dicts_to_pickles(
             output_dir=output_dir,
             dict_list=modified_dicts,
-            call="merge",
+            caller="merge",
             filenames=filenames,
             message=message,
             save_reduced_dicts=save_reduced_dicts,

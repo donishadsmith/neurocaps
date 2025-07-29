@@ -153,7 +153,7 @@ class MatrixVisualizer:
 
     @staticmethod
     def create_display(
-        df: DataFrame, plot_dict: dict[str, Any], suffix_title: str, group_name: str, call: str
+        df: DataFrame, plot_dict: dict[str, Any], suffix_title: str, group_name: str, caller: str
     ) -> Union[Axes, Figure]:
         # Refresh grid for each iteration
         plt.figure(figsize=plot_dict["figsize"])
@@ -168,12 +168,12 @@ class MatrixVisualizer:
         # Modify label sizes
         display = PlotFuncs.label_size(display, plot_dict)
 
-        if call == "trans":
+        if caller == "trans":
             display.set_ylabel("From", fontdict={"fontsize": plot_dict["fontsize"]})
             display.set_xlabel("To", fontdict={"fontsize": plot_dict["fontsize"]})
 
         # Set plot name
-        plot_name = "Correlation Matrix" if call == "corr" else "Transition Probabilities"
+        plot_name = "Correlation Matrix" if caller == "corr" else "Transition Probabilities"
         display = PlotFuncs.set_title(
             display, f"{group_name} CAPs {plot_name}", suffix_title, plot_dict
         )
@@ -191,7 +191,7 @@ class MatrixVisualizer:
         curr_dict: dict[str, DataFrame],
         save_plots: bool,
         save_df: bool,
-        call: str,
+        caller: str,
     ) -> None:
         """Save figure as png and dataframe as csv."""
         if not output_dir:
@@ -199,7 +199,7 @@ class MatrixVisualizer:
 
         io_utils.makedir(output_dir)
 
-        desc = "correlation_matrix" if call == "caps2corr" else "transition_probability_matrix"
+        desc = "correlation_matrix" if caller == "caps2corr" else "transition_probability_matrix"
         filename = io_utils.filename(
             basename=f"{group_name}_CAPs_{desc}", add_name=suffix_filename, pos="suffix"
         )

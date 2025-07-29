@@ -139,7 +139,7 @@ def transition_matrix(
                 curr_dict=trans_mat_dict,
                 save_plots=save_plots,
                 save_df=save_df,
-                call="transition_matrix",
+                caller="transition_matrix",
             )
 
         PlotFuncs.show(show_figs)

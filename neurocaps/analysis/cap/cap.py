@@ -234,7 +234,7 @@ class CAP(CAPGetter):
         groups: Optional[dict[str, list[str]]] = None,
     ) -> None:
         if parcel_approach is not None:
-            parcel_approach = check_parcel_approach(parcel_approach=parcel_approach, call="CAP")
+            parcel_approach = check_parcel_approach(parcel_approach=parcel_approach, caller="CAP")
 
         self._parcel_approach = parcel_approach
 
@@ -1167,7 +1167,7 @@ class CAP(CAPGetter):
         if "Custom" in self._parcel_approach and any(
             key not in self._parcel_approach["Custom"] for key in ["nodes", "regions"]
         ):
-            check_parcel_approach(parcel_approach=self._parcel_approach, call="caps2plot")
+            check_parcel_approach(parcel_approach=self._parcel_approach, caller="caps2plot")
 
         # Check if number of nodes in parcel_approach match length of first cap vector
         matrix.check_cap_length(self._caps, self._parcel_approach)
@@ -1363,7 +1363,7 @@ class CAP(CAPGetter):
                 curr_dict=corr_dict,
                 save_plots=save_plots,
                 save_df=save_df,
-                call="caps2corr",
+                caller="caps2corr",
             )
 
             PlotFuncs.show(show_figs)

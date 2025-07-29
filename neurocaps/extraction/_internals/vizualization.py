@@ -30,7 +30,7 @@ def get_roi_indices(
     elif isinstance(roi_indx, str):
         # Check if parcellation_approach is custom
         if "Custom" in parcel_approach and "nodes" not in parcel_approach["Custom"]:
-            check_parcel_approach(parcel_approach=parcel_approach, call="visualize_bold")
+            check_parcel_approach(parcel_approach=parcel_approach, caller="visualize_bold")
 
         plot_indxs = list(parcel_approach[parc_name]["nodes"]).index(roi_indx)
     else:
@@ -39,7 +39,7 @@ def get_roi_indices(
         elif all(isinstance(indx, str) for indx in roi_indx):
             # Check if parcellation_approach is custom
             if "Custom" in parcel_approach and "nodes" not in parcel_approach["Custom"]:
-                check_parcel_approach(parcel_approach=parcel_approach, call="visualize_bold")
+                check_parcel_approach(parcel_approach=parcel_approach, caller="visualize_bold")
 
             plot_indxs = np.array(
                 [list(parcel_approach[parc_name]["nodes"]).index(index) for index in roi_indx]
@@ -55,7 +55,7 @@ def get_region_indices(parcel_approach: ParcelApproach, region: str) -> NDArray:
     parc_name = get_parc_name(parcel_approach)
     if "Custom" in parcel_approach:
         if "regions" not in parcel_approach["Custom"]:
-            check_parcel_approach(parcel_approach=parcel_approach, call="visualize_bold")
+            check_parcel_approach(parcel_approach=parcel_approach, caller="visualize_bold")
         else:
             plot_indxs = np.array(extract_custom_region_indices(parcel_approach, region))
     else:

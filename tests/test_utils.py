@@ -64,7 +64,7 @@ def check_lateralized_regions(parcel_approach):
 def check_structure(parcel_approach):
     """Checks structure of custom parcellation approach."""
     try:
-        process_custom(parcel_approach, call="test")
+        process_custom(parcel_approach, caller="test")
     except:
         pytest.raises("Custom parcellation does not have the correct structure.")
 

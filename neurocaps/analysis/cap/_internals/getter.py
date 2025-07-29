@@ -27,7 +27,7 @@ class CAPGetter:
 
     @parcel_approach.setter
     def parcel_approach(self, parcel_dict: Union[ParcelConfig, ParcelApproach, str]) -> None:
-        self._parcel_approach = check_parcel_approach(parcel_approach=parcel_dict, call="setter")
+        self._parcel_approach = check_parcel_approach(parcel_approach=parcel_dict, caller="setter")
 
     @property
     def groups(self) -> Union[dict[str, list[str]], None]:
@@ -97,8 +97,9 @@ class CAPGetter:
 
             {"GroupName": np.array(shape=[(participants x TRs), ROIs])}
 
-        .. note:: For versions >= 0.25.0, subject IDs are sorted lexicographically prior to\
-        concatenation and the order is determined by ``self.groups``.
+        .. note::
+           For versions >= 0.25.0, subject IDs are sorted lexicographically prior to
+           concatenation and the order is determined by ``self.groups``.
         """
         return getattr(self, "_concatenated_timeseries", None)
 

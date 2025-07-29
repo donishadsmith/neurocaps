@@ -9,7 +9,7 @@ from neurocaps.utils import _io as io_utils
 def dicts_to_pickles(
     output_dir: str,
     dict_list: list[dict],
-    call: str,
+    caller: str,
     filenames: Union[str, None] = None,
     message: Union[str, None] = None,
     save_reduced_dicts: bool = False,
@@ -19,7 +19,7 @@ def dicts_to_pickles(
     ``standardize``, and ``change_dtypes`` functions.
     """
     if not filenames:
-        saved_filenames = create_default_filenames(dict_list, call, save_reduced_dicts)
+        saved_filenames = create_default_filenames(dict_list, caller, save_reduced_dicts)
     else:
         saved_filenames = [
             f"{os.path.splitext(os.path.basename(name).rstrip())[0].rstrip()}.pkl"
@@ -31,7 +31,7 @@ def dicts_to_pickles(
             "Length of `filenames` list  must be the same length as `subject_timeseries_list`."
         )
 
-    if call == "merge" and save_reduced_dicts is False:
+    if caller == "merge" and save_reduced_dicts is False:
         dict_list = {"merged": dict_list["merged"]}
 
     if filenames:
@@ -45,13 +45,13 @@ def dicts_to_pickles(
 
 
 def create_default_filenames(
-    dict_list: list[dict], call: str, save_reduced_dicts: bool
+    dict_list: list[dict], caller: str, save_reduced_dicts: bool
 ) -> list[str]:
     """
     Generates default names for dictionaries created by the  ``merge_dicts``, ``standardize``, and
     ``change_dtypes`` functions.
     """
-    if call == "merge":
+    if caller == "merge":
         if save_reduced_dicts:
             default_filenames = [
                 (
@@ -64,7 +64,7 @@ def create_default_filenames(
         else:
             default_filenames = ["merged_subject_timeseries.pkl"]
     else:
-        if call == "standardize":
+        if caller == "standardize":
             suffix = "standardized"
         else:
             dict_name = list(dict_list)[0]

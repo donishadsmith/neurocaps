@@ -39,7 +39,7 @@ class TimeseriesExtractorGetter:
 
     @parcel_approach.setter
     def parcel_approach(self, parcel_dict: Union[ParcelConfig, ParcelApproach, str]) -> None:
-        self._parcel_approach = check_parcel_approach(parcel_approach=parcel_dict, call="setter")
+        self._parcel_approach = check_parcel_approach(parcel_approach=parcel_dict, caller="setter")
 
     @property
     def signal_clean_info(self) -> Union[dict[str, Union[bool, int, float, str]], None]:

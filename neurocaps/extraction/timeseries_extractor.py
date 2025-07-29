@@ -846,7 +846,7 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
         self
         """
         save_filename = self._create_output_filename(
-            output_dir, filename, attr_name="_subject_timeseries", call="timeseries_to_pickle"
+            output_dir, filename, attr_name="_subject_timeseries", caller="timeseries_to_pickle"
         )
 
         io_utils.serialize(self._subject_timeseries, output_dir, save_filename, use_joblib=True)
@@ -920,7 +920,7 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
         for high-motion frames, respectively.
         """
         save_filename = self._create_output_filename(
-            output_dir, filename, attr_name="_qc", call="report_qc"
+            output_dir, filename, attr_name="_qc", caller="report_qc"
         )
         assert self._qc, "No quality control information to report."
 
@@ -959,7 +959,7 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
             return df
 
     def _create_output_filename(
-        self, output_dir: Union[str, None], filename: Union[str, None], attr_name: str, call: str
+        self, output_dir: Union[str, None], filename: Union[str, None], attr_name: str, caller: str
     ) -> Union[str, None]:
         """Checks if the required attribute is present then creates the output filename."""
         if not hasattr(self, attr_name):
@@ -977,11 +977,11 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
         else:
             io_utils.makedir(output_dir)
 
-        ext = "pkl" if call == "timeseries_to_pickle" else "csv"
+        ext = "pkl" if caller == "timeseries_to_pickle" else "csv"
 
         if filename is None:
             save_filename = (
-                "subject_timeseries.pkl" if call == "timeseries_to_pickle" else "report_qc.csv"
+                "subject_timeseries.pkl" if caller == "timeseries_to_pickle" else "report_qc.csv"
             )
         else:
             save_filename = f"{os.path.splitext(filename.rstrip())[0].rstrip()}.{ext}"
