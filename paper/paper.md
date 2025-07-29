@@ -97,7 +97,9 @@ utility functions.
 
 - Standalone functions:
 Provide tools for data standardization [@harris2020array], merging timeseries data across sessions
-or tasks, and creating group-averaged transition matrices.
+or tasks to identify CAPs relevant to all sessions or tasks being investigated, and creating
+group-averaged transition matrices to determine which CAPs are most and least likely to be
+transitioned into for a specific CAP given the group.
 
 3. `neurocaps.utils`
 
@@ -210,6 +212,10 @@ print(metric_dict["temporal_fraction"])
 | 1 | All Subjects | run-0 | 0.530120 | 0.469880 |
 | 2 | All Subjects | run-0 | 0.521739 | 0.478261 |
 
+*Note*: For all subjects, CAP-1 has the highest frequency of appearance in the timeseries,
+suggesting that it is the dominant brain state most subjects occupy. However, a downstream
+statistical analysis should be conducted to determine the significance of this finding.
+
 4. Visualize CAPs
 ```python
 # Project CAPs onto surface plots
@@ -256,6 +262,57 @@ cap_analysis.caps2surf(**surface_kwargs).caps2radar(**radar_kwargs)
 ![CAP-1 Radar Image.](cap_1_radar.png)
 
 ![CAP-2 Radar Image.](cap_2_radar.png)
+
+For the radar images, the "High Amplitude" represents network alignment to the positive
+activations (> 0) to a CAP (positive cosine similarities) while "Low Amplitude" represents network
+alignment to the negative activations (deactivations) (< 0) of a CAP (negative cosine similarities).
+Using this information, we can quantitatively characterize each CAP:
+
+- using the max cosine similarity values in "High Amplitude" and "Low Amplitude". In this case,
+  CAP-1 would be (Vis+/SomSot-) and CAP-2 would be (SomSot+/Vis-)
+- based on the networks that exhibit the highest overall predominant (net) activation or deactivation
+  by subtracting the "High Amplitude" and "Low Amplitude" values. Using the information in the
+  "Net" column, CAP-1 would be (SalVentAttn+/SomSot-) and CAP-2 would be (SomSot+/SalVentAttn-)
+
+```python
+import pandas as pd
+
+df = pd.DataFrame(cap_analysis.cosine_similarity["All Subjects"]["CAP-1"])
+# Note for "Low Amplitude" the absolute values of the
+# negative cosine similarities are stored
+df["Net"] = df["High Amplitude"] - df["Low Amplitude"]
+df["Regions"] = cap_analysis.cosine_similarity["All Subjects"]["Regions"]
+print(df)
+```
+
+| High Amplitude | Low Amplitude | Net | Regions |
+|----------------|---------------|-----|---------|
+| 0.340826 | 0.309850 | 0.030976 | Vis |
+| 0.155592 | 0.318072 | -0.162480 | SomMot |
+| 0.213348 | 0.181667 | 0.031681  | DorsAttn |
+| 0.287179 | 0.113046 | 0.174133  | SalVentAttn |
+| 0.027542 | 0.168325 | -0.140783 | Limbic |
+| 0.236915 | 0.195235 | 0.041680  | Cont |
+| 0.238242 | 0.208548 | 0.029694 | Default |
+
+
+```python
+df = pd.DataFrame(cap_analysis.cosine_similarity["All Subjects"]["CAP-2"])
+df["Net"] = df["High Amplitude"] - df["Low Amplitude"]
+df["Regions"] = cap_analysis.cosine_similarity["All Subjects"]["Regions"]
+print(df)
+```
+
+| High Amplitude | Low Amplitude | Net | Regions |
+|----------------|---------------|-----|---------|
+| 0.309850 | 0.340826 | -0.030976 | Vis |
+| 0.318072 | 0.155592 | 0.162480  | SomMot |
+| 0.181667 | 0.213348 | -0.031681 | DorsAttn |
+| 0.113046 | 0.287179 | -0.174133 | SalVentAttn |
+| 0.168325 | 0.027542 | 0.140783  | Limbic |
+| 0.195235 | 0.236915 | -0.041680 | Cont |
+| 0.208548 | 0.230242 | -0.021694 | Default |
+
 
 # Documentation
 Comprehensive documentations and interactive tutorials of NeuroCAPS can be found at

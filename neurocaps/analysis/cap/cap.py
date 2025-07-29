@@ -191,6 +191,11 @@ class CAP(CAPGetter):
                 }
             }
 
+        .. note::
+           "High Amplitude" indicate alignment to positive activations (> 0) in a CAP and\
+           "Low Amplitude" indicate alignment to the negative activations (deactivations) (< 0) in a\
+           CAP.
+
     See Also
     --------
     :class:`neurocaps.typing.ParcelConfig`
@@ -1739,7 +1744,15 @@ class CAP(CAPGetter):
         can be described as (DAN +/VAN -). Or if the highest "High Amplitude" cosine similarity
         value is assoiciated with the default mode network (DMN), while the highest "Low Amplitude"
         cosine similarity values are associates with the DAN and the frontoparietal network (FPN),
-        then the CAP can represent a classic task-negative pattern.
+        then the CAP can represent a classic task-negative pattern. Note, the "High Amplitude"
+        and "Low Amplitude" values of each region can also be subtracted using the infomation
+        in the ``self.cosine_similarity`` property to determine the most predominantly
+        active and suppressed networks in order to characterize CAPs.
+
+        .. important::
+           In the  ``self.cosine_similarity``, the absolute values for "Low Amplitude", which are
+           the negative cosine similarity values, denoting alignment to the negative activations
+           (deactivations) (< 0) of a CAP are provided.
 
         **Methodology**: The process involves the following steps for computing the "High Amplitude"
         and "Low Amplitude" values for each CAP and network/region combination
