@@ -304,6 +304,44 @@ cap_analysis.caps2surf(**surface_kwargs).caps2radar(**radar_kwargs)
 
 ![CAP-2 Radar Image.](paper/cap_2_radar.png)
 
+```python
+import pandas as pd
+
+df = pd.DataFrame(cap_analysis.cosine_similarity["All Subjects"]["CAP-1"])
+# Note for "Low Amplitude" the absolute values of the
+# negative cosine similarities are stored
+df["Net"] = df["High Amplitude"] - df["Low Amplitude"]
+df["Regions"] = cap_analysis.cosine_similarity["All Subjects"]["Regions"]
+print(df)
+```
+| High Amplitude | Low Amplitude | Net | Regions |
+|----------------|---------------|-----|---------|
+| 0.340826 | 0.309850 | 0.030976 | Vis |
+| 0.155592 | 0.318072 | -0.162480 | SomMot |
+| 0.213348 | 0.181667 | 0.031681  | DorsAttn |
+| 0.287179 | 0.113046 | 0.174133  | SalVentAttn |
+| 0.027542 | 0.168325 | -0.140783 | Limbic |
+| 0.236915 | 0.195235 | 0.041680  | Cont |
+| 0.238242 | 0.208548 | 0.029694 | Default |
+
+```python
+df = pd.DataFrame(cap_analysis.cosine_similarity["All Subjects"]["CAP-2"])
+df["Net"] = df["High Amplitude"] - df["Low Amplitude"]
+df["Regions"] = cap_analysis.cosine_similarity["All Subjects"]["Regions"]
+print(df)
+```
+
+| High Amplitude | Low Amplitude | Net | Regions |
+|----------------|---------------|-----|---------|
+| 0.309850 | 0.340826 | -0.030976 | Vis |
+| 0.318072 | 0.155592 | 0.162480  | SomMot |
+| 0.181667 | 0.213348 | -0.031681 | DorsAttn |
+| 0.113046 | 0.287179 | -0.174133 | SalVentAttn |
+| 0.168325 | 0.027542 | 0.140783  | Limbic |
+| 0.195235 | 0.236915 | -0.041680 | Cont |
+| 0.208548 | 0.230242 | -0.021694 | Default |
+
+
 Note: For information about logging, refer to [NeuroCAPs' Logging Guide](https://neurocaps.readthedocs.io/en/stable/user_guide/logging.html).
 
 ## Acknowledgements
