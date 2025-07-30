@@ -16,9 +16,7 @@ For Schaefer, the available subkeys are "n_rois", "yeo_networks", and "resolutio
 
 .. code-block:: python
 
-    parcel_approach = {
-        "Schaefer": {"n_rois": 100, "yeo_networks": 7, "resolution_mm": 1}
-    }
+    parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7, "resolution_mm": 1}}
 
 AAL Parcellation
 ----------------

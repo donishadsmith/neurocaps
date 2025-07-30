@@ -27,9 +27,7 @@ This configuration sets the root logger to output to the console and configures 
     )
     extract_timeseries_logger.setLevel(logging.WARNING)
     file_handler = logging.FileHandler("neurocaps.log")
-    file_handler.setFormatter(
-        logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
-    )
+    file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
     extract_timeseries_logger.addHandler(file_handler)
 
     # Import package

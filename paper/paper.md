@@ -46,7 +46,7 @@ the k-means algorithm, to capture the dynamic nature of brain activity [@Liu2013
 The typical CAPs workflow can be programmatically time-consuming to manually orchestrate as it
 generally entails several steps:
 
-1. implement spatial dimensionality reduction of timeseries data
+1. implement spatial dimensionality reduction of timeseries data using a parcellation
 2. perform nuisance regression and scrub high-motion volumes (excessive head motion)
 3. concatenate the timeseries data from multiple subjects into a single matrix
 4. apply k-means clustering to the concatenated data and select the optimal number of
@@ -69,51 +69,10 @@ outputs (e.g. NiBabies [@Goncalves2025]). Furthermore, NeuroCAPs only supports t
 algorithm for clustering, which is the clustering algorithm that was originally used and is often
 employed when performing the CAPs analysis [@Liu2013].
 
-# Modules
-The core functionalities of NeuroCAPs are concentrated in three modules:
-
-1. `neurocaps.extraction`
-Contains the `TimeseriesExtractor` class, which:
-
-- collects preprocessed BOLD data from an BIDS-compliant dataset [@Yarkoni2019]
-- leverages Nilearn's [@Nilearn] `NiftiLabelsMasker` to perform nuisance regression and spatial
-dimensionality reduction using deterministic parcellations (e.g., Schaefer [@Schaefer2018],
-AAL [@Tzourio-Mazoyer2002])
-- scrubs high-motion volumes using fMRIPrep-derived framewise displacement values
-- reports quality control information related to high-motion or non-steady state volumes
-
-2. `neurocaps.analysis`
-Contains the CAP class for performing the main analysis, as well as several standalone
-utility functions.
-
-- The `CAP` class:
-  - performs k-means clustering [@scikit-learn] to identify CAPs, supporting both single and
-    optimized cluster selection with heuristics such as the silhouette and elbow method [@Arvai2023]
-  - computes subject-level temporal dynamics metrics (e.g., fractional occupancy, transition
-    probabilities) for statistical analysis
-  - converts identified CAPs back into NIfTI statistical maps for spatial interpretation
-  - integrates multiple plotting libraries [@Hunter:2007; @Waskom2021; @plotly; @Gale2021] to
-    provide a diverse range of visualization options
-
-- Standalone functions:
-Provide tools for data standardization [@harris2020array], merging timeseries data across sessions
-or tasks to identify CAPs relevant to all sessions or tasks being investigated, and creating
-group-averaged transition matrices to determine which CAPs are most and least likely to be
-transitioned into for a specific CAP given the group.
-
-3. `neurocaps.utils`
-
-Contains several utility functions:
-
-- `fetch_preset_parcel_approach`: fetches a preset parcel approach ("4S", "HCPex" [@Huang2022], "Gordon" [@Gordon2016])
-- `generate_custom_parcel_approach`: automatically creates the necessary data structures from a parcellation's metadata file
-
-Additional utility function are also available for plotting and simulating data.
-
-# Workflow Example
-The following code demonstrates a simple workflow example using NeuroCAPs to perform the CAPs
-analysis. Note that this example uses simulated data, an interactive variant of a workflow
-example using real data is available on the [readthedocs](https://neurocaps.readthedocs.io/en/stable/tutorials/tutorial-8.html).
+# Usage
+The following code demonstrates basic usage of NeuroCAPs (with simulated data) to perform CAPs analysis
+. A version of this example using real data is available on
+[NeuroCAPs' readthedocs](https://neurocaps.readthedocs.io/en/stable/tutorials/tutorial-8.html).
 
 1. Extract timeseries data
 ```python
@@ -126,24 +85,14 @@ from neurocaps.utils import simulate_bids_dataset
 np.random.seed(0)
 
 # Generate a BIDS directory with fMRIPrep derivatives
-bids_root = simulate_bids_dataset(
-    n_subs=3, n_runs=1, n_volumes=100, task_name="rest"
-)
+bids_root = simulate_bids_dataset(n_subs=3, n_runs=1, n_volumes=100, task_name="rest")
 
 # Using Schaefer, one of the default parcellation approaches
 parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
 
 # List of fMRIPrep-derived confounds for nuisance regression
-confound_names = [
-    "cosine*",
-    "trans*",
-    "rot*",
-    "a_comp_cor_00",
-    "a_comp_cor_01",
-    "a_comp_cor_02",
-    "a_comp_cor_03",
-    "a_comp_cor_04",
-]
+acompcor_names = [f"a_comp_cor_0{i}" for i in range(5)]
+confound_names = ["cosine*", "trans*", "rot*", *acompcor_names]
 
 # Initialize extractor with signal cleaning parameters
 extractor = TimeseriesExtractor(
@@ -151,20 +100,14 @@ extractor = TimeseriesExtractor(
     parcel_approach=parcel_approach,
     confound_names=confound_names,
     standardize=False,
-    fd_threshold={
-        "threshold": 0.90,
-        "outlier_percentage": 0.30,
-    },
+    # Run discarded if more than 30% of volumes exceed FD threshold
+    fd_threshold={"threshold": 0.90, "outlier_percentage": 0.30},
 )
 
-# Extract BOLD data from preprocessed fMRIPrep data which should be located in
-# the "derivatives" folder within the BIDS root directory.
-# The extracted timeseries data is automatically stored
-extractor.get_bold(
-    bids_dir=bids_root, task="rest", tr=2, n_cores=1, verbose=False
-)
+# Extract preprocessed BOLD data
+extractor.get_bold(bids_dir=bids_root, task="rest", tr=2, n_cores=1, verbose=False)
 
-# Get dataframe of QC information to use for downstream statistical analyses
+# Check QC information
 qc_df = extractor.report_qc()
 print(qc_df)
 ```
@@ -181,14 +124,11 @@ from neurocaps.analysis import CAP
 from neurocaps.utils import PlotDefaults
 
 # Initialize CAP class
-cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
+cap_analysis = CAP(parcel_approach=extractor.parcel_approach, groups=None)
 
-plot_kwargs = PlotDefaults.get_caps()
-plot_kwargs.update({"figsize": (4, 3), "step": 2})
+plot_kwargs = {**PlotDefaults.get_caps(), "figsize": (4, 3), "step": 2}
 
-# Identify the optimal number of CAPs (clusters) using the silhouette method
-# (higher score is better) to test 2-20 clusters.
-# The optimal number of CAPs is automatically stored
+# Find optimal CAPs (2-20) using silhouette method; results are stored
 cap_analysis.get_caps(
     subject_timeseries=extractor.subject_timeseries,
     n_clusters=range(2, 21),
@@ -204,7 +144,7 @@ cap_analysis.get_caps(
 
 3. Compute temporal dynamic metrics for downstream statistical analyses
 ```python
-# Calculate temporal fraction of each CAP for all subjects
+# Calculate temporal fraction of each CAP
 metric_dict = cap_analysis.calculate_metrics(
     extractor.subject_timeseries, metrics=["temporal_fraction"]
 )
@@ -217,43 +157,16 @@ print(metric_dict["temporal_fraction"])
 | 1 | All Subjects | run-0 | 0.530120 | 0.469880 |
 | 2 | All Subjects | run-0 | 0.521739 | 0.478261 |
 
-*Note*: For all subjects, CAP-1 has the highest frequency of appearance in the timeseries,
-suggesting that it is the dominant brain state most subjects occupy. However, a downstream
-statistical analysis should be conducted to determine the significance of this finding.
+Note that CAP-1 is the dominant brain state across subjects (highest frequency).
 
 4. Visualize CAPs
 ```python
-# Project CAPs onto surface plots
-# and generate cosine similarity network alignment of CAPs
-surface_kwargs = PlotDefaults.caps2surf()
-surface_kwargs["layout"] = "row"
-surface_kwargs["size"] = (500, 100)
+# Create surface and radar plots for each CAP
+surface_kwargs = {**PlotDefaults.caps2surf(), "layout": "row", "size": (500, 100)}
 
-radar_kwargs = PlotDefaults.caps2radar()
-radar_kwargs["height"] = 400
-radar_kwargs["width"] = 485
-
-radialaxis = {
-    "showline": True,
-    "linewidth": 2,
-    "linecolor": "rgba(0, 0, 0, 0.25)",
-    "gridcolor": "rgba(0, 0, 0, 0.25)",
-    "ticks": "outside",
-    "tickfont": {"size": 14, "color": "black"},
-    "range": [0, 0.4],
-    "tickvals": [0.1, "", "", 0.4],
-}
-
-legend = {
-    "yanchor": "top",
-    "y": 0.75,
-    "x": 1.15,
-    "title_font_family": "Times New Roman",
-    "font": {"size": 12, "color": "black"},
-}
-
-radar_kwargs["radialaxis"] = radialaxis
-radar_kwargs["legend"] = legend
+radar_kwargs = {**PlotDefaults.caps2radar(), "height": 400, "width": 485}
+radar_kwargs["radialaxis"] = {"range": [0, 0.4], "tickvals": [0.1, "", "", 0.4]}
+radar_kwargs["legend"] = {"yanchor": "top", "y": 0.75, "x": 1.15}
 
 cap_analysis.caps2surf(**surface_kwargs).caps2radar(**radar_kwargs)
 ```
@@ -266,27 +179,23 @@ cap_analysis.caps2surf(**surface_kwargs).caps2radar(**radar_kwargs)
 
 ![CAP-2 Radar Image.](cap_2_radar.png)
 
-For the radar images, the "High Amplitude" represents network alignment to the positive
-activations (> 0) to a CAP (positive cosine similarities) while "Low Amplitude" represents network
-alignment to the negative activations (deactivations) (< 0) of a CAP (negative cosine similarities).
-Using this information, we can quantitatively characterize each CAP:
+Radar plots show network alignment (measured by cosine similarity): "High Amplitude" =
+alignment to activations (> 0), "Low Amplitude" = alignment to deactivations (< 0).
 
-- using the max cosine similarity values in "High Amplitude" and "Low Amplitude". In this case,
-  CAP-1 would be (Vis+/SomSot-) and CAP-2 would be (SomSot+/Vis-)
-- based on the networks that exhibit the highest overall predominant (net) activation or deactivation
-  by subtracting the "High Amplitude" and "Low Amplitude" values. Using the information in the
-  "Net" column, CAP-1 would be (SalVentAttn+/SomSot-) and CAP-2 would be (SomSot+/SalVentAttn-)
+Each CAP can be characterized using either maximum alignment
+(CAP-1: Vis+/SomMot-; CAP-2: SomMot+/Vis-) or predominant alignment ("High Amplitude" − "Low Amplitude";
+CAP-1: SalVentAttn+/SomMot-; CAP-2: SomMot+/SalVentAttn-).
 
 ```python
 import pandas as pd
 
-df = pd.DataFrame(cap_analysis.cosine_similarity["All Subjects"]["CAP-1"])
-# Note for "Low Amplitude" the absolute values of the
-# negative cosine similarities are stored
-df["Net"] = df["High Amplitude"] - df["Low Amplitude"]
-df["Regions"] = cap_analysis.cosine_similarity["All Subjects"]["Regions"]
-print(df)
+for cap_name in cap_analysis.caps["All Subjects"]:
+    df = pd.DataFrame(cap_analysis.cosine_similarity["All Subjects"][cap_name])
+    df["Net"] = df["High Amplitude"] - df["Low Amplitude"]
+    df["Regions"] = cap_analysis.cosine_similarity["All Subjects"]["Regions"]
+    print(f"{cap_name}:", "\n", df, "\n")
 ```
+CAP-1:
 
 | High Amplitude | Low Amplitude | Net | Regions |
 |----------------|---------------|-----|---------|
@@ -299,12 +208,7 @@ print(df)
 | 0.238242 | 0.208548 | 0.029694 | Default |
 
 
-```python
-df = pd.DataFrame(cap_analysis.cosine_similarity["All Subjects"]["CAP-2"])
-df["Net"] = df["High Amplitude"] - df["Low Amplitude"]
-df["Regions"] = cap_analysis.cosine_similarity["All Subjects"]["Regions"]
-print(df)
-```
+CAP-2:
 
 | High Amplitude | Low Amplitude | Net | Regions |
 |----------------|---------------|-----|---------|
@@ -316,15 +220,10 @@ print(df)
 | 0.195235 | 0.236915 | -0.041680 | Cont |
 | 0.208548 | 0.230242 | -0.021694 | Default |
 
-
 # Documentation
 Comprehensive documentations and interactive tutorials of NeuroCAPS can be found at
 [https://neurocaps.readthedocs.io/](https://neurocaps.readthedocs.io/) and on its
 [repository](https://github.com/donishadsmith/neurocaps).
-
-# Research Utility
-NeuroCAPs was originally developed (and later expanded and refined for broader use) to facilitate
-the analysis in @Smith2025, which has been submitted for peer review by the same author.
 
 # Acknowledgements
 Funding provided by the Dissertation Year Fellowship (DYF) Program at Florida International

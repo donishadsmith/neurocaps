@@ -192,9 +192,8 @@ class CAP(CAPGetter):
             }
 
         .. note::
-           "High Amplitude" indicate alignment to positive activations (> 0) in a CAP and\
-           "Low Amplitude" indicate alignment to the negative activations (deactivations) (< 0) in a\
-           CAP.
+           "High Amplitude" indicate alignment to activations (> 0) in a CAP and "Low Amplitude"\
+           indicate alignment to the deactivations (< 0) in a CAP.
 
     See Also
     --------
@@ -1751,8 +1750,8 @@ class CAP(CAPGetter):
 
         .. important::
            In the  ``self.cosine_similarity``, the absolute values for "Low Amplitude", which are
-           the negative cosine similarity values, denoting alignment to the negative activations
-           (deactivations) (< 0) of a CAP are provided.
+           the negative cosine similarity values, denoting alignment to the deactivations (< 0) of
+           a CAP are provided.
 
         **Methodology**: The process involves the following steps for computing the "High Amplitude"
         and "Low Amplitude" values for each CAP and network/region combination
