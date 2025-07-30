@@ -157,16 +157,14 @@ extractor = TimeseriesExtractor(
     },
 )
 
-# Extract BOLD data from preprocessed fMRIPrep data
-# which should be located in the "derivatives" folder
-# within the BIDS root directory
+# Extract BOLD data from preprocessed fMRIPrep data which should be located in
+# the "derivatives" folder within the BIDS root directory.
 # The extracted timeseries data is automatically stored
 extractor.get_bold(
     bids_dir=bids_root, task="rest", tr=2, n_cores=1, verbose=False
 )
 
-# Retrieve the dataframe containing QC information for each subject
-# to use for downstream statistical analyses
+# Get dataframe of QC information to use for downstream statistical analyses
 qc_df = extractor.report_qc()
 print(qc_df)
 ```
@@ -180,12 +178,16 @@ print(qc_df)
 2. Use k-means clustering to identify the optimal number of CAPs from the data using a heuristic
 ```python
 from neurocaps.analysis import CAP
+from neurocaps.utils import PlotDefaults
 
 # Initialize CAP class
 cap_analysis = CAP(parcel_approach=extractor.parcel_approach)
 
-# Identify the optimal number of CAPs (clusters)
-# using the silhouette method to test 2-20
+plot_kwargs = PlotDefaults.get_caps()
+plot_kwargs.update({"figsize": (4, 3), "step": 2})
+
+# Identify the optimal number of CAPs (clusters) using the silhouette method
+# (higher score is better) to test 2-20 clusters.
 # The optimal number of CAPs is automatically stored
 cap_analysis.get_caps(
     subject_timeseries=extractor.subject_timeseries,
@@ -194,8 +196,11 @@ cap_analysis.get_caps(
     cluster_selection_method="silhouette",
     max_iter=500,
     n_init=10,
+    show_figs=True,
+    **plot_kwargs,
 )
 ```
+![Silhouette Score Plot.](silhouette_plot.png)
 
 3. Compute temporal dynamic metrics for downstream statistical analyses
 ```python
@@ -220,15 +225,13 @@ statistical analysis should be conducted to determine the significance of this f
 ```python
 # Project CAPs onto surface plots
 # and generate cosine similarity network alignment of CAPs
-from neurocaps.utils import PlotDefaults
-
 surface_kwargs = PlotDefaults.caps2surf()
 surface_kwargs["layout"] = "row"
 surface_kwargs["size"] = (500, 100)
 
 radar_kwargs = PlotDefaults.caps2radar()
 radar_kwargs["height"] = 400
-radar_kwargs["width"] = 600
+radar_kwargs["width"] = 485
 
 radialaxis = {
     "showline": True,
@@ -243,8 +246,8 @@ radialaxis = {
 
 legend = {
     "yanchor": "top",
-    "y": 0.99,
-    "x": 0.99,
+    "y": 0.75,
+    "x": 1.15,
     "title_font_family": "Times New Roman",
     "font": {"size": 12, "color": "black"},
 }
