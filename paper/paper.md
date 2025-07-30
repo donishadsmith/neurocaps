@@ -75,7 +75,7 @@ The core functionalities of NeuroCAPs are concentrated in three modules:
 1. `neurocaps.extraction`
 Contains the `TimeseriesExtractor` class, which:
 
-- collects preproccessed BOLD data from an BIDS-compliant dataset [@Yarkoni2019]
+- collects preprocessed BOLD data from an BIDS-compliant dataset [@Yarkoni2019]
 - leverages Nilearn's [@Nilearn] `NiftiLabelsMasker` to perform nuisance regression and spatial
 dimensionality reduction using deterministic parcellations (e.g., Schaefer [@Schaefer2018],
 AAL [@Tzourio-Mazoyer2002])
