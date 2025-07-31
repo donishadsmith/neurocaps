@@ -147,12 +147,7 @@ extractor.get_bold(bids_dir=bids_root, task="rest", tr=2, n_cores=1, verbose=Fal
 qc_df = extractor.report_qc()
 print(qc_df)
 ```
-
-| Subject_ID | Run | Mean_FD | Std_FD | Frames_Scrubbed | ... |
-|------------|-----|---------|--------|-----------------|-----|
-| 0 | run-0 | 0.516349 | 0.289657 |  9 | ... |
-| 1 | run-0 | 0.526343 | 0.297550 | 17 | ... |
-| 2 | run-0 | 0.518041 | 0.273964 |  8 | ... |
+![Quality Control Dataframe.](paper/qc_df.png)
 
 2. Use k-means clustering to identify the optimal number of CAPs from the data using a heuristic
 ```python
@@ -187,11 +182,7 @@ metric_dict = cap_analysis.calculate_metrics(
 print(metric_dict["temporal_fraction"])
 ```
 
-| Subject_ID | Group | Run | CAP-1 | CAP-2 |
-|------------|-------|-----|-------|-------|
-| 0 | All Subjects | run-0 | 0.505495 | 0.494505 |
-| 1 | All Subjects | run-0 | 0.530120 | 0.469880 |
-| 2 | All Subjects | run-0 | 0.521739 | 0.478261 |
+![Temporal Fraction Dataframe.](paper/temporal_fraction_df.png)
 
 Note that CAP-1 is the dominant brain state across subjects (highest frequency).
 
@@ -215,8 +206,8 @@ cap_analysis.caps2surf(**surface_kwargs).caps2radar(**radar_kwargs)
 
 ![CAP-2 Radar Image.](paper/cap_2_radar.png)
 
-Radar plots show network alignment (measured by cosine similarity): "High Amplitude" =
-alignment to activations (> 0), "Low Amplitude" = alignment to deactivations (< 0).
+Radar plots show network alignment (measured by cosine similarity): "High Amplitude" represents
+alignment to activations (> 0), "Low Amplitude" represents alignment to deactivations (< 0).
 
 Each CAP can be characterized using either maximum alignment
 (CAP-1: Vis+/SomMot-; CAP-2: SomMot+/Vis-) or predominant alignment ("High Amplitude" − "Low Amplitude";
@@ -233,29 +224,11 @@ for cap_name in cap_analysis.caps["All Subjects"]:
 ```
 CAP-1:
 
-| High Amplitude | Low Amplitude | Net | Regions |
-|----------------|---------------|-----|---------|
-| 0.340826 | 0.309850 | 0.030976 | Vis |
-| 0.155592 | 0.318072 | -0.162480 | SomMot |
-| 0.213348 | 0.181667 | 0.031681  | DorsAttn |
-| 0.287179 | 0.113046 | 0.174133  | SalVentAttn |
-| 0.027542 | 0.168325 | -0.140783 | Limbic |
-| 0.236915 | 0.195235 | 0.041680  | Cont |
-| 0.238242 | 0.208548 | 0.029694 | Default |
-
+![CAP-1 Network Alignment Dataframe.](paper/cap_1_alignment_df.png)
 
 CAP-2:
 
-| High Amplitude | Low Amplitude | Net | Regions |
-|----------------|---------------|-----|---------|
-| 0.309850 | 0.340826 | -0.030976 | Vis |
-| 0.318072 | 0.155592 | 0.162480  | SomMot |
-| 0.181667 | 0.213348 | -0.031681 | DorsAttn |
-| 0.113046 | 0.287179 | -0.174133 | SalVentAttn |
-| 0.168325 | 0.027542 | 0.140783  | Limbic |
-| 0.195235 | 0.236915 | -0.041680 | Cont |
-| 0.208548 | 0.230242 | -0.021694 | Default |
-
+![CAP-2 Network Alignment Dataframe.](paper/cap_2_alignment_df.png)
 
 Note: For information about logging, refer to [NeuroCAPs' Logging Guide](https://neurocaps.readthedocs.io/en/stable/user_guide/logging.html).
 
