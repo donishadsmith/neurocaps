@@ -72,7 +72,7 @@ napoleon_include_private_with_doc = False
 
 nbsphinx_execute = "never"
 nbsphinx_prompt_width = "0"
-nbsphinx_codecell_lexer = "ipython3"
+nbsphinx_codecell_lexer = "python3"
 
 pygments_style = "sphinx"
 
@@ -117,6 +117,13 @@ html_theme_options = {
 html_sidebars = {
     "contributing": [],
     "changelog": [],
+}
+
+# TODO: Not seeing way to define thumbnail path outside metadata + tooltip (which is only added to
+# metadata) outside of adding the png to the notebook so that thumbnail and tooltip is defined in
+# cell metadata
+nbsphinx_thumbnails = {
+    "tutorials/tutorial-[457]": "_static/neurocaps.png",
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,

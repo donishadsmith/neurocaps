@@ -171,7 +171,7 @@ cap_analysis.get_caps(
     **plot_kwargs,
 )
 ```
-![Silhouette Score Plot.](paper/silhouette_plot.png)
+<img src="paper/silhouette_plot.png" alt="Silhouette Score Plot." style="width:46%; height:auto;">
 
 3. Compute temporal dynamic metrics for downstream statistical analyses
 ```python
@@ -197,14 +197,13 @@ radar_kwargs["legend"] = {"yanchor": "top", "y": 0.75, "x": 1.15}
 
 cap_analysis.caps2surf(**surface_kwargs).caps2radar(**radar_kwargs)
 ```
+<img src="paper/cap_1_surface.png" alt="CAP-1 Surface Image." style="width:46%; height:auto;">
 
-![CAP-1 Surface Image.](paper/cap_1_surface.png)
+<img src="paper/cap_2_surface.png" alt="CAP-2 Surface Image." style="width:46%; height:auto;">
 
-![CAP-2 Surface Image.](paper/cap_2_surface.png)
+<img src="paper/cap_1_radar.png" alt="CAP-1 Radar Image." style="width:46%; height:auto;">
 
-![CAP-1 Radar Image.](paper/cap_1_radar.png)
-
-![CAP-2 Radar Image.](paper/cap_2_radar.png)
+<img src="paper/cap_2_radar.png" alt="CAP-2 Radar Image." style="width:46%; height:auto;">
 
 Radar plots show network alignment (measured by cosine similarity): "High Amplitude" represents
 alignment to activations (> 0), "Low Amplitude" represents alignment to deactivations (< 0).
@@ -224,11 +223,11 @@ for cap_name in cap_analysis.caps["All Subjects"]:
 ```
 CAP-1:
 
-![CAP-1 Network Alignment Dataframe.](paper/cap_1_alignment_df.png)
+<img src="paper/cap_1_alignment_df.png" alt="CAP-1 Network Alignment Dataframe." style="width:46%; height:auto;">
 
 CAP-2:
 
-![CAP-2 Network Alignment Dataframe.](paper/cap_2_alignment_df.png)
+<img src="paper/cap_2_alignment_df.png" alt="CAP-2 Network Alignment Dataframe." style="width:46%; height:auto;">
 
 Note: For information about logging, refer to [NeuroCAPs' Logging Guide](https://neurocaps.readthedocs.io/en/stable/user_guide/logging.html).
 
