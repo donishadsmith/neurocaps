@@ -142,8 +142,8 @@ implemented in other neuroimaging Python packages, specifically:
 References
 ----------
 .. [1] Liu, X., Chang, C., & Duyn, J. H. (2013). Decomposition of spontaneous brain activity into
-distinct fMRI co-activation patterns. Frontiers in Systems Neuroscience, 7.
-https://doi.org/10.3389/fnsys.2013.00101
+       distinct fMRI co-activation patterns. Frontiers in Systems Neuroscience, 7.
+       https://doi.org/10.3389/fnsys.2013.00101
 
 .. [2] Liu, X., Zhang, N., Chang, C., & Duyn, J. H. (2018). Co-activation patterns in resting-state
        fMRI signals. NeuroImage, 180, 485–494. https://doi.org/10.1016/j.neuroimage.2018.01.041

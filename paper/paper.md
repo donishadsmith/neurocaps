@@ -103,7 +103,7 @@ or tasks, and creating group-averaged transition matrices.
 - generating custom parcellation approaches from tabular metadata
 - customizing plots and simulating data
 
-# Usage
+# Workflow
 The following code demonstrates basic usage of NeuroCAPs (with simulated data) to perform CAPs analysis.
 A version of this example using real data is available on
 [NeuroCAPs' readthedocs](https://neurocaps.readthedocs.io/en/stable/tutorials/tutorial-8.html).
