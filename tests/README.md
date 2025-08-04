@@ -4,7 +4,7 @@ To ensure all necessary software is installed for testing, use the following com
 
 ### Ubuntu & Mac
 ```bash
-pip install .[test]
+pip install -e '.[test]'
 ```
 
 ### Windows
@@ -34,3 +34,4 @@ To obtain a coverage report, run the following command (only the home directory 
 ```bash
 pytest --cov=neurocaps
 ```
+
