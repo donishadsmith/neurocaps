@@ -113,7 +113,6 @@ also available.
 1. Extract timeseries data
 ```python
 import numpy as np
-
 from neurocaps.extraction import TimeseriesExtractor
 from neurocaps.utils import simulate_bids_dataset
 

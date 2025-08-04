@@ -23,79 +23,71 @@ bibliography: paper.bib
 
 # Summary
 Co-Activation Patterns (CAPs) is a dynamic functional connectivity technique that clusters similar
-spatial distributions of brain activity. To make this analytical technique more accessible to
-neuroimaging researchers, NeuroCAPs, an open source Python package, was developed. This package
-performs end-to-end CAPs analyses on preprocessed resting-state or task-based functional magnetic
-resonance imaging (fMRI) data, and is most optimized for data preprocessed with fMRIPrep, a robust
-preprocessing pipeline designed to minimize manual user input and enhance reproducibility
-[@Esteban2019].
+spatial distributions of brain activity. NeuroCAPs is an open-source Python package that makes CAPs
+analysis accessible to neuroimaging researchers for preprocessed resting-state or task-based fMRI
+data. The package is optimized for fMRIPrep-preprocessed data [@Esteban2019], leveraging fMRIPrep's
+robust, BIDS-compliant outputs.
 
 # Background
 Numerous fMRI studies employ static functional connectivity (sFC) techniques to analyze correlative
-activity within and between brain regions. However, these approaches operate under the assumption
-that functional connectivity patterns, which change within seconds [@Jiang2022], remain stationary
-throughout the entire data acquisition period [@Hutchison2013].
+activity within and between brain regions. However, these approaches assume functional connectivity
+patterns, which change within seconds [@Jiang2022], remain stationary throughout the entire data
+acquisition period [@Hutchison2013].
 
 Unlike sFC approaches, dynamic functional connectivity (dFC) methods enable the analysis of dynamic
 functional states, which are characterized by consistent, replicable, and distinct periods of
 time-varying brain connectivity patterns [@Rabany2019]. Among these techniques, CAPs analysis
-aggregates similar spatial distributions of brain activity using clustering techniques, typically
-the k-means algorithm, to capture the dynamic nature of brain activity [@Liu2013; @Liu2018].
+aggregates similar spatial distributions of brain activity using a clustering algorithm
+(i.e. k-means) to capture the dynamic nature of brain activity [@Liu2013; @Liu2018].
 
 # Statement of Need
 The typical CAPs workflow can be programmatically time-consuming to manually orchestrate as it
 generally entails several steps:
 
-1. implement spatial dimensionality reduction of timeseries data
-2. perform nuisance regression and scrub high-motion volumes (excessive head motion)
-3. concatenate the timeseries data from multiple subjects into a single matrix
-4. apply k-means clustering to the concatenated data and select the optimal number of
-   clusters (CAPs) using heuristics such as the elbow or silhouette methods
-5. generate different visualizations to enhance the interpretability of the CAP
+1. apply spatial dimensionality reduction to timeseries data
+2. perform nuisance regression and remove high-motion volumes
+3. concatenate timeseries data from multiple subjects into a single matrix
+4. implement k-means clustering with optimal cluster selection
+5. generate visualizations for CAP interpretation
 
-While other excellent CAPs toolboxes exist, they are often implemented in proprietary languages such
-as MATLAB (which is the case for TbCAPs [@Bolton2020]), lack comprehensive end-to-end analytical
+While excellent CAPs toolboxes exist, they are often implemented in proprietary languages such
+as MATLAB (TbCAPs [@Bolton2020]), lack comprehensive end-to-end analytical
 pipelines for both resting-state and task-based fMRI data with temporal dynamic metrics and
-visualization capabilities (such as capcalc [@Frederick2022]), or are comprehensive, but generalized
-toolboxes for evaluating and comparing different dFC methods (such as pydFC [@Torabi2024]).
+visualization capabilities (capcalc [@Frederick2022]), or are comprehensive, but generalized
+toolboxes for evaluating and comparing different dFC methods (pydFC [@Torabi2024]).
 
-NeuroCAPs addresses these limitations by providing an accessible Python package specifically
-for performing end-to-end CAPs analyses, from post-processing of fMRI data to creation of temporal
-metrics for downstream statistical analyses and visualizations to facilitate interpretations.
-However, many of NeuroCAPs' post-processing functionalities assumes that fMRI data is organized in
-a Brain Imaging Data Structure (BIDS) compliant directory and is most optimized for data
-preprocessed with fMRIPrep [@Esteban2019] or preprocessing pipelines that generate similar
-outputs (e.g. NiBabies [@Goncalves2025]). Furthermore, NeuroCAPs only supports the k-means
-algorithm for clustering, which is the clustering algorithm that was originally used and is often
-employed when performing the CAPs analysis [@Liu2013].
+NeuroCAPs provides an accessible Python package for end-to-end CAPs analysis, spanning fMRI
+post-processing through computation of temporal metrics and creation of visualizations. However,
+many of NeuroCAPs' post-processing functionalities assumes that fMRI data is organized in a BIDS
+compliant directory [@Yarkoni2019] and is optimized for fMRIPrep [@Esteban2019] or fMRIPrep-like
+pipelines such as NiBabies [@Goncalves2025]. Furthermore, NeuroCAPs is limited to the k-means
+algorithm for clustering, a choice that aligns with the original CAPs methodology [@Liu2013] and its
+prevalence in the CAPs literature.
 
 # Modules
 The core functionalities of NeuroCAPs are concentrated in three modules:
 
 1. `neurocaps.extraction` contains the `TimeseriesExtractor` class, which:
 
-- collects preprocessed BOLD data from an BIDS-compliant dataset [@Yarkoni2019]
-- leverages Nilearn's [@Nilearn] `NiftiLabelsMasker` to perform nuisance regression and spatial
-  dimensionality reduction using deterministic parcellations (e.g., Schaefer [@Schaefer2018],
-  AAL [@Tzourio-Mazoyer2002])
-- scrubs high-motion volumes using fMRIPrep-derived framewise displacement (FD) values
-- reports quality control information related to high-motion or non-steady state volumes
+- leverages Nilearn's [@Nilearn] `NiftiLabelsMasker` for denoising and
+  spatial dimensionality reduction using deterministic parcellations (e.g.,
+  Schaefer [@Schaefer2018], AAL [@Tzourio-Mazoyer2002], etc)
+- removes high-motion volumes using fMRIPrep-derived framewise displacement (FD) values
+- reports quality control metrics for motion and non-steady state volumes
 
-2. `neurocaps.analysis` contains the CAP class for performing the main analysis, as well as several
-standalone utility functions.
+2. `neurocaps.analysis` contains the `CAP` class for performing the CAPs analysis, as well as
+   standalone functions.
 
 - The `CAP` class:
-  - performs k-means clustering [@scikit-learn] to identify CAPs, supporting both single and
-    optimized cluster selection with heuristics such as the silhouette and elbow method [@Arvai2023]
-  - computes subject-level temporal dynamics metrics (e.g., temporal fraction, transition
-    probabilities, etc) for statistical analysis
-  - converts identified CAPs back into NIfTI statistical maps for spatial interpretation
-  - integrates multiple plotting libraries [@Hunter:2007; @Waskom2021; @plotly; @Gale2021] to
-    provide a diverse range of visualization options
+  - identifies CAPs via k-means clustering [@scikit-learn] with optimized cluster selection (e.g.,
+    silhouette, elbow [@Arvai2023], etc)
+  - computes subject-level temporal metrics (e.g., temporal fraction, transition probabilities, etc)
+  - converts CAPs to NIfTI statistical maps
+  - integrates multiple plotting libraries [@Hunter:2007; @Waskom2021; @plotly; @Gale2021] for
+    diverse visualizations
 
-- Standalone functions:
-Provide tools for data standardization [@harris2020array], merging timeseries data across sessions
-or tasks, and creating group-averaged transition matrices.
+- Standalone functions: provides tools for merging timeseries across sessions/tasks and creating
+  group-averaged transition matrices.
 
 3. `neurocaps.utils` contains utility functions for:
 
@@ -104,14 +96,13 @@ or tasks, and creating group-averaged transition matrices.
 - customizing plots and simulating data
 
 # Workflow
-The following code demonstrates basic usage of NeuroCAPs (with simulated data) to perform CAPs analysis.
-A version of this example using real data is available on
+The following code demonstrates basic usage of NeuroCAPs (with simulated data) to perform CAPs
+analysis. A version of this example using real data is available on
 [NeuroCAPs' readthedocs](https://neurocaps.readthedocs.io/en/stable/tutorials/tutorial-8.html).
 
 1. Extract timeseries data
 ```python
 import numpy as np
-
 from neurocaps.extraction import TimeseriesExtractor
 from neurocaps.utils import simulate_bids_dataset
 
@@ -206,8 +197,8 @@ Radar plots show network alignment (measured by cosine similarity): "High Amplit
 alignment to activations (> 0), "Low Amplitude" represents alignment to deactivations (< 0).
 
 Each CAP can be characterized using either maximum alignment
-(CAP-1: Vis+/SomMot-; CAP-2: SomMot+/Vis-) or predominant alignment ("High Amplitude" − "Low Amplitude";
-CAP-1: SalVentAttn+/SomMot-; CAP-2: SomMot+/SalVentAttn-).
+(CAP-1: Vis+/SomMot-; CAP-2: SomMot+/Vis-) or predominant alignment ("High Amplitude" −
+"Low Amplitude"; CAP-1: SalVentAttn+/SomMot-; CAP-2: SomMot+/SalVentAttn-).
 
 ```python
 import pandas as pd
