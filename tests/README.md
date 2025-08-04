@@ -22,7 +22,7 @@ git submodule update --init
 
 ## Run pytest
 ```bash
-pytest
+pytest .
 ```
 
 **Note:** Some tests require the AAL 3v2 atlas and will be skipped if `nilearn < 0.11.0` is
