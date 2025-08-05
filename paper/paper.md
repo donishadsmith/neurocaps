@@ -38,11 +38,10 @@ Unlike sFC approaches, dynamic functional connectivity (dFC) methods enable the 
 functional states, which are characterized by consistent, replicable, and distinct periods of
 time-varying brain connectivity patterns [@Rabany2019]. Among these techniques, CAPs analysis
 aggregates similar spatial distributions of brain activity using a clustering algorithm
-(i.e. k-means) to capture the dynamic nature of brain activity [@Liu2013; @Liu2018].
+(i.e., k-means) to capture the dynamic nature of brain activity [@Liu2013; @Liu2018].
 
 # Statement of Need
-The typical CAPs workflow can be programmatically time-consuming to manually orchestrate as it
-generally entails several steps:
+The CAPs workflow can be programmatically time-consuming as researchers must:
 
 1. apply spatial dimensionality reduction to timeseries data
 2. perform nuisance regression and remove high-motion volumes
@@ -86,19 +85,19 @@ The core functionalities of NeuroCAPs are concentrated in three modules:
   - integrates multiple plotting libraries [@Hunter:2007; @Waskom2021; @plotly; @Gale2021] for
     diverse visualizations
 
-- Standalone functions: provides tools for merging timeseries across sessions/tasks and creating
-  group-averaged transition matrices.
+- Standalone functions: provides tools for within-run ROI standardization [@harris2020array],
+merging timeseries across sessions/tasks and creating group-averaged transition matrices.
 
 3. `neurocaps.utils` contains utility functions for:
 
-- fetching preset parcellation approaches (i.e. 4S, HCPex [@Huang2022], and Gordon [@Gordon2016])
+- fetching non-default (i.e., Schaefer and AAL) preset parcellation approaches
+  (i.e., 4S, HCPex [@Huang2022], and Gordon [@Gordon2016])
 - generating custom parcellation approaches from tabular metadata
 - customizing plots and simulating data
 
 # Workflow
-The following code demonstrates basic usage of NeuroCAPs (with simulated data) to perform CAPs
-analysis. A version of this example using real data is available on
-[NeuroCAPs' readthedocs](https://neurocaps.readthedocs.io/en/stable/tutorials/tutorial-8.html).
+The following code demonstrates basic usage of NeuroCAPs (with simulated data) to perform CAPs analysis,
+[a version using real data is also available](https://neurocaps.readthedocs.io/en/stable/tutorials/tutorial-8.html).
 
 1. Extract timeseries data
 ```python
@@ -112,7 +111,7 @@ np.random.seed(0)
 # Generate a BIDS directory with fMRIPrep derivatives
 bids_root = simulate_bids_dataset(n_subs=3, n_runs=1, n_volumes=100, task_name="rest")
 
-# Using Schaefer, one of the default parcellation approaches
+# Set the parcel approach
 parcel_approach = {"Schaefer": {"n_rois": 100, "yeo_networks": 7}}
 
 # List of fMRIPrep-derived confounds for nuisance regression
@@ -125,11 +124,11 @@ extractor = TimeseriesExtractor(
     parcel_approach=parcel_approach,
     confound_names=confound_names,
     standardize=False,
-    # Run discarded if more than 30% of volumes exceed FD threshold
+    # Run discarded if >30% of volumes exceed FD threshold
     fd_threshold={"threshold": 0.90, "outlier_percentage": 0.30},
 )
 
-# Extract preprocessed BOLD data
+# Extract timeseries
 extractor.get_bold(bids_dir=bids_root, task="rest", tr=2, n_cores=1, verbose=False)
 
 # Check QC information
@@ -143,7 +142,6 @@ print(qc_df)
 from neurocaps.analysis import CAP
 from neurocaps.utils import PlotDefaults
 
-# Initialize CAP class
 cap_analysis = CAP(parcel_approach=extractor.parcel_approach, groups=None)
 
 plot_kwargs = {**PlotDefaults.get_caps(), "figsize": (4, 3), "step": 2}
@@ -164,7 +162,6 @@ cap_analysis.get_caps(
 
 3. Compute temporal dynamic metrics for downstream statistical analyses
 ```python
-# Calculate temporal fraction of each CAP
 metric_dict = cap_analysis.calculate_metrics(
     extractor.subject_timeseries, metrics=["temporal_fraction"]
 )
@@ -176,7 +173,6 @@ Note that CAP-1 is the dominant brain state across subjects (highest frequency).
 
 4. Visualize CAPs
 ```python
-# Create surface and radar plots for each CAP
 surface_kwargs = {**PlotDefaults.caps2surf(), "layout": "row", "size": (500, 100)}
 
 radar_kwargs = {**PlotDefaults.caps2radar(), "height": 400, "width": 485}
