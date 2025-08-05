@@ -85,8 +85,9 @@ The core functionalities of NeuroCAPs are concentrated in three modules:
   - integrates multiple plotting libraries [@Hunter:2007; @Waskom2021; @plotly; @Gale2021] for
     diverse visualizations
 
-- Standalone functions: provides tools for within-run ROI standardization [@harris2020array],
-merging timeseries across sessions/tasks and creating group-averaged transition matrices.
+- Standalone functions: provides tools for within-run regions-of-interest standardization
+[@harris2020array], merging timeseries across sessions/tasks and creating group-averaged transition
+matrices.
 
 3. `neurocaps.utils` contains utility functions for:
 
