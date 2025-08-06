@@ -3,14 +3,11 @@
 [![Latest Version](https://img.shields.io/pypi/v/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/neurocaps.svg)](https://pypi.python.org/pypi/neurocaps/)
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal)](https://doi.org/10.5281/zenodo.16430050)
-[![Github Repository](https://img.shields.io/badge/Source%20Code-neurocaps-purple)](https://github.com/donishadsmith/neurocaps)
 [![Test Status](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml/badge.svg)](https://github.com/donishadsmith/neurocaps/actions/workflows/testing.yaml)
 [![Documentation Status](https://readthedocs.org/projects/neurocaps/badge/?version=stable)](http://neurocaps.readthedocs.io/en/stable/?badge=stable)
 [![Codecov](https://codecov.io/github/donishadsmith/neurocaps/graph/badge.svg?token=WS2V7I16WF)](https://codecov.io/github/donishadsmith/neurocaps)
-[![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-![Platform Support](https://img.shields.io/badge/OS-Ubuntu%20|%20macOS%20|%20Windows-blue)
-[![Docker](https://img.shields.io/badge/docker-donishadsmith/neurocaps-darkblue.svg?logo=docker)](https://hub.docker.com/r/donishadsmith/neurocaps/tags/)
+[![Docker](https://img.shields.io/badge/Docker-donishadsmith/neurocaps-darkblue.svg?logo=docker)](https://hub.docker.com/r/donishadsmith/neurocaps/tags/)
 [![JOSS](https://joss.theoj.org/papers/0e5c44d5d82402fa0f28e6a8833428f0/status.svg)](https://joss.theoj.org/papers/0e5c44d5d82402fa0f28e6a8833428f0)
 
 NeuroCAPs (**Neuro**imaging **C**o-**A**ctivation **P**attern**s**) is a Python package for performing Co-Activation
@@ -63,41 +60,15 @@ docker run -it -p 9999:9999 neurocaps notebook
 ```
 
 ## Features
-NeuroCAPs is built around two main classes (``TimeseriesExtractor`` and ``CAP``) and includes several
+NeuroCAPs is built around two main classes (`TimeseriesExtractor` and `CAP`) and includes several
 features to perform the complete CAPs workflow from postprocessing to visualizations.
 Notable features includes:
 
-- Timeseries Extraction (``TimeseriesExtractor``):
-    - extracts BOLD timeseries from resting-state or task-based fMRI data
-    - supports deterministic parcellations such as the Schaefer and AAL, in addition to custom-defined deterministic parcellations
-    - performs nuisance regression, motion scrubbing, and additional features
-    - reports quality control information based on framewise displacement
-
-    **Important**:
-       NeuroCAPs is most optimized for fMRI data preprocessed with
-       [fMRIPrep](https://fmriprep.org/en/stable/) and assumes the data is BIDs compliant.
-       Refer to [NeuroCAPs' BIDS Structure and Entities Documentation](https://neurocaps.readthedocs.io/en/stable/bids.html)
-       for additional information.
-
-- CAPs Analysis (``CAP``):
-    - performs k-means clustering on individuals or groups
-    - identifies the optimal number of clusters using Silhouette, Elbow, Davies Bouldin, or Variance Ratio methods
-    - computes several temporal dynamic metrics [^2] [^3]:
-        - temporal fraction (fraction of time)
-        - persistence (dwell time)
-        - counts (state initiation)
-        - transition frequency & probability
-    - produces several visualizations:
-        - heatmaps and outer product plots
-        - surface plots
-        - correlation matrices
-        - cosine similarity radar plots [^4] [^5]
-
-- Utilities:
-  - plot transition matrices
-  - merge timeseries data across tasks or session [^6]
-  - generate the custom parcellation dictionary structure from the parcellation's metadata file
-  - fetch preset custom parcellation approaches
+| Component | Key Features |
+| -------- | ------------|
+| **Timeseries Extraction (`TimeseriesExtractor`)** | <ul><li>supports Schaefer, AAL, and deterministic custom parcellations</li><li>performs nuisance regression and motion scrubbing</li><li>reports quality control based on framewise displacement<br><br><b>Important</b>: Optimized for BIDS-compliant data preprocessed with <a href="https://fmriprep.org/en/stable/">fMRIPrep</a> and assumes data is BIDs compliant. Refer to <a href="https://neurocaps.readthedocs.io/en/stable/bids.html">NeuroCAPs' BIDS Structure and Entities Documentation</a> for additional information.</li></ul> |
+| **CAPs Analysis (`CAP`)** | <ul><li>performs k-means clustering</li><li>finds the optimal number of clusters (silhouette, elbow, variance ratio, Davies-Bouldin)</li><li>computes temporal dynamic metrics (temporal fraction, persistence, counts, transition frequency and probabilities) [^2] [^3]</li><li>converts CAPs to NIfTI images</li><li>creates visualizations (heatmaps, outer products, surface plots, correlation matrices, cosine similarity radar plots [^4] [^5]).</li></ul> |
+| **Standalone Functions** | <ul><li>plots transition matrices</li><li>merges timeseries data across tasks or sessions [^6]</li><li>generates and fetches custom parcellation approaches</li></ul> |
 
 Full details for every function and parameter are available in the
 [API Documentation](https://neurocaps.readthedocs.io/en/stable/api.html).

@@ -5,3 +5,4 @@ neurocaps.egg-info/
 dist/
 neurocaps_demo/
 .asv/
+.DS_Store

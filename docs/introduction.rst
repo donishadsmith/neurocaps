@@ -28,10 +28,7 @@
    :target: https://opensource.org/licenses/MIT
    :alt: License
 
-.. image:: https://img.shields.io/badge/OS-Ubuntu%20|%20macOS%20|%20Windows-blue
-  :alt: Platform Support
-
-.. image:: https://img.shields.io/badge/docker-donishadsmith/neurocaps-darkblue.svg?logo=docker&style=round
+.. image:: https://img.shields.io/badge/Docker-donishadsmith/neurocaps-darkblue.svg?logo=docker&style=round
    :target: https://hub.docker.com/r/donishadsmith/neurocaps/tags/
    :alt: Docker
 
@@ -53,46 +50,38 @@ Citing
 
   Smith, D. (2024). NeuroCAPs. Zenodo. https://doi.org/10.5281/zenodo.16430050
 
-Usage
------
+Features
+--------
 NeuroCAPs is built around two main classes (``TimeseriesExtractor`` and ``CAP``) and includes several
 features to perform the complete CAPs workflow from postprocessing to visualizations.
 Notable features includes:
 
-- Timeseries Extraction (``TimeseriesExtractor``):
+.. list-table::
 
-  - extracts BOLD timeseries from resting-state or task-based fMRI data.
-  - supports deterministic parcellations such as the Schaefer and AAL, in addition to custom-defined deterministic parcellations.
-  - performs nuisance regression, motion scrubbing, and additional features
-  - reports quality control information based on framewise displacement
+   * - Component
+     - Key Features
+   * - Timeseries Extraction (``TimeseriesExtractor``)
+     - * supports Schaefer, AAL, and custom deterministic parcellations
+       * performs nuisance regression and motion scrubbing
+       * reports quality control based on framewise displacement
 
-  .. important::
-      NeuroCAPs is most optimized for fMRI data preprocessed with
-      [fMRIPrep](https://fmriprep.org/en/stable/) and assumes the data is BIDs compliant.
-      Refer to [NeuroCAPs' BIDS Structure and Entities Documentation](https://neurocaps.readthedocs.io/en/stable/bids.html)
-      for additional information.
+       .. important::
+          Optimized for BIDS-compliant data preprocessed with `fMRIPrep <https://fmriprep.org/en/stable/>`_.
+          Refer to `NeuroCAPs' BIDS Structure and Entities Documentation <https://neurocaps.readthedocs.io/en/stable/bids.html>`_ for more information.
 
-- CAP Analysis (``CAP``):
+   * - CAPs analysis (``CAP``)
+     - * performs k-means clustering
+       * finds the optimal number of clusters (silhouette, elbow, variance ratio, Davies-Bouldin)
+       * computes temporal dynamic metrics (temporal fraction, persistence, counts, transition frequency and probabilities) [2]_ [3]_
+       * converts CAPs to NIfTI images
+       * creates visualizations (heatmaps, outer products, surface plots, correlation matrices, cosine similarity radar plots [4]_ [5]_ )
+   * - **Standalone Functions**
+     - * plots transition matrices
+       * merges timeseries data across tasks or sessions [6]_
+       * generates and fetches custom parcellation approaches
 
-  - performs k-means clustering on individuals or groups
-  - identifies the optimal number of clusters using silhouette, elbow, davies bouldin, or variance ratio methods
-  - computes several temporal dynamic metrics [2]_ [3]_:
-      - temporal fraction (fraction of time)
-      - persistence (dwell time)
-      - counts (state initiation)
-      - transition frequency & probability
-  - produces several visualizations:
-      - heatmaps and outer product plots
-      - surface plots
-      - correlation matrices
-      - cosine similarity radar plots [4]_ [5]_
-
-- Utilities:
-
-  - plot transition matrices
-  - merge timeseries data across tasks or session [6]_
-  - generate the custom parcellation dictionary structure from the parcellation's metadata file
-  - fetch preset custom parcellation approaches
+Full details for every function and parameter are available in the
+`API Documentation <https://neurocaps.readthedocs.io/en/stable/api.html>`_.
 
 Refer to the demos to the `demos <https://github.com/donishadsmith/neurocaps/tree/main/demos>`_ or
 `tutorials <https://neurocaps.readthedocs.io/en/latest/examples/examples.html>`_ for an

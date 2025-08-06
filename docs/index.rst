@@ -4,7 +4,7 @@
    :hidden:
    :maxdepth: 2
 
-   user_guide
+   user_guide/user_guide
    api/api
    tutorials/tutorials
    contributing
