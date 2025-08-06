@@ -23,7 +23,7 @@ Publicly available modules in NeuroCAPs.
    * - :doc:`extraction`
      - Timeseries extraction, quality control, and BOLD visualization
    * - :doc:`analysis`
-     - Co-activation patterns, merging timeseries, ROI standardization, and changing timeseries dtype
+     - Co-activation patterns analysis, merging timeseries, ROI standardization, and changing timeseries dtype
    * - :doc:`typing`
      - Type definitions for ``SubjectTimeseries``, ``ParcelConfig``, and ``ParcelApproach``
    * - :doc:`utils`

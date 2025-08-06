@@ -199,14 +199,14 @@ CAP-2:
 
 <img src="paper/cap_2_alignment_df.png" alt="CAP-2 Network Alignment Dataframe." style="width:46%; height:auto;">
 
-Note: For information about logging, refer to [NeuroCAPs' Logging Guide](https://neurocaps.readthedocs.io/en/stable/user_guide/logging.html).
+**Note**: For information about logging, refer to [NeuroCAPs' Logging Guide](https://neurocaps.readthedocs.io/en/stable/user_guide/logging.html).
 
 ## Acknowledgements
 NeuroCAPs relies on several popular data processing, machine learning, neuroimaging, and visualization
 [packages](https://neurocaps.readthedocs.io/en/stable/#dependencies).
 
 Additionally, some foundational concepts in this package take inspiration from features or design
-patterns implemented in other neuroimaging Python packages, specically:
+patterns implemented in other neuroimaging Python packages, specifically:
 
 - mtorabi59's [pydfc](https://github.com/neurodatascience/dFC), a toolbox that allows comparisons
 among several popular dynamic functionality methods.
