@@ -1,7 +1,7 @@
 API
 ===
 
-Publicly available classes, functions, exceptions, types, and utility functions within NeuroCAPs.
+Publicly available modules in NeuroCAPs.
 
 .. toctree::
    :hidden:
@@ -13,30 +13,19 @@ Publicly available classes, functions, exceptions, types, and utility functions 
    typing
    utils
 
-.. autosummary::
-   :nosignatures:
+.. list-table::
 
-   neurocaps.exceptions.BIDSQueryError
-   neurocaps.exceptions.NoElbowDetectedError
-   neurocaps.exceptions.UnsupportedFileExtensionError
-   neurocaps.extraction.TimeseriesExtractor
-   neurocaps.analysis.CAP
-   neurocaps.analysis.change_dtype
-   neurocaps.analysis.merge_dicts
-   neurocaps.analysis.standardize
-   neurocaps.analysis.transition_matrix
-   neurocaps.typing.SubjectTimeseries
-   neurocaps.typing.ParcelConfig
-   neurocaps.typing.SchaeferParcelConfig
-   neurocaps.typing.AALParcelConfig
-   neurocaps.typing.ParcelApproach
-   neurocaps.typing.SchaeferParcelApproach
-   neurocaps.typing.AALParcelApproach
-   neurocaps.typing.CustomParcelApproach
-   neurocaps.utils.fetch_preset_parcel_approach
-   neurocaps.utils.generate_custom_parcel_approach
-   neurocaps.utils.simulate_bids_dataset
-   neurocaps.utils.simulate_subject_timeseries
-   neurocaps.utils.create_dataset_description
-   neurocaps.utils.save_dataset_description
-   neurocaps.utils.PlotDefaults
+   * - Module
+     - Description
+   * - :doc:`exceptions`
+     - Definitions for custom exceptions for BIDS querying error, elbow method error, unsupported
+       file formats
+   * - :doc:`extraction`
+     - Timeseries extraction, quality control, and BOLD visualization
+   * - :doc:`analysis`
+     - Co-activation patterns, merging timeseries, ROI standardization, and changing timeseries dtype
+   * - :doc:`typing`
+     - Type definitions for ``SubjectTimeseries``, ``ParcelConfig``, and ``ParcelApproach``
+   * - :doc:`utils`
+     - Fetching preset parcellation approaches, creating parcellation approaches from tabular
+       metadata, data simulation, and plotting defaults
