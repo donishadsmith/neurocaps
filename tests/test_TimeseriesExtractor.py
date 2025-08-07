@@ -844,6 +844,51 @@ def test_tr_with_and_without_bandpass(
             bids_query.get_tr(bold_json, None, signal_clean, task_info, None)
 
 
+def test_event_duration():
+    """Test that the expected frames are given for event."""
+    task_info = {"slice_time_ref": 0, "condition_tr_shift": 0}
+    condition_df = pd.DataFrame({"onset": [0], "duration": [2.4]})
+    data = postprocess.RunData(task_info=task_info, tr=1.2)
+    scans = postprocess.get_condition_indices(data, condition_df)
+    assert scans == ([0, 1], 2)
+
+
+def test_event_condition_shift():
+    """Test that expected frames are given for event when condition shift applied."""
+    task_info = {"slice_time_ref": 0, "condition_tr_shift": 2}
+    condition_df = pd.DataFrame({"onset": [0], "duration": [2.4]})
+    data = postprocess.RunData(task_info=task_info, tr=1.2)
+    scans = postprocess.get_condition_indices(data, condition_df)
+    assert scans == ([2, 3], 2)
+
+
+def test_event_slice_shift():
+    """Test that expected frames are given for event slice timing shift applied."""
+    task_info = {"slice_time_ref": 1, "condition_tr_shift": 0}
+    condition_df = pd.DataFrame({"onset": [1], "duration": [1.2]})
+    data = postprocess.RunData(task_info=task_info, tr=1.2)
+    scans = postprocess.get_condition_indices(data, condition_df)
+    assert scans == ([0], 1)
+
+
+def test_zero_event_duration():
+    """Test that expected frames are given in cases when event duration is 0."""
+    task_info = {"slice_time_ref": 0, "condition_tr_shift": 0}
+    condition_df = pd.DataFrame({"onset": [0], "duration": [0]})
+    data = postprocess.RunData(task_info=task_info, tr=1.2)
+    scans = postprocess.get_condition_indices(data, condition_df)
+    assert scans == ([0], 1)
+
+    # Should avoid adding scan when it occurs before data acquisition (when end scan is less than
+    # or equal to zero and onset_scan is less than 0, onset scan being 0 is fine since it is the
+    # first volume)
+    task_info["slice_time_ref"] = 1
+    condition_df = pd.DataFrame({"onset": [0], "duration": [0]})
+    data = postprocess.RunData(task_info=task_info, tr=1.2)
+    scans = postprocess.get_condition_indices(data, condition_df)
+    assert scans == ([], 0)
+
+
 def test_condition_extraction(setup_environment_1, get_vars):
     """
     Ensures correct frames are selected when condition specified.

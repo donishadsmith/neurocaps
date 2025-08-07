@@ -173,7 +173,7 @@ def compute_counts(arr: NDArray, n_caps: int) -> dict[str, int]:
     count_dict = {}
     for target in range(1, n_caps + 1):
         if target in arr:
-            _, counts = segments(target, arr)
+            _, counts = segments(arr, target)
             count_dict.update({target: counts})
         else:
             count_dict.update({target: 0})

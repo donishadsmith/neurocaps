@@ -3,7 +3,7 @@
 import copy, json, inspect, math, os, re
 from dataclasses import dataclass, field
 from functools import cached_property
-from typing import Union
+from typing import Optional, Union
 
 import numpy as np, pandas as pd
 from nilearn.maskers import NiftiLabelsMasker
@@ -32,7 +32,7 @@ class RunData:
     tr: Union[int, None] = None
     verbose: bool = False
     # Run-specific attributes
-    files: dict[str, str] = field(default_factory=dict)
+    files: dict[str, Optional[str]] = field(default_factory=dict)
     head: Union[str, None] = None
     dummy_vols: Union[int, None] = None
     censored_frames: list[int] = field(default_factory=list)
@@ -559,9 +559,14 @@ def get_condition_indices(data, condition_df):
             math.ceil((adjusted_onset + condition_df.loc[i, "duration"]) / data.tr) + data.tr_shift
         )
 
-        # Avoid accidental negative indexing
-        onset_scan = max([0, onset_scan])
-        end_scan = max([0, end_scan])
+        # Prevents inclusion of scans that occur before acquisition
+        if max(0, end_scan) == 0 and onset_scan < 0:
+            continue
+
+        # Clip to 0 to prevent negative scans indices
+        onset_scan = max(0, onset_scan)
+        # For cases when "duration" is zero (impulse)
+        end_scan = end_scan + 1 if onset_scan == end_scan else end_scan
         scans.extend(range(onset_scan, end_scan))
 
     scans = sorted(list(set(scans)))

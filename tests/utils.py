@@ -245,8 +245,14 @@ def get_scans(
         end = int(end_convert) if end_convert == int(end_convert) else int(end_convert) + 1
         end += condition_tr_shift
 
+        if max(0, end) == 0 and start < 0:
+            continue
+
         start = start if start >= 0 else 0
-        end = end if end >= 0 else 0
+
+        # For cases when duration is zero
+        end = end + 1 if start == end else end
+
         scan_list.extend(list(range(start, end)))
 
     scan_list = sorted(list(set(scan_list)))

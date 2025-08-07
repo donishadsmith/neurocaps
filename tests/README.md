@@ -34,4 +34,3 @@ To obtain a coverage report, run the following command (only the home directory 
 ```bash
 pytest --cov=neurocaps
 ```
-

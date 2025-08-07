@@ -582,14 +582,16 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
             end_scan = math.ceil((adjusted_onset + condition_df.loc[i, "duration"]) / tr)
             end_scan += condition_tr_shift
 
-            onset_scan = max([0, onset_scan])
-            end_scan = max([0, end_scan])
+            # Prevents inclusion of scans that occur before acquisition
+            if max(0, end_scan) == 0 and onset_scan < 0:
+                continue
+
+            # Clip to 0 to prevent negative scan indices
+            onset_scan = max(0, onset_scan)
+            # Accounts for 0 "duration" (impulse)
+            end_scan = end_scan + 1 if onset_scan == end_scan else end_scan
             scans.extend(range(onset_scan, end_scan))
             scans = sorted(list(set(scans)))
-
-        .. important::
-           Max check done for ``onset_scan`` and ``end_scan`` instead of ``adjusted_onset`` in
-           versions >= 0.28.4.
 
         When partial scans are computed, ``math.floor`` is used to round down for the beginning scan
         index and ``math.ceil`` is used to round up for the ending scan index. Negative scan indices
