@@ -2159,11 +2159,11 @@ def test_interpolate_censored_frames_unit(condition):
     if condition:
         assert new_timeseries.shape == (10, 20)
         assert np.allclose(
-            timeseries[[2, 3, 6, 7, 8, 9]], new_timeseries[[2, 3, 6, 7, 8, 9]], atol=1e07
+            timeseries[[2, 3, 6, 7, 8, 9]], new_timeseries[[2, 3, 6, 7, 8, 9]], atol=1e-07
         )
     else:
         assert new_timeseries.shape == (8, 20)
-        assert np.allclose(timeseries[[0, 1, 4, 5, 7]], new_timeseries[[0, 1, 4, 5, 7]], atol=1e07)
+        assert np.allclose(timeseries[[0, 1, 4, 5, 7]], new_timeseries[[0, 1, 4, 5, 7]], atol=1e-07)
 
 
 @pytest.mark.parametrize("use_sample_mask", [True, False])
@@ -2508,7 +2508,7 @@ def test_parallel_and_sequential_preprocessing_equivalence(setup_environment_3, 
         for run in extractor.subject_timeseries[sub]:
             assert extractor.subject_timeseries[sub][run].shape[0] == 40
             assert np.allclose(
-                parallel_timeseries[sub][run], extractor.subject_timeseries[sub][run], atol=1e-7
+                parallel_timeseries[sub][run], extractor.subject_timeseries[sub][run], atol=1e-07
             )
 
 
