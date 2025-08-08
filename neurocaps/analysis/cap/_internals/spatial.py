@@ -31,12 +31,14 @@ def cap_to_img(
     # Get array containing all labels in atlas to avoid issue if the first non-zero atlas label is
     # not 1
     target_array = np.unique(atlas_fdata)
-
     # Start at 1 to avoid assignment to the background label
     for indx, value in enumerate(cap_vector, start=1):
         atlas_array[atlas_fdata == target_array[indx]] = value
 
-    stat_map = nib.Nifti1Image(atlas_array, atlas.affine, atlas.header)
+    hdr = atlas.header.copy()
+    hdr.set_data_dtype(cap_vector.dtype)
+
+    stat_map = nib.Nifti1Image(atlas_array, atlas.affine, hdr)
 
     # Knn implementation to aid in coverage issues
     if knn_dict:

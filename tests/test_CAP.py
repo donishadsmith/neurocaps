@@ -1165,7 +1165,7 @@ def test_caps2niftis(tmp_dir, timeseries, parcel_approach):
 
         # Assess if reconstructing 1D array from 3D nifti produces the same cluster centroid
         assert np.allclose(
-            cap_analysis.caps["All Subjects"][f"CAP-{indx}"], np.array(act_values), atol=1e-05
+            cap_analysis.caps["All Subjects"][f"CAP-{indx}"], np.array(act_values), atol=1e-6
         )
 
     # Check files

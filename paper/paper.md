@@ -7,11 +7,11 @@ tags:
     - fMRI
     - dynamic functional connectivity
     - co-activation patterns
-date: 21 July 2025
+date: 08 August 2025
 output: pdf_document
 authors:
     - name: Donisha Smith
-      orchid: 0000-0001-7019-3520
+      orcid: 0000-0001-7019-3520
       affiliation: 1
 
 affiliations:

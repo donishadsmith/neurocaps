@@ -124,6 +124,7 @@ def process_aal(config_dict):
             if not config_dict["AAL"]["version"] == "3v2"
             else "10.1016/j.neuroimage.2019.116189"
         ),
+        version=config_dict["AAL"]["version"],
     )
     parcel_dict["AAL"]["metadata"] = metadata_dict
 
