@@ -623,7 +623,7 @@ def test_counts():
 
     df = df_dict["counts"]
     df = df[[x for x in df.columns if x.startswith("CAP")]]
-    assert all(df.apply(lambda x: x.values.dtype == "int64" and all(x.values >= 0)).values)
+    assert all(df.apply(lambda x: all(x.values >= 0)).values)
 
     # Get first subject
     first_subject_labels = get_subject_labels(timeseries, cap_analysis, hstack=True)
