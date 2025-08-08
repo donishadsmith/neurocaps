@@ -18,10 +18,9 @@ improvements/enhancements. All fixes and modifications are backwards compatible.
 ## [0.35.1] - 2025-08-08
 ### 🐛 Fixes
 - Properly set data type in nifti image header to address floating point issues for certain atlases
-when converting CAP vectors to niftis
+when converting CAP vectors to niftis and saving image.
 
 ## [0.35.0] - 2025-08-08
-- JOSS Version
 ### 🐛 Fixes
 - Ensures mutability by using deepcopy in `CAP` and `TimeseriesExtractor` to not bypass validation
 - Accounts for case when duration is coded as 0 in event timing files as 0 in BIDS can indicate
