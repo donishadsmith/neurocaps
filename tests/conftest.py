@@ -65,7 +65,9 @@ def use_agg_backend():
     return
 
 
-@pytest.fixture(autouse=True, scope="session")
+# Fixture may not run as intended in Github Actions so run as function instead
+# TODO: look into caching this in Github Actions and retention rules
+# @pytest.fixture(autouse=True, scope="session")
 def create_data_directories():
     """
     Function to copy nilearn, neuromaps, and neurocaps data to home directory to prevent
@@ -84,3 +86,6 @@ def create_data_directories():
     target_neurocaps = os.path.expanduser("~/neurocaps_data")
     if not os.path.isdir(target_neurocaps):
         shutil.copytree(os.path.join(curr_dir, "neurocaps_data"), target_neurocaps)
+
+
+create_data_directories()

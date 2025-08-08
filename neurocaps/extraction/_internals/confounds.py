@@ -1,5 +1,7 @@
 """Internal Function for checking confound names"""
 
+from copy import deepcopy
+
 from neurocaps.utils._logging import setup_logger
 
 LG = setup_logger(__name__)
@@ -65,7 +67,7 @@ def check_confound_names(high_pass, user_confounds, n_acompcor_separate):
 
     LG.info(f"Confound regressors to be used if available: {', '.join(confound_names)}.")
 
-    return confound_names.copy()
+    return deepcopy(confound_names)
 
 
 def remove_a_comp_cor(confound_names, user_confounds, n):

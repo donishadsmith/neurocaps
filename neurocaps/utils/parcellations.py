@@ -180,7 +180,7 @@ def generate_custom_parcel_approach(
 
     # Drop first row if background label
     if background_label and df.loc[0, column_map["nodes"]] == background_label:
-        df = df.iloc[1:].copy()
+        df = df.iloc[1:].copy(deep=True)
 
     # Check for NaN values
     for key in column_map:

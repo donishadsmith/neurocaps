@@ -1,5 +1,6 @@
 """Internal helper functions."""
 
+from copy import deepcopy
 from typing import Any
 
 from ._logging import setup_logger
@@ -8,7 +9,7 @@ LG = setup_logger(__name__)
 
 
 def resolve_kwargs(defaults: dict[str, Any], **kwargs) -> dict[str, Any]:
-    plot_dict = defaults.copy()
+    plot_dict = deepcopy(defaults)
     plot_dict.update({k: v for k, v in kwargs.items() if k in plot_dict})
 
     if kwargs:

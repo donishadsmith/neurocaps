@@ -1,5 +1,6 @@
 """Function for merging timeseries data across dictionaries."""
 
+from copy import deepcopy
 from typing import Optional, Union
 
 import numpy as np
@@ -119,7 +120,7 @@ def merge_dicts(
         new_timeseries_list.append(curr_dict)
 
     # Get common subject ids
-    subject_set = {}
+    subject_set = None
     for curr_dict in new_timeseries_list:
         if not subject_set:
             subject_set = set(curr_dict)
@@ -172,7 +173,7 @@ def merge_dicts(
 
             for subj_id in subject_timeseries_merged:
                 # Diff memory address from original array
-                modified_dicts[f"dict_{indx}"].update({subj_id: curr_dict[subj_id].copy()})
+                modified_dicts[f"dict_{indx}"].update({subj_id: deepcopy(curr_dict[subj_id])})
 
     if return_merged_dict or output_dir:
         modified_dicts["merged"] = subject_timeseries_merged

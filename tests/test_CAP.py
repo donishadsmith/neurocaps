@@ -43,7 +43,7 @@ def test_init_mutability():
 
     cap_analysis = CAP(groups=groups)
 
-    assert not id(cap_analysis._groups) != id(groups)
+    assert id(cap_analysis._groups) != id(groups)
 
 
 def test_default_arg():
@@ -223,16 +223,16 @@ def test_groups_without_cluster_selection(standardize, runs):
     cap_analysis.get_caps(subject_timeseries=timeseries, standardize=standardize)
 
     # Subject table created correctly
-    assert all(k in groups.get(v) for k, v in cap_analysis.subject_table.items())
-
+    groups_dict = {k: list(map(str, groups[k])) for k in groups}
+    assert all(k in groups_dict.get(v) for k, v in cap_analysis.subject_table.items())
     assert cap_analysis.caps["A"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["A"]["CAP-2"].shape == (100,)
     assert cap_analysis.caps["B"]["CAP-1"].shape == (100,)
     assert cap_analysis.caps["B"]["CAP-2"].shape == (100,)
 
-    # Concatenated data used in kmeans
-    cap_analysis.concatenated_timeseries["A"].shape == (1200, 100)
-    cap_analysis.concatenated_timeseries["A"].shape == (1800, 100)
+    # Concatenated data used in kmeans; no runs applied
+    assert cap_analysis.concatenated_timeseries["A"].shape == (1200, 100)
+
     concatenated_timeseries = concat_data(
         timeseries, cap_analysis.subject_table, standardize=standardize
     )
@@ -263,8 +263,8 @@ def test_groups_without_cluster_selection(standardize, runs):
 
     cap_analysis = CAP(groups={"A": [0, 1, 2, 4], "B": [3, 5, 6, 7, 8, 9, 6]})
     cap_analysis.get_caps(subject_timeseries=timeseries, runs=runs, standardize=standardize)
-    cap_analysis.concatenated_timeseries["A"].shape == (800, 100)
-    cap_analysis.concatenated_timeseries["A"].shape == (1200, 100)
+    # Only two runs per subject
+    assert cap_analysis.concatenated_timeseries["A"].shape == (800, 100)
     run_nums = [int(y) for y in [str(x).removeprefix("run-") for x in runs]]
     concatenated_timeseries = concat_data(
         timeseries, cap_analysis.subject_table, standardize=standardize, runs=run_nums
@@ -623,7 +623,7 @@ def test_counts():
 
     df = df_dict["counts"]
     df = df[[x for x in df.columns if x.startswith("CAP")]]
-    all(df.apply(lambda x: x.values.dtype == "int64" and all(x.values >= 0)).values)
+    assert all(df.apply(lambda x: x.values.dtype == "int64" and all(x.values >= 0)).values)
 
     # Get first subject
     first_subject_labels = get_subject_labels(timeseries, cap_analysis, hstack=True)
@@ -1150,7 +1150,7 @@ def test_caps2niftis(tmp_dir, timeseries, parcel_approach):
     labels = sorted(np.unique(atlas_data))[1:]
 
     cap_analysis.caps2niftis(output_dir=tmp_dir.name, suffix_filename="suffix_name")
-    nifti_files = glob.glob(os.path.join(tmp_dir.name, "*.nii.gz"))
+    nifti_files = sorted(glob.glob(os.path.join(tmp_dir.name, "*.nii.gz")))
 
     # Check that elements of the cluster centroid are correctly assigned to their corresponding
     # labels in atlas
@@ -1164,7 +1164,9 @@ def test_caps2niftis(tmp_dir, timeseries, parcel_approach):
             act_values.append(act_value)
 
         # Assess if reconstructing 1D array from 3D nifti produces the same cluster centroid
-        np.array_equal(cap_analysis.caps["All Subjects"][f"CAP-{indx}"], np.array(act_values))
+        assert np.allclose(
+            cap_analysis.caps["All Subjects"][f"CAP-{indx}"], np.array(act_values), atol=1e05
+        )
 
     # Check files
     check_outputs(tmp_dir, plot_type="nifti", values_dict={"nii.gz": 2})

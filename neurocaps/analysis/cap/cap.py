@@ -1,6 +1,7 @@
 """Contains the CAP class for performing co-activation patterns analyses"""
 
 import itertools
+from copy import deepcopy
 from typing import Any, Callable, Literal, Optional, Union
 from typing_extensions import Self
 
@@ -249,6 +250,7 @@ class CAP(CAPGetter):
                 assert groups[group_name], f"{group_name} has zero subject IDs."
 
             # Convert ids to strings
+            groups = deepcopy(groups)
             for group in set(groups):
                 groups[group] = [
                     str(subj_id) if not isinstance(subj_id, str) else subj_id
@@ -1175,7 +1177,7 @@ class CAP(CAPGetter):
         io_utils.makedir(output_dir)
 
         plot_output_format = io_utils.validate_plot_output_format(
-            output_dir, plot_output_format, "get_caps"
+            output_dir, plot_output_format, "caps2plot"
         )
 
         # Check inputs for plot_options and visual_scope

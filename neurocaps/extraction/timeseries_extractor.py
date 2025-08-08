@@ -1,6 +1,7 @@
 """Contains the TimeseriesExtractor class for extracting timeseries"""
 
 import os
+from copy import deepcopy
 from functools import lru_cache
 from multiprocessing.queues import Queue
 from typing import Any, Literal, Optional, Union
@@ -334,8 +335,10 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
             "use_confounds": use_confounds,
             "confound_names": confound_names,
             "n_acompcor_separate": n_acompcor_separate,
-            "dummy_scans": dummy_scans.copy() if isinstance(dummy_scans, dict) else dummy_scans,
-            "fd_threshold": fd_threshold.copy() if isinstance(fd_threshold, dict) else fd_threshold,
+            "dummy_scans": deepcopy(dummy_scans) if isinstance(dummy_scans, dict) else dummy_scans,
+            "fd_threshold": (
+                deepcopy(fd_threshold) if isinstance(fd_threshold, dict) else fd_threshold
+            ),
             "dtype": dtype,
         }
 

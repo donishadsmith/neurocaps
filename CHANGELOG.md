@@ -15,8 +15,10 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
-## [0.35.0] - Unreleased
+## [0.35.0] - 8/08/2025
+- JOSS Version
 ### 🐛 Fixes
+- Ensures mutability by using deepcopy in `CAP` and `TimeseriesExtractor` to not bypass validation
 - Accounts for case when duration is coded as 0 in event timing files as 0 in BIDS can indicate
 impulse.
 

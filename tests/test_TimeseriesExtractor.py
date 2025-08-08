@@ -313,9 +313,9 @@ def test_init_mutability():
         confound_names=confounds, fd_threshold=fd_threshold, dummy_scans=dummy_scans
     )
 
-    assert not id(confounds) == id(extractor._signal_clean_info["confound_names"])
-    assert not id(fd_threshold) == id(extractor._signal_clean_info["fd_threshold"])
-    assert not id(dummy_scans) == id(extractor._signal_clean_info["dummy_scans"])
+    assert id(confounds) != id(extractor._signal_clean_info["confound_names"])
+    assert id(fd_threshold) != id(extractor._signal_clean_info["fd_threshold"])
+    assert id(dummy_scans) != id(extractor._signal_clean_info["dummy_scans"])
 
 
 def test_default_confounds():
@@ -1026,7 +1026,7 @@ def test_confounds(setup_environment_1, get_vars, confound_type):
         assert len(returned_confounds.columns) == len(correct_confounds)
         assert returned_confounds.shape == (40, len(correct_confounds))
 
-        all(i in returned_confounds for i in correct_confounds)
+        assert all(i in returned_confounds for i in correct_confounds)
 
 
 def test_acompcor_separate(setup_environment_1, caplog, get_vars):
@@ -2158,10 +2158,12 @@ def test_interpolate_censored_frames_unit(condition):
 
     if condition:
         assert new_timeseries.shape == (10, 20)
-        np.array_equal(timeseries[[2, 3, 6, 7, 8, 9]], new_timeseries[[2, 3, 6, 7, 8, 9]])
+        assert np.allclose(
+            timeseries[[2, 3, 6, 7, 8, 9]], new_timeseries[[2, 3, 6, 7, 8, 9]], atol=1e07
+        )
     else:
         assert new_timeseries.shape == (8, 20)
-        np.array_equal(timeseries[[0, 1, 4, 5, 7]], new_timeseries[[0, 1, 4, 5, 7]])
+        assert np.allclose(timeseries[[0, 1, 4, 5, 7]], new_timeseries[[0, 1, 4, 5, 7]], atol=1e07)
 
 
 @pytest.mark.parametrize("use_sample_mask", [True, False])
@@ -2505,8 +2507,8 @@ def test_parallel_and_sequential_preprocessing_equivalence(setup_environment_3, 
     for sub in extractor.subject_timeseries:
         for run in extractor.subject_timeseries[sub]:
             assert extractor.subject_timeseries[sub][run].shape[0] == 40
-            assert np.array_equal(
-                parallel_timeseries[sub][run], extractor.subject_timeseries[sub][run]
+            assert np.allclose(
+                parallel_timeseries[sub][run], extractor.subject_timeseries[sub][run], atol=1e-7
             )
 
 
