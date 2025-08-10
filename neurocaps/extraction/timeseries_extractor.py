@@ -605,6 +605,8 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
 
             start_scan = math.floor(onset / tr)
             end_scan = math.ceil((onset + duration) / tr)
+            # Accounts for 0 "duration" (impulse)
+            end_scan = end_scan + 1 if onset_scan == end_scan else end_scan
             scans.extend(range(onset_scan, end_scan))
             scans = sorted(list(set(scans)))
 
