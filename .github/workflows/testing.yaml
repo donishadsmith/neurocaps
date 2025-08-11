@@ -27,6 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           submodules: 'recursive'
       - uses: actions/setup-python@v5
         with:
@@ -51,7 +52,7 @@ jobs:
         with:
           options: -screen 0 1600x1200x24
           run: |
-            pytest --cov=neurocaps
+            pytest --cov neurocaps
 
       - name: Run test without coverage for Ubuntu from Python 3.9 to 3.11
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-ver != '3.12' }}
