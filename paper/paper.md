@@ -16,7 +16,7 @@ authors:
 
 affiliations:
   - index: 1
-    name: Department of Psychology, Florida International University
+    name: Department of Psychology, Florida International University, Miami, Florida, United States of America
 
 bibliography: paper.bib
 ---
