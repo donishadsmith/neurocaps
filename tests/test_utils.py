@@ -87,7 +87,7 @@ def test_fetch_preset_parcel_approach():
 
 
 @pytest.mark.skipif(
-    os.getenv("GITHUB_ACTIONS") and sys.platform != "linux" and sys.version_info[:2] == (3, 12),
+    os.getenv("GITHUB_ACTIONS") and sys.platform != "linux" and sys.version_info[:2] != (3, 12),
     reason="Restrict file fetching in Github Actions testing to specific version and platform",
 )
 def test_fetch_files_from_osf(tmp_dir):
