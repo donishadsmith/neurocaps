@@ -202,6 +202,22 @@ CAP-2:
 
 **Note**: For information about logging, refer to [NeuroCAPs' Logging Guide](https://neurocaps.readthedocs.io/en/stable/user_guide/logging.html).
 
+## Citing
+If you would like to cite NeuroCAPs, you can use:
+
+```
+   Smith, D., (2025). NeuroCAPs: A Python Package for Performing Co-Activation Patterns Analyses on Resting-State and Task-Based fMRI Data. Journal of Open Source Software, 10(112), 8196, https://doi.org/10.21105/joss.08196
+```
+
+## Reporting Issues
+Bug reports, feature requests, and documentation enhancements can be reported using the
+templates offered when creating a new issue in the
+[issue tracker](https://github.com/donishadsmith/neurocaps/issues).
+
+## Contributing
+Please refer the [contributing guidelines](https://neurocaps.readthedocs.io/en/stable/contributing.html)
+on how to contribute to NeuroCAPs.
+
 ## Acknowledgements
 NeuroCAPs relies on several popular data processing, machine learning, neuroimaging, and visualization
 [packages](https://neurocaps.readthedocs.io/en/stable/#dependencies).
@@ -213,15 +229,6 @@ patterns implemented in other neuroimaging Python packages, specifically:
 among several popular dynamic functionality methods.
 - 62442katieb's [IDConn](https://github.com/62442katieb/IDConn), a pipeline for assessing individual
 differences in resting-state or task-based functional connectivity.
-
-## Reporting Issues
-Bug reports, feature requests, and documentation enhancements can be reported using the
-templates offered when creating a new issue in the
-[issue tracker](https://github.com/donishadsmith/neurocaps/issues).
-
-## Contributing
-Please refer the [contributing guidelines](https://neurocaps.readthedocs.io/en/stable/contributing.html)
-on how to contribute to NeuroCAPs.
 
 ## References
 [^1]: Liu, X., Chang, C., & Duyn, J. H. (2013). Decomposition of spontaneous brain activity into

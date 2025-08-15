@@ -1,4 +1,4 @@
-import os, shutil
+import os, shutil, sys
 
 import pandas as pd
 import pytest
@@ -41,7 +41,7 @@ def copy_test_data(tmp_dir):
 
 def check_lateralized_regions(parcel_approach):
     """
-    Checks 4S lateralized (Vis and SomSot) and non-lateralized regions (Cerebellum).
+    Checks 4S lateralized (Vis and SomMot) and non-lateralized regions (Cerebellum).
     For 156 parcel variant.
     """
     # Check the regions mapping for lateralized case
@@ -66,7 +66,7 @@ def check_structure(parcel_approach):
     try:
         process_custom(parcel_approach, caller="test")
     except:
-        pytest.raises("Custom parcellation does not have the correct structure.")
+        pytest.fail("Custom parcellation does not have the correct structure.")
 
 
 def test_fetch_preset_parcel_approach():
@@ -84,6 +84,21 @@ def test_fetch_preset_parcel_approach():
     assert parcel_approach["Custom"]["metadata"]["name"] == "4S"
     assert parcel_approach["Custom"]["metadata"]["n_nodes"] == 156
     assert parcel_approach["Custom"]["metadata"]["n_regions"] == 7
+
+
+@pytest.mark.skipif(
+    os.getenv("GITHUB_ACTIONS") and sys.platform != "linux" and sys.version_info[:2] == (3, 12),
+    reason="Restrict file fetching in Github Actions testing to specific version and platform",
+)
+def test_fetch_files_from_osf(tmp_dir):
+    """
+    Tests the fetch from OSF.
+    """
+    from neurocaps.utils.datasets._fetch import fetch_files_from_osf
+
+    filename = [os.path.join(tmp_dir.name, "mock.json")]
+    fetch_files_from_osf(filenames=filename, download_mock=True)
+    assert "mock.json" in os.listdir(tmp_dir.name)
 
 
 def test_generate_custom_parcel_approach(copy_test_data, create_empty_nifti_file):
@@ -174,9 +189,11 @@ def test_PlotDefaults():
 
 
 @pytest.mark.parametrize("n_cores", [None, 2])
-def test_simulate_bids_dataset(n_cores):
+def test_simulate_bids_dataset(tmp_dir, n_cores):
     """Tests if ``simulate_bids_dataset`` is compatible with ``TimeseriesExtractor``."""
-    bids_root = simulate_bids_dataset(n_subs=2, n_cores=n_cores)
+    bids_root = simulate_bids_dataset(
+        n_subs=2, n_cores=n_cores, output_dir=os.path.join(f"{tmp_dir.name}", "simulated_bids_dir")
+    )
 
     extractor = TimeseriesExtractor()
     extractor.get_bold(bids_dir=bids_root, task="rest")

@@ -1051,7 +1051,6 @@ def test_acompcor_separate(setup_environment_1, caplog, get_vars):
             bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name, tr=1.2
         )
 
-    # Possibly change language when only 1 component used
     msg1 = (
         "Since `n_acompcor_separate` has been specified, acompcor components in `confound_names` will be "
         "disregarded and replaced with the first 1 components of the white matter and cerebrospinal fluid masks "

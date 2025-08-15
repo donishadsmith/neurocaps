@@ -32,7 +32,7 @@ def fetch_preset_parcel_approach(
 
     n_nodes: :obj:`int` or :obj:`None`, default=None
         Currently only relevant to "4S". Options for the "4S" are: 156, 256, 356,
-        456, 556, 656, 757, 956, 1056. Defaults to 456 if None.
+        456, 556, 656, 756, 956, 1056. Defaults to 456 if None.
 
         .. note::
            The 856 node version of "4S" is currently unavailable.

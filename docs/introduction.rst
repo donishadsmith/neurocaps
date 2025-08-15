@@ -46,9 +46,11 @@ by applying k-means clustering on BOLD timeseries data [1]_.
 
 Citing
 ------
+If you would like to cite NeuroCAPs, you can use:
+
 ::
 
-  Smith, D. (2024). NeuroCAPs. Zenodo. https://doi.org/10.5281/zenodo.16783258
+   Smith, D., (2025). NeuroCAPs: A Python Package for Performing Co-Activation Patterns Analyses on Resting-State and Task-Based fMRI Data. Journal of Open Source Software, 10(112), 8196, https://doi.org/10.21105/joss.08196
 
 Features
 --------

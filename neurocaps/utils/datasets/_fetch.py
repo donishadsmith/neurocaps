@@ -72,7 +72,8 @@ def check_n_nodes(name: str, n_nodes: Union[int, None]) -> Union[int, None]:
         else:
             raise ValueError(
                 f"{n_nodes} is not valid for the {name} parcellation. "
-                f"Only the following are supported: {list_to_str(list(ATLAS_N_NODES.get(name)))}."
+                "Only the following are supported: "
+                f"{list_to_str(list(ATLAS_N_NODES[name]['valid_n']))}."
             )
 
     return n_nodes
@@ -88,11 +89,14 @@ def get_preset_filenames(name: str, n_nodes: int = None) -> tuple[str, str]:
     return json_filename, nifti_filename
 
 
-def get_osf_file_url(filename: str) -> str:
-    """Retrieves the url for a specific file."""
-    base_filename = os.path.basename(filename)
+def get_osf_file_url(filename: str, download_mock: bool = True) -> str:
+    """Retrieves the url for a specific file or a mock file."""
+    if not download_mock:
+        base_filename = os.path.basename(filename)
 
-    return r"https://osf.io/{}/download".format(OSF_FILE_URLS[base_filename])
+        return r"https://osf.io/{}/download".format(OSF_FILE_URLS[base_filename])
+    else:
+        return "https://osf.io/p8gsb/download"
 
 
 def fetch_custom_parcel_approach(
@@ -125,6 +129,7 @@ def fetch_files_from_osf(
     overwrite: bool = False,
     resume: bool = True,
     verbose: Union[bool, int] = 1,
+    download_mock: bool = False,
 ) -> None:
     """
     Fetches the files from OSF storage.
@@ -149,7 +154,7 @@ def fetch_files_from_osf(
     for data_dir, base_filename in download_contents:
         opts["move"] = base_filename
         # (file_path, url, opts)
-        files = [(base_filename, get_osf_file_url(base_filename), opts)]
+        files = [(base_filename, get_osf_file_url(base_filename, download_mock), opts)]
         # Will create data_dir path
         _ = _fetch_files(
             data_dir=data_dir, files=files, resume=resume, verbose=verbose, session=None
