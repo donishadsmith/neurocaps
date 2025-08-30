@@ -35,7 +35,7 @@ pip install neurocaps[windows]
 ### Development Version
 
 ```bash
-git clone https://github.com/donishadsmith/neurocaps/
+git clone --depth 1 https://github.com/donishadsmith/neurocaps/
 cd neurocaps
 pip install -e .
 
