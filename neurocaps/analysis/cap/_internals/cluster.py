@@ -374,7 +374,7 @@ def save_cluster_performance_figure(
 
 
 def compute_variance_explained(
-    concatenated_timeseries_dict: dict[str, NDArray], kmeans: dict[str, KMeans]
+    concatenated_timeseries_dict: dict[str, NDArray], kmeans_dict: dict[str, KMeans]
 ) -> dict[str, float]:
     """Computes variance explained in the concatenated timeseries by clustering."""
     variance_explained_dict = {}
@@ -382,7 +382,7 @@ def compute_variance_explained(
     for group_name in concatenated_timeseries_dict:
         mean_vec = np.mean(concatenated_timeseries_dict[group_name], axis=0)
         total_var = np.sum((concatenated_timeseries_dict[group_name] - mean_vec) ** 2)
-        explained_var = 1 - (kmeans[group_name].inertia_ / total_var)
+        explained_var = 1 - (kmeans_dict[group_name].inertia_ / total_var)
         variance_explained_dict[group_name] = explained_var
 
     return variance_explained_dict
