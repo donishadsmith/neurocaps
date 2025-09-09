@@ -24,37 +24,6 @@ from neurocaps.utils._plot_utils import PlotFuncs
 LG = setup_logger(__name__)
 
 
-def perform_kmeans(
-    n_cluster: int, configs: dict[str, Any], concatenated_timeseries: NDArray, method: str
-) -> Union[KMeans, tuple[dict[int, float], dict[int, KMeans]]]:
-    """
-    Uses scikit-learn to perform k-means clustering on concatenated timeseries data in both
-    sequential and parallel contexts. Also uses scikit-learn to provide cluster performance metrics.
-    """
-    model = KMeans(n_clusters=n_cluster, **configs, verbose=0).fit(concatenated_timeseries)
-
-    # Only return model when no cluster selection chosen
-    if method is None:
-        return model
-
-    cluster_labels = model.labels_
-    if method == "davies_bouldin":
-        performance = {n_cluster: davies_bouldin_score(concatenated_timeseries, cluster_labels)}
-    elif method == "elbow":
-        performance = {n_cluster: model.inertia_}
-    elif method == "silhouette":
-        performance = {
-            n_cluster: silhouette_score(concatenated_timeseries, cluster_labels, metric="euclidean")
-        }
-    else:
-        # Variance Ratio
-        performance = {n_cluster: calinski_harabasz_score(concatenated_timeseries, cluster_labels)}
-
-    model_dict = {n_cluster: model}
-
-    return performance, model_dict
-
-
 def setup_groups(
     subject_timeseries: SubjectTimeseries, groups_dict: Union[dict[str, str], None]
 ) -> tuple[dict[str, str], dict[str, str]]:
@@ -197,6 +166,37 @@ def get_runs(
     miss_runs = list(set(requested_runs) - set(runs)) if requested_runs else None
 
     return runs, miss_runs
+
+
+def perform_kmeans(
+    n_cluster: int, configs: dict[str, Any], concatenated_timeseries: NDArray, method: str
+) -> Union[KMeans, tuple[dict[int, float], dict[int, KMeans]]]:
+    """
+    Uses scikit-learn to perform k-means clustering on concatenated timeseries data in both
+    sequential and parallel contexts. Also uses scikit-learn to provide cluster performance metrics.
+    """
+    model = KMeans(n_clusters=n_cluster, **configs, verbose=0).fit(concatenated_timeseries)
+
+    # Only return model when no cluster selection chosen
+    if method is None:
+        return model
+
+    cluster_labels = model.labels_
+    if method == "davies_bouldin":
+        performance = {n_cluster: davies_bouldin_score(concatenated_timeseries, cluster_labels)}
+    elif method == "elbow":
+        performance = {n_cluster: model.inertia_}
+    elif method == "silhouette":
+        performance = {
+            n_cluster: silhouette_score(concatenated_timeseries, cluster_labels, metric="euclidean")
+        }
+    else:
+        # Variance Ratio
+        performance = {n_cluster: calinski_harabasz_score(concatenated_timeseries, cluster_labels)}
+
+    model_dict = {n_cluster: model}
+
+    return performance, model_dict
 
 
 def select_optimal_clusters(
