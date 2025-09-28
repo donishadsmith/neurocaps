@@ -9,11 +9,11 @@ LG = setup_logger(__name__)
 
 
 def resolve_kwargs(defaults: dict[str, Any], **kwargs) -> dict[str, Any]:
-    plot_dict = deepcopy(defaults)
-    plot_dict.update({k: v for k, v in kwargs.items() if k in plot_dict})
+    valid_kwargs = deepcopy(defaults)
+    valid_kwargs.update({k: v for k, v in kwargs.items() if k in valid_kwargs})
 
     if kwargs:
-        invalid_kwargs = {k: v for k, v in kwargs.items() if k not in plot_dict}
+        invalid_kwargs = {k: v for k, v in kwargs.items() if k not in valid_kwargs}
         if invalid_kwargs:
             LG.info(
                 f"The following invalid kwargs arguments used and will be ignored: {invalid_kwargs}"
