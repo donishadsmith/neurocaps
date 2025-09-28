@@ -19,7 +19,7 @@ def resolve_kwargs(defaults: dict[str, Any], **kwargs) -> dict[str, Any]:
                 f"The following invalid kwargs arguments used and will be ignored: {invalid_kwargs}"
             )
 
-    return plot_dict
+    return valid_kwargs
 
 
 def list_to_str(str_list: list[str]) -> None:
