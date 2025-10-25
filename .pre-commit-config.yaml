@@ -56,6 +56,6 @@ repos:
         description: Uses grep to ensure all attributes in the TimeseriesExtractor and CAP classes
                      have the underscore prefix. Only exception is ``return_cap_labels()`` in the
                      CAP class.
-        types: [python]
         entry: python hooks/grep.py
+        pass_filenames: false
         language: system
