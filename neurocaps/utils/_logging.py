@@ -68,7 +68,7 @@ def setup_logger(
     if not default_handlers and not (
         parallel_log_config or (logger.name == _PARALLEL_MODULE and top_level)
     ):
-        logger = add_handler(logger)
+        logger = add_default_handler(logger)
 
     return logger
 
@@ -89,8 +89,8 @@ def setup_queuehandler(logger: logging.Logger, parallel_log_config: dict[str, Un
     return logger
 
 
-def add_handler(logger: logging.Logger, format: Union[str, None] = None):
-    """Add and format handler."""
+def add_default_handler(logger: logging.Logger, format: Union[str, None] = None):
+    """Add a default handler and a format."""
     # Safeguard; ensure a clean state for "extract_timeseries" since it is used in parallel and
     # sequential contexts
     if logger.name == _PARALLEL_MODULE:
