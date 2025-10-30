@@ -120,11 +120,7 @@ def check_ext(
     filename: str, supported_ext: list[str], return_ext: bool = False
 ) -> Union[str, None]:
     """Checks if a file has a valid extension."""
-    if filename.endswith(".gz"):
-        _, ext = os.path.splitext(filename.removesuffix(".gz"))
-        ext += ".gz"
-    else:
-        _, ext = os.path.splitext(filename)
+    ext = f".{filename.partition('.')[-1]}"
 
     # Dont end with periods
     if ext not in supported_ext:
