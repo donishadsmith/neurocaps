@@ -17,6 +17,7 @@ from neurocaps.exceptions import BIDSQueryError
 from neurocaps.typing import ParcelConfig, ParcelApproach, SubjectTimeseries
 from neurocaps.utils import PlotDefaults
 from neurocaps.utils import _io as io_utils
+from neurocaps.utils._decorators import check_required_attributes
 from neurocaps.utils._helpers import list_to_str, resolve_kwargs
 from neurocaps.utils._logging import setup_logger
 from neurocaps.utils._parcellation_validation import check_parcel_approach
@@ -822,17 +823,7 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
             if qc:
                 self._qc.update(qc)
 
-    @staticmethod
-    def _raise_error(attr_name: str, msg: str) -> None:
-        """Raises error if ``_subject_timeseries`` pr ``self._qc`` is not available."""
-        if attr_name == "_subject_timeseries":
-            raise AttributeError(
-                f"{msg} since `self.subject_timeseries` is None, either run `self.get_bold()` or "
-                "assign a valid timeseries dictionary to `self.subject_timeseries`."
-            )
-        else:
-            raise AttributeError(f"{msg} since `self.qc` is None, run `self.get_bold()` first.")
-
+    @check_required_attributes(required_attrs=["_subject_timeseries"])
     def timeseries_to_pickle(self, output_dir: str, filename: Optional[str] = None) -> Self:
         """
         Save the Extracted Subject Timeseries.
@@ -853,13 +844,14 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
         self
         """
         save_filename = self._create_output_filename(
-            output_dir, filename, attr_name="_subject_timeseries", caller="timeseries_to_pickle"
+            output_dir, filename, caller="timeseries_to_pickle"
         )
 
         io_utils.serialize(self._subject_timeseries, output_dir, save_filename, use_joblib=True)
 
         return self
 
+    @check_required_attributes(required_attrs=["_qc"])
     def report_qc(
         self,
         output_dir: Optional[str] = None,
@@ -926,10 +918,9 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
         represent the average length and population standard deviation of consecutive frames flagged
         for high-motion frames, respectively.
         """
-        save_filename = self._create_output_filename(
-            output_dir, filename, attr_name="_qc", caller="report_qc"
-        )
         assert self._qc, "No quality control information to report."
+
+        save_filename = self._create_output_filename(output_dir, filename, caller="report_qc")
 
         # Build df
         df = DataFrame(
@@ -966,19 +957,9 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
             return df
 
     def _create_output_filename(
-        self, output_dir: Union[str, None], filename: Union[str, None], attr_name: str, caller: str
+        self, output_dir: Union[str, None], filename: Union[str, None], caller: str
     ) -> Union[str, None]:
-        """Checks if the required attribute is present then creates the output filename."""
-        if not hasattr(self, attr_name):
-            self._raise_error(
-                attr_name,
-                msg=(
-                    "Cannot save pickle file"
-                    if attr_name == "_subject_timeseries"
-                    else "Cannot save csv file"
-                ),
-            )
-
+        """Creates the output filename for ``report_qc`` and ``timeseries_to_pickle``."""
         if not output_dir:
             return None
         else:
@@ -995,6 +976,7 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
 
         return save_filename
 
+    @check_required_attributes(required_attrs=["_subject_timeseries"])
     def visualize_bold(
         self,
         subj_id: Union[int, str],
@@ -1061,10 +1043,6 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
         **Parcellation Approach**: the "nodes" and "regions" subkeys are required in
         ``parcel_approach``.
         """
-
-        if not hasattr(self, "_subject_timeseries"):
-            self._raise_error(attr_name="_subject_timeseries", msg="Cannot plot bold data")
-
         subj_id = str(subj_id).removeprefix("sub-")
         if subj_id not in self._subject_timeseries:
             raise KeyError(f"Subject {subj_id} is not available in `self._subject_timeseries`.")

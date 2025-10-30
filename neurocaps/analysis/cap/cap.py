@@ -17,6 +17,7 @@ from ._internals.getter import CAPGetter
 from neurocaps.typing import ParcelConfig, ParcelApproach, SubjectTimeseries
 from neurocaps.utils import PlotDefaults
 from neurocaps.utils import _io as io_utils
+from neurocaps.utils._decorators import check_required_attributes
 from neurocaps.utils._helpers import list_to_str, resolve_kwargs
 from neurocaps.utils._logging import setup_logger
 from neurocaps.utils._parcellation_validation import check_parcel_approach, get_parc_name
@@ -528,29 +529,7 @@ class CAP(CAPGetter):
         """
         self._groups = None
 
-    @staticmethod
-    def _raise_error(attr_name: str) -> None:
-        """Raises an attribute error if a specific attribute is not present."""
-        if attr_name == "_caps":
-            raise AttributeError(
-                "Cannot plot caps since `self.caps` is None. Run `self.get_caps()` first."
-            )
-        elif attr_name == "_parcel_approach":
-            raise AttributeError(
-                "`self.parcel_approach` is None. Add `parcel_approach` using "
-                "`self.parcel_approach=parcel_approach` to use this function."
-            )
-        else:
-            raise AttributeError(
-                "Cannot calculate metrics since `self.kmeans` is None. Run `self.get_caps()` first."
-            )
-
-    def _check_required_attrs(self, attr_names: list[str]) -> None:
-        """Checks if certain attributes, needed for a specific function, are present."""
-        for attr_name in attr_names:
-            if getattr(self, attr_name, None) is None:
-                self._raise_error(attr_name)
-
+    @check_required_attributes(required_attrs=["_kmeans"])
     def calculate_metrics(
         self,
         subject_timeseries: Union[SubjectTimeseries, str],
@@ -835,8 +814,6 @@ class CAP(CAPGetter):
         transition in schizophrenia. NeuroImage, 237, 118193.
         https://doi.org/10.1016/j.neuroimage.2021.118193
         """
-        self._check_required_attrs(["_kmeans"])
-
         io_utils.issue_file_warning("prefix_filename", prefix_filename, output_dir)
         io_utils.makedir(output_dir)
 
@@ -916,6 +893,7 @@ class CAP(CAPGetter):
         if return_df:
             return df_dict
 
+    @check_required_attributes(required_attrs=["_kmeans"])
     def return_cap_labels(
         self,
         subject_timeseries: Union[SubjectTimeseries, str],
@@ -1012,8 +990,6 @@ class CAP(CAPGetter):
                 Dictionary mapping each subject to their run IDs and a 1D numpy array containing
                 the predicted CAP for each frame (TR).
         """
-        self._check_required_attrs(["_kmeans"])
-
         subject_timeseries = io_utils.get_obj(subject_timeseries, needs_deepcopy=False)
 
         for subj_id, group in self._subject_table.items():
@@ -1063,6 +1039,7 @@ class CAP(CAPGetter):
 
         return predicted_subject_timeseries
 
+    @check_required_attributes(["_parcel_approach", "_caps"])
     def caps2plot(
         self,
         plot_options: Union[
@@ -1162,8 +1139,6 @@ class CAP(CAPGetter):
         ``self.outer_products``, the final values stored are associated with the last
         string in the ``visual_scope`` list.
         """
-        self._check_required_attrs(["_parcel_approach", "_caps"])
-
         # Check if parcellation_approach is custom
         if "Custom" in self._parcel_approach and any(
             key not in self._parcel_approach["Custom"] for key in ["nodes", "regions"]
@@ -1243,6 +1218,7 @@ class CAP(CAPGetter):
 
         return self
 
+    @check_required_attributes(["_caps"])
     def caps2corr(
         self,
         method: str = "pearson",
@@ -1318,8 +1294,6 @@ class CAP(CAPGetter):
         p-value in parenthesis with a single asterisk if < 0.05, a double asterisk if < 0.01, and a
         triple asterisk < 0.001.
         """
-        self._check_required_attrs(["_caps"])
-
         assert method in [
             "spearman",
             "pearson",
@@ -1372,6 +1346,7 @@ class CAP(CAPGetter):
         if return_df:
             return corr_dict
 
+    @check_required_attributes(["_parcel_approach", "_caps"])
     def caps2niftis(
         self,
         output_dir: str,
@@ -1432,8 +1407,6 @@ class CAP(CAPGetter):
         sorted labels are iterated over to map each element of the CAP cluster centroid onto the
         corresponding non-zero label IDs in the parcellation.
         """
-        self._check_required_attrs(["_parcel_approach", "_caps"])
-
         knn_dict = self._validate_knn_dict(knn_dict)
 
         io_utils.makedir(output_dir)
@@ -1514,6 +1487,7 @@ class CAP(CAPGetter):
 
         return knn_dict
 
+    @check_required_attributes(["_parcel_approach", "_caps"])
     def caps2surf(
         self,
         fslr_density: Literal["32k", "164k"] = "32k",
@@ -1617,9 +1591,6 @@ class CAP(CAPGetter):
         **Space**: Additionally, this funcition assumes that the parcellation map is in MNI
         volumetric space.
         """
-        check_params = ["_parcel_approach", "_caps"]
-        self._check_required_attrs(check_params)
-
         knn_dict = self._validate_knn_dict(knn_dict)
 
         io_utils.issue_file_warning("suffix_filename", suffix_filename, output_dir)
@@ -1666,6 +1637,7 @@ class CAP(CAPGetter):
 
         return self
 
+    @check_required_attributes(["_parcel_approach", "_caps"])
     def caps2radar(
         self,
         use_scatterpolar: bool = False,
@@ -1854,8 +1826,6 @@ class CAP(CAPGetter):
         pre-registered replication analysis of the Hamburg City Health Study. Imaging Neuroscience,
         2, 1–17. https://doi.org/10.1162/imag_a_00122
         """
-        self._check_required_attrs(["_parcel_approach", "_caps"])
-
         io_utils.issue_file_warning("suffix_filename", suffix_filename, output_dir)
         io_utils.makedir(output_dir)
 

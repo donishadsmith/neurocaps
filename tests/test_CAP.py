@@ -1,6 +1,6 @@
-import copy, glob, math, os, re, sys
+import copy, glob, math, os, sys
 
-import nibabel as nib, nilearn, numpy as np, pandas as pd, pytest
+import nibabel as nib, numpy as np, pandas as pd, pytest
 
 from kneed import KneeLocator
 
@@ -1297,53 +1297,6 @@ def test_method_chaining(tmp_dir):
     assert cap_analysis.cosine_similarity
 
     check_outputs(tmp_dir, plot_type="nifti", values_dict={"nii.gz": 2})
-
-
-def test_check_raise_error():
-    """
-    Tests that the proper error messages are being produced.
-    """
-    error_msg = {
-        "_caps": "Cannot plot caps since `self.caps` is None. Run `self.get_caps()` first.",
-        "_parcel_approach": (
-            "`self.parcel_approach` is None. Add `parcel_approach` using "
-            "`self.parcel_approach=parcel_approach` to use this function."
-        ),
-        "_kmeans": (
-            "Cannot calculate metrics since `self.kmeans` is None. Run " "`self.get_caps()` first."
-        ),
-    }
-
-    for i in ["_caps", "_parcel_approach", "_kmeans"]:
-        with pytest.raises(AttributeError, match=re.escape(error_msg[i])):
-            CAP._raise_error(i)
-
-
-def test_raise_error_methods(data_dir, tmp_dir):
-    """
-    Tests that the proper error messages are being produced when using functions.
-    """
-    error_msg = {
-        "_caps": ("Cannot plot caps since `self.caps` is None. Run `self.get_caps()` first."),
-        "_parcel_approach": (
-            "`self.parcel_approach` is None. Add `parcel_approach` using "
-            "`self.parcel_approach=parcel_approach` to use this function."
-        ),
-        "_kmeans": (
-            "Cannot calculate metrics since `self.kmeans` is None. Run `self.get_caps()` first."
-        ),
-    }
-
-    cap_analysis = CAP()
-
-    with pytest.raises(AttributeError, match=re.escape(error_msg["_caps"])):
-        cap_analysis.caps2corr()
-
-    with pytest.raises(AttributeError, match=re.escape(error_msg["_parcel_approach"])):
-        cap_analysis.caps2plot()
-
-    with pytest.raises(AttributeError, match=re.escape(error_msg["_kmeans"])):
-        cap_analysis.calculate_metrics(os.path.join(tmp_dir.name, "data", "sample_timeseries.pkl"))
 
 
 def test_compute_cosine_similarity():

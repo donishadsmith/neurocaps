@@ -62,6 +62,7 @@ def logger():
 def use_agg_backend():
     """Changes backend for matplotlib to prevent random tcl errors."""
     matplotlib.use("Agg")
+
     return
 
 

@@ -501,17 +501,6 @@ def test_space_setter():
     assert extractor.space == "New Space"
 
 
-def test_check_raise_error():
-    """Tests error message is properly raised by an internal function."""
-    msg = (
-        f"Cannot do x since `self.subject_timeseries` is None, either run "
-        "`self.get_bold()` or assign a valid timeseries dictionary to `self.subject_timeseries`."
-    )
-
-    with pytest.raises(AttributeError, match=re.escape(msg)):
-        TimeseriesExtractor._raise_error(attr_name="_subject_timeseries", msg="Cannot do x")
-
-
 # Check basic extraction across all parcel approaches
 @pytest.mark.parametrize(
     "parcel_approach, use_confounds, name",
@@ -637,11 +626,6 @@ def test_missing_confound_messages(setup_environment_1, get_vars, caplog):
 def test_report_qc(setup_environment_1, tmp_dir, get_vars):
     """Smoke test for `report_qc` to ensure it returns a dataframe and saves."""
     extractor = TimeseriesExtractor(fd_threshold=1)
-
-    # Error due to not running get_bold first
-    msg = "Cannot save csv file since `self.qc` is None, run `self.get_bold()` first."
-    with pytest.raises(AttributeError, match=re.escape(msg)):
-        extractor.report_qc()
 
     # After run get bold, everything should run without error
     bids_dir, pipeline_name = get_vars
