@@ -52,7 +52,7 @@ def simulate_bids_dataset(
         Number of runs for each subject.
 
     n_volumes: :obj:`int`, default=100
-        Number of volumes for the NifTI images.
+        Number of volumes for the NIfTI images.
 
     task_name: :obj:`str`, default="rest"
         Name of task.
@@ -173,7 +173,7 @@ def save_dataset_description(dataset_description: dict, output_dir: str) -> None
     Save Dataset Description.
 
     Saves the dataset description dictionary as a file named "dataset_description.json" to the
-    directory specified by `output_dir`.
+    directory specified by ``output_dir``.
 
     .. versionadded:: 0.34.1
 
@@ -228,7 +228,7 @@ def _save_confound_data(df: pd.DataFrame, output_dir: str, filename: str) -> Non
 
 
 def _simulate_nifti_image(n_volumes: int) -> nib.Nifti1Image:
-    """Simulate a NifTI of shape (97, 115, 98, n_volumes)."""
+    """Simulate a NIfTI of shape (97, 115, 98, n_volumes)."""
     img_shape = (97, 115, 98, n_volumes)
     affine = _create_affine(diagonal_value=2, translate_vec=np.array([-96, -132, -78, 1]))
 
