@@ -230,15 +230,15 @@ def _save_confound_data(df: pd.DataFrame, output_dir: str, filename: str) -> Non
 def _simulate_nifti_image(n_volumes: int) -> nib.Nifti1Image:
     """Simulate a NIfTI of shape (97, 115, 98, n_volumes)."""
     img_shape = (97, 115, 98, n_volumes)
-    affine = _create_affine(diagonal_value=2, translate_vec=np.array([-96, -132, -78, 1]))
+    affine = _create_affine(xyz_diagonal_value=2, translate_vec=np.array([-96, -132, -78, 1]))
 
     return nib.Nifti1Image(np.random.rand(*img_shape), affine)
 
 
-def _create_affine(diagonal_value: int, translate_vec: NDArray) -> NDArray:
+def _create_affine(xyz_diagonal_value: int, translate_vec: NDArray) -> NDArray:
     """Generate an 4x4 affine matrix."""
     affine = np.zeros((4, 4))
-    np.fill_diagonal(affine[:3], diagonal_value)
+    np.fill_diagonal(affine[:3, :3], xyz_diagonal_value)
     affine[:, 3:] = translate_vec[:, np.newaxis]
 
     return affine
