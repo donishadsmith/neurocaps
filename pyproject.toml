@@ -66,7 +66,7 @@ dependencies = [
 
 [project.optional-dependencies]
 all = ["neurocaps[benchmark, demo, development, test, windows]"]
-benchmark = ["asv", "virtualenv<20.35.4"]
+benchmark = ["asv", "virtualenv<20.35.5"]
 demo = ["ipywidgets", "openneuro-py"]
 development = ["pre-commit"]
 test = ["pytest", "pytest-cov", "pytest-rerunfailures"]
