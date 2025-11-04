@@ -42,7 +42,6 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx.ext.linkcode",
-    "sphinx_rtd_theme",
     "myst_parser",
     "sphinx_copybutton",
     "sphinx_gallery.load_style",
