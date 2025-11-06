@@ -16,7 +16,7 @@ repos:
     hooks:
     -   id: black
         args: [--line-length=100]
-        files: '(^neurocaps/.*\.py$|.*^tests.*\.py$|^demos/.*\.ipynb$)'
+        files: '(^neurocaps/.*\.py$|^tests/.*\.py$|^demos/.*\.ipynb$)'
         additional_dependencies:
         - black[jupyter]
 
@@ -34,7 +34,7 @@ repos:
         - id: ruff
           # Ensure no print statements are in the codebase; only logging allowed
           entry: ruff check --select T201
-          files: '(^neurocaps/.*\.py$|.*^tests.*\.py$)'
+          files: '(^neurocaps/.*\.py$|^tests/.*\.py$)'
           exclude: '(test_TimeseriesExtractor.py$|test_CAP.py$)'
 
 -   repo: local
