@@ -23,7 +23,7 @@ def check_required_attributes(required_attrs: list[str]) -> Callable:
 
     def decorator(func: Callable) -> None:
         @functools.wraps(func)
-        def wrapper(self, *args: Any, **kwargs: Any) -> Callable:
+        def wrapper(self, *args: Any, **kwargs: Any) -> Any:
             for attr_name in required_attrs:
                 if getattr(self, attr_name, None) is None:
                     if attr_name == "_caps":
