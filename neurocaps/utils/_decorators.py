@@ -21,7 +21,7 @@ def check_required_attributes(required_attrs: list[str]) -> Callable:
         The decorated function.
     """
 
-    def decorator(func: Callable) -> None:
+    def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(self, *args: Any, **kwargs: Any) -> Any:
             for attr_name in required_attrs:
