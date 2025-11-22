@@ -15,6 +15,9 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.36.0] - 2025-11-22
+- Support for Python 3.13
+
 ## [0.35.2] - 2025-08-15
 ### 🐛 Fixes
 - Fixes an error message not providing valid number of nodes when fetching parcellation approaches.
