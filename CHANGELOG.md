@@ -16,7 +16,7 @@ improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
 ## [0.36.0] - 2025-11-22
-- Support for Python 3.13
+- Added support for Python 3.13
 
 ## [0.35.2] - 2025-08-15
 ### 🐛 Fixes
