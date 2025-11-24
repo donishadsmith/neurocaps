@@ -21,7 +21,7 @@ jobs:
         python-ver: ['3.9', '3.13']
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
           fetch-depth: 0
