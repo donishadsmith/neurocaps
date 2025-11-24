@@ -22,7 +22,7 @@ jobs:
 
     name: Python ${{ matrix.python-ver }} check on ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - uses: actions/setup-python@v6
