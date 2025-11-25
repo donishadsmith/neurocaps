@@ -30,40 +30,40 @@ def transition_matrix(
 
     Parameters
     ----------
-    trans_dict: :obj: `dict[str, pd.DataFrame]`
+    trans_dict : :obj: `dict[str, pd.DataFrame]`
         A dictionary mapping groups to pandas DataFrame containing the transition probabilities for
         each subject. This assumes the output from ``CAP.calculate_metrics`` is being used,
         specifically ``metrics_output["transition_probability"]``.
 
-    output_dir: :obj:`str` or :obj:`None`, default=None
+    output_dir : :obj:`str` or :obj:`None`, default=None
         Directory to save plots (if ``save_plots`` is True) and transition probability matrices
         DataFrames (if ``save_df`` is True) to. The directory will be created if it does not exist.
         Plots and dataframes will not be saved if None.
 
-    plot_output_format: :obj:`str`, default="png"
+    plot_output_format : :obj:`str`, default="png"
         The format to save plots in when ``output_dir`` is specified. Options are "png" or
         "pkl" (which can be further modified). Note that "pickle" is also accepted.
 
         .. versionchanged:: 0.33.0
             Replaces ``as_pickle`` and accepts a string value.
 
-    suffix_filename: :obj:`str` or :obj:`None`, default=None
+    suffix_filename : :obj:`str` or :obj:`None`, default=None
         Appended to the filename of each saved plot if ``output_dir`` is provided.
 
-    suffix_title: :obj:`str` or :obj:`None`, default=None
+    suffix_title : :obj:`str` or :obj:`None`, default=None
         Appended to the title of each plot.
 
-    save_plots: :obj:`bool`, default=True
+    save_plots : :obj:`bool`, default=True
         If True, plots are saves as png images. For this to be used, ``output_dir`` must be specified.
 
-    save_df: :obj:`bool`, default=False,
+    save_df : :obj:`bool`, default=False,
         If True, saves the transition probability matrix contained in the DataFrames as csv files.
         For this to be used, ``output_dir`` must be specified.
 
-    show_figs: :obj:`bool`, default=True
+    show_figs : :obj:`bool`, default=True
         Display figures.
 
-    return_df: :obj:`bool`, default=False
+    return_df : :obj:`bool`, default=False
         If True, returns a dictionary with a transition probability matrix for each group.
 
     **kwargs

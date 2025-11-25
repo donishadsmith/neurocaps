@@ -12,7 +12,7 @@ def check_required_attributes(required_attrs: list[str]) -> Callable:
 
     Parameters
     ----------
-    required_attr: :obj:`list[str]`
+    required_attr : :obj:`list[str]`
         A list of required class attributes.
 
     Returns

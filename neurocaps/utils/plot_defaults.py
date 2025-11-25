@@ -42,11 +42,11 @@ class PlotDefaults:
         dict[str, Any]
             Default parameters:
 
-            - dpi: :obj:`int`, default=300 --
+            - dpi : :obj:`int`, default=300 --
                 Dots per inch for the figure.
-            - figsize: :obj:`tuple`, default=(11, 5) --
+            - figsize : :obj:`tuple`, default=(11, 5) --
                 Figure size in inches (width, height).
-            - bbox_inches: :obj:`str`, default="tight" --
+            - bbox_inches : :obj:`str`, default="tight" --
                 Alters size of the whitespace in the saved image.
         """
         return {"dpi": 300, "figsize": (11, 5), "bbox_inches": "tight"}
@@ -64,13 +64,13 @@ class PlotDefaults:
         dict[str, Any]
             Default parameters:
 
-            - dpi: :obj:`int`, default=300 --
+            - dpi : :obj:`int`, default=300 --
                 Dots per inch for the figure.
-            - figsize: :obj:`tuple`, default=(8, 6) --
+            - figsize : :obj:`tuple`, default=(8, 6) --
                 Figure size in inches (width, height).
-            - bbox_inches: :obj:`str`, default="tight" --
+            - bbox_inches : :obj:`str`, default="tight" --
                 Alters size of the whitespace in the saved image.
-            - step: :obj:`int` or :obj:`None`, default=None --
+            - step : :obj:`int` or :obj:`None`, default=None --
                 Controls the progression of the x-axis in plots.
         """
         return {"dpi": 300, "figsize": (8, 6), "bbox_inches": "tight", "step": None}
@@ -87,80 +87,80 @@ class PlotDefaults:
 
             - General Figure Parameters:
 
-                - dpi: :obj:`int`, default=300 --
+                - dpi : :obj:`int`, default=300 --
                     Dots per inch for the figure.
-                - figsize: :obj:`tuple`, default=(8, 6) --
+                - figsize : :obj:`tuple`, default=(8, 6) --
                     Figure size in inches (width, height).
-                - fontsize: :obj:`int`, default=14 --
+                - fontsize : :obj:`int`, default=14 --
                     Font size for the title of individual plots or subplots.
-                - bbox_inches: :obj:`str`, default="tight" --
+                - bbox_inches : :obj:`str`, default="tight" --
                     Alters size of the whitespace in the saved image.
 
             - Subplot Parameters (exclusive to Outer Product plots when ``subplots=True``):
 
-                - hspace: :obj:`float`, default=0.2 --
+                - hspace : :obj:`float`, default=0.2 --
                     Height space between subplots.
-                - wspace: :obj:`float`, default=0.2 --
+                - wspace : :obj:`float`, default=0.2 --
                     Width space between subplots.
-                - nrow: :obj:`int` or :obj:`None`, default=None (max 5) --
+                - nrow : :obj:`int` or :obj:`None`, default=None (max 5) --
                     Number of rows for subplots.
-                - ncol: :obj:`int` or :obj:`None`, default=None (max 5) --
+                - ncol : :obj:`int` or :obj:`None`, default=None (max 5) --
                     Number of columns for subplots.
-                - suptitle_fontsize: :obj:`float`, default=20 --
+                - suptitle_fontsize : :obj:`float`, default=20 --
                     Font size for the main title of subplots.
-                - tight_layout: :obj:`bool`, default=True --
+                - tight_layout : :obj:`bool`, default=True --
                     Use tight layout for subplots.
-                - rect: :obj:`list[float | int]`, default=[0, 0.03, 1, 0.95] --
+                - rect : :obj:`list[float | int]`, default=[0, 0.03, 1, 0.95] --
                     Rectangle parameter for "tight_layout" for subplots.
-                - sharey: :obj:`bool`, default=True --
+                - sharey : :obj:`bool`, default=True --
                     Share y-axis labels for subplots.
 
             - Axis Parameters:
 
-                - xticklabels_size: :obj:`int`, default=8 --
+                - xticklabels_size : :obj:`int`, default=8 --
                     Font size for x-axis tick labels.
-                - yticklabels_size: :obj:`int`, default=8 --
+                - yticklabels_size : :obj:`int`, default=8 --
                     Font size for y-axis tick labels.
-                - xlabel_rotation: :obj:`int`, default=0 --
+                - xlabel_rotation : :obj:`int`, default=0 --
                     Rotation angle for x-axis labels.
-                - ylabel_rotation: :obj:`int`, default=0 --
+                - ylabel_rotation : :obj:`int`, default=0 --
                     Rotation angle for y-axis labels.
 
             - Cell Parameters:
 
-                - annot: :obj:`bool`, default=False --
+                - annot : :obj:`bool`, default=False --
                     Add values to cells.
-                - annot_kws: :obj:`dict` or :obj:`None`, default=None --
+                - annot_kws : :obj:`dict` or :obj:`None`, default=None --
                     Customize the annotations.
-                - fmt: :obj:`str`, default=".2g" --
+                - fmt : :obj:`str`, default=".2g" --
                     Format for annotated values.
-                - linewidths: :obj:`float`, default=0 --
+                - linewidths : :obj:`float`, default=0 --
                     Padding between each cell in the plot.
-                - linecolor: :obj:`str`, default="black" --
+                - linecolor : :obj:`str`, default="black" --
                     Color of the line that separates each cell.
-                - edgecolors: :obj:`str` or :obj:`None`, default=None --
+                - edgecolors : :obj:`str` or :obj:`None`, default=None --
                     Color of the edges.
-                - borderwidths: :obj:`float`, default=0 --
+                - borderwidths : :obj:`float`, default=0 --
                     Width of the border around the plot.
-                - alpha: :obj:`float` or :obj:`None`, default=None --
+                - alpha : :obj:`float` or :obj:`None`, default=None --
                     Controls transparency (0=transparent, 1=opaque).
 
             - Colormap Parameters:
 
-                - cmap: :obj:`str` or :obj:`callable`, default="coolwarm" --
+                - cmap : :obj:`str` or :obj:`callable`, default="coolwarm" --
                     Color map for the plot cells.
-                - vmin: :obj:`float` or :obj:`None`, default=None --
+                - vmin : :obj:`float` or :obj:`None`, default=None --
                     The minimum value to display in colormap.
-                - vmax: :obj:`float` or :obj:`None`, default=None --
+                - vmax : :obj:`float` or :obj:`None`, default=None --
                     The maximum value to display in colormap.
-                - shrink: :obj:`float`, default=0.8 --
+                - shrink : :obj:`float`, default=0.8 --
                     Fraction by which to shrink the colorbar.
-                - cbarlabels_size: :obj:`int`, default=8 --
+                - cbarlabels_size : :obj:`int`, default=8 --
                     Font size for the colorbar labels.
 
             - "Custom" Parcellation Parameters:
 
-                - add_custom_node_labels: :obj:`bool`, default=False --
+                - add_custom_node_labels : :obj:`bool`, default=False --
                     When visual_scope="nodes" and using Custom parcellation, adds simplified node
                     names to plot axes. Instead of labeling every individual node, the node list is
                     collapsed by region. A single label is then placed at the beginning of the group
@@ -233,56 +233,56 @@ class PlotDefaults:
 
             - General Figure Parameters:
 
-                - dpi: :obj:`int`, default=300 --
+                - dpi : :obj:`int`, default=300 --
                     Dots per inch for the figure.
-                - figsize: :obj:`tuple`, default=(8, 6) --
+                - figsize : :obj:`tuple`, default=(8, 6) --
                     Figure size in inches (width, height).
-                - bbox_inches: :obj:`str`, default="tight" --
+                - bbox_inches : :obj:`str`, default="tight" --
                     Alters size of the whitespace in the saved image.
 
             - Title and Font Parameters:
 
-                - fontsize: :obj:`int`, default=14 --
+                - fontsize : :obj:`int`, default=14 --
                     Font size for the title of each plot.
-                - xticklabels_size: :obj:`int`, default=8 --
+                - xticklabels_size : :obj:`int`, default=8 --
                     Font size for x-axis tick labels.
-                - yticklabels_size: :obj:`int`, default=8 --
+                - yticklabels_size : :obj:`int`, default=8 --
                     Font size for y-axis tick labels.
-                - xlabel_rotation: :obj:`int`, default=0 --
+                - xlabel_rotation : :obj:`int`, default=0 --
                     Rotation angle for x-axis labels.
-                - ylabel_rotation: :obj:`int`, default=0 --
+                - ylabel_rotation : :obj:`int`, default=0 --
                     Rotation angle for y-axis labels.
 
             - Cell Parameters:
 
-                - annot: :obj:`bool`, default=True --
+                - annot : :obj:`bool`, default=True --
                     Add values to each cell.
-                - annot_kws: :obj:`dict` or :obj:`None`, default=None --
+                - annot_kws : :obj:`dict` or :obj:`None`, default=None --
                     Customize the annotations.
-                - fmt: :obj:`str`, default=".2g" --
+                - fmt : :obj:`str`, default=".2g" --
                     Format for annotated values.
-                - linewidths: :obj:`float`, default=0 --
+                - linewidths : :obj:`float`, default=0 --
                     Padding between each cell in the plot.
-                - linecolor: :obj:`str`, default="black" --
+                - linecolor : :obj:`str`, default="black" --
                     Color of the line that separates each cell.
-                - edgecolors: :obj:`str` or :obj:`None`, default=None --
+                - edgecolors : :obj:`str` or :obj:`None`, default=None --
                     Color of the edges.
-                - borderwidths: :obj:`float`, default=0 --
+                - borderwidths : :obj:`float`, default=0 --
                     Width of the border around the plot.
-                - alpha: :obj:`float`, :obj:`int`, or :obj:`None`, default=None --
+                - alpha : :obj:`float`, :obj:`int`, or :obj:`None`, default=None --
                     Controls transparency (0=transparent, 1=opaque).
 
             - Colormap Parameters:
 
-                - cmap: :obj:`str` or :obj:`callable`, default="coolwarm" --
+                - cmap : :obj:`str` or :obj:`callable`, default="coolwarm" --
                     Color map for the plot cells.
-                - cbarlabels_size: :obj:`int`, default=8 --
+                - cbarlabels_size : :obj:`int`, default=8 --
                     Font size for the colorbar labels.
-                - vmin: :obj:`float` or :obj:`None`, default=None --
+                - vmin : :obj:`float` or :obj:`None`, default=None --
                     The minimum value to display in colormap.
-                - vmax: :obj:`float` or :obj:`None`, default=None --
+                - vmax : :obj:`float` or :obj:`None`, default=None --
                     The maximum value to display in colormap.
-                - shrink: :obj:`float`, default=0.8 --
+                - shrink : :obj:`float`, default=0.8 --
                     Fraction by which to shrink the colorbar.
 
         Note
@@ -326,50 +326,50 @@ class PlotDefaults:
 
             - General Figure Parameters:
 
-                - dpi: :obj:`int`, default=300 --
+                - dpi : :obj:`int`, default=300 --
                     Dots per inch for the plot.
-                - title_pad: :obj:`int`, default=-3 --
+                - title_pad : :obj:`int`, default=-3 --
                     Padding for the plot title.
-                - bbox_inches: :obj:`str`, default="tight" --
+                - bbox_inches : :obj:`str`, default="tight" --
                     Alters size of the whitespace in the saved image.
 
             - Color Parameters:
 
-                - cmap: :obj:`str` or :obj:`callable`, default="cold_hot" --
+                - cmap : :obj:`str` or :obj:`callable`, default="cold_hot" --
                     Colormap to be used for the plot.
-                - cbar_kws: :obj:`dict`, default={"location": "bottom", "n_ticks": 3} --
+                - cbar_kws : :obj:`dict`, default={"location": "bottom", "n_ticks": 3} --
                     Customizes colorbar.
-                - color_range: :obj:`tuple` or :obj:`None`, default=None --
+                - color_range : :obj:`tuple` or :obj:`None`, default=None --
                     The minimum and maximum value to display in plots (min, max).
-                - alpha: :obj:`float` or :obj:`int`, default=1 --
+                - alpha : :obj:`float` or :obj:`int`, default=1 --
                     Transparency level of the colorbar (0=transparent, 1=opaque).
-                - zero_transparent: :obj:`bool`, default=True --
+                - zero_transparent : :obj:`bool`, default=True --
                     Turns vertices with a value of 0 transparent.
 
             - Surface Parameters:
 
                 - surface: {"inflated", "veryinflated"}, default="inflated" --
                     The surface atlas used for plotting.
-                - views: :obj:`list`, default=["lateral", "medial"] --
+                - views : :obj:`list`, default=["lateral", "medial"] --
                     Views to be displayed in the plot.
-                - as_outline: :obj:`bool`, default=False --
+                - as_outline : :obj:`bool`, default=False --
                     Plots only an outline of contiguous vertices with the same value.
-                - outline_alpha: :obj:`float`, default=1 --
+                - outline_alpha : :obj:`float`, default=1 --
                     Transparency level of the colorbar for outline if as_outline is True.
 
             - Brightness, Layout, Sizing, and Parameters:
 
-                - size: :obj:`tuple`, default=(500, 400) --
+                - size : :obj:`tuple`, default=(500, 400) --
                     Size of the plot in pixels.
-                - layout: :obj:`str`, default="grid" --
+                - layout : :obj:`str`, default="grid" --
                     Layout of the plot.
-                - zoom: :obj:`float`, default=1.5 --
+                - zoom : :obj:`float`, default=1.5 --
                     Zoom level for the plot.
-                - brightness: :obj:`float`, default=0.5 --
+                - brightness : :obj:`float`, default=0.5 --
                     Brightness level of the plot.
-                - figsize: :obj:`tuple` or :obj:`None`, default=None --
+                - figsize : :obj:`tuple` or :obj:`None`, default=None --
                     Size of the figure.
-                - scale: :obj:`tuple`, default=(2, 2) --
+                - scale : :obj:`tuple`, default=(2, 2) --
                     Scale factors for the plot.
 
         Note
@@ -411,43 +411,43 @@ class PlotDefaults:
 
             - General Figure Parameters:
 
-                - scale: :obj:`int`, default=2 --
+                - scale : :obj:`int`, default=2 --
                     Controls resolution of image when saving (similar to dpi).
-                - height: :obj:`int`, default=800 --
+                - height : :obj:`int`, default=800 --
                     Height of the plot.
-                - width: :obj:`int`, default=1200 --
+                - width : :obj:`int`, default=1200 --
                     Width of the plot.
-                - bgcolor: :obj:`str`, default="white" --
+                - bgcolor : :obj:`str`, default="white" --
                     Color of the background.
                 - engine: {"kaleido", "orca"}, default="kaleido" --
                     Engine used for saving plots.
 
             - Trace and Marker Parameters:
 
-                - line_close: :obj:`bool`, default=True --
+                - line_close : :obj:`bool`, default=True --
                     Whether to close the lines.
-                - fill: :obj:`str`, default="toself" --
+                - fill : :obj:`str`, default="toself" --
                     If "toself" the area within the boundaries of the line will be filled.
-                - scattersize: :obj:`int`, default=8 --
+                - scattersize : :obj:`int`, default=8 --
                     Controls size of the dots when markers are used.
-                - connectgaps: :obj:`bool`, default=True --
+                - connectgaps : :obj:`bool`, default=True --
                     If ``use_scatterpolar=True``, controls if missing values are connected.
-                - opacity: :obj:`float`, default=0.5 --
+                - opacity : :obj:`float`, default=0.5 --
                     If ``use_scatterpolar=True``, sets the opacity of the trace.
-                - linewidth: :obj:`int`, default=2 --
+                - linewidth : :obj:`int`, default=2 --
                     The width of the line connecting the values if ``use_scatterpolar=True``.
-                - mode: :obj:`str`, default="markers+lines" --
+                - mode : :obj:`str`, default="markers+lines" --
                     Determines how the trace is drawn.
 
             - Axis Parameters:
 
-                - radialaxis: :obj:`dict`, default={"showline": False, "linewidth": 2, \
+                - radialaxis : :obj:`dict`, default={"showline": False, "linewidth": 2, \
                                                     "linecolor": "rgba(0, 0, 0, 0.25)",\
                                                     "gridcolor": "rgba(0, 0, 0, 0.25)", \
                                                     ticks": "outside",\
                                                     "tickfont": {"size": 14, "color": "black"}} --
                     Customizes the radial axis.
-                - angularaxis: :obj:`dict`, default={"showline": True, "linewidth": 2, \
+                - angularaxis : :obj:`dict`, default={"showline": True, "linewidth": 2, \
                                                     "linecolor": "rgba(0, 0, 0, 0.25)", \
                                                     "gridcolor": "rgba(0, 0, 0, 0.25)", \
                                                     "tickfont": {"size": 16, "color": "black"}} --
@@ -455,19 +455,19 @@ class PlotDefaults:
 
             - Color Parameters:
 
-                - color_discrete_map: :obj:`dict`, default={"High Amplitude": "rgba(255, 0, 0, 1)",\
+                - color_discrete_map : :obj:`dict`, default={"High Amplitude": "rgba(255, 0, 0, 1)",\
                                                             "Low Amplitude": "rgba(0, 0, 255, 1)"} --
                     Change the color of the "High Amplitude" and "Low Amplitude" groups.
 
             - Title and Legend Parameters:
 
-                - title_font: :obj:`dict`, default={"family": "Times New Roman", "size": 30, "color": "black"} --
+                - title_font : :obj:`dict`, default={"family": "Times New Roman", "size": 30, "color": "black"} --
                     Modifies the font of the title.
-                - title_x: :obj:`float`, default=0.5 --
+                - title_x : :obj:`float`, default=0.5 --
                     Modifies x position of title.
-                - title_y: :obj:`float` or :obj:`None`, default=None --
+                - title_y : :obj:`float` or :obj:`None`, default=None --
                     Modifies y position of title.
-                - legend: :obj:`dict`, default={"yanchor": "top", "xanchor": "left", "y": 0.99,\
+                - legend : :obj:`dict`, default={"yanchor": "top", "xanchor": "left", "y": 0.99,\
                                                 "x": 0.01, title_font_family": "Times New Roman",\
                                                 "font": {"size": 12, "color": "black"}} --
                     Customizes the legend.
@@ -545,56 +545,56 @@ class PlotDefaults:
 
             - General Figure Parameters:
 
-                - dpi: :obj:`int`, default=300 --
+                - dpi : :obj:`int`, default=300 --
                     Dots per inch for the figure.
-                - figsize: :obj:`tuple`, default=(8, 6) --
+                - figsize : :obj:`tuple`, default=(8, 6) --
                     Figure size in inches (width, height).
-                - bbox_inches: :obj:`str`, default="tight" --
+                - bbox_inches : :obj:`str`, default="tight" --
                     Alters size of the whitespace in the saved image.
 
             - Title and Font Parameters:
 
-                - fontsize: :obj:`int`, default=14 --
+                - fontsize : :obj:`int`, default=14 --
                     Font size for the title of each plot.
-                - xticklabels_size: :obj:`int`, default=8 --
+                - xticklabels_size : :obj:`int`, default=8 --
                     Font size for x-axis tick labels.
-                - yticklabels_size: :obj:`int`, default=8 --
+                - yticklabels_size : :obj:`int`, default=8 --
                     Font size for y-axis tick labels.
-                - xlabel_rotation: :obj:`int`, default=0 --
+                - xlabel_rotation : :obj:`int`, default=0 --
                     Rotation angle for x-axis labels.
-                - ylabel_rotation: :obj:`int`, default=0 --
+                - ylabel_rotation : :obj:`int`, default=0 --
                     Rotation angle for y-axis labels.
 
             - Cell Parameters:
 
-                - annot: :obj:`bool`, default=True --
+                - annot : :obj:`bool`, default=True --
                     Add values to each cell.
-                - annot_kws: :obj:`dict` or :obj:`None`, default=None --
+                - annot_kws : :obj:`dict` or :obj:`None`, default=None --
                     Customize the annotations.
-                - fmt: :obj:`str`, default=".2g" --
+                - fmt : :obj:`str`, default=".2g" --
                     Format for annotated values.
-                - linewidths: :obj:`float`, default=0 --
+                - linewidths : :obj:`float`, default=0 --
                     Padding between each cell in the plot.
-                - linecolor: :obj:`str`, default="black" --
+                - linecolor : :obj:`str`, default="black" --
                     Color of the line that separates each cell.
-                - edgecolors: :obj:`str` or :obj:`None`, default=None --
+                - edgecolors : :obj:`str` or :obj:`None`, default=None --
                     Color of the edges.
-                - borderwidths: :obj:`float`, default=0 --
+                - borderwidths : :obj:`float`, default=0 --
                     Width of the border around the plot.
-                - alpha: :obj:`float`, :obj:`int`, or :obj:`None`, default=None --
+                - alpha : :obj:`float`, :obj:`int`, or :obj:`None`, default=None --
                     Controls transparency (0=transparent, 1=opaque).
 
             - Colormap Parameters:
 
-                - cmap: :obj:`str` or :obj:`callable`, default="coolwarm" --
+                - cmap : :obj:`str` or :obj:`callable`, default="coolwarm" --
                     Color map for the plot cells.
-                - cbarlabels_size: :obj:`int`, default=8 --
+                - cbarlabels_size : :obj:`int`, default=8 --
                     Font size for the colorbar labels.
-                - vmin: :obj:`float` or :obj:`None`, default=None --
+                - vmin : :obj:`float` or :obj:`None`, default=None --
                     The minimum value to display in colormap.
-                - vmax: :obj:`float` or :obj:`None`, default=None --
+                - vmax : :obj:`float` or :obj:`None`, default=None --
                     The maximum value to display in colormap.
-                - shrink: :obj:`float`, default=0.8 --
+                - shrink : :obj:`float`, default=0.8 --
                     Fraction by which to shrink the colorbar.
 
         Note

@@ -45,32 +45,32 @@ def simulate_bids_dataset(
 
     Parameters
     ----------
-    n_subs: :obj:`int`, default=1
+    n_subs : :obj:`int`, default=1
         Number of subjects.
 
-    n_runs: :obj:`int`, default=1
+    n_runs : :obj:`int`, default=1
         Number of runs for each subject.
 
-    n_volumes: :obj:`int`, default=100
+    n_volumes : :obj:`int`, default=100
         Number of volumes for the NIfTI images.
 
-    task_name: :obj:`str`, default="rest"
+    task_name : :obj:`str`, default="rest"
         Name of task.
 
-    output_dir: :obj:`str` or :obj:`None`, default=None
+    output_dir : :obj:`str` or :obj:`None`, default=None
         Path to save the simulated BIDS directory to.
 
         .. important::
            If None, a directory named "simulated_bids_dir" will be created in the current working
            directory.
 
-    n_cores: :obj:`int` or :obj:`None`, default=None
+    n_cores : :obj:`int` or :obj:`None`, default=None
         The number of cores to use for multiprocessing with Joblib (over subjects). The "loky"
         backend is used.
 
         .. versionadded:: 0.34.3
 
-    progress_bar: :obj:`bool`, default=False
+    progress_bar : :obj:`bool`, default=False
         If True, displays a progress bar.
 
         .. versionadded:: 0.34.3
@@ -146,13 +146,13 @@ def create_dataset_description(
 
     Parameters
     ----------
-    dataset_name: :obj:`str`
+    dataset_name : :obj:`str`
         Name of the dataset.
 
-    bids_version: :obj:`str`, default="1.0.0"
+    bids_version : :obj:`str`, default="1.0.0"
         Version of the BIDS dataset.
 
-    derivative: :obj:`bool`, default=False
+    derivative : :obj:`bool`, default=False
         Determines if "GeneratedBy" key is added to dictionary.
 
     Returns
@@ -179,10 +179,10 @@ def save_dataset_description(dataset_description: dict, output_dir: str) -> None
 
     Parameters
     ----------
-    dataset_description: :obj:`dict`
+    dataset_description : :obj:`dict`
         The dataset description dictionary.
 
-    output_dir: :obj:`str`
+    output_dir : :obj:`str`
         Path to save the JSON file to.
 
     """
@@ -256,13 +256,13 @@ def simulate_subject_timeseries(
 
     Parameters
     ----------
-    n_subs: :obj:`int`, default=8
+    n_subs : :obj:`int`, default=8
         Number of subjects.
 
-    n_runs: :obj:`int`, default=3
+    n_runs : :obj:`int`, default=3
         Number of runs for each subject.
 
-    shape: :obj:`tuple`, default=(400, 100)
+    shape : :obj:`tuple`, default=(400, 100)
         Shape of the generated timeseries data in the form (rows, columns).
 
     Returns

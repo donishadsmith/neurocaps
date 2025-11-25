@@ -43,19 +43,19 @@ def merge_dicts(
 
     Parameters
     ----------
-    subject_timeseries_list: :obj:`list[SubjectTimeseries]` or :obj:`list[str]`
+    subject_timeseries_list : :obj:`list[SubjectTimeseries]` or :obj:`list[str]`
         A list where each element consist of a dictionary mapping subject IDs to their run IDs and
         associated timeseries (TRs x ROIs) as a NumPy array. Can also be a list consisting of paths
         to serialized files containing this same structure. Refer to documentation for
         ``SubjectTimeseries`` in the "See Also" section for an example structure.
 
-    output_dir: :obj:`str` or :obj:`None`, default=None
+    output_dir : :obj:`str` or :obj:`None`, default=None
         Directory to save the merged or reduced dictionaries as pickle files. The directory will be
         created if it does not exist. For the reduced dictionaries to be saved, ``save_reduced_dicts``
         must be set to True. If ``save_reduced_dicts`` is False and ``output_dir`` is provided, only
         the merged dictionary will be saved. Dictionaries will not be saved if None.
 
-    filenames: :obj:`list[str]` or :obj:`None`, default=None
+    filenames : :obj:`list[str]` or :obj:`None`, default=None
         A list of file names for saving dictionaries when ``output_dir`` is provided.
 
         If ``save_reduced_dicts`` is False:
@@ -72,15 +72,15 @@ def merge_dicts(
         default names - "subject_timeseries_{0}_reduced.pkl" (where {0} indicates the original input
         order) and "merged_subject_timeseries.pkl" for the merged dictionary.
 
-    save_reduced_dicts: :obj:`bool` or None, default=False
+    save_reduced_dicts : :obj:`bool` or None, default=False
         If True and the ``output_dir`` is provided, then the reduced dictionaries are saved as
         pickle files.
 
-    return_merged_dict: :obj:`bool`, default=True
+    return_merged_dict : :obj:`bool`, default=True
         If True, returns a single dictionary containing the merged dictionary under a key named
         "merged".
 
-    return_reduced_dicts: :obj:`bool`, default=False
+    return_reduced_dicts : :obj:`bool`, default=False
         If True, returns a single dictionary containing the input dictionaries filtered to only
         include subjects present in the merged dictionary. Keys are named "dict_{0}" where {0}
         corresponds to the dictionary's position in the input list.

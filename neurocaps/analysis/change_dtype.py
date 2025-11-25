@@ -23,28 +23,28 @@ def change_dtype(
 
     Parameters
     ----------
-    subject_timeseries_list: :obj:`list[dict[str, dict[str, np.ndarray]]]` or :obj:`list[str]`
+    subject_timeseries_list : :obj:`list[dict[str, dict[str, np.ndarray]]]` or :obj:`list[str]`
         A list where each element consist of a dictionary mapping subject IDs to their run IDs and
         associated timeseries (TRs x ROIs) as a NumPy array. Can also be a list consisting of paths
         to serialized files containing this same structure. Refer to documentation for
         ``SubjectTimeseries`` in the "See Also" section for an example structure.
 
-    dtype: :obj:`bool` or :obj:`np.floating`
+    dtype : :obj:`bool` or :obj:`np.floating`
         Target data type (e.g "float32" or ``np.float32``) to convert each participant's NumPy
         arrays into.
 
-    output_dir: :obj:`str` or :obj:`None`, default=None
+    output_dir : :obj:`str` or :obj:`None`, default=None
         Directory to save the converted ``subject_timeseries`` as pickle files. The directory will
         be created if it does not exist. Dictionaries will not be saved if None.
 
-    filenames: :obj:`list[str]` or :obj:`None`, default=None
+    filenames : :obj:`list[str]` or :obj:`None`, default=None
         A list of names to save the dictionaries with changed dtypes as. Names are matched to
         dictionaries by position (e.g., a file name in the 0th position will be the file name for
         the dictionary in the 0th position of ``subject_timeseries_list``). If None and
         ``output_dir`` is specified, uses default file names - "subject_timeseries_{0}_float{1}.pkl"
         (where {0} indicates the original input order and {1} is the dtype.
 
-    return_dicts: :obj:`bool`, default=True
+    return_dicts : :obj:`bool`, default=True
         If True, returns a single dictionary containing the converted input dictionaries. Keys are
         named "dict_{0}" where {0} corresponds to the dictionary's position in the input list.
 

@@ -40,7 +40,7 @@ class CAP(CAPGetter):
 
     Parameters
     ----------
-    parcel_approach: :obj:`ParcelConfig`, :obj:`ParcelApproach`, or :obj:`str`, default=None
+    parcel_approach : :obj:`ParcelConfig`, :obj:`ParcelApproach`, or :obj:`str`, default=None
         Specifies the parcellation approach to use. Options are "Schaefer", "AAL", or "Custom". Can
         be initialized with parameters, as a nested dictionary, or loaded from a serialized file
         (i.e. pickle, joblib, json). For detailed documentation on the expected structure, see the
@@ -50,7 +50,7 @@ class CAP(CAPGetter):
            The default "regions" names for "AAL" was changed in versions >=0.31.0, which will group
            nodes differently.
 
-    groups: :obj:`dict[str, list[str]]` or :obj:`None`, default=None
+    groups : :obj:`dict[str, list[str]]` or :obj:`None`, default=None
         Optional mapping of group names to lists of subject IDs for group-specific analyses. If
         None, on the first call of ``self.get_caps()``, "All Subjects" will be set as the default
         group name and be populated with the subject IDs in ``subject_timeseries``. Groups remain
@@ -59,40 +59,40 @@ class CAP(CAPGetter):
 
     Properties
     ----------
-    parcel_approach: :obj:`ParcelApproach`
+    parcel_approach : :obj:`ParcelApproach`
         Parcellation information with "maps" (path to parcellation file), "nodes" (labels), and
         "regions" (anatomical regions or networks). This property is also settable (accepts a
         dictionary or pickle file). Returns a deep copy.
 
-    groups: :obj:`dict[str, list[str]]` or :obj:`None`:
+    groups : :obj:`dict[str, list[str]]` or :obj:`None`:
         Mapping of groups names to lists of subject IDs. Returns a deep copy.
 
-    subject_table: :obj:`dict[str, str]` or :obj:`None`
+    subject_table : :obj:`dict[str, str]` or :obj:`None`
         Lookup table mapping subject IDs to their groups. Derived from ``self.groups`` each time
         ``self.get_caps()`` is ran. While this property can be modified using its setter, any
         changes will be overwritten based on ``self.groups`` on the subsequent call to
         ``self.get_caps()``. Returns a deep copy.
 
-    n_clusters: :obj:`int`, :obj:`list[int]`, or :obj:`None`
+    n_clusters : :obj:`int`, :obj:`list[int]`, or :obj:`None`
         An integer or list of integers representing the number of clusters used for k-means.
         Defined after running ``self.get_caps()``.
 
-    cluster_selection_method: :obj:`str` or :obj:`None`:
+    cluster_selection_method : :obj:`str` or :obj:`None`:
         Method used to identify the optimal number of clusters. Defined after running
         ``self.get_caps()``.
 
-    n_cores: :obj:`int` or :obj:`None`
+    n_cores : :obj:`int` or :obj:`None`
         Number of cores specified used for multiprocessing with Joblib. Defined after running
         ``self.get_caps()``.
 
-    runs: :obj:`int`, :obj:`list[int | str]`, or :obj:`None`
+    runs : :obj:`int`, :obj:`list[int | str]`, or :obj:`None`
         Run IDs specified in the analysis. Defined after running ``self.get_caps()``.
 
-    standardize: :obj:`bool` or :obj:`None`
+    standardize : :obj:`bool` or :obj:`None`
         Whether region-of-interests (ROIs)/columns were standardized during analysis.
         Defined after running ``self.get_caps()``.
 
-    means: :obj:`dict[str, np.array]` or :obj:`None`
+    means : :obj:`dict[str, np.array]` or :obj:`None`
         Group-specific feature means if standardization was applied. Defined after running
         ``self.get_caps()``. Returns a deep copy.
 
@@ -100,7 +100,7 @@ class CAP(CAPGetter):
 
             {"GroupName": np.array(shape=[1, ROIs])}
 
-    stdev: :obj:`dict[str, np.array]` or :obj:`None`
+    stdev : :obj:`dict[str, np.array]` or :obj:`None`
         Group-specific feature standard deviations if standardization was applied. Defined after
         running ``self.get_caps()``. Returns a deep copy.
 
@@ -112,7 +112,7 @@ class CAP(CAPGetter):
            Standard deviations below ``np.finfo(std.dtype).eps`` are replaced with 1 for
            numerical stability.
 
-    concatenated_timeseries: :obj:`dict[str, np.array]` or :obj:`None`
+    concatenated_timeseries : :obj:`dict[str, np.array]` or :obj:`None`
         Group-specific concatenated timeseries data. Can be deleted using
         ``del self.concatenated_timeseries``. Defined after running ``self.get_caps()``. Returns a
         reference.
@@ -125,7 +125,7 @@ class CAP(CAPGetter):
            For versions >= 0.25.0, subject IDs are sorted lexicographically prior to
            concatenation and the order is determined by ``self.groups``.
 
-    kmeans: :obj:`dict[str, sklearn.cluster.KMeans]` or :obj:`None`
+    kmeans : :obj:`dict[str, sklearn.cluster.KMeans]` or :obj:`None`
         Group-specific k-means models. Defined after running ``self.get_caps()``. Returns a deep
         copy.
 
@@ -133,7 +133,7 @@ class CAP(CAPGetter):
 
             {"GroupName": sklearn.cluster.KMeans}
 
-    caps: :obj:`dict[str, dict[str, np.array]]` or :obj:`None`
+    caps : :obj:`dict[str, dict[str, np.array]]` or :obj:`None`
         Cluster centroids for each group and CAP. Defined after running ``self.get_caps()``. Returns
         a deep copy.
 
@@ -141,14 +141,14 @@ class CAP(CAPGetter):
 
             {"GroupName": {"CAP-1": np.array(shape=[1, ROIs]), ...}}
 
-    cluster_scores: :obj:`dict[str, str | dict[str, float]]` or :obj:`None`
+    cluster_scores : :obj:`dict[str, str | dict[str, float]]` or :obj:`None`
         Scores for different cluster sizes by group. Defined after running ``self.get_caps()``.
 
         ::
 
             {"Cluster_Selection_Method": str, "Scores": {"GroupName": {2: float, 3: float}}}
 
-    optimal_n_clusters: :obj:`dict[str, int]` or :obj:`None`
+    optimal_n_clusters : :obj:`dict[str, int]` or :obj:`None`
         Optimal number of clusters by group if cluster selection was used. Defined after running
         ``self.get_caps()``.
 
@@ -156,28 +156,28 @@ class CAP(CAPGetter):
 
             {"GroupName": int}
 
-    variance_explained: :obj:`dict[str, float]` or :obj:`None`
+    variance_explained : :obj:`dict[str, float]` or :obj:`None`
         Total variance explained by each group's model. Defined after running ``self.get_caps()``.
 
         ::
 
             {"GroupName": float}
 
-    region_means: :obj:`dict[str, dict[str, list[str] | np.array]]` or :obj:`None`
+    region_means : :obj:`dict[str, dict[str, list[str] | np.array]]` or :obj:`None`
         Region-averaged values used for visualization. Defined after running ``self.caps2plot()``.
 
         ::
 
             {"GroupName": {"Regions": [...], "CAP-1": np.array(shape=[1, Regions]), ...)}}
 
-    outer_products: :obj:`dict[str, dict[str, np.array]]` or :obj:`None`
+    outer_products : :obj:`dict[str, dict[str, np.array]]` or :obj:`None`
         Outer product matrices for visualization. Defined after running ``self.caps2plot()``.
 
         ::
 
             {"GroupName": {"CAP-1": np.array(shape=[ROIs, ROIs]), ...}}
 
-    cosine_similarity: :obj:`dict[str, dict[str, list[str] | np.array]]` or :obj:`None`
+    cosine_similarity : :obj:`dict[str, dict[str, list[str] | np.array]]` or :obj:`None`
         Cosine similarities between CAPs and the regions specified in ``parcel_approach``.
         Defined after running ``self.caps2radar()``.
 
@@ -291,17 +291,17 @@ class CAP(CAPGetter):
 
         Parameters
         ----------
-        subject_timeseries: :obj:`SubjectTimeseries` or :obj:`str`
+        subject_timeseries : :obj:`SubjectTimeseries` or :obj:`str`
             A dictionary mapping subject IDs to their run IDs and their associated timeseries
             (TRs x ROIs) as a NumPy array. Can also be a path to a serialized file containing this
             same structure. Refer to documentation for ``SubjectTimeseries`` in the "See Also" section
             for an example structure.
 
-        runs: :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
+        runs : :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
             Specific run IDs to perform the CAPs analysis with (e.g. ``runs=[0, 1]`` or
             ``runs=["01", "02"]``). If None, all runs will be used.
 
-        n_clusters: :obj:`int` or :obj:`list[int]`, default=5
+        n_clusters : :obj:`int` or :obj:`list[int]`, default=5
             Number of clusters to use. Can be a single integer or a list of integers (if
             ``cluster_selection_method`` is not None).
 
@@ -310,7 +310,7 @@ class CAP(CAPGetter):
             Method to find the optimal number of clusters. Options are "elbow", "davies_bouldin",
             "silhouette", and "variance_ratio".
 
-        random_state: :obj:`int` or :obj:`None`, default=None
+        random_state : :obj:`int` or :obj:`None`, default=None
             Random state (seed) value to use.
 
         init: {"k-means++", "random"}, :obj:`Callable`, or `ArrayLike`, default="k-means++"
@@ -321,17 +321,17 @@ class CAP(CAPGetter):
             Number of times k-means is ran with different initial clusters. The model with lowest
             inertia from these runs will be selected.
 
-        max_iter: :obj:`int`, default=300
+        max_iter : :obj:`int`, default=300
             Maximum number of iterations for a single run of k-means.
 
-        tol: :obj:`float`, default=1e-4
+        tol : :obj:`float`, default=1e-4
             Stopping criterion if the change in cluster centers (measured using Frobenius norm) is
             below this value, assuming ``max_iter`` has not been reached.
 
         algorithm: {"lloyd", "elkan"}, default="lloyd"
             The algorithm to use. Options are "lloyd" and "elkan".
 
-        standardize: :obj:`bool`, default=True
+        standardize : :obj:`bool`, default=True
             Standardizes the columns (ROIs) of the concatenated timeseries data. Uses sample
             standard deviation (`n-1`).
 
@@ -339,34 +339,34 @@ class CAP(CAPGetter):
                Standard deviations below ``np.finfo(std.dtype).eps`` are replaced with 1 for
                numerical stability.
 
-        n_cores: :obj:`int` or :obj:`None`, default=None
+        n_cores : :obj:`int` or :obj:`None`, default=None
             Number of cores to use for multiprocessing, with Joblib, to run multiple k-means models
             if ``cluster_selection_method`` is not None. The "loky" backend is used.
 
-        output_dir: :obj:`str` or :obj:`None`, default=None
+        output_dir : :obj:`str` or :obj:`None`, default=None
             Directory to save plots as png files if ``cluster_selection_method`` is not None. The
             directory will be created if it does not exist. If None, plots will not be saved.
 
-        plot_output_format: :obj:`str`, default="png"
+        plot_output_format : :obj:`str`, default="png"
             The format to save plots in when ``output_dir`` is specified. Options are "png" or
             "pkl" (which can be further modified). Note that "pickle" is also accepted.
 
             .. versionchanged:: 0.33.0
                Replaces ``as_pickle`` and accepts a string value.
 
-        show_figs: :obj:`bool`, default=False
+        show_figs : :obj:`bool`, default=False
             Displays the plots for the specified ``cluster_selection_method`` for all groups.
 
-        progress_bar: :obj:`bool`, default=False
+        progress_bar : :obj:`bool`, default=False
             If True and ``cluster_selection_method`` is not None, displays a progress bar.
 
         **kwargs:
             Additional keyword arguments when ``cluster_selection_method`` is specified:
 
-            - S: :obj:`int` or :obj:`float`, default=1.0 -- Adjusts the sensitivity of finding the
+            - S : :obj:`int` or :obj:`float`, default=1.0 -- Adjusts the sensitivity of finding the
               elbow. Larger values are more conservative and less sensitive to small fluctuations.
               Passed to ``KneeLocator`` from the kneed package.
-            - max_nbytes: :obj:`int`, :obj:`str`, or :obj:`None`, default="1M" -- If ``n_cores`` is
+            - max_nbytes : :obj:`int`, :obj:`str`, or :obj:`None`, default="1M" -- If ``n_cores`` is
               not None, serves as the threshold to trigger Joblib's automated memory mapping for
               large arrays.
 
@@ -641,18 +641,18 @@ class CAP(CAPGetter):
 
         Parameters
         ----------
-        subject_timeseries: :obj:`SubjectTimeseries` or :obj:`str`
+        subject_timeseries : :obj:`SubjectTimeseries` or :obj:`str`
             A dictionary mapping subject IDs to their run IDs and their associated timeseries
             (TRs x ROIs) as a NumPy array. Can also be a path to a serialized file containing this
             same structure. Refer to documentation for ``SubjectTimeseries`` in the "See Also"
             section for an example structure.
 
-        runs: :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
+        runs : :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
             The run IDs to calculate CAP metrics for (e.g. ``runs=[0, 1]`` or ``runs=["01", "02"]``).
             If None, CAP metrics will be calculated for all detected run IDs even if only specific
             runs were used during ``self.get_caps()``.
 
-        continuous_runs: :obj:`bool`, default=False
+        continuous_runs : :obj:`bool`, default=False
             If True, all runs will be treated as a single, uninterrupted run.
 
             ::
@@ -678,25 +678,25 @@ class CAP(CAPGetter):
             "counts", "transition_frequency", and "transition_probability". Defaults to
             ``("temporal_fraction", "persistence", "counts", "transition_frequency")`` if None.
 
-        tr: :obj:`float` or :obj:`None`, default=None
+        tr : :obj:`float` or :obj:`None`, default=None
             Repetition time (TR) in seconds. If provided, persistence will be calculated as the
             average uninterrupted time, in seconds, spent in each CAP. If not provided, persistence
             will be calculated as the average uninterrupted volumes (TRs), in TR units, spent in
             each state.
 
-        output_dir: :obj:`str` or :obj:`None`, default=None
+        output_dir : :obj:`str` or :obj:`None`, default=None
             Directory to save ``pandas.DataFrame`` as csv files. The directory will be created if
             it does not exist. Dataframes will not be saved if None.
 
-        prefix_filename: :obj:`str` or :obj:`None`, default=None
+        prefix_filename : :obj:`str` or :obj:`None`, default=None
             A prefix to append to the saved file names for each ``pandas.DataFrame``, if
             ``output_dir`` is provided.
 
-        return_df: :obj:`str`, default=True
+        return_df : :obj:`str`, default=True
             If True, returns ``pandas.DataFrame`` inside a dictionary, mapping each dataframe to
             their metric.
 
-        progress_bar: :obj:`bool`, default=False
+        progress_bar : :obj:`bool`, default=False
             If True, displays a progress bar.
 
         See Also
@@ -937,18 +937,18 @@ class CAP(CAPGetter):
 
         Parameters
         ----------
-        subject_timeseries: :obj:`SubjectTimeseries` or :obj:`str`
+        subject_timeseries : :obj:`SubjectTimeseries` or :obj:`str`
             A dictionary mapping subject IDs to their run IDs and their associated timeseries
             (TRs x ROIs) as a NumPy array. Can also be a path to a serialized file containing this
             same structure. Refer to documentation for ``SubjectTimeseries`` in the "See Also"
             section for an example structure.
 
-        runs: :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
+        runs : :obj:`int`, :obj:`str`, :obj:`list[int]`, :obj:`list[str]`, or :obj:`None`, default=None
             The run IDs to return CAP labels for (e.g. ``runs=[0, 1]`` or ``runs=["01", "02"]``).
             If None, CAP labels will be returned for all detected run IDs even if only specific runs
             were used during ``self.get_caps()``.
 
-        continuous_runs: :obj:`bool`, default=False
+        continuous_runs : :obj:`bool`, default=False
             If True, all runs will be treated as a single, uninterrupted run.
 
             ::
@@ -967,7 +967,7 @@ class CAP(CAPGetter):
                 - If only a single run available for a subject, the original run ID (as opposed to
                   "run-continuous") will be used.
 
-        shift_labels: :obj:`bool`, default=False
+        shift_labels : :obj:`bool`, default=False
             If True, shifts each label by up one unit for the minimum CAP label to start at "1" as
             opposed to "0" (scikit-learn's default), if preferred.
 
@@ -1094,27 +1094,27 @@ class CAP(CAPGetter):
               before plotting. These groupings must be defined in the `parcel_approach`
               configuration under the "regions" subkey.
 
-        subplots: :obj:`bool`, default=True
+        subplots : :obj:`bool`, default=True
             Produce subplots for outer product plots, combining all plots into a single figure.
 
-        output_dir: :obj:`str` or :obj:`None`, default=None
+        output_dir : :obj:`str` or :obj:`None`, default=None
             Directory for saving plots as png files. The directory will be created if it does not
             exist. If None, plots will not be saved.
 
-        plot_output_format: :obj:`str`, default="png"
+        plot_output_format : :obj:`str`, default="png"
             The format to save plots in when ``output_dir`` is specified. Options are "png" or
             "pkl" (which can be further modified). Note that "pickle" is also accepted.
 
             .. versionchanged:: 0.33.0
                Replaces ``as_pickle`` and accepts a string value.
 
-        suffix_filename: :obj:`str` or :obj:`None`, default=None
+        suffix_filename : :obj:`str` or :obj:`None`, default=None
             Appended to the filename of each saved plot if ``output_dir`` is provided.
 
-        suffix_title: :obj:`str` or :obj:`None`, default=None
+        suffix_title : :obj:`str` or :obj:`None`, default=None
             Appended to the title of each plot.
 
-        show_figs: :obj:`bool`, default=True
+        show_figs : :obj:`bool`, default=True
            Display figures.
 
         **kwargs:
@@ -1240,39 +1240,39 @@ class CAP(CAPGetter):
 
         Parameters
         ----------
-        method: :obj:`str`, default="pearson"
+        method : :obj:`str`, default="pearson"
             Type of correlation method to use. Options are "pearson" or "spearman".
 
-        output_dir: :obj:`str` or :obj:`None`, default=None
+        output_dir : :obj:`str` or :obj:`None`, default=None
             Directory to save plots (if ``save_plots`` is True) and correlation matrices DataFrames
             (if ``save_df`` is True). The directory will be created if it does not exist. If None,
             plots and dataFrame will not be saved.
 
-        plot_output_format: :obj:`str`, default="png"
+        plot_output_format : :obj:`str`, default="png"
             The format to save plots in when ``output_dir`` is specified. Options are "png" or
             "pkl" (which can be further modified). Note that "pickle" is also accepted.
 
             .. versionchanged:: 0.33.0
                Replaces ``as_pickle`` and accepts a string value.
 
-        suffix_filename: :obj:`str` or :obj:`None`, default=None
+        suffix_filename : :obj:`str` or :obj:`None`, default=None
             Appended to the filename of each saved plot if ``output_dir`` is provided.
 
-        suffix_title: :obj:`str` or :obj:`None`, default=None
+        suffix_title : :obj:`str` or :obj:`None`, default=None
             Appended to the title of each plot.
 
-        save_plots: :obj:`bool`, default=True
+        save_plots : :obj:`bool`, default=True
             If True, plots are saves as png images. For this to be used, ``output_dir`` must be
             specified.
 
-        save_df: :obj:`bool`, default=False
+        save_df : :obj:`bool`, default=False
             If True, saves the correlation matrix contained in the DataFrames as csv files. For
             this to be used, ``output_dir`` must be specified.
 
-        show_figs: :obj:`bool`, default=True
+        show_figs : :obj:`bool`, default=True
             Display figures.
 
-        return_df: :obj:`bool`, default=False
+        return_df : :obj:`bool`, default=False
             If True, returns a dictionary with a correlation matrix for each group.
 
         **kwargs
@@ -1363,13 +1363,13 @@ class CAP(CAPGetter):
 
         Parameters
         ----------
-        output_dir: :obj:`str`
+        output_dir : :obj:`str`
             Directory to save nii.gz files. The directory will be created if it does not exist.
 
-        suffix_filename: :obj:`str` or :obj:`None`, default=None
+        suffix_filename : :obj:`str` or :obj:`None`, default=None
             Appended to the name of the saved file.
 
-        knn_dict: :obj:`dict[str, int | list[int] | str ]`, default=None
+        knn_dict : :obj:`dict[str, int | list[int] | str ]`, default=None
             Use KNN (k-nearest neighbors) interpolation with reference atlas masking (which is native
             to volume space) to fill in non-background coordinates that are assigned zero.
             Useful when a "Custom" parcellation does not project well from volumetric to surface
@@ -1389,7 +1389,7 @@ class CAP(CAPGetter):
               the distance weighted approach uses inverse distance weighting (1/distance) to
               estimate the new averaged value for the non-background voxel.
 
-        progress_bar: :obj:`bool`, default=False
+        progress_bar : :obj:`bool`, default=False
             If True, displays a progress bar.
 
         Returns
@@ -1520,28 +1520,28 @@ class CAP(CAPGetter):
             Interpolation method to use when converting from MNI152 space to fsLR surface or from
             fsLR to fsLR. Options are "linear" or "nearest".
 
-        output_dir: :obj:`str` or :obj:`None`, default=None
+        output_dir : :obj:`str` or :obj:`None`, default=None
             Directory to save plots as png files. The directory will be created if it does not exist.
             If None, plots will not be saved.
 
-        plot_output_format: :obj:`str`, default="png"
+        plot_output_format : :obj:`str`, default="png"
             The format to save plots in when ``output_dir`` is specified. Options are "png" or
             "pkl" (which can be further modified). Note that "pickle" is also accepted.
 
             .. versionchanged:: 0.33.0
                Replaces ``as_pickle`` and accepts a string value.
 
-        suffix_filename: :obj:`str` or :obj:`None`, default=None
+        suffix_filename : :obj:`str` or :obj:`None`, default=None
             Appended to the filename of each saved plot if ``output_dir`` is provided.
 
-        suffix_title: :obj:`str` or :obj:`None`, default=None
+        suffix_title : :obj:`str` or :obj:`None`, default=None
             Appended to the title of each plot.
 
-        save_stat_maps: :obj:`bool`, default=False
+        save_stat_maps : :obj:`bool`, default=False
             If True, saves the statistical map for each CAP for all groups as a Nifti1Image if
             ``output_dir`` is provided.
 
-        knn_dict: :obj:`dict[str, int | list[int] | bool]`, default=None
+        knn_dict : :obj:`dict[str, int | list[int] | bool]`, default=None
             Use KNN (k-nearest neighbors) interpolation with reference atlas masking (which is native
             to volume space) to fill in non-background coordinates that are assigned zero.
             Useful when a "Custom" parcellation does not project well from volumetric to surface
@@ -1561,10 +1561,10 @@ class CAP(CAPGetter):
               the distance weighted approach uses inverse distance weighting (1/distance) to
               estimate the new averaged value for the non-background voxel.
 
-        show_figs: :obj:`bool`, default=True
+        show_figs : :obj:`bool`, default=True
             Display figures.
 
-        progress_bar: :obj:`bool`, default=False
+        progress_bar : :obj:`bool`, default=False
             If True, displays a progress bar.
 
         **kwargs
@@ -1663,27 +1663,27 @@ class CAP(CAPGetter):
 
         Parameters
         ----------
-        use_scatterpolar: :obj:`bool`, default=False
+        use_scatterpolar : :obj:`bool`, default=False
             Uses ``plotly.graph_objects.Scatterpolar`` instead of ``plotly.express.line_polar``.
 
-        output_dir: :obj:`str` or :obj:`None`, default=None
+        output_dir : :obj:`str` or :obj:`None`, default=None
             Directory to save plots as png or html images. The directory will be created if it does
             not exist. If None, plots will not be saved.
 
-        plot_output_format: :obj:`str`, default="png"
+        plot_output_format : :obj:`str`, default="png"
             The format to save plots in when ``output_dir`` is specified. Options are "png", "html",
             or "json" (which can be further modified).
 
             .. versionchanged:: 0.33.0
                Replaces ``as_html`` and ``as_json`` and accepts a string value.
 
-        suffix_filename: :obj:`str` or :obj:`None`, default=None
+        suffix_filename : :obj:`str` or :obj:`None`, default=None
             Appended to the filename of each saved plot if ``output_dir`` is provided.
 
-        suffix_title: :obj:`str` or :obj:`None`, default=None
+        suffix_title : :obj:`str` or :obj:`None`, default=None
             Appended to the title of each plot.
 
-        show_figs: :obj:`bool`, default=True
+        show_figs : :obj:`bool`, default=True
             Display figures. If the current Python session is non-interactive, then ``plotly.offline``
             is used to generate an html file named "temp-plot.html", which opens each plot in the
             default browser.

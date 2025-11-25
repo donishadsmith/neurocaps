@@ -26,11 +26,11 @@ def fetch_preset_parcel_approach(
 
     Parameters
     ----------
-    name: :obj:`str`
+    name : :obj:`str`
         Name of the preset "Custom" parcellation approach to fetch. Options are "HCPex", "4S",
         and "Gordon".
 
-    n_nodes: :obj:`int` or :obj:`None`, default=None
+    n_nodes : :obj:`int` or :obj:`None`, default=None
         Currently only relevant to "4S". Options for the "4S" are: 156, 256, 356,
         456, 556, 656, 756, 956, 1056. Defaults to 456 if None.
 
@@ -82,15 +82,15 @@ def generate_custom_parcel_approach(
 
     Parameters
     ----------
-    filepath_or_df: :obj:`pd.Dataframe` or :obj:`str`
+    filepath_or_df : :obj:`pd.Dataframe` or :obj:`str`
         Path to the parcellation description file (e.g., "Schaefer_400.tsv"). Supports files
         with the following extension: ".csv", ".tsv", ".txt", ".xlsx". Can also be
         a pandas Dataframe.
 
-    maps_path: :obj:`str`
+    maps_path : :obj:`str`
         Path to the corresponding NIfTI parcellation file (e.g., "Schaefer_400.nii.gz").
 
-    column_map: :obj:`dict[Literal["nodes", "regions", "hemispheres"], str]`
+    column_map : :obj:`dict[Literal["nodes", "regions", "hemispheres"], str]`
         A dictionary mapping keys to column names in the metadata file. The following keys are
         valid:
 
@@ -104,7 +104,7 @@ def generate_custom_parcel_approach(
            ``column_map``. If the "regions" key is not provided, then the output custom
            parcellation dictionary will only contain the "maps" and "nodes" subkeys.
 
-    hemisphere_map: :obj:`dict[Literal["lh", "rh"], list[str]]` or :obj:`None`, default=None
+    hemisphere_map : :obj:`dict[Literal["lh", "rh"], list[str]]` or :obj:`None`, default=None
         A dictionary mapping hemisphere values in the metadata column to "lh" and "rh"
         (e.g. {"lh": ["Left", "L", "l", "LH"], "rh": ["Right", "R", "r", "RH"]]}).
 
@@ -114,7 +114,7 @@ def generate_custom_parcel_approach(
            information is only used in a specific case in ``CAP.caps2plot`` when
            ``visual_scope`` is set to "nodes" and the ``add_custom_node_labels`` kwarg is True.
 
-    background_label: :obj:`str` or :obj:`None`, default="Background"
+    background_label : :obj:`str` or :obj:`None`, default="Background"
         The label name for the background ROI to be excluded (e.g. "background", "Unknown", etc).
 
         .. important::
@@ -125,7 +125,7 @@ def generate_custom_parcel_approach(
            the mapping of regions/networks corresponds to the indices in the "nodes" list
            not its label ID.
 
-    metadata: :obj:`dict[str, Any]` or None, default=None
+    metadata : :obj:`dict[str, Any]` or None, default=None
         Metadata information to add to the "metadata" key if not None.
 
     Returns
