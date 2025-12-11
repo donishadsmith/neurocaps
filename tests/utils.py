@@ -1,4 +1,4 @@
-import copy, glob, json, os, re, sys
+import copy, glob, json, math, os, re, sys
 from functools import lru_cache
 from packaging import version
 
@@ -237,10 +237,17 @@ def get_scans(
     scan_list = []
 
     for i in condition_df.index:
-        adjusted_onset = condition_df.loc[i, "onset"] - slice_time_ref * tr
+        onset = condition_df.loc[i, "onset"]
+        if math.isnan(onset):
+            continue
+
+        adjusted_onset = onset - slice_time_ref * tr
         true_floor = -1 if adjusted_onset < 0 else 0
         start = (int(adjusted_onset / tr) + true_floor) + condition_tr_shift
-        end_convert = (adjusted_onset + condition_df.loc[i, "duration"]) / tr
+        duration = (
+            0 if math.isnan(condition_df.loc[i, "duration"]) else condition_df.loc[i, "duration"]
+        )
+        end_convert = (adjusted_onset + duration) / tr
         # Conditional instead of math.ceil
         end = int(end_convert) if end_convert == int(end_convert) else int(end_convert) + 1
         end += condition_tr_shift

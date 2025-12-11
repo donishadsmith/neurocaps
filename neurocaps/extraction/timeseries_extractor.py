@@ -580,11 +580,17 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
 
         ::
 
-            adjusted_onset = condition_df.loc[i, "onset"] - slice_time_ref * tr
-            onset_scan = math.floor(adjusted_onset / tr)
-            onset_scan += condition_tr_shift
-            end_scan = math.ceil((adjusted_onset + condition_df.loc[i, "duration"]) / tr)
-            end_scan += condition_tr_shift
+            onset_time = condition_df.loc[i, "onset"]
+            if math.isnan(onset_time):
+                continue
+
+            adjusted_onset_time = onset_time - data.slice_ref * data.tr
+            onset_scan = math.floor(adjusted_onset_time / data.tr) + data.tr_shift
+            duration_time = condition_df.loc[i, "duration"]
+            if math.isnan(duration_time):
+                duration_time = 0
+
+            end_scan = (math.ceil((adjusted_onset_time + duration_time) / data.tr) + data.tr_shift)
 
             # Prevents inclusion of scans that occur before acquisition
             if max(0, end_scan) == 0 and onset_scan < 0:

@@ -828,13 +828,22 @@ def test_tr_with_and_without_bandpass(
             bids_query.get_tr(bold_json, None, signal_clean, task_info, None)
 
 
+def test_event_nan_onset():
+    """Test that NaN onset is skipped."""
+    task_info = {"slice_time_ref": 0, "condition_tr_shift": 0}
+    condition_df = pd.DataFrame({"onset": [np.nan], "duration": [2.4]})
+    data = postprocess.RunData(task_info=task_info, tr=1.2)
+    scans = postprocess.get_condition_indices(data, condition_df)
+    assert scans == ([], 0)
+
+
 def test_event_duration():
     """Test that the expected frames are given for event."""
     task_info = {"slice_time_ref": 0, "condition_tr_shift": 0}
-    condition_df = pd.DataFrame({"onset": [0], "duration": [2.4]})
+    condition_df = pd.DataFrame({"onset": [0, 2.4], "duration": [2.4, np.nan]})
     data = postprocess.RunData(task_info=task_info, tr=1.2)
     scans = postprocess.get_condition_indices(data, condition_df)
-    assert scans == ([0, 1], 2)
+    assert scans == ([0, 1, 2], 3)
 
 
 def test_event_condition_shift():
