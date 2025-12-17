@@ -17,7 +17,7 @@ improvements/enhancements. All fixes and modifications are backwards compatible.
 
 ## [0.36.2] - 2025-12-17
 ### 🐛 Fixes
-- Update seperate acompcor logic to accomodate new format
+- Update separate acompcor logic to accommodate new format
 
 ## [0.36.1] - 2025-12-11
 ### 🐛 Fixes
