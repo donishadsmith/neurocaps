@@ -764,13 +764,26 @@ def get_separate_acompcor(data):
     with open(confound_metadata_file, "r") as confounds_json:
         confound_metadata = json.load(confounds_json)
 
-    acompcors = sorted([acompcor for acompcor in confound_metadata if "a_comp_cor" in acompcor])
-    CSF = [CSF for CSF in acompcors if confound_metadata[CSF]["Mask"] == "CSF"][
-        : data.n_acompcor_separate
-    ]
-    WM = [WM for WM in acompcors if confound_metadata[WM]["Mask"] == "WM"][
-        : data.n_acompcor_separate
-    ]
+    c_compcors = sorted([key for key in confound_metadata if "c_comp_cor" in key])
+    w_compcors = sorted([key for key in confound_metadata if "w_comp_cor" in key])
+    if c_compcors or w_compcors:
+        CSF = [key for key in c_compcors if confound_metadata[key].get("Mask") == "CSF"][
+            : data.n_acompcor_separate
+        ]
+        WM = [key for key in w_compcors if confound_metadata[key].get("Mask") == "WM"][
+            : data.n_acompcor_separate
+        ]
+    else:
+        a_compcors = sorted(
+            [a_compcor for a_compcor in confound_metadata if "a_comp_cor" in a_compcor]
+        )
+        CSF = [CSF for CSF in a_compcors if confound_metadata[CSF]["Mask"] == "CSF"][
+            : data.n_acompcor_separate
+        ]
+        WM = [WM for WM in a_compcors if confound_metadata[WM]["Mask"] == "WM"][
+            : data.n_acompcor_separate
+        ]
+
     components_list.extend(CSF + WM)
 
     return components_list

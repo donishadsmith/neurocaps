@@ -15,9 +15,13 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.36.2] - 2025-12-17
+### 🐛 Fixes
+- Update seperate acompcor logic to accomodate new format
+
 ## [0.36.1] - 2025-12-11
 ### 🐛 Fixes
-- Account for NaN in onset and duration.
+- Account for NaN in onset and duration
 
 ## [0.36.0] - 2025-11-22
 - Added support for Python 3.13

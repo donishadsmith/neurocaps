@@ -1065,17 +1065,28 @@ def test_acompcor_separate(setup_environment_1, caplog, get_vars):
     )
 
 
-@pytest.mark.parametrize("n", (None, 2))
-def test_get_acompcor_separate(setup_environment_1, get_vars, n):
+@pytest.mark.parametrize(
+    "n, use_new_compcor_format", [(None, False), (None, True), (2, False), (2, True)]
+)
+def test_get_acompcor_separate(setup_environment_1, get_vars, n, use_new_compcor_format):
     """
     Ensures ``n_acompcor_separate`` functions properly. Assesses an internal function to ensure that
     the correct "acompcor" components are extracted for nuisance regression when
-    ``n_acompcor_separate`` are specified and not specified.
+    ``n_acompcor_separate`` are specified and not specified. Tests both old (a_comp_cor) and
+    new (c_comp_cor/w_comp_cor) fMRIPrep formats.
     """
     bids_dir, pipeline_name = get_vars
+
+    # Overwrite confounds with the appropriate format
+    simulate_confounds(bids_dir, pipeline_name, use_new_compcor_format)
+
     confound_file = get_confound_data(bids_dir, pipeline_name)
     confound_json = confound_file.replace(".tsv", ".json")
-    correct_confounds = ["a_comp_cor_00", "a_comp_cor_01", "a_comp_cor_02", "a_comp_cor_03"]
+
+    if use_new_compcor_format:
+        correct_confounds = ["c_comp_cor_00", "c_comp_cor_01", "w_comp_cor_00", "w_comp_cor_01"]
+    else:
+        correct_confounds = ["a_comp_cor_00", "a_comp_cor_01", "a_comp_cor_02", "a_comp_cor_03"]
 
     data = postprocess.RunData(
         files={"confound": confound_file, "confound_meta": confound_json}, verbose=False
@@ -1093,7 +1104,7 @@ def test_get_acompcor_separate(setup_environment_1, get_vars, n):
     assert all(i in correct_confounds for i in confounds.columns)
 
     data.signal_clean_info["confound_names"] = ["rot_x"]
-    correct_confounds += ["rot_x"]
+    correct_confounds = correct_confounds + ["rot_x"]
     confounds = postprocess.process_confounds(data, None)
     assert isinstance(confounds, pd.DataFrame)
     assert len(correct_confounds) == len(confounds.columns) == 5

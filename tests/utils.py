@@ -112,7 +112,7 @@ def simulate_event_data(bids_dir):
     )
 
 
-def simulate_confounds(bids_dir, pipeline_name):
+def simulate_confounds(bids_dir, pipeline_name, use_new_compcor_format=False):
     """Create the confounds tsv and json files."""
     confounds_file = glob.glob(
         os.path.join(
@@ -120,8 +120,7 @@ def simulate_confounds(bids_dir, pipeline_name):
         )
     )[0]
 
-    # Create json to test n_acompcor_seperate
-    # Get confounds; original is 31 columns
+    # Create json to test n_acompcor_separate
     confounds_df = pd.read_csv(confounds_file, sep="\t").iloc[:, :31]
     comp_dict = {}
 
@@ -134,12 +133,23 @@ def simulate_confounds(bids_dir, pipeline_name):
         "VarianceExplained": None,
     }
 
-    mask_names = ["CSF"] * 2 + ["WM"] * 3
+    if use_new_compcor_format:
+        for i in range(2):
+            colname = f"c_comp_cor_0{i}"
+            confounds_df[colname] = [x[0] for x in np.random.rand(40, 1)]
+            comp_dict.update({colname: map_comp("CSF")})
 
-    for i in range(5):
-        colname = f"a_comp_cor_0{i}" if i != 4 else "dropped_1"
-        confounds_df[colname] = [x[0] for x in np.random.rand(40, 1)]
-        comp_dict.update({colname: map_comp(mask_names[i])})
+        for i in range(3):
+            colname = f"w_comp_cor_0{i}" if i != 2 else "dropped_1"
+            confounds_df[colname] = [x[0] for x in np.random.rand(40, 1)]
+            comp_dict.update({colname: map_comp("WM")})
+    else:
+        mask_names = ["CSF"] * 2 + ["WM"] * 3
+
+        for i in range(5):
+            colname = f"a_comp_cor_0{i}" if i != 4 else "dropped_1"
+            confounds_df[colname] = [x[0] for x in np.random.rand(40, 1)]
+            comp_dict.update({colname: map_comp(mask_names[i])})
 
     json_object = json.dumps(comp_dict, indent=1)
 
