@@ -544,7 +544,7 @@ class CAP(CAPGetter):
                 "transition_probability",
             ],
             list[str],
-            tuple[str],
+            tuple[str, ...],
             None,
         ] = ("temporal_fraction", "persistence", "counts", "transition_frequency"),
         tr: Optional[float] = None,
@@ -672,7 +672,7 @@ class CAP(CAPGetter):
                   "run-continuous") will be used.
 
         metrics: {"temporal_fraction", "persistence", "counts", "transition_frequency", "transition_probability"},\
-                 :obj:`list[str]`, :obj:`tuple[str]`, or :obj:`None`,\
+                 :obj:`list[str]`, :obj:`tuple[str, ...]`, or :obj:`None`,\
                  default=("temporal_fraction", "persistence", "counts", "transition_frequency")
             The metrics to calculate. Available options include "temporal_fraction", "persistence",
             "counts", "transition_frequency", and "transition_probability". Defaults to
