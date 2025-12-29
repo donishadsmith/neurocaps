@@ -41,6 +41,11 @@ jobs:
         run: pip install .[test]
         shell: bash
 
+      - name: Install pytest-forked for Ubuntu Python 3.11+
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-ver != '3.9' && matrix.python-ver != '3.10' }}
+        run: pip install pytest-forked
+        shell: bash
+
       - name: Install package & pytest for Windows
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
@@ -48,22 +53,28 @@ jobs:
           pip install .[windows,test]
         shell: cmd
 
-      - name: Run tests with coverage for Ubuntu on Python 3.13
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-ver == '3.13' }}
+      - name: Run tests with coverage for Ubuntu on Python 3.10
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-ver == '3.10' }}
         uses: coactions/setup-xvfb@v1
         with:
           options: -screen 0 1600x1200x24
-          run: pytest --cov neurocaps -v
+          run: pytest tests/ --cov neurocaps -v
 
-      - name: Run test without coverage for Ubuntu from Python 3.9 to 3.12
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-ver != '3.13' }}
+      - name: Run tests without coverage for Ubuntu on Python 3.11-3.13 (forked)
+        if: ${{ matrix.os == 'ubuntu-latest' && (matrix.python-ver == '3.11' || matrix.python-ver == '3.12' || matrix.python-ver == '3.13') }}
         uses: coactions/setup-xvfb@v1
         with:
           options: -screen 0 1600x1200x24
-          run: pytest . -v
-          working-directory: tests
+          run: pytest tests/ --forked -v
 
-      - name: Run tests without coverage for Mac for all versions
+      - name: Run tests without coverage for Ubuntu on Python 3.9
+        if: ${{ matrix.os == 'ubuntu-latest' && (matrix.python-ver == '3.9') }}
+        uses: coactions/setup-xvfb@v1
+        with:
+          options: -screen 0 1600x1200x24
+          run: pytest tests/ -v
+
+      - name: Run tests without coverage for Mac
         if: ${{ matrix.os == 'macos-latest' }}
         run: pytest . -v
         shell: bash
@@ -76,7 +87,7 @@ jobs:
         working-directory: tests
 
       - name: Upload coverage reports to Codecov for Ubuntu
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-ver == '3.13' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-ver == '3.10' }}
         uses: codecov/codecov-action@v5.5.2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

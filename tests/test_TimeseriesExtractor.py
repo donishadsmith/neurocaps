@@ -2572,7 +2572,7 @@ def test_session(setup_environment_3, get_vars):
     assert ["02"] not in list(extractor.subject_timeseries)
 
 
-def test_session_error(get_vars):
+def test_session_error(setup_environment_3, get_vars):
     """
     Ensures extraction stops if more than one session ID is detected. The ``subject_timeseries``
     property maintains a strict dictionary order of Subject ID -> Run ID -> Timeseries.
