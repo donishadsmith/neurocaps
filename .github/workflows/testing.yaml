@@ -58,7 +58,9 @@ jobs:
         uses: coactions/setup-xvfb@v1
         with:
           options: -screen 0 1600x1200x24
-          run: COVERAGE_PROCESS_START=pyproject.toml pytest --forked --cov=neurocaps -v
+          run: |
+            export COVERAGE_PROCESS_START=pyproject.toml
+            pytest --forked --cov=neurocaps -v
           shell: bash
 
       - name: Run tests without coverage for Ubuntu on Python 3.11-3.12 (forked)
