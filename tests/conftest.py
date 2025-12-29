@@ -7,6 +7,12 @@ import matplotlib, pytest
 
 from .utils import get_paths
 
+version = sys.version_info
+if sys.platform == "linux" and f"{version.major}.{version.minor}" == "3.13":
+    import coverage
+
+    coverage.process_startup()
+
 
 @pytest.fixture(autouse=True)
 def cleanup_after_test():

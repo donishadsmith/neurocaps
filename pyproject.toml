@@ -88,6 +88,7 @@ exclude_also = [
 [tool.coverage.run]
 branch = true
 source = ["neurocaps"]
+parallel = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

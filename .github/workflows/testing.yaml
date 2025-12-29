@@ -58,21 +58,26 @@ jobs:
         uses: coactions/setup-xvfb@v1
         with:
           options: -screen 0 1600x1200x24
-          run: pytest tests/ --forked --cov neurocaps -v
+          run: COVERAGE_PROCESS_START=pyproject.toml pytest --forked --cov=neurocaps -v
+        shell: bash
+        working-directory: tests
 
       - name: Run tests without coverage for Ubuntu on Python 3.11-3.12 (forked)
         if: ${{ matrix.os == 'ubuntu-latest' && (matrix.python-ver == '3.11' || matrix.python-ver == '3.12') }}
         uses: coactions/setup-xvfb@v1
         with:
           options: -screen 0 1600x1200x24
-          run: pytest tests/ --forked -v
+          run: pytest --forked -v
+        shell: bash
+        working-directory: tests
 
       - name: Run tests without coverage for Ubuntu on Python 3.9-3.10
         if: ${{ matrix.os == 'ubuntu-latest' && (matrix.python-ver == '3.9' || matrix.python-ver == '3.10') }}
         uses: coactions/setup-xvfb@v1
         with:
           options: -screen 0 1600x1200x24
-          run: pytest tests/ -v
+          run: pytest -v
+        working-directory: tests
 
       - name: Run tests without coverage for Mac
         if: ${{ matrix.os == 'macos-latest' }}
