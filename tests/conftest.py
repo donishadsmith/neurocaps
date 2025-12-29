@@ -1,4 +1,4 @@
-import logging, os, shutil, sys, tempfile
+import gc, logging, os, shutil, sys, tempfile
 
 # Assign null handler to root to reduce logged output when using `pytest -s`
 logging.getLogger().addHandler(logging.NullHandler())
@@ -6,6 +6,13 @@ logging.getLogger().addHandler(logging.NullHandler())
 import matplotlib, pytest
 
 from .utils import get_paths
+
+
+@pytest.fixture(autouse=True)
+def cleanup_after_test():
+    yield
+    matplotlib.pyplot.close("all")
+    gc.collect()
 
 
 @pytest.fixture(autouse=False, scope="module")
