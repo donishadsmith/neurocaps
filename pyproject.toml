@@ -71,7 +71,7 @@ benchmark = ["asv", "virtualenv<20.35.5"]
 demo = ["ipywidgets", "openneuro-py"]
 development = ["pre-commit"]
 test = ["pytest", "pytest-cov", "pytest-rerunfailures"]
-windows = ["pybids>=0.16.2"]
+windows = ["pybids>=0.16.5"]
 
 [tool.setuptools.packages.find]
 where = ["."]
