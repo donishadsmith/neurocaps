@@ -1,7 +1,7 @@
 """Module for creating simulated datasets."""
 
 import json, os
-from typing import Union
+from typing import Optional, Union
 
 from joblib import Parallel, delayed
 from numpy.typing import NDArray
@@ -24,8 +24,8 @@ def simulate_bids_dataset(
     n_runs: int = 1,
     n_volumes: int = 100,
     task_name: str = "rest",
-    output_dir: Union[str, None] = None,
-    n_cores: Union[int, None] = None,
+    output_dir: Optional[str] = None,
+    n_cores: Optional[int] = None,
     progress_bar: bool = False,
 ) -> str:
     """
@@ -78,7 +78,7 @@ def simulate_bids_dataset(
     Returns
     -------
     str
-        Root of the simulated BIDs directory.
+        Root of the simulated BIDS directory.
     """
     bids_root = output_dir
     if not bids_root:
