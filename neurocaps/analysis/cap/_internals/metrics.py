@@ -283,8 +283,7 @@ def compute_transition_probability(
     arr: NDArray, cap_pairs: list[tuple[int, int]]
 ) -> dict[str, float]:
     """
-    Computes transition probability for the subject and run specified in ``sub_info`` and
-    inserts new row in the dataframe.
+    Computes transition probability.
     """
     trans_prob_dict = {}
 
