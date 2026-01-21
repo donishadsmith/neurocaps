@@ -78,7 +78,7 @@ def setup_environment_2(setup_environment_1, get_vars):
         )
     )[0]
     confound_df = pd.read_csv(confound_file, sep="\t")
-    fd_array = confound_df["framewise_displacement"].values
+    fd_array = confound_df["framewise_displacement"].to_numpy(copy=True)
     # Add high FD threshold; 0 censors beginning scan for "active" condition and 28, 29 censors
     # end scans for "active" condition
     fd_array[[0, 10, 11, 28, 29, 38, 39]] = 0.9
@@ -1199,7 +1199,9 @@ def test_fd_censoring(setup_environment_1, get_vars):
     bids_dir, pipeline_name = get_vars
 
     fd_array = (
-        get_confound_data(bids_dir, pipeline_name, True)["framewise_displacement"].fillna(0).values
+        get_confound_data(bids_dir, pipeline_name, True)["framewise_displacement"]
+        .fillna(0)
+        .to_numpy(copy=True)
     )
 
     # Should censor; use_confounds is True by default
@@ -1370,7 +1372,9 @@ def test_censoring_with_sample_mask(setup_environment_1, get_vars):
     bids_dir, pipeline_name = get_vars
 
     fd_array = (
-        get_confound_data(bids_dir, pipeline_name, True)["framewise_displacement"].fillna(0).values
+        get_confound_data(bids_dir, pipeline_name, True)["framewise_displacement"]
+        .fillna(0)
+        .to_numpy(copy=True)
     )
 
     # Flags 2, 12, 39
@@ -1634,7 +1638,9 @@ def test_dummy_scans_with_fd_censoring(setup_environment_1, get_vars):
     bids_dir, pipeline_name = get_vars
 
     fd_array = (
-        get_confound_data(bids_dir, pipeline_name, True)["framewise_displacement"].fillna(0).values
+        get_confound_data(bids_dir, pipeline_name, True)["framewise_displacement"]
+        .fillna(0)
+        .to_numpy(copy=True)
     )
 
     # Only one volume should meet the fd threshold
@@ -1756,7 +1762,9 @@ def test_extended_censoring_integration(setup_environment_1, get_vars, fd_thresh
     bids_dir, pipeline_name = get_vars
 
     fd_array = (
-        get_confound_data(bids_dir, pipeline_name, True)["framewise_displacement"].fillna(0).values
+        get_confound_data(bids_dir, pipeline_name, True)["framewise_displacement"]
+        .fillna(0)
+        .to_numpy(copy=True)
     )
 
     extractor_not_censored = TimeseriesExtractor(standardize=False)
@@ -1826,7 +1834,9 @@ def test_extended_censor_with_dummy_scans(setup_environment_1, get_vars):
     bids_dir, pipeline_name = get_vars
 
     fd_array = (
-        get_confound_data(bids_dir, pipeline_name, True)["framewise_displacement"].fillna(0).values
+        get_confound_data(bids_dir, pipeline_name, True)["framewise_displacement"]
+        .fillna(0)
+        .to_numpy(copy=True)
     )
 
     fd_threshold = {"threshold": 0.31, "n_before": 4, "n_after": 2}
