@@ -1,7 +1,7 @@
 """Module for creating simulated datasets."""
 
 import json, os
-from typing import Optional, Union
+from typing import Optional
 
 from joblib import Parallel, delayed
 from numpy.typing import NDArray
