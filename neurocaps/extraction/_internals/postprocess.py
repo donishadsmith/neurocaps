@@ -3,6 +3,8 @@
 import copy, json, inspect, math, os, re
 from dataclasses import dataclass, field
 from functools import cached_property
+
+# from packaging import parse
 from typing import Optional, Union
 
 import numpy as np, pandas as pd
@@ -681,6 +683,7 @@ def perform_extraction(data, LG):
         labels_img=data.maps,
         resampling_target="data",
         strategy="mean",
+        # standardize=None if parse(nilearn.__version__) >= parse("0.15.0") else False,
         standardize=False,
         t_r=data.tr,
         **data.signal_clean_info["masker_init"],
