@@ -12,10 +12,9 @@ brainspace==0.1.16
 surfplot==0.2.0
 neuromaps==0.0.5
 pybids==0.16.5
-plotly==5.19.0
+plotly==6.5.0
 nbformat==5.10.0
-kaleido==0.1.0.post1; platform_system == 'Windows'
-kaleido==0.2.0; platform_system != 'Windows'
+kaleido==1.2.0
 typing_extensions==4.10.0
 vtk==9.2.4
 tqdm==4.65.0

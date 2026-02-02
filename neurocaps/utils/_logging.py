@@ -15,6 +15,15 @@ _USER_ROOT_HANDLER = None
 _USER_MODULE_HANDLERS = {}
 
 
+def _suppress_third_party_loggers():
+    """Suppresses specific loggers from other packages"""
+    for name in ["choreographer", "kaleido"]:
+        logging.getLogger(name).setLevel(logging.WARNING)
+
+
+_suppress_third_party_loggers()
+
+
 def setup_logger(
     name: str,
     top_level: bool = True,

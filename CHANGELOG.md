@@ -15,6 +15,11 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.37.0] - 2026-02-02
+### ♻ Changed
+- Updated minimum plotly version to 6.5.0 and kaleido to 1.2.0. Chrome needs to be installed to save plots as a PNG
+- Removed the deprecated "engine" kwarg since kaleido is the only backend used for new plotly versions
+
 ## [0.36.2] - 2025-12-17
 ### 🐛 Fixes
 - Update separate acompcor logic to accommodate new format
