@@ -1806,8 +1806,9 @@ class CAP(CAPGetter):
         **Parcellation Approach**: If using "Custom" for ``parcel_approach`` the "regions" subkey is
         required.
 
-        **Saving Plots**: By default, this function uses "kaleido" (a dependency of NeuroCAPs) to
-        save plots. For other engines such as "orca", those packages must be installed seperately.
+        **Saving Plots and Chrome Installation**: Kaleido >= 1.0.0 no longer installs Chrome automatically.
+        Saving plots as PNG requires Chrome. If Chrome is not installed, either install it or run ``pip
+        install kaleido && kaleido_get_chrome``, or use ``plot_output_format="html"`` as an alternative.
 
         **Tick Values**: if the ``tickvals`` or  ``range`` subkeys in this code are not specified in
         the ``radialaxis`` kwarg, then four values are shown - 0.25*(max value), 0.50*(max value),
@@ -1864,7 +1865,6 @@ class CAP(CAPGetter):
                 radar.save_radar_plot(
                     fig=fig,
                     scale=plot_dict["scale"],
-                    engine=plot_dict["engine"],
                     output_dir=output_dir,
                     plot_output_format=plot_output_format,
                     suffix_filename=suffix_filename,

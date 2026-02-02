@@ -204,7 +204,6 @@ def show_radar_plot(fig: go.Figure, show_figure: bool) -> None:
 def save_radar_plot(
     fig: go.Figure,
     scale: int,
-    engine: str,
     output_dir: Union[str, None],
     plot_output_format: str,
     suffix_filename: str,
@@ -226,5 +225,4 @@ def save_radar_plot(
             fig.write_image(
                 os.path.join(output_dir, filename + ".png"),
                 scale=scale,
-                engine=engine,
             )

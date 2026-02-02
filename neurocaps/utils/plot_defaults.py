@@ -419,8 +419,6 @@ class PlotDefaults:
                     Width of the plot.
                 - bgcolor : :obj:`str`, default="white" --
                     Color of the background.
-                - engine: {"kaleido", "orca"}, default="kaleido" --
-                    Engine used for saving plots.
 
             - Trace and Marker Parameters:
 
@@ -493,7 +491,6 @@ class PlotDefaults:
             "height": 800,
             "width": 1200,
             "bgcolor": "white",
-            "engine": "kaleido",
             "line_close": True,
             "fill": "toself",
             "scattersize": 8,

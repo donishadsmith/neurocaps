@@ -2,7 +2,7 @@ name: Test Minimum Dependencies
 
 on:
   push:
-    branches: [main]
+    branches: [main, development]
   pull_request:
     branches:
       - '*'
@@ -33,6 +33,7 @@ jobs:
         if: ${{ matrix.os != 'windows-latest' }}
         run: |
           pip install -r requirements.txt
+          python -c "import kaleido; kaleido.get_chrome_sync()"
         working-directory: tests/minimum_dependencies
 
       - name: Install package & pytest for Windows
@@ -40,6 +41,7 @@ jobs:
         run: |
           git config --system core.longpaths true
           pip install -r requirements.txt
+          python -c "import kaleido; kaleido.get_chrome_sync()"
         working-directory: tests/minimum_dependencies
 
       - name: Install NeuroCAPs

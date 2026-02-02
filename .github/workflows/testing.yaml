@@ -38,7 +38,9 @@ jobs:
 
       - name: Install package & pytest for Mac & Ubuntu
         if: ${{ matrix.os != 'windows-latest' }}
-        run: pip install .[test]
+        run: |
+          pip install .[test]
+          python -c "import kaleido; kaleido.get_chrome_sync()"
         shell: bash
 
       - name: Install pytest-forked for Ubuntu Python 3.11+
@@ -51,6 +53,7 @@ jobs:
         run: |
           git config --system core.longpaths true
           pip install .[windows,test]
+          python -c "import kaleido; kaleido.get_chrome_sync()"
         shell: cmd
 
       - name: Run tests with coverage for Ubuntu on Python 3.10

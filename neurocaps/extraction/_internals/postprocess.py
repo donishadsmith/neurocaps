@@ -683,6 +683,7 @@ def perform_extraction(data, LG):
         labels_img=data.maps,
         resampling_target="data",
         strategy="mean",
+        # TODO: Keep track of Nilearn version that changes False to None
         # standardize=None if parse(nilearn.__version__) >= parse("0.15.0") else False,
         standardize=False,
         t_r=data.tr,
