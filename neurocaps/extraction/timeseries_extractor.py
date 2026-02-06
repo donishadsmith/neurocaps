@@ -679,7 +679,7 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
                 "`self.space = 'TEMPLATE_SPACE'` (e.g. 'MNI152NLin6Asym')\n"
                 "2. File names do not contain specific entities required for "
                 "querying such as 'sub-', 'space-', 'task-', or 'desc-' "
-                "(e.g 'sub-01_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-preproc-bold.nii.gz')\n"
+                "(e.g 'sub-01_ses-1_task-rest_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz')\n"
                 "3. Incorrect task name or session ID specified in `task` or `session` parameters.\n"
                 "4. The cache may need to be cleared using "
                 "``TimeseriesExtractor._call_layout.cache_clear()`` if the directory has been "
