@@ -1,6 +1,9 @@
 # Preference for not counting the Jupyter Notebooks tutorial in language stats
 *.ipynb linguist-detectable=false
 
+*.sh text eol=lf
+* text=auto eol=lf
+
 # Open source data used for testing; "nilearn_data" and "neuromaps-data" added to reduce fetching in Github Actions
 tests/data/nilearn_data/* linguist-vendored
 tests/data/neuromaps-data/* linguist-vendored

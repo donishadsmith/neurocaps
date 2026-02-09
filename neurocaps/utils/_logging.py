@@ -17,7 +17,7 @@ _USER_MODULE_HANDLERS = {}
 
 def _suppress_third_party_loggers():
     """Suppresses specific loggers from other packages"""
-    for name in ["choreographer", "kaleido"]:
+    for name in ["choreographer", "kaleido", "matplotlib"]:
         logging.getLogger(name).setLevel(logging.WARNING)
 
 
