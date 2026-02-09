@@ -58,7 +58,7 @@ dependencies = [
     "plotly>=6.5.0",
     "nbformat>=5.10.0", # Needed for plotly figures to display in Jupyter Notebooks without errors
     "kaleido>=1.2.0",
-    "setuptools>=77.0.1; python_version>='3.12'", # Results in installation errors if not included as dependency
+    "setuptools>=77.0.1, <82.0.0", # Results in installation errors if not included as dependency
     "typing_extensions>=4.10.0",
     "vtk>=9.2.0",
     "tqdm>=4.65.0",

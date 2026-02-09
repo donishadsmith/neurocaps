@@ -9,7 +9,7 @@
    :alt: Python Versions
 
 .. image:: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal
-   :target: https://doi.org/10.5281/zenodo.18460809
+   :target: https://doi.org/10.5281/zenodo.18529846
    :alt: DOI
 
 .. image:: https://img.shields.io/badge/Source%20Code-neurocaps-purple
@@ -113,7 +113,7 @@ NeuroCAPs relies on several packages:
       "plotly>=6.5.0",
       "nbformat>=5.10.0",
       "kaleido>=1.2.0",
-      "setuptools>=77.0.1; python_version>='3.12'",
+      "setuptools>=77.0.1, <82.0.0",
       "typing_extensions>=4.10.0",
       "vtk>=9.2.0",
       "tqdm>=4.65.0"

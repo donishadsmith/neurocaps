@@ -7,4 +7,5 @@ myst_parser
 nbsphinx
 pandoc
 ipykernel
+setuptools<82.0.0
 neurocaps
