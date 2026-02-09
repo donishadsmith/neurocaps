@@ -15,6 +15,11 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.37.1] - 2026-02-08
+### 🐛 Fixes
+- Restrict setuptools so that maximum version installed is <82.0.0 to prevent import error for neuromaps due to removal of pkg_resources (Note: A fix is available in the neuromaps main branch but has not been released to PyPI yet)
+- Fixed spelling in exception message ("preproc-bold" -> "preproc_bold") in ``TimeseriesExtractor.get_bold``
+
 ## [0.37.0] - 2026-02-02
 ### ♻ Changed
 - Updated minimum plotly version to 6.5.0 and kaleido to 1.2.0. Chrome needs to be installed to save plots as a PNG
