@@ -15,6 +15,13 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.37.2] - 2026-02-19
+### 💻 Metadata
+- Update metadata on Pypi
+### ♻ Changed
+- Update internal code to handle deprecated parameter argument
+- Silence matplotlib logger
+
 ## [0.37.1] - 2026-02-08
 ### 🐛 Fixes
 - Restrict setuptools so that maximum version installed is <82.0.0 to prevent import error for neuromaps due to removal of pkg_resources (Note: A fix is available in the neuromaps main branch but has not been released to PyPI yet)

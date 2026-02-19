@@ -3,11 +3,10 @@
 import copy, json, inspect, math, os, re
 from dataclasses import dataclass, field
 from functools import cached_property
-
-# from packaging import parse
+from packaging.version import parse
 from typing import Optional, Union
 
-import numpy as np, pandas as pd
+import nilearn, numpy as np, pandas as pd
 from nilearn.maskers import NiftiLabelsMasker
 from nilearn.image import index_img, load_img
 from scipy.interpolate import CubicSpline
@@ -683,9 +682,7 @@ def perform_extraction(data, LG):
         labels_img=data.maps,
         resampling_target="data",
         strategy="mean",
-        # TODO: Keep track of Nilearn version that changes False to None
-        # standardize=None if parse(nilearn.__version__) >= parse("0.15.0") else False,
-        standardize=False,
+        standardize=None if parse(nilearn.__version__) >= parse("0.13.0") else False,
         t_r=data.tr,
         **data.signal_clean_info["masker_init"],
         **clean_param(),
