@@ -86,6 +86,7 @@ def test_fetch_preset_parcel_approach():
     assert parcel_approach["Custom"]["metadata"]["n_regions"] == 7
 
 
+@pytest.mark.flaky(reruns=5)
 @pytest.mark.skipif(
     os.getenv("GITHUB_ACTIONS") and sys.platform != "linux" and sys.version_info[:2] != (3, 12),
     reason="Restrict file fetching in Github Actions testing to specific version and platform",
