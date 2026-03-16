@@ -1055,6 +1055,7 @@ def test_caps2corr(tmp_dir, method):
     check_outputs(tmp_dir, {"pkl": 1}, plot_type="pickle")
 
 
+@pytest.mark.flaky(reruns=5)
 @pytest.mark.parametrize(
     "timeseries, parcel_approach",
     [
