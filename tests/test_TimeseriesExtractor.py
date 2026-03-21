@@ -1861,11 +1861,11 @@ def test_extended_censor_with_dummy_scans(setup_environment_1, get_vars):
     censored_data = copy.deepcopy(extractor_censored.subject_timeseries)
 
     # Remove dummy scans to ensure nuisance regression is the same
-    extractor_non_censored = TimeseriesExtractor(dummy_scans=dummy_scans)
+    extractor_non_censored = TimeseriesExtractor(dummy_scans=dummy_scans, standardize=False)
     extractor_non_censored.get_bold(bids_dir=bids_dir, task="rest", pipeline_name=pipeline_name)
     # Shift back by three
     expected_removal = np.array([35, 36, 37, 38, 39]) - dummy_scans
-    np.array_equal(
+    assert np.array_equal(
         censored_data["01"]["run-001"],
         np.delete(
             extractor_non_censored.subject_timeseries["01"]["run-001"], expected_removal, axis=0
