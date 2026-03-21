@@ -153,7 +153,7 @@ def simulate_confounds(bids_dir, pipeline_name, use_new_compcor_format=False):
 
     json_object = json.dumps(comp_dict, indent=1)
 
-    with open(confounds_file.replace("tsv", "json"), "w") as f:
+    with open(confounds_file.rsplit(".tsv", 1)[0] + ".json", "w") as f:
         f.write(json_object)
 
     confounds_df.to_csv(confounds_file, sep="\t", index=None)
