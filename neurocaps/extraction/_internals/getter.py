@@ -1,7 +1,6 @@
 """A class which is responsible for accessing attributes in ``TimeSeriesExtractor``."""
 
 import copy, sys
-from typing import Union
 
 import numpy as np
 
@@ -38,11 +37,11 @@ class TimeseriesExtractorGetter:
         return copy.deepcopy(self._parcel_approach)
 
     @parcel_approach.setter
-    def parcel_approach(self, parcel_dict: Union[ParcelConfig, ParcelApproach, str]) -> None:
+    def parcel_approach(self, parcel_dict: ParcelConfig | ParcelApproach | str) -> None:
         self._parcel_approach = check_parcel_approach(parcel_approach=parcel_dict, caller="setter")
 
     @property
-    def signal_clean_info(self) -> Union[dict[str, Union[bool, int, float, str]], None]:
+    def signal_clean_info(self) -> dict[str, bool | int | float | str] | None:
         """
         Dictionary containing signal cleaning parameters. Returns a deep copy.
         """
@@ -52,7 +51,7 @@ class TimeseriesExtractorGetter:
 
     # Exist when TimeSeriesExtractor.get_bold() used
     @property
-    def task_info(self) -> Union[dict[str, Union[str, int]], None]:
+    def task_info(self) -> dict[str, str | int] | None:
         """
         Dictionary containing all task-related information such. Defined after running
         ``self.get_bold()``.
@@ -61,7 +60,7 @@ class TimeseriesExtractorGetter:
 
     # Gets initialized and populated in TimeSeriesExtractor.get_bold(),
     @property
-    def subject_ids(self) -> Union[list[str], None]:
+    def subject_ids(self) -> list[str] | None:
         """
         A list containing all subject IDs retrieved from ``BIDSLayout`` for timeseries extraction.
         Defined after running ``self.get_bold()``.
@@ -69,7 +68,7 @@ class TimeseriesExtractorGetter:
         return getattr(self, "_subject_ids", None)
 
     @property
-    def n_cores(self) -> Union[int, None]:
+    def n_cores(self) -> int | None:
         """
         Number of cores used for multiprocessing with Joblib. Defined after running
         ``self.get_bold()``.
@@ -77,7 +76,7 @@ class TimeseriesExtractorGetter:
         return getattr(self, "_n_cores", None)
 
     @property
-    def subject_timeseries(self) -> Union[SubjectTimeseries, None]:
+    def subject_timeseries(self) -> SubjectTimeseries | None:
         """
         A dictionary mapping subject IDs to their run IDs and their associated timeseries
         (TRs x ROIs) as a NumPy array. Can be deleted using ``del self.subject_timeseries``.
@@ -87,7 +86,7 @@ class TimeseriesExtractorGetter:
         return getattr(self, "_subject_timeseries", None)
 
     @subject_timeseries.setter
-    def subject_timeseries(self, subject_dict: Union[SubjectTimeseries, str]) -> None:
+    def subject_timeseries(self, subject_dict: SubjectTimeseries | str) -> None:
         subject_dict = io_utils.get_obj(subject_dict)
 
         self._validate_timeseries(subject_dict)
@@ -99,7 +98,7 @@ class TimeseriesExtractorGetter:
         del self._subject_timeseries
 
     @property
-    def qc(self) -> Union[dict[str, dict[str, dict[str, Union[float, int]]]], None]:
+    def qc(self) -> dict[str, dict[str, dict[str, float | int]]] | None:
         """
         A dictionary reporting quality control, which maps subject IDs to their run IDs and
         information related to framewise displacement and dummy scans. Returns a reference.

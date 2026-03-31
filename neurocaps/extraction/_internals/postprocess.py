@@ -4,7 +4,6 @@ import copy, json, inspect, math, os, re
 from dataclasses import dataclass, field
 from functools import cached_property
 from packaging.version import parse
-from typing import Optional, Union
 
 import nilearn, numpy as np, pandas as pd
 from nilearn.maskers import NiftiLabelsMasker
@@ -30,31 +29,31 @@ class RunData:
     parcel_approach: ParcelApproach = field(default_factory=dict)
     signal_clean_info: dict = field(default_factory=dict)
     task_info: dict = field(default_factory=dict)
-    tr: Union[int, None] = None
+    tr: int | None = None
     verbose: bool = False
     # Run-specific attributes
-    files: dict[str, Optional[str]] = field(default_factory=dict)
-    head: Union[str, None] = None
-    dummy_vols: Union[int, None] = None
+    files: dict[str, str | None] = field(default_factory=dict)
+    head: str | None = None
+    dummy_vols: int | None = None
     censored_frames: list[int] = field(default_factory=list)
-    sample_mask: Union[np.typing.NDArray[np.bool_], None] = None
+    sample_mask: np.typing.NDArray[np.bool_] | None = None
     censored_ends: list[int] = field(default_factory=list)
-    fd_array_len: Union[int, None] = None
+    fd_array_len: int | None = None
     # Event condition scan indices and qc information for condition
     scans: list[int] = field(default_factory=list)
-    n_total_scans: Union[int, None] = None
-    n_censored_scans: Union[int, None] = None
-    n_interpolated_scans: Union[int, None] = None
+    n_total_scans: int | None = None
+    n_censored_scans: int | None = None
+    n_interpolated_scans: int | None = None
     # Avoid timeseries extraction
     skip_run: bool = False
     # Stats for qc
-    mean_fd: Union[float, None] = None
-    std_fd: Union[float, None] = None
-    high_motion_len_mean: Union[float, None] = None
-    high_motion_len_std: Union[float, None] = None
+    mean_fd: float | None = None
+    std_fd: float | None = None
+    high_motion_len_mean: float | None = None
+    high_motion_len_std: float | None = None
 
     @property
-    def session(self) -> Union[int, str, None]:
+    def session(self) -> int | str | None:
         return self.task_info["session"]
 
     @property
@@ -62,7 +61,7 @@ class RunData:
         return self.task_info["task"]
 
     @property
-    def condition(self) -> Union[str, None]:
+    def condition(self) -> str | None:
         return self.task_info["condition"]
 
     @property
@@ -78,22 +77,22 @@ class RunData:
         return self.signal_clean_info["use_confounds"]
 
     @property
-    def confound_names(self) -> Union[list[str], None]:
+    def confound_names(self) -> list[str] | None:
         return self.signal_clean_info["confound_names"]
 
     @property
-    def n_acompcor_separate(self) -> Union[int, None]:
+    def n_acompcor_separate(self) -> int | None:
         return self.signal_clean_info["n_acompcor_separate"]
 
     @property
-    def fd_thresh(self) -> Union[float, None]:
+    def fd_thresh(self) -> float | None:
         if isinstance(self.signal_clean_info["fd_threshold"], dict):
             return self.signal_clean_info["fd_threshold"]["threshold"]
         else:
             return self.signal_clean_info["fd_threshold"]
 
     @property
-    def out_percent(self) -> Union[float, None]:
+    def out_percent(self) -> float | None:
         if isinstance(self.signal_clean_info["fd_threshold"], dict):
             return self.signal_clean_info["fd_threshold"].get("outlier_percentage")
 
@@ -106,17 +105,17 @@ class RunData:
         )
 
     @property
-    def n_before(self) -> Union[int, None]:
+    def n_before(self) -> int | None:
         if isinstance(self.signal_clean_info["fd_threshold"], dict):
             return self.signal_clean_info["fd_threshold"].get("n_before")
 
     @property
-    def n_after(self) -> Union[int, None]:
+    def n_after(self) -> int | None:
         if isinstance(self.signal_clean_info["fd_threshold"], dict):
             return self.signal_clean_info["fd_threshold"].get("n_after")
 
     @property
-    def pass_mask_to_nilearn(self) -> Union[bool, None]:
+    def pass_mask_to_nilearn(self) -> bool | None:
         if isinstance(self.signal_clean_info["fd_threshold"], dict):
             return (
                 True
@@ -127,12 +126,12 @@ class RunData:
             return False
 
     @property
-    def interpolate(self) -> Union[bool, None]:
+    def interpolate(self) -> bool | None:
         if isinstance(self.signal_clean_info["fd_threshold"], dict):
             return self.signal_clean_info["fd_threshold"].get("interpolate")
 
     @cached_property
-    def confound_df(self) -> Union[pd.DataFrame, None]:
+    def confound_df(self) -> pd.DataFrame | None:
         if self.files["confound"]:
             return pd.read_csv(self.files["confound"], sep="\t")
         else:

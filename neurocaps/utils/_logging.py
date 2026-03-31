@@ -7,7 +7,6 @@ provided.
 import logging, sys
 from logging.handlers import QueueHandler
 from multiprocessing.queues import Queue
-from typing import Union
 
 # Global variables to determine if a handler is user defined or defined by OS
 _PARALLEL_MODULE = "neurocaps.extraction._internals.postprocess"
@@ -27,7 +26,7 @@ _suppress_third_party_loggers()
 def setup_logger(
     name: str,
     top_level: bool = True,
-    parallel_log_config: Union[dict[str, Union[Queue, int]], None] = None,
+    parallel_log_config: dict[str, Queue | int] | None = None,
 ):
     """
     Generates module specific loggers, defaults to outputting logs at the informational level to
@@ -82,7 +81,7 @@ def setup_logger(
     return logger
 
 
-def setup_queuehandler(logger: logging.Logger, parallel_log_config: dict[str, Union[Queue, int]]):
+def setup_queuehandler(logger: logging.Logger, parallel_log_config: dict[str, Queue | int]):
     # Only QueueHandler will be in handler list
     logger.handlers.clear()
     queue = parallel_log_config.get("queue")
@@ -98,7 +97,7 @@ def setup_queuehandler(logger: logging.Logger, parallel_log_config: dict[str, Un
     return logger
 
 
-def add_default_handler(logger: logging.Logger, format: Union[str, None] = None):
+def add_default_handler(logger: logging.Logger, format: str | None = None):
     """Add a default handler and a format."""
     # Safeguard; ensure a clean state for "extract_timeseries" since it is used in parallel and
     # sequential contexts

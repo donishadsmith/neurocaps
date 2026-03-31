@@ -1123,17 +1123,13 @@ try:
 except TypeError:
     # Create temp
     temp_nifti = tempfile.NamedTemporaryFile(delete=False, suffix=".nii.gz")
-    warnings.warn(
-        textwrap.dedent(
-            f"""
+    warnings.warn(textwrap.dedent(f"""
                     Potential error due to changes in pathlib.py in Python 3.12 causing the error
                     message to output as "not 'Nifti1Image'" instead of "not Nifti1Image", which
                     neuromaps uses to determine if the input is a Nifti1Image object.
                     Converting stat_map into a temporary nii.gz file (which will be automatically
                     deleted afterwards) at {temp_nifti.name}
-                    """
-        )
-    )
+                    """))
     # Ensure file is closed
     temp_nifti.close()
     # Save temporary nifti to temp file

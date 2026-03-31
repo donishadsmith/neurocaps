@@ -1,7 +1,7 @@
 """Module containing functions related to fetching the preset parcellation approaches."""
 
 import os
-from typing import Literal, Union
+from typing import Literal
 
 import numpy as np
 
@@ -53,7 +53,7 @@ def get_preset_subdir_paths(root_dir) -> tuple[str, str]:
     return os.path.join(root_dir, "presets", "jsons"), os.path.join(root_dir, "presets", "niftis")
 
 
-def check_n_nodes(name: str, n_nodes: Union[int, None]) -> Union[int, None]:
+def check_n_nodes(name: str, n_nodes: int | None) -> int | None:
     """Checks if the number of nodes for the parcellation is valid."""
     has_node_info = name in ATLAS_N_NODES
     if not has_node_info:
@@ -100,7 +100,7 @@ def get_osf_file_url(filename: str, download_mock: bool = True) -> str:
 
 
 def fetch_custom_parcel_approach(
-    name: str, n_nodes: Union[int, None], overwrite: bool = False
+    name: str, n_nodes: int | None, overwrite: bool = False
 ) -> dict[Literal["Custom"], CustomParcelApproach]:
     """Fetches the "Custom" parcellation approach. Current valid names are "HCPex" and "4S"."""
     is_valid_preset(name)
@@ -125,10 +125,10 @@ def fetch_custom_parcel_approach(
 
 
 def fetch_files_from_osf(
-    filenames: Union[list[str], None],
+    filenames: list[str] | None,
     overwrite: bool = False,
     resume: bool = True,
-    verbose: Union[bool, int] = 1,
+    verbose: bool | int = 1,
     download_mock: bool = False,
 ) -> None:
     """

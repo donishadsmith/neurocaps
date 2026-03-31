@@ -1,7 +1,7 @@
 """Module containing helper functions related to visualizing BOLD data."""
 
 import os
-from typing import Any, Union
+from typing import Any
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -20,7 +20,7 @@ from neurocaps.utils._plot_utils import PlotFuncs
 
 
 def get_roi_indices(
-    parcel_approach: ParcelApproach, roi_indx: Union[int, str, list[str], list[int]]
+    parcel_approach: ParcelApproach, roi_indx: int | str | list[str] | list[int]
 ) -> NDArray:
     """Gets the indices for a specified node or nodes from ``parcel_approach``."""
     parc_name = get_parc_name(parcel_approach)
@@ -72,7 +72,7 @@ def get_region_indices(parcel_approach: ParcelApproach, region: str) -> NDArray:
 
 def get_plot_indxs(
     parcel_approach: ParcelApproach,
-    roi_indx: Union[int, str, list[str], list[int]] = None,
+    roi_indx: int | str | list[str] | list[int] = None,
     region: str = None,
 ):
     """Retrieve the indices from the subject's timeseries data to plot."""
@@ -89,7 +89,7 @@ def create_bold_figure(
     parcel_approach: ParcelApproach,
     figsize: tuple[int, int],
     plot_indxs: NDArray,
-    roi_indx: Union[int, str, list[str], list[int]] = None,
+    roi_indx: int | str | list[str] | list[int] = None,
     region: str = None,
 ):
     """Generate the BOLD figure."""
@@ -117,7 +117,7 @@ def create_bold_figure(
 
 
 def save_bold_figure(
-    fig: Union[Figure, Axes],
+    fig: Figure | Axes,
     plot_dict: dict[str, Any],
     subj_id: str,
     run_name: str,

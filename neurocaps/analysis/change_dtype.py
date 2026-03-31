@@ -1,7 +1,5 @@
 """Function for changing the dtype of timeseries data."""
 
-from typing import Optional, Union
-
 import numpy as np
 
 from ._internals import serialize
@@ -10,12 +8,12 @@ from neurocaps.typing import SubjectTimeseries
 
 
 def change_dtype(
-    subject_timeseries_list: Union[list[SubjectTimeseries], list[str]],
-    dtype: Union[str, np.floating],
-    output_dir: Optional[str] = None,
-    filenames: Optional[list[str]] = None,
+    subject_timeseries_list: list[SubjectTimeseries] | list[str],
+    dtype: str | np.floating,
+    output_dir: str | None = None,
+    filenames: list[str] | None = None,
     return_dicts: bool = True,
-) -> Union[dict[str, SubjectTimeseries], None]:
+) -> dict[str, SubjectTimeseries] | None:
     """
     Perform Participant-wise Dtype Conversion.
 

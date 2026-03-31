@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
-        python-ver: ['3.9']
+        python-ver: ['3.10']
 
     name: Python ${{ matrix.python-ver }} check on ${{ matrix.os }}
     steps:

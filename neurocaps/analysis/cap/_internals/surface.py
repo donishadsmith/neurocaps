@@ -1,7 +1,7 @@
 """Internal module for generating surface plots."""
 
 import os, tempfile
-from typing import Any, Union
+from typing import Any
 
 import nibabel as nib
 import matplotlib.pyplot as plt
@@ -78,7 +78,7 @@ def generate_surface_plot(
     plot_dict: dict[str, Any],
     group_name: str,
     cap_name: str,
-    suffix_title: Union[str, None],
+    suffix_title: str | None,
 ) -> Figure:
     """Creates the surface plot."""
     # Code adapted from example on https://surfplot.readthedocs.io/
@@ -143,11 +143,11 @@ def generate_surface_plot(
 
 
 def save_surface_plot(
-    fig: Union[Figure, Axes],
+    fig: Figure | Axes,
     plot_dict: dict[str, Any],
     output_dir: str,
     plot_output_format: str,
-    suffix_filename: Union[str, None],
+    suffix_filename: str | None,
     stat_map: nib.Nifti1Image,
     save_stat_maps: bool,
     group_name: str,
@@ -174,7 +174,7 @@ def save_nifti_img(img: nib.Nifti1Image, output_dir: str, filename: str) -> None
     nib.save(img, os.path.join(output_dir, filename))
 
 
-def show_surface_plot(fig: Union[Figure, Axes], show_fig: bool) -> None:
+def show_surface_plot(fig: Figure | Axes, show_fig: bool) -> None:
     """Visualizes a single surface plot."""
     try:
         plt.show(fig) if show_fig else plt.close(fig)

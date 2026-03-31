@@ -12,7 +12,7 @@ license = "MIT"
 authors = [{name = "Donisha Smith", email = "donishasmith@outlook.com"}]
 description = "Co-activation Patterns (CAPs) Python package"
 readme = "README.md"
-requires-python = ">=3.9.0"
+requires-python = ">=3.10.0"
 
 keywords = [
     "python",
@@ -29,7 +29,6 @@ classifiers = [
     "Intended Audience :: Education",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",

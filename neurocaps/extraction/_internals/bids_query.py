@@ -2,7 +2,7 @@
 
 import json, os, re
 
-from typing import Any, Optional, Union
+from typing import Any
 
 from neurocaps.utils._logging import setup_logger
 
@@ -13,7 +13,7 @@ def setup_extraction(
     layout: Any,
     subj_ids: list[str],
     space: str,
-    exclude_niftis: Union[list[str], None],
+    exclude_niftis: list[str] | None,
     signal_clean_info: dict[str, Any],
     task_info: dict[str, Any],
     verbose: bool,
@@ -110,10 +110,10 @@ def query_files(
     extension: str,
     subj_id: str,
     scope: str = "derivatives",
-    suffix: Union[str, None] = None,
-    desc: Union[str, None] = None,
+    suffix: str | None = None,
+    desc: str | None = None,
     event: bool = False,
-    space: Optional[str] = None,
+    space: str | None = None,
 ):
     """
     Queries specific files (sorted lexicographically) using ``BidsLayout``.
@@ -147,11 +147,11 @@ def query_files(
 
 
 def build_dict(
-    base: dict[str, Union[Any, None]],
+    base: dict[str, Any | None],
     space: str,
     signal_clean_info: dict[str, Any],
     task_info: dict[str, Any],
-) -> dict[str, Union[str, None]]:
+) -> dict[str, str | None]:
     """Builds dictionary containing subject-specific files queried using ``BIDSLayout``."""
     files = {}
     files["niftis"] = query_files(
@@ -183,7 +183,7 @@ def build_dict(
     return files
 
 
-def exclude_nifti_files(niftis: list[str], exclude_niftis: Union[str, list[str]]) -> list[str]:
+def exclude_nifti_files(niftis: list[str], exclude_niftis: str | list[str]) -> list[str]:
     """Excludes certain NIfTI files based on ``exclude_niftis``."""
     exclude_niftis = exclude_niftis if isinstance(exclude_niftis, list) else [exclude_niftis]
 
@@ -203,10 +203,10 @@ def create_header(subj_id: str, task_info: dict[str, Any]) -> str:
 
 
 def check_files(
-    files: dict[str, Union[list[str], None]],
+    files: dict[str, list[str] | None],
     signal_clean_info: dict[str, Any],
     task_info: dict[str, Any],
-) -> tuple[Union[bool, None], Union[str, None]]:
+) -> tuple[bool, str | None]:
     """
     Simple initial check to ensure the required files are needed based on certain
     parameters ``__init__``.
@@ -325,7 +325,7 @@ def get_tr(
     signal_clean_info: dict[str, Any],
     task_info: dict[str, Any],
     verbose: bool,
-) -> Union[float, int, None]:
+) -> float | int | None:
     """Gets repetition time."""
     try:
         if task_info["tr"]:

@@ -1,7 +1,6 @@
 """A class which is responsible for accessing attributes in ``CAP``."""
 
 import copy, sys
-from typing import Union
 
 import numpy as np
 from numpy.typing import NDArray
@@ -17,7 +16,7 @@ class CAPGetter:
 
     ### Attributes exist when CAP initialized
     @property
-    def parcel_approach(self) -> Union[ParcelApproach, None]:
+    def parcel_approach(self) -> ParcelApproach | None:
         """
         Parcellation information with "maps" (path to parcellation file), "nodes" (labels), and
         "regions" (anatomical regions or networks). This property is also settable (accepts a
@@ -26,17 +25,17 @@ class CAPGetter:
         return self._parcel_approach
 
     @parcel_approach.setter
-    def parcel_approach(self, parcel_dict: Union[ParcelConfig, ParcelApproach, str]) -> None:
+    def parcel_approach(self, parcel_dict: ParcelConfig | ParcelApproach | str) -> None:
         self._parcel_approach = check_parcel_approach(parcel_approach=parcel_dict, caller="setter")
 
     @property
-    def groups(self) -> Union[dict[str, list[str]], None]:
+    def groups(self) -> dict[str, list[str]] | None:
         """Mapping of groups names to lists of subject IDs. Returns a deep copy."""
         return copy.deepcopy(self._groups)
 
     ### Attributes exist when CAP.get_caps() used
     @property
-    def subject_table(self) -> Union[dict[str, str], None]:
+    def subject_table(self) -> dict[str, str] | None:
         """
         Lookup table mapping subject IDs to their groups. Derived from ``self.groups`` each time
         ``self.get_caps()`` is ran. While this property can be modified using its setter, any
@@ -56,7 +55,7 @@ class CAPGetter:
             )
 
     @property
-    def n_clusters(self) -> Union[int, list[int], None]:
+    def n_clusters(self) -> int | list[int] | None:
         """
         An integer or list of integers representing the number of clusters used for k-means.
         Defined after running ``self.get_caps()``.
@@ -64,7 +63,7 @@ class CAPGetter:
         return getattr(self, "_n_clusters", None)
 
     @property
-    def n_cores(self) -> Union[int, None]:
+    def n_cores(self) -> int | None:
         """
         Number of cores specified used for multiprocessing with Joblib. Defined after running
         ``self.get_caps()``.
@@ -72,14 +71,14 @@ class CAPGetter:
         return getattr(self, "_n_cores", None)
 
     @property
-    def runs(self) -> Union[list[Union[int, str]], None]:
+    def runs(self) -> list[int | str] | None:
         """
         Run IDs specified in the analysis. Defined after running ``self.get_caps()``.
         """
         return getattr(self, "_runs", None)
 
     @property
-    def standardize(self) -> Union[bool, None]:
+    def standardize(self) -> bool | None:
         """
         Whether region-of-interests (ROIs)/columns were standardized during analysis.
         Defined after running ``self.get_caps()``.
@@ -87,7 +86,7 @@ class CAPGetter:
         return getattr(self, "_standardize", None)
 
     @property
-    def concatenated_timeseries(self) -> Union[dict[str, NDArray[np.floating]], None]:
+    def concatenated_timeseries(self) -> dict[str, NDArray[np.floating]] | None:
         """
         Group-specific concatenated timeseries data. Can be deleted using
         ``del self.concatenated_timeseries``. Defined after running ``self.get_caps()``. Returns
@@ -108,7 +107,7 @@ class CAPGetter:
         del self._concatenated_timeseries
 
     @property
-    def means(self) -> Union[dict[str, NDArray[np.floating]], None]:
+    def means(self) -> dict[str, NDArray[np.floating]] | None:
         """
         Group-specific feature means if standardization was applied. Defined after running
         ``self.get_caps()``. Returns a deep copy.
@@ -120,7 +119,7 @@ class CAPGetter:
         return copy.deepcopy(getattr(self, "_mean_vec", None))
 
     @property
-    def stdev(self) -> Union[dict[str, NDArray[np.floating]], None]:
+    def stdev(self) -> dict[str, NDArray[np.floating]] | None:
         """
         Group-specific feature standard deviations if standardization was applied. Defined after
         running ``self.get_caps()``. Returns a deep copy.
@@ -135,7 +134,7 @@ class CAPGetter:
         return copy.deepcopy(getattr(self, "_stdev_vec", None))
 
     @property
-    def kmeans(self) -> Union[dict[str, KMeans], None]:
+    def kmeans(self) -> dict[str, KMeans] | None:
         """
         Group-specific k-means models. Defined after running ``self.get_caps()``. Returns a deep
         copy.
@@ -147,7 +146,7 @@ class CAPGetter:
         return copy.deepcopy(getattr(self, "_kmeans", None))
 
     @property
-    def caps(self) -> Union[dict[str, dict[str, NDArray[np.floating]]], None]:
+    def caps(self) -> dict[str, dict[str, NDArray[np.floating]]] | None:
         """
         Cluster centroids for each group and CAP. Defined after running ``self.get_caps()``. Returns
         a deep copy.
@@ -155,7 +154,7 @@ class CAPGetter:
         return copy.deepcopy(getattr(self, "_caps", None))
 
     @property
-    def cluster_scores(self) -> Union[dict[str, Union[str, dict[str, float]]], None]:
+    def cluster_scores(self) -> dict[str, str | dict[str, float]] | None:
         """
         Scores for different cluster sizes by group. Defined after running ``self.get_caps()``.
 
@@ -166,7 +165,7 @@ class CAPGetter:
         return getattr(self, "_cluster_scores", None)
 
     @property
-    def cluster_selection_method(self) -> Union[str, None]:
+    def cluster_selection_method(self) -> str | None:
         """
         Method used to identify the optimal number of clusters. Defined after running
         ``self.get_caps()``.
@@ -179,7 +178,7 @@ class CAPGetter:
             return attr
 
     @property
-    def optimal_n_clusters(self) -> Union[dict[str, int], None]:
+    def optimal_n_clusters(self) -> dict[str, int] | None:
         """
         Optimal number of clusters by group if cluster selection was used. Defined after running
         ``self.get_caps()``.
@@ -191,7 +190,7 @@ class CAPGetter:
         return getattr(self, "_optimal_n_clusters", None)
 
     @property
-    def variance_explained(self) -> Union[dict[str, float], None]:
+    def variance_explained(self) -> dict[str, float] | None:
         """
         Total variance explained by each group's model. Defined after running ``self.get_caps()``.
 
@@ -205,7 +204,7 @@ class CAPGetter:
     @property
     def region_means(
         self,
-    ) -> Union[dict[str, dict[str, Union[list[str], NDArray[np.floating]]]], None]:
+    ) -> dict[str, dict[str, list[str] | NDArray[np.floating]]] | None:
         """
         Region-averaged values used for visualization. Defined after running ``self.caps2plot()``.
 
@@ -216,7 +215,7 @@ class CAPGetter:
         return getattr(self, "_region_means", None)
 
     @property
-    def outer_products(self) -> Union[dict[str, dict[str, NDArray[np.floating]]], None]:
+    def outer_products(self) -> dict[str, dict[str, NDArray[np.floating]]] | None:
         """
         Outer product matrices for visualization. Defined after running ``self.caps2plot()``.
 
@@ -230,7 +229,7 @@ class CAPGetter:
     @property
     def cosine_similarity(
         self,
-    ) -> Union[dict[str, dict[str, Union[list[str], NDArray[np.floating]]]], None]:
+    ) -> dict[str, dict[str, list[str] | NDArray[np.floating]]] | None:
         """
         Cosine similarities between CAPs and the regions specified in ``parcel_approach``.
         Defined after running ``self.caps2radar()``.

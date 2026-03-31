@@ -1,15 +1,12 @@
 """Module for creating simulated datasets."""
 
 import json, os
-from typing import Optional
 
 from joblib import Parallel, delayed
 from numpy.typing import NDArray
 from tqdm.auto import tqdm
 
-import nibabel as nib
-import numpy as np
-import pandas as pd
+import nibabel as nib, numpy as np, pandas as pd
 
 from neurocaps.analysis.cap._internals.surface import save_nifti_img
 from neurocaps.typing import SubjectTimeseries
@@ -24,8 +21,8 @@ def simulate_bids_dataset(
     n_runs: int = 1,
     n_volumes: int = 100,
     task_name: str = "rest",
-    output_dir: Optional[str] = None,
-    n_cores: Optional[int] = None,
+    output_dir: str | None = None,
+    n_cores: int | None = None,
     progress_bar: bool = False,
 ) -> str:
     """

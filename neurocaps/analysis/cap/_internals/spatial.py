@@ -2,7 +2,6 @@
 
 import inspect
 from functools import lru_cache
-from typing import Union
 
 import nibabel as nib, numpy as np
 from nilearn import datasets, image
@@ -13,7 +12,7 @@ from scipy.spatial import KDTree
 def cap_to_img(
     atlas_file: str,
     cap_vector: NDArray[np.floating],
-    knn_dict: dict[str, Union[int, list[int], str]],
+    knn_dict: dict[str, int | list[int] | str],
 ) -> nib.nifti1.Nifti1Image:
     """
     Projects cluster centroids (CAPs) on to the parcellation map. Also if specified, performs
@@ -57,7 +56,7 @@ def build_tree(atlas: nib.nifti1.Nifti1Image) -> tuple[KDTree, NDArray[np.intp]]
 
 
 def get_remove_indices(
-    atlas: nib.nifti1.Nifti1Image, remove_labels: Union[list[int], NDArray[np.integer]]
+    atlas: nib.nifti1.Nifti1Image, remove_labels: list[int] | NDArray[np.integer]
 ) -> tuple[NDArray[np.intp], ...]:
     """If requested, gets the coordinates containing a specified label to be removed."""
     remove_indxs = np.where(np.isin(atlas.get_fdata(), remove_labels))
@@ -67,7 +66,7 @@ def get_remove_indices(
 
 def perform_knn(
     atlas: nib.nifti1.Nifti1Image,
-    knn_dict: dict[str, Union[int, list[int], str]],
+    knn_dict: dict[str, int | list[int] | str],
     stat_map: nib.nifti1.Nifti1Image,
 ) -> nib.nifti1.Nifti1Image:
     """

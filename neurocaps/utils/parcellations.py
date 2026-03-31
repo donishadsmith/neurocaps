@@ -1,6 +1,6 @@
 """Public utility functions for parcellations."""
 
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal
 
 import pandas as pd
 
@@ -14,7 +14,7 @@ LG = setup_logger(__name__)
 
 
 def fetch_preset_parcel_approach(
-    name: str, n_nodes: Optional[int] = None
+    name: str, n_nodes: int | None = None
 ) -> dict[Literal["Custom"], CustomParcelApproach]:
     """
     Fetches a Preset "Custom" Parcellation Approach.
@@ -64,12 +64,12 @@ def fetch_preset_parcel_approach(
 
 
 def generate_custom_parcel_approach(
-    filepath_or_df: Union[pd.DataFrame, str],
+    filepath_or_df: pd.DataFrame | str,
     maps_path: str,
     column_map: dict[Literal["nodes", "regions", "hemispheres"], str],
-    hemisphere_map: Optional[dict[Literal["lh", "rh"], list[str]]] = None,
-    background_label: Optional[str] = "Background",
-    metadata: Optional[dict[str, Any]] = None,
+    hemisphere_map: dict[Literal["lh", "rh"], list[str]] | None = None,
+    background_label: str | None = "Background",
+    metadata: dict[str, Any] | None = None,
 ) -> dict[Literal["Custom"], CustomParcelApproach]:
     """
     Generate a "Custom" Parcellation Approach From a Tabular Metadata File.
@@ -231,7 +231,7 @@ def _validate_column_map(column_map: dict[Literal["nodes", "regions", "hemispher
         )
 
 
-def _open_tabular_data(filepath_or_df: Union[pd.DataFrame, str]) -> pd.DataFrame:
+def _open_tabular_data(filepath_or_df: pd.DataFrame | str) -> pd.DataFrame:
     """Opens a tabular dataset."""
     if isinstance(filepath_or_df, pd.DataFrame):
         return filepath_or_df
@@ -260,7 +260,7 @@ def _check_if_columns_exists(
 
 
 def _validate_hemisphere_map(
-    hemisphere_map: Optional[dict[Literal["lh", "rh"], list[str]]],
+    hemisphere_map: dict[Literal["lh", "rh"], list[str]] | None,
 ) -> None:
     """Validates ``hemisphere_map``."""
     if not hemisphere_map:
@@ -281,8 +281,8 @@ def _validate_hemisphere_map(
 def _construct_regions_dict(
     df: pd.DataFrame,
     column_map: dict[Literal["nodes", "regions", "hemispheres"], str],
-    hemisphere_map: Optional[dict[Literal["lh", "rh"], list[str]]],
-) -> dict[str, Union[dict[Literal["lh", "rh"], list[int]], list[int]]]:
+    hemisphere_map: dict[Literal["lh", "rh"], list[str]] | None,
+) -> dict[str, dict[Literal["lh", "rh"], list[int]]]:
     """Construct the "regions" dictionary."""
     regions_dict = {}
 

@@ -1,6 +1,6 @@
 """Internal module containing helper functions for ``CAP.get_caps``."""
 
-from typing import Any, Union
+from typing import Any
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -25,7 +25,7 @@ LG = setup_logger(__name__)
 
 
 def setup_groups(
-    subject_timeseries: SubjectTimeseries, groups_dict: Union[dict[str, str], None]
+    subject_timeseries: SubjectTimeseries, groups_dict: dict[str, str] | None
 ) -> tuple[dict[str, str], dict[str, str]]:
     """Used to resolve ``self._groups`` and ``self._subject_table``."""
     if groups_dict is None:
@@ -93,7 +93,7 @@ def create_group_map(subject_table: dict[str, str], group_dict: dict[str, str]) 
 def concatenate_timeseries(
     subject_timeseries: SubjectTimeseries,
     group_dict: dict[str, list[str]],
-    runs: Union[list[int], list[str], None],
+    runs: list[int | str] | None,
     progress_bar: bool,
 ) -> dict[str, NDArray]:
     """
@@ -152,8 +152,8 @@ def scale(concatenated_timeseries: dict[str, NDArray]) -> dict[str, NDArray]:
 
 
 def get_runs(
-    requested_runs: Union[list[int], list[str], None], curr_runs: list[str]
-) -> tuple[list[str], Union[list[str], None]]:
+    requested_runs: list[int | str] | None, curr_runs: list[str]
+) -> tuple[list[str], list[str] | None]:
     """
     Filters the current runs available for a subject if specific runs are requested.
     Also returns a list of missing runs that were requested
@@ -170,7 +170,7 @@ def get_runs(
 
 def perform_kmeans(
     n_cluster: int, configs: dict[str, Any], concatenated_timeseries: NDArray, method: str
-) -> Union[KMeans, tuple[dict[int, float], dict[int, KMeans]]]:
+) -> KMeans | tuple[dict[int, float], dict[int, KMeans]]:
     """
     Uses scikit-learn to perform k-means clustering on concatenated timeseries data in both
     sequential and parallel contexts. Also uses scikit-learn to provide cluster performance metrics.
@@ -203,10 +203,10 @@ def select_optimal_clusters(
     concatenated_timeseries_dict,
     method: str,
     n_clusters: list[int],
-    n_cores: Union[int, None],
+    n_cores: int | None,
     configs: dict[str, Any],
     show_figs: bool,
-    output_dir: Union[str, None],
+    output_dir: str | None,
     plot_output_format: str,
     progress_bar: bool,
     **kwargs,
@@ -311,7 +311,7 @@ def plot_cluster_performance(
     method: str,
     group_name: str,
     performance_dict: dict[str, float],
-    optimal_n_clusters: Union[int, None],
+    optimal_n_clusters: int | None,
     show_figs: bool,
     plot_dict: dict[str, Any],
 ) -> None:
@@ -357,7 +357,7 @@ def plot_cluster_performance(
 
 def save_cluster_performance_figure(
     fig: Figure,
-    output_dir: Union[str, None],
+    output_dir: str | None,
     plot_output_format: bool,
     group_name: str,
     method_name: str,

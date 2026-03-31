@@ -1,7 +1,5 @@
 import os, subprocess, sys
 
-from typing import Union
-
 IS_WINDOWS: bool = sys.platform == "win32"
 BASENAME: str = os.path.join(os.path.dirname(__file__).removesuffix("hooks").rstrip(os.sep), "neurocaps")
 FILES : list[str] = [
@@ -9,7 +7,7 @@ FILES : list[str] = [
     os.path.join(BASENAME, "extraction", "timeseries_extractor.py"),
 ]
 
-def get_cmd(filename: str) -> Union[str, list[str]]:
+def get_cmd(filename: str) -> str | list[str]:
     if not IS_WINDOWS:
         # Pattern used two negative look behinds to ignore "self" preceded by a backtick or del + whitespace
         # then a negative look ahead for "self" that is not followed by underscore, followed by word.
@@ -23,7 +21,7 @@ def get_cmd(filename: str) -> Union[str, list[str]]:
 
     return cmd
 
-def get_stdout(cmd: Union[str, list[str]]) -> str:
+def get_stdout(cmd: str | list[str]) -> str:
     output = subprocess.run(cmd, shell=not IS_WINDOWS, capture_output=True, text=True)
 
     return output.stdout

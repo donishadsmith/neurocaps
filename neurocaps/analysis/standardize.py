@@ -1,7 +1,5 @@
 """Function to standardize timeseries within subject runs."""
 
-from typing import Optional, Union
-
 from ._internals import serialize
 from neurocaps.utils import _io as io_utils
 from neurocaps.typing import SubjectTimeseries
@@ -9,11 +7,11 @@ from neurocaps.extraction._internals.postprocess import standardize_rois
 
 
 def standardize(
-    subject_timeseries_list: Union[list[SubjectTimeseries], list[str]],
-    output_dir: Optional[str] = None,
-    filenames: Optional[list[str]] = None,
+    subject_timeseries_list: list[SubjectTimeseries] | list[str],
+    output_dir: str | None = None,
+    filenames: list[str] | None = None,
     return_dicts: bool = True,
-) -> Union[dict[str, SubjectTimeseries], None]:
+) -> dict[str, SubjectTimeseries] | None:
     """
     Perform Participant-wise Timeseries Standardization Within Runs.
 

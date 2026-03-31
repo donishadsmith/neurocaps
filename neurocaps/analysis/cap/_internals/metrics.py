@@ -1,7 +1,6 @@
 """Internal module for computing temporal dynamic metrics."""
 
 import itertools, os
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -14,7 +13,7 @@ from neurocaps.utils._logging import setup_logger
 LG = setup_logger(__name__)
 
 
-def filter_metrics(metrics: Union[list[str], tuple[str], None]) -> list[str]:
+def filter_metrics(metrics: list[str] | tuple[str]) -> list[str]:
     """
     Filters metrics to ensure only the supported metrics ("temporal_fraction", "persistence",
     "counts", "transition_frequency") are in the list. Maintains the order of the original
@@ -99,7 +98,7 @@ def create_columns_names(
     group_names: list[str],
     cap_names: list[str],
     pairs: dict[str, list[tuple[int, int]]],
-) -> dict[str, Union[list[str], dict[str, list[str]]]]:
+) -> dict[str, list[str] | dict[str, list[str]]]:
     """
     Creates the column names for each requested metric. Used downstream has the column
     names for each metrics dataframe.
@@ -123,7 +122,7 @@ def create_columns_names(
 
 def initialize_all_metrics_dict(
     metrics: list[str], group_names: list[str]
-) -> dict[str, Union[list, dict[str, list]]]:
+) -> dict[str, list | dict[str, list]]:
     """
     Initializes a dictionary intended to store all computations for a metric across all
     subjects. The dictionary will be converted to a dataframe downstream.
@@ -181,7 +180,7 @@ def compute_counts(arr: NDArray, n_caps: int) -> dict[str, int]:
     return count_dict
 
 
-def compute_persistence(arr: NDArray, n_caps: int, tr: Union[float, int, None]) -> dict[str, float]:
+def compute_persistence(arr: NDArray, n_caps: int, tr: float | int | None) -> dict[str, float]:
     """
     Computes persistence for the subject and run specified in ``sub_info`` and inserts new row
     in the dataframe. Assumes one-based values in ``arr``.
@@ -227,8 +226,8 @@ def segments(
 
 
 def add_nans_to_dict(
-    max_cap: int, n_group_caps: int, curr_dict: dict[str, Union[float, int]]
-) -> dict[str, Union[float, int]]:
+    max_cap: int, n_group_caps: int, curr_dict: dict[str, float | int]
+) -> dict[str, float | int]:
     """Adds NaN for groups with less CAPs than the group with the greatest number of CAPs."""
     if max_cap > n_group_caps:
         for i in range(n_group_caps + 1, max_cap + 1):
@@ -238,9 +237,9 @@ def add_nans_to_dict(
 
 
 def convert_dict_to_df(
-    columns_names_dict: dict[str, Union[list[str], dict[str, list[str]]]],
-    all_metrics_dict: dict[str, Union[list, dict[str, list]]],
-) -> dict[str, Union[pd.DataFrame, dict[str, pd.DataFrame]]]:
+    columns_names_dict: dict[str, list[str] | dict[str, list[str]]],
+    all_metrics_dict: dict[str, list | dict[str, list]],
+) -> dict[str, pd.DataFrame | dict[str, pd.DataFrame]]:
     """
     Appends the data ``all_metrics_dict`` to its respective dataframe in ``df_dict``.
     """
@@ -306,8 +305,8 @@ def compute_transition_probability(
 def save_metrics(
     output_dir: str,
     group_names: list[str],
-    df_dict: dict[str, Union[pd.DataFrame, dict[str, pd.DataFrame]]],
-    prefix_filename: Union[str, None],
+    df_dict: dict[str, pd.DataFrame | dict[str, pd.DataFrame]],
+    prefix_filename: str | None,
 ) -> None:
     """Saves the metric dataframes as csv files."""
     if not output_dir:

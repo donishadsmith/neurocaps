@@ -4,7 +4,7 @@ Joblib or pickle), unserializing (with Joblib), and additional utilities.
 """
 
 import os, copy, json, pickle
-from typing import Any, Optional, Union
+from typing import Any
 
 import joblib
 
@@ -32,7 +32,7 @@ def issue_file_warning(param_name: str, param: str, output_dir: str) -> None:
         )
 
 
-def filename(basename: str, add_name: Union[str, None], pos: str) -> str:
+def filename(basename: str, add_name: str | None, pos: str) -> str:
     """
     Adds the the prefix or suffix to the file name depending on if ``pos`` is "prefix" or "suffix".
     """
@@ -103,7 +103,7 @@ def open_pickle_file(filename: str) -> dict:
 
 def check_file_exist(
     filename: str, raise_errors: bool = True, return_flag: bool = False
-) -> Union[bool, None]:
+) -> bool | None:
     """Check if a file exists."""
     # Dont end with periods
     if not isinstance(filename, str) and raise_errors:
@@ -116,9 +116,7 @@ def check_file_exist(
     return file_exist if return_flag else None
 
 
-def check_ext(
-    filename: str, supported_ext: list[str], return_ext: bool = False
-) -> Union[str, None]:
+def check_ext(filename: str, supported_ext: list[str], return_ext: bool = False) -> str | None:
     """Checks if a file has a valid extension."""
     ext = f".{filename.partition('.')[-1]}"
 
@@ -132,16 +130,14 @@ def check_ext(
     return ext if return_ext else None
 
 
-def validate_file(
-    filename: str, supported_ext: list[str], return_ext: bool = False
-) -> Union[str, None]:
+def validate_file(filename: str, supported_ext: list[str], return_ext: bool = False) -> str | None:
     """Validates file and returns extension if True."""
     check_file_exist(filename)
 
     return check_ext(filename, supported_ext, return_ext)
 
 
-def validate_plot_output_format(output_dir: Optional[str], output_format: str, caller=str) -> str:
+def validate_plot_output_format(output_dir: str | None, output_format: str, caller: str) -> str:
     """Validates the supported output format for files."""
     if not output_dir:
         return output_format

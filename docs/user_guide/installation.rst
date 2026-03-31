@@ -1,6 +1,6 @@
 Installation
 ============
-**Requires Python 3.9-3.14.**
+**Requires Python 3.10-3.14.**
 
 Standard Installation
 ---------------------

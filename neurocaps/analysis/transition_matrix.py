@@ -1,7 +1,5 @@
 """Function for averaging subject-level transition probabilities and producing visualizations."""
 
-from typing import Optional, Union
-
 import pandas as pd
 
 from neurocaps.utils import PlotDefaults
@@ -12,16 +10,16 @@ from neurocaps.utils._plot_utils import MatrixVisualizer, PlotFuncs
 
 def transition_matrix(
     trans_dict: dict[str, pd.DataFrame],
-    output_dir: Optional[str] = None,
+    output_dir: str | None = None,
     plot_output_format: str = "png",
-    suffix_filename: Optional[str] = None,
-    suffix_title: Optional[str] = None,
+    suffix_filename: str | None = None,
+    suffix_title: str | None = None,
     save_plots: bool = True,
     save_df: bool = True,
     show_figs: bool = True,
     return_df: bool = True,
     **kwargs,
-) -> Union[pd.DataFrame, None]:
+) -> pd.DataFrame | None:
     """
     Generate and Visualize the Averaged Transition Probabilities.
 

@@ -1,7 +1,6 @@
 """Function for merging timeseries data across dictionaries."""
 
 from copy import deepcopy
-from typing import Optional, Union
 
 import numpy as np
 
@@ -11,13 +10,13 @@ from neurocaps.utils import _io as io_utils
 
 
 def merge_dicts(
-    subject_timeseries_list: Union[list[SubjectTimeseries], list[str]],
-    output_dir: Optional[Union[str, str]] = None,
-    filenames: Optional[list[str]] = None,
+    subject_timeseries_list: list[SubjectTimeseries] | list[str],
+    output_dir: str | None = None,
+    filenames: list[str] | None = None,
     save_reduced_dicts: bool = False,
     return_merged_dict: bool = True,
     return_reduced_dicts: bool = False,
-) -> Union[dict[str, SubjectTimeseries], None]:
+) -> dict[str, SubjectTimeseries] | None:
     """
     Merge Participant Timeseries Across Multiple Sessions or Tasks.
 

@@ -1,7 +1,7 @@
 """Internal module containing functions for creating radar plots."""
 
 import os, sys
-from typing import Any, Union
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -20,9 +20,9 @@ LG = setup_logger(__name__)
 
 def update_radar_dict(
     cap_dict: dict[str, NDArray],
-    radar_dict: Union[dict[str, str]],
+    radar_dict: dict[str, str],
     parcel_approach: ParcelApproach,
-) -> dict[str, Union[str, float]]:
+) -> dict[str, str | float]:
     """
     Updates a dictionary containing information about the cosine similarity between each region
     specified in a parcellation and the positive and negative activations in a CAP vector for
@@ -92,10 +92,10 @@ def compute_cosine_similarity(
 
 def generate_radar_plot(
     use_scatterpolar: bool,
-    radar_dict: dict[str, Union[str, float]],
+    radar_dict: dict[str, str | float],
     cap_name: str,
     group_name: str,
-    suffix_title: Union[str, None],
+    suffix_title: str | None,
     plot_dict: dict[str, Any],
 ) -> go.Figure:
     """Generates radar plots."""
@@ -204,7 +204,7 @@ def show_radar_plot(fig: go.Figure, show_figure: bool) -> None:
 def save_radar_plot(
     fig: go.Figure,
     scale: int,
-    output_dir: Union[str, None],
+    output_dir: str | None,
     plot_output_format: str,
     suffix_filename: str,
     group_name: str,

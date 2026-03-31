@@ -2,7 +2,7 @@
 
 import itertools
 from copy import deepcopy
-from typing import Any, Callable, Literal, Optional, Union
+from typing import Any, Callable, Literal
 from typing_extensions import Self
 
 import numpy as np
@@ -231,8 +231,8 @@ class CAP(CAPGetter):
 
     def __init__(
         self,
-        parcel_approach: Optional[Union[ParcelConfig, ParcelApproach, str]] = None,
-        groups: Optional[dict[str, list[str]]] = None,
+        parcel_approach: ParcelConfig | ParcelApproach | str | None = None,
+        groups: dict[str, list[str]] | None = None,
     ) -> None:
         if parcel_approach is not None:
             parcel_approach = check_parcel_approach(parcel_approach=parcel_approach, caller="CAP")
@@ -262,21 +262,21 @@ class CAP(CAPGetter):
 
     def get_caps(
         self,
-        subject_timeseries: Union[SubjectTimeseries, str],
-        runs: Optional[Union[int, str, list[int], list[str]]] = None,
-        n_clusters: Union[int, list[int], range] = 5,
-        cluster_selection_method: Optional[
-            Literal["elbow", "davies_bouldin", "silhouette", "variance_ratio"]
-        ] = None,
-        random_state: Optional[int] = None,
-        init: Union[Literal["k-means++", "random"], Callable, ArrayLike] = "k-means++",
-        n_init: Union[Literal["auto"], int] = "auto",
+        subject_timeseries: SubjectTimeseries | str,
+        runs: int | str | list[int | str] | None = None,
+        n_clusters: int | list[int] | range = 5,
+        cluster_selection_method: (
+            Literal["elbow", "davies_bouldin", "silhouette", "variance_ratio"] | None
+        ) = None,
+        random_state: int | None = None,
+        init: Literal["k-means++", "random"] | Callable | ArrayLike = "k-means++",
+        n_init: Literal["auto"] | int = "auto",
         max_iter: int = 300,
         tol: float = 0.0001,
         algorithm: Literal["lloyd", "elkan"] = "lloyd",
         standardize: bool = True,
-        n_cores: Optional[int] = None,
-        output_dir: Optional[str] = None,
+        n_cores: int | None = None,
+        output_dir: str | None = None,
         plot_output_format: str = "png",
         show_figs: bool = False,
         progress_bar: bool = False,
@@ -532,27 +532,27 @@ class CAP(CAPGetter):
     @check_required_attributes(required_attrs=["_kmeans"])
     def calculate_metrics(
         self,
-        subject_timeseries: Union[SubjectTimeseries, str],
-        runs: Optional[Union[int, str, list[int], list[str]]] = None,
+        subject_timeseries: SubjectTimeseries | str,
+        runs: int | str | list[int | str] | None = None,
         continuous_runs: bool = False,
-        metrics: Union[
+        metrics: (
             Literal[
                 "temporal_fraction",
                 "persistence",
                 "counts",
                 "transition_frequency",
                 "transition_probability",
-            ],
-            list[str],
-            tuple[str, ...],
-            None,
-        ] = ("temporal_fraction", "persistence", "counts", "transition_frequency"),
-        tr: Optional[float] = None,
-        output_dir: Optional[str] = None,
-        prefix_filename: Optional[str] = None,
+            ]
+            | list[str]
+            | tuple[str, ...]
+            | None
+        ) = ("temporal_fraction", "persistence", "counts", "transition_frequency"),
+        tr: float | None = None,
+        output_dir: str | None = None,
+        prefix_filename: str | None = None,
         return_df: bool = True,
         progress_bar: bool = False,
-    ) -> Union[dict[str, pd.DataFrame], dict[str, dict[str, pd.DataFrame]], None]:
+    ) -> dict[str, pd.DataFrame] | dict[str, dict[str, pd.DataFrame]]:
         """
         Calculate Participant-wise CAP Metrics.
 
@@ -896,8 +896,8 @@ class CAP(CAPGetter):
     @check_required_attributes(required_attrs=["_kmeans"])
     def return_cap_labels(
         self,
-        subject_timeseries: Union[SubjectTimeseries, str],
-        runs: Optional[Union[int, str, list[int], list[str]]] = None,
+        subject_timeseries: SubjectTimeseries | str,
+        runs: int | str | list[int | str] | None = None,
         continuous_runs: bool = False,
         shift_labels: bool = False,
     ) -> dict[str, dict[str, NDArray]]:
@@ -1042,17 +1042,15 @@ class CAP(CAPGetter):
     @check_required_attributes(["_parcel_approach", "_caps"])
     def caps2plot(
         self,
-        plot_options: Union[
-            Literal["heatmap", "outer_product"], list[Literal["heatmap", "outer_product"]]
-        ] = "heatmap",
-        visual_scope: Union[
-            Literal["regions", "nodes"], list[Literal["regions", "nodes"]]
-        ] = "regions",
+        plot_options: (
+            Literal["heatmap", "outer_product"] | list[Literal["heatmap", "outer_product"]]
+        ) = "heatmap",
+        visual_scope: Literal["regions", "nodes"] | list[Literal["regions", "nodes"]] = "regions",
         subplots: bool = False,
-        output_dir: Optional[str] = None,
+        output_dir: str | None = None,
         plot_output_format: str = "png",
-        suffix_filename: Optional[str] = None,
-        suffix_title: Optional[str] = None,
+        suffix_filename: str | None = None,
+        suffix_title: str | None = None,
         show_figs: bool = True,
         **kwargs,
     ) -> Self:
@@ -1222,16 +1220,16 @@ class CAP(CAPGetter):
     def caps2corr(
         self,
         method: str = "pearson",
-        output_dir: Optional[str] = None,
+        output_dir: str | None = None,
         plot_output_format: str = "png",
-        suffix_filename: Optional[str] = None,
-        suffix_title: Optional[str] = None,
+        suffix_filename: str | None = None,
+        suffix_title: str | None = None,
         save_plots: bool = True,
         save_df: bool = False,
         show_figs: bool = True,
         return_df: bool = False,
         **kwargs,
-    ) -> Union[dict[str, pd.DataFrame], None]:
+    ) -> dict[str, pd.DataFrame] | None:
         """
         Generate a Correlation Matrix for CAPs.
 
@@ -1350,8 +1348,8 @@ class CAP(CAPGetter):
     def caps2niftis(
         self,
         output_dir: str,
-        suffix_filename: Optional[str] = None,
-        knn_dict: Optional[dict[str, Union[int, list[int], str]]] = None,
+        suffix_filename: str | None = None,
+        knn_dict: dict[str, int | list[int] | str] | None = None,
         progress_bar: bool = False,
     ) -> Self:
         """
@@ -1435,8 +1433,8 @@ class CAP(CAPGetter):
 
     @staticmethod
     def _validate_knn_dict(
-        knn_dict: Union[dict[str, Any], None],
-    ) -> Union[dict[str, Union[int, list[int], str]], None]:
+        knn_dict: dict[str, Any] | None,
+    ) -> dict[str, int | list[int] | str] | None:
         """Validates the ``knn_dict``."""
         if not knn_dict:
             return None
@@ -1492,12 +1490,12 @@ class CAP(CAPGetter):
         self,
         fslr_density: Literal["32k", "164k"] = "32k",
         method: Literal["linear", "nearest"] = "linear",
-        output_dir: Optional[str] = None,
+        output_dir: str | None = None,
         plot_output_format: str = "png",
-        suffix_filename: Optional[str] = None,
-        suffix_title: Optional[str] = None,
+        suffix_filename: str | None = None,
+        suffix_title: str | None = None,
         save_stat_maps: bool = False,
-        knn_dict: Optional[dict[str, Union[int, list[int], str]]] = None,
+        knn_dict: dict[str, int | list[int] | str] | None = None,
         show_figs: bool = True,
         progress_bar: bool = False,
         **kwargs,
@@ -1641,10 +1639,10 @@ class CAP(CAPGetter):
     def caps2radar(
         self,
         use_scatterpolar: bool = False,
-        output_dir: Optional[str] = None,
+        output_dir: str | None = None,
         plot_output_format: str = "png",
-        suffix_filename: Optional[str] = None,
-        suffix_title: Optional[str] = None,
+        suffix_filename: str | None = None,
+        suffix_title: str | None = None,
         show_figs: bool = True,
         **kwargs,
     ) -> Self:

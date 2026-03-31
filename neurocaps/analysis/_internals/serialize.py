@@ -1,5 +1,4 @@
 import os
-from typing import Union
 
 import joblib
 
@@ -10,8 +9,8 @@ def dicts_to_pickles(
     output_dir: str,
     dict_list: list[dict],
     caller: str,
-    filenames: Union[str, None] = None,
-    message: Union[str, None] = None,
+    filenames: str | None = None,
+    message: str | None = None,
     save_reduced_dicts: bool = False,
 ) -> None:
     """

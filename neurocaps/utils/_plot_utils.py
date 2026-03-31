@@ -1,7 +1,7 @@
 """Classes to centralize plotting utility functions."""
 
 import inspect, os
-from typing import Any, Union
+from typing import Any
 
 import matplotlib.pyplot as plt, seaborn
 from matplotlib.axes import Axes
@@ -38,11 +38,11 @@ class PlotFuncs:
 
     @staticmethod
     def border(
-        display: Union[Axes, Figure],
+        display: Axes | Figure,
         plot_dict: dict[str, Any],
         axhline: int,
-        axvline: Union[int, None] = None,
-    ) -> Union[Axes, Figure]:
+        axvline: int | None = None,
+    ) -> Axes | Figure:
         if not plot_dict["borderwidths"]:
             return display
 
@@ -65,11 +65,11 @@ class PlotFuncs:
 
     @staticmethod
     def label_size(
-        display: Union[Axes, Figure],
+        display: Axes | Figure,
         plot_dict: dict[str, Any],
         set_x: bool = True,
         set_y: bool = True,
-    ) -> Union[Axes, Figure]:
+    ) -> Axes | Figure:
         if set_x:
             display.set_xticklabels(
                 display.get_xticklabels(),
@@ -91,7 +91,7 @@ class PlotFuncs:
         return display
 
     @staticmethod
-    def set_ticks(display: Union[Axes, Figure], labels: list[str]) -> Union[Axes, Figure]:
+    def set_ticks(display: Axes | Figure, labels: list[str]) -> Axes | Figure:
         ticks = [i for i, label in enumerate(labels) if label]
 
         display.set_xticks(ticks)
@@ -103,12 +103,12 @@ class PlotFuncs:
 
     @staticmethod
     def set_title(
-        display: Union[Axes, Figure],
+        display: Axes | Figure,
         title: str,
-        suffix: Union[str, None],
+        suffix: str | None,
         plot_dict: dict[str, Any],
         is_subplot: bool = False,
-    ) -> Union[Axes, Figure]:
+    ) -> Axes | Figure:
         title = f"{title} {suffix}" if suffix else title
 
         if is_subplot:
@@ -124,7 +124,7 @@ class PlotFuncs:
 
     @staticmethod
     def save_fig(
-        fig: Union[Axes, Figure],
+        fig: Axes | Figure,
         plot_dict: dict[str, Any],
         output_dir: str,
         plot_output_format: str,
@@ -154,7 +154,7 @@ class MatrixVisualizer:
     @staticmethod
     def create_display(
         df: DataFrame, plot_dict: dict[str, Any], suffix_title: str, group_name: str, caller: str
-    ) -> Union[Axes, Figure]:
+    ) -> Axes | Figure:
         # Refresh grid for each iteration
         plt.figure(figsize=plot_dict["figsize"])
 
@@ -182,7 +182,7 @@ class MatrixVisualizer:
 
     @staticmethod
     def save_contents(
-        display: Union[Axes, Figure],
+        display: Axes | Figure,
         plot_dict: dict[str, Any],
         output_dir: str,
         plot_output_format: str,

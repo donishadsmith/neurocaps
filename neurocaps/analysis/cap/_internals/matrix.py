@@ -4,7 +4,7 @@ outer products.
 """
 
 import collections, re
-from typing import Any, Union
+from typing import Any
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -89,7 +89,7 @@ def extract_scope_information(
     parcel_approach: ParcelApproach,
     add_custom_node_labels: bool,
     cap_dict: dict[str, dict[str, NDArray]],
-    region_means_dict=Union[dict[str, dict[str, NDArray]], None],
+    region_means_dict=dict[str, dict[str, NDArray]] | None,
 ) -> tuple[dict[str, dict[str, NDArray]], list[str]]:
     """
     Extracting region means of each CAP from ``self._region_means`` if scope is "region" else
@@ -153,7 +153,7 @@ def sort_custom_node_names(parcel_approach: ParcelApproach) -> list[str]:
 
 def collapse_node_labels(
     parcel_approach: ParcelApproach,
-    custom_nodes: Union[list[str], None] = None,
+    custom_nodes: list[str] | None = None,
 ) -> tuple[list[str], list[str]]:
     """
     Collapses node labels names (based on unique node names and hemisphere) for plotting
@@ -246,10 +246,10 @@ def generate_outer_product_plots(
     cap_dict: dict[str, dict[str, NDArray]],
     full_labels: list[str],
     subplots: bool,
-    output_dir: Union[str, None],
+    output_dir: str | None,
     plot_output_format: str,
-    suffix_title: Union[str, None],
-    suffix_filename: Union[str, None],
+    suffix_title: str | None,
+    suffix_filename: str | None,
     show_figs: bool,
     scope: str,
     parcel_approach: ParcelApproach,
@@ -376,7 +376,7 @@ def initialize_outer_product_subplot(
     cap_dict: dict[str, dict[str, NDArray]],
     group_name: str,
     plot_dict: dict[str, Any],
-    suffix_title: Union[str, None],
+    suffix_title: str | None,
 ) -> tuple[plt.Figure, plt.Axes, tuple[int, int], tuple[int, int]]:
     """
     Initializes the subplot for "outer_product".
@@ -420,10 +420,10 @@ def generate_heatmap_plots(
     plot_dict: dict[str, Any],
     cap_dict: dict[str, dict[str, NDArray]],
     full_labels: list[str],
-    output_dir: Union[str, None],
+    output_dir: str | None,
     plot_output_format: str,
-    suffix_title: Union[str, None],
-    suffix_filename: Union[str, None],
+    suffix_title: str | None,
+    suffix_filename: str | None,
     show_figs: bool,
     scope: str,
     parcel_approach: ParcelApproach,

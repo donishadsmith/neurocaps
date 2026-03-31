@@ -4,7 +4,7 @@ import os
 from copy import deepcopy
 from functools import lru_cache
 from multiprocessing.queues import Queue
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal
 from typing_extensions import Self
 
 from joblib import Parallel, delayed
@@ -266,18 +266,18 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
     def __init__(
         self,
         space: str = "MNI152NLin2009cAsym",
-        parcel_approach: Union[ParcelConfig, ParcelApproach, str, None] = None,
+        parcel_approach: ParcelConfig | ParcelApproach | str | None = None,
         standardize: bool = True,
         detrend: bool = False,
-        low_pass: Optional[Union[float, int]] = None,
-        high_pass: Optional[Union[float, int]] = None,
-        fwhm: Optional[Union[float, int]] = None,
+        low_pass: float | int | None = None,
+        high_pass: float | int | None = None,
+        fwhm: float | int | None = None,
         use_confounds: bool = True,
-        confound_names: Optional[Union[list[str], Literal["basic"]]] = "basic",
-        fd_threshold: Optional[Union[float, dict[str, Union[bool, float, int]]]] = None,
-        n_acompcor_separate: Optional[int] = None,
-        dummy_scans: Optional[Union[int, dict[str, Union[bool, int]], Literal["auto"]]] = None,
-        dtype: Optional[Union[str, Literal["auto"]]] = None,
+        confound_names: list[str] | Literal["basic"] = "basic",
+        fd_threshold: float | dict[str, bool | float | int] | None = None,
+        n_acompcor_separate: int | None = None,
+        dummy_scans: int | dict[str, bool | int] | Literal["auto"] | None = None,
+        dtype: str | Literal["auto"] | None = None,
     ) -> None:
 
         self._space = space
@@ -414,18 +414,18 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
         self,
         bids_dir: str,
         task: str,
-        session: Optional[Union[int, str]] = None,
-        runs: Optional[Union[int, str, list[int], list[str]]] = None,
-        condition: Optional[str] = None,
+        session: int | str | None = None,
+        runs: int | str | list[int | str] = None,
+        condition: str | None = None,
         condition_tr_shift: int = 0,
-        tr: Optional[Union[int, float]] = None,
-        slice_time_ref: Union[int, float] = 0.0,
-        run_subjects: Optional[Union[str, list[str]]] = None,
-        exclude_subjects: Optional[Union[str, list[str]]] = None,
-        exclude_niftis: Optional[Union[str, list[str]]] = None,
-        pipeline_name: Optional[str] = None,
-        n_cores: Optional[int] = None,
-        parallel_log_config: Optional[dict[str, Union[Queue, int]]] = None,
+        tr: int | float | None = None,
+        slice_time_ref: int | float = 0.0,
+        run_subjects: str | list[str] | None = None,
+        exclude_subjects: str | list[str] | None = None,
+        exclude_niftis: str | list[str] | None = None,
+        pipeline_name: str | None = None,
+        n_cores: int | None = None,
+        parallel_log_config: dict[str, Queue | int] | None = None,
         verbose: bool = True,
         progress_bar: bool = False,
     ) -> Self:
@@ -775,7 +775,7 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
 
     @staticmethod
     @lru_cache(maxsize=4)
-    def _call_layout(bids_dir: str, pipeline_name: Union[str, None]) -> Any:
+    def _call_layout(bids_dir: str, pipeline_name: str | None) -> Any:
         """
         Returns ``BIDSLayout``.
 
@@ -817,8 +817,8 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
 
     def _expand_dicts(
         self,
-        subject_timeseries: Union[SubjectTimeseries, None],
-        qc: Union[dict[str, dict[str, dict[str, Union[float, int]]]], None],
+        subject_timeseries: SubjectTimeseries | None,
+        qc: dict[str, dict[str, dict[str, float | int]]] | None,
     ) -> None:
         """
         Aggregates individual subject timeseries and qc dictionaries into ``self._subject_timeseries``
@@ -830,7 +830,7 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
                 self._qc.update(qc)
 
     @check_required_attributes(required_attrs=["_subject_timeseries"])
-    def timeseries_to_pickle(self, output_dir: str, filename: Optional[str] = None) -> Self:
+    def timeseries_to_pickle(self, output_dir: str, filename: str | None = None) -> Self:
         """
         Save the Extracted Subject Timeseries.
 
@@ -860,10 +860,10 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
     @check_required_attributes(required_attrs=["_qc"])
     def report_qc(
         self,
-        output_dir: Optional[str] = None,
-        filename: Optional[str] = None,
+        output_dir: str | None = None,
+        filename: str | None = None,
         return_df: bool = True,
-    ) -> Union[DataFrame, None]:
+    ) -> DataFrame | None:
         """
         Report Quality Control Information.
 
@@ -963,8 +963,8 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
             return df
 
     def _create_output_filename(
-        self, output_dir: Union[str, None], filename: Union[str, None], caller: str
-    ) -> Union[str, None]:
+        self, output_dir: str | None, filename: str | None, caller: str
+    ) -> str | None:
         """Creates the output filename for ``report_qc`` and ``timeseries_to_pickle``."""
         if not output_dir:
             return None
@@ -985,14 +985,14 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
     @check_required_attributes(required_attrs=["_subject_timeseries"])
     def visualize_bold(
         self,
-        subj_id: Union[int, str],
-        run: Optional[Union[int, str]] = None,
-        roi_indx: Optional[Union[int, str, list[str], list[int]]] = None,
-        region: Optional[str] = None,
+        subj_id: int | str,
+        run: int | str | None = None,
+        roi_indx: int | str | list[str] | list[int] | None = None,
+        region: str | None = None,
         show_figs: bool = True,
-        output_dir: Optional[str] = None,
+        output_dir: str | None = None,
         plot_output_format: str = "png",
-        filename: Optional[str] = None,
+        filename: str | None = None,
         **kwargs,
     ) -> Self:
         """

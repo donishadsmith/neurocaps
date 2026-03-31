@@ -1,6 +1,6 @@
 """Module containing custom types."""
 
-from typing import Any, Literal, TypedDict, Union
+from typing import Any, Literal, TypedDict
 from typing_extensions import Required, NotRequired
 
 from numpy import floating
@@ -108,9 +108,9 @@ class AALParcelConfig(TypedDict):
     version: NotRequired[str]
 
 
-ParcelConfig = Union[
-    dict[Literal["Schaefer"], SchaeferParcelConfig], dict[Literal["AAL"], AALParcelConfig]
-]
+ParcelConfig = (
+    dict[Literal["Schaefer"], SchaeferParcelConfig] | dict[Literal["AAL"], AALParcelConfig]
+)
 """
    Type Definition for the Parcellation Configurations.
 
@@ -277,8 +277,8 @@ class CustomRegionHemispheres(TypedDict):
     <https://neurocaps.readthedocs.io/en/stable/user_guide/parcellations.html>`_
     """
 
-    lh: Required[Union[list[int], range]]
-    rh: Required[Union[list[int], range]]
+    lh: Required[list[int] | range]
+    rh: Required[list[int] | range]
 
 
 class CustomParcelApproach(ParcelApproachBase):
@@ -367,16 +367,14 @@ class CustomParcelApproach(ParcelApproachBase):
     <https://neurocaps.readthedocs.io/en/stable/user_guide/parcellations.html>`_
     """
 
-    regions: NotRequired[
-        Union[dict[str, Union[list[int], range]], dict[str, CustomRegionHemispheres]]
-    ]
+    regions: NotRequired[dict[str, list[int] | range] | dict[str, CustomRegionHemispheres]]
 
 
-ParcelApproach = Union[
-    dict[Literal["Schaefer"], SchaeferParcelApproach],
-    dict[Literal["AAL"], AALParcelApproach],
-    dict[Literal["Custom"], CustomParcelApproach],
-]
+ParcelApproach = (
+    dict[Literal["Schaefer"], SchaeferParcelApproach]
+    | dict[Literal["AAL"], AALParcelApproach]
+    | dict[Literal["Custom"], CustomParcelApproach]
+)
 """
   Type Definition for the Parcellation Approaches.
 
