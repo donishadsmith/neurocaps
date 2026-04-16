@@ -35,29 +35,26 @@ RUN apt-get update && apt-get install -y \
     ln -sf /usr/bin/python3.12 /usr/bin/python3 && \
     curl https://bootstrap.pypa.io/get-pip.py | python3.12
 
-# Create user and home directory;
-# recursively change ownership of home directory to user;
-# add user to sudo group
-# Append no password requirement for sudo users to sudoers
-RUN useradd -md /home/user user && \
-    chown -R user /home/user && \
-    adduser user sudo && \
-    echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+ENV NILEARN_SHARED_DATA=/opt/neurocaps/data/nilearn_data \
+    NEUROMAPS_DATA=/opt/neurocaps/data/neuromaps-data \
+    NEUROCAPS_DATA=/opt/neurocaps/data/neurocaps_data
 
-WORKDIR /home/user
-ENV HOME="/home/user"
+RUN mkdir -p /opt/neurocaps/src \
+    /opt/neurocaps/demos \
+    $NILEARN_SHARED_DATA \
+    $NEUROMAPS_DATA \
+    $NEUROCAPS_DATA
+
+WORKDIR /opt/neurocaps
 
 COPY neurocaps/ src/neurocaps/
-COPY demos/* demos/
-COPY docker/scripts/entrypoint.sh /usr/local/bin
 COPY pyproject.toml src/
-COPY tests/data/nilearn_data /home/user/nilearn_data
-COPY tests/data/neuromaps-data /home/user/neuromaps-data
+COPY demos/* demos/
+COPY tests/data/nilearn_data $NILEARN_SHARED_DATA
+COPY tests/data/neuromaps-data $NEUROMAPS_DATA
+COPY docker/scripts/entrypoint.sh /usr/local/bin/
 
-RUN chown -R user:user /home/user/ && \
-    chmod -R 775 /home/user/ && \
-    chown user /usr/local/bin/entrypoint.sh && \
-    sed -i "s/\r$//" /usr/local/bin/entrypoint.sh && \
+RUN sed -i "s/\r$//" /usr/local/bin/entrypoint.sh && \
     chmod +x /usr/local/bin/entrypoint.sh
 
 RUN pip install --upgrade pip setuptools && \
@@ -66,12 +63,12 @@ RUN pip install --upgrade pip setuptools && \
 
 RUN yes | plotly_get_chrome
 
-EXPOSE 9999
-LABEL maintainer="Donisha Smith <donishasmith@outlook.com>"
+RUN chmod -R a+rwX /opt/neurocaps
 
 RUN mkdir -p /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
 
-USER user
+EXPOSE 9999
+LABEL maintainer="Donisha Smith <donishasmith@outlook.com>"
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 

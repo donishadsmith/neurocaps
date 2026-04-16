@@ -24,6 +24,10 @@ def fetch_preset_parcel_approach(
     Open Science Framework (OSF) if the corresponding files are not present in the
     directory.
 
+    .. versionchanged:: 0.37.3
+       The data directory location can now be overridden via the ``NEUROCAPS_DATA``
+       environment variable. If unset, the default ``~/neurocaps_data`` location is used.
+
     Parameters
     ----------
     name : :obj:`str`

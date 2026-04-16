@@ -38,10 +38,13 @@ def is_valid_preset(name: str) -> None:
 
 def get_data_dir() -> str:
     """
-    Gets the full path for 'neurocaps_data' in the users home directory. If it does not
-    exist, then the directory and the subfolders are created.
+    Gets the full path for 'neurocaps_data' in the users home directory or path set by
+    environmental variable. If it does not exist, then the directory and the subfolders
+    are created.
     """
-    data_dir = os.path.expanduser(os.path.join("~", "neurocaps_data"))
+    if not (data_dir := os.environ.get("NEUROCAPS_DATA")):
+        data_dir = os.path.expanduser(os.path.join("~", "neurocaps_data"))
+
     # Create manually instead of using `fetch_files` to notify user that a directory was created
     io_utils.makedir(data_dir)
 

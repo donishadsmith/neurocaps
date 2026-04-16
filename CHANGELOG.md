@@ -15,6 +15,10 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.37.3] - 2026-04-16
+### ♻ Changed
+- Added support for the ``NEUROCAPS_DATA`` environment variable to override the default data directory location used by fetch_preset_parcel_approach. Defaults to "~/neurocaps_data" when unset.
+
 ## [0.37.2] - 2026-02-19
 ### 💻 Metadata
 - Update metadata on Pypi
