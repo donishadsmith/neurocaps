@@ -9,7 +9,7 @@
    :alt: Python Versions
 
 .. image:: https://img.shields.io/badge/DOI-10.5281%2Fzenodo.11642615-teal
-   :target: https://doi.org/10.5281/zenodo.18529846
+   :target: https://doi.org/10.5281/zenodo.19602764
    :alt: DOI
 
 .. image:: https://img.shields.io/badge/Source%20Code-neurocaps-purple
