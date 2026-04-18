@@ -18,6 +18,7 @@ improvements/enhancements. All fixes and modifications are backwards compatible.
 ## [0.37.3] - 2026-04-16
 ### ♻ Changed
 - Added support for the ``NEUROCAPS_DATA`` environment variable to override the default data directory location used by fetch_preset_parcel_approach. Defaults to "~/neurocaps_data" when unset.
+- Dropped Python 3.9 support
 
 ## [0.37.2] - 2026-02-19
 ### 💻 Metadata
