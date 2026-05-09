@@ -17,7 +17,7 @@ improvements/enhancements. All fixes and modifications are backwards compatible.
 
 ## [0.37.4] - 2026-05-09
 ### ♻ Changed
-- `1high_pass`1 is now automatically set to ``None`` with a warning when cosine regressors are detected in user-specified `confound_names`, preventing multicollinearity between nilearn's DCT basis functions and fMRIPrep's cosine regressors.
+- ``high_pass`` is now automatically set to ``None`` with a warning when cosine regressors are detected in user-specified `confound_names`, preventing multicollinearity between nilearn's DCT basis functions and fMRIPrep's cosine regressors.
 
 ## [0.37.3] - 2026-04-16
 ### ♻ Changed
