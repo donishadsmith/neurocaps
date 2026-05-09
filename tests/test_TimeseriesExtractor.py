@@ -375,6 +375,53 @@ def test_default_confounds():
     assert extractor.signal_clean_info["confound_names"] is None
 
 
+def test_high_pass_and_cosine_conflict(caplog):
+    """
+    Tests to assess high pass parameter handling when cosine parameters are specified and not specified
+    in confound names.
+    """
+    import logging
+
+    confound_names = ["cosine*", "trans*", "rot*", "a_comp_cor_00", "a_comp_cor_01"]
+    with caplog.at_level(logging.WARNING):
+        extractor = TimeseriesExtractor(
+            high_pass=0.008,
+            confound_names=confound_names,
+        )
+
+    msg = (
+        "Both `high_pass` and cosine regressors were specified in `confound_names`. Using both "
+        "introduces near-identical DCT regressors, resulting in multicollinearity issues. "
+        "`high_pass` has been set to None; cosine regressors from fMRIPrep will be used for "
+        "high-pass filtering instead."
+    )
+    assert msg in caplog.text
+    assert extractor.signal_clean_info["masker_init"]["high_pass"] is None
+    assert "cosine*" in extractor.signal_clean_info["confound_names"]
+    caplog.clear()
+
+    confound_names = ["trans*", "rot*"]
+    with caplog.at_level(logging.WARNING):
+        extractor = TimeseriesExtractor(
+            high_pass=0.008,
+            confound_names=confound_names,
+        )
+
+    assert "Both `high_pass` and cosine regressors were specified" not in caplog.text
+    assert extractor.signal_clean_info["masker_init"]["high_pass"] == 0.008
+    caplog.clear()
+
+    confound_names = ["cosine*", "trans*", "rot*"]
+    with caplog.at_level(logging.WARNING):
+        extractor = TimeseriesExtractor(
+            high_pass=None,
+            confound_names=confound_names,
+        )
+
+    assert "Both `high_pass` and cosine regressors were specified" not in caplog.text
+    assert extractor.signal_clean_info["masker_init"]["high_pass"] is None
+
+
 def test_delete_property(setup_environment_1, get_vars):
     """
     Ensures deleter property works.
@@ -526,7 +573,6 @@ def test_basic_extraction(
         standardize=True,
         use_confounds=use_confounds,
         low_pass=0.15,
-        high_pass=0.008,
         confound_names=["cosine*", "rot*"],
     )
 

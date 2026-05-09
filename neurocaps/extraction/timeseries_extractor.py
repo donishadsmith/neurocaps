@@ -71,6 +71,11 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
 
     high_pass : :obj:`float`, :obj:`int`, or :obj:`None`, default=None
         Filters out signals below the specified cutoff frequency.
+        .. versionchanged:: 0.37.4
+           When cosine regressors (e.g., "cosine*") are detected in user-specified
+           ``confound_names``, ``high_pass`` is automatically set to None to avoid
+           multicollinearity between nilearn's DCT basis functions and fMRIPrep's cosine
+           regressors.
 
     fwhm : :obj:`float`, :obj:`int`, or :obj:`None`, default=None
         Applies spatial smoothing to data (in millimeters).
@@ -286,8 +291,7 @@ class TimeseriesExtractor(TimeseriesExtractorGetter):
 
         if use_confounds:
             if confound_names:
-                # Replace confounds if not None
-                confound_names = check_confound_names(
+                confound_names, high_pass = check_confound_names(
                     high_pass, confound_names, n_acompcor_separate
                 )
 

@@ -15,6 +15,10 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.37.4] - 2026-05-09
+### ♻ Changed
+- `1high_pass`1 is now automatically set to ``None`` with a warning when cosine regressors are detected in user-specified `confound_names`, preventing multicollinearity between nilearn's DCT basis functions and fMRIPrep's cosine regressors.
+
 ## [0.37.3] - 2026-04-16
 ### ♻ Changed
 - Added support for the ``NEUROCAPS_DATA`` environment variable to override the default data directory location used by fetch_preset_parcel_approach. Defaults to "~/neurocaps_data" when unset.

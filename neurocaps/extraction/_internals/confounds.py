@@ -10,7 +10,8 @@ LG = setup_logger(__name__)
 def check_confound_names(high_pass, user_confounds, n_acompcor_separate):
     """
     Pipeline for checking confound names. The default confound names ("basic") depend on whether
-    high-pass filtering is specified.
+    high-pass filtering is specified. In addition, ``high_pass`` set to ``None`` if cosine parameters
+    are in the confound names.
     """
     if user_confounds == "basic":
         if high_pass:
@@ -58,6 +59,8 @@ def check_confound_names(high_pass, user_confounds, n_acompcor_separate):
         ), "`confound_names` must be a non-empty list."
         confound_names = user_confounds
 
+        high_pass = _check_cosine_high_pass_conflict(high_pass, confound_names)
+
     confound_names = check_wildcard_confounds(confound_names)
 
     if n_acompcor_separate:
@@ -67,7 +70,25 @@ def check_confound_names(high_pass, user_confounds, n_acompcor_separate):
 
     LG.info(f"Confound regressors to be used if available: {', '.join(confound_names)}.")
 
-    return deepcopy(confound_names)
+    return deepcopy(confound_names), high_pass
+
+
+def _check_cosine_high_pass_conflict(high_pass, confound_names):
+    """
+    Checks if both ``high_pass`` and cosine regressors are specified. If so, ``high_pass`` is set
+    to None to avoid multicollinearity between nilearn's DCT basis functions and fMRIPrep's cosine
+    regressors.
+    """
+    if high_pass is not None and any(confound.startswith("cosine") for confound in confound_names):
+        LG.warning(
+            "Both `high_pass` and cosine regressors were specified in `confound_names`. Using both "
+            "introduces near-identical DCT regressors, resulting in multicollinearity issues. "
+            "`high_pass` has been set to None; cosine regressors from fMRIPrep will be used for "
+            "high-pass filtering instead."
+        )
+        high_pass = None
+
+    return high_pass
 
 
 def remove_a_comp_cor(confound_names, user_confounds, n):
