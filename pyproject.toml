@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=77.0.1"]
+requires = ["setuptools>=82.0.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.dynamic]
@@ -53,12 +53,12 @@ dependencies = [
     "scipy>=1.10.0",
     "brainspace>=0.1.16", # Version >= 0.1.16 due to a numpy > 2.0 compatibility issue; used by surfplot
     "surfplot>=0.2.0",
-    "neuromaps>=0.0.5",
+    "neuromaps>=0.0.7",
     "pybids>=0.16.5; platform_system != 'Windows'",
     "plotly>=6.5.0",
     "nbformat>=5.10.0", # Needed for plotly figures to display in Jupyter Notebooks without errors
     "kaleido>=1.2.0",
-    "setuptools>=77.0.1, <82.0.0", # Results in installation errors if not included as dependency
+    "setuptools>=82.0.0", # Results in installation errors if not included as dependency
     "typing_extensions>=4.10.0",
     "vtk>=9.2.0",
     "tqdm>=4.65.0",
