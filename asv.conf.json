@@ -5,6 +5,7 @@
     "repo": ".",
     "branches": ["main", "development"],
     "environment_type": "virtualenv",
+    "build_command": ["SETUPTOOLS_SCM_PRETEND_VERSION=0.0.0 python -m pip wheel --no-deps -w {build_cache_dir} {build_dir}"],
     "install_command": ["python -m pip install .[windows]"],
     "env_dir": ".asv/env",
     "results_dir": ".asv/results"
