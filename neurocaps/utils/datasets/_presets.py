@@ -27,7 +27,7 @@ PRESET_METADATA = {
     "4S": {
         "name": "4S",
         "n_nodes": None,
-        "n_regions": 7,
+        "n_regions": 10,
         "space": "MNI152NLin2009cAsym",
         "source": "https://github.com/PennLINC/AtlasPack",
     },

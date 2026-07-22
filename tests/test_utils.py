@@ -83,7 +83,7 @@ def test_fetch_preset_parcel_approach():
 
     assert parcel_approach["Custom"]["metadata"]["name"] == "4S"
     assert parcel_approach["Custom"]["metadata"]["n_nodes"] == 156
-    assert parcel_approach["Custom"]["metadata"]["n_regions"] == 7
+    assert parcel_approach["Custom"]["metadata"]["n_regions"] == 10
 
 
 @pytest.mark.flaky(reruns=5)
