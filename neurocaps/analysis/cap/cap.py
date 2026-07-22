@@ -1731,14 +1731,14 @@ class CAP(CAPGetter):
         1. Extract Cluster Centroids:
 
             - Each CAP is represented by a cluster centroid, which is a 1 x ROI
-            (Region of Interest) vector.
+              (Region of Interest) vector.
 
         2. Generate Binary Vectors:
 
             - For each network/region create a binary vector (1 x ROI) where "1" indicates that
-            the ROI is part of the specific region and "0" otherwise.
+              the ROI is part of the specific region and "0" otherwise.
             - In this example, the binary vector acts as a 1-D mask to isolate ROIs in the Visual
-            Network by setting the corresponding indices to "1".
+              Network by setting the corresponding indices to "1".
 
             ::
 
@@ -1746,7 +1746,7 @@ class CAP(CAPGetter):
 
                 # Define nodes with their corresponding label IDs
                 nodes = ["LH_Vis1", "LH_Vis2", "LH_SomSot1", "LH_SomSot2",
-                            "RH_Vis1", "RH_Vis2", "RH_SomSot1", "RH_SomSot2"]
+                         "RH_Vis1", "RH_Vis2", "RH_SomSot1", "RH_SomSot2"]
 
                 # Binary mask for the Visual Network (Vis)
                 binary_vector = np.array([1, 1, 0, 0, 1, 1, 0, 0])
@@ -1754,9 +1754,9 @@ class CAP(CAPGetter):
         3. Isolate Positive and Negative Activations in CAP Centroid:
 
             - Positive activations are defined as the values in the CAP centroid that are greater
-            than zero. These values represent the "High Amplitude" activations for that CAP.
+              than zero. These values represent the "High Amplitude" activations for that CAP.
             - Negative activations are defined as the values in the CAP centroid that are less
-            than zero. These values represent the "Low Amplitude" activations for that CAP.
+              than zero. These values represent the "Low Amplitude" activations for that CAP.
 
             ::
 
@@ -1773,7 +1773,7 @@ class CAP(CAPGetter):
         4. Calculate Cosine Similarity:
 
             - Normalize the dot product by the product of the Euclidean norms of the cluster
-            centroid and the binary vector to obtain the cosine similarity:
+              centroid and the binary vector to obtain the cosine similarity:
 
             ::
 
@@ -1794,7 +1794,7 @@ class CAP(CAPGetter):
         5. Generate Radar Plots of Each CAPs:
 
             - Each radar plot visualizes the cosine similarity for both "High Amplitude"
-            (positive) and "Low Amplitude" (negative) activations of the CAP.
+              (positive) and "Low Amplitude" (negative) activations of the CAP.
 
         **Handling Division by Zero:** NumPy automatically handles division by zero errors. This
         may occur if the network or the "High Amplitude" or "Low Amplitude" vectors are all zeroes.
