@@ -45,7 +45,7 @@ jobs:
 
       - name: Install pytest-forked for Ubuntu Python 3.11+
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-ver != '3.10' }}
-        run: pip install pytest-forked
+        run: pip install pytest-forked "pytest<9.2"
         shell: bash
 
       - name: Install package & pytest for Windows
