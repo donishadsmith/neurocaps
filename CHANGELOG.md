@@ -15,6 +15,10 @@ noted in the changelog (e.g., new functions or parameters, changes in parameter 
 improvements/enhancements. All fixes and modifications are backwards compatible.
 - *.postN* : Consists of documentation changes or metadata-related updates, such as modifications to type hints.
 
+## [0.37.6] - 2026-11-16
+### ♻ Changed
+- Restrict kaleido version for MacOs due to intermittent PNG export error
+
 ## [0.37.5] - 2026-06-30
 ### ♻ Changed
 - Set ``neuromaps`` minimum version to 0.0.7 and ``setuptools`` minimum version to 82.0.0 since ``pkg_resources`` was deprecated in ``setuptools`` version 82.0.0.
